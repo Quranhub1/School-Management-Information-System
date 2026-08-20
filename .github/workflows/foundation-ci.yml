@@ -32,7 +32,6 @@ jobs:
             docs/SECURITY.md
             docs/DEPLOYMENT.md
           )
-
           for file in "${required_files[@]}"; do
             test -f "$file"
             echo "Found $file"
@@ -59,3 +58,26 @@ jobs:
       - name: Build backend
         working-directory: backend
         run: dotnet build SchoolManagement.sln --configuration Release --no-restore
+
+      - name: Restore pinned EF Core CLI
+        working-directory: backend
+        run: dotnet tool restore
+
+      - name: Validate EF Core model can scaffold
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/smism-migrations
+          dotnet ef migrations add CiModelValidation \
+            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --configuration Release \
+            --output-dir /tmp/smism-migrations \
+            --no-build
+          test -f /tmp/smism-migrations/*_CiModelValidation.cs
+          dotnet ef migrations script \
+            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --configuration Release \
+            --output /tmp/smism-schema.sql \
+            --no-build
+          test -s /tmp/smism-schema.sql
+          echo "EF Core model successfully scaffolds and generates SQL."
