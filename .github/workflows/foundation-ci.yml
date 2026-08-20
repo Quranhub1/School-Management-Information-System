@@ -46,3 +46,16 @@ jobs:
           test -d docs/adr
           test -d .github/workflows
           echo "Project foundation directories are present."
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore backend
+        working-directory: backend
+        run: dotnet restore SchoolManagement.sln
+
+      - name: Build backend
+        working-directory: backend
+        run: dotnet build SchoolManagement.sln --configuration Release --no-restore
