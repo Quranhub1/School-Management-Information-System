@@ -3,6 +3,8 @@ using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure;
+using SchoolManagement.Infrastructure.Identity;
+using SchoolManagement.Infrastructure.Persistence;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +42,12 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<SchoolManagementDbContext>();
+    await IdentitySeeder.SeedAsync(db);
+}
 
 if (app.Environment.IsDevelopment())
 {
