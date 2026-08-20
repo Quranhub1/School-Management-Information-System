@@ -3,7 +3,10 @@ using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Assessment;
 using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Domain.Clinical;
+using SchoolManagement.Domain.Examinations;
+using SchoolManagement.Domain.Finance;
 using SchoolManagement.Domain.Identity;
+using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Students;
 
 namespace SchoolManagement.Infrastructure.Persistence;
@@ -34,6 +37,12 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
     public DbSet<Placement> Placements => Set<Placement>();
     public DbSet<StudentPlacement> StudentPlacements => Set<StudentPlacement>();
+    public DbSet<Result> Results => Set<Result>();
+    public DbSet<FeeStructure> FeeStructures => Set<FeeStructure>();
+    public DbSet<StudentInvoice> StudentInvoices => Set<StudentInvoice>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
+    public DbSet<TeachingAllocation> TeachingAllocations => Set<TeachingAllocation>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -61,5 +70,11 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<AttendanceRecord>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.StudentId, x.CourseId, x.SemesterId, x.AttendanceDate }).IsUnique(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Semester>().WithMany().HasForeignKey(x => x.SemesterId).OnDelete(DeleteBehavior.Restrict); });
         m.Entity<Placement>(e => { e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(200).IsRequired(); e.Property(x => x.FacilityName).HasMaxLength(250); e.Property(x => x.FacilityType).HasMaxLength(100); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); });
         m.Entity<StudentPlacement>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.PlacementId, x.StudentId }).IsUnique(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.Property(x => x.CompetencyOutcome).HasMaxLength(1000); e.HasOne<Placement>().WithMany().HasForeignKey(x => x.PlacementId).OnDelete(DeleteBehavior.Cascade); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); });
+        m.Entity<Result>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.StudentId, x.CourseId, x.SemesterId }).IsUnique(); e.Property(x => x.Score).HasPrecision(8, 2); e.Property(x => x.Grade).HasMaxLength(20); e.Property(x => x.GradePoint).HasPrecision(5, 2); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Semester>().WithMany().HasForeignKey(x => x.SemesterId).OnDelete(DeleteBehavior.Restrict); });
+        m.Entity<FeeStructure>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.ProgrammeId, x.AcademicYearId, x.Name }).IsUnique(); e.Property(x => x.Name).HasMaxLength(200).IsRequired(); e.Property(x => x.TotalAmount).HasPrecision(18, 2); e.Property(x => x.Currency).HasMaxLength(3).IsRequired(); e.HasOne<Programme>().WithMany().HasForeignKey(x => x.ProgrammeId).OnDelete(DeleteBehavior.Restrict); e.HasOne<AcademicYear>().WithMany().HasForeignKey(x => x.AcademicYearId).OnDelete(DeleteBehavior.Restrict); });
+        m.Entity<StudentInvoice>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.InvoiceNumber).IsUnique(); e.Property(x => x.InvoiceNumber).HasMaxLength(50).IsRequired(); e.Property(x => x.Amount).HasPrecision(18, 2); e.Property(x => x.PaidAmount).HasPrecision(18, 2); e.Property(x => x.Currency).HasMaxLength(3).IsRequired(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); e.HasOne<FeeStructure>().WithMany().HasForeignKey(x => x.FeeStructureId).OnDelete(DeleteBehavior.SetNull); });
+        m.Entity<Payment>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.ReceiptNumber).IsUnique(); e.Property(x => x.ReceiptNumber).HasMaxLength(50).IsRequired(); e.Property(x => x.Amount).HasPrecision(18, 2); e.Property(x => x.Currency).HasMaxLength(3).IsRequired(); e.Property(x => x.PaymentMethod).HasMaxLength(50).IsRequired(); e.Property(x => x.Reference).HasMaxLength(100); e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict); });
+        m.Entity<StaffMember>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.StaffNumber).IsUnique(); e.Property(x => x.StaffNumber).HasMaxLength(50).IsRequired(); e.Property(x => x.FirstName).HasMaxLength(100).IsRequired(); e.Property(x => x.LastName).HasMaxLength(100).IsRequired(); e.Property(x => x.NationalId).HasMaxLength(50); e.Property(x => x.PhoneNumber).HasMaxLength(30); e.Property(x => x.Email).HasMaxLength(254); e.Property(x => x.EmploymentType).HasMaxLength(50).IsRequired(); });
+        m.Entity<TeachingAllocation>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.StaffMemberId, x.CourseId, x.SemesterId }).IsUnique(); e.Property(x => x.Role).HasMaxLength(50).IsRequired(); e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffMemberId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Semester>().WithMany().HasForeignKey(x => x.SemesterId).OnDelete(DeleteBehavior.Restrict); });
     }
 }
