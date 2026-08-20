@@ -10,4 +10,5 @@ public sealed class Curriculum
     public DateOnly EffectiveFrom { get; init; }
     public DateOnly? EffectiveTo { get; init; }
     public string Status { get; set; } = "Draft";
+    public bool IsActive { get; set; } = true;
 }
