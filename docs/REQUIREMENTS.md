@@ -2,38 +2,107 @@
 
 ## System goal
 
-Provide a maintainable School Management Information System that centralizes school operations while remaining usable over a local school network without requiring Internet access for normal internal workflows.
+Provide a maintainable, production-oriented School Management Information System for Ugandan tertiary, higher-education and TVET institutions. The system must centralize institutional operations while remaining usable over the local network without Internet access for normal internal workflows.
+
+## Institutional model
+
+The system must support:
+
+```text
+Institution → Campus → Faculty/School → Department → Programme
+Programme → Curriculum Version → Programme Course → Course
+Academic Year → Academic Period
+Intake → Student Enrollment → Period Registration → Course Registration
+Course Registration → Attendance / Assessment / Results / Progression
+```
+
+Terminology must be configurable so an institution can use semester, term, trimester or block without changing the underlying model.
 
 ## Core modules
 
 1. Identity and access management
-2. Student management
-3. Staff and teacher management
-4. Admissions and enrollment
-5. Academic management
-6. Attendance
-7. Examinations and grading
-8. Finance and fees
-9. Library management
-10. Transport management
-11. Communication and notifications
-12. Parent portal
-13. Student portal
-14. Reporting and dashboards
-15. System administration and audit logging
+2. Institution and campus administration
+3. Faculty/school and department management
+4. Programme and curriculum management
+5. Admissions and enrollment
+6. Student, guardian and next-of-kin management
+7. Academic years, periods and intakes
+8. Course/unit management and registration
+9. Attendance
+10. Assessment and examinations
+11. Results, progression and transcripts
+12. Staff, teaching allocation and workload
+13. Clinical, practical and workplace learning
+14. Finance and fees
+15. Library management
+16. Communication and notifications
+17. Graduation, certification and alumni
+18. Reporting and dashboards
+19. Student/guardian self-service
+20. System administration and audit logging
+
+## Uganda-oriented academic requirements
+
+### Programme and curriculum
+
+- Programmes must have configurable award type, award title, duration, study mode and delivery model.
+- Programme approval/accreditation references must be stored as metadata.
+- Curriculum versions must be independently versioned and preserved historically.
+- Curriculum must support conventional academic and competency-based education/training models.
+
+### Admissions
+
+- Application records must exist before student records where the workflow requires it.
+- Applications must identify programme and intended intake.
+- Admission decisions must be auditable.
+- Admission/reference numbers must be distinct from the internal student primary key.
+
+### Students
+
+- Student identity must be separated from academic enrollment.
+- Multiple guardians/next-of-kin may be recorded.
+- Student status must support active, deferred, completed, withdrawn, graduated and other configured states.
+- Disability/support information must be handled securely where required.
+
+### Academic registration
+
+- A student may enroll in a programme and register for an academic period.
+- Course registration must reference the curriculum course, not merely the course master record.
+- Repeats and multiple attempts must be represented.
+- Historical registrations must remain traceable.
+
+### Assessment
+
+The system must support:
+
+- theory examinations;
+- continuous assessment;
+- practical assessment;
+- clinical assessment;
+- workplace/industrial attachment assessment;
+- competency-based assessment;
+- numeric scores and/or competency outcomes;
+- assessor identity and approval;
+- result publication and locking.
+
+### Progression and completion
+
+The system must record progression decisions such as progress, repeat, defer, withdraw and complete. Completion must support clearance, final results, transcript generation and graduation/certification.
 
 ## Cross-cutting requirements
 
 - Role-based access control.
 - Auditability of important changes.
-- Validation at API and database boundaries.
+- API and database validation.
 - Secure password and credential handling.
 - Consistent error handling.
-- Automated testing for business-critical workflows.
+- Automated tests for business-critical workflows.
 - Database migrations under version control.
 - Backup and restore procedures.
 - LAN-first deployment.
-- Responsive web interface for supported school devices.
+- Responsive interface for institutional devices.
+- Configurable terminology and institutional rules.
+- Historical academic data preservation.
 
 ## Non-functional requirements
 
@@ -43,16 +112,16 @@ The system must preserve data integrity and fail predictably when dependencies a
 
 ### Security
 
-Authentication, authorization, input validation, secret management, audit logging, and least-privilege access are mandatory concerns.
+Authentication, authorization, input validation, secret management, audit logging and least-privilege access are mandatory.
 
 ### Maintainability
 
-Domain functionality should be modular, testable, documented, and independently evolvable where practical.
+Domains must be modular, testable, documented and independently evolvable where practical.
 
 ### Performance
 
-Common school-office operations should remain responsive on the local network with multiple concurrent users.
+Common registry, admissions, academic, finance and reporting operations should remain responsive on the local network with multiple concurrent users.
 
 ### Offline/LAN operation
 
-Normal internal operations must not depend on third-party cloud services. Optional Internet-dependent integrations must degrade gracefully when Internet access is unavailable.
+Normal internal operations must not depend on third-party cloud services. Optional SMS, email and other Internet integrations must degrade gracefully when connectivity is unavailable.
