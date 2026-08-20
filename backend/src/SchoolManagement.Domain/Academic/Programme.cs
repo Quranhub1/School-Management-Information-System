@@ -7,6 +7,13 @@ public sealed class Programme
     public required string Code { get; init; }
     public required string Name { get; init; }
     public required string Award { get; init; }
+    public string? AwardTitle { get; init; }
     public int DurationYears { get; init; }
+    public string DurationUnit { get; init; } = "Years";
+    public string StudyMode { get; init; } = "Full-time";
+    public string DeliveryType { get; init; } = "Academic";
+    public string? Regulator { get; init; }
+    public string? ApprovalReference { get; init; }
+    public DateOnly? ApprovalDate { get; init; }
     public bool IsActive { get; set; } = true;
 }

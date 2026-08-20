@@ -6,5 +6,6 @@ public sealed class Department
     public Guid FacultyId { get; init; }
     public required string Code { get; init; }
     public required string Name { get; init; }
+    public Guid? HeadStaffId { get; init; }
     public bool IsActive { get; set; } = true;
 }
