@@ -12,6 +12,7 @@ public sealed class Student
     public string? NationalId { get; init; }
     public string? PhoneNumber { get; init; }
     public string? Email { get; init; }
-    public bool IsActive { get; set; } = true;
+    public string Status { get; set; } = "Active";
+    public Guid? AdmissionId { get; init; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 }
