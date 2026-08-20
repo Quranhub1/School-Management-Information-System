@@ -1,6 +1,5 @@
-using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Students;
-using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Application.Students;
 
@@ -15,13 +14,13 @@ public sealed record CreateStudentRequest(
     string? PhoneNumber = null,
     string? Email = null);
 
-public sealed class StudentService(SchoolManagementDbContext db)
+public sealed class StudentService(IStudentRepository students)
 {
-    public async Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        await db.Students.AsNoTracking().OrderBy(x => x.StudentNumber).ToListAsync(cancellationToken);
+    public Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        students.GetAllAsync(cancellationToken);
 
-    public async Task<Student?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+    public Task<Student?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        students.GetByIdAsync(id, cancellationToken);
 
     public async Task<Student> CreateAsync(CreateStudentRequest request, CancellationToken cancellationToken = default)
     {
@@ -38,8 +37,8 @@ public sealed class StudentService(SchoolManagementDbContext db)
             Email = request.Email?.Trim()
         };
 
-        db.Students.Add(student);
-        await db.SaveChangesAsync(cancellationToken);
+        await students.AddAsync(student, cancellationToken);
+        await students.SaveChangesAsync(cancellationToken);
         return student;
     }
 }
