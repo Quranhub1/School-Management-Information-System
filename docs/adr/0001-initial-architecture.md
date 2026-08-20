@@ -11,7 +11,7 @@ The system is intended to be a real school management platform deployed primaril
 
 Use a layered web application with a React/TypeScript frontend, ASP.NET Core backend, Entity Framework Core data access, and a relational database. Use Nginx as the production reverse proxy on Ubuntu Server. Keep domain modules separated and use GitHub as the implementation source of truth.
 
-Use GitHub Actions for automated build and test workflows. Workflows are stored under `.github/workflows`, consistent with GitHub's workflow model. citeturn0search1turn0search2
+Use GitHub Actions for automated build and test workflows. Workflows are stored under `.github/workflows`.
 
 ## Consequences
 
