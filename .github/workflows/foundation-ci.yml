@@ -70,11 +70,13 @@ jobs:
           rm -rf /tmp/smism-migrations
           dotnet ef migrations add CiModelValidation \
             --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --configuration Release \
             --output-dir /tmp/smism-migrations \
             --no-build
           test -f /tmp/smism-migrations/*_CiModelValidation.cs
           dotnet ef migrations script \
             --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --configuration Release \
             --output /tmp/smism-schema.sql \
             --no-build
           test -s /tmp/smism-schema.sql
