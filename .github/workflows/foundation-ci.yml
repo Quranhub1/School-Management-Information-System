@@ -1,0 +1,48 @@
+name: Foundation CI
+
+on:
+  push:
+    branches: [main, 'foundation/**', 'feature/**', 'fix/**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    name: Validate project foundation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required foundation files
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_files=(
+            README.md
+            .gitignore
+            .editorconfig
+            docs/ARCHITECTURE.md
+            docs/REQUIREMENTS.md
+            docs/DATABASE.md
+            docs/API.md
+            docs/SECURITY.md
+            docs/DEPLOYMENT.md
+          )
+
+          for file in "${required_files[@]}"; do
+            test -f "$file"
+            echo "Found $file"
+          done
+
+      - name: Validate architecture directories
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d docs
+          test -d docs/adr
+          test -d .github/workflows
+          echo "Project foundation directories are present."
