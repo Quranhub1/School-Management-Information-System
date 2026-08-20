@@ -29,7 +29,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization(AuthorizationPolicies.AddInstitutionalPolicies);
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.AcademicManagement, policy =>
+        policy.RequireRole(AuthorizationPolicies.RoleSets.AcademicManagement));
+    options.AddPolicy(AuthorizationPolicies.FinanceManagement, policy =>
+        policy.RequireRole(AuthorizationPolicies.RoleSets.FinanceManagement));
+    options.AddPolicy(AuthorizationPolicies.ExaminationManagement, policy =>
+        policy.RequireRole(AuthorizationPolicies.RoleSets.ExaminationManagement));
+});
 
 var app = builder.Build();
 
