@@ -1,9 +1,12 @@
-namespace SchoolManagement.Domain.Students;
+namespace SchoolManagement.Domain.Admissions;
 
-public sealed class Student
+/// <summary>
+/// A person seeking admission before becoming an enrolled student.
+/// </summary>
+public sealed class Applicant
 {
     public Guid Id { get; init; } = Guid.NewGuid();
-    public required string StudentNumber { get; init; }
+    public required string ApplicationNumber { get; init; }
     public required string FirstName { get; init; }
     public required string LastName { get; init; }
     public string? OtherNames { get; init; }
@@ -12,7 +15,6 @@ public sealed class Student
     public string? NationalId { get; init; }
     public string? PhoneNumber { get; init; }
     public string? Email { get; init; }
-    public string Status { get; set; } = "Active";
-    public Guid? AdmissionId { get; init; }
-    public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+    public string Status { get; set; } = "Submitted";
+    public DateTimeOffset AppliedAt { get; init; } = DateTimeOffset.UtcNow;
 }

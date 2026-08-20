@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Academic;
+using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Assessment;
 using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Domain.Clinical;
@@ -16,6 +17,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Applicant> Applicants => Set<Applicant>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<StudentGuardian> StudentGuardians => Set<StudentGuardian>();
     public DbSet<Faculty> Faculties => Set<Faculty>();
@@ -49,6 +51,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<User>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.Username).IsUnique(); e.Property(x => x.Username).HasMaxLength(100).IsRequired(); e.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired(); e.Property(x => x.FirstName).HasMaxLength(100).IsRequired(); e.Property(x => x.LastName).HasMaxLength(100).IsRequired(); e.Property(x => x.Email).HasMaxLength(254); });
         m.Entity<Role>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.Name).IsUnique(); e.Property(x => x.Name).HasMaxLength(100).IsRequired(); });
         m.Entity<UserRole>(e => { e.HasKey(x => new { x.UserId, x.RoleId }); e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId); e.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId); });
+        m.Entity<Applicant>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.ApplicationNumber).IsUnique(); e.Property(x => x.ApplicationNumber).HasMaxLength(50).IsRequired(); e.Property(x => x.FirstName).HasMaxLength(100).IsRequired(); e.Property(x => x.LastName).HasMaxLength(100).IsRequired(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); });
         m.Entity<Student>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.StudentNumber).IsUnique(); e.Property(x => x.StudentNumber).HasMaxLength(50).IsRequired(); e.Property(x => x.FirstName).HasMaxLength(100).IsRequired(); e.Property(x => x.LastName).HasMaxLength(100).IsRequired(); });
         m.Entity<StudentGuardian>(e => { e.HasKey(x => x.Id); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<Faculty>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.Code).IsUnique(); e.Property(x => x.Code).HasMaxLength(30).IsRequired(); e.Property(x => x.Name).HasMaxLength(200).IsRequired(); });
