@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SchoolManagement.Application.Abstractions;
+using SchoolManagement.Application.Authentication;
+using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Infrastructure.Repositories;
 
@@ -14,16 +16,15 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("SchoolManagement")
-            ?? throw new InvalidOperationException(
-                "Connection string 'SchoolManagement' is not configured.");
+            ?? throw new InvalidOperationException("Connection string 'SchoolManagement' is not configured.");
 
-        services.AddDbContext<SchoolManagementDbContext>(options =>
-            options.UseNpgsql(connectionString));
-
+        services.AddDbContext<SchoolManagementDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IProgrammeRepository, ProgrammeRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<DatabaseHealthCheck>();
-
+        services.AddSingleton<PasswordHasher>();
+        services.AddScoped<AdminSeeder>();
         return services;
     }
 }

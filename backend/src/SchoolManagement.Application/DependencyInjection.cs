@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SchoolManagement.Application.Academic;
+using SchoolManagement.Application.Authentication;
 using SchoolManagement.Application.Students;
 
 namespace SchoolManagement.Application;
@@ -10,6 +11,7 @@ public static class DependencyInjection
     {
         services.AddScoped<StudentService>();
         services.AddScoped<ProgrammeService>();
+        services.AddScoped<AuthService>();
         return services;
     }
 }
