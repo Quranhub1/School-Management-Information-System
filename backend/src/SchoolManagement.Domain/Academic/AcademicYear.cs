@@ -7,4 +7,5 @@ public sealed class AcademicYear
     public DateOnly StartDate { get; init; }
     public DateOnly EndDate { get; init; }
     public bool IsCurrent { get; set; }
+    public bool IsActive { get; set; } = true;
 }
