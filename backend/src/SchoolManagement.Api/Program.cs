@@ -1,12 +1,12 @@
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
+builder.Services.AddHealthChecks();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
@@ -18,10 +18,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapHealthChecks("/health");
-app.MapHealthChecks("/health/database", new HealthCheckOptions
-{
-    Predicate = check => check.Name == "database"
-});
 app.MapControllers();
 
 app.Run();
