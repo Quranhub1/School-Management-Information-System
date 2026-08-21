@@ -1,4 +1,5 @@
-import { FormEvent, useState } from 'react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
 import { getStudentAcademicSummaries, getStudentTranscript } from './api/academicRecords'
 import type { AcademicResultSummary, TranscriptEntry } from './types/academic'
 
@@ -71,7 +72,7 @@ function App() {
             <strong>{summary.semesterId}</strong>
             <div className="metrics">
               <span>GPA <b>{summary.gpa.toFixed(2)}</b></span>
-              <span>CGPA <b>{summary.cgpa.toFixed(2)}</b></span>
+              <span>CGPA <b>{summary.cgpa?.toFixed(2) ?? '—'}</b></span>
             </div>
             <small>{summary.standing}</small>
           </article>
@@ -91,7 +92,7 @@ function App() {
             <thead>
               <tr>
                 <th>Course</th>
-                <th>Course name</th>
+                <th>Course title</th>
                 <th>Units</th>
                 <th>Score</th>
                 <th>Grade</th>
@@ -104,10 +105,10 @@ function App() {
               ) : transcript.map((entry) => (
                 <tr key={entry.id}>
                   <td>{entry.courseCode}</td>
-                  <td>{entry.courseName}</td>
+                  <td>{entry.courseTitle}</td>
                   <td>{entry.creditUnits}</td>
                   <td>{entry.score}</td>
-                  <td><span className="grade">{entry.grade}</span></td>
+                  <td><span className="grade">{entry.grade ?? '—'}</span></td>
                   <td>{entry.gradePoint.toFixed(2)}</td>
                 </tr>
               ))}
