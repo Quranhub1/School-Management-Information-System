@@ -11,5 +11,11 @@ public sealed class StudentAssessment
     public string? Grade { get; set; }
     public string? CompetencyLevel { get; set; }
     public bool IsFinalized { get; set; }
+    /// <summary>Compatibility alias used by assessment-processing callers.</summary>
+    public bool IsFinal
+    {
+        get => IsFinalized;
+        set => IsFinalized = value;
+    }
     public DateTimeOffset RecordedAt { get; init; } = DateTimeOffset.UtcNow;
 }
