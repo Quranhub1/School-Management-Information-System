@@ -35,6 +35,8 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<CourseOffering> CourseOfferings => Set<CourseOffering>();
     public DbSet<TeachingGroup> TeachingGroups => Set<TeachingGroup>();
     public DbSet<TimetableEntry> TimetableEntries => Set<TimetableEntry>();
+    public DbSet<AttendanceSession> AttendanceSessions => Set<AttendanceSession>();
+    public DbSet<StudentAttendance> StudentAttendances => Set<StudentAttendance>();
     public DbSet<StudentAcademicStatus> StudentAcademicStatuses => Set<StudentAcademicStatus>();
     public DbSet<LearningOutcome> LearningOutcomes => Set<LearningOutcome>();
     public DbSet<AssessmentPlan> AssessmentPlans => Set<AssessmentPlan>();
@@ -53,5 +55,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     {
         m.Entity<TimetableEntry>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.TeachingGroupId, x.DayOfWeek, x.StartTime }).IsUnique(); e.Property(x => x.Room).HasMaxLength(100); e.Property(x => x.SessionType).HasMaxLength(50); e.HasOne<TeachingGroup>().WithMany().HasForeignKey(x => x.TeachingGroupId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<TeachingGroup>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.CourseOfferingId, x.GroupCode }).IsUnique(); e.Property(x => x.GroupCode).HasMaxLength(30).IsRequired(); e.Property(x => x.Name).HasMaxLength(100); e.HasOne<CourseOffering>().WithMany().HasForeignKey(x => x.CourseOfferingId).OnDelete(DeleteBehavior.Cascade); });
+        m.Entity<AttendanceSession>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.TimetableEntryId, x.SessionDate }).IsUnique(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.Property(x => x.Remarks).HasMaxLength(500); e.HasOne<TimetableEntry>().WithMany().HasForeignKey(x => x.TimetableEntryId).OnDelete(DeleteBehavior.Restrict); });
+        m.Entity<StudentAttendance>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.AttendanceSessionId, x.StudentId }).IsUnique(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.Property(x => x.Remarks).HasMaxLength(500); e.HasOne<AttendanceSession>().WithMany().HasForeignKey(x => x.AttendanceSessionId).OnDelete(DeleteBehavior.Cascade); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); });
     }
 }
