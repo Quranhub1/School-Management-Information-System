@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { createInvoice, getInvoices, recordPayment, type Invoice } from '../api/finance'
 
 export function FinanceManagement() {
@@ -19,20 +20,16 @@ export function FinanceManagement() {
   }
   useEffect(() => { void load() }, [])
 
-  async function submitInvoice(event: React.FormEvent) {
+  async function submitInvoice(event: FormEvent) {
     event.preventDefault()
-    try {
-      await createInvoice({ studentId: studentId.trim(), invoiceNumber: invoiceNumber.trim(), amount: Number(amount), currency: 'UGX' })
-      setStudentId(''); setInvoiceNumber(''); setAmount(''); await load()
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create invoice.') }
+    try { await createInvoice({ studentId: studentId.trim(), invoiceNumber: invoiceNumber.trim(), amount: Number(amount), currency: 'UGX' }); setStudentId(''); setInvoiceNumber(''); setAmount(''); await load() }
+    catch (e) { setError(e instanceof Error ? e.message : 'Unable to create invoice.') }
   }
 
-  async function submitPayment(event: React.FormEvent) {
+  async function submitPayment(event: FormEvent) {
     event.preventDefault(); if (!paymentInvoice) return
-    try {
-      await recordPayment(paymentInvoice.id, { amount: Number(paymentAmount), receiptNumber: receiptNumber.trim(), paymentMethod, currency: paymentInvoice.currency })
-      setPaymentInvoice(null); setPaymentAmount(''); setReceiptNumber(''); await load()
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to record payment.') }
+    try { await recordPayment(paymentInvoice.id, { amount: Number(paymentAmount), receiptNumber: receiptNumber.trim(), paymentMethod, currency: paymentInvoice.currency }); setPaymentInvoice(null); setPaymentAmount(''); setReceiptNumber(''); await load() }
+    catch (e) { setError(e instanceof Error ? e.message : 'Unable to record payment.') }
   }
 
   return <section className="panel"><div className="panel-heading"><div><p className="eyebrow">Finance Management</p><h2>Fees, invoices & payments</h2></div><button className="secondary-button" onClick={() => void load()}>Refresh</button></div>
