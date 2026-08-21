@@ -1,4 +1,3 @@
-using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Assessment;
 using Xunit;
 
@@ -7,61 +6,60 @@ namespace SchoolManagement.Domain.Tests.Assessment;
 public sealed class SemesterGpaCalculatorTests
 {
     [Fact]
-    public void CalculateSemesterGpa_UsesCreditUnitWeighting()
+    public void CalculateSemester_UsesCreditUnitWeighting()
     {
-        var course1 = Guid.NewGuid();
-        var course2 = Guid.NewGuid();
         var results = new[]
         {
-            new AssessmentResult { Id = Guid.NewGuid(), StudentId = Guid.NewGuid(), CourseId = course1, TotalScore = 80m, Grade = "A", GradePoint = 5m, IsFinal = true },
-            new AssessmentResult { Id = Guid.NewGuid(), StudentId = Guid.NewGuid(), CourseId = course2, TotalScore = 60m, Grade = "B", GradePoint = 3m, IsFinal = true }
-        };
-        var courses = new[]
-        {
-            new Course { Id = course1, Code = "C1", Name = "Course 1", CreditUnits = 4 },
-            new Course { Id = course2, Code = "C2", Name = "Course 2", CreditUnits = 2 }
+            new SemesterGpaCalculator.CourseResultInput(Guid.NewGuid(), 5m, 4, true),
+            new SemesterGpaCalculator.CourseResultInput(Guid.NewGuid(), 3m, 2, true)
         };
 
-        var gpa = SemesterGpaCalculator.CalculateGpa(results, courses);
+        var result = SemesterGpaCalculator.CalculateSemester(results);
 
-        Assert.Equal(4.33m, gpa);
+        Assert.Equal(26m, result.QualityPoints);
+        Assert.Equal(6, result.CreditUnits);
+        Assert.Equal(4.33m, result.Gpa);
     }
 
     [Fact]
-    public void CalculateGpa_IgnoresNonFinalResults()
+    public void CalculateSemester_IgnoresNonFinalResults()
     {
-        var course = Guid.NewGuid();
         var results = new[]
         {
-            new AssessmentResult { Id = Guid.NewGuid(), StudentId = Guid.NewGuid(), CourseId = course, TotalScore = 80m, Grade = "A", GradePoint = 5m, IsFinal = true },
-            new AssessmentResult { Id = Guid.NewGuid(), StudentId = Guid.NewGuid(), CourseId = course, TotalScore = 20m, Grade = "F", GradePoint = 0m, IsFinal = false }
+            new SemesterGpaCalculator.CourseResultInput(Guid.NewGuid(), 5m, 3, true),
+            new SemesterGpaCalculator.CourseResultInput(Guid.NewGuid(), 0m, 3, false)
         };
-        var courses = new[] { new Course { Id = course, Code = "C1", Name = "Course 1", CreditUnits = 3 } };
 
-        var gpa = SemesterGpaCalculator.CalculateGpa(results, courses);
+        var result = SemesterGpaCalculator.CalculateSemester(results);
 
-        Assert.Equal(5m, gpa);
+        Assert.Equal(15m, result.QualityPoints);
+        Assert.Equal(3, result.CreditUnits);
+        Assert.Equal(5m, result.Gpa);
     }
 
     [Fact]
-    public void CalculateCgpa_UsesTotalQualityPointsAcrossSemesters()
+    public void CalculateCumulative_UsesTotalQualityPointsAcrossSemesters()
     {
-        var cgpa = SemesterGpaCalculator.CalculateCgpa(
-            new[] { (4m, 20), (3m, 40) });
+        var result = SemesterGpaCalculator.CalculateCumulative(
+            new[]
+            {
+                new SemesterGpaCalculator.GpaResult(80m, 20, 4m),
+                new SemesterGpaCalculator.GpaResult(120m, 40, 3m)
+            });
 
-        Assert.Equal(3.33m, cgpa);
+        Assert.Equal(200m, result.QualityPoints);
+        Assert.Equal(60, result.CreditUnits);
+        Assert.Equal(3.33m, result.Gpa);
     }
 
     [Fact]
-    public void CalculateGpa_RejectsNonPositiveCreditUnits()
+    public void CalculateSemester_RejectsNonPositiveCreditUnits()
     {
-        var course = Guid.NewGuid();
         var results = new[]
         {
-            new AssessmentResult { Id = Guid.NewGuid(), StudentId = Guid.NewGuid(), CourseId = course, TotalScore = 80m, Grade = "A", GradePoint = 5m, IsFinal = true }
+            new SemesterGpaCalculator.CourseResultInput(Guid.NewGuid(), 5m, 0, true)
         };
-        var courses = new[] { new Course { Id = course, Code = "C1", Name = "Course 1", CreditUnits = 0 } };
 
-        Assert.Throws<ArgumentException>(() => SemesterGpaCalculator.CalculateGpa(results, courses));
+        Assert.Throws<InvalidOperationException>(() => SemesterGpaCalculator.CalculateSemester(results));
     }
 }
