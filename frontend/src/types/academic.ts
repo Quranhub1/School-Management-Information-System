@@ -1,14 +1,16 @@
 export interface TranscriptEntry {
   id: string
   studentId: string
+  courseRegistrationId: string
   academicYearId: string
   semesterId: string
   courseCode: string
-  courseName: string
+  courseTitle: string
   creditUnits: number
   score: number
-  grade: string
+  grade: string | null
   gradePoint: number
+  isPass: boolean
 }
 
 export interface AcademicResultSummary {
@@ -16,7 +18,11 @@ export interface AcademicResultSummary {
   studentId: string
   academicYearId: string
   semesterId: string
+  totalCreditUnits: number
+  totalGradePoints: number
   gpa: number
-  cgpa: number
+  cgpa: number | null
   standing: string
+  isApproved: boolean
+  approvedAt: string | null
 }
