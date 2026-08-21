@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { getSession, login, logout } from './api/auth'
-import { canManageAcademics } from './auth/roleGuards'
+import { canManageAcademics, canManageExaminations } from './auth/roleGuards'
 import { RoleNavigation } from './components/RoleNavigation'
 import { AcademicManagement } from './components/AcademicManagement'
+import { ExaminationResults } from './components/ExaminationResults'
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState('')
@@ -54,18 +55,23 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
   }
 
   const academicAccess = canManageAcademics(session?.roles ?? [])
+  const examinationAccess = canManageExaminations(session?.roles ?? [])
 
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div><span className="eyebrow">SMIS</span><h1>Academic Services</h1></div>
+        <div><span className="eyebrow">SMIS</span><h1>Institutional Services</h1></div>
         <div className="topbar-actions">
           <span className="status">{session?.username ?? 'Authenticated'}</span>
           <button className="secondary-button" onClick={signOut}>Sign out</button>
         </div>
       </header>
       <RoleNavigation roles={session?.roles ?? []} />
-      <AcademicManagement canManage={academicAccess} />
+      {academicAccess && <AcademicManagement canManage />}
+      {examinationAccess && <ExaminationResults />}
+      {!academicAccess && !examinationAccess && (
+        <section className="panel"><h3>Institutional Services</h3><p className="empty">Your role has no academic or examination workspace assigned yet.</p></section>
+      )}
     </main>
   )
 }
