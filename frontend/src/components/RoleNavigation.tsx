@@ -1,4 +1,5 @@
 import { ACADEMIC_MANAGEMENT_ROLES, EXAMINATION_MANAGEMENT_ROLES, FINANCE_MANAGEMENT_ROLES, hasAnyRole } from '../auth/roles'
+import './RoleNavigation.css'
 
 interface RoleNavigationProps {
   roles: string[]
