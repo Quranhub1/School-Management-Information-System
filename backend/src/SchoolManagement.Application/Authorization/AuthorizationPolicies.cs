@@ -5,6 +5,7 @@ public static class AuthorizationPolicies
     public const string AcademicManagement = "AcademicManagement";
     public const string FinanceManagement = "FinanceManagement";
     public const string ExaminationManagement = "ExaminationManagement";
+    public const string StudentManagement = "StudentManagement";
 
     public static class RoleSets
     {
@@ -16,5 +17,8 @@ public static class AuthorizationPolicies
 
         public static readonly string[] ExaminationManagement =
         [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.ExaminationsOfficer];
+
+        public static readonly string[] StudentManagement =
+        [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Registrar];
     }
 }
