@@ -24,8 +24,9 @@ public enum ProgrammeFamily
     Agriculture = 5,
     HomeScience = 6,
     Hospitality = 7,
-    Construction = 8,
-    Automotive = 9,
-    ElectricalElectronics = 10,
+    FoodScienceAndNutrition = 8,
+    Construction = 9,
+    Automotive = 10,
+    ElectricalElectronics = 11,
     Other = 99
 }
