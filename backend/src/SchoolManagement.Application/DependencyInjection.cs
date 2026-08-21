@@ -12,6 +12,7 @@ public static class DependencyInjection
     {
         services.AddScoped<StudentService>();
         services.AddScoped<ProgrammeService>();
+        services.AddScoped<AcademicRecordService>();
         services.AddScoped<AuthService>();
         services.AddScoped<ModuleAccessService>();
         return services;

@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddDbContext<SchoolManagementDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IProgrammeRepository, ProgrammeRepository>();
+        services.AddScoped<IAcademicRecordRepository, AcademicRecordRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
