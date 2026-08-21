@@ -19,60 +19,28 @@ public sealed class AssessmentResultCalculatorTests
         {
             new StudentAssessment
             {
-                Id = Guid.NewGuid(),
-                StudentId = studentId,
-                CourseRegistrationId = registrationId,
-                AssessmentPlanId = plan1Id,
-                Score = 80m,
-                MaximumScore = 100m,
-                IsFinalized = true
+                Id = Guid.NewGuid(), StudentId = studentId, CourseRegistrationId = registrationId,
+                AssessmentPlanId = plan1Id, Score = 80m, MaximumScore = 100m, IsFinalized = true
             },
             new StudentAssessment
             {
-                Id = Guid.NewGuid(),
-                StudentId = studentId,
-                CourseRegistrationId = registrationId,
-                AssessmentPlanId = plan2Id,
-                Score = 90m,
-                MaximumScore = 100m,
-                IsFinalized = true
+                Id = Guid.NewGuid(), StudentId = studentId, CourseRegistrationId = registrationId,
+                AssessmentPlanId = plan2Id, Score = 90m, MaximumScore = 100m, IsFinalized = true
             }
         };
 
         var plans = new[]
         {
-            new AssessmentPlan
-            {
-                Id = plan1Id,
-                Name = "Coursework",
-                AssessmentType = "Coursework",
-                WeightPercentage = 40m
-            },
-            new AssessmentPlan
-            {
-                Id = plan2Id,
-                Name = "Final Examination",
-                AssessmentType = "Examination",
-                WeightPercentage = 60m
-            }
+            new AssessmentPlan { Id = plan1Id, Name = "Coursework", AssessmentType = "Coursework", WeightPercentage = 40m },
+            new AssessmentPlan { Id = plan2Id, Name = "Final Examination", AssessmentType = "Examination", WeightPercentage = 60m }
         };
 
         var bands = new[]
         {
-            new GradeBand
-            {
-                Id = Guid.NewGuid(),
-                GradingScaleId = scaleId,
-                Grade = "A",
-                MinimumScore = 80m,
-                MaximumScore = 100m,
-                GradePoint = 5m,
-                IsPass = true
-            }
+            new GradeBand { Id = Guid.NewGuid(), GradingScaleId = scaleId, Grade = "A", MinimumScore = 80m, MaximumScore = 100m, GradePoint = 5m, IsPass = true }
         };
 
-        var calculator = new AssessmentResultCalculator();
-        var result = calculator.Calculate(studentId, registrationId, assessments, plans, bands);
+        var result = new AssessmentResultCalculator().Calculate(studentId, registrationId, assessments, plans, bands);
 
         Assert.Equal(studentId, result.StudentId);
         Assert.Equal(registrationId, result.CourseRegistrationId);
