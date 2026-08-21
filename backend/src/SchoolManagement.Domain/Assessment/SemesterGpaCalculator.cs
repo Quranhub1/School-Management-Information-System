@@ -36,4 +36,32 @@ public static class SemesterGpaCalculator
         var qualityPoints = completed.Sum(x => x.QualityPoints);
         return new GpaResult(qualityPoints, credits, decimal.Round(qualityPoints / credits, 2, MidpointRounding.AwayFromZero));
     }
+
+    public static decimal CalculateGpa(IEnumerable<AssessmentResult> results, IEnumerable<Course> courses)
+    {
+        ArgumentNullException.ThrowIfNull(results);
+        ArgumentNullException.ThrowIfNull(courses);
+        var courseById = courses.ToDictionary(x => x.Id);
+        var inputs = results.Where(x => x.IsFinal)
+            .Select(x =>
+            {
+                if (!courseById.TryGetValue(x.CourseId, out var course))
+                    throw new ArgumentException($"Course {x.CourseId} was not supplied.", nameof(courses));
+                return new CourseResultInput(x.CourseRegistrationId, x.GradePoint, course.CreditUnits, true);
+            });
+        return CalculateSemester(inputs).Gpa;
+    }
+
+    public static decimal CalculateCgpa(IEnumerable<(decimal Gpa, int CreditUnits)> semesters)
+    {
+        ArgumentNullException.ThrowIfNull(semesters);
+        var values = semesters.ToList();
+        if (values.Count == 0)
+            throw new InvalidOperationException("At least one semester result is required.");
+        var credits = values.Sum(x => x.CreditUnits);
+        if (values.Any(x => x.CreditUnits <= 0))
+            throw new ArgumentException("Semester credit units must be positive.", nameof(semesters));
+        var qualityPoints = values.Sum(x => x.Gpa * x.CreditUnits);
+        return decimal.Round(qualityPoints / credits, 2, MidpointRounding.AwayFromZero);
+    }
 }
