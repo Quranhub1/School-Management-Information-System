@@ -53,6 +53,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
 
     protected override void OnModelCreating(ModelBuilder m)
     {
+        m.Entity<UserRole>(e => { e.HasKey(x => new { x.UserId, x.RoleId }); e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade); e.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<TimetableEntry>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.TeachingGroupId, x.DayOfWeek, x.StartTime }).IsUnique(); e.Property(x => x.Room).HasMaxLength(100); e.Property(x => x.SessionType).HasMaxLength(50); e.HasOne<TeachingGroup>().WithMany().HasForeignKey(x => x.TeachingGroupId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<TeachingGroup>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.CourseOfferingId, x.GroupCode }).IsUnique(); e.Property(x => x.GroupCode).HasMaxLength(30).IsRequired(); e.Property(x => x.Name).HasMaxLength(100); e.HasOne<CourseOffering>().WithMany().HasForeignKey(x => x.CourseOfferingId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<AttendanceSession>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.TimetableEntryId, x.SessionDate }).IsUnique(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.Property(x => x.Remarks).HasMaxLength(500); e.HasOne<TimetableEntry>().WithMany().HasForeignKey(x => x.TimetableEntryId).OnDelete(DeleteBehavior.Restrict); });
