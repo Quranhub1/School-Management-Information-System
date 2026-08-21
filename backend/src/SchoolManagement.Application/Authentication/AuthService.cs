@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using SchoolManagement.Domain.Identity;
+using SchoolManagement.Application.Administration;
 
 namespace SchoolManagement.Application.Authentication;
 
@@ -10,6 +11,10 @@ public interface IUserRepository
 {
     Task<User?> FindByUsernameAsync(string username, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<string>> GetRolesAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UserSummary>> GetUsersAsync(CancellationToken cancellationToken = default);
+    Task<UserSummary?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task AddUserAsync(User user, IReadOnlyList<string> roles, CancellationToken cancellationToken = default);
+    Task<User?> SetActiveAsync(Guid userId, bool active, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 
@@ -19,7 +24,6 @@ public sealed class AuthService(IUserRepository users)
     {
         var user = await users.FindByUsernameAsync(request.Username.Trim(), cancellationToken);
         if (user is null || !user.IsActive || !VerifyPassword(request.Password, user.PasswordHash)) return null;
-
         var roles = await users.GetRolesAsync(user.Id, cancellationToken);
         user.LastLoginAt = DateTimeOffset.UtcNow;
         await users.SaveChangesAsync(cancellationToken);
@@ -37,9 +41,12 @@ public sealed class AuthService(IUserRepository users)
     {
         var parts = encoded.Split('$');
         if (parts.Length != 4 || parts[0] != "PBKDF2-SHA256" || !int.TryParse(parts[1], out var iterations)) return false;
-        var salt = Convert.FromBase64String(parts[2]);
-        var expected = Convert.FromBase64String(parts[3]);
-        var actual = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, expected.Length);
-        return CryptographicOperations.FixedTimeEquals(actual, expected);
+        try
+        {
+            var salt = Convert.FromBase64String(parts[2]); var expected = Convert.FromBase64String(parts[3]);
+            var actual = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, expected.Length);
+            return CryptographicOperations.FixedTimeEquals(actual, expected);
+        }
+        catch (FormatException) { return false; }
     }
 }
