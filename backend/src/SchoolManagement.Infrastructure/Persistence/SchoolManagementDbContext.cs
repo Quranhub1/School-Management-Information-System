@@ -32,7 +32,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Admission> Admissions => Set<Admission>();
     public DbSet<StudentEnrollment> StudentEnrollments => Set<StudentEnrollment>();
     public DbSet<Registration> Registrations => Set<Registration>();
-    public DbSet<CourseRegistration> CourseRegistrations => Set<CourseRegistration>();
+    public DbSet<SchoolManagement.Domain.Academic.CourseRegistration> CourseRegistrations => Set<SchoolManagement.Domain.Academic.CourseRegistration>();
     public DbSet<RegistrationStatusHistory> RegistrationStatusHistories => Set<RegistrationStatusHistory>();
     public DbSet<StudentAcademicStatus> StudentAcademicStatuses => Set<StudentAcademicStatus>();
     public DbSet<LearningOutcome> LearningOutcomes => Set<LearningOutcome>();
@@ -51,7 +51,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     protected override void OnModelCreating(ModelBuilder m)
     {
         m.Entity<Registration>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.RegistrationNumber).IsUnique(); e.Property(x => x.RegistrationNumber).HasMaxLength(50).IsRequired(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); e.HasOne<AcademicYear>().WithMany().HasForeignKey(x => x.AcademicYearId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Semester>().WithMany().HasForeignKey(x => x.SemesterId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Programme>().WithMany().HasForeignKey(x => x.ProgrammeId).OnDelete(DeleteBehavior.Restrict); });
-        m.Entity<CourseRegistration>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.RegistrationId, x.CourseId }).IsUnique(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.Property(x => x.DropReason).HasMaxLength(500); e.HasOne<Registration>().WithMany().HasForeignKey(x => x.RegistrationId).OnDelete(DeleteBehavior.Cascade); e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Restrict); });
+        m.Entity<SchoolManagement.Domain.Academic.CourseRegistration>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.StudentId, x.CourseId, x.SemesterId }).IsUnique(); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Semester>().WithMany().HasForeignKey(x => x.SemesterId).OnDelete(DeleteBehavior.Restrict); });
         m.Entity<RegistrationStatusHistory>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.RegistrationId, x.ChangedAt }); e.Property(x => x.FromStatus).HasMaxLength(30).IsRequired(); e.Property(x => x.ToStatus).HasMaxLength(30).IsRequired(); e.Property(x => x.Reason).HasMaxLength(500); e.HasOne<Registration>().WithMany().HasForeignKey(x => x.RegistrationId).OnDelete(DeleteBehavior.Cascade); });
     }
 }
