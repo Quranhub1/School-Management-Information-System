@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { getStudentAcademicSummaries, getStudentTranscript } from './api/academicRecords'
 import { getSession, login, logout } from './api/auth'
+import { RoleNavigation } from './components/RoleNavigation'
 import type { AcademicResultSummary, TranscriptEntry } from './types/academic'
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
@@ -37,9 +38,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <label htmlFor="password">Password</label>
           <input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" />
           {error && <div className="error" role="alert">{error}</div>}
-          <button type="submit" disabled={loading || !username.trim() || !password}>
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
+          <button type="submit" disabled={loading || !username.trim() || !password}>{loading ? 'Signing in…' : 'Sign in'}</button>
         </form>
       </section>
     </main>
@@ -94,6 +93,7 @@ function AcademicRecords({ onLogout }: { onLogout: () => void }) {
           <button className="secondary-button" onClick={signOut}>Sign out</button>
         </div>
       </header>
+      <RoleNavigation roles={session?.roles ?? []} />
       <section className="hero">
         <p className="eyebrow">Student services</p>
         <h2>Transcript and academic performance</h2>
