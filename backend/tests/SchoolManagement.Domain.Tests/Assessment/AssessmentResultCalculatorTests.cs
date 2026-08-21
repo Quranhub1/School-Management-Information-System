@@ -19,16 +19,11 @@ public sealed class AssessmentResultCalculatorTests
 
         var plans = new[]
         {
-            new AssessmentPlan { Id = assessments[0].AssessmentPlanId, WeightPercentage = 40m },
-            new AssessmentPlan { Id = assessments[1].AssessmentPlanId, WeightPercentage = 60m }
+            new AssessmentPlan { Id = assessments[0].AssessmentPlanId, Name = "Coursework", AssessmentType = "Coursework", WeightPercentage = 40m },
+            new AssessmentPlan { Id = assessments[1].AssessmentPlanId, Name = "Final Examination", AssessmentType = "Examination", WeightPercentage = 60m }
         };
 
-        var result = AssessmentResultCalculator.Calculate(
-            assessments,
-            plans,
-            scale,
-            new[] { band },
-            Guid.NewGuid());
+        var result = AssessmentResultCalculator.Calculate(assessments, plans, scale, new[] { band }, Guid.NewGuid());
 
         Assert.Equal(86m, result.TotalScore);
         Assert.Equal("A", result.Grade);
