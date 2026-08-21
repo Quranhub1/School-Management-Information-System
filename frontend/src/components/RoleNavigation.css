@@ -1,0 +1,2 @@
+.role-navigation { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+.module-chip { display: inline-flex; align-items: center; padding: 0.45rem 0.75rem; border: 1px solid #d7dce5; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
