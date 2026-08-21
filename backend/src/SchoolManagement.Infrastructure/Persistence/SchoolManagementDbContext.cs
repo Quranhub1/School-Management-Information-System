@@ -12,6 +12,7 @@ using SchoolManagement.Domain.Students;
 using AssessmentGradingScale = SchoolManagement.Domain.Assessment.GradingScale;
 using AssessmentGradeBand = SchoolManagement.Domain.Assessment.GradeBand;
 using AssessmentTranscriptEntry = SchoolManagement.Domain.Assessment.TranscriptEntry;
+using AssessmentAcademicResultSummary = SchoolManagement.Domain.Assessment.AcademicResultSummary;
 
 namespace SchoolManagement.Infrastructure.Persistence;
 
@@ -45,8 +46,8 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<AssessmentPlan> AssessmentPlans => Set<AssessmentPlan>();
     public DbSet<StudentAssessment> StudentAssessments => Set<StudentAssessment>();
     public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
-    public DbSet<TranscriptEntry> TranscriptEntries => Set<TranscriptEntry>();
-    public DbSet<AcademicResultSummary> AcademicResultSummaries => Set<AcademicResultSummary>();
+    public DbSet<AssessmentTranscriptEntry> TranscriptEntries => Set<AssessmentTranscriptEntry>();
+    public DbSet<AssessmentAcademicResultSummary> AcademicResultSummaries => Set<AssessmentAcademicResultSummary>();
     public DbSet<Placement> Placements => Set<Placement>();
     public DbSet<StudentPlacement> StudentPlacements => Set<StudentPlacement>();
     public DbSet<Result> Results => Set<Result>();
