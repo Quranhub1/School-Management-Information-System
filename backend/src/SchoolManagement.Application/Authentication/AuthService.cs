@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using SchoolManagement.Domain.Identity;
+using SchoolManagement.Application.Administration;
 
 namespace SchoolManagement.Application.Authentication;
 
@@ -10,8 +11,8 @@ public interface IUserRepository
 {
     Task<User?> FindByUsernameAsync(string username, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<string>> GetRolesAsync(Guid userId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Administration.UserSummary>> GetUsersAsync(CancellationToken cancellationToken = default);
-    Task<Administration.UserSummary?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UserSummary>> GetUsersAsync(CancellationToken cancellationToken = default);
+    Task<UserSummary?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default);
     Task AddUserAsync(User user, IReadOnlyList<string> roles, CancellationToken cancellationToken = default);
     Task<User?> SetActiveAsync(Guid userId, bool active, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
