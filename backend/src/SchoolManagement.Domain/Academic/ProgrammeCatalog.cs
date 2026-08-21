@@ -42,16 +42,14 @@ public static class ProgrammeCatalog
         new("PHD", "Diploma in Public Health Dentistry", "Diploma", "UHPAB", "Health", "Academic", "UHPAB")
     ];
 
-    // Initial UVTAB reference catalogue. Entries are deliberately marked reference-only
-    // until the institution verifies the current UVTAB approval/programme register.
     public static IReadOnlyList<ProgrammeCatalogEntry> Uvtab { get; } =
     [
         new("UVTAB-BME-C", "Biomedical Engineering", "Certificate", "UVTAB", "Engineering", "CompetencyBased", "Institution/UVTAB reference", true),
         new("UVTAB-BME-D", "Biomedical Engineering", "Diploma", "UVTAB", "Engineering", "CompetencyBased", "Institution/UVTAB reference", true),
         new("UVTAB-SON-C", "Sonography", "Certificate", "UVTAB", "Health", "CompetencyBased", "Institution/UVTAB reference", true),
         new("UVTAB-SON-D", "Sonography", "Diploma", "UVTAB", "Health", "CompetencyBased", "Institution/UVTAB reference", true),
-        new("UVTAB-FSN-C", "Food Science and Nutrition", "Certificate", "UVTAB", "Hospitality", "CompetencyBased", "Institution/UVTAB reference", true),
-        new("UVTAB-FSN-D", "Food Science and Nutrition", "Diploma", "UVTAB", "Hospitality", "CompetencyBased", "Institution/UVTAB reference", true),
+        new("UVTAB-FSN-C", "Food Science and Nutrition", "Certificate", "UVTAB", "FoodScienceAndNutrition", "CompetencyBased", "Institution/UVTAB reference", true),
+        new("UVTAB-FSN-D", "Food Science and Nutrition", "Diploma", "UVTAB", "FoodScienceAndNutrition", "CompetencyBased", "Institution/UVTAB reference", true),
         new("UVTAB-MR-C", "Medical Records", "Certificate", "UVTAB", "Health", "CompetencyBased", "Institution/UVTAB reference", true),
         new("UVTAB-MR-D", "Medical Records", "Diploma", "UVTAB", "Health", "CompetencyBased", "Institution/UVTAB reference", true)
     ];
