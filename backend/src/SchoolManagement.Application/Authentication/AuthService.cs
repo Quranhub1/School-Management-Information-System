@@ -43,8 +43,7 @@ public sealed class AuthService(IUserRepository users)
         if (parts.Length != 4 || parts[0] != "PBKDF2-SHA256" || !int.TryParse(parts[1], out var iterations)) return false;
         try
         {
-            var salt = Convert.FromBase64String(parts[2]);
-            var expected = Convert.FromBase64String(parts[3]);
+            var salt = Convert.FromBase64String(parts[2]); var expected = Convert.FromBase64String(parts[3]);
             var actual = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, expected.Length);
             return CryptographicOperations.FixedTimeEquals(actual, expected);
         }
