@@ -9,6 +9,9 @@ using SchoolManagement.Domain.Finance;
 using SchoolManagement.Domain.Identity;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Students;
+using AssessmentGradingScale = SchoolManagement.Domain.Assessment.GradingScale;
+using AssessmentGradeBand = SchoolManagement.Domain.Assessment.GradeBand;
+using AssessmentTranscriptEntry = SchoolManagement.Domain.Assessment.TranscriptEntry;
 
 namespace SchoolManagement.Infrastructure.Persistence;
 

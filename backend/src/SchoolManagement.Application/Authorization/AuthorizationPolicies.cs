@@ -2,6 +2,7 @@ namespace SchoolManagement.Application.Authorization;
 
 public static class AuthorizationPolicies
 {
+    public const string Administration = "Administration";
     public const string AcademicManagement = "AcademicManagement";
     public const string FinanceManagement = "FinanceManagement";
     public const string ExaminationManagement = "ExaminationManagement";

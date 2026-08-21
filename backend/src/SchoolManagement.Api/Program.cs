@@ -17,17 +17,14 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var jwtKey = builder.Configuration["Authentication:JwtKey"] ?? "development-only-change-this-key-before-deployment-32-chars";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(1)
-        };
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromMinutes(1)
     });
 
 builder.Services.AddAuthorization(options =>
@@ -44,10 +41,7 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
-}
+using (var scope = app.Services.CreateScope()) await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
 
 if (app.Environment.IsDevelopment())
 {
@@ -60,7 +54,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapHealthChecks("/health");
 app.MapControllers();
-
 app.Run();
 
 public partial class Program { }

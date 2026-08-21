@@ -1,0 +1,1 @@
+The frontend role model mirrors the backend institutional roles and policy role sets. UI navigation is derived from the authenticated session roles; backend authorization remains the security boundary.
