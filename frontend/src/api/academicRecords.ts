@@ -1,12 +1,20 @@
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
+import { getAccessToken } from './auth'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
 async function getJson<T>(path: string): Promise<T> {
+  const token = getAccessToken()
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { Accept: 'application/json' },
+    headers: {
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   })
 
+  if (response.status === 401) {
+    throw new Error('Your session has expired. Please sign in again.')
+  }
   if (!response.ok) {
     throw new Error(`Request failed with status ${response.status}`)
   }
