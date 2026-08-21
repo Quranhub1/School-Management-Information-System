@@ -38,6 +38,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole(AuthorizationPolicies.RoleSets.FinanceManagement));
     options.AddPolicy(AuthorizationPolicies.ExaminationManagement, policy =>
         policy.RequireRole(AuthorizationPolicies.RoleSets.ExaminationManagement));
+    options.AddPolicy(AuthorizationPolicies.StudentManagement, policy =>
+        policy.RequireRole(AuthorizationPolicies.RoleSets.StudentManagement));
 });
 
 var app = builder.Build();
