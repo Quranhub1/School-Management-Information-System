@@ -31,6 +31,8 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(AuthorizationPolicies.AcademicManagement, policy =>
         policy.RequireRole(AuthorizationPolicies.RoleSets.AcademicManagement));
+    options.AddPolicy(AuthorizationPolicies.StudentManagement, policy =>
+        policy.RequireRole(AuthorizationPolicies.RoleSets.StudentManagement));
     options.AddPolicy(AuthorizationPolicies.FinanceManagement, policy =>
         policy.RequireRole(AuthorizationPolicies.RoleSets.FinanceManagement));
     options.AddPolicy(AuthorizationPolicies.ExaminationManagement, policy =>
