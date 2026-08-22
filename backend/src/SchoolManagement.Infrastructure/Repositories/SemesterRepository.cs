@@ -21,5 +21,11 @@ public sealed class SemesterRepository(SchoolManagementDbContext db) : ISemester
 
     public Task AddAsync(Semester semester, CancellationToken cancellationToken = default) => db.Semesters.AddAsync(semester, cancellationToken).AsTask();
 
+    public async Task SetCurrentAsync(Guid academicYearId, Guid semesterId, CancellationToken cancellationToken = default)
+    {
+        await db.Semesters.Where(x => x.AcademicYearId == academicYearId && x.IsCurrent && x.Id != semesterId).ExecuteUpdateAsync(x => x.SetProperty(y => y.IsCurrent, false), cancellationToken);
+        await db.Semesters.Where(x => x.Id == semesterId && x.AcademicYearId == academicYearId).ExecuteUpdateAsync(x => x.SetProperty(y => y.IsCurrent, true), cancellationToken);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
 }
