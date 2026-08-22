@@ -25,6 +25,9 @@ public static class DependencyInjection
         services.AddScoped<ISemesterRepository, SemesterRepository>();
         services.AddScoped<IAcademicRecordRepository, AcademicRecordRepository>();
         services.AddScoped<IAssessmentRepository, AssessmentRepository>();
+        services.AddScoped<ICurriculumRepository, CurriculumRepository>();
+        services.AddScoped<ICourseRepository, CourseRepository>();
+        services.AddScoped<ICurriculumCourseRepository, CurriculumCourseRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
