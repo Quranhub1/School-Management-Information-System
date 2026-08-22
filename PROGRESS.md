@@ -2,15 +2,15 @@
 
 **Last updated:** 2026-08-22  
 **Current focus:** Library Management expansion and external library integrations  
-**Tracking branch:** `feature/library-integrations`
+**Tracking branch:** `main`
 
-> This is the **master project tracker** for the whole SMIS. It is intentionally separate from GitHub Actions CI status. A module is only marked complete when its implemented scope has been verified in the repository.
+> This is the master project tracker for the whole SMIS. Features are marked complete only when their implemented scope has been verified in the repository and CI.
 
 ## Overall implementation status
 
-**Estimated project progress: ~45%**
+**Estimated project progress: ~50%**
 
-This is a working engineering estimate based on the repository's implemented modules and current maturity. It will be revised as modules move through backend, persistence, authorization, frontend, testing and deployment stages.
+This is an engineering estimate, not a percentage of code written. It reflects the breadth of implemented modules plus their current maturity across backend, persistence, authorization, frontend and CI.
 
 ---
 
@@ -96,6 +96,7 @@ This is a working engineering estimate based on the repository's implemented mod
 - [x] Library domain foundation
 - [x] Library book model
 - [x] Library loan model
+- [x] Librarian model and persistence mapping
 - [x] Library authorization policies
 - [x] Protected circulation API
 - [x] Library book/loan persistence
@@ -112,8 +113,10 @@ This is a working engineering estimate based on the repository's implemented mod
 - [x] Active loan tracking
 - [x] Overdue loan handling
 - [x] Library statistics/dashboard
+- [x] KOHA integration access area
+- [x] DSpace integration access area
 - [x] Frontend JSX build issue fixed
-- [x] Frontend CI verified green after the JSX fix
+- [x] Backend CI build verified after Librarian persistence fix
 
 ---
 
@@ -121,18 +124,17 @@ This is a working engineering estimate based on the repository's implemented mod
 
 ## Library Management — Expansion
 - [ ] Librarian records/profile UI
-- [ ] Librarian assignment to staff
-- [ ] Librarian activation/deactivation workflow
+- [ ] Librarian assignment workflow UI
+- [ ] Librarian activation/deactivation workflow UI
 - [ ] Librarian roles/permissions UI
-- [ ] Librarian management API verification
-- [ ] KOHA integration configuration
-- [ ] KOHA OPAC access section
+- [ ] Full librarian API integration verification
+- [ ] KOHA connection configuration persistence
+- [ ] KOHA OPAC integration/launch workflow
 - [ ] KOHA integration health/status handling
-- [ ] DSpace integration configuration
-- [ ] DSpace repository access section
+- [ ] DSpace connection configuration persistence
+- [ ] DSpace repository integration/launch workflow
 - [ ] DSpace integration health/status handling
 - [ ] Library integrations settings
-- [ ] Library dashboard navigation for all library services
 - [ ] Library automated tests
 
 ---
@@ -280,22 +282,23 @@ This is a working engineering estimate based on the repository's implemented mod
 
 # 5. INTEGRATIONS
 
-- [ ] KOHA — connect school library catalogue/circulation environment
-- [ ] DSpace — connect institutional repository
+- [ ] KOHA — production connection/configuration
+- [ ] DSpace — production connection/configuration
 - [ ] Email/SMS provider
 - [ ] Payment provider(s)
 - [ ] Optional identity/SSO integration
 
-**Important:** KOHA and DSpace are treated as existing systems to integrate with SMIS, not as systems to rebuild inside SMIS.
+**Important:** KOHA and DSpace are existing systems to integrate with SMIS, not systems to rebuild inside SMIS.
 
 ---
 
 # 6. TESTING & QUALITY GATES
 
-### Current
+### Verified
 - [x] Frontend CI exists
 - [x] Library frontend JSX/build issue resolved
-- [x] Library frontend CI reported green after the fix
+- [x] Backend build passed after Librarian persistence restoration
+- [x] Library integration PR merged to `main`
 
 ### Remaining
 - [ ] Backend CI/build verification for every feature
@@ -330,10 +333,10 @@ The SMIS project is **production-ready** when:
 # 8. IMMEDIATE ROADMAP
 
 1. **Complete Library Management expansion**
-   - Librarians
-   - KOHA
-   - DSpace
-   - Library tests
+   - Librarian UI and workflows
+   - KOHA configuration/health/access
+   - DSpace configuration/health/access
+   - Library automated tests
 2. **Complete Academic Management**
 3. **Expand Examinations & Assessment**
 4. **Complete Student/Staff/Finance/Attendance workflows**
