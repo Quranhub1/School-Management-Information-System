@@ -4,6 +4,10 @@
 
 Provide a maintainable, production-oriented School Management Information System for Ugandan tertiary, higher-education and TVET institutions. The system must centralize institutional operations while remaining usable over the local network without Internet access for normal internal workflows.
 
+## Operating boundary
+
+The SMIS is a **local-first, on-premises school system**. Normal internal workflows must not require the Internet or third-party cloud services. Student/guardian Internet portals are outside the current scope. Any future external or Internet-connected integration must be explicitly approved and isolated from the core local system.
+
 ## Institutional model
 
 The system must support:
@@ -35,11 +39,10 @@ Terminology must be configurable so an institution can use semester, term, trime
 13. Clinical, practical and workplace learning
 14. Finance and fees
 15. Library management
-16. Communication and notifications
+16. Communication and local notifications
 17. Graduation, certification and alumni
 18. Reporting and dashboards
-19. Student/guardian self-service
-20. System administration and audit logging
+19. System administration and audit logging
 
 ## Uganda-oriented academic requirements
 
@@ -83,7 +86,8 @@ The system must support:
 - competency-based assessment;
 - numeric scores and/or competency outcomes;
 - assessor identity and approval;
-- result publication and locking.
+- result publication and locking;
+- configurable special result codes such as X where required by the applicable institutional/board recording convention.
 
 ### Progression and completion
 
@@ -103,12 +107,13 @@ The system must record progression decisions such as progress, repeat, defer, wi
 - Responsive interface for institutional devices.
 - Configurable terminology and institutional rules.
 - Historical academic data preservation.
+- No mandatory Internet dependency for normal internal workflows.
 
 ## Non-functional requirements
 
 ### Reliability
 
-The system must preserve data integrity and fail predictably when dependencies are unavailable.
+The system must preserve data integrity and fail predictably when optional dependencies are unavailable.
 
 ### Security
 
@@ -124,4 +129,4 @@ Common registry, admissions, academic, finance and reporting operations should r
 
 ### Offline/LAN operation
 
-Normal internal operations must not depend on third-party cloud services. Optional SMS, email and other Internet integrations must degrade gracefully when connectivity is unavailable.
+Normal internal operations must function without third-party cloud services or Internet connectivity. Any explicitly approved external integration must be isolated and must not prevent the core SMIS from operating locally.
