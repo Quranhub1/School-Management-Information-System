@@ -1,0 +1,58 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Application.Authorization;
+using SchoolManagement.Domain.Staff;
+using SchoolManagement.Infrastructure.Persistence;
+
+namespace SchoolManagement.Api.Controllers;
+
+[ApiController]
+[Route("api/staff")]
+public sealed class StaffController(SchoolManagementDbContext db) : ControllerBase
+{
+    [HttpGet]
+    [Authorize(Policy = StaffPolicies.Read)]
+    public async Task<IActionResult> List([FromQuery] bool activeOnly = true, CancellationToken cancellationToken = default)
+    {
+        var query = db.StaffMembers.AsNoTracking();
+        if (activeOnly) query = query.Where(x => x.IsActive);
+        return Ok(await query.OrderBy(x => x.LastName).ThenBy(x => x.FirstName).ToListAsync(cancellationToken));
+    }
+
+    [HttpGet("{id:guid}")]
+    [Authorize(Policy = StaffPolicies.Read)]
+    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
+    {
+        var staff = await db.StaffMembers.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return staff is null ? NotFound() : Ok(staff);
+    }
+
+    [HttpPost]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> Create(CreateStaffRequest request, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.StaffNumber) || string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.EmploymentType))
+            return BadRequest(new { message = "Staff number, names and employment type are required." });
+        if (await db.StaffMembers.AnyAsync(x => x.StaffNumber == request.StaffNumber.Trim(), cancellationToken))
+            return Conflict(new { message = "A staff member with this staff number already exists." });
+
+        var staff = new StaffMember { StaffNumber = request.StaffNumber.Trim(), FirstName = request.FirstName.Trim(), LastName = request.LastName.Trim(), NationalId = request.NationalId, PhoneNumber = request.PhoneNumber, Email = request.Email, EmploymentType = request.EmploymentType.Trim() };
+        db.StaffMembers.Add(staff);
+        await db.SaveChangesAsync(cancellationToken);
+        return Created($"api/staff/{staff.Id}", staff);
+    }
+
+    [HttpPatch("{id:guid}/deactivate")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
+    {
+        var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (staff is null) return NotFound();
+        staff.IsActive = false;
+        await db.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+}
+
+public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType);
