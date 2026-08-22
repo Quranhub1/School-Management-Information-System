@@ -6,3 +6,5 @@ export function canManageExaminations(roles: string[]): boolean { return hasAnyR
 export function canManageStudents(roles: string[]): boolean { return hasAnyRole(roles, STUDENT_MANAGEMENT_ROLES) }
 export function canManageTimetable(roles: string[]): boolean { return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'Lecturer']) }
 export function canManageAdmissions(roles: string[]): boolean { return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar']) }
+export function canReadStaff(roles: string[]): boolean { return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'HR Manager', 'Lecturer']) }
+export function canManageStaff(roles: string[]): boolean { return hasAnyRole(roles, ['System Administrator', 'HR Manager', 'Registrar']) }
