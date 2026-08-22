@@ -34,6 +34,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(AuthorizationPolicies.FinanceManagement, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.FinanceManagement));
     options.AddPolicy(AuthorizationPolicies.ExaminationManagement, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.ExaminationManagement));
     options.AddPolicy(AuthorizationPolicies.AttendanceManagement, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.AttendanceManagement));
+    options.AddPolicy(AdmissionsPolicies.Management, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsManagement));
+    options.AddPolicy(AdmissionsPolicies.Read, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsManagement));
     options.AddPolicy(TimetablePolicies.Management, policy => policy.RequireRole("System Administrator", "Registrar", "Academic Registrar", "Lecturer"));
 });
 
