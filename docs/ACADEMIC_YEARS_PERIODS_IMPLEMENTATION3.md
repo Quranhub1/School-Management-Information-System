@@ -1,0 +1,1 @@
+This branch implements academic year and academic period administration over the existing domain model.

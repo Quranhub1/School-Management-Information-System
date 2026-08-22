@@ -1,0 +1,1 @@
+Academic Years and Periods implementation: protected API over existing AcademicYear and Semester entities, with local administrative screens and date/overlap validation.
