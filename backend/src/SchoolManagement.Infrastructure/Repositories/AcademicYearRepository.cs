@@ -19,5 +19,11 @@ public sealed class AcademicYearRepository(SchoolManagementDbContext db) : IAcad
     public Task AddAsync(AcademicYear academicYear, CancellationToken cancellationToken = default) =>
         db.AcademicYears.AddAsync(academicYear, cancellationToken).AsTask();
 
+    public async Task SetCurrentAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        await db.AcademicYears.Where(x => x.IsCurrent && x.Id != id).ExecuteUpdateAsync(x => x.SetProperty(y => y.IsCurrent, false), cancellationToken);
+        await db.AcademicYears.Where(x => x.Id == id).ExecuteUpdateAsync(x => x.SetProperty(y => y.IsCurrent, true), cancellationToken);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
 }
