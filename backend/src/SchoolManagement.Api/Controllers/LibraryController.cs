@@ -20,6 +20,15 @@ public sealed class LibraryController(SchoolManagementDbContext db) : Controller
         return Ok(await q.OrderBy(x => x.Title).ToListAsync(ct));
     }
 
+    [HttpGet("members")]
+    [Authorize(Policy = LibraryPolicies.Read)]
+    public async Task<IActionResult> Members([FromQuery] string? search, CancellationToken ct)
+    {
+        var q = db.Students.AsNoTracking().Where(x => x.Status == "Active");
+        if (!string.IsNullOrWhiteSpace(search)) q = q.Where(x => x.StudentNumber.Contains(search) || x.FirstName.Contains(search) || x.LastName.Contains(search));
+        return Ok(await q.OrderBy(x => x.StudentNumber).Take(30).Select(x => new LibraryMemberView(x.Id, x.StudentNumber, x.FirstName + " " + x.LastName)).ToListAsync(ct));
+    }
+
     [HttpGet("loans")]
     [Authorize(Policy = LibraryPolicies.Read)]
     public async Task<IActionResult> Loans([FromQuery] bool activeOnly = true, CancellationToken ct = default)
@@ -47,7 +56,7 @@ public sealed class LibraryController(SchoolManagementDbContext db) : Controller
         var book = await db.LibraryBooks.SingleOrDefaultAsync(x => x.Id == request.BookId && x.IsActive, ct);
         if (book is null) return NotFound(new { message = "Book not found." });
         if (book.AvailableCopies < 1) return Conflict(new { message = "No available copy of this book." });
-        if (!await db.Students.AnyAsync(x => x.Id == request.StudentId, ct)) return BadRequest(new { message = "Student not found." });
+        if (!await db.Students.AnyAsync(x => x.Id == request.StudentId && x.Status == "Active", ct)) return BadRequest(new { message = "Active student not found." });
         if (await db.LibraryLoans.AnyAsync(x => x.StudentId == request.StudentId && x.BookId == request.BookId && x.ReturnedAtUtc == null, ct)) return Conflict(new { message = "This student already has this book on loan." });
         if (request.DueAtUtc <= DateTime.UtcNow) return BadRequest(new { message = "Due date must be in the future." });
         var loan = new LibraryLoan { BookId = book.Id, StudentId = request.StudentId, DueAtUtc = request.DueAtUtc.ToUniversalTime() };
@@ -64,6 +73,7 @@ public sealed class LibraryController(SchoolManagementDbContext db) : Controller
     }
 }
 
+public sealed record LibraryMemberView(Guid Id, string StudentNumber, string Name);
 public sealed record LibraryLoanView(Guid Id, Guid BookId, string BookTitle, string BookIsbn, Guid StudentId, string StudentNumber, string StudentName, DateTime IssuedAtUtc, DateTime DueAtUtc, DateTime? ReturnedAtUtc, decimal FineAmount);
 public sealed record CreateBookRequest(string Isbn, string Title, string Author, string? Publisher, int TotalCopies);
 public sealed record IssueLoanRequest(Guid BookId, Guid StudentId, DateTime DueAtUtc);
