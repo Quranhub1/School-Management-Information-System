@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<ProgrammeService>();
         services.AddScoped<AcademicRecordService>();
         services.AddScoped<AcademicCalendarService>();
+        services.AddScoped<CurriculumManagementService>();
         services.AddScoped<AssessmentService>();
         services.AddScoped<AuthService>();
         services.AddScoped<AdministrationService>();
