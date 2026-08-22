@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { getSession, login, logout } from './api/auth'
-import { canManageAcademics, canManageAdministration, canManageExaminations, canManageFinance, canManageStudents } from './auth/roleGuards'
+import { canManageAcademics, canManageAdministration, canManageExaminations, canManageFinance, canManageStudents, canManageTimetable } from './auth/roleGuards'
 import { RoleNavigation } from './components/RoleNavigation'
 import { AcademicManagement } from './components/AcademicManagement'
 import { AdministrationManagement } from './components/AdministrationManagement'
 import { ExaminationResults } from './components/ExaminationResults'
 import { StudentManagement } from './components/StudentManagement'
 import { FinanceManagement } from './components/FinanceManagement'
+import { TimetableManagement } from './components/TimetableManagement'
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState(''); const [password, setPassword] = useState(''); const [loading, setLoading] = useState(false); const [error, setError] = useState('')
@@ -17,9 +18,9 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
 function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
   const session = getSession(); const roles = session?.roles ?? []
-  const administrationAccess = canManageAdministration(roles); const academicAccess = canManageAcademics(roles); const examinationAccess = canManageExaminations(roles); const studentAccess = canManageStudents(roles); const financeAccess = canManageFinance(roles)
+  const administrationAccess = canManageAdministration(roles); const academicAccess = canManageAcademics(roles); const examinationAccess = canManageExaminations(roles); const studentAccess = canManageStudents(roles); const financeAccess = canManageFinance(roles); const timetableAccess = canManageTimetable(roles)
   function signOut() { logout(); onLogout() }
-  return <main className="app-shell"><header className="topbar"><div><span className="eyebrow">SMIS</span><h1>Institutional Services</h1></div><div className="topbar-actions"><span className="status">{session?.username ?? 'Authenticated'}</span><button className="secondary-button" onClick={signOut}>Sign out</button></div></header><RoleNavigation roles={roles}/>{administrationAccess && <AdministrationManagement/>}{studentAccess && <StudentManagement canManage/>}{academicAccess && <AcademicManagement canManage/>}{examinationAccess && <ExaminationResults/>}{financeAccess && <FinanceManagement/>}{!administrationAccess && !studentAccess && !academicAccess && !examinationAccess && !financeAccess && <section className="panel"><h3>Institutional Services</h3><p className="empty">Your role has no management workspace assigned yet.</p></section>}</main>
+  return <main className="app-shell"><header className="topbar"><div><span className="eyebrow">SMIS</span><h1>Institutional Services</h1></div><div className="topbar-actions"><span className="status">{session?.username ?? 'Authenticated'}</span><button className="secondary-button" onClick={signOut}>Sign out</button></div></header><RoleNavigation roles={roles}/>{administrationAccess && <AdministrationManagement/>}{studentAccess && <StudentManagement canManage/>}{academicAccess && <AcademicManagement canManage/>}{examinationAccess && <ExaminationResults/>}{financeAccess && <FinanceManagement/>}{timetableAccess && <TimetableManagement/>}{!administrationAccess && !studentAccess && !academicAccess && !examinationAccess && !financeAccess && !timetableAccess && <section className="panel"><h3>Institutional Services</h3><p className="empty">Your role has no management workspace assigned yet.</p></section>}</main>
 }
 
 function App() { const [authenticated, setAuthenticated] = useState(() => Boolean(getSession())); return authenticated ? <AuthenticatedWorkspace onLogout={() => setAuthenticated(false)}/> : <LoginScreen onLogin={() => setAuthenticated(true)}/> }

@@ -29,28 +29,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(AuthorizationPolicies.AcademicManagement, policy =>
-        policy.RequireRole(AuthorizationPolicies.RoleSets.AcademicManagement));
-    options.AddPolicy(AuthorizationPolicies.StudentManagement, policy =>
-        policy.RequireRole(AuthorizationPolicies.RoleSets.StudentManagement));
-    options.AddPolicy(AuthorizationPolicies.FinanceManagement, policy =>
-        policy.RequireRole(AuthorizationPolicies.RoleSets.FinanceManagement));
-    options.AddPolicy(AuthorizationPolicies.ExaminationManagement, policy =>
-        policy.RequireRole(AuthorizationPolicies.RoleSets.ExaminationManagement));
-    options.AddPolicy(AuthorizationPolicies.AttendanceManagement, policy =>
-        policy.RequireRole(AuthorizationPolicies.RoleSets.AttendanceManagement));
+    options.AddPolicy(AuthorizationPolicies.AcademicManagement, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.AcademicManagement));
+    options.AddPolicy(AuthorizationPolicies.StudentManagement, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.StudentManagement));
+    options.AddPolicy(AuthorizationPolicies.FinanceManagement, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.FinanceManagement));
+    options.AddPolicy(AuthorizationPolicies.ExaminationManagement, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.ExaminationManagement));
+    options.AddPolicy(AuthorizationPolicies.AttendanceManagement, policy => policy.RequireRole(AuthorizationPolicies.RoleSets.AttendanceManagement));
+    options.AddPolicy(TimetablePolicies.Management, policy => policy.RequireRole("System Administrator", "Registrar", "Academic Registrar", "Lecturer"));
 });
 
 var app = builder.Build();
-
 using (var scope = app.Services.CreateScope()) await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
