@@ -20,6 +20,16 @@ public sealed class LibraryController(SchoolManagementDbContext db) : Controller
         return Ok(await q.OrderBy(x => x.Title).ToListAsync(ct));
     }
 
+    [HttpGet("loans")]
+    [Authorize(Policy = LibraryPolicies.Read)]
+    public async Task<IActionResult> Loans([FromQuery] bool activeOnly = true, CancellationToken ct = default)
+    {
+        var query = db.LibraryLoans.AsNoTracking().Join(db.LibraryBooks, l => l.BookId, b => b.Id, (l, b) => new { Loan = l, Book = b })
+            .Join(db.Students, x => x.Loan.StudentId, s => s.Id, (x, s) => new { x.Loan, x.Book, Student = s });
+        if (activeOnly) query = query.Where(x => x.Loan.ReturnedAtUtc == null);
+        return Ok(await query.OrderByDescending(x => x.Loan.IssuedAtUtc).Select(x => new LibraryLoanView(x.Loan.Id, x.Book.Id, x.Book.Title, x.Book.Isbn, x.Student.Id, x.Student.StudentNumber, x.Student.FirstName + " " + x.Student.LastName, x.Loan.IssuedAtUtc, x.Loan.DueAtUtc, x.Loan.ReturnedAtUtc, x.Loan.FineAmount)).ToListAsync(ct));
+    }
+
     [HttpPost("books")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> AddBook(CreateBookRequest request, CancellationToken ct)
@@ -54,5 +64,6 @@ public sealed class LibraryController(SchoolManagementDbContext db) : Controller
     }
 }
 
+public sealed record LibraryLoanView(Guid Id, Guid BookId, string BookTitle, string BookIsbn, Guid StudentId, string StudentNumber, string StudentName, DateTime IssuedAtUtc, DateTime DueAtUtc, DateTime? ReturnedAtUtc, decimal FineAmount);
 public sealed record CreateBookRequest(string Isbn, string Title, string Author, string? Publisher, int TotalCopies);
 public sealed record IssueLoanRequest(Guid BookId, Guid StudentId, DateTime DueAtUtc);
