@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import './LibraryManagementWorkspace.css';
 import { LibraryManagement } from './LibraryManagement';
 import { LibrarianManagement } from './LibrarianManagement';
 import { LibraryIntegrations } from './LibraryIntegrations';
@@ -11,31 +12,16 @@ export function LibraryManagementWorkspace({ canManage }: { canManage: boolean }
   return (
     <section className="library-workspace-shell" aria-labelledby="library-management-workspace-title">
       <div className="library-workspace-tabs" role="tablist" aria-label="Library management sections">
-        <button
-          role="tab"
-          aria-selected={tab === 'circulation'}
-          className={tab === 'circulation' ? 'active' : ''}
-          onClick={() => setTab('circulation')}
-        >
+        <button role="tab" aria-selected={tab === 'circulation'} className={tab === 'circulation' ? 'active' : ''} onClick={() => setTab('circulation')}>
           Catalogue &amp; Circulation
         </button>
         {canManage && (
-          <button
-            role="tab"
-            aria-selected={tab === 'librarians'}
-            className={tab === 'librarians' ? 'active' : ''}
-            onClick={() => setTab('librarians')}
-          >
+          <button role="tab" aria-selected={tab === 'librarians'} className={tab === 'librarians' ? 'active' : ''} onClick={() => setTab('librarians')}>
             Librarian Management
           </button>
         )}
         {canManage && (
-          <button
-            role="tab"
-            aria-selected={tab === 'integrations'}
-            className={tab === 'integrations' ? 'active' : ''}
-            onClick={() => setTab('integrations')}
-          >
+          <button role="tab" aria-selected={tab === 'integrations'} className={tab === 'integrations' ? 'active' : ''} onClick={() => setTab('integrations')}>
             KOHA / DSpace Configuration
           </button>
         )}
