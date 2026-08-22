@@ -1,37 +1,39 @@
-export type LibraryIntegration = {
-  id: string;
-  name: 'KOHA' | 'DSpace';
-  enabled: boolean;
-  baseUrl: string;
-  description: string;
+export type LibraryIntegrationConfig = {
+  kohaOpacUrl: string;
+  kohaApiUrl: string;
+  dspaceUrl: string;
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api';
+const STORAGE_KEY = 'smis.library.integrations';
 
-export const defaultLibraryIntegrations: LibraryIntegration[] = [
-  {
-    id: 'koha',
-    name: 'KOHA',
-    enabled: false,
-    baseUrl: '',
-    description: 'Library automation and OPAC integration.',
-  },
-  {
-    id: 'dspace',
-    name: 'DSpace',
-    enabled: false,
-    baseUrl: '',
-    description: 'Institutional repository and digital collections.',
-  },
-];
+const defaults: LibraryIntegrationConfig = {
+  kohaOpacUrl: '',
+  kohaApiUrl: '',
+  dspaceUrl: ''
+};
 
-export async function listLibraryIntegrations(): Promise<LibraryIntegration[]> {
-  const response = await fetch(`${API_BASE}/library/integrations`, {
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    if (response.status === 404) return defaultLibraryIntegrations;
-    throw new Error('Unable to load library integrations.');
+export function getLibraryIntegrationConfig(): LibraryIntegrationConfig {
+  try {
+    return { ...defaults, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+  } catch {
+    return defaults;
   }
-  return response.json();
+}
+
+export function saveLibraryIntegrationConfig(config: LibraryIntegrationConfig): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+}
+
+export function openExternalLibraryEndpoint(url: string): void {
+  if (url.trim()) window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+export async function checkExternalEndpoint(url: string): Promise<{ ok: boolean; message: string }> {
+  if (!url.trim()) return { ok: false, message: 'Endpoint is not configured.' };
+  try {
+    await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+    return { ok: true, message: 'Endpoint is reachable from the browser.' };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : 'Endpoint could not be reached.' };
+  }
 }
