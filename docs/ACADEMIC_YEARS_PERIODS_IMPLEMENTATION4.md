@@ -1,0 +1,1 @@
+Protected academic year and period administration is implemented on the existing AcademicYear and Semester models.
