@@ -8,6 +8,10 @@ A comprehensive, modular and LAN-first School Management Information System (SMI
 
 GitHub is the persistent source of truth. The system is being built as a production-oriented application with a configurable institutional model rather than a school-specific hard-coded schema.
 
+## Operating model
+
+The SMIS is **local-first and on-premises**. Normal school operations must run on the school's local server/LAN without an Internet connection. Internet-connected or cloud integrations are not part of the core system and may only be introduced when explicitly approved as a separate requirement.
+
 ## Technology
 
 - **Frontend:** React + TypeScript + Vite
@@ -61,9 +65,11 @@ Application → Admission → Student → Enrollment → Period Registration
 - Library
 - Clinical/workplace attachment
 - Graduation, certification and alumni
-- Communication and notifications
+- Communication and local notifications
 - Reporting and audit
-- Parent/guardian and student self-service portals
+- System administration
+
+Student/guardian self-service portals are **not part of the current scope**. Academic results, transcripts and institutional records are managed by authorized school staff through the local SMIS.
 
 ## Uganda alignment
 
