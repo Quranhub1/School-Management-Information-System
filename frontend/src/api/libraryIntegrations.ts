@@ -1,37 +1,72 @@
 export type LibraryIntegration = {
-  id: string;
+  id: 'koha' | 'dspace';
   name: 'KOHA' | 'DSpace';
-  enabled: boolean;
-  baseUrl: string;
   description: string;
+  baseUrl: string;
+  enabled: boolean;
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api';
+export type LibraryIntegrationConfig = {
+  kohaOpacUrl: string;
+  kohaApiUrl: string;
+  dspaceUrl: string;
+};
+
+const STORAGE_KEY = 'smis.library.integrations';
+
+const defaults: LibraryIntegrationConfig = {
+  kohaOpacUrl: '',
+  kohaApiUrl: '',
+  dspaceUrl: '',
+};
 
 export const defaultLibraryIntegrations: LibraryIntegration[] = [
   {
     id: 'koha',
     name: 'KOHA',
-    enabled: false,
+    description: 'External KOHA library automation and OPAC installation.',
     baseUrl: '',
-    description: 'Library automation and OPAC integration.',
+    enabled: false,
   },
   {
     id: 'dspace',
     name: 'DSpace',
-    enabled: false,
+    description: 'External DSpace institutional repository installation.',
     baseUrl: '',
-    description: 'Institutional repository and digital collections.',
+    enabled: false,
   },
 ];
 
-export async function listLibraryIntegrations(): Promise<LibraryIntegration[]> {
-  const response = await fetch(`${API_BASE}/library/integrations`, {
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    if (response.status === 404) return defaultLibraryIntegrations;
-    throw new Error('Unable to load library integrations.');
+export function getLibraryIntegrationConfig(): LibraryIntegrationConfig {
+  try {
+    return { ...defaults, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+  } catch {
+    return defaults;
   }
-  return response.json();
+}
+
+export function saveLibraryIntegrationConfig(config: LibraryIntegrationConfig): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+}
+
+export async function listLibraryIntegrations(): Promise<LibraryIntegration[]> {
+  const config = getLibraryIntegrationConfig();
+  return defaultLibraryIntegrations.map((integration) => {
+    const baseUrl = integration.id === 'koha' ? config.kohaOpacUrl : config.dspaceUrl;
+    return { ...integration, baseUrl, enabled: Boolean(baseUrl.trim()) };
+  });
+}
+
+export function openExternalLibraryEndpoint(url: string): void {
+  if (url.trim()) window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+export async function checkExternalEndpoint(url: string): Promise<{ ok: boolean; message: string }> {
+  if (!url.trim()) return { ok: false, message: 'Endpoint is not configured.' };
+  try {
+    await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+    return { ok: true, message: 'Endpoint is reachable from the browser.' };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : 'Endpoint could not be reached.' };
+  }
 }
