@@ -12,4 +12,13 @@ public sealed class ProgrammeRepository(SchoolManagementDbContext db) : IProgram
 
     public Task<Programme?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.Programmes.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task<bool> CodeExistsAsync(string code, Guid? excludingId = null, CancellationToken cancellationToken = default) =>
+        db.Programmes.AnyAsync(x => x.Code == code && (!excludingId.HasValue || x.Id != excludingId.Value), cancellationToken);
+
+    public Task AddAsync(Programme programme, CancellationToken cancellationToken = default) =>
+        db.Programmes.AddAsync(programme, cancellationToken).AsTask();
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+        db.SaveChangesAsync(cancellationToken);
 }
