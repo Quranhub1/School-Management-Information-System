@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
+using AcademicYearRequest = SchoolManagement.Application.Academic.CreateAcademicYearRequest;
+using SemesterRequest = SchoolManagement.Application.Academic.CreateSemesterRequest;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -14,7 +16,7 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
     public async Task<IActionResult> GetYears(CancellationToken cancellationToken) => Ok(await service.GetYearsAsync(cancellationToken));
 
     [HttpPost("years")]
-    public async Task<IActionResult> CreateYear([FromBody] CreateAcademicYearRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateYear([FromBody] AcademicYearRequest request, CancellationToken cancellationToken)
     {
         var result = await service.CreateYearAsync(request, cancellationToken);
         if (!result.Success) return BadRequest(new { message = result.Error });
@@ -33,7 +35,7 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
         Ok(await service.GetSemestersAsync(academicYearId, cancellationToken));
 
     [HttpPost("periods")]
-    public async Task<IActionResult> CreatePeriod([FromBody] CreateSemesterRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreatePeriod([FromBody] SemesterRequest request, CancellationToken cancellationToken)
     {
         var result = await service.CreateSemesterAsync(request, cancellationToken);
         if (!result.Success) return BadRequest(new { message = result.Error });
