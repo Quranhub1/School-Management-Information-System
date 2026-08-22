@@ -1,141 +1,210 @@
 # School Management Information System — Project Progress
 
 **Last updated:** 2026-08-22  
-**Current focus:** Library Management and integrations  
-**Active branch:** `feature/library-integrations`
+**Current focus:** Library Management expansion and external library integrations  
+**Tracking branch:** `feature/library-integrations`
 
-## Progress overview
+> This is the **master project tracker** for the whole SMIS. It is intentionally separate from GitHub Actions CI status. A module is only marked complete when its implemented scope has been verified in the repository.
 
-> This file tracks the implementation scope, what is already covered, what is currently being worked on, and what remains before the project can be considered complete.
+## Overall implementation status
 
-### Current estimate
+**Estimated project progress: ~45%**
 
-**Overall project completion: ~35%**
-
-This is an implementation estimate based on the modules and functionality currently present in the repository. It is not a GitHub CI percentage.
+This is a working engineering estimate based on the repository's implemented modules and current maturity. It will be revised as modules move through backend, persistence, authorization, frontend, testing and deployment stages.
 
 ---
 
-## 1. Covered / Implemented
+# 1. COVERED / IMPLEMENTED
 
-### Core application foundation
-- [x] Repository and project structure established
-- [x] Backend API project structure
+## Foundation & Architecture
+- [x] Repository/project structure
+- [x] .NET backend foundation
 - [x] Application/domain/infrastructure separation
-- [x] React frontend established
-- [x] Authentication/authorization foundation
-- [x] Role-based access foundations
-- [x] CI workflow for frontend validation
+- [x] React frontend foundation
+- [x] Authentication foundation
+- [x] JWT authentication
+- [x] Role-based authorization foundation
+- [x] Health endpoint
+- [x] Swagger/development API documentation
+- [x] Frontend CI workflow
 
-### Library Management — current implementation
-- [x] Library workspace/dashboard
+## Administration & User Management
+- [x] Administration service
+- [x] User repository/administration persistence layer
+- [x] Administration users API
+- [x] Administration authorization
+- [x] Frontend administration API client
+- [x] User management workspace
+- [x] Administration role guard
+- [x] Administration navigation
+
+## Student Management
+- [x] Student management authorization
+- [x] Protected student endpoints
+- [x] Student API client
+- [x] Student registry workspace
+- [x] Student role guard
+- [x] Student navigation
+
+## Finance Management
+- [x] Finance invoice API
+- [x] Payment API
+- [x] Finance frontend API client
+- [x] Finance management workspace
+- [x] Finance role guard
+- [x] Finance navigation/mounting
+
+## Attendance Management
+- [x] Attendance session model
+- [x] Student attendance model
+- [x] EF Core attendance persistence wiring
+- [x] Attendance authorization policy
+- [x] Protected attendance recording API
+
+## Timetable / Scheduling
+- [x] Timetable authorization policy
+- [x] Protected timetable API
+- [x] Timetable frontend API client
+- [x] Timetable management workspace
+- [x] Timetable role guard
+- [x] Timetable navigation
+
+## Admissions
+- [x] Admissions authorization policies
+- [x] Protected admissions API
+- [x] Admissions frontend API client
+- [x] Admissions management workspace
+- [x] Admissions role guard
+- [x] Admissions navigation
+
+## Staff & HR Foundation
+- [x] Staff domain model
+- [x] Staff authorization
+- [x] Protected staff management API
+- [x] Staff frontend API client
+- [x] Staff management workspace
+- [x] Staff role guards
+- [x] Staff navigation
+
+## Examinations & Results Foundation
+- [x] Examination/results endpoints
+- [x] Examination results frontend API client
+- [x] Examination results workspace
+- [x] Results workspace mounting
+
+## Library Management — Core
+- [x] Library domain foundation
+- [x] Library book model
+- [x] Library loan model
+- [x] Library authorization policies
+- [x] Protected circulation API
+- [x] Library book/loan persistence
+- [x] Library frontend API client
+- [x] Library management workspace
+- [x] Library role guards
+- [x] Library navigation/integration into frontend
 - [x] Book catalogue
-- [x] ISBN/title/author/publisher information
-- [x] Physical copy quantities
-- [x] Available-copy calculation
-- [x] Library member/student lookup
+- [x] Book search
+- [x] Student/member lookup
 - [x] Book issue/circulation
 - [x] Due dates
-- [x] Book returns
+- [x] Returns
 - [x] Active loan tracking
-- [x] Overdue loan detection
-- [x] Library statistics
-- [x] Search catalogue
-- [x] Role-protected management actions
-- [x] Backend persistence for library books and loans
-- [x] Frontend CI build fixed and passing
-
-### Library work already validated
-- [x] Library frontend JSX syntax corrected
-- [x] Frontend TypeScript/Vite build passes CI
-- [x] Library feature work isolated on feature branches
+- [x] Overdue loan handling
+- [x] Library statistics/dashboard
+- [x] Frontend JSX build issue fixed
+- [x] Frontend CI verified green after the JSX fix
 
 ---
 
-## 2. Currently Being Covered
+# 2. CURRENTLY BEING COVERED
 
-### Library Management expansion
-- [ ] Librarian Management
-- [ ] Librarian records and profiles
-- [ ] Librarian activation/deactivation
-- [ ] Librarian roles and permissions
-- [ ] Librarian assignment to library operations
-- [ ] KOHA integration section
-- [ ] KOHA OPAC/configuration entry point
-- [ ] DSpace integration section
-- [ ] DSpace repository/configuration entry point
-- [ ] Library integrations configuration model
-- [ ] Library dashboard navigation for Catalogue, Circulation, Librarians, KOHA and DSpace
-- [ ] Integration documentation and deployment notes
+## Library Management — Expansion
+- [ ] Librarian records/profile UI
+- [ ] Librarian assignment to staff
+- [ ] Librarian activation/deactivation workflow
+- [ ] Librarian roles/permissions UI
+- [ ] Librarian management API verification
+- [ ] KOHA integration configuration
+- [ ] KOHA OPAC access section
+- [ ] KOHA integration health/status handling
+- [ ] DSpace integration configuration
+- [ ] DSpace repository access section
+- [ ] DSpace integration health/status handling
+- [ ] Library integrations settings
+- [ ] Library dashboard navigation for all library services
+- [ ] Library automated tests
 
 ---
 
-## 3. To Be Covered — Major SMIS Modules
+# 3. TO BE COVERED — MAJOR MODULES
 
-### Student Management
-- [ ] Student registration
-- [ ] Student profiles
-- [ ] Admission/enrolment
-- [ ] Student documents
-- [ ] Student status/history
-- [ ] Parent/guardian management
-- [ ] Student search and reporting
-
-### Staff & Human Resources
-- [ ] Staff profiles
-- [ ] Departments
-- [ ] Positions/designations
-- [ ] Staff attendance
-- [ ] Leave management
-- [ ] Staff records and documents
-- [ ] Role/access administration
-
-### Academic Management
-- [ ] Academic years/terms/semesters
+## Academic Management
+- [ ] Academic years
+- [ ] Terms/semesters
 - [ ] Classes/forms
 - [ ] Streams
 - [ ] Subjects
-- [ ] Curriculum configuration
+- [ ] Curriculum
 - [ ] Teacher-subject assignments
-- [ ] Timetables
-- [ ] Academic records
+- [ ] Academic records expansion
+- [ ] Academic reports
 
-### Examination & Assessment
-- [ ] Examination setup
+## Examination & Assessment — Expansion
+- [ ] Examination setup/configuration
 - [ ] Assessment configuration
 - [ ] Marks entry
-- [ ] Grade calculation
+- [ ] Grade calculation rules
 - [ ] Report cards
-- [ ] Result approval
+- [ ] Result approval workflow
 - [ ] Result publishing
 - [ ] Examination reports
 
-### Finance / Fees
+## Student Management — Expansion
+- [ ] Complete admission/enrolment lifecycle
+- [ ] Student documents
+- [ ] Parent/guardian management
+- [ ] Student status/history
+- [ ] Student transfers
+- [ ] Student reporting
+
+## Staff & HR — Expansion
+- [ ] Departments
+- [ ] Positions/designations
+- [ ] Staff attendance integration
+- [ ] Leave management
+- [ ] Staff documents
+- [ ] HR reporting
+- [ ] Payroll integration/foundation if required
+
+## Finance — Expansion
 - [ ] Fee structures
 - [ ] Student billing
-- [ ] Payments/receipts
+- [ ] Receipts
 - [ ] Outstanding balances
 - [ ] Discounts/waivers
+- [ ] Finance reconciliation
 - [ ] Finance reports
-- [ ] Payment reconciliation
+- [ ] Payment provider integration points
 
-### Attendance
-- [ ] Student attendance
+## Attendance — Expansion
+- [ ] Daily attendance workflow
 - [ ] Staff attendance
-- [ ] Daily attendance registers
+- [ ] Late/absence tracking
 - [ ] Attendance summaries
-- [ ] Absence/late tracking
 - [ ] Attendance reports
+- [ ] Notifications for absence
 
-### Communication
+## Communication
 - [ ] Announcements
 - [ ] Notices
 - [ ] Internal messaging
 - [ ] Parent/student notifications
-- [ ] Email/SMS integration points
+- [ ] Email integration
+- [ ] SMS integration
 - [ ] Notification history
 
-### Transport
+## Transport
 - [ ] Vehicles
 - [ ] Drivers
 - [ ] Routes
@@ -143,83 +212,140 @@ This is an implementation estimate based on the modules and functionality curren
 - [ ] Student transport assignments
 - [ ] Transport fees
 - [ ] Transport attendance/tracking
+- [ ] Transport reports
 
-### Inventory / Assets
+## Inventory & Assets
 - [ ] Asset register
 - [ ] Stock/items
 - [ ] Suppliers
-- [ ] Purchases
-- [ ] Issuing/receiving
+- [ ] Purchase orders
+- [ ] Receiving
+- [ ] Issuing
 - [ ] Stock levels
 - [ ] Asset reports
 
-### Hostel / Boarding
+## Hostel / Boarding
 - [ ] Houses/hostels
 - [ ] Rooms/beds
 - [ ] Student allocation
 - [ ] Boarding attendance
 - [ ] Hostel administration
+- [ ] Hostel reports
 
-### Reports & Administration
-- [ ] Central reporting dashboard
-- [ ] Exportable reports
-- [ ] Audit logs
-- [ ] System configuration
-- [ ] User management
-- [ ] Permissions management
-- [ ] Backup/restore strategy
-- [ ] Data import/export
+## Library — Beyond Core
+- [ ] Advanced catalogue management
+- [ ] Barcode support
+- [ ] Fines/payment workflow
+- [ ] Reservations/holds
+- [ ] Library reports
+- [ ] KOHA synchronization strategy
+- [ ] DSpace repository synchronization strategy
+
+## Reporting & Analytics
+- [ ] Central dashboard
+- [ ] Cross-module reports
+- [ ] Export to PDF
+- [ ] Export to Excel/CSV
+- [ ] Analytics/KPIs
+- [ ] Scheduled reports
 
 ---
 
-## 4. Remaining Engineering Work
+# 4. REMAINING ENGINEERING / PRODUCTION WORK
 
-- [ ] Complete database migrations for all modules
-- [ ] Complete API validation and error handling
-- [ ] Complete frontend forms and validation
-- [ ] Complete authorization policies per module
-- [ ] Add automated backend tests
-- [ ] Add frontend component/integration tests
-- [ ] Add end-to-end testing
-- [ ] Improve accessibility and responsive UI
+- [ ] Complete database migrations for all implemented modules
+- [ ] Verify production database schema
+- [ ] Complete API validation/error handling
+- [ ] Complete frontend validation
+- [ ] Complete server-side authorization coverage
+- [ ] Automated backend unit tests
+- [ ] Frontend component tests
+- [ ] API/integration tests
+- [ ] End-to-end tests
+- [ ] Accessibility review
+- [ ] Responsive/mobile UI review
 - [ ] Security review
+- [ ] Audit logging
 - [ ] Performance review
+- [ ] Backup/restore strategy
 - [ ] Production configuration
-- [ ] Deployment documentation
+- [ ] Environment/secrets management
+- [ ] Deployment pipeline
+- [ ] Monitoring/logging
 - [ ] Administrator documentation
 - [ ] User documentation
+- [ ] API/integration documentation
 
 ---
 
-## 5. Definition of Done
+# 5. INTEGRATIONS
 
-A module is considered **covered** only when its backend/domain logic, persistence, authorization, frontend UI, validation, tests and CI validation are sufficiently implemented.
+- [ ] KOHA — connect school library catalogue/circulation environment
+- [ ] DSpace — connect institutional repository
+- [ ] Email/SMS provider
+- [ ] Payment provider(s)
+- [ ] Optional identity/SSO integration
 
-The project is considered ready for production when:
+**Important:** KOHA and DSpace are treated as existing systems to integrate with SMIS, not as systems to rebuild inside SMIS.
 
-1. All required modules are implemented.
-2. Database migrations are complete and reproducible.
+---
+
+# 6. TESTING & QUALITY GATES
+
+### Current
+- [x] Frontend CI exists
+- [x] Library frontend JSX/build issue resolved
+- [x] Library frontend CI reported green after the fix
+
+### Remaining
+- [ ] Backend CI/build verification for every feature
+- [ ] Database migration tests
+- [ ] Authorization tests
+- [ ] API integration tests
+- [ ] Frontend tests
+- [ ] End-to-end critical workflows
+- [ ] Security checks
+- [ ] Production smoke tests
+
+---
+
+# 7. DEFINITION OF DONE
+
+A module is **covered** only when the required backend/domain logic, persistence, authorization, frontend UI, validation and tests are implemented and CI is passing.
+
+The SMIS project is **production-ready** when:
+
+1. All required business modules are implemented.
+2. Database migrations are reproducible.
 3. Authorization is enforced server-side.
 4. Critical workflows have automated tests.
 5. CI is consistently green.
-6. Deployment configuration is documented.
-7. Administrator and end-user documentation is available.
-8. Integrations such as **KOHA and DSpace** are configured for the target school environment.
+6. KOHA and DSpace integrations work in the target school environment.
+7. Production deployment is documented and repeatable.
+8. Backup, monitoring and security controls are in place.
+9. Administrator and end-user documentation is complete.
 
 ---
 
-## 6. Immediate Next Milestone
+# 8. IMMEDIATE ROADMAP
 
-**Library Management completion**
+1. **Complete Library Management expansion**
+   - Librarians
+   - KOHA
+   - DSpace
+   - Library tests
+2. **Complete Academic Management**
+3. **Expand Examinations & Assessment**
+4. **Complete Student/Staff/Finance/Attendance workflows**
+5. **Transport**
+6. **Inventory & Assets**
+7. **Hostel/Boarding**
+8. **Communication & notifications**
+9. **Reporting & analytics**
+10. **System-wide testing, security and deployment**
 
-Priority order:
+---
 
-1. Librarian Management
-2. KOHA integration
-3. DSpace integration
-4. Library dashboard/navigation refinement
-5. Library tests
-6. CI verification
-7. Merge the completed library work into `main`
+## Progress rule
 
-After the library milestone is merged, the next major SMIS module will be selected from the remaining roadmap and developed on its own feature branch.
+When a feature is implemented, tested and verified, move it from **To Be Covered** to **Covered**. Do not mark features complete merely because a placeholder, model or UI exists.
