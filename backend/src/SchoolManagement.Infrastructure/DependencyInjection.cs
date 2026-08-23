@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Authentication;
+using SchoolManagement.Application.Students;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Infrastructure.Repositories;
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<ICourseRepository, CourseRepository>();
         services.AddScoped<ICurriculumCourseRepository, CurriculumCourseRepository>();
         services.AddScoped<ICourseRegistrationRepository, CourseRegistrationRepository>();
+        services.AddScoped<IStudentPromotionRepository, StudentPromotionRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
