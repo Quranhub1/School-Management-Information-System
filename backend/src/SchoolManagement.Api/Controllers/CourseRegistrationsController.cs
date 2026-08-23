@@ -7,7 +7,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/course-registrations")]
-[Authorize(Policy = AuthorizationPolicies.StudentManagement)]
+[Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class CourseRegistrationsController(CourseRegistrationService service) : ControllerBase
 {
     [HttpGet("student/{studentId:guid}")]
