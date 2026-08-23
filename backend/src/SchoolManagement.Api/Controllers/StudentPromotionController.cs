@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Abstractions;
+using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Students;
-using SchoolManagement.Domain.Assessment;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -22,8 +21,11 @@ public sealed class StudentPromotionController(
     {
         try
         {
-            var transcript = await academicRecords.GetTranscriptAsync(
-                studentId, request.FromAcademicYearId, request.FromSemesterId, cancellationToken);
+            var sourceTranscript = await academicRecords.GetTranscriptAsync(
+                studentId,
+                request.FromAcademicYearId,
+                request.FromSemesterId,
+                cancellationToken);
 
             var promotion = await promotionService.PromoteAsync(
                 studentId,
@@ -31,7 +33,7 @@ public sealed class StudentPromotionController(
                 request.FromSemesterId,
                 request.ToAcademicYearId,
                 request.ToSemesterId,
-                transcript,
+                sourceTranscript,
                 User.Identity?.Name,
                 cancellationToken);
 
