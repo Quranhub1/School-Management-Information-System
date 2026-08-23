@@ -10,8 +10,9 @@ public sealed class TranscriptEntry
     public string CourseCode { get; set; } = string.Empty;
     public string CourseTitle { get; set; } = string.Empty;
     public decimal CreditUnits { get; set; }
-    public decimal Score { get; set; }
+    public decimal? Score { get; set; }
     public string? Grade { get; set; }
-    public decimal GradePoint { get; set; }
+    public decimal? GradePoint { get; set; }
+    public TranscriptStatus Status { get; set; } = TranscriptStatus.Recorded;
     public bool IsPass { get; set; }
 }
