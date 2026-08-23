@@ -16,4 +16,12 @@ public sealed class AcademicRecordService(IAcademicRecordRepository records)
         Guid studentId,
         CancellationToken cancellationToken = default) =>
         records.GetSummariesAsync(studentId, cancellationToken);
+
+    public async Task<IReadOnlyList<TranscriptEntry>> GetOutstandingMissedPapersAsync(
+        Guid studentId,
+        CancellationToken cancellationToken = default)
+    {
+        var transcript = await records.GetTranscriptAsync(studentId, null, null, cancellationToken);
+        return transcript.Where(x => x.Status == TranscriptStatus.Missed).ToList();
+    }
 }
