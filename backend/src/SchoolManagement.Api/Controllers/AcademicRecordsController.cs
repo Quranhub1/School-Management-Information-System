@@ -18,12 +18,7 @@ public sealed class AcademicRecordsController(AcademicRecordService service) : C
         [FromQuery] Guid? semesterId,
         CancellationToken cancellationToken)
     {
-        var entries = await service.GetTranscriptAsync(
-            studentId,
-            academicYearId,
-            semesterId,
-            cancellationToken);
-
+        var entries = await service.GetTranscriptAsync(studentId, academicYearId, semesterId, cancellationToken);
         return Ok(entries);
     }
 
@@ -34,5 +29,14 @@ public sealed class AcademicRecordsController(AcademicRecordService service) : C
     {
         var summaries = await service.GetSummariesAsync(studentId, cancellationToken);
         return Ok(summaries);
+    }
+
+    [HttpGet("students/{studentId:guid}/outstanding/missed-papers")]
+    public async Task<ActionResult<IReadOnlyList<TranscriptEntry>>> GetOutstandingMissedPapers(
+        Guid studentId,
+        CancellationToken cancellationToken)
+    {
+        var entries = await service.GetOutstandingMissedPapersAsync(studentId, cancellationToken);
+        return Ok(entries);
     }
 }
