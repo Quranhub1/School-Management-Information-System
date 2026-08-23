@@ -22,6 +22,7 @@ public sealed class CourseRegistrationService(ICourseRegistrationRepository repo
         };
 
         await repository.AddAsync(registration, cancellationToken);
+        await repository.SaveChangesAsync(cancellationToken);
         return registration;
     }
 
@@ -32,5 +33,6 @@ public sealed class CourseRegistrationService(ICourseRegistrationRepository repo
 
         registration.Status = "Dropped";
         await repository.UpdateAsync(registration, cancellationToken);
+        await repository.SaveChangesAsync(cancellationToken);
     }
 }
