@@ -4,7 +4,7 @@ namespace SchoolManagement.Application.Assessment;
 
 /// <summary>
 /// Calculates semester GPA and cumulative CGPA from finalized transcript entries.
-/// The grading scale remains institution/programme configurable through GradeBand.
+/// Missed papers (X) remain on the transcript but are excluded from GPA/CGPA until a result is recorded.
 /// </summary>
 public sealed class GpaCalculator
 {
@@ -40,15 +40,21 @@ public sealed class GpaCalculator
         Guid studentId,
         string scope)
     {
-        var studentEntries = entries.Where(x => x.StudentId == studentId).ToList();
+        var studentEntries = entries
+            .Where(x => x.StudentId == studentId && x.Status != TranscriptStatus.Missed)
+            .ToList();
+
         if (studentEntries.Count == 0)
-            throw new InvalidOperationException($"No transcript entries were supplied for the {scope} calculation.");
+            throw new InvalidOperationException($"No graded transcript entries were supplied for the {scope} calculation.");
 
         if (studentEntries.Any(x => x.CreditUnits <= 0m))
             throw new InvalidOperationException("Credit units must be greater than zero for GPA/CGPA calculation.");
 
+        if (studentEntries.Any(x => x.GradePoint is null))
+            throw new InvalidOperationException("Every graded transcript entry must have a grade point.");
+
         var credits = studentEntries.Sum(x => x.CreditUnits);
-        var weightedPoints = studentEntries.Sum(x => x.CreditUnits * x.GradePoint);
+        var weightedPoints = studentEntries.Sum(x => x.CreditUnits * x.GradePoint!.Value);
         var average = weightedPoints / credits;
 
         return new WeightedResult(
