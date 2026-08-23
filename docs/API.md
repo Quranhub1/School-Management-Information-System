@@ -60,6 +60,17 @@ The backend exposes a versioned REST API consumed by the React frontend and othe
 - `/api/v1/transcripts`
 - `/api/v1/workplace-learning`
 
+### Academic records and missed papers
+
+The current academic-record controller also exposes the following protected endpoints for the implemented transcript/progression workflow:
+
+- `GET /api/academic-records/students/{studentId}/transcript`
+- `GET /api/academic-records/students/{studentId}/summaries`
+- `GET /api/academic-records/students/{studentId}/outstanding/missed-papers`
+- `GET /api/academic-records/students/{studentId}/progression-assessment`
+
+A missed paper is represented by status `X` and has no numeric score or grade point. It remains on the transcript as an outstanding academic requirement and is excluded from GPA calculation. UHPAB/UVTAB progression treatment is applied through configurable rules rather than separate APIs.
+
 ### Operations
 
 - `/api/v1/finance`
