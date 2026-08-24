@@ -11,6 +11,7 @@ using SchoolManagement.Domain.Library;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Students;
 using SchoolManagement.Infrastructure.Attendance;
+using SchoolManagement.Infrastructure.Assessment;
 using AssessmentGradingScale = SchoolManagement.Domain.Assessment.GradingScale;
 using AssessmentGradeBand = SchoolManagement.Domain.Assessment.GradeBand;
 using AssessmentTranscriptEntry = SchoolManagement.Domain.Assessment.TranscriptEntry;
@@ -108,6 +109,8 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         });
 
         AttendanceConfiguration.Apply(m);
+        m.ApplyConfiguration(new AssessmentPlanConfiguration());
+        m.ApplyConfiguration(new StudentAssessmentConfiguration());
 
         m.Entity<LibraryBook>(e =>
         {
