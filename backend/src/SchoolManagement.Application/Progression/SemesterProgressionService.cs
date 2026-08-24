@@ -1,4 +1,4 @@
-using SchoolManagement.Domain.Progression;
+using SchoolManagement.Domain.Students;
 
 namespace SchoolManagement.Application.Progression;
 
@@ -6,20 +6,23 @@ public sealed record ProgressionRule(decimal MinimumPassRate, bool AllowConditio
 
 public interface ISemesterProgressionService
 {
-    SemesterProgressionDecision Decide(Guid studentId, Guid fromSemesterId, Guid? toSemesterId,
-        decimal passRate, ProgressionRule rule, string? reason = null);
+    PromotionStatus Decide(decimal passRate, ProgressionRule rule);
 }
 
 public sealed class SemesterProgressionService : ISemesterProgressionService
 {
-    public SemesterProgressionDecision Decide(Guid studentId, Guid fromSemesterId, Guid? toSemesterId,
-        decimal passRate, ProgressionRule rule, string? reason = null)
+    public PromotionStatus Decide(decimal passRate, ProgressionRule rule)
     {
-        if (passRate >= rule.MinimumPassRate)
-            return new(studentId, fromSemesterId, toSemesterId, ProgressionOutcome.Promoted, passRate, reason);
+        if (passRate < 0 || passRate > 100)
+            throw new ArgumentOutOfRangeException(nameof(passRate));
+        if (rule.MinimumPassRate is < 0 or > 100)
+            throw new ArgumentOutOfRangeException(nameof(rule.MinimumPassRate));
 
-        var outcome = rule.AllowConditional ? ProgressionOutcome.Conditional : ProgressionOutcome.Repeat;
-        return new(studentId, fromSemesterId, outcome == ProgressionOutcome.Promoted ? toSemesterId : null,
-            outcome, passRate, reason);
+        if (passRate >= rule.MinimumPassRate)
+            return PromotionStatus.Promoted;
+
+        return rule.AllowConditional
+            ? PromotionStatus.PromotedWithOutstandingPapers
+            : PromotionStatus.Repeat;
     }
 }
