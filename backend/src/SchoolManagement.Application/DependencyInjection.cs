@@ -7,6 +7,7 @@ using SchoolManagement.Application.Authentication;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Application.Library;
+using SchoolManagement.Application.Progression;
 using SchoolManagement.Application.Students;
 
 namespace SchoolManagement.Application;
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<AcademicCalendarService>(); services.AddScoped<CurriculumManagementService>(); services.AddScoped<CourseRegistrationService>();
         services.AddScoped<AssessmentService>(); services.AddScoped<TranscriptStatusService>(); services.AddScoped<ProgressionAssessment>();
         services.AddScoped<StudentPromotionService>(); services.AddScoped<AttendanceService>(); services.AddScoped<FinanceService>(); services.AddScoped<LibraryService>();
+        services.AddScoped<ProgressionWorkflowService>(); services.AddScoped<ISemesterProgressionService, SemesterProgressionService>();
         services.AddScoped<AuthService>(); services.AddScoped<AdministrationService>(); services.AddScoped<ModuleAccessService>();
         return services;
     }
