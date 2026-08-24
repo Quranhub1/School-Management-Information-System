@@ -20,17 +20,29 @@ public sealed class StudentPromotionService(IStudentPromotionRepository promotio
         if (fromAcademicYearId == toAcademicYearId && fromSemesterId == toSemesterId)
             throw new ArgumentException("Source and destination academic periods must differ.");
 
-        var existing = await promotions.GetBySourcePeriodAsync(
-            studentId, fromAcademicYearId, fromSemesterId, cancellationToken);
+        var existing = await promotions.GetBySourcePeriodAsync(studentId, fromAcademicYearId, fromSemesterId, cancellationToken);
         if (existing is not null)
             throw new InvalidOperationException("A promotion decision already exists for this student and source academic period.");
 
-        var missedCount = transcript.Count(x =>
-            x.StudentId == studentId && x.Status == TranscriptStatus.Missed);
+        var sourceEntries = transcript.Where(x =>
+            x.StudentId == studentId &&
+            x.AcademicYearId == fromAcademicYearId &&
+            x.SemesterId == fromSemesterId).ToList();
+
+        var missedCount = sourceEntries.Count(x => x.Status == TranscriptStatus.Missed);
+        var failedCount = sourceEntries.Count(x => x.Status != TranscriptStatus.Missed && !x.IsPass);
 
         var status = missedCount > 0
             ? PromotionStatus.PromotedWithOutstandingPapers
-            : PromotionStatus.Promoted;
+            : failedCount > 0
+                ? PromotionStatus.AcademicReview
+                : PromotionStatus.Promoted;
+
+        var reason = missedCount > 0
+            ? $"Progression recorded with {missedCount} outstanding missed paper(s) recorded as X."
+            : failedCount > 0
+                ? $"Progression requires academic review because {failedCount} source-semester result(s) are not passed."
+                : "Source semester results contain no outstanding missed or failed papers.";
 
         var promotion = new StudentPromotion
         {
@@ -41,9 +53,7 @@ public sealed class StudentPromotionService(IStudentPromotionRepository promotio
             ToSemesterId = toSemesterId,
             Status = status,
             OutstandingPaperCount = missedCount,
-            Reason = missedCount > 0
-                ? $"Promotion requires tracking {missedCount} outstanding missed paper(s) recorded as X."
-                : "No outstanding missed papers were found.",
+            Reason = reason,
             RecordedBy = recordedBy
         };
 
@@ -51,47 +61,4 @@ public sealed class StudentPromotionService(IStudentPromotionRepository promotio
         await promotions.SaveChangesAsync(cancellationToken);
         return promotion;
     }
-
-    public async Task<PromotionAssessment> AssessAsync(
-        Guid studentId,
-        Guid fromAcademicYearId,
-        Guid fromSemesterId,
-        Guid toAcademicYearId,
-        Guid toSemesterId,
-        IReadOnlyCollection<TranscriptEntry> transcript,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(transcript);
-        if (fromAcademicYearId == toAcademicYearId && fromSemesterId == toSemesterId)
-            throw new ArgumentException("Source and destination academic periods must differ.");
-
-        var missedCount = transcript.Count(x =>
-            x.StudentId == studentId && x.Status == TranscriptStatus.Missed);
-
-        return new PromotionAssessment
-        {
-            StudentId = studentId,
-            FromAcademicYearId = fromAcademicYearId,
-            FromSemesterId = fromSemesterId,
-            ToAcademicYearId = toAcademicYearId,
-            ToSemesterId = toSemesterId,
-            Status = missedCount > 0 ? PromotionStatus.PromotedWithOutstandingPapers : PromotionStatus.Promoted,
-            OutstandingPaperCount = missedCount,
-            Reason = missedCount > 0
-                ? $"Promotion requires tracking {missedCount} outstanding missed paper(s) recorded as X."
-                : "No outstanding missed papers were found."
-        };
-    }
-}
-
-public sealed class PromotionAssessment
-{
-    public Guid StudentId { get; init; }
-    public Guid FromAcademicYearId { get; init; }
-    public Guid FromSemesterId { get; init; }
-    public Guid ToAcademicYearId { get; init; }
-    public Guid ToSemesterId { get; init; }
-    public PromotionStatus Status { get; init; }
-    public int OutstandingPaperCount { get; init; }
-    public string Reason { get; init; } = string.Empty;
 }
