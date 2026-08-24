@@ -12,9 +12,7 @@ namespace SchoolManagement.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("SchoolManagement")
             ?? throw new InvalidOperationException("Connection string 'SchoolManagement' is not configured.");
@@ -32,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<ICourseRegistrationRepository, CourseRegistrationRepository>();
         services.AddScoped<IStudentPromotionRepository, StudentPromotionRepository>();
         services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+        services.AddScoped<IFinanceRepository, FinanceRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
