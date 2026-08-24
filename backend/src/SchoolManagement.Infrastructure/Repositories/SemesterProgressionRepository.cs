@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Progression;
-using SchoolManagement.Domain.Progression;
+using SchoolManagement.Domain.Students;
+using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Repositories;
 
@@ -9,12 +10,12 @@ public sealed class SemesterProgressionRepository : ISemesterProgressionReposito
     private readonly SchoolManagementDbContext _db;
     public SemesterProgressionRepository(SchoolManagementDbContext db) => _db = db;
 
-    public async Task AddAsync(SemesterProgressionDecision decision, CancellationToken cancellationToken = default)
+    public async Task AddAsync(StudentPromotion promotion, CancellationToken cancellationToken = default)
     {
-        _db.Set<SemesterProgressionDecision>().Add(decision);
+        _db.StudentPromotions.Add(promotion);
         await _db.SaveChangesAsync(cancellationToken);
     }
 
     public Task<bool> ExistsAsync(Guid studentId, Guid fromSemesterId, CancellationToken cancellationToken = default) =>
-        _db.Set<SemesterProgressionDecision>().AnyAsync(x => x.StudentId == studentId && x.FromSemesterId == fromSemesterId, cancellationToken);
+        _db.StudentPromotions.AnyAsync(x => x.StudentId == studentId && x.FromSemesterId == fromSemesterId, cancellationToken);
 }
