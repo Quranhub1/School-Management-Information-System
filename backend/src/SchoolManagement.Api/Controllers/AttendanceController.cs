@@ -1,46 +1,78 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SchoolManagement.Application.Attendance;
 using SchoolManagement.Application.Authorization;
-using System.Collections.Concurrent;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/attendance")]
 [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
-public sealed class AttendanceController : ControllerBase
+public sealed class AttendanceController(AttendanceService service) : ControllerBase
 {
-    private static readonly ConcurrentDictionary<string, AttendanceRecord> Records = new();
-
-    [HttpGet]
-    public ActionResult<IReadOnlyCollection<AttendanceRecord>> Get([FromQuery] DateOnly? date, [FromQuery] string? studentId)
+    [HttpPost("sessions")]
+    public async Task<IActionResult> OpenSession(OpenAttendanceSessionRequest request, CancellationToken cancellationToken)
     {
-        var query = Records.Values.AsEnumerable();
-        if (date.HasValue) query = query.Where(x => x.Date == date.Value);
-        if (!string.IsNullOrWhiteSpace(studentId)) query = query.Where(x => x.StudentId == studentId);
-        return Ok(query.OrderByDescending(x => x.Date).ThenBy(x => x.StudentId).ToArray());
+        try
+        {
+            var session = await service.OpenSessionAsync(
+                request.TimetableEntryId,
+                request.SessionDate,
+                request.RecordedByUserId,
+                request.Remarks,
+                cancellationToken);
+            return Created($"/api/attendance/sessions/{session.Id}", session);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 
-    [HttpPost]
-    public ActionResult<AttendanceRecord> Mark(MarkAttendanceRequest request)
+    [HttpPost("sessions/{attendanceSessionId:guid}/records")]
+    public async Task<IActionResult> Mark(
+        Guid attendanceSessionId,
+        MarkAttendanceRequest request,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.StudentId))
-            return BadRequest(new { message = "StudentId is required." });
-        if (string.IsNullOrWhiteSpace(request.CourseCode))
-            return BadRequest(new { message = "CourseCode is required." });
+        try
+        {
+            var record = await service.MarkAsync(
+                attendanceSessionId,
+                request.StudentId,
+                request.Status,
+                request.Remarks,
+                cancellationToken);
+            return Created($"/api/attendance/records/{record.Id}", record);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
 
-        var key = $"{request.StudentId}:{request.CourseCode}:{request.Date:yyyy-MM-dd}";
-        var record = new AttendanceRecord(
-            request.StudentId.Trim(), request.CourseCode.Trim().ToUpperInvariant(),
-            request.Date, request.Status, DateTimeOffset.UtcNow);
-
-        if (!Records.TryAdd(key, record))
-            return Conflict(new { message = "Attendance has already been recorded for this student, course and date." });
-
-        return Created($"/api/attendance/{key}", record);
+    [HttpGet("students/{studentId:guid}")]
+    public async Task<IActionResult> StudentHistory(
+        Guid studentId,
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await service.GetStudentHistoryAsync(studentId, from, to, cancellationToken));
     }
 }
 
-public sealed record MarkAttendanceRequest(string StudentId, string CourseCode, DateOnly Date, AttendanceStatus Status);
-public sealed record AttendanceRecord(string StudentId, string CourseCode, DateOnly Date, AttendanceStatus Status, DateTimeOffset RecordedAt);
-public enum AttendanceStatus { Present, Absent, Late, Excused }
+public sealed record OpenAttendanceSessionRequest(
+    Guid TimetableEntryId,
+    DateOnly SessionDate,
+    Guid? RecordedByUserId,
+    string? Remarks);
+
+public sealed record MarkAttendanceRequest(
+    Guid StudentId,
+    string Status,
+    string? Remarks);
