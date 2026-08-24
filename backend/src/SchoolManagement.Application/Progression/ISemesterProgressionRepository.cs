@@ -1,9 +1,9 @@
-using SchoolManagement.Domain.Progression;
+using SchoolManagement.Domain.Students;
 
 namespace SchoolManagement.Application.Progression;
 
 public interface ISemesterProgressionRepository
 {
-    Task AddAsync(SemesterProgressionDecision decision, CancellationToken cancellationToken = default);
+    Task AddAsync(StudentPromotion promotion, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(Guid studentId, Guid fromSemesterId, CancellationToken cancellationToken = default);
 }
