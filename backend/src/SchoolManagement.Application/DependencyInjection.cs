@@ -5,6 +5,7 @@ using SchoolManagement.Application.Assessment;
 using SchoolManagement.Application.Attendance;
 using SchoolManagement.Application.Authentication;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Finance;
 using SchoolManagement.Application.Students;
 
 namespace SchoolManagement.Application;
@@ -24,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<ProgressionAssessment>();
         services.AddScoped<StudentPromotionService>();
         services.AddScoped<AttendanceService>();
+        services.AddScoped<FinanceService>();
         services.AddScoped<AuthService>();
         services.AddScoped<AdministrationService>();
         services.AddScoped<ModuleAccessService>();
