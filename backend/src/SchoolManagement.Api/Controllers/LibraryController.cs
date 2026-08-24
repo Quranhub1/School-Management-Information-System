@@ -1,79 +1,89 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SchoolManagement.Application.Authorization;
-using SchoolManagement.Domain.Library;
-using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Application.Library;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/library")]
-public sealed class LibraryController(SchoolManagementDbContext db) : ControllerBase
+public sealed class LibraryController(LibraryService library, IConfiguration configuration) : ControllerBase
 {
     [HttpGet("books")]
     [Authorize(Policy = LibraryPolicies.Read)]
-    public async Task<IActionResult> Books([FromQuery] string? search, CancellationToken ct)
-    {
-        var q = db.LibraryBooks.AsNoTracking().Where(x => x.IsActive);
-        if (!string.IsNullOrWhiteSpace(search)) q = q.Where(x => x.Title.Contains(search) || x.Author.Contains(search) || x.Isbn.Contains(search));
-        return Ok(await q.OrderBy(x => x.Title).ToListAsync(ct));
-    }
+    public async Task<IActionResult> Books(CancellationToken ct) => Ok(await library.GetBooksAsync(ct));
 
-    [HttpGet("members")]
+    [HttpGet("librarians")]
     [Authorize(Policy = LibraryPolicies.Read)]
-    public async Task<IActionResult> Members([FromQuery] string? search, CancellationToken ct)
-    {
-        var q = db.Students.AsNoTracking().Where(x => x.Status == "Active");
-        if (!string.IsNullOrWhiteSpace(search)) q = q.Where(x => x.StudentNumber.Contains(search) || x.FirstName.Contains(search) || x.LastName.Contains(search));
-        return Ok(await q.OrderBy(x => x.StudentNumber).Take(30).Select(x => new LibraryMemberView(x.Id, x.StudentNumber, x.FirstName + " " + x.LastName)).ToListAsync(ct));
-    }
+    public async Task<IActionResult> Librarians(CancellationToken ct) => Ok(await library.GetLibrariansAsync(ct));
 
-    [HttpGet("loans")]
+    [HttpGet("loans/{studentId:guid}")]
     [Authorize(Policy = LibraryPolicies.Read)]
-    public async Task<IActionResult> Loans([FromQuery] bool activeOnly = true, CancellationToken ct = default)
+    public async Task<IActionResult> StudentLoans(Guid studentId, [FromQuery] bool activeOnly = false, CancellationToken ct = default) =>
+        Ok(await library.GetStudentLoansAsync(studentId, activeOnly, ct));
+
+    [HttpGet("integrations")]
+    [Authorize(Policy = LibraryPolicies.Read)]
+    public IActionResult Integrations() => Ok(new
     {
-        var query = db.LibraryLoans.AsNoTracking().Join(db.LibraryBooks, l => l.BookId, b => b.Id, (l, b) => new { Loan = l, Book = b })
-            .Join(db.Students, x => x.Loan.StudentId, s => s.Id, (x, s) => new { x.Loan, x.Book, Student = s });
-        if (activeOnly) query = query.Where(x => x.Loan.ReturnedAtUtc == null);
-        return Ok(await query.OrderByDescending(x => x.Loan.IssuedAtUtc).Select(x => new LibraryLoanView(x.Loan.Id, x.Book.Id, x.Book.Title, x.Book.Isbn, x.Student.Id, x.Student.StudentNumber, x.Student.FirstName + " " + x.Student.LastName, x.Loan.IssuedAtUtc, x.Loan.DueAtUtc, x.Loan.ReturnedAtUtc, x.Loan.FineAmount)).ToListAsync(ct));
-    }
+        koha = new
+        {
+            enabled = configuration.GetValue<bool>("LibraryIntegrations:Koha:Enabled"),
+            baseUrl = configuration["LibraryIntegrations:Koha:BaseUrl"]
+        },
+        dspace = new
+        {
+            enabled = configuration.GetValue<bool>("LibraryIntegrations:DSpace:Enabled"),
+            baseUrl = configuration["LibraryIntegrations:DSpace:BaseUrl"]
+        }
+    });
 
     [HttpPost("books")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> AddBook(CreateBookRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Isbn) || string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Author) || request.TotalCopies < 1) return BadRequest(new { message = "ISBN, title, author and at least one copy are required." });
-        if (await db.LibraryBooks.AnyAsync(x => x.Isbn == request.Isbn.Trim(), ct)) return Conflict(new { message = "A book with this ISBN already exists." });
-        var book = new LibraryBook { Isbn = request.Isbn.Trim(), Title = request.Title.Trim(), Author = request.Author.Trim(), Publisher = request.Publisher?.Trim(), TotalCopies = request.TotalCopies, AvailableCopies = request.TotalCopies };
-        db.LibraryBooks.Add(book); await db.SaveChangesAsync(ct); return Created($"api/library/books/{book.Id}", book);
+        try
+        {
+            var book = await library.AddBookAsync(request.Isbn, request.Title, request.Author, request.Publisher, request.TotalCopies, ct);
+            return Created($"/api/library/books/{book.Id}", book);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpPost("librarians")]
+    [Authorize(Policy = LibraryPolicies.Management)]
+    public async Task<IActionResult> AddLibrarian(AddLibrarianRequest request, CancellationToken ct)
+    {
+        try { return Ok(await library.AddLibrarianAsync(request.StaffMemberId, request.LibraryRole, ct)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpPost("loans")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> Issue(IssueLoanRequest request, CancellationToken ct)
     {
-        var book = await db.LibraryBooks.SingleOrDefaultAsync(x => x.Id == request.BookId && x.IsActive, ct);
-        if (book is null) return NotFound(new { message = "Book not found." });
-        if (book.AvailableCopies < 1) return Conflict(new { message = "No available copy of this book." });
-        if (!await db.Students.AnyAsync(x => x.Id == request.StudentId && x.Status == "Active", ct)) return BadRequest(new { message = "Active student not found." });
-        if (await db.LibraryLoans.AnyAsync(x => x.StudentId == request.StudentId && x.BookId == request.BookId && x.ReturnedAtUtc == null, ct)) return Conflict(new { message = "This student already has this book on loan." });
-        if (request.DueAtUtc <= DateTime.UtcNow) return BadRequest(new { message = "Due date must be in the future." });
-        var loan = new LibraryLoan { BookId = book.Id, StudentId = request.StudentId, DueAtUtc = request.DueAtUtc.ToUniversalTime() };
-        book.AvailableCopies--; db.LibraryLoans.Add(loan); await db.SaveChangesAsync(ct); return Created($"api/library/loans/{loan.Id}", loan);
+        try
+        {
+            var loan = await library.IssueBookAsync(request.StudentId, request.BookId, request.DueAtUtc.ToUniversalTime(), ct);
+            return Created($"/api/library/loans/{loan.Id}", loan);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpPatch("loans/{id:guid}/return")]
     [Authorize(Policy = LibraryPolicies.Management)]
-    public async Task<IActionResult> Return(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Return(Guid id, [FromQuery] decimal finePerOverdueDay = 1000m, CancellationToken ct = default)
     {
-        var loan = await db.LibraryLoans.SingleOrDefaultAsync(x => x.Id == id, ct);
-        if (loan is null) return NotFound(); if (loan.ReturnedAtUtc is not null) return Conflict(new { message = "Loan already returned." });
-        var book = await db.LibraryBooks.SingleAsync(x => x.Id == loan.BookId, ct); loan.ReturnedAtUtc = DateTime.UtcNow; if (loan.ReturnedAtUtc > loan.DueAtUtc) loan.FineAmount = Math.Round((decimal)(loan.ReturnedAtUtc.Value - loan.DueAtUtc).TotalDays, 0) * 500m; book.AvailableCopies = Math.Min(book.TotalCopies, book.AvailableCopies + 1); await db.SaveChangesAsync(ct); return Ok(loan);
+        try { return Ok(await library.ReturnBookAsync(id, finePerOverdueDay, ct)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 }
 
-public sealed record LibraryMemberView(Guid Id, string StudentNumber, string Name);
-public sealed record LibraryLoanView(Guid Id, Guid BookId, string BookTitle, string BookIsbn, Guid StudentId, string StudentNumber, string StudentName, DateTime IssuedAtUtc, DateTime DueAtUtc, DateTime? ReturnedAtUtc, decimal FineAmount);
 public sealed record CreateBookRequest(string Isbn, string Title, string Author, string? Publisher, int TotalCopies);
+public sealed record AddLibrarianRequest(Guid StaffMemberId, string LibraryRole);
 public sealed record IssueLoanRequest(Guid BookId, Guid StudentId, DateTime DueAtUtc);
