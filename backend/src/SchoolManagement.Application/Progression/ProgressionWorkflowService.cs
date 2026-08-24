@@ -1,4 +1,4 @@
-using SchoolManagement.Domain.Progression;
+using SchoolManagement.Domain.Students;
 
 namespace SchoolManagement.Application.Progression;
 
@@ -13,20 +13,28 @@ public sealed class ProgressionWorkflowService
         _decisionService = decisionService;
     }
 
-    public async Task<SemesterProgressionDecision> DecideAndRecordAsync(
-        Guid studentId,
-        Guid fromSemesterId,
-        Guid? toSemesterId,
-        decimal passRate,
-        ProgressionRule rule,
-        string? reason = null,
-        CancellationToken cancellationToken = default)
+    public async Task<StudentPromotion> DecideAndRecordAsync(
+        Guid studentId, Guid fromAcademicYearId, Guid fromSemesterId,
+        Guid toAcademicYearId, Guid toSemesterId, decimal passRate,
+        int outstandingPaperCount, ProgressionRule rule, string? reason = null,
+        string? recordedBy = null, CancellationToken cancellationToken = default)
     {
+        if (studentId == Guid.Empty || fromAcademicYearId == Guid.Empty || fromSemesterId == Guid.Empty ||
+            toAcademicYearId == Guid.Empty || toSemesterId == Guid.Empty)
+            throw new ArgumentException("All academic and student identifiers are required.");
+        if (outstandingPaperCount < 0) throw new ArgumentOutOfRangeException(nameof(outstandingPaperCount));
         if (await _repository.ExistsAsync(studentId, fromSemesterId, cancellationToken))
             throw new InvalidOperationException("A progression decision already exists for this student and semester.");
 
-        var decision = _decisionService.Decide(studentId, fromSemesterId, toSemesterId, passRate, rule, reason);
-        await _repository.AddAsync(decision, cancellationToken);
-        return decision;
+        var status = _decisionService.Decide(passRate, rule);
+        var promotion = new StudentPromotion
+        {
+            StudentId = studentId, FromAcademicYearId = fromAcademicYearId, FromSemesterId = fromSemesterId,
+            ToAcademicYearId = toAcademicYearId, ToSemesterId = toSemesterId, Status = status,
+            OutstandingPaperCount = status == PromotionStatus.PromotedWithOutstandingPapers ? outstandingPaperCount : 0,
+            Reason = reason, RecordedBy = recordedBy
+        };
+        await _repository.AddAsync(promotion, cancellationToken);
+        return promotion;
     }
 }
