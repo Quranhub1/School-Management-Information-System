@@ -12,14 +12,14 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
     public async Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) =>
         await db.StudentInvoices.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
 
-    public Task<StudentInvoice?> GetOpenInvoiceAsync(Guid studentId, Guid? feeStructureId, CancellationToken cancellationToken) =>
-        db.StudentInvoices.SingleOrDefaultAsync(x => x.StudentId == studentId && x.FeeStructureId == feeStructureId && x.Status != "Paid", cancellationToken);
-
     public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken) =>
         db.FeeStructures.SingleOrDefaultAsync(x => x.Id == feeStructureId && x.IsActive, cancellationToken);
 
     public Task<bool> StudentExistsAsync(Guid studentId, CancellationToken cancellationToken) =>
         db.Students.AnyAsync(x => x.Id == studentId, cancellationToken);
+
+    public Task<bool> InvoiceNumberExistsAsync(string invoiceNumber, CancellationToken cancellationToken) =>
+        db.StudentInvoices.AnyAsync(x => x.InvoiceNumber == invoiceNumber, cancellationToken);
 
     public Task<bool> ReceiptExistsAsync(string receiptNumber, CancellationToken cancellationToken) =>
         db.Payments.AnyAsync(x => x.ReceiptNumber == receiptNumber, cancellationToken);
