@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { getStreams, createStream, updateStream, type Stream } from '../api/academicStructure'
+
+type Stream = { id: string; name: string; code: string; classFormId?: string; isActive: boolean }
 
 export default function StreamsPage() {
   const [streams, setStreams] = useState<Stream[]>([])
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
-  const [classFormId, setClassFormId] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -13,7 +13,9 @@ export default function StreamsPage() {
   async function load() {
     setLoading(true)
     try {
-      setStreams(await getStreams())
+      const response = await fetch('/api/academic-structure/streams', { headers: { Accept: 'application/json', ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}) } })
+      if (!response.ok) throw new Error(`Unable to load streams (${response.status}).`)
+      setStreams(await response.json() as Stream[])
       setMessage('')
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to load streams.') }
     finally { setLoading(false) }
@@ -26,14 +28,14 @@ export default function StreamsPage() {
     setSaving(true)
     setMessage('')
     try {
-      await createStream({
-        name: name.trim(),
-        code: code.trim().toUpperCase(),
-        classFormId: classFormId || undefined,
+      const response = await fetch('/api/academic-structure/streams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}) },
+        body: JSON.stringify({ name: name.trim(), code: code.trim().toUpperCase(), isActive: true }),
       })
+      if (!response.ok) throw new Error(await response.text() || `Unable to create stream (${response.status}).`)
       setName('')
       setCode('')
-      setClassFormId('')
       setMessage('Stream created.')
       await load()
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to create stream.') }
@@ -42,12 +44,12 @@ export default function StreamsPage() {
 
   async function toggleActive(stream: Stream) {
     try {
-      await updateStream(stream.id, {
-        name: stream.name,
-        code: stream.code,
-        classFormId: stream.classFormId ?? null,
-        isActive: !stream.isActive,
+      const response = await fetch(`/api/academic-structure/streams/${stream.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}) },
+        body: JSON.stringify({ name: stream.name, code: stream.code, isActive: !stream.isActive }),
       })
+      if (!response.ok) throw new Error(await response.text() || `Unable to update stream (${response.status}).`)
       setStreams((items) => items.map((item) => item.id === stream.id ? { ...item, isActive: !item.isActive } : item))
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to update stream.') }
   }
@@ -57,13 +59,12 @@ export default function StreamsPage() {
     <form onSubmit={createStreamEvent}>
       <label>Name <input value={name} onChange={e => setName(e.target.value)} placeholder="Stream A" required /></label>
       <label>Code <input value={code} onChange={e => setCode(e.target.value)} placeholder="A" required /></label>
-      <label>Class Form ID <input value={classFormId} onChange={e => setClassFormId(e.target.value)} placeholder="Optional" /></label>
       <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add Stream'}</button>
     </form>
     {message && <p role="status">{message}</p>}
-    {loading ? <p>Loading streams…</p> : <table><thead><tr><th>Name</th><th>Code</th><th>Class Form</th><th>Status</th><th>Action</th></tr></thead><tbody>
-      {streams.length === 0 && <tr><td colSpan={5}>No streams found.</td></tr>}
-      {streams.map(s => <tr key={s.id}><td>{s.name}</td><td>{s.code}</td><td>{s.classFormId ?? '—'}</td><td>{s.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => void toggleActive(s)}>{s.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+    {loading ? <p>Loading streams…</p> : <table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Action</th></tr></thead><tbody>
+      {streams.length === 0 && <tr><td colSpan={4}>No streams found.</td></tr>}
+      {streams.map(s => <tr key={s.id}><td>{s.name}</td><td>{s.code}</td><td>{s.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => void toggleActive(s)}>{s.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
     </tbody></table>}
   </section>
 }
