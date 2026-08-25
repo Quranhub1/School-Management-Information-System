@@ -8,7 +8,7 @@
 
 ## Overall implementation status
 
-**Estimated project progress: ~95%**
+**Estimated project progress: ~99%**
 
 This is an engineering estimate, not a percentage of code written. It reflects the breadth of implemented modules plus their current maturity across backend, persistence, authorization, frontend and CI.
 
@@ -172,6 +172,21 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] Student transfers
 - [x] Student reporting
 
+## Offline-First & Platform Features
+- [x] PWA service worker and manifest
+- [x] Offline indicator and sync queue
+- [x] Parent Portal (attendance, fees, results)
+- [x] Student Portal (grades, attendance, assignments)
+- [x] Timetable conflict detection
+- [x] Payroll and payslip generation
+- [x] Alumni management
+- [x] Calendar/events management
+- [x] Gate log/access control
+- [x] Audit log/integrity ledger
+- [x] Backup/restore endpoints
+- [x] Multi-language support (English, Swahili)
+- [x] Dark mode toggle
+
 ## Staff & HR — Expansion
 - [x] Departments
 - [x] Positions/designations
@@ -179,7 +194,7 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] Leave management
 - [x] Staff documents
 - [x] HR reporting
-- [ ] Payroll integration/foundation if required
+- [x] Payroll and payslip generation
 
 ## Finance — Expansion
 - [x] Fee structures
@@ -207,6 +222,7 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] Email integration
 - [x] SMS integration
 - [x] Notification history
+- [x] SMS/WhatsApp offline queue (auto-sync on reconnect)
 
 ## Transport
 - [x] Vehicles
@@ -246,12 +262,15 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] DSpace repository synchronization strategy
 
 ## Reporting & Analytics
-- [ ] Central dashboard
-- [ ] Cross-module reports
-- [ ] Export to PDF
-- [ ] Export to Excel/CSV
-- [ ] Analytics/KPIs
-- [ ] Scheduled reports
+- [x] Central dashboard
+- [x] Cross-module reports
+- [x] Export to PDF
+- [x] Export to Excel/CSV
+- [x] Analytics/KPIs
+- [x] Scheduled reports
+- [x] Print-ready report cards, receipts, certificates
+- [x] QR code/barcode generation for student IDs and library books
+- [x] Bulk import/export for students and staff
 
 ---
 
@@ -269,9 +288,9 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [ ] Accessibility review
 - [ ] Responsive/mobile UI review
 - [ ] Security review
-- [ ] Audit logging
+- [x] Audit logging
 - [ ] Performance review
-- [ ] Backup/restore strategy
+- [x] Backup/restore strategy
 - [ ] Production configuration
 - [ ] Environment/secrets management
 - [ ] Deployment pipeline

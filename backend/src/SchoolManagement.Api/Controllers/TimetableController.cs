@@ -19,6 +19,20 @@ public sealed class TimetableController(SchoolManagementDbContext db) : Controll
         return Ok(await query.OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime).ToListAsync(cancellationToken));
     }
 
+    [HttpGet("conflicts")]
+    public async Task<IActionResult> Conflicts([FromQuery] Guid? teachingGroupId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
+    {
+        var query = db.TimetableEntries.AsNoTracking().Where(x => x.IsActive);
+        if (teachingGroupId.HasValue) query = query.Where(x => x.TeachingGroupId == teachingGroupId.Value);
+        var entries = await query.ToListAsync(cancellationToken);
+        var conflicts = entries
+            .GroupBy(x => new { x.DayOfWeek, x.Room })
+            .Where(g => g.Count() > 1)
+            .SelectMany(g => g)
+            .ToList();
+        return Ok(conflicts);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreateTimetableEntryRequest request, CancellationToken cancellationToken)
     {

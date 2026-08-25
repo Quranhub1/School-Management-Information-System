@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Reporting;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -8,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/reports")]
 [Authorize]
-public sealed class ReportsController(SchoolManagementDbContext db) : ControllerBase
+public sealed class ReportsController(SchoolManagementDbContext db, ReportGenerator generator) : ControllerBase
 {
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
@@ -67,5 +69,35 @@ public sealed class ReportsController(SchoolManagementDbContext db) : Controller
             registrations = await db.CourseRegistrations.AsNoTracking().LongCountAsync(cancellationToken),
             results = await db.Results.AsNoTracking().LongCountAsync(cancellationToken)
         });
+    }
+
+    [HttpGet("student/{studentId:guid}/report-card")]
+    public async Task<IActionResult> GetStudentReportCard(Guid studentId, [FromQuery] Guid? academicYearId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
+    {
+        var report = await generator.GenerateStudentReportCardAsync(studentId, academicYearId, semesterId, cancellationToken);
+        return report is null ? NotFound() : Ok(report);
+    }
+
+    [HttpGet("payment/{paymentId:guid}/receipt")]
+    public async Task<IActionResult> GetPaymentReceipt(Guid paymentId, CancellationToken cancellationToken)
+    {
+        var receipt = await generator.GenerateFeeReceiptAsync(paymentId, cancellationToken);
+        return receipt is null ? NotFound() : Ok(receipt);
+    }
+
+    [HttpGet("attendance/class/{classId:guid}")]
+    public async Task<IActionResult> GetClassAttendanceReport(Guid classId, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, CancellationToken cancellationToken)
+    {
+        var from = fromDate ?? DateOnly.MinValue;
+        var to = toDate ?? DateOnly.MaxValue;
+        var report = await generator.GenerateAttendanceReportAsync(classId, (from, to), cancellationToken);
+        return Ok(report);
+    }
+
+    [HttpGet("financial/statement")]
+    public async Task<IActionResult> GetFinancialStatement([FromQuery] string? period, CancellationToken cancellationToken)
+    {
+        var statement = await generator.GenerateFinancialStatementAsync(period, cancellationToken);
+        return Ok(statement);
     }
 }

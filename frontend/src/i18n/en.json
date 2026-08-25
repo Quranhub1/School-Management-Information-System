@@ -1,0 +1,31 @@
+{
+  "app": {
+    "title": "School Management Information System",
+    "login": "Sign in",
+    "logout": "Sign out"
+  },
+  "nav": {
+    "administration": "Administration",
+    "academic": "Academic Management",
+    "students": "Student Management",
+    "finance": "Finance",
+    "timetable": "Timetable",
+    "attendance": "Attendance",
+    "staff": "Staff Management",
+    "library": "Library",
+    "communication": "Communication",
+    "parentPortal": "Parent Portal",
+    "studentPortal": "Student Portal"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "actions": "Actions",
+    "empty": "No records found."
+  }
+}

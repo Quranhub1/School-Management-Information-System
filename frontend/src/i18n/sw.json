@@ -1,0 +1,31 @@
+{
+  "app": {
+    "title": "Mfumo wa Usimamizi wa Shule",
+    "login": "Ingia",
+    "logout": "Toka"
+  },
+  "nav": {
+    "administration": "Uendeshaji",
+    "academic": "Menejimenti ya Masomo",
+    "students": "Menejimenti ya Wanafunzi",
+    "finance": "Finansi",
+    "timetable": "Ratiba ya Masomo",
+    "attendance": "Uwepo",
+    "staff": "Menejimenti ya Wafanyakazi",
+    "library": "Maktaba",
+    "communication": "Mawasiliano",
+    "parentPortal": "Portal ya Wazazi",
+    "studentPortal": "Portal ya Mwanafunzi"
+  },
+  "common": {
+    "loading": "Inapakia…",
+    "error": "Kosa",
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "delete": "Futa",
+    "edit": "Hariri",
+    "search": "Tafuta",
+    "actions": "Vitendo",
+    "empty": "Hakuna rekodi zilizopatikana."
+  }
+}

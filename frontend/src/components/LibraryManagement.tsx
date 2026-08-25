@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
   addBook,
+  getBookBarcode,
   issueBook,
   listBooks,
   listLoans,
@@ -45,6 +46,7 @@ export function LibraryManagement({ canManage }: { canManage: boolean }) {
     memberNumber: '',
     dueDate: dateInput(),
   });
+  const [barcodeBookId, setBarcodeBookId] = useState<string | null>(null);
 
   async function load() {
     setError('');
@@ -400,6 +402,7 @@ export function LibraryManagement({ canManage }: { canManage: boolean }) {
                       {book.availableCopies}/{book.totalCopies} available
                     </span>
                   </td>
+                  <td><button className="secondary-button" onClick={() => setBarcodeBookId(book.id)}>View Barcode</button></td>
                 </tr>
               ))}
             </tbody>
@@ -451,6 +454,16 @@ export function LibraryManagement({ canManage }: { canManage: boolean }) {
             </button>
           </form>
         </section>
+      )}
+      {barcodeBookId && (
+        <div className="modal-backdrop" onClick={() => setBarcodeBookId(null)}>
+          <div className="auth-card" onClick={e => e.stopPropagation()}>
+            <p className="eyebrow">Book Barcode</p>
+            <h3>{barcodeBookId}</h3>
+            <img src={getBookBarcode(barcodeBookId)} alt="Book Barcode" style={{ width: '100%', height: 'auto' }} />
+            <button className="secondary-button" style={{ marginTop: 12 }} onClick={() => setBarcodeBookId(null)}>Close</button>
+          </div>
+        </div>
       )}
     </section>
   );

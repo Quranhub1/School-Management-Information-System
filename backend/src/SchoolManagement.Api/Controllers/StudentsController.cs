@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Students;
 
@@ -22,6 +23,14 @@ public sealed class StudentsController(StudentService service) : ControllerBase
     {
         var student = await service.GetByIdAsync(id, cancellationToken);
         return student is null ? NotFound() : Ok(student);
+    }
+
+    [HttpGet("{id:guid}/qrcode")]
+    [AllowAnonymous]
+    public IActionResult GetQrCode(Guid id)
+    {
+        var qr = QrCodeHelper.GenerateSvg(id.ToString());
+        return Content(qr, "image/svg+xml");
     }
 
     [HttpPost]
