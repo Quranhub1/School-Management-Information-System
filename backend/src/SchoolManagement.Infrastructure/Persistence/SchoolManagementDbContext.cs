@@ -15,6 +15,7 @@ using SchoolManagement.Infrastructure.Assessment;
 using SchoolManagement.Infrastructure.Admissions;
 using AssessmentTranscriptEntry = SchoolManagement.Domain.Assessment.TranscriptEntry;
 using AssessmentAcademicResultSummary = SchoolManagement.Domain.Assessment.AcademicResultSummary;
+using AdmissionEntity = SchoolManagement.Domain.Admissions.Admission;
 
 namespace SchoolManagement.Infrastructure.Persistence;
 
@@ -35,7 +36,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Curriculum> Curricula => Set<Curriculum>();
     public DbSet<CurriculumCourse> CurriculumCourses => Set<CurriculumCourse>();
-    public DbSet<Admission> Admissions => Set<Admission>();
+    public DbSet<AdmissionEntity> Admissions => Set<AdmissionEntity>();
     public DbSet<AdmissionDecision> AdmissionDecisions => Set<AdmissionDecision>();
     public DbSet<StudentEnrollment> StudentEnrollments => Set<StudentEnrollment>();
     public DbSet<CourseRegistration> CourseRegistrations => Set<CourseRegistration>();
@@ -76,7 +77,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        m.Entity<AdmissionDecision>().HasOne<Admission>().WithMany().HasForeignKey(x => x.AdmissionId).OnDelete(DeleteBehavior.Cascade);
+        m.Entity<AdmissionDecision>().HasOne<AdmissionEntity>().WithMany().HasForeignKey(x => x.AdmissionId).OnDelete(DeleteBehavior.Cascade);
         m.ApplyConfiguration(new AdmissionsConfiguration());
         m.ApplyConfiguration(new AdmissionDecisionConfiguration());
 
