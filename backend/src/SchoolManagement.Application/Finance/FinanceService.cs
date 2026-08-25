@@ -75,4 +75,7 @@ public sealed class FinanceService(IFinanceRepository finance)
         await finance.SaveChangesAsync(cancellationToken);
         return payment;
     }
+
+    public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) =>
+        finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken);
 }

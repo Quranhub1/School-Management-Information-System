@@ -12,5 +12,6 @@ public interface IFinanceRepository
     Task<bool> ReceiptExistsAsync(string receiptNumber, CancellationToken cancellationToken);
     Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken);
     Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken);
-    Task SaveChangesAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
