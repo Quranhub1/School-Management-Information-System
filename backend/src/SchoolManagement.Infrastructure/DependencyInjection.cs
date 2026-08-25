@@ -32,9 +32,9 @@ public static class DependencyInjection
         services.AddScoped<ICourseRegistrationRepository, CourseRegistrationRepository>();
         services.AddScoped<IStudentPromotionRepository, StudentPromotionRepository>();
         services.AddScoped<ISemesterProgressionRepository, SemesterProgressionRepository>();
-        services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+        services.AddScoped<SchoolManagement.Application.Abstractions.IAttendanceRepository, SchoolManagement.Infrastructure.Repositories.AttendanceRepository>();
         services.AddScoped<IAdmissionRepository, AdmissionRepository>();
-        services.AddScoped<IFinanceRepository, FinanceRepository>();
+        services.AddScoped<SchoolManagement.Application.Abstractions.IFinanceRepository, SchoolManagement.Infrastructure.Repositories.FinanceRepository>();
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
