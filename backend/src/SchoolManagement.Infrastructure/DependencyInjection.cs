@@ -9,6 +9,7 @@ using SchoolManagement.Application.Library;
 using SchoolManagement.Application.Progression;
 using SchoolManagement.Application.Students;
 using SchoolManagement.Infrastructure.Identity;
+using SchoolManagement.Infrastructure.Library;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Infrastructure.Repositories;
 
@@ -47,6 +48,14 @@ public static class DependencyInjection
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
         services.AddScoped<AdminSeeder>();
+
+        var librarySettings = new LibraryIntegrationSettings
+        {
+            KohaBaseUrl = configuration["Library:Integrations:KohaBaseUrl"] ?? string.Empty,
+            DSpaceBaseUrl = configuration["Library:Integrations:DSpaceBaseUrl"] ?? string.Empty
+        };
+        services.AddLibraryExternalIntegration(librarySettings);
+
         return services;
     }
 }
