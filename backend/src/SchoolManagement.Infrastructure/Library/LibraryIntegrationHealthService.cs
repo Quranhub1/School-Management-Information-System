@@ -4,8 +4,8 @@ namespace SchoolManagement.Infrastructure.Library;
 
 public sealed class LibraryIntegrationHealthService
 {
-    private readonly ILibraryExternalClient _koha;
-    private readonly ILibraryExternalClient _dspace;
+    private readonly KohaExternalClient _koha;
+    private readonly DSpaceExternalClient _dspace;
 
     public LibraryIntegrationHealthService(KohaExternalClient koha, DSpaceExternalClient dspace)
     {
@@ -18,4 +18,14 @@ public sealed class LibraryIntegrationHealthService
         _dspace.IsConfigured,
         _koha.BaseUri?.ToString() ?? string.Empty,
         _dspace.BaseUri?.ToString() ?? string.Empty);
+
+    public async Task<IReadOnlyList<ExternalConnectionResult>> CheckConnectionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var results = await Task.WhenAll(
+            _koha.CheckConnectionAsync(cancellationToken),
+            _dspace.CheckConnectionAsync(cancellationToken));
+
+        return results;
+    }
 }

@@ -12,8 +12,8 @@ public static class LibraryIntegrationRegistration
         ArgumentNullException.ThrowIfNull(settings);
 
         services.AddSingleton<ILibraryIntegrationSettings>(new LibraryIntegrationSettingsProvider(settings));
-        services.AddSingleton<KohaExternalClient>();
-        services.AddSingleton<DSpaceExternalClient>();
+        services.AddHttpClient<KohaExternalClient>(client => client.Timeout = TimeSpan.FromSeconds(10));
+        services.AddHttpClient<DSpaceExternalClient>(client => client.Timeout = TimeSpan.FromSeconds(10));
         services.AddSingleton<ILibraryExternalClient>(sp => sp.GetRequiredService<KohaExternalClient>());
         services.AddSingleton<LibraryIntegrationHealthService>();
 
