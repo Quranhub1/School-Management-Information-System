@@ -21,11 +21,16 @@ public sealed class LibraryController(LibraryWorkflowService library, IConfigura
 
     [HttpGet("integrations")]
     [Authorize(Policy = LibraryPolicies.Read)]
-    public IActionResult Integrations() => Ok(new
+    public IActionResult Integrations()
     {
-        koha = new { enabled = configuration.GetValue<bool>("LibraryIntegrations:Koha:Enabled"), baseUrl = configuration["LibraryIntegrations:Koha:BaseUrl"] },
-        dspace = new { enabled = configuration.GetValue<bool>("LibraryIntegrations:DSpace:Enabled"), baseUrl = configuration["LibraryIntegrations:DSpace:BaseUrl"] }
-    });
+        var kohaUrl = configuration["LibraryIntegrations:Koha:BaseUrl"]?.Trim() ?? string.Empty;
+        var dspaceUrl = configuration["LibraryIntegrations:DSpace:BaseUrl"]?.Trim() ?? string.Empty;
+        return Ok(new
+        {
+            koha = new { enabled = configuration.GetValue<bool>("LibraryIntegrations:Koha:Enabled") && Uri.TryCreate(kohaUrl, UriKind.Absolute, out _), baseUrl = kohaUrl },
+            dspace = new { enabled = configuration.GetValue<bool>("LibraryIntegrations:DSpace:Enabled") && Uri.TryCreate(dspaceUrl, UriKind.Absolute, out _), baseUrl = dspaceUrl }
+        });
+    }
 
     [HttpPost("books")]
     [Authorize(Policy = LibraryPolicies.Management)]
