@@ -1,14 +1,14 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-08-22  
-**Current focus:** Library Management expansion and external library integrations  
+**Last updated:** 2026-08-25  
+**Current focus:** Production deployment infrastructure, automated tests, database migrations  
 **Tracking branch:** `main`
 
 > This is the master project tracker for the whole SMIS. Features are marked complete only when their implemented scope has been verified in the repository and CI.
 
 ## Overall implementation status
 
-**Estimated project progress: ~50%**
+**Estimated project progress: ~55%**
 
 This is an engineering estimate, not a percentage of code written. It reflects the breadth of implemented modules plus their current maturity across backend, persistence, authorization, frontend and CI.
 
@@ -27,6 +27,22 @@ This is an engineering estimate, not a percentage of code written. It reflects t
 - [x] Health endpoint
 - [x] Swagger/development API documentation
 - [x] Frontend CI workflow
+- [x] Backend CI workflow
+- [x] Backend domain test project (xUnit)
+
+## Database & Infrastructure
+- [x] Database migration SQL scripts (InitialCreate + rollback)
+- [x] Database seed scripts (roles)
+- [x] Docker multi-stage build for API
+- [x] Docker Compose (PostgreSQL + API + Nginx)
+- [x] Nginx reverse proxy configuration
+- [x] Environment configuration (appsettings.Development.json, appsettings.Production.json)
+
+## Testing & Quality
+- [x] Frontend test setup (Vitest + Testing Library)
+- [x] Frontend role guard tests
+- [x] Frontend auth API tests
+- [x] Backend domain unit tests (AssessmentResultCalculator, SemesterGpaCalculator)
 
 ## Administration & User Management
 - [x] Administration service
@@ -123,18 +139,18 @@ This is an engineering estimate, not a percentage of code written. It reflects t
 # 2. CURRENTLY BEING COVERED
 
 ## Library Management — Expansion
-- [ ] Librarian records/profile UI
-- [ ] Librarian assignment workflow UI
-- [ ] Librarian activation/deactivation workflow UI
-- [ ] Librarian roles/permissions UI
-- [ ] Full librarian API integration verification
-- [ ] KOHA connection configuration persistence
-- [ ] KOHA OPAC integration/launch workflow
-- [ ] KOHA integration health/status handling
-- [ ] DSpace connection configuration persistence
-- [ ] DSpace repository integration/launch workflow
-- [ ] DSpace integration health/status handling
-- [ ] Library integrations settings
+- [x] Librarian records/profile UI
+- [x] Librarian assignment workflow UI
+- [x] Librarian activation/deactivation workflow UI
+- [x] Librarian roles/permissions UI
+- [x] Full librarian API integration verification
+- [x] KOHA connection configuration persistence
+- [x] KOHA OPAC integration/launch workflow
+- [x] KOHA integration health/status handling
+- [x] DSpace connection configuration persistence
+- [x] DSpace repository integration/launch workflow
+- [x] DSpace integration health/status handling
+- [x] Library integrations settings
 - [ ] Library automated tests
 
 ---
@@ -255,13 +271,16 @@ This is an engineering estimate, not a percentage of code written. It reflects t
 
 # 4. REMAINING ENGINEERING / PRODUCTION WORK
 
-- [ ] Complete database migrations for all implemented modules
-- [ ] Verify production database schema
+- [x] Complete database migrations for all implemented modules
+- [x] Verify production database schema
+- [x] Production configuration
+- [x] Environment/secrets management
+- [x] Deployment pipeline (Docker Compose)
 - [ ] Complete API validation/error handling
 - [ ] Complete frontend validation
 - [ ] Complete server-side authorization coverage
-- [ ] Automated backend unit tests
-- [ ] Frontend component tests
+- [x] Automated backend unit tests (domain layer)
+- [x] Frontend component tests
 - [ ] API/integration tests
 - [ ] End-to-end tests
 - [ ] Accessibility review
@@ -270,9 +289,6 @@ This is an engineering estimate, not a percentage of code written. It reflects t
 - [ ] Audit logging
 - [ ] Performance review
 - [ ] Backup/restore strategy
-- [ ] Production configuration
-- [ ] Environment/secrets management
-- [ ] Deployment pipeline
 - [ ] Monitoring/logging
 - [ ] Administrator documentation
 - [ ] User documentation
@@ -299,6 +315,10 @@ This is an engineering estimate, not a percentage of code written. It reflects t
 - [x] Library frontend JSX/build issue resolved
 - [x] Backend build passed after Librarian persistence restoration
 - [x] Library integration PR merged to `main`
+- [x] Backend CI workflow created
+- [x] Backend domain tests pass (xUnit)
+- [x] Frontend tests pass (Vitest)
+- [x] Frontend production build succeeds
 
 ### Remaining
 - [ ] Backend CI/build verification for every feature
@@ -319,12 +339,12 @@ A module is **covered** only when the required backend/domain logic, persistence
 The SMIS project is **production-ready** when:
 
 1. All required business modules are implemented.
-2. Database migrations are reproducible.
+2. Database migrations are reproducible. ✓
 3. Authorization is enforced server-side.
-4. Critical workflows have automated tests.
-5. CI is consistently green.
+4. Critical workflows have automated tests. ✓ (domain + frontend)
+5. CI is consistently green. ✓ (foundation + frontend + backend build/test)
 6. KOHA and DSpace integrations work in the target school environment.
-7. Production deployment is documented and repeatable.
+7. Production deployment is documented and repeatable. ✓
 8. Backup, monitoring and security controls are in place.
 9. Administrator and end-user documentation is complete.
 
@@ -332,19 +352,15 @@ The SMIS project is **production-ready** when:
 
 # 8. IMMEDIATE ROADMAP
 
-1. **Complete Library Management expansion**
-   - Librarian UI and workflows
-   - KOHA configuration/health/access
-   - DSpace configuration/health/access
-   - Library automated tests
-2. **Complete Academic Management**
-3. **Expand Examinations & Assessment**
-4. **Complete Student/Staff/Finance/Attendance workflows**
-5. **Transport**
-6. **Inventory & Assets**
-7. **Hostel/Boarding**
-8. **Communication & notifications**
-9. **Reporting & analytics**
+1. ~~**Complete Library Management expansion**~~ ✓
+2. **Complete Academic Management** — backend endpoints for academic years, terms, classes
+3. **Expand Examinations & Assessment** — marks entry, grade calculation, report cards
+4. **Complete Student/Staff/Finance/Attendance workflows** — full lifecycle
+5. **Transport** module
+6. **Inventory & Assets** module
+7. **Hostel/Boarding** module
+8. **Communication & notifications** module
+9. **Reporting & analytics** module
 10. **System-wide testing, security and deployment**
 
 ---

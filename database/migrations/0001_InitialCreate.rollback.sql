@@ -1,0 +1,56 @@
+-- Rollback for 0001_InitialCreate.sql
+-- Removes all SMIS tables in reverse dependency order.
+
+BEGIN;
+
+DROP TABLE IF EXISTS assessment_plan_weighting_profiles CASCADE;
+DROP TABLE IF EXISTS assessment_weighting_components CASCADE;
+DROP TABLE IF EXISTS assessment_weighting_profiles CASCADE;
+DROP TABLE IF EXISTS student_assessments CASCADE;
+DROP TABLE IF EXISTS assessment_plans CASCADE;
+DROP TABLE IF EXISTS learning_outcomes CASCADE;
+DROP TABLE IF EXISTS result_approvals CASCADE;
+DROP TABLE IF EXISTS results CASCADE;
+DROP TABLE IF EXISTS academic_result_summaries CASCADE;
+DROP TABLE IF EXISTS transcript_entries CASCADE;
+DROP TABLE IF EXISTS student_promotions CASCADE;
+DROP TABLE IF EXISTS student_academic_statuses CASCADE;
+DROP TABLE IF EXISTS student_placements CASCADE;
+DROP TABLE IF EXISTS placements CASCADE;
+DROP TABLE IF EXISTS teaching_allocations CASCADE;
+DROP TABLE IF EXISTS timetable_entries CASCADE;
+DROP TABLE IF EXISTS teaching_groups CASCADE;
+DROP TABLE IF EXISTS course_offerings CASCADE;
+DROP TABLE IF EXISTS course_registrations CASCADE;
+DROP TABLE IF EXISTS student_enrollments CASCADE;
+DROP TABLE IF EXISTS admission_decisions CASCADE;
+DROP TABLE IF EXISTS admissions CASCADE;
+DROP TABLE IF EXISTS applicants CASCADE;
+DROP TABLE IF EXISTS student_guardians CASCADE;
+DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE IF EXISTS student_attendances CASCADE;
+DROP TABLE IF EXISTS attendance_sessions CASCADE;
+DROP TABLE IF EXISTS attendance_records CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS student_invoices CASCADE;
+DROP TABLE IF EXISTS fee_structures CASCADE;
+DROP TABLE IF EXISTS library_loans CASCADE;
+DROP TABLE IF EXISTS library_books CASCADE;
+DROP TABLE IF EXISTS librarians CASCADE;
+DROP TABLE IF EXISTS staff_members CASCADE;
+DROP TABLE IF EXISTS programme_courses CASCADE;
+DROP TABLE IF EXISTS courses CASCADE;
+DROP TABLE IF EXISTS curricula CASCADE;
+DROP TABLE IF EXISTS programmes CASCADE;
+DROP TABLE IF EXISTS academic_periods CASCADE;
+DROP TABLE IF EXISTS academic_years CASCADE;
+DROP TABLE IF EXISTS intakes CASCADE;
+DROP TABLE IF EXISTS departments CASCADE;
+DROP TABLE IF EXISTS faculties CASCADE;
+DROP TABLE IF EXISTS campuses CASCADE;
+DROP TABLE IF EXISTS institutions CASCADE;
+DROP TABLE IF EXISTS user_roles CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
+
+COMMIT;
