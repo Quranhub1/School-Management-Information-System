@@ -8,82 +8,51 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/library")]
-public sealed class LibraryController(LibraryService library, IConfiguration configuration) : ControllerBase
+public sealed class LibraryController(LibraryWorkflowService library, IConfiguration configuration) : ControllerBase
 {
     [HttpGet("books")]
     [Authorize(Policy = LibraryPolicies.Read)]
-    public async Task<IActionResult> Books(CancellationToken ct) => Ok(await library.GetBooksAsync(ct));
-
-    [HttpGet("librarians")]
-    [Authorize(Policy = LibraryPolicies.Read)]
-    public async Task<IActionResult> Librarians(CancellationToken ct) => Ok(await library.GetLibrariansAsync(ct));
+    public Task<IReadOnlyList<LibraryBookDto>> Books(CancellationToken ct) => library.GetBooksAsync(ct);
 
     [HttpGet("loans/{studentId:guid}")]
     [Authorize(Policy = LibraryPolicies.Read)]
-    public async Task<IActionResult> StudentLoans(Guid studentId, [FromQuery] bool activeOnly = false, CancellationToken ct = default) =>
-        Ok(await library.GetStudentLoansAsync(studentId, activeOnly, ct));
+    public Task<IReadOnlyList<LibraryLoanDto>> StudentLoans(Guid studentId, [FromQuery] bool activeOnly = false, CancellationToken ct = default) =>
+        library.GetStudentLoansAsync(studentId, activeOnly, ct);
 
     [HttpGet("integrations")]
     [Authorize(Policy = LibraryPolicies.Read)]
     public IActionResult Integrations() => Ok(new
     {
-        koha = new
-        {
-            enabled = configuration.GetValue<bool>("LibraryIntegrations:Koha:Enabled"),
-            baseUrl = configuration["LibraryIntegrations:Koha:BaseUrl"]
-        },
-        dspace = new
-        {
-            enabled = configuration.GetValue<bool>("LibraryIntegrations:DSpace:Enabled"),
-            baseUrl = configuration["LibraryIntegrations:DSpace:BaseUrl"]
-        }
+        koha = new { enabled = configuration.GetValue<bool>("LibraryIntegrations:Koha:Enabled"), baseUrl = configuration["LibraryIntegrations:Koha:BaseUrl"] },
+        dspace = new { enabled = configuration.GetValue<bool>("LibraryIntegrations:DSpace:Enabled"), baseUrl = configuration["LibraryIntegrations:DSpace:BaseUrl"] }
     });
 
     [HttpPost("books")]
     [Authorize(Policy = LibraryPolicies.Management)]
-    public async Task<IActionResult> AddBook(CreateBookRequest request, CancellationToken ct)
+    public async Task<IActionResult> AddBook(CreateLibraryBookRequest request, CancellationToken ct)
     {
-        try
-        {
-            var book = await library.AddBookAsync(request.Isbn, request.Title, request.Author, request.Publisher, request.TotalCopies, ct);
-            return Created($"/api/library/books/{book.Id}", book);
-        }
-        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
-        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
-    }
-
-    [HttpPost("librarians")]
-    [Authorize(Policy = LibraryPolicies.Management)]
-    public async Task<IActionResult> AddLibrarian(AddLibrarianRequest request, CancellationToken ct)
-    {
-        try { return Ok(await library.AddLibrarianAsync(request.StaffMemberId, request.LibraryRole, ct)); }
+        try { return Ok(await library.AddBookAsync(request, ct)); }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpPost("loans")]
     [Authorize(Policy = LibraryPolicies.Management)]
-    public async Task<IActionResult> Issue(IssueLoanRequest request, CancellationToken ct)
+    public async Task<IActionResult> Issue(IssueLibraryBookRequest request, CancellationToken ct)
     {
-        try
-        {
-            var loan = await library.IssueBookAsync(request.StudentId, request.BookId, request.DueAtUtc.ToUniversalTime(), ct);
-            return Created($"/api/library/loans/{loan.Id}", loan);
-        }
+        try { return Ok(await library.IssueBookAsync(request, ct)); }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
     [HttpPatch("loans/{id:guid}/return")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> Return(Guid id, [FromQuery] decimal finePerOverdueDay = 1000m, CancellationToken ct = default)
     {
-        try { return Ok(await library.ReturnBookAsync(id, finePerOverdueDay, ct)); }
+        try { return Ok(await library.ReturnBookAsync(id, new ReturnLibraryBookRequest(finePerOverdueDay), ct)); }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 }
-
-public sealed record CreateBookRequest(string Isbn, string Title, string Author, string? Publisher, int TotalCopies);
-public sealed record AddLibrarianRequest(Guid StaffMemberId, string LibraryRole);
-public sealed record IssueLoanRequest(Guid BookId, Guid StudentId, DateTime DueAtUtc);
