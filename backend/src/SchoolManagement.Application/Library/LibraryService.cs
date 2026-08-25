@@ -4,11 +4,9 @@ namespace SchoolManagement.Application.Library;
 
 public sealed class LibraryService(ILibraryRepository library)
 {
-    public Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default) =>
-        library.GetBooksAsync(cancellationToken);
+    public Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default) => library.GetBooksAsync(cancellationToken);
 
-    public Task<IReadOnlyList<Librarian>> GetLibrariansAsync(CancellationToken cancellationToken = default) =>
-        library.GetLibrariansAsync(cancellationToken);
+    public Task<IReadOnlyList<Librarian>> GetLibrariansAsync(CancellationToken cancellationToken = default) => library.GetLibrariansAsync(cancellationToken);
 
     public Task<IReadOnlyList<LibraryLoan>> GetStudentLoansAsync(Guid studentId, bool activeOnly = false, CancellationToken cancellationToken = default) =>
         library.GetStudentLoansAsync(studentId, activeOnly, cancellationToken);
@@ -17,16 +15,19 @@ public sealed class LibraryService(ILibraryRepository library)
     {
         if (string.IsNullOrWhiteSpace(isbn) || string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(author))
             throw new ArgumentException("ISBN, title and author are required.");
-        if (totalCopies < 1)
-            throw new ArgumentException("Total copies must be at least one.");
-        if (await library.GetBookByIsbnAsync(isbn.Trim(), cancellationToken) is not null)
+        if (totalCopies < 1) throw new ArgumentOutOfRangeException(nameof(totalCopies));
+        var normalizedIsbn = isbn.Trim();
+        if (await library.GetBookByIsbnAsync(normalizedIsbn, cancellationToken) is not null)
             throw new InvalidOperationException("A library book with this ISBN already exists.");
 
         var book = new LibraryBook
         {
-            Isbn = isbn.Trim(), Title = title.Trim(), Author = author.Trim(),
+            Isbn = normalizedIsbn,
+            Title = title.Trim(),
+            Author = author.Trim(),
             Publisher = string.IsNullOrWhiteSpace(publisher) ? null : publisher.Trim(),
-            TotalCopies = totalCopies, AvailableCopies = totalCopies
+            TotalCopies = totalCopies,
+            AvailableCopies = totalCopies
         };
         await library.AddBookAsync(book, cancellationToken);
         await library.SaveChangesAsync(cancellationToken);
@@ -37,7 +38,7 @@ public sealed class LibraryService(ILibraryRepository library)
     {
         if (staffMemberId == Guid.Empty || string.IsNullOrWhiteSpace(libraryRole))
             throw new ArgumentException("Staff member and library role are required.");
-        if (await library.GetLibrariansAsync(cancellationToken) is { } librarians && librarians.Any(x => x.StaffMemberId == staffMemberId))
+        if ((await library.GetLibrariansAsync(cancellationToken)).Any(x => x.StaffMemberId == staffMemberId))
             throw new InvalidOperationException("This staff member is already registered as a librarian.");
 
         var librarian = new Librarian { StaffMemberId = staffMemberId, LibraryRole = libraryRole.Trim() };
@@ -50,9 +51,8 @@ public sealed class LibraryService(ILibraryRepository library)
     {
         if (studentId == Guid.Empty || bookId == Guid.Empty || dueAtUtc <= DateTime.UtcNow)
             throw new ArgumentException("Student, book and a future due date are required.");
-        var book = await library.GetBookAsync(bookId, cancellationToken) ?? throw new InvalidOperationException("Library book was not found.");
-        if (book.AvailableCopies <= 0)
-            throw new InvalidOperationException("No available copies remain for this book.");
+        var book = await library.GetBookAsync(bookId, cancellationToken) ?? throw new KeyNotFoundException("Library book was not found.");
+        if (book.AvailableCopies <= 0) throw new InvalidOperationException("No available copies remain for this book.");
         if ((await library.GetStudentLoansAsync(studentId, true, cancellationToken)).Any(x => x.BookId == bookId))
             throw new InvalidOperationException("The student already has an active loan for this book.");
 
@@ -65,15 +65,13 @@ public sealed class LibraryService(ILibraryRepository library)
 
     public async Task<LibraryLoan> ReturnBookAsync(Guid loanId, decimal finePerOverdueDay = 1000m, CancellationToken cancellationToken = default)
     {
-        if (finePerOverdueDay < 0)
-            throw new ArgumentException("Fine per overdue day cannot be negative.");
-        var loan = await library.GetLoanAsync(loanId, cancellationToken) ?? throw new InvalidOperationException("Library loan was not found.");
-        if (loan.ReturnedAtUtc.HasValue)
-            throw new InvalidOperationException("This loan has already been returned.");
-        var book = await library.GetBookAsync(loan.BookId, cancellationToken) ?? throw new InvalidOperationException("Library book was not found.");
+        if (finePerOverdueDay < 0) throw new ArgumentOutOfRangeException(nameof(finePerOverdueDay));
+        var loan = await library.GetLoanAsync(loanId, cancellationToken) ?? throw new KeyNotFoundException("Library loan was not found.");
+        if (loan.ReturnedAtUtc.HasValue) throw new InvalidOperationException("This loan has already been returned.");
+        var book = await library.GetBookAsync(loan.BookId, cancellationToken) ?? throw new KeyNotFoundException("Library book was not found.");
 
         var returnedAt = DateTime.UtcNow;
-        var overdueDays = returnedAt > loan.DueAtUtc ? (returnedAt.Date - loan.DueAtUtc.Date).Days : 0;
+        var overdueDays = returnedAt.Date > loan.DueAtUtc.Date ? (returnedAt.Date - loan.DueAtUtc.Date).Days : 0;
         loan.FineAmount = overdueDays * finePerOverdueDay;
         loan.ReturnedAtUtc = returnedAt;
         book.AvailableCopies = Math.Min(book.TotalCopies, book.AvailableCopies + 1);
