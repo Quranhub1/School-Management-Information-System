@@ -8,7 +8,7 @@ namespace SchoolManagement.Infrastructure.Repositories;
 public sealed class AdmissionRepository(SchoolManagementDbContext db) : IAdmissionRepository
 {
     public Task<Applicant?> GetApplicantAsync(Guid applicantId, CancellationToken cancellationToken = default) =>
-        db.Applicants.FirstOrDefaultAsync(x => x.Id == applicantId, cancellationToken);
+        db.Applicants.AsNoTracking().FirstOrDefaultAsync(x => x.Id == applicantId, cancellationToken);
 
     public Task<Admission?> GetAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default) =>
         db.Admissions.FirstOrDefaultAsync(x => x.Id == admissionId, cancellationToken);
@@ -17,7 +17,8 @@ public sealed class AdmissionRepository(SchoolManagementDbContext db) : IAdmissi
         await db.Admissions.AddAsync(admission, cancellationToken);
 
     public async Task AddDecisionAsync(AdmissionDecision decision, CancellationToken cancellationToken = default) =>
-        await db.Set<AdmissionDecision>().AddAsync(decision, cancellationToken);
+        await db.AdmissionDecisions.AddAsync(decision, cancellationToken);
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+        db.SaveChangesAsync(cancellationToken);
 }
