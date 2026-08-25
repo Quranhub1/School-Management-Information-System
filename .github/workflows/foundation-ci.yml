@@ -82,3 +82,5 @@ jobs:
             --no-build
           test -s /tmp/smism-schema.sql
           echo "EF Core model successfully scaffolds and generates SQL."
+
+# CI trigger refresh: execute Foundation CI on the current main revision.
