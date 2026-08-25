@@ -9,4 +9,7 @@ public sealed class LibraryLoan
     public DateTime DueAtUtc { get; set; }
     public DateTime? ReturnedAtUtc { get; set; }
     public decimal FineAmount { get; set; }
+
+    public bool IsActive => !ReturnedAtUtc.HasValue;
+    public bool IsOverdue(DateTime utcNow) => IsActive && utcNow > DueAtUtc;
 }

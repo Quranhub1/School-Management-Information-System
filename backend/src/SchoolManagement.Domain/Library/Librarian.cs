@@ -8,4 +8,16 @@ public sealed class Librarian
     public bool IsActive { get; set; } = true;
     public DateTime AssignedAtUtc { get; init; } = DateTime.UtcNow;
     public DateTime? DeactivatedAtUtc { get; set; }
+
+    public void Activate()
+    {
+        IsActive = true;
+        DeactivatedAtUtc = null;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        DeactivatedAtUtc ??= DateTime.UtcNow;
+    }
 }
