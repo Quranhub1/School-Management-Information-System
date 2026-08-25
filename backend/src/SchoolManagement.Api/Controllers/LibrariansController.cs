@@ -19,17 +19,16 @@ public sealed class LibrariansController(SchoolManagementDbContext db) : Control
             .Join(db.StaffMembers, l => l.StaffMemberId, s => s.Id, (l, s) => new LibrarianView(
                 l.Id, s.Id, s.StaffNumber, s.FirstName, s.LastName, s.PhoneNumber, s.Email,
                 l.LibraryRole, l.IsActive, l.AssignedAtUtc, l.DeactivatedAtUtc))
-            .OrderBy(x => x.LastName)
-            .ThenBy(x => x.FirstName)
-            .ToListAsync(ct);
+            .OrderBy(x => x.LastName).ThenBy(x => x.FirstName).ToListAsync(ct);
         return Ok(librarians);
     }
 
     [HttpPost]
     public async Task<IActionResult> Add(CreateLibrarianRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.LibraryRole))
-            return BadRequest(new { message = "Library role is required." });
+        var role = request.LibraryRole?.Trim();
+        if (string.IsNullOrWhiteSpace(role)) return BadRequest(new { message = "Library role is required." });
+        if (role.Length > 100) return BadRequest(new { message = "Library role must not exceed 100 characters." });
 
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == request.StaffMemberId, ct);
         if (staff is null) return NotFound(new { message = "Staff member not found." });
@@ -37,11 +36,7 @@ public sealed class LibrariansController(SchoolManagementDbContext db) : Control
         if (await db.Librarians.AnyAsync(x => x.StaffMemberId == request.StaffMemberId, ct))
             return Conflict(new { message = "This staff member is already registered as a librarian." });
 
-        var librarian = new Librarian
-        {
-            StaffMemberId = request.StaffMemberId,
-            LibraryRole = request.LibraryRole.Trim()
-        };
+        var librarian = new Librarian { StaffMemberId = request.StaffMemberId, LibraryRole = role };
         db.Librarians.Add(librarian);
         await db.SaveChangesAsync(ct);
         return Created($"api/library/librarians/{librarian.Id}", librarian);
@@ -50,12 +45,14 @@ public sealed class LibrariansController(SchoolManagementDbContext db) : Control
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateLibrarianRequest request, CancellationToken ct)
     {
-        var librarian = await db.Librarians.SingleOrDefaultAsync(x => x.Id == id, ct);
-        if (librarian is null) return NotFound();
-        if (string.IsNullOrWhiteSpace(request.LibraryRole))
-            return BadRequest(new { message = "Library role is required." });
+        var role = request.LibraryRole?.Trim();
+        if (string.IsNullOrWhiteSpace(role)) return BadRequest(new { message = "Library role is required." });
+        if (role.Length > 100) return BadRequest(new { message = "Library role must not exceed 100 characters." });
 
-        librarian.LibraryRole = request.LibraryRole.Trim();
+        var librarian = await db.Librarians.SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (librarian is null) return NotFound(new { message = "Librarian not found." });
+
+        librarian.LibraryRole = role;
         librarian.IsActive = request.IsActive;
         librarian.DeactivatedAtUtc = request.IsActive ? null : librarian.DeactivatedAtUtc ?? DateTime.UtcNow;
         await db.SaveChangesAsync(ct);

@@ -1,18 +1,27 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000';
 
-function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('accessToken');
-  return fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
+      Accept: 'application/json',
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init.headers ?? {}),
     },
-  }).then(async response => {
-    if (!response.ok) throw new Error((await response.text()) || `Request failed (${response.status})`);
-    return response.status === 204 ? undefined as T : response.json() as Promise<T>;
   });
+
+  if (!response.ok) {
+    let message = `Request failed (${response.status})`;
+    try {
+      const payload = await response.json() as { message?: string; title?: string };
+      message = payload.message ?? payload.title ?? message;
+    } catch { /* fall back to the HTTP status */ }
+    throw new Error(message);
+  }
+
+  return response.status === 204 ? undefined as T : await response.json() as T;
 }
 
 export type Librarian = {
@@ -30,5 +39,19 @@ export type Librarian = {
 };
 
 export const listLibrarians = () => request<Librarian[]>('/api/library/librarians');
-export const addLibrarian = (staffMemberId: string, libraryRole: string) => request<Librarian>('/api/library/librarians', { method: 'POST', body: JSON.stringify({ staffMemberId, libraryRole }) });
-export const updateLibrarian = (id: string, libraryRole: string, isActive: boolean) => request<Librarian>(`/api/library/librarians/${id}`, { method: 'PATCH', body: JSON.stringify({ libraryRole, isActive }) });
+
+export const addLibrarian = (staffMemberId: string, libraryRole: string) => {
+  if (!staffMemberId || !libraryRole.trim()) throw new Error('Staff member and library role are required.');
+  return request<Librarian>('/api/library/librarians', {
+    method: 'POST',
+    body: JSON.stringify({ staffMemberId, libraryRole: libraryRole.trim() }),
+  });
+};
+
+export const updateLibrarian = (id: string, libraryRole: string, isActive: boolean) => {
+  if (!id || !libraryRole.trim()) throw new Error('Librarian and library role are required.');
+  return request<Librarian>(`/api/library/librarians/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ libraryRole: libraryRole.trim(), isActive }),
+  });
+};
