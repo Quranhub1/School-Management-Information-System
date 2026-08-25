@@ -6,6 +6,7 @@ using SchoolManagement.Application.Admissions;
 using SchoolManagement.Application.Authentication;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Application.Library;
+using SchoolManagement.Application.Library.External;
 using SchoolManagement.Application.Progression;
 using SchoolManagement.Application.Students;
 using SchoolManagement.Infrastructure.Identity;
