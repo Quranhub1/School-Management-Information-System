@@ -25,10 +25,9 @@ public sealed class LibraryService(ILibraryRepository library)
             Isbn = normalizedIsbn,
             Title = title.Trim(),
             Author = author.Trim(),
-            Publisher = string.IsNullOrWhiteSpace(publisher) ? null : publisher.Trim(),
-            TotalCopies = totalCopies,
-            AvailableCopies = totalCopies
+            Publisher = string.IsNullOrWhiteSpace(publisher) ? null : publisher.Trim()
         };
+        book.SetInventory(totalCopies);
         await library.AddBookAsync(book, cancellationToken);
         await library.SaveChangesAsync(cancellationToken);
         return book;
@@ -52,12 +51,13 @@ public sealed class LibraryService(ILibraryRepository library)
         if (studentId == Guid.Empty || bookId == Guid.Empty || dueAtUtc <= DateTime.UtcNow)
             throw new ArgumentException("Student, book and a future due date are required.");
         var book = await library.GetBookAsync(bookId, cancellationToken) ?? throw new KeyNotFoundException("Library book was not found.");
+        if (!book.IsActive) throw new InvalidOperationException("This library book is inactive.");
         if (book.AvailableCopies <= 0) throw new InvalidOperationException("No available copies remain for this book.");
         if ((await library.GetStudentLoansAsync(studentId, true, cancellationToken)).Any(x => x.BookId == bookId))
             throw new InvalidOperationException("The student already has an active loan for this book.");
 
         var loan = new LibraryLoan { StudentId = studentId, BookId = bookId, DueAtUtc = dueAtUtc };
-        book.AvailableCopies--;
+        book.SetInventory(book.TotalCopies, book.AvailableCopies - 1);
         await library.AddLoanAsync(loan, cancellationToken);
         await library.SaveChangesAsync(cancellationToken);
         return loan;
@@ -74,7 +74,7 @@ public sealed class LibraryService(ILibraryRepository library)
         var overdueDays = returnedAt.Date > loan.DueAtUtc.Date ? (returnedAt.Date - loan.DueAtUtc.Date).Days : 0;
         loan.FineAmount = overdueDays * finePerOverdueDay;
         loan.ReturnedAtUtc = returnedAt;
-        book.AvailableCopies = Math.Min(book.TotalCopies, book.AvailableCopies + 1);
+        book.SetInventory(book.TotalCopies, Math.Min(book.TotalCopies, book.AvailableCopies + 1));
         await library.SaveChangesAsync(cancellationToken);
         return loan;
     }
