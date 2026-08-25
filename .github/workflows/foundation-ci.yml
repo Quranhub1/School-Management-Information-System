@@ -1,6 +1,7 @@
 name: Foundation CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, 'foundation/**', 'feature/**', 'fix/**']
   pull_request:
