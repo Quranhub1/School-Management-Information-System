@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Administration;
+using SchoolManagement.Application.Admissions;
 using SchoolManagement.Application.Assessment;
 using SchoolManagement.Application.Attendance;
 using SchoolManagement.Application.Authentication;
@@ -28,7 +29,12 @@ public static class DependencyInjection
         services.AddScoped<StudentPromotionService>();
         services.AddScoped<AttendanceService>();
         services.AddScoped<AttendanceWorkflowService>();
+        services.AddScoped<AdmissionService>();
+        services.AddScoped<AdmissionsWorkflowService>();
         services.AddScoped<FinanceService>();
+        services.AddScoped<FinanceWorkflowService>();
+        services.AddScoped<FeeService>();
+        services.AddScoped<FeeWorkflowService>();
         services.AddScoped<LibraryService>();
         services.AddScoped<ProgressionWorkflowService>();
         services.AddScoped<ISemesterProgressionService, SemesterProgressionService>();
