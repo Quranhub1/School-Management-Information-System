@@ -10,6 +10,7 @@ using SchoolManagement.Domain.Identity;
 using SchoolManagement.Domain.Library;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Students;
+using SchoolManagement.Infrastructure.Academic;
 using SchoolManagement.Infrastructure.Attendance;
 using SchoolManagement.Infrastructure.Assessment;
 using SchoolManagement.Infrastructure.Admissions;
@@ -67,6 +68,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<AssessmentWeightingProfile> AssessmentWeightingProfiles => Set<AssessmentWeightingProfile>();
     public DbSet<AssessmentWeightingComponent> AssessmentWeightingComponents => Set<AssessmentWeightingComponent>();
     public DbSet<AssessmentPlanWeightingProfile> AssessmentPlanWeightingProfiles => Set<AssessmentPlanWeightingProfile>();
+    public DbSet<AcademicClass> AcademicClasses => Set<AcademicClass>();
+    public DbSet<Stream> Streams => Set<Stream>();
+    public DbSet<Subject> Subjects => Set<Subject>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -138,5 +142,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.HasOne<AssessmentPlan>().WithMany().HasForeignKey(x => x.AssessmentPlanId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<AssessmentWeightingProfile>().WithMany().HasForeignKey(x => x.AssessmentWeightingProfileId).OnDelete(DeleteBehavior.Restrict);
         });
+
+        m.ApplyConfiguration(new AcademicClassConfiguration());
+        m.ApplyConfiguration(new StreamConfiguration());
+        m.ApplyConfiguration(new SubjectConfiguration());
     }
 }

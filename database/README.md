@@ -6,6 +6,7 @@ This directory contains SQL-based database schema scripts for PostgreSQL.
 
 - `migrations/0001_InitialCreate.sql` — Creates the full SMIS schema (identity, institution, academic structure, students, staff, finance, library, etc.)
 - `migrations/0001_InitialCreate.rollback.sql` — Rolls back the initial schema
+- `migrations/0002_AcademicManagement.sql` — Academic classes, streams, and subjects tables
 - `seed/admin_roles.sql` — Seeds initial institutional roles
 
 ## Usage

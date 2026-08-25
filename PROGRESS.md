@@ -8,7 +8,7 @@
 
 ## Overall implementation status
 
-**Estimated project progress: ~55%**
+**Estimated project progress: ~60%**
 
 This is an engineering estimate, not a percentage of code written. It reflects the breadth of implemented modules plus their current maturity across backend, persistence, authorization, frontend and CI.
 
@@ -158,12 +158,12 @@ This is an engineering estimate, not a percentage of code written. It reflects t
 # 3. TO BE COVERED — MAJOR MODULES
 
 ## Academic Management
-- [ ] Academic years
-- [ ] Terms/semesters
-- [ ] Classes/forms
-- [ ] Streams
-- [ ] Subjects
-- [ ] Curriculum
+- [x] Academic years — backend (controllers, services, repositories) + frontend pages
+- [x] Terms/semesters — backend (controllers, services, repositories) + frontend pages
+- [x] Classes/forms — backend (AcademicClass entity, controller, service, repository) + frontend component
+- [x] Streams — backend (Stream entity, controller, service, repository) + frontend component
+- [x] Subjects — backend (Subject entity, controller, service, repository) + frontend component
+- [x] Curriculum — backend + frontend component
 - [ ] Teacher-subject assignments
 - [ ] Academic records expansion
 - [ ] Academic reports

@@ -40,6 +40,9 @@ public static class DependencyInjection
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IAcademicClassRepository, AcademicClassRepository>();
+        services.AddScoped<IStreamRepository, StreamRepository>();
+        services.AddScoped<ISubjectRepository, SubjectRepository>();
         services.AddScoped<AdmissionService>();
         services.AddScoped<AdmissionsWorkflowService>();
         services.AddScoped<FinanceService>();

@@ -41,6 +41,9 @@ public static class DependencyInjection
         services.AddScoped<AuthService>();
         services.AddScoped<AdministrationService>();
         services.AddScoped<ModuleAccessService>();
+        services.AddScoped<AcademicClassService>();
+        services.AddScoped<StreamService>();
+        services.AddScoped<SubjectService>();
         return services;
     }
 }
