@@ -8,19 +8,19 @@ namespace SchoolManagement.Infrastructure.Repositories;
 public sealed class LibraryRepository(SchoolManagementDbContext db) : ILibraryRepository
 {
     public Task<LibraryBook?> GetBookAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.LibraryBooks.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        db.LibraryBooks.FirstOrDefaultAsync(x => x.Id == id && x.IsActive, cancellationToken);
 
     public Task<LibraryBook?> GetBookByIsbnAsync(string isbn, CancellationToken cancellationToken = default) =>
-        db.LibraryBooks.SingleOrDefaultAsync(x => x.Isbn == isbn, cancellationToken);
+        db.LibraryBooks.FirstOrDefaultAsync(x => x.Isbn == isbn && x.IsActive, cancellationToken);
 
     public Task<Librarian?> GetLibrarianAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Librarians.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        db.Librarians.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<LibraryLoan?> GetLoanAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.LibraryLoans.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        db.LibraryLoans.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default) =>
-        await db.LibraryBooks.AsNoTracking().OrderBy(x => x.Title).ToListAsync(cancellationToken);
+        await db.LibraryBooks.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Title).ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<LibraryLoan>> GetStudentLoansAsync(Guid studentId, bool activeOnly = false, CancellationToken cancellationToken = default)
     {
@@ -32,14 +32,8 @@ public sealed class LibraryRepository(SchoolManagementDbContext db) : ILibraryRe
     public async Task<IReadOnlyList<Librarian>> GetLibrariansAsync(CancellationToken cancellationToken = default) =>
         await db.Librarians.AsNoTracking().OrderBy(x => x.LibraryRole).ToListAsync(cancellationToken);
 
-    public Task AddBookAsync(LibraryBook book, CancellationToken cancellationToken = default) =>
-        db.LibraryBooks.AddAsync(book, cancellationToken).AsTask();
-
-    public Task AddLibrarianAsync(Librarian librarian, CancellationToken cancellationToken = default) =>
-        db.Librarians.AddAsync(librarian, cancellationToken).AsTask();
-
-    public Task AddLoanAsync(LibraryLoan loan, CancellationToken cancellationToken = default) =>
-        db.LibraryLoans.AddAsync(loan, cancellationToken).AsTask();
-
+    public Task AddBookAsync(LibraryBook book, CancellationToken cancellationToken = default) => db.LibraryBooks.AddAsync(book, cancellationToken).AsTask();
+    public Task AddLibrarianAsync(Librarian librarian, CancellationToken cancellationToken = default) => db.Librarians.AddAsync(librarian, cancellationToken).AsTask();
+    public Task AddLoanAsync(LibraryLoan loan, CancellationToken cancellationToken = default) => db.LibraryLoans.AddAsync(loan, cancellationToken).AsTask();
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
 }
