@@ -7,8 +7,14 @@ public sealed record LibraryBookDto(Guid Id, string Isbn, string Title, string A
     public static LibraryBookDto FromDomain(LibraryBook x) => new(x.Id, x.Isbn, x.Title, x.Author, x.Publisher, x.TotalCopies, x.AvailableCopies, x.IsActive);
 }
 
+public sealed record LibrarianDto(Guid Id, Guid StaffMemberId, string LibraryRole, bool IsActive, DateTime AssignedAtUtc, DateTime? DeactivatedAtUtc)
+{
+    public static LibrarianDto FromDomain(Librarian x) => new(x.Id, x.StaffMemberId, x.LibraryRole, x.IsActive, x.AssignedAtUtc, x.DeactivatedAtUtc);
+}
+
 public sealed record LibraryLoanDto(Guid Id, Guid BookId, Guid StudentId, DateTime IssuedAtUtc, DateTime DueAtUtc, DateTime? ReturnedAtUtc, decimal FineAmount)
 {
+    public bool IsActive => !ReturnedAtUtc.HasValue;
     public static LibraryLoanDto FromDomain(LibraryLoan x) => new(x.Id, x.BookId, x.StudentId, x.IssuedAtUtc, x.DueAtUtc, x.ReturnedAtUtc, x.FineAmount);
 }
 
