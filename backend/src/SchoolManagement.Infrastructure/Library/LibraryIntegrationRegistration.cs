@@ -1,3 +1,4 @@
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using SchoolManagement.Application.Library.External;
 
@@ -12,8 +13,9 @@ public static class LibraryIntegrationRegistration
         ArgumentNullException.ThrowIfNull(settings);
 
         services.AddSingleton<ILibraryIntegrationSettings>(new LibraryIntegrationSettingsProvider(settings));
-        services.AddHttpClient<KohaExternalClient>(client => client.Timeout = TimeSpan.FromSeconds(10));
-        services.AddHttpClient<DSpaceExternalClient>(client => client.Timeout = TimeSpan.FromSeconds(10));
+        services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(10) });
+        services.AddSingleton<KohaExternalClient>();
+        services.AddSingleton<DSpaceExternalClient>();
         services.AddSingleton<ILibraryExternalClient>(sp => sp.GetRequiredService<KohaExternalClient>());
         services.AddSingleton<LibraryIntegrationHealthService>();
 
