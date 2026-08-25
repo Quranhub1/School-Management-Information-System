@@ -40,7 +40,10 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<AdmissionService>();
         services.AddScoped<AdmissionsWorkflowService>();
+        services.AddScoped<FinanceService>();
+        services.AddScoped<FinanceWorkflowService>();
         services.AddScoped<FeeService>();
+        services.AddScoped<FeeWorkflowService>();
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
         services.AddScoped<AdminSeeder>();
