@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
+<<<<<<< ours
 type AcademicYear = { id: string; name: string; startDate: string; endDate: string; isCurrent: boolean; isActive: boolean };
+=======
+const authHeaders = () => ({ 'Content-Type': 'application/json', ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}) });
+>>>>>>> theirs
 
 export default function AcademicYearsPage() {
   const [years, setYears] = useState<AcademicYear[]>([]);
@@ -12,6 +16,7 @@ export default function AcademicYearsPage() {
   const [saving, setSaving] = useState(false);
 
   async function load() {
+<<<<<<< ours
     setLoading(true);
     try {
       const response = await fetch('/api/academic-structure/years', { headers: { Accept: 'application/json' } });
@@ -20,12 +25,17 @@ export default function AcademicYearsPage() {
       setMessage('');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to load academic years.'); }
     finally { setLoading(false); }
+=======
+    const response = await fetch('/api/academic-structure/years', { headers: authHeaders() });
+    if (response.ok) setYears(await response.json());
+>>>>>>> theirs
   }
 
   useEffect(() => { void load(); }, []);
 
   async function createYear(event: React.FormEvent) {
     event.preventDefault();
+<<<<<<< ours
     if (new Date(startDate) >= new Date(endDate)) { setMessage('The start date must be before the end date.'); return; }
     setSaving(true); setMessage('');
     try {
@@ -37,6 +47,15 @@ export default function AcademicYearsPage() {
       setName(''); setStartDate(''); setEndDate(''); setMessage('Academic year created.'); await load();
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to create academic year.'); }
     finally { setSaving(false); }
+=======
+    setMessage('');
+    const response = await fetch('/api/academic-structure/years', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ name, startDate, endDate, isCurrent: false })
+    });
+    setMessage(response.ok ? 'Academic year created.' : await response.text());
+    if (response.ok) { setName(''); setStartDate(''); setEndDate(''); await load(); }
+>>>>>>> theirs
   }
 
   return <section>
