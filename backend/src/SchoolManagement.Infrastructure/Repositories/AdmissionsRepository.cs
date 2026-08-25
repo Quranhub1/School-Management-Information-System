@@ -5,9 +5,9 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Infrastructure.Repositories;
 
 /// <summary>
-/// Backwards-compatible plural alias for the canonical AdmissionRepository.
+/// Backwards-compatible plural alias for the canonical admission repository.
 /// </summary>
-public sealed class AdmissionsRepository(SchoolManagementDbContext db) : IAdmissionsRepository
+public sealed class AdmissionsRepository(SchoolManagementDbContext db) : IAdmissionRepository
 {
     private readonly AdmissionRepository inner = new(db);
 
