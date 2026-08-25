@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SchoolManagement.Application.Library.External;
 using SchoolManagement.Infrastructure.Library;
 
 namespace SchoolManagement.Api.Controllers;
