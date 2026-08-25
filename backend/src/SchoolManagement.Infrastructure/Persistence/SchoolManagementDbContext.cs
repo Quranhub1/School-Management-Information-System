@@ -12,8 +12,7 @@ using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Students;
 using SchoolManagement.Infrastructure.Attendance;
 using SchoolManagement.Infrastructure.Assessment;
-using AssessmentGradingScale = SchoolManagement.Domain.Assessment.GradingScale;
-using AssessmentGradeBand = SchoolManagement.Domain.Assessment.GradeBand;
+using SchoolManagement.Infrastructure.Admissions;
 using AssessmentTranscriptEntry = SchoolManagement.Domain.Assessment.TranscriptEntry;
 using AssessmentAcademicResultSummary = SchoolManagement.Domain.Assessment.AcademicResultSummary;
 
@@ -37,6 +36,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Curriculum> Curricula => Set<Curriculum>();
     public DbSet<CurriculumCourse> CurriculumCourses => Set<CurriculumCourse>();
     public DbSet<Admission> Admissions => Set<Admission>();
+    public DbSet<AdmissionDecision> AdmissionDecisions => Set<AdmissionDecision>();
     public DbSet<StudentEnrollment> StudentEnrollments => Set<StudentEnrollment>();
     public DbSet<CourseRegistration> CourseRegistrations => Set<CourseRegistration>();
     public DbSet<CourseOffering> CourseOfferings => Set<CourseOffering>();
@@ -76,37 +76,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        m.Entity<StudentPromotion>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.HasIndex(x => new { x.StudentId, x.FromAcademicYearId, x.FromSemesterId }).IsUnique();
-            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(50).IsRequired();
-            e.Property(x => x.Reason).HasMaxLength(1000);
-            e.Property(x => x.RecordedBy).HasMaxLength(150);
-            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
-            e.HasOne<AcademicYear>().WithMany().HasForeignKey(x => x.FromAcademicYearId).OnDelete(DeleteBehavior.Restrict);
-            e.HasOne<Semester>().WithMany().HasForeignKey(x => x.FromSemesterId).OnDelete(DeleteBehavior.Restrict);
-            e.HasOne<AcademicYear>().WithMany().HasForeignKey(x => x.ToAcademicYearId).OnDelete(DeleteBehavior.Restrict);
-            e.HasOne<Semester>().WithMany().HasForeignKey(x => x.ToSemesterId).OnDelete(DeleteBehavior.Restrict);
-        });
-
-        m.Entity<TimetableEntry>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.HasIndex(x => new { x.TeachingGroupId, x.DayOfWeek, x.StartTime }).IsUnique();
-            e.Property(x => x.Room).HasMaxLength(100);
-            e.Property(x => x.SessionType).HasMaxLength(50);
-            e.HasOne<TeachingGroup>().WithMany().HasForeignKey(x => x.TeachingGroupId).OnDelete(DeleteBehavior.Cascade);
-        });
-
-        m.Entity<TeachingGroup>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.HasIndex(x => new { x.CourseOfferingId, x.GroupCode }).IsUnique();
-            e.Property(x => x.GroupCode).HasMaxLength(30).IsRequired();
-            e.Property(x => x.Name).HasMaxLength(100);
-            e.HasOne<CourseOffering>().WithMany().HasForeignKey(x => x.CourseOfferingId).OnDelete(DeleteBehavior.Cascade);
-        });
+        m.Entity<AdmissionDecision>().HasOne<Admission>().WithMany().HasForeignKey(x => x.AdmissionId).OnDelete(DeleteBehavior.Cascade);
+        m.ApplyConfiguration(new AdmissionsConfiguration());
+        m.ApplyConfiguration(new AdmissionDecisionConfiguration());
 
         AttendanceConfiguration.Apply(m);
         m.ApplyConfiguration(new AssessmentPlanConfiguration());
