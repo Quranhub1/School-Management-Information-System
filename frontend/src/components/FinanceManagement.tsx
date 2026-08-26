@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createInvoice, getInvoices, recordPayment, type Invoice } from '../api/finance'
 
-type PaymentTab = 'new' | 'history' | 'receipts'
+type PaymentTab = 'dashboard' | 'new' | 'history' | 'receipts' | 'structures'
 
 const STATUS_COLORS: Record<string, string> = {
   Paid: '#059669',
@@ -18,15 +18,17 @@ export function FinanceManagement() {
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
-  const [tab, setTab] = useState<PaymentTab>('new')
+  const [tab, setTab] = useState<PaymentTab>('dashboard')
 
   const [studentId, setStudentId] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [amount, setAmount] = useState('')
+  const [feeStructure, setFeeStructure] = useState('')
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null)
   const [paymentAmount, setPaymentAmount] = useState('')
   const [receiptNumber, setReceiptNumber] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Cash')
+  const [reference, setReference] = useState('')
 
   async function load() {
     setLoading(true)
@@ -61,10 +63,11 @@ export function FinanceManagement() {
   async function submitInvoice(event: FormEvent) {
     event.preventDefault()
     try {
-      await createInvoice({ studentId: studentId.trim(), invoiceNumber: invoiceNumber.trim(), amount: Number(amount), currency: 'UGX' })
+      await createInvoice({ studentId: studentId.trim(), feeStructureId: feeStructure || undefined, invoiceNumber: invoiceNumber.trim(), amount: Number(amount), currency: 'UGX' })
       setStudentId('')
       setInvoiceNumber('')
       setAmount('')
+      setFeeStructure('')
       setTab('history')
       await load()
     } catch (e) {
@@ -76,10 +79,11 @@ export function FinanceManagement() {
     event.preventDefault()
     if (!paymentInvoice) return
     try {
-      await recordPayment(paymentInvoice.id, { amount: Number(paymentAmount), receiptNumber: receiptNumber.trim(), paymentMethod, currency: paymentInvoice.currency })
+      await recordPayment(paymentInvoice.id, { amount: Number(paymentAmount), receiptNumber: receiptNumber.trim(), paymentMethod, reference: reference.trim(), currency: paymentInvoice.currency })
       setPaymentInvoice(null)
       setPaymentAmount('')
       setReceiptNumber('')
+      setReference('')
       setTab('history')
       await load()
     } catch (e) {
@@ -95,7 +99,7 @@ export function FinanceManagement() {
     <section className="panel" aria-label="Finance management">
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">FINANCE</span>
+          <span className="eyebrow">Finance</span>
           <h2>Fees, Invoices & Payments</h2>
         </div>
         <button className="secondary-button" onClick={() => void load()}>Refresh</button>
@@ -134,17 +138,62 @@ export function FinanceManagement() {
           </div>
 
           <div className="library-workspace-tabs" role="tablist" aria-label="Finance sections" style={{ marginBottom: 18 }}>
+            <button role="tab" aria-selected={tab === 'dashboard'} className={tab === 'dashboard' ? 'active' : ''} onClick={() => setTab('dashboard')}>Dashboard</button>
             <button role="tab" aria-selected={tab === 'new'} className={tab === 'new' ? 'active' : ''} onClick={() => setTab('new')}>New Invoice</button>
             <button role="tab" aria-selected={tab === 'history'} className={tab === 'history' ? 'active' : ''} onClick={() => setTab('history')}>Payment History</button>
             <button role="tab" aria-selected={tab === 'receipts'} className={tab === 'receipts' ? 'active' : ''} onClick={() => setTab('receipts')}>Receipts</button>
+            <button role="tab" aria-selected={tab === 'structures'} className={tab === 'structures' ? 'active' : ''} onClick={() => setTab('structures')}>Fee Structures</button>
           </div>
+
+          {tab === 'dashboard' && (
+            <div>
+              <div className="summary-grid" style={{ marginBottom: 22 }}>
+                <div className="summary-card">
+                  <span>Collection Rate</span>
+                  <strong>{totalBilled > 0 ? Math.round((totalPaid / totalBilled) * 100) : 0}%</strong>
+                </div>
+                <div className="summary-card">
+                  <span>Paid Invoices</span>
+                  <strong style={{ color: '#059669' }}>{invoices.filter(i => i.status === 'Paid').length}</strong>
+                </div>
+                <div className="summary-card">
+                  <span>Pending Invoices</span>
+                  <strong style={{ color: '#d97706' }}>{invoices.filter(i => i.status === 'Pending').length}</strong>
+                </div>
+                <div className="summary-card">
+                  <span>Overdue Invoices</span>
+                  <strong style={{ color: '#dc2626' }}>{invoices.filter(i => i.status === 'Overdue').length}</strong>
+                </div>
+              </div>
+              <div className="table-wrap">
+                <h3>Recent Invoices</h3>
+                {loading ? <p className="empty">Loading...</p> : (
+                  <table>
+                    <thead><tr><th>Invoice</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+                    <tbody>
+                      {invoices.slice(0, 5).map(invoice => (
+                        <tr key={invoice.id}>
+                          <td><strong>{invoice.invoiceNumber}</strong></td>
+                          <td>{invoice.currency} {invoice.amount.toLocaleString()}</td>
+                          <td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
+                          <td style={{ color: invoice.balance > 0 ? '#dc2626' : '#059669' }}>{invoice.currency} {invoice.balance.toLocaleString()}</td>
+                          <td><span className="badge" style={{ background: STATUS_COLORS[invoice.status] ?? '#78716c', color: 'white' }}>{invoice.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
 
           {tab === 'new' && (
             <form className="student-form" onSubmit={submitInvoice}>
               <h3>Create Invoice</h3>
-              <div className="form-row">
+              <div className="form-grid">
                 <label>Student ID<input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="Student ID" required /></label>
                 <label>Invoice Number<input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} placeholder="INV-001" required /></label>
+                <label>Fee Structure<input value={feeStructure} onChange={e => setFeeStructure(e.target.value)} placeholder="e.g. Tuition-Year1" /></label>
                 <label>Amount (UGX)<input type="number" min="1" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" required /></label>
               </div>
               <button type="submit">Create Invoice</button>
@@ -180,15 +229,7 @@ export function FinanceManagement() {
                           {invoice.currency} {invoice.balance.toLocaleString()}
                         </td>
                         <td>
-                          <span style={{
-                            display: 'inline-flex',
-                            padding: '4px 10px',
-                            borderRadius: '999px',
-                            background: STATUS_COLORS[invoice.status] ?? '#78716c',
-                            color: 'white',
-                            fontSize: '.72rem',
-                            fontWeight: 800,
-                          }}>
+                          <span className="badge" style={{ background: STATUS_COLORS[invoice.status] ?? '#78716c', color: 'white' }}>
                             {invoice.status}
                           </span>
                         </td>
@@ -222,6 +263,7 @@ export function FinanceManagement() {
                       <th>Amount Paid</th>
                       <th>Currency</th>
                       <th>Status</th>
+                      <th>Date</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -230,24 +272,20 @@ export function FinanceManagement() {
                         <td><strong>{invoice.invoiceNumber}</strong></td>
                         <td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
                         <td>{invoice.currency}</td>
-                        <td>
-                          <span style={{
-                            display: 'inline-flex',
-                            padding: '4px 10px',
-                            borderRadius: '999px',
-                            background: STATUS_COLORS[invoice.status] ?? '#78716c',
-                            color: 'white',
-                            fontSize: '.72rem',
-                            fontWeight: 800,
-                          }}>
-                            {invoice.status}
-                          </span>
-                        </td>
+                        <td><span className="badge" style={{ background: STATUS_COLORS[invoice.status] ?? '#78716c', color: 'white' }}>{invoice.status}</span></td>
+                        <td>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
+            </div>
+          )}
+
+          {tab === 'structures' && (
+            <div className="card">
+              <h3>Fee Structures</h3>
+              <p className="empty">Fee structure management will be available here. Configure tuition, registration, and other fees per programme.</p>
             </div>
           )}
         </>
@@ -272,7 +310,9 @@ export function FinanceManagement() {
               <option>Bank</option>
               <option>Mobile Money</option>
               <option>Card</option>
+              <option>Cheque</option>
             </select>
+            <input aria-label="Reference" placeholder="Reference number (optional)" value={reference} onChange={e => setReference(e.target.value)} />
             <div className="topbar-actions">
               <button type="button" className="secondary-button" onClick={() => setPaymentInvoice(null)}>Cancel</button>
               <button type="submit">Record Payment</button>

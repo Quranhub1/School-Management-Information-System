@@ -3,6 +3,7 @@ import './RoleNavigation.css'
 interface RoleNavigationProps { roles: string[] }
 export function RoleNavigation({ roles }: RoleNavigationProps) {
   const items = [
+    roles.includes('SystemAdministrator') ? 'Admin Dashboard' : null,
     hasAnyRole(roles, ADMINISTRATION_ROLES) ? 'Administration' : null,
     hasAnyRole(roles, ACADEMIC_MANAGEMENT_ROLES) ? 'Academic Management' : null,
     hasAnyRole(roles, ACADEMIC_MANAGEMENT_ROLES) ? 'Class Forms' : null,
