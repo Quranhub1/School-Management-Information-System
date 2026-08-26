@@ -15,6 +15,8 @@ using SchoolManagement.Application.Staff;
 using SchoolManagement.Application.Calendar;
 using SchoolManagement.Application.Access;
 using SchoolManagement.Application.Audit;
+using SchoolManagement.Application.Administration;
+using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Progression;
 using SchoolManagement.Application.Students;
 using SchoolManagement.Infrastructure.Identity;
