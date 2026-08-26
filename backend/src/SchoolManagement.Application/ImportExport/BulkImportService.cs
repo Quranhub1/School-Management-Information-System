@@ -1,4 +1,3 @@
-using System.Text;
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.HR;
 using SchoolManagement.Domain.Staff;
@@ -46,7 +45,18 @@ public sealed class BulkImportService(IStudentRepository students, IHrRepository
             var phone = values.ElementAtOrDefault(phoneIdx)?.Trim();
             var email = values.ElementAtOrDefault(emailIdx)?.Trim();
             var status = values.ElementAtOrDefault(statusIdx)?.Trim() ?? "Active";
-            var student = new SchoolManagement.Domain.Students.Student { StudentNumber = studentNumber, FirstName = firstName, LastName = lastName, OtherNames = otherNames, DateOfBirth = dob, Gender = gender, PhoneNumber = phone, Email = email, Status = status };
+            var student = new SchoolManagement.Domain.Students.Student
+            {
+                StudentNumber = studentNumber,
+                FirstName = firstName,
+                LastName = lastName,
+                OtherNames = otherNames,
+                DateOfBirth = dob,
+                Gender = gender,
+                PhoneNumber = phone,
+                Email = email,
+                Status = status
+            };
             await students.AddAsync(student, cancellationToken);
             existingNumbers.Add(studentNumber);
             successCount++;
@@ -86,7 +96,16 @@ public sealed class BulkImportService(IStudentRepository students, IHrRepository
             var nationalId = values.ElementAtOrDefault(nationalIdIdx)?.Trim();
             var phone = values.ElementAtOrDefault(phoneIdx)?.Trim();
             var email = values.ElementAtOrDefault(emailIdx)?.Trim();
-            var staffMember = new StaffMember { StaffNumber = staffNumber, FirstName = firstName, LastName = lastName, EmploymentType = employmentType, NationalId = nationalId, PhoneNumber = phone, Email = email };
+            var staffMember = new StaffMember
+            {
+                StaffNumber = staffNumber,
+                FirstName = firstName,
+                LastName = lastName,
+                EmploymentType = employmentType,
+                NationalId = nationalId,
+                PhoneNumber = phone,
+                Email = email
+            };
             await staff.AddAsync(staffMember, cancellationToken);
             existingNumbers.Add(staffNumber);
             successCount++;
@@ -105,9 +124,13 @@ public sealed class BulkImportService(IStudentRepository students, IHrRepository
             if (filters.TryGetValue("search", out var search) && !string.IsNullOrWhiteSpace(search)) query = query.Where(s => s.StudentNumber.Contains(search.Trim()) || s.FirstName.Contains(search.Trim()) || s.LastName.Contains(search.Trim()));
         }
         var studentList = query.OrderBy(s => s.LastName).ThenBy(s => s.FirstName).ToList();
-        var sb = new StringBuilder();
+        var sb = new System.Text.StringBuilder();
         sb.AppendLine("StudentNumber,FirstName,LastName,OtherNames,DateOfBirth,Gender,PhoneNumber,Email,Status,CreatedAt");
-        foreach (var s in studentList) sb.AppendLine($"{Escape(s.StudentNumber)},{Escape(s.FirstName)},{Escape(s.LastName)},{Escape(s.OtherNames)},{Escape(s.DateOfBirth?.ToString(\"yyyy-MM-dd\"))},{Escape(s.Gender)},{Escape(s.PhoneNumber)},{Escape(s.Email)},{Escape(s.Status)},{Escape(s.CreatedAt.ToString(\"o\"))}");
+        foreach (var s in studentList)
+        {
+            var dob = s.DateOfBirth?.ToString("yyyy-MM-dd") ?? string.Empty;
+            sb.AppendLine(string.Join(",", Escape(s.StudentNumber), Escape(s.FirstName), Escape(s.LastName), Escape(s.OtherNames), Escape(dob), Escape(s.Gender), Escape(s.PhoneNumber), Escape(s.Email), Escape(s.Status), Escape(s.CreatedAt.ToString("o"))));
+        }
         return sb.ToString();
     }
 
@@ -121,16 +144,18 @@ public sealed class BulkImportService(IStudentRepository students, IHrRepository
             if (filters.TryGetValue("search", out var search) && !string.IsNullOrWhiteSpace(search)) query = query.Where(s => s.StaffNumber.Contains(search.Trim()) || s.FirstName.Contains(search.Trim()) || s.LastName.Contains(search.Trim()));
         }
         var staffList = query.OrderBy(s => s.LastName).ThenBy(s => s.FirstName).ToList();
-        var sb = new StringBuilder();
+        var sb = new System.Text.StringBuilder();
         sb.AppendLine("StaffNumber,FirstName,LastName,NationalId,PhoneNumber,Email,EmploymentType,IsActive");
-        foreach (var s in staffList) sb.AppendLine($"{Escape(s.StaffNumber)},{Escape(s.FirstName)},{Escape(s.LastName)},{Escape(s.NationalId)},{Escape(s.PhoneNumber)},{Escape(s.Email)},{Escape(s.EmploymentType)},{s.IsActive}");
+        foreach (var s in staffList)
+            sb.AppendLine(string.Join(",", Escape(s.StaffNumber), Escape(s.FirstName), Escape(s.LastName), Escape(s.NationalId), Escape(s.PhoneNumber), Escape(s.Email), Escape(s.EmploymentType), s.IsActive.ToString()));
         return sb.ToString();
     }
 
     private static string Escape(string? value)
     {
         if (value is null) return string.Empty;
-        if (value.Contains(',') || value.Contains('\"') || value.Contains('\n')) return $"\"{value.Replace(\"\"\", \"\"\"\") }\"";
-        return value;
+        return value.Contains(',') || value.Contains('"') || value.Contains('\n')
+            ? $"\"{value.Replace("\"", "\"\"")}\""
+            : value;
     }
 }
