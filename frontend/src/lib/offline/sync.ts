@@ -16,7 +16,7 @@ export async function enqueue(item: Omit<QueueItem, 'id' | 'createdAt'>): Promis
 }
 
 export async function dequeue(): Promise<QueueItem | undefined> {
-  const items = await idbGet<QueueItem[]>('queue');
+  const items = await idbGet<QueueItem>('queue');
   const next = items[0];
   if (!next) return undefined;
   if (next.id) await idbRemove('queue', next.id);
@@ -24,7 +24,7 @@ export async function dequeue(): Promise<QueueItem | undefined> {
 }
 
 export async function queueSize(): Promise<number> {
-  const items = await idbGet<QueueItem[]>('queue');
+  const items = await idbGet<QueueItem>('queue');
   return items.length;
 }
 

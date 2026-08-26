@@ -39,7 +39,7 @@ export async function get<T>(storeName: string): Promise<T[]> {
   const store = await getStore<T>(storeName);
   return new Promise((resolve, reject) => {
     const request = store.getAll();
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => resolve(request.result as T[]);
     request.onerror = () => reject(request.error);
   });
 }
@@ -48,13 +48,13 @@ export async function put<T>(storeName: string, value: T): Promise<T> {
   const store = await getStore<T>(storeName, 'readwrite');
   return new Promise((resolve, reject) => {
     const request = store.put(value);
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => resolve(request.result as T);
     request.onerror = () => reject(request.error);
   });
 }
 
 export async function remove(storeName: string, id: string | number): Promise<void> {
-  const store = await getStore<{ id?: string | number }>(storeName, 'readwrite');
+  const store = await getStore<Record<string, unknown>>(storeName, 'readwrite');
   return new Promise((resolve, reject) => {
     const request = store.delete(id as IDBValidKey);
     request.onsuccess = () => resolve();
