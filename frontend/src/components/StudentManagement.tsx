@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createStudent, getStudents, type CreateStudentRequest, type Student } from '../api/students'
+import { createStudent, getStudentQrCode, getStudents, type CreateStudentRequest, type Student } from '../api/students'
 
 interface Props { canManage: boolean }
 
@@ -11,6 +11,7 @@ export function StudentManagement({ canManage }: Props) {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [qrStudentId, setQrStudentId] = useState<string | null>(null)
 
   async function load() {
     setLoading(true); setError('')
@@ -44,8 +45,18 @@ export function StudentManagement({ canManage }: Props) {
       <button type="submit" disabled={saving}>{saving ? 'Registering…' : 'Register student'}</button>
     </form>
     {error && <div className="error" role="alert">{error}</div>}
-    <div className="table-wrap"><table><thead><tr><th>Student number</th><th>Name</th><th>Gender</th><th>Phone</th><th>Email</th><th>Status</th></tr></thead><tbody>
-      {loading ? <tr><td colSpan={6} className="empty">Loading students…</td></tr> : students.length === 0 ? <tr><td colSpan={6} className="empty">No students registered.</td></tr> : students.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{[s.firstName, s.otherNames, s.lastName].filter(Boolean).join(' ')}</td><td>{s.gender ?? '—'}</td><td>{s.phoneNumber ?? '—'}</td><td>{s.email ?? '—'}</td><td>{s.status}</td></tr>)}
+    <div className="table-wrap"><table><thead><tr><th>Student number</th><th>Name</th><th>Gender</th><th>Phone</th><th>Email</th><th>Status</th><th>QR Code</th></tr></thead><tbody>
+      {loading ? <tr><td colSpan={7} className="empty">Loading students…</td></tr> : students.length === 0 ? <tr><td colSpan={7} className="empty">No students registered.</td></tr> : students.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{[s.firstName, s.otherNames, s.lastName].filter(Boolean).join(' ')}</td><td>{s.gender ?? '—'}</td><td>{s.phoneNumber ?? '—'}</td><td>{s.email ?? '—'}</td><td>{s.status}</td><td><button className="secondary-button" onClick={() => setQrStudentId(s.id)}>View QR</button></td></tr>)}
     </tbody></table></div>
+    {qrStudentId && (
+      <div className="modal-backdrop" onClick={() => setQrStudentId(null)}>
+        <div className="auth-card" onClick={e => e.stopPropagation()}>
+          <p className="eyebrow">Student QR Code</p>
+          <h3>{qrStudentId}</h3>
+          <img src={getStudentQrCode(qrStudentId)} alt="Student QR Code" style={{ width: '100%', height: 'auto' }} />
+          <button className="secondary-button" style={{ marginTop: 12 }} onClick={() => setQrStudentId(null)}>Close</button>
+        </div>
+      </div>
+    )}
   </section>
 }

@@ -1,2 +1,6 @@
-.role-navigation { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
-.module-chip { display: inline-flex; align-items: center; padding: 0.45rem 0.75rem; border: 1px solid #d7dce5; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
+.role-navigation { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.module-chip { padding: 7px 14px; border-radius: 999px; background: #1e40af; color: white; font-size: .78rem; font-weight: 800; letter-spacing: .02em; }
+.module-chip:nth-child(2n) { background: #f97316; }
+.module-chip:nth-child(3n) { background: #92400e; color: white; }
+.module-chip:nth-child(4n) { background: #059669; }
+.module-chip:nth-child(5n) { background: #7c3aed; }

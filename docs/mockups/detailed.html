@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SMIS — Detailed Screen Mockups</title>
+  <style>
+    :root {
+      --blue: #1e40af;
+      --orange: #f97316;
+      --brown: #92400e;
+      --green: #059669;
+      --purple: #7c3aed;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: #111827;
+    }
+    header {
+      background: linear-gradient(90deg, #1e40af, #2563eb);
+      color: white;
+      padding: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 { margin: 0; font-size: 22px; }
+    header p { margin: 6px 0 0; opacity: 0.9; font-size: 14px; }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 16px 24px;
+      overflow-x: auto;
+      background: #eef2ff;
+      border-bottom: 1px solid var(--border);
+    }
+    .tabs button {
+      border: 1px solid var(--border);
+      background: white;
+      color: #374151;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .tabs button.active { background: var(--blue); color: white; border-color: var(--blue); }
+    main { padding: 24px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card h2 { margin: 0 0 16px; font-size: 18px; color: #111827; }
+    .card p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stat {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .stat .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .stat .value { font-size: 22px; font-weight: 800; color: #111827; margin-top: 6px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+      background: #eef2ff; color: #1e3a8a; border: 1px solid #c7d2fe; font-size: 13px; font-weight: 600;
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+      background: #fff7ed; color: #7c2d12; border: 1px solid #fed7aa; font-size: 13px; font-weight: 600;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-yellow { background: #fef3c7; color: #92400e; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-blue { background: #dbeafe; color: #1e3a8a; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px;
+      border-radius: 10px; border: 1px solid transparent; background: var(--blue); color: white;
+      font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+    .btn-secondary { background: white; color: #374151; border-color: var(--border); }
+    .input {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: white; font-size: 14px;
+    }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; background: white; border: 1px solid var(--border);
+      border-radius: 14px; margin-bottom: 16px;
+    }
+    .topbar .brand { display: flex; align-items: center; gap: 12px; }
+    .topbar .logo {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: white; display: grid; place-items: center; font-weight: 900;
+    }
+    .empty { color: var(--muted); font-size: 14px; }
+    .tabs-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .detail-row { display: flex; gap: 16px; }
+    .detail-field { flex: 1; }
+    .detail-field label { display: block; font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .detail-field div { font-size: 15px; color: #111827; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SMIS — Detailed Screen Mockups</h1>
+    <p>Offline-first school management system — UI preview per module</p>
+  </header>
+
+  <div class="tabs">
+    <button class="active" onclick="show('login')">Login</button>
+    <button onclick="show('dashboard')">Dashboard</button>
+    <button onclick="show('students')">Students</button>
+    <button onclick="show('finance')">Finance</button>
+    <button onclick="show('attendance')">Attendance</button>
+    <button onclick="show('exams')">Exams</button>
+    <button onclick="show('library')">Library</button>
+    <button onclick="show('staff')">Staff</button>
+    <button onclick="show('reports')">Reports</button>
+    <button onclick="show('settings')">Settings</button>
+    <button onclick="show('parent')">Parent Portal</button>
+    <button onclick="show('student')">Student Portal</button>
+    <button onclick="show('student-detail')">Student Detail</button>
+    <button onclick="show('finance-invoice')">New Invoice</button>
+    <button onclick="show('attendance-mark')">Mark Attendance</button>
+    <button onclick="show('exam-entry')">Marks Entry</button>
+    <button onclick="show('library-detail')">Book Detail</button>
+    <button onclick="show('certificate')">Certificate</button>
+  </div>
+
+  <main>
+    <!-- LOGIN -->
+    <section id="login" class="screen active">
+      <div class="card" style="max-width: 420px; margin: 40px auto;">
+        <div style="text-align:center; margin-bottom: 18px;">
+          <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#1e40af,#7c3aed);color:white;display:grid;place-items:center;font-weight:900;margin:0 auto 10px;">S</div>
+          <h2 style="margin:0;font-size:18px;">Sign in to SMIS</h2>
+          <p style="color:var(--muted);font-size:13px;">School Management Information System</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <input class="input" placeholder="Username" />
+          <input class="input" type="password" placeholder="Password" />
+          <button class="btn" style="width:100%;">Sign in</button>
+          <p class="empty" style="text-align:center;">Use admin / admin123</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="screen">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">S</div>
+          <div>
+            <div style="font-weight:800;">Institutional Services</div>
+            <div class="empty" style="font-size:12px;">SMIS</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary">Theme</button>
+          <button class="btn btn-secondary">Offline: Online</button>
+          <button class="btn btn-secondary">Sign out</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Modules</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span class="chip">Academic Management</span>
+          <span class="chip">Class Forms</span>
+          <span class="chip">Streams</span>
+          <span class="chip">Examinations</span>
+          <span class="chip">Student Management</span>
+          <span class="chip">Finance</span>
+          <span class="chip">Timetable</span>
+          <span class="chip">Admissions</span>
+          <span class="chip">Attendance</span>
+          <span class="chip">Transport</span>
+          <span class="chip">Inventory</span>
+          <span class="chip">Hostel</span>
+          <span class="chip">Reports</span>
+          <span class="chip">Communication</span>
+          <span class="chip">Teaching</span>
+          <span class="chip">Student Portal</span>
+          <span class="chip">Parent Portal</span>
+          <span class="chip">Payroll</span>
+          <span class="chip">Alumni</span>
+          <span class="chip">Calendar</span>
+          <span class="chip">Gate Log</span>
+          <span class="chip">Audit Log</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>At a glance</h2>
+        <div class="grid grid-4">
+          <div class="stat"><div class="label">Students</div><div class="value">1,240</div></div>
+          <div class="stat"><div class="label">Staff</div><div class="value">86</div></div>
+          <div class="stat"><div class="label">Attendance</div><div class="value">94.2%</div></div>
+          <div class="stat"><div class="label">Revenue</div><div class="value">UGX 12.4M</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STUDENTS -->
+    <section id="students" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Student Management</div>
+          <div class="empty" style="font-size:12px;">Registry, enrolment, status, history</div>
+        </div>
+        <button class="btn">+ New Student</button>
+      </div>
+      <div class="card">
+        <div class="grid grid-4">
+          <div class="stat"><div class="label">Total</div><div class="value">1,240</div></div>
+          <div class="stat"><div class="label">Active</div><div class="value">1,198</div></div>
+          <div class="stat"><div class="label">Alumni</div><div class="value">42</div></div>
+          <div class="stat"><div class="label">New this term</div><div class="value">86</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <input class="input" placeholder="Search students..." style="max-width:260px;" />
+          <button class="btn">Export CSV</button>
+          <button class="btn btn-secondary">Import</button>
+        </div>
+        <table>
+          <thead><tr><th>Student ID</th><th>Name</th><th>Programme</th><th>Class</th><th>Status</th><th>QR</th></tr></thead>
+          <tbody>
+            <tr><td>STU-2026-001</td><td>Naomi Ayiko</td><td>Diploma in IT</td><td>Year 1</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-secondary" style="padding:6px 10px;font-size:12px;">View QR</button></td></tr>
+            <tr><td>STU-2026-002</td><td>Brian Mugisha</td><td>Certificate in Business</td><td>Year 1</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-secondary" style="padding:6px 10px;font-size:12px;">View QR</button></td></tr>
+          </tbody>
+        </table>
+        <p class="empty">Showing 2 of 1,240 students</p>
+      </div>
+    </section>
+
+    <!-- FINANCE -->
+    <section id="finance" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Finance Management</div>
+          <div class="empty" style="font-size:12px;">Invoices, payments, receipts, chart of accounts</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="grid grid-4">
+          <div class="stat"><div class="label">Total Billed</div><div class="value">UGX 18.2M</div></div>
+          <div class="stat"><div class="label">Total Paid</div><div class="value">UGX 14.7M</div></div>
+          <div class="stat"><div class="label">Outstanding</div><div class="value">UGX 3.5M</div></div>
+          <div class="stat"><div class="label">Invoices</div><div class="value">342</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Student lookup</h2>
+        <div class="grid grid-2">
+          <input class="input" placeholder="Search by student ID or name..." />
+          <button class="btn">Lookup</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="btn">New Invoice</button>
+          <button class="btn btn-secondary">Record Payment</button>
+          <button class="btn btn-secondary">Receipts</button>
+        </div>
+        <table>
+          <thead><tr><th>Invoice</th><th>Student</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>INV-2026-001</td><td>Naomi Ayiko</td><td>UGX 850,000</td><td>UGX 500,000</td><td>UGX 350,000</td><td><span class="badge badge-yellow">Pending</span></td></tr>
+            <tr><td>INV-2026-002</td><td>Brian Mugisha</td><td>UGX 720,000</td><td>UGX 720,000</td><td>UGX 0</td><td><span class="badge badge-green">Paid</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ATTENDANCE -->
+    <section id="attendance" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Attendance Management</div>
+          <div class="empty" style="font-size:12px;">Daily attendance, late/absence tracking</div>
+        </div>
+        <button class="btn">+ Mark Attendance</button>
+      </div>
+      <div class="card">
+        <div class="grid grid-4">
+          <div class="stat"><div class="label">Present Today</div><div class="value">1,178</div></div>
+          <div class="stat"><div class="label">Absent</div><div class="value">42</div></div>
+          <div class="stat"><div class="label">Late</div><div class="value">20</div></div>
+          <div class="stat"><div class="label">Attendance %</div><div class="value">94.2%</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <input class="input" type="date" style="max-width:180px;" />
+          <select class="input" style="max-width:160px;"><option>Year 1</option><option>Year 2</option></select>
+          <button class="btn">Filter</button>
+        </div>
+        <table>
+          <thead><tr><th>Student</th><th>Class</th><th>Status</th><th>Time In</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Naomi Ayiko</td><td>Year 1</td><td><span class="badge badge-green">Present</span></td><td>08:02</td><td>—</td></tr>
+            <tr><td>Brian Mugisha</td><td>Year 1</td><td><span class="badge badge-yellow">Late</span></td><td>09:15</td><td>Late arrival</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EXAMS -->
+    <section id="exams" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Examinations & Results</div>
+          <div class="empty" style="font-size:12px;">Exam setup, marks entry, results, report cards</div>
+        </div>
+        <button class="btn">+ New Exam</button>
+      </div>
+      <div class="card">
+        <h2>Active Examinations</h2>
+        <table>
+          <thead><tr><th>Exam</th><th>Period</th><th>Classes</th><th>Status</th><th>Results</th></tr></thead>
+          <tbody>
+            <tr><td>Mid-term 1, 2026</td><td>Term 1</td><td>Year 1, Year 2</td><td><span class="badge badge-green">Published</span></td><td><button class="btn btn-secondary" style="padding:6px 10px;font-size:12px;">View</button></td></tr>
+            <tr><td>End of Year, 2025</td><td>Year End</td><td>All</td><td><span class="badge badge-blue">Draft</span></td><td><button class="btn btn-secondary" style="padding:6px 10px;font-size:12px;">View</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section id="library" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Library Management</div>
+          <div class="empty" style="font-size:12px;">Catalogue, circulation, fines, reservations</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="grid grid-4">
+          <div class="stat"><div class="label">Books</div><div class="value">4,280</div></div>
+          <div class="stat"><div class="label">Loans Active</div><div class="value">312</div></div>
+          <div class="stat"><div class="label">Overdue</div><div class="value">18</div></div>
+          <div class="stat"><div class="label">Fines Collected</div><div class="value">UGX 45,000</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <input class="input" placeholder="Search ISBN, title, author..." style="max-width:300px;" />
+          <button class="btn">Search</button>
+          <button class="btn btn-secondary">+ Add Book</button>
+        </div>
+        <table>
+          <thead><tr><th>ISBN</th><th>Title</th><th>Author</th><th>Status</th><th>Barcode</th></tr></thead>
+          <tbody>
+            <tr><td>978-1-234</td><td>Introduction to Computing</td><td>A. Author</td><td><span class="badge badge-green">Available</span></td><td>LIB-0001</td></tr>
+            <tr><td>978-9-876</td><td>Business Studies</td><td>B. Writer</td><td><span class="badge badge-yellow">On Loan</span></td><td>LIB-0002</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- STAFF -->
+    <section id="staff" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Staff Management</div>
+          <div class="empty" style="font-size:12px;">Staff registry, leave, payroll</div>
+        </div>
+        <button class="btn">+ Add Staff</button>
+      </div>
+      <div class="card">
+        <div class="tabs-row">
+          <button class="btn">Staff</button>
+          <button class="btn btn-secondary">Leave</button>
+          <button class="btn btn-secondary">Payroll</button>
+        </div>
+        <table>
+          <thead><tr><th>Staff No.</th><th>Name</th><th>Department</th><th>Role</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>STF-001</td><td>Grace Namuli</td><td>IT</td><td>Lecturer</td><td><span class="badge badge-green">Active</span></td></tr>
+            <tr><td>STF-002</td><td>David Okello</td><td>Business</td><td>Registrar</td><td><span class="badge badge-green">Active</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="reports" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Reports</div>
+          <div class="empty" style="font-size:12px;">Report cards, receipts, certificates, analytics</div>
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <h2>Academic</h2>
+          <p>Report cards, transcripts, exam analysis, class performance</p>
+          <button class="btn">Generate Report Card</button>
+        </div>
+        <div class="card">
+          <h2>Finance</h2>
+          <p>Fee statements, receipts, P&L, balance sheet, defaulter reports</p>
+          <button class="btn">Print Receipt</button>
+        </div>
+        <div class="card">
+          <h2>Attendance</h2>
+          <p>Daily, weekly, monthly attendance summaries</p>
+          <button class="btn">Export Attendance</button>
+        </div>
+        <div class="card">
+          <h2>Certificates</h2>
+          <p>Issue and print completion certificates with serial numbers</p>
+          <button class="btn">Issue Certificate</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settings" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Administration</div>
+          <div class="empty" style="font-size:12px;">Users, roles, institutions, backups</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Users</h2>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Username</th><th>Full Name</th><th>Roles</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>admin</td><td>System Administrator</td><td><span class="pill">System Administrator</span></td><td><span class="badge badge-green">Active</span></td></tr>
+              <tr><td>registrar</td><td>Academic Registrar</td><td><span class="chip">Registrar</span> <span class="chip">Academic Management</span></td><td><span class="badge badge-green">Active</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>System</h2>
+        <div class="grid grid-2">
+          <div>
+            <div class="label">Backup / Restore</div>
+            <p class="empty" style="margin-top:6px;">Export database backup or restore from file.</p>
+            <div style="margin-top:10px;display:flex;gap:8px;">
+              <button class="btn">Backup Now</button>
+              <button class="btn btn-secondary">Restore</button>
+            </div>
+          </div>
+          <div>
+            <div class="label">Audit Log</div>
+            <p class="empty" style="margin-top:6px;">Tamper-evident action history.</p>
+            <button class="btn" style="margin-top:10px;">View Audit Log</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARENT PORTAL -->
+    <section id="parent" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Parent Portal</div>
+          <div class="empty" style="font-size:12px;">Children overview, fees, attendance, results</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="grid grid-4">
+          <div class="stat"><div class="label">Child</div><div class="value">Naomi Ayiko</div></div>
+          <div class="stat"><div class="label">Class</div><div class="value">Year 1</div></div>
+          <div class="stat"><div class="label">Fees Balance</div><div class="value">UGX 350,000</div></div>
+          <div class="stat"><div class="label">Attendance</div><div class="value">96%</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STUDENT PORTAL -->
+    <section id="student" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Student Portal</div>
+          <div class="empty" style="font-size:12px;">Grades, attendance, assignments, timetable</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="grid grid-4">
+          <div class="stat"><div class="label">Student</div><div class="value">Naomi Ayiko</div></div>
+          <div class="stat"><div class="label">Programme</div><div class="value">Diploma in IT</div></div>
+          <div class="stat"><div class="label">GPA</div><div class="value">3.8</div></div>
+          <div class="stat"><div class="label">Attendance</div><div class="value">96%</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STUDENT DETAIL -->
+    <section id="student-detail" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Student Detail</div>
+          <div class="empty" style="font-size:12px;">STU-2026-001 — Naomi Ayiko</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn">Edit</button>
+          <button class="btn btn-secondary">Print Profile</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Profile</h2>
+        <div class="detail-row">
+          <div class="detail-field"><label>Full Name</label><div>Naomi Ayiko</div></div>
+          <div class="detail-field"><label>Student ID</label><div>STU-2026-001</div></div>
+          <div class="detail-field"><label>Programme</label><div>Diploma in IT</div></div>
+          <div class="detail-field"><label>Class</label><div>Year 1</div></div>
+        </div>
+        <div class="detail-row" style="margin-top:12px;">
+          <div class="detail-field"><label>Status</label><div><span class="badge badge-green">Active</span></div></div>
+          <div class="detail-field"><label>Admission Date</label><div>2026-01-10</div></div>
+          <div class="detail-field"><label>Guardian</label><div>Mary Ayiko — +256 700 000000</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>QR Code</h2>
+        <p>Scan for quick identification at gates, library, and attendance points.</p>
+        <button class="btn">Download QR</button>
+      </div>
+    </section>
+
+    <!-- NEW INVOICE -->
+    <section id="finance-invoice" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">New Invoice</div>
+          <div class="empty" style="font-size:12px;">Create invoice for student</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="grid grid-2">
+          <div class="detail-field"><label>Student</label><input class="input" placeholder="Search student..." /></div>
+          <div class="detail-field"><label>Invoice Date</label><input class="input" type="date" /></div>
+          <div class="detail-field"><label>Due Date</label><input class="input" type="date" /></div>
+          <div class="detail-field"><label>Fee Structure</label><select class="input"><option>Tuition — Year 1</option></select></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Items</h2>
+        <table>
+          <thead><tr><th>Item</th><th>Amount</th></tr></thead>
+          <tbody>
+            <tr><td>Tuition</td><td>UGX 800,000</td></tr>
+            <tr><td>Registration</td><td>UGX 50,000</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">
+          <div><strong>Total: UGX 850,000</strong></div>
+          <button class="btn">Create Invoice</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARK ATTENDANCE -->
+    <section id="attendance-mark" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Mark Attendance</div>
+          <div class="empty" style="font-size:12px;">Year 1 — Term 1 — 2026-08-26</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn">Save</button>
+          <button class="btn btn-secondary">Mark All Present</button>
+        </div>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Student</th><th>ID</th><th>Present</th><th>Late</th><th>Absent</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Naomi Ayiko</td><td>STU-2026-001</td><td><input type="radio" name="a1" checked /></td><td><input type="radio" name="a1" /></td><td><input type="radio" name="a1" /></td><td><input class="input" placeholder="Optional" /></td></tr>
+            <tr><td>Brian Mugisha</td><td>STU-2026-002</td><td><input type="radio" name="a2" checked /></td><td><input type="radio" name="a2" /></td><td><input type="radio" name="a2" /></td><td><input class="input" placeholder="Optional" /></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MARKS ENTRY -->
+    <section id="exam-entry" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Marks Entry</div>
+          <div class="empty" style="font-size:12px;">Mid-term 1, 2026 — Year 1</div>
+        </div>
+        <button class="btn">Save Marks</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Student</th><th>Student ID</th><th>Math</th><th>English</th><th>Science</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>Naomi Ayiko</td><td>STU-2026-001</td><td><input class="input" type="number" value="85" /></td><td><input class="input" type="number" value="78" /></td><td><input class="input" type="number" value="90" /></td><td>253</td></tr>
+            <tr><td>Brian Mugisha</td><td>STU-2026-002</td><td><input class="input" type="number" value="72" /></td><td><input class="input" type="number" value="65" /></td><td><input class="input" type="number" value="80" /></td><td>217</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BOOK DETAIL -->
+    <section id="library-detail" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Book Detail</div>
+          <div class="empty" style="font-size:12px;">ISBN 978-1-234 — LIB-0001</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn">Issue</button>
+          <button class="btn btn-secondary">Print Barcode</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="detail-row">
+          <div class="detail-field"><label>Title</label><div>Introduction to Computing</div></div>
+          <div class="detail-field"><label>Author</label><div>A. Author</div></div>
+          <div class="detail-field"><label>ISBN</label><div>978-1-234</div></div>
+          <div class="detail-field"><label>Status</label><div><span class="badge badge-green">Available</span></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Loan History</h2>
+        <table>
+          <thead><tr><th>Borrower</th><th>Issue Date</th><th>Due Date</th><th>Return Date</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Naomi Ayiko</td><td>2026-01-15</td><td>2026-02-15</td><td>2026-02-10</td><td><span class="badge badge-green">Returned</span></td></tr>
+            <tr><td>Brian Mugisha</td><td>2026-03-01</td><td>2026-04-01</td><td>—</td><td><span class="badge badge-yellow">On Loan</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CERTIFICATE -->
+    <section id="certificate" class="screen">
+      <div class="topbar">
+        <div>
+          <div style="font-weight:800;">Certificate</div>
+          <div class="empty" style="font-size:12px;">Certificate of Completion — Naomi Ayiko</div>
+        </div>
+        <button class="btn">Print Certificate</button>
+      </div>
+      <div class="card" style="text-align:center; padding: 60px 40px; border: 2px solid var(--border);">
+        <div style="font-size:14px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Certificate of Completion</div>
+        <div style="font-size:28px;font-weight:900;color:#1e40af;margin-bottom:12px;">Naomi Ayiko</div>
+        <div style="color:var(--muted);max-width:520px;margin:0 auto 18px;">Has successfully completed the Diploma in Information Technology programme and is awarded this certificate.</div>
+        <div style="display:flex;justify-content:center;gap:40px;margin-top:24px;font-size:13px;color:var(--muted);">
+          <div><div style="font-weight:700;color:#111827;">Date</div>2026-08-26</div>
+          <div><div style="font-weight:700;color:#111827;">Serial</div>SMIS-CERT-2026-001</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function show(id) {
+      document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('.tabs button').forEach((btn) => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

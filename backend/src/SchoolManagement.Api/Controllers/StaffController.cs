@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Staff;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Infrastructure.Persistence;
 
@@ -53,6 +54,46 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
+
+    [HttpGet("{id:guid}/leave")]
+    [Authorize(Policy = StaffPolicies.Read)]
+    public async Task<IActionResult> GetLeave(Guid id, CancellationToken cancellationToken)
+    {
+        var requests = await db.LeaveRequests.AsNoTracking().Where(x => x.StaffMemberId == id).OrderByDescending(x => x.StartDate).ToListAsync(cancellationToken);
+        return Ok(requests);
+    }
+
+    [HttpPost("{id:guid}/leave")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> RequestLeave(Guid id, [FromBody] CreateLeaveRequestDto request, CancellationToken cancellationToken)
+    {
+        var leaveRequest = new LeaveRequest
+        {
+            StaffMemberId = id,
+            LeaveType = request.LeaveType,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
+            Reason = request.Reason,
+            Status = "Pending"
+        };
+        db.LeaveRequests.Add(leaveRequest);
+        await db.SaveChangesAsync(cancellationToken);
+        return Created($"api/staff/{id}/leave/{leaveRequest.Id}", leaveRequest);
+    }
+
+    [HttpPatch("leave/{id:guid}/approve")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> ApproveLeave(Guid id, [FromBody] ApproveLeaveRequest request, CancellationToken cancellationToken)
+    {
+        var leaveRequest = await db.LeaveRequests.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (leaveRequest is null) return NotFound();
+        leaveRequest.Status = request.Approved ? "Approved" : "Rejected";
+        leaveRequest.ApprovedBy = request.ApprovedBy;
+        leaveRequest.ApprovedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
 }
 
 public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType);
+public sealed record ApproveLeaveRequest(Guid ApprovedBy, bool Approved);

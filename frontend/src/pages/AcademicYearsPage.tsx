@@ -14,7 +14,7 @@ export default function AcademicYearsPage() {
   async function load() {
     setLoading(true);
     try {
-      const response = await fetch('/api/academic-structure/years', { headers: { Accept: 'application/json' } });
+      const response = await fetch('/api/academic-structure/years', { headers: { Accept: 'application/json', ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}) } });
       if (!response.ok) throw new Error(`Unable to load academic years (${response.status}).`);
       setYears(await response.json() as AcademicYear[]);
       setMessage('');
@@ -30,7 +30,7 @@ export default function AcademicYearsPage() {
     setSaving(true); setMessage('');
     try {
       const response = await fetch('/api/academic-structure/years', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}) },
         body: JSON.stringify({ name: name.trim(), startDate, endDate, isCurrent: false }),
       });
       if (!response.ok) throw new Error(await response.text() || `Unable to create academic year (${response.status}).`);

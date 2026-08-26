@@ -45,3 +45,5 @@ export const returnBook = (id:string) => {
   if (!id) throw new Error('Loan id is required.');
   return request<LibraryLoan>(`/api/library/loans/${id}/return`, { method:'PATCH' });
 };
+
+export const getBookBarcode = (id: string) => `${BASE}/api/library/books/${id}/barcode`

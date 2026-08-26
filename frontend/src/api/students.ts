@@ -43,3 +43,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const getStudents = () => request<Student[]>('/api/students')
 export const getStudent = (id: string) => request<Student>(`/api/students/${id}`)
 export const createStudent = (requestBody: CreateStudentRequest) => request<Student>('/api/students', { method: 'POST', body: JSON.stringify(requestBody) })
+export const getStudentQrCode = (id: string) => {
+  const token = getAccessToken()
+  return `${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''}/api/students/${id}/qrcode`
+}

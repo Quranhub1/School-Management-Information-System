@@ -3,6 +3,9 @@ using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Assessment;
 using SchoolManagement.Domain.Attendance;
+using SchoolManagement.Domain.Audit;
+using SchoolManagement.Domain.Access;
+using SchoolManagement.Domain.Calendar;
 using SchoolManagement.Domain.Clinical;
 using SchoolManagement.Domain.Examinations;
 using SchoolManagement.Domain.Finance;
@@ -59,11 +62,30 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<FeeStructure> FeeStructures => Set<FeeStructure>();
     public DbSet<StudentInvoice> StudentInvoices => Set<StudentInvoice>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<ChartOfAccounts> ChartOfAccounts => Set<ChartOfAccounts>();
+    public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+    public DbSet<JournalEntryLine> JournalEntryLines => Set<JournalEntryLine>();
+    public DbSet<Vendor> Vendors => Set<Vendor>();
+    public DbSet<Bill> Bills => Set<Bill>();
+    public DbSet<BillPayment> BillPayments => Set<BillPayment>();
+    public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<BudgetLine> BudgetLines => Set<BudgetLine>();
+    public DbSet<BankReconciliation> BankReconciliations => Set<BankReconciliation>();
+    public DbSet<BankStatementLine> BankStatementLines => Set<BankStatementLine>();
+    public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
     public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
+    public DbSet<PayrollRecord> PayrollRecords => Set<PayrollRecord>();
+    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
     public DbSet<TeachingAllocation> TeachingAllocations => Set<TeachingAllocation>();
     public DbSet<LibraryBook> LibraryBooks => Set<LibraryBook>();
     public DbSet<LibraryLoan> LibraryLoans => Set<LibraryLoan>();
     public DbSet<Librarian> Librarians => Set<Librarian>();
+    public DbSet<Certificate> Certificates => Set<Certificate>();
+    public DbSet<Alumni> Alumni => Set<Alumni>();
+    public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
+    public DbSet<GateLog> GateLogs => Set<GateLog>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<AssessmentWeightingProfile> AssessmentWeightingProfiles => Set<AssessmentWeightingProfile>();
     public DbSet<AssessmentWeightingComponent> AssessmentWeightingComponents => Set<AssessmentWeightingComponent>();
     public DbSet<AssessmentPlanWeightingProfile> AssessmentPlanWeightingProfiles => Set<AssessmentPlanWeightingProfile>();
@@ -137,6 +159,110 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.HasKey(x => new { x.AssessmentPlanId, x.AssessmentWeightingProfileId });
             e.HasOne<AssessmentPlan>().WithMany().HasForeignKey(x => x.AssessmentPlanId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<AssessmentWeightingProfile>().WithMany().HasForeignKey(x => x.AssessmentWeightingProfileId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<ChartOfAccounts>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Code).IsUnique();
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Code).HasMaxLength(50).IsRequired();
+        });
+
+        m.Entity<Account>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.ChartOfAccountsId, x.Code }).IsUnique();
+            e.Property(x => x.Code).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.Property(x => x.AccountType).HasMaxLength(50).IsRequired();
+            e.HasOne<ChartOfAccounts>().WithMany().HasForeignKey(x => x.ChartOfAccountsId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        m.Entity<JournalEntry>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.EntryNumber).IsUnique();
+            e.Property(x => x.EntryNumber).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.HasMany<JournalEntryLine>().WithOne().HasForeignKey(x => x.JournalEntryId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        m.Entity<JournalEntryLine>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Description).HasMaxLength(500);
+        });
+
+        m.Entity<Vendor>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Name).IsUnique();
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.Property(x => x.ContactPerson).HasMaxLength(150);
+            e.Property(x => x.Phone).HasMaxLength(50);
+            e.Property(x => x.Email).HasMaxLength(200);
+        });
+
+        m.Entity<Bill>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.BillNumber).IsUnique();
+            e.Property(x => x.BillNumber).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Currency).HasMaxLength(10).IsRequired();
+            e.HasOne<Vendor>().WithMany().HasForeignKey(x => x.VendorId).OnDelete(DeleteBehavior.Restrict);
+            e.HasMany<BillPayment>().WithOne().HasForeignKey(x => x.BillId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        m.Entity<BillPayment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.PaymentMethod).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Reference).HasMaxLength(100);
+        });
+
+        m.Entity<Budget>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Currency).HasMaxLength(10).IsRequired();
+            e.HasMany<BudgetLine>().WithOne().HasForeignKey(x => x.BudgetId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        m.Entity<BudgetLine>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Category).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Notes).HasMaxLength(500);
+        });
+
+        m.Entity<BankReconciliation>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Notes).HasMaxLength(1000);
+        });
+
+        m.Entity<BankStatementLine>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne<BankReconciliation>().WithMany().HasForeignKey(x => x.BankReconciliationId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(x => x.Description).HasMaxLength(500);
+            e.Property(x => x.TransactionType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Reference).HasMaxLength(100);
+        });
+
+        m.Entity<CreditNote>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.CreditNoteNumber).IsUnique();
+            e.Property(x => x.CreditNoteNumber).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

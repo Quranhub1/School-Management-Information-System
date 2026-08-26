@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Library;
 
@@ -13,6 +14,14 @@ public sealed class LibraryController(LibraryWorkflowService library, IConfigura
     [HttpGet("books")]
     [Authorize(Policy = LibraryPolicies.Read)]
     public Task<IReadOnlyList<LibraryBookDto>> Books(CancellationToken ct) => library.GetBooksAsync(ct);
+
+    [HttpGet("books/{id:guid}/barcode")]
+    [AllowAnonymous]
+    public IActionResult GetBookBarcode(Guid id)
+    {
+        var barcode = BarcodeHelper.GenerateSvg(id.ToString());
+        return Content(barcode, "image/svg+xml");
+    }
 
     [HttpGet("loans/{studentId:guid}")]
     [Authorize(Policy = LibraryPolicies.Read)]

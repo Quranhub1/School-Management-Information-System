@@ -1,0 +1,9 @@
+.print-only { display: none !important; }
+
+@media print {
+  body * { visibility: hidden; }
+  #report-card-print, #report-card-print *, #receipt-print, #receipt-print *, #certificate-print, #certificate-print * { visibility: visible; }
+  #report-card-print, #receipt-print, #certificate-print { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; box-shadow: none; }
+  .no-print { display: none !important; }
+  @page { size: A4; margin: 15mm; }
+}
