@@ -1,6 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+<<<<<<< ours
 using SchoolManagement.Application.Alumni;
 using AlumniEntity = SchoolManagement.Domain.Students.Alumni;
+=======
+using SchoolManagement.Application.AlumniManagement;
+using SchoolManagement.Domain.Students;
+>>>>>>> theirs
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Repositories;
