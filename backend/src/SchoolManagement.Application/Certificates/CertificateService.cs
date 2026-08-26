@@ -25,7 +25,7 @@ public sealed class CertificateService(
         var student = await db.Students.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.StudentId, cancellationToken);
         if (student is null) throw new InvalidOperationException("Student not found.");
 
-        var serialNumber = $"CERT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N"[..8].ToUpperInvariant()}";
+        var serialNumber = $"CERT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
         var certificate = new Certificate
         {
             StudentId = request.StudentId,
