@@ -38,7 +38,7 @@ public sealed record AcademicReportMetrics(
 public sealed record StudentReportCardDto(
     string StudentNumber,
     string StudentName,
-    IReadOnlyList<ResultEntry> Results,
+    IReadOnlyList<StudentReportCardDto.ResultEntry> Results,
     decimal GPA)
 {
     public sealed record ResultEntry(string CourseCode, string CourseName, decimal? Score, string? Grade, decimal? GradePoint, string Status, bool IsFinal);
@@ -63,7 +63,7 @@ public sealed record AttendanceReportDto(
     int SessionCount,
     int RecordCount,
     IReadOnlyDictionary<string, int> StatusSummary,
-    IReadOnlyList<SessionSummary> Sessions)
+    IReadOnlyList<AttendanceReportDto.SessionSummary> Sessions)
 {
     public sealed record SessionSummary(Guid SessionId, DateOnly Date, string Status, int AttendanceCount);
 }
@@ -75,7 +75,7 @@ public sealed record FinancialStatementDto(
     decimal TotalExpenses,
     decimal OutstandingRevenue,
     decimal NetSurplus,
-    IReadOnlyList<PlEntry> ProfitAndLoss)
+    IReadOnlyList<FinancialStatementDto.PlEntry> ProfitAndLoss)
 {
     public sealed record PlEntry(string Description, decimal Amount);
 }
