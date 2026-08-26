@@ -50,7 +50,6 @@ public static class DependencyInjection
         services.AddScoped<AdministrationService>();
         services.AddScoped<ModuleAccessService>();
         services.AddScoped<BulkImportService>();
-        services.AddScoped<ReportGenerator>();
         services.AddScoped<CertificateService>();
         services.AddScoped<PayrollService>();
         services.AddScoped<AlumniService>();
