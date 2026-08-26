@@ -186,6 +186,10 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] Backup/restore endpoints
 - [x] Multi-language support (English, Swahili)
 - [x] Dark mode toggle
+- [x] Service worker app shell caching
+- [x] IndexedDB local stores for offline reads
+- [x] Background sync for queued mutations
+- [x] Offline-aware API client
 
 ## Staff & HR — Expansion
 - [x] Departments

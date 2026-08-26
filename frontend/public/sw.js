@@ -1,57 +1,53 @@
-const CACHE = 'smis-offline-v1';
+const CACHE_NAME = 'smis-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
+];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(['/', '/index.html']))
-  );
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+  );
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+    )
+  );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetched = fetch(event.request).then((response) => {
+    caches.match(request).then((cached) => {
+      const networkFetch = fetch(request).then((response) => {
         if (response && response.status === 200) {
           const clone = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
       }).catch(() => cached);
-      return cached || fetched;
+      return cached || networkFetch;
     })
   );
 });
 
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-mutations') {
-    event.waitUntil(syncOfflineMutations());
+  if (event.tag === 'smis-sync') {
+    event.waitUntil(doBackgroundSync());
   }
 });
 
-async function syncOfflineMutations() {
-  const db = await openDB();
-  const records = await db.getAll('mutations');
-  for (const record of records) {
-    try {
-      await fetch(record.url, { method: record.method, body: record.body, headers: record.headers });
-      await db.delete('mutations', record.id);
-    } catch { /* will retry next sync */ }
-  }
-}
-
-function openDB() {
-  return new Promise<any>((resolve, reject) => {
-    const request = indexedDB.open('smis-offline', 1);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains('mutations')) db.createObjectStore('mutations', { keyPath: 'id', autoIncrement: true });
-    };
-  });
+async function doBackgroundSync() {
+  const clients = await self.clients.matchAll();
+  clients.forEach((client) => client.postMessage({ type: 'SYNC_REQUIRED' }));
 }
