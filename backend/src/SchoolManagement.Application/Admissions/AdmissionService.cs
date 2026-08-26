@@ -1,9 +1,10 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Admissions;
+using SchoolManagement.Domain.Students;
 
 namespace SchoolManagement.Application.Admissions;
 
-public sealed class AdmissionService(IAdmissionRepository repository)
+public sealed class AdmissionService(IAdmissionRepository repository, IStudentRepository studentRepository)
 {
     public async Task<Admission> CreateAsync(Guid applicantId, Guid programmeId, Guid academicYearId, Guid intakeId, CancellationToken cancellationToken = default)
     {
@@ -35,6 +36,33 @@ public sealed class AdmissionService(IAdmissionRepository repository)
 
         admission.Status = decision.Equals("Accepted", StringComparison.OrdinalIgnoreCase) ? "Accepted" : "Rejected";
         admission.DecidedAt = DateTimeOffset.UtcNow;
+
+        if (admission.Status == "Accepted")
+        {
+            var applicant = await repository.GetApplicantAsync(admission.ApplicantId, cancellationToken)
+                ?? throw new KeyNotFoundException("Applicant was not found.");
+
+            var yearId = admission.AcademicYearId.ToString("N");
+            var guid = Guid.NewGuid().ToString("N");
+            var studentNumber = $"STU-{yearId[..Math.Min(8, yearId.Length)]}-{guid[..Math.Min(6, guid.Length)]}";
+            var student = new Student
+            {
+                StudentNumber = studentNumber,
+                FirstName = applicant.FirstName,
+                LastName = applicant.LastName,
+                OtherNames = applicant.OtherNames,
+                DateOfBirth = applicant.DateOfBirth,
+                Gender = applicant.Gender,
+                NationalId = applicant.NationalId,
+                PhoneNumber = applicant.PhoneNumber,
+                Email = applicant.Email,
+                Status = "Active",
+                AdmissionId = admission.Id
+            };
+
+            await studentRepository.AddAsync(student, cancellationToken);
+            await studentRepository.SaveChangesAsync(cancellationToken);
+        }
 
         var result = new AdmissionDecision
         {

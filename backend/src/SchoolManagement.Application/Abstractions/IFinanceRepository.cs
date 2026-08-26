@@ -14,4 +14,32 @@ public interface IFinanceRepository
     Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken);
     Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<FeeStructure>> GetFeeStructuresAsync(Guid? academicYearId = null, CancellationToken cancellationToken = default);
+    Task AddFeeStructureAsync(FeeStructure feeStructure, CancellationToken cancellationToken);
+    Task UpdateFeeStructureAsync(FeeStructure feeStructure, CancellationToken cancellationToken);
+
+    Task<Sponsorship?> GetSponsorshipAsync(Guid sponsorshipId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Sponsorship>> GetSponsorshipsAsync(Guid? studentId = null, CancellationToken cancellationToken = default);
+    Task AddSponsorshipAsync(Sponsorship sponsorship, CancellationToken cancellationToken);
+    Task UpdateSponsorshipAsync(Sponsorship sponsorship, CancellationToken cancellationToken);
+
+    Task<InstalmentPlan?> GetInstalmentPlanAsync(Guid instalmentPlanId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<InstalmentPlan>> GetInstalmentPlansAsync(Guid studentId, CancellationToken cancellationToken = default);
+    Task AddInstalmentPlanAsync(InstalmentPlan plan, CancellationToken cancellationToken);
+    Task AddInstalmentPaymentAsync(InstalmentPayment payment, CancellationToken cancellationToken);
+    Task<IReadOnlyList<InstalmentPayment>> GetInstalmentPaymentsAsync(Guid instalmentPlanId, CancellationToken cancellationToken = default);
+    Task UpdateInstalmentPaymentAsync(InstalmentPayment payment, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<StudentInvoice>> GetOutstandingInvoicesAsync(Guid? programmeId = null, Guid? academicYearId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<MobileMoneyTransaction>> GetMobileMoneyTransactionsAsync(string? status = null, CancellationToken cancellationToken = default);
+    Task AddMobileMoneyTransactionAsync(MobileMoneyTransaction transaction, CancellationToken cancellationToken);
+    Task UpdateMobileMoneyTransactionAsync(MobileMoneyTransaction transaction, CancellationToken cancellationToken);
+
+    Task<DailyCollection?> GetDailyCollectionAsync(Guid collectionId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<DailyCollection>> GetDailyCollectionsAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
+    Task AddDailyCollectionAsync(DailyCollection collection, CancellationToken cancellationToken);
+    Task UpdateDailyCollectionAsync(DailyCollection collection, CancellationToken cancellationToken);
+    Task AddDailyCollectionPaymentAsync(DailyCollectionPayment payment, CancellationToken cancellationToken);
+    Task<IReadOnlyList<DailyCollectionPayment>> GetDailyCollectionPaymentsAsync(Guid dailyCollectionId, CancellationToken cancellationToken = default);
 }

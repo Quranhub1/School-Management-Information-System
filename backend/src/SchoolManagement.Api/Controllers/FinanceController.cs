@@ -58,6 +58,225 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetDashboardAsync(cancellationToken));
+    }
+
+    [HttpGet("outstanding")]
+    public async Task<IActionResult> GetOutstandingBalances([FromQuery] Guid? programmeId, CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetOutstandingBalancesAsync(programmeId, cancellationToken));
+    }
+
+    [HttpGet("fee-structures")]
+    public async Task<IActionResult> GetFeeStructures([FromQuery] Guid? academicYearId, CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetFeeStructuresAsync(academicYearId, cancellationToken));
+    }
+
+    [HttpPost("fee-structures")]
+    public async Task<IActionResult> CreateFeeStructure(CreateFeeStructureRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var feeStructure = await finance.CreateFeeStructureAsync(
+                request.ProgrammeId,
+                request.AcademicYearId,
+                request.Name,
+                request.TotalAmount,
+                request.Currency,
+                cancellationToken);
+
+            return Ok(feeStructure);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPost("mobile-money")]
+    public async Task<IActionResult> CreateMobileMoneyTransaction(CreateMobileMoneyRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var transaction = await finance.CreateMobileMoneyTransactionAsync(
+                request.StudentId,
+                request.StudentInvoiceId,
+                request.Provider,
+                request.PhoneNumber,
+                request.Amount,
+                cancellationToken);
+
+            return Ok(transaction);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPost("mobile-money/{transactionId:guid}/confirm")]
+    public async Task<IActionResult> ConfirmMobileMoneyTransaction(Guid transactionId, ConfirmMobileMoneyRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await finance.ConfirmMobileMoneyTransactionAsync(transactionId, request.ExternalRef, cancellationToken);
+            return Ok(new { message = "Transaction confirmed." });
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpGet("mobile-money")]
+    public async Task<IActionResult> GetMobileMoneyTransactions([FromQuery] string? status, CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetMobileMoneyTransactionsAsync(status, cancellationToken));
+    }
+
+    [HttpPost("bulk-payments")]
+    public async Task<IActionResult> CreateBulkPayment(CreateBulkPaymentRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = new List<object>();
+            foreach (var item in request.Payments)
+            {
+                try
+                {
+                    var payment = await finance.RecordPaymentAsync(
+                        item.InvoiceId,
+                        item.ReceiptNumber,
+                        item.Amount,
+                        item.PaymentMethod,
+                        item.Reference,
+                        cancellationToken);
+
+                    result.Add(new { studentId = item.StudentId, invoiceId = item.InvoiceId, success = true, payment });
+                }
+                catch (Exception ex)
+                {
+                    result.Add(new { studentId = item.StudentId, invoiceId = item.InvoiceId, success = false, error = ex.Message });
+                }
+            }
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("daily-collections")]
+    public async Task<IActionResult> CreateDailyCollection(CreateDailyCollectionRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var collection = await finance.CreateDailyCollectionAsync(
+                request.CashierName,
+                request.CashierUserId,
+                request.CollectionDate,
+                cancellationToken);
+
+            return Ok(collection);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPost("daily-collections/{collectionId:guid}/payments")]
+    public async Task<IActionResult> AddPaymentToDailyCollection(Guid collectionId, AddDailyCollectionPaymentRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await finance.AddPaymentToDailyCollectionAsync(
+                collectionId,
+                request.StudentInvoiceId,
+                request.StudentId,
+                request.Amount,
+                request.PaymentMethod,
+                request.ReceiptNumber,
+                request.Reference,
+                cancellationToken);
+
+            return Ok(new { message = "Payment added to daily collection." });
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpPost("daily-collections/{collectionId:guid}/close")]
+    public async Task<IActionResult> CloseDailyCollection(Guid collectionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var collection = await finance.CloseDailyCollectionAsync(collectionId, cancellationToken);
+            return Ok(collection);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpGet("daily-collections")]
+    public async Task<IActionResult> GetDailyCollections([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetDailyCollectionsAsync(from, to, cancellationToken));
+    }
+
+    [HttpPost("sponsorships")]
+    public async Task<IActionResult> CreateSponsorship(CreateSponsorshipRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var sponsorship = await finance.CreateSponsorshipAsync(
+                request.StudentId,
+                request.SponsorName,
+                request.Amount,
+                request.Type,
+                request.StartDate,
+                request.EndDate,
+                request.Notes,
+                cancellationToken);
+
+            return Ok(sponsorship);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpGet("sponsorships")]
+    public async Task<IActionResult> GetSponsorships([FromQuery] Guid? studentId, CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetSponsorshipsAsync(studentId, cancellationToken));
+    }
+
+    [HttpPost("instalment-plans")]
+    public async Task<IActionResult> CreateInstalmentPlan(CreateInstalmentPlanRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var plan = await finance.CreateInstalmentPlanAsync(
+                request.StudentInvoiceId,
+                request.StudentId,
+                request.NumberOfInstalments,
+                cancellationToken);
+
+            return Ok(plan);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpGet("instalment-plans")]
+    public async Task<IActionResult> GetInstalmentPlans([FromQuery] Guid studentId, CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetInstalmentPlansAsync(studentId, cancellationToken));
+    }
+
+    [HttpGet("payments")]
+    public async Task<IActionResult> GetPayments(
+        [FromQuery] string? receiptNumber,
+        [FromQuery] string? paymentMethod,
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken));
+    }
+
     public sealed record CreateInvoiceRequest(
         Guid StudentId,
         Guid FeeStructureId,
@@ -68,4 +287,57 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
         string ReceiptNumber,
         string PaymentMethod,
         string? Reference);
+
+    public sealed record CreateFeeStructureRequest(
+        Guid ProgrammeId,
+        Guid AcademicYearId,
+        string Name,
+        decimal TotalAmount,
+        string? Currency);
+
+    public sealed record CreateMobileMoneyRequest(
+        Guid StudentId,
+        Guid? StudentInvoiceId,
+        string Provider,
+        string PhoneNumber,
+        decimal Amount);
+
+    public sealed record ConfirmMobileMoneyRequest(string ExternalRef);
+
+    public sealed record CreateBulkPaymentRequest(List<BulkPaymentItem> Payments);
+
+    public sealed record BulkPaymentItem(
+        Guid StudentId,
+        Guid InvoiceId,
+        decimal Amount,
+        string ReceiptNumber,
+        string PaymentMethod,
+        string? Reference);
+
+    public sealed record CreateDailyCollectionRequest(
+        string CashierName,
+        Guid? CashierUserId,
+        DateOnly CollectionDate);
+
+    public sealed record AddDailyCollectionPaymentRequest(
+        Guid StudentInvoiceId,
+        Guid StudentId,
+        decimal Amount,
+        string PaymentMethod,
+        string? ReceiptNumber,
+        string? Reference);
+
+    public sealed record CreateSponsorshipRequest(
+        Guid StudentId,
+        string SponsorName,
+        decimal Amount,
+        string Type,
+        DateOnly? StartDate,
+        DateOnly? EndDate,
+        string? Notes);
+
+    public sealed record CreateInstalmentPlanRequest(
+        Guid StudentInvoiceId,
+        Guid StudentId,
+        int NumberOfInstalments);
 }

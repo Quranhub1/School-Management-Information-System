@@ -99,4 +99,59 @@ public sealed class ReportsController(SchoolManagementDbContext db, ReportGenera
         var statement = await generator.GenerateFinancialStatementAsync(period, cancellationToken);
         return Ok(statement);
     }
+
+    [HttpGet("finance/daily-collection/{collectionId:guid}")]
+    public async Task<IActionResult> GetDailyCollectionReport(Guid collectionId, CancellationToken cancellationToken)
+    {
+        var collection = await db.DailyCollections.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == collectionId, cancellationToken);
+        if (collection == null) return NotFound();
+
+        var payments = await db.DailyCollectionPayments.AsNoTracking()
+            .Where(x => x.DailyCollectionId == collectionId)
+            .ToListAsync(cancellationToken);
+
+        return Ok(new { collection, payments });
+    }
+
+    [HttpGet("finance/outstanding-by-programme")]
+    public async Task<IActionResult> GetOutstandingByProgramme(CancellationToken cancellationToken)
+    {
+        var data = await db.StudentInvoices.AsNoTracking()
+            .Where(x => x.PaidAmount < x.Amount)
+            .GroupBy(x => new { x.FeeStructure.ProgrammeId, ProgrammeName = x.FeeStructure.Name })
+            .Select(g => new
+            {
+                g.Key.ProgrammeId,
+                g.Key.ProgrammeName,
+                StudentCount = g.Select(x => x.StudentId).Distinct().Count(),
+                TotalOutstanding = g.Sum(x => x.Amount - x.PaidAmount),
+                Currency = g.FirstOrDefault()?.Currency ?? "UGX"
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(data);
+    }
+
+    [HttpGet("integration/schoolpay/status")]
+    public async Task<IActionResult> GetSchoolPayIntegrationStatus(CancellationToken cancellationToken)
+    {
+        return Ok(new
+        {
+            integrated = false,
+            provider = "SchoolPay",
+            status = "Placeholder",
+            message = "SchoolPay integration is not configured. This endpoint is a placeholder for future integration."
+        });
+    }
+
+    [HttpPost("integration/schoolpay/sync")]
+    public async Task<IActionResult> SyncSchoolPay(CancellationToken cancellationToken)
+    {
+        return Ok(new
+        {
+            success = false,
+            message = "SchoolPay sync is not configured. This endpoint is a placeholder for future integration."
+        });
+    }
 }

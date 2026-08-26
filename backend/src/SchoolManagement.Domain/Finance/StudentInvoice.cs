@@ -11,4 +11,5 @@ public sealed class StudentInvoice
     public string Currency { get; init; } = "UGX";
     public required string Status { get; set; }
     public DateTimeOffset IssuedAt { get; init; } = DateTimeOffset.UtcNow;
+    public ICollection<StudentFee> StudentFees { get; set; } = new List<StudentFee>();
 }

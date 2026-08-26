@@ -60,7 +60,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Result> Results => Set<Result>();
     public DbSet<StudentPromotion> StudentPromotions => Set<StudentPromotion>();
     public DbSet<FeeStructure> FeeStructures => Set<FeeStructure>();
+    public DbSet<FeeItem> FeeItems => Set<FeeItem>();
     public DbSet<StudentInvoice> StudentInvoices => Set<StudentInvoice>();
+    public DbSet<StudentFee> StudentFees => Set<StudentFee>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<ChartOfAccounts> ChartOfAccounts => Set<ChartOfAccounts>();
     public DbSet<Account> Accounts => Set<Account>();
@@ -74,6 +76,12 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<BankReconciliation> BankReconciliations => Set<BankReconciliation>();
     public DbSet<BankStatementLine> BankStatementLines => Set<BankStatementLine>();
     public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
+    public DbSet<Sponsorship> Sponsorships => Set<Sponsorship>();
+    public DbSet<InstalmentPlan> InstalmentPlans => Set<InstalmentPlan>();
+    public DbSet<InstalmentPayment> InstalmentPayments => Set<InstalmentPayment>();
+    public DbSet<MobileMoneyTransaction> MobileMoneyTransactions => Set<MobileMoneyTransaction>();
+    public DbSet<DailyCollection> DailyCollections => Set<DailyCollection>();
+    public DbSet<DailyCollectionPayment> DailyCollectionPayments => Set<DailyCollectionPayment>();
     public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
     public DbSet<PayrollRecord> PayrollRecords => Set<PayrollRecord>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
@@ -255,6 +263,30 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.Reference).HasMaxLength(100);
         });
 
+        m.Entity<FeeItem>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(160).IsRequired();
+            e.Property(x => x.FeeType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.HasIndex(x => new { x.FeeStructureId, x.FeeType });
+        });
+
+        m.Entity<StudentFee>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.FeeType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(160).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.PaidAmount).HasPrecision(18, 2);
+            e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(30).IsRequired();
+            e.HasIndex(x => new { x.StudentId, x.StudentInvoiceId, x.FeeType });
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         m.Entity<CreditNote>(e =>
         {
             e.HasKey(x => x.Id);
@@ -263,6 +295,68 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.Reason).HasMaxLength(500).IsRequired();
             e.Property(x => x.Status).HasMaxLength(20).IsRequired();
             e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<Sponsorship>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.SponsorName).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Type).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.HasIndex(x => new { x.StudentId, x.Status });
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<InstalmentPlan>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<InstalmentPayment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.Property(x => x.PaymentMethod).HasMaxLength(40);
+            e.HasIndex(x => new { x.InstalmentPlanId, x.Status });
+            e.HasOne<InstalmentPlan>().WithMany().HasForeignKey(x => x.InstalmentPlanId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<MobileMoneyTransaction>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.TransactionRef).IsUnique();
+            e.Property(x => x.TransactionRef).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Provider).HasMaxLength(30).IsRequired();
+            e.Property(x => x.PhoneNumber).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.HasIndex(x => new { x.StudentId, x.Status });
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<DailyCollection>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.CashierName).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Notes).HasMaxLength(1000);
+            e.HasIndex(x => new { x.CollectionDate, x.CashierUserId });
+        });
+
+        m.Entity<DailyCollectionPayment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.PaymentMethod).HasMaxLength(40).IsRequired();
+            e.Property(x => x.ReceiptNumber).HasMaxLength(50);
+            e.Property(x => x.Reference).HasMaxLength(100);
+            e.HasOne<DailyCollection>().WithMany().HasForeignKey(x => x.DailyCollectionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

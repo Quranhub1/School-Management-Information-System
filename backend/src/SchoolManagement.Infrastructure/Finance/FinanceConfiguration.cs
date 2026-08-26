@@ -46,3 +46,92 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasIndex(x => new { x.StudentInvoiceId, x.PaidAt });
     }
 }
+
+public sealed class SponsorshipConfiguration : IEntityTypeConfiguration<Sponsorship>
+{
+    public void Configure(EntityTypeBuilder<Sponsorship> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.SponsorName).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.Type).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.HasIndex(x => new { x.StudentId, x.Status });
+    }
+}
+
+public sealed class InstalmentPlanConfiguration : IEntityTypeConfiguration<InstalmentPlan>
+{
+    public void Configure(EntityTypeBuilder<InstalmentPlan> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.TotalAmount).HasPrecision(18, 2);
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.HasIndex(x => new { x.StudentId, x.Status });
+    }
+}
+
+public sealed class InstalmentPaymentConfiguration : IEntityTypeConfiguration<InstalmentPayment>
+{
+    public void Configure(EntityTypeBuilder<InstalmentPayment> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.Property(x => x.PaymentMethod).HasMaxLength(40);
+        builder.Property(x => x.ReceiptNumber).HasMaxLength(50);
+        builder.Property(x => x.Reference).HasMaxLength(100);
+        builder.HasIndex(x => new { x.InstalmentPlanId, x.Status });
+    }
+}
+
+public sealed class MobileMoneyTransactionConfiguration : IEntityTypeConfiguration<MobileMoneyTransaction>
+{
+    public void Configure(EntityTypeBuilder<MobileMoneyTransaction> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.HasIndex(x => x.TransactionRef).IsUnique();
+        builder.Property(x => x.TransactionRef).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Provider).HasMaxLength(30).IsRequired();
+        builder.Property(x => x.PhoneNumber).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.Property(x => x.ErrorMessage).HasMaxLength(500);
+        builder.HasIndex(x => new { x.StudentId, x.Status });
+    }
+}
+
+public sealed class DailyCollectionConfiguration : IEntityTypeConfiguration<DailyCollection>
+{
+    public void Configure(EntityTypeBuilder<DailyCollection> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.CashierName).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Notes).HasMaxLength(1000);
+        builder.Property(x => x.CashExpected).HasPrecision(18, 2);
+        builder.Property(x => x.CashActual).HasPrecision(18, 2);
+        builder.Property(x => x.MobileMoneyTotal).HasPrecision(18, 2);
+        builder.Property(x => x.BankTotal).HasPrecision(18, 2);
+        builder.Property(x => x.CardTotal).HasPrecision(18, 2);
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.HasIndex(x => new { x.CollectionDate, x.CashierUserId });
+    }
+}
+
+public sealed class DailyCollectionPaymentConfiguration : IEntityTypeConfiguration<DailyCollectionPayment>
+{
+    public void Configure(EntityTypeBuilder<DailyCollectionPayment> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.PaymentMethod).HasMaxLength(40).IsRequired();
+        builder.Property(x => x.ReceiptNumber).HasMaxLength(50);
+        builder.Property(x => x.Reference).HasMaxLength(100);
+        builder.Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+    }
+}
