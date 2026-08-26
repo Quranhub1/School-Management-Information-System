@@ -1,0 +1,20 @@
+[Unit]
+Description=School Management Information System API
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=notify
+User=schoolmanagement
+WorkingDirectory=/opt/schoolmanagement/api
+ExecStart=/opt/schoolmanagement/api/schoolmanagement
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ConnectionStrings__SchoolManagement=Host=localhost;Port=5432;Database=school_management;Username=school_management;Password=__DB_PASS__
+Environment=Authentication__JwtKey=__JWT_KEY__
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+Restart=always
+RestartSec=10
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
