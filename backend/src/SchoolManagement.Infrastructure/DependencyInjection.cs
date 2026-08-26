@@ -10,7 +10,6 @@ using SchoolManagement.Application.ImportExport;
 using SchoolManagement.Application.Library;
 using SchoolManagement.Application.Library.External;
 using SchoolManagement.Application.Payroll;
-using SchoolManagement.Application.Reporting;
 using SchoolManagement.Application.Alumni;
 using SchoolManagement.Application.Staff;
 using SchoolManagement.Application.Calendar;
@@ -22,6 +21,7 @@ using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Library;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Infrastructure.Repositories;
+using SchoolManagement.Infrastructure.Reporting;
 
 namespace SchoolManagement.Infrastructure;
 
@@ -80,14 +80,8 @@ public static class DependencyInjection
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
         services.AddScoped<AdminSeeder>();
-
-        var librarySettings = new LibraryIntegrationSettings
-        {
-            KohaBaseUrl = configuration["Library:Integrations:KohaBaseUrl"] ?? string.Empty,
-            DSpaceBaseUrl = configuration["Library:Integrations:DSpaceBaseUrl"] ?? string.Empty
-        };
+        var librarySettings = new LibraryIntegrationSettings { KohaBaseUrl = configuration["Library:Integrations:KohaBaseUrl"] ?? string.Empty, DSpaceBaseUrl = configuration["Library:Integrations:DSpaceBaseUrl"] ?? string.Empty };
         services.AddLibraryExternalIntegration(librarySettings);
-
         return services;
     }
 }
