@@ -8,23 +8,4 @@ namespace SchoolManagement.Application.Attendance;
 /// </summary>
 public interface IAttendanceRepository : SchoolManagement.Application.Abstractions.IAttendanceRepository
 {
-    Task<AttendanceSession?> GetSessionAsync(
-        Guid timetableEntryId,
-        DateOnly sessionDate,
-        CancellationToken cancellationToken = default);
-
-    Task<StudentAttendance?> GetStudentAttendanceAsync(
-        Guid attendanceSessionId,
-        Guid studentId,
-        CancellationToken cancellationToken = default);
-
-    Task AddSessionAsync(AttendanceSession session, CancellationToken cancellationToken = default);
-
-    Task AddStudentAttendanceAsync(StudentAttendance attendance, CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<StudentAttendance>> GetStudentAttendanceAsync(
-        Guid studentId,
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken cancellationToken = default);
 }

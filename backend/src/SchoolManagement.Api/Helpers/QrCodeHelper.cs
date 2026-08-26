@@ -32,7 +32,6 @@ public static class QrCodeHelper
 
         var moduleCount = 21;
         var ecBytes = 7;
-
         var dataCodewords = EncodeData(bytes, 19);
         var ecCodewords = ComputeErrorCorrection(dataCodewords, ecBytes);
 
@@ -45,7 +44,6 @@ public static class QrCodeHelper
 
         var moduleSize = (double)size / moduleCount;
         var svgSize = moduleSize * moduleCount;
-
         var sb = new StringBuilder();
         sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {svgSize} {svgSize}\" width=\"{size}\" height=\"{size}\">");
         sb.Append($"<rect width=\"{size}\" height=\"{size}\" fill=\"#ffffff\"/>");
@@ -62,10 +60,9 @@ public static class QrCodeHelper
     private static byte[] EncodeData(byte[] input, int totalDataBytes)
     {
         var buffer = new List<byte>();
-        buffer.Add(0x40); // Byte mode indicator
-        buffer.Add((byte)input.Length); // Character count (8-bit for versions 1-9)
+        buffer.Add(0x40);
+        buffer.Add((byte)input.Length);
         buffer.AddRange(input);
-
         var padBytes = new[] { (byte)0xEC, (byte)0x11 };
         var padIndex = 0;
         while (buffer.Count < totalDataBytes)
@@ -73,14 +70,12 @@ public static class QrCodeHelper
             buffer.Add(padBytes[padIndex % 2]);
             padIndex++;
         }
-
         return buffer.ToArray();
     }
 
     private static byte[] ComputeErrorCorrection(byte[] data, int ecBytes)
     {
         var gen = ComputeGeneratorPolynomial(ecBytes);
-
         var result = new byte[ecBytes + 1];
         foreach (var b in data)
         {
@@ -88,7 +83,6 @@ public static class QrCodeHelper
             for (var i = 0; i < ecBytes; i++)
                 result[i] = (byte)(result[i + 1] ^ GfMul(gen[i + 1], coef));
         }
-
         var ec = new byte[ecBytes];
         Array.Copy(result, 0, ec, 0, ecBytes);
         return ec;
@@ -98,7 +92,6 @@ public static class QrCodeHelper
     {
         var gen = new byte[ecBytes + 1];
         gen[ecBytes] = 1;
-
         for (var i = 0; i < ecBytes; i++)
         {
             var c = GfExp[i];
@@ -106,7 +99,6 @@ public static class QrCodeHelper
                 gen[j] = (byte)(GfMul(gen[j], c) ^ gen[j - 1]);
             gen[0] = GfMul(gen[0], c);
         }
-
         return gen;
     }
 
@@ -123,7 +115,8 @@ public static class QrCodeHelper
         for (var col = moduleCount - 1; col > 0; col -= 2)
         {
             if (col == 6) col--;
-            for (var row = upward ? moduleCount - 1 : 0; upward ? row >= 0 : row < moduleCount; upward ? row-- : row++)
+            var row = upward ? moduleCount - 1 : 0;
+            while (upward ? row >= 0 : row < moduleCount)
             {
                 for (var c = 0; c < 2; c++)
                 {
@@ -141,6 +134,7 @@ public static class QrCodeHelper
                         matrix[row, x] = false;
                     }
                 }
+                row += upward ? -1 : 1;
             }
             upward = !upward;
         }
@@ -190,7 +184,6 @@ public static class QrCodeHelper
         matrix[8, 7] = (formatBits & (1 << 6)) != 0;
         matrix[8, 8] = (formatBits & (1 << 7)) != 0;
         matrix[7, 8] = (formatBits & (1 << 8)) != 0;
-
         for (var i = 0; i < 6; i++)
             matrix[moduleCount - 1 - i, 8] = (formatBits & (1 << i)) != 0;
         matrix[8, moduleCount - 8] = (formatBits & (1 << 6)) != 0;
