@@ -1,3 +1,4 @@
+using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Students;
 
@@ -5,7 +6,7 @@ namespace SchoolManagement.Application.Certificates;
 
 public sealed class CertificateService(
     ICertificateRepository repository,
-    SchoolManagement.Infrastructure.Persistence.SchoolManagementDbContext db) : ICertificateRepository
+    IStudentRepository studentRepository) : ICertificateRepository
 {
     public async Task<Certificate?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await repository.GetByIdAsync(id, cancellationToken);
@@ -22,7 +23,7 @@ public sealed class CertificateService(
     public async Task<CertificateDto> GenerateAsync(GenerateCertificateRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var student = await db.Students.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.StudentId, cancellationToken);
+        var student = await studentRepository.GetByIdAsync(request.StudentId, cancellationToken);
         if (student is null) throw new InvalidOperationException("Student not found.");
 
         var serialNumber = $"CERT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
