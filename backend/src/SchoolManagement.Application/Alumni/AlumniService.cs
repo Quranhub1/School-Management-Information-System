@@ -1,21 +1,21 @@
-using SchoolManagement.Domain.Students;
+using AlumniEntity = SchoolManagement.Domain.Students.Alumni;
 
 namespace SchoolManagement.Application.Alumni;
 
 public sealed class AlumniService(IAlumniRepository alumniRepository)
 {
-    public async Task<IReadOnlyList<Alumni>> GetActiveAsync(CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<AlumniEntity>> GetActiveAsync(CancellationToken cancellationToken = default) =>
         await alumniRepository.GetActiveAsync(cancellationToken);
 
-    public async Task<Alumni?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+    public async Task<AlumniEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await alumniRepository.GetByIdAsync(id, cancellationToken);
 
-    public async Task<Alumni?> GetByStudentAsync(Guid studentId, CancellationToken cancellationToken = default) =>
+    public async Task<AlumniEntity?> GetByStudentAsync(Guid studentId, CancellationToken cancellationToken = default) =>
         await alumniRepository.GetByStudentAsync(studentId, cancellationToken);
 
-    public async Task<Alumni> RegisterAsync(Guid studentId, DateOnly graduationDate, string programme, CancellationToken cancellationToken = default)
+    public async Task<AlumniEntity> RegisterAsync(Guid studentId, DateOnly graduationDate, string programme, CancellationToken cancellationToken = default)
     {
-        var alumni = new Alumni
+        var alumni = new AlumniEntity
         {
             StudentId = studentId,
             GraduationDate = graduationDate,
