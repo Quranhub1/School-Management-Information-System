@@ -172,6 +172,33 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] Student transfers
 - [x] Student reporting
 
+## UI / Mockups
+- [x] Login screen
+- [x] Dashboard / module navigation
+- [x] Administration / users & roles
+- [x] Student management
+- [x] Admissions
+- [x] Finance management
+- [x] Attendance management
+- [x] Examinations & results
+- [x] Library management
+- [x] Staff management
+- [x] Timetable
+- [x] Reports
+- [x] Communication
+- [x] Transport
+- [x] Inventory
+- [x] Hostel
+- [x] Parent portal
+- [x] Student portal
+- [x] Alumni
+- [x] Calendar
+- [x] Gate log
+- [x] Audit log
+- [x] Backup / restore
+- [x] Bulk operations
+- [x] Settings
+
 ## Offline-First & Platform Features
 - [x] PWA service worker and manifest
 - [x] Offline indicator and sync queue
