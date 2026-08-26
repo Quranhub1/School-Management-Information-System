@@ -9,10 +9,10 @@ public static class QrCodeHelper
 
     static QrCodeHelper()
     {
-        byte x = 1;
+        var x = 1;
         for (var i = 0; i < 255; i++)
         {
-            GfExp[i] = x;
+            GfExp[i] = (byte)x;
             GfLog[x] = (byte)i;
             x <<= 1;
             if ((x & 0x100) != 0) x ^= 0x11D;
@@ -66,7 +66,6 @@ public static class QrCodeHelper
         buffer.Add((byte)input.Length); // Character count (8-bit for versions 1-9)
         buffer.AddRange(input);
 
-        // Pad to total data bytes
         var padBytes = new[] { (byte)0xEC, (byte)0x11 };
         var padIndex = 0;
         while (buffer.Count < totalDataBytes)
@@ -85,9 +84,9 @@ public static class QrCodeHelper
         var result = new byte[ecBytes + 1];
         foreach (var b in data)
         {
-            var coef = result[0] ^ b;
+            var coef = (byte)(result[0] ^ b);
             for (var i = 0; i < ecBytes; i++)
-                result[i] = result[i + 1] ^ GfMul(gen[i + 1], coef);
+                result[i] = (byte)(result[i + 1] ^ GfMul(gen[i + 1], coef));
         }
 
         var ec = new byte[ecBytes];
@@ -104,7 +103,7 @@ public static class QrCodeHelper
         {
             var c = GfExp[i];
             for (var j = ecBytes; j > 0; j--)
-                gen[j] = GfMul(gen[j], c) ^ gen[j - 1];
+                gen[j] = (byte)(GfMul(gen[j], c) ^ gen[j - 1]);
             gen[0] = GfMul(gen[0], c);
         }
 
