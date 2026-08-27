@@ -13,6 +13,8 @@ export interface StudentReportCard {
     isFinal: boolean
   }[]
   gpa: number
+  classRank: number
+  totalInCohort: number
 }
 
 export interface FeeReceipt {

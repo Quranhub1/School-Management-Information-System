@@ -39,7 +39,9 @@ public sealed record StudentReportCardDto(
     string StudentNumber,
     string StudentName,
     IReadOnlyList<StudentReportCardDto.ResultEntry> Results,
-    decimal GPA)
+    decimal GPA,
+    int ClassRank,
+    int TotalInCohort)
 {
     public sealed record ResultEntry(string CourseCode, string CourseName, decimal? Score, string? Grade, decimal? GradePoint, string Status, bool IsFinal);
 }

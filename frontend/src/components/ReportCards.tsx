@@ -59,6 +59,7 @@ export function ReportCards({ canManage }: ReportCardsProps) {
             </div>
             <div className="report-card-meta">
               <span>GPA: {report.gpa.toFixed(2)}</span>
+              <span>Position: {report.classRank} / {report.totalInCohort}</span>
             </div>
           </div>
           <table>

@@ -95,6 +95,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Alumni> Alumni => Set<Alumni>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<GateLog> GateLogs => Set<GateLog>();
+    public DbSet<GatePass> GatePasses => Set<GatePass>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<AssessmentWeightingProfile> AssessmentWeightingProfiles => Set<AssessmentWeightingProfile>();
     public DbSet<AssessmentWeightingComponent> AssessmentWeightingComponents => Set<AssessmentWeightingComponent>();
@@ -106,6 +107,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<AssessmentCentre> AssessmentCentres => Set<AssessmentCentre>();
     public DbSet<RegulatoryCircular> RegulatoryCirculars => Set<RegulatoryCircular>();
     public DbSet<AdmissionRequirement> AdmissionRequirements => Set<AdmissionRequirement>();
+    public DbSet<StudentMedicalRecord> StudentMedicalRecords => Set<StudentMedicalRecord>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -467,6 +469,32 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.RequirementType).HasMaxLength(100).IsRequired();
             e.Property(x => x.Description).HasMaxLength(1000).IsRequired();
             e.HasIndex(x => new { x.ProgrammeId, x.DisplayOrder });
+        });
+
+        m.Entity<StudentMedicalRecord>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.StudentId, x.VisitDate });
+            e.Property(x => x.RecordType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Condition).HasMaxLength(200);
+            e.Property(x => x.Treatment).HasMaxLength(500);
+            e.Property(x => x.Medication).HasMaxLength(200);
+            e.Property(x => x.Notes).HasMaxLength(1000);
+            e.Property(x => x.AttendedBy).HasMaxLength(100);
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<GatePass>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.StudentId, x.Status });
+            e.Property(x => x.PassType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Reason).HasMaxLength(500);
+            e.Property(x => x.Destination).HasMaxLength(200);
+            e.Property(x => x.AuthorizedBy).HasMaxLength(100);
+            e.Property(x => x.ParentGuardianContact).HasMaxLength(20);
+            e.Property(x => x.Notes).HasMaxLength(1000);
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

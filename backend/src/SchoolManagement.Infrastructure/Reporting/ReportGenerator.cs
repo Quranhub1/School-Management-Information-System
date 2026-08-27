@@ -41,7 +41,61 @@ public sealed class ReportGenerator(SchoolManagementDbContext db)
             ? Math.Round(formatted.Where(r => r.GradePoint.HasValue).Average(r => r.GradePoint!.Value), 2)
             : 0m;
 
-        return new StudentReportCardDto(student.StudentNumber, $"{student.FirstName} {student.LastName}".Trim(), formatted, gpa);
+        var admission = await db.Students.AsNoTracking()
+            .Where(x => x.Id == studentId)
+            .Select(x => new { x.AdmissionId })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var cohortQuery = db.Results.AsNoTracking().AsQueryable();
+        if (academicYearId.HasValue)
+        {
+            var semesterIds = await db.Semesters.AsNoTracking()
+                .Where(s => s.AcademicYearId == academicYearId.Value)
+                .Select(s => s.Id)
+                .ToListAsync(cancellationToken);
+            cohortQuery = cohortQuery.Where(r => semesterIds.Contains(r.SemesterId));
+        }
+        if (semesterId.HasValue) cohortQuery = cohortQuery.Where(r => r.SemesterId == semesterId.Value);
+
+        if (admission is not null && admission.AdmissionId.HasValue)
+        {
+            var admissionRecord = await db.Admissions.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == admission.AdmissionId.Value, cancellationToken);
+
+            if (admissionRecord is not null)
+            {
+                var sameProgrammeStudentIds = await db.Admissions.AsNoTracking()
+                    .Where(a => a.ProgrammeId == admissionRecord.ProgrammeId)
+                    .Select(a => a.ApplicantId)
+                    .ToListAsync(cancellationToken);
+
+                var studentIds = await db.Students.AsNoTracking()
+                    .Where(s => sameProgrammeStudentIds.Contains(s.Id))
+                    .Select(s => s.Id)
+                    .ToListAsync(cancellationToken);
+
+                cohortQuery = cohortQuery.Where(r => studentIds.Contains(r.StudentId));
+            }
+        }
+
+        var cohortGpas = await cohortQuery
+            .GroupBy(r => r.StudentId)
+            .Select(g => new
+            {
+                StudentId = g.Key,
+                Gpa = g.Average(r => r.GradePoint)
+            })
+            .ToListAsync(cancellationToken);
+
+        var rank = 1;
+        if (cohortGpas.Any())
+        {
+            var studentGpa = cohortGpas.FirstOrDefault(x => x.StudentId == studentId)?.Gpa ?? 0m;
+            var higherGpas = cohortGpas.Count(x => x.Gpa > studentGpa);
+            rank = higherGpas + 1;
+        }
+
+        return new StudentReportCardDto(student.StudentNumber, $"{student.FirstName} {student.LastName}".Trim(), formatted, gpa, rank, cohortGpas.Count);
     }
 
     public async Task<FeeReceiptDto?> GenerateFeeReceiptAsync(Guid paymentId, CancellationToken cancellationToken = default)
