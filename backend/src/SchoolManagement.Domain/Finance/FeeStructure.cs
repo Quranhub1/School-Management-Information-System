@@ -10,4 +10,5 @@ public sealed class FeeStructure
     public decimal TotalAmount { get; init; }
     public string Currency { get; init; } = "UGX";
     public bool IsActive { get; set; } = true;
+    public ICollection<FeeItem> FeeItems { get; set; } = new List<FeeItem>();
 }

@@ -158,52 +158,54 @@ export function FinanceManagement() {
               ) : invoices.length === 0 ? (
                 <p className="empty">No invoices found for this student.</p>
               ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Invoice</th>
-                      <th>Amount</th>
-                      <th>Paid</th>
-                      <th>Balance</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoices.map(invoice => (
-                      <tr key={invoice.id}>
-                        <td><strong>{invoice.invoiceNumber}</strong></td>
-                        <td>{invoice.currency} {invoice.amount.toLocaleString()}</td>
-                        <td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
-                        <td style={{ color: invoice.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>
-                          {invoice.currency} {invoice.balance.toLocaleString()}
-                        </td>
-                        <td>
-                          <span style={{
-                            display: 'inline-flex',
-                            padding: '4px 10px',
-                            borderRadius: '999px',
-                            background: STATUS_COLORS[invoice.status] ?? '#78716c',
-                            color: 'white',
-                            fontSize: '.72rem',
-                            fontWeight: 800,
-                          }}>
-                            {invoice.status}
-                          </span>
-                        </td>
-                        <td>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</td>
-                        <td>
-                          {invoice.balance > 0 && (
-                            <button className="secondary-button" onClick={() => setPaymentInvoice(invoice)}>
-                              Record Payment
-                            </button>
-                          )}
-                        </td>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Fee Type</th>
+                        <th>Invoice</th>
+                        <th>Amount</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {invoices.map(invoice => (
+                        <tr key={invoice.id}>
+                          <td><strong>{invoice.feeType}</strong></td>
+                          <td><strong>{invoice.invoiceNumber}</strong></td>
+                          <td>{invoice.currency} {invoice.amount.toLocaleString()}</td>
+                          <td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
+                          <td style={{ color: invoice.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>
+                            {invoice.currency} {invoice.balance.toLocaleString()}
+                          </td>
+                          <td>
+                            <span style={{
+                              display: 'inline-flex',
+                              padding: '4px 10px',
+                              borderRadius: '999px',
+                              background: STATUS_COLORS[invoice.status] ?? '#78716c',
+                              color: 'white',
+                              fontSize: '.72rem',
+                              fontWeight: 800,
+                            }}>
+                              {invoice.status}
+                            </span>
+                          </td>
+                          <td>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</td>
+                          <td>
+                            {invoice.balance > 0 && (
+                              <button className="secondary-button" onClick={() => setPaymentInvoice(invoice)}>
+                                Record Payment
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
               )}
             </div>
           )}

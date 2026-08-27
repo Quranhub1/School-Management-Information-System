@@ -268,6 +268,28 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
         return Ok(await finance.GetInstalmentPlansAsync(studentId, cancellationToken));
     }
 
+    [HttpGet("invoices/{invoiceId:guid}/fee-items")]
+    public async Task<IActionResult> GetInvoiceFeeItems(Guid invoiceId, CancellationToken cancellationToken)
+    {
+        var items = await db.StudentFees.AsNoTracking()
+            .Where(x => x.StudentInvoiceId == invoiceId)
+            .OrderBy(x => x.FeeType)
+            .Select(x => new
+            {
+                x.Id,
+                x.FeeType,
+                x.Name,
+                x.Amount,
+                x.PaidAmount,
+                balance = x.Amount - x.PaidAmount,
+                x.Currency,
+                x.Status
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(items);
+    }
+
     [HttpGet("payments")]
     public async Task<IActionResult> GetPayments(
         [FromQuery] string? receiptNumber,

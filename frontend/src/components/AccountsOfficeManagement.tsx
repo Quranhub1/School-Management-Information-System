@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import React, { useEffect, useState, type FormEvent } from 'react'
 import type { Invoice } from '../api/finance'
-import { getInvoices, recordPayment, getPayments, issueCreditNote, getCreditNotes, addInvoiceNote, getInvoiceNotes, requestStaffAdvance, approveStaffAdvance, recoverStaffAdvance, getStaffAdvances } from '../api/finance'
+import { getInvoices, recordPayment, getPayments, issueCreditNote, getCreditNotes, addInvoiceNote, getInvoiceNotes, requestStaffAdvance, approveStaffAdvance, recoverStaffAdvance, getStaffAdvances, getInvoiceFeeItems } from '../api/finance'
 import { listStaff, type StaffMember } from '../api/staff'
 import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } from '../api/payroll'
 
@@ -14,6 +14,17 @@ type FeeBreakdownRow = {
   amount: number
   paid: number
   balance: number
+  status: string
+}
+
+type InvoiceFeeItem = {
+  id: string
+  feeType: string
+  name: string
+  amount: number
+  paidAmount: number
+  balance: number
+  currency: string
   status: string
 }
 
@@ -94,6 +105,9 @@ export function AccountsOfficeManagement() {
   const [editingFees, setEditingFees] = useState<FeeBreakdownRow[]>([])
   const [editDraft, setEditDraft] = useState<Record<string, number>>({})
   const [editMessage, setEditMessage] = useState('')
+
+  const [invoiceFeeItems, setInvoiceFeeItems] = useState<InvoiceFeeItem[]>([])
+  const [feeItemsLoading, setFeeItemsLoading] = useState(false)
 
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([])
   const [staffMap, setStaffMap] = useState<Record<string, StaffMember>>({})
@@ -305,11 +319,12 @@ export function AccountsOfficeManagement() {
     return () => { cancelled = true }
   }, [payrollDetailId])
 
-  useEffect(() => {
+   useEffect(() => {
     if (!selectedInvoice) {
       setPaymentHistory([])
       setCreditNotes([])
       setInvoiceNotes([])
+      setInvoiceFeeItems([])
       return
     }
     let cancelled = false
@@ -318,29 +333,34 @@ export function AccountsOfficeManagement() {
       setPaymentHistoryLoading(true)
       setCreditNotesLoading(true)
       setInvoiceNotesLoading(true)
+      setFeeItemsLoading(true)
       try {
-        const [payments, creditNotesData, notes] = await Promise.all([
+        const [payments, creditNotesData, notes, feeItems] = await Promise.all([
           getPayments(undefined, undefined, undefined, undefined),
           getCreditNotes(invoice.id),
           getInvoiceNotes(invoice.id),
+          getInvoiceFeeItems(invoice.id),
         ])
         if (!cancelled) {
           const filtered = payments.filter(p => true)
           setPaymentHistory(filtered)
           setCreditNotes(creditNotesData)
           setInvoiceNotes(notes)
+          setInvoiceFeeItems(feeItems)
         }
       } catch {
         if (!cancelled) {
           setPaymentHistory([])
           setCreditNotes([])
           setInvoiceNotes([])
+          setInvoiceFeeItems([])
         }
       } finally {
         if (!cancelled) {
           setPaymentHistoryLoading(false)
           setCreditNotesLoading(false)
           setInvoiceNotesLoading(false)
+          setFeeItemsLoading(false)
         }
       }
     }
@@ -756,57 +776,81 @@ export function AccountsOfficeManagement() {
                 <button type="button" onClick={exportPaymentHistory}>Export Payment History</button>
               </div>
 
-              <div className="table-wrap" style={{ marginBottom: 22 }}>
-                {loading ? (
-                  <p className="empty">Loading fee breakdown…</p>
-                ) : invoices.length === 0 ? (
-                  <p className="empty">No invoices found for this student.</p>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Fee Type</th>
-                        <th>Amount</th>
-                        <th>Paid</th>
-                        <th>Balance</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoices.map(inv => {
-                        const statusColor = getStatusColor(inv.balance, inv.paidAmount)
-                        return (
-                          <tr key={inv.id}>
-                            <td><strong>{inv.feeType}</strong></td>
-                            <td>UGX {inv.amount.toLocaleString()}</td>
-                            <td style={{ color: '#059669' }}>UGX {inv.paidAmount.toLocaleString()}</td>
-                            <td style={{ color: inv.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {inv.balance.toLocaleString()}</td>
-                            <td>
-                              <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: statusColor, color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
-                                {getStatusLabel(inv.balance, inv.paidAmount)}
-                              </span>
-                            </td>
-                            <td>
-                              {inv.balance > 0 && (
-                                <button className="secondary-button" onClick={() => { setSelectedInvoice(inv); setPaymentAmount(''); setReceiptNumber(''); }}>Record Payment</button>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                      <tr>
-                        <td><strong>Total</strong></td>
-                        <td><strong>UGX {totalAmount.toLocaleString()}</strong></td>
-                        <td style={{ color: '#059669' }}><strong>UGX {totalPaid.toLocaleString()}</strong></td>
-                        <td style={{ color: totalBalance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}><strong>UGX {totalBalance.toLocaleString()}</strong></td>
-                        <td><strong>{totalBalance === 0 ? 'Fully Paid' : 'Outstanding'}</strong></td>
-                        <td></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                )}
-              </div>
+               <div className="table-wrap" style={{ marginBottom: 22 }}>
+                 {loading ? (
+                   <p className="empty">Loading fee breakdown…</p>
+                 ) : invoices.length === 0 ? (
+                   <p className="empty">No invoices found for this student.</p>
+                 ) : (
+                   <table>
+                     <thead>
+                       <tr>
+                         <th>Fee Type</th>
+                         <th>Amount</th>
+                         <th>Paid</th>
+                         <th>Balance</th>
+                         <th>Status</th>
+                         <th>Action</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {invoices.map(inv => {
+                         const statusColor = getStatusColor(inv.balance, inv.paidAmount)
+                         const itemsForInvoice = invoiceFeeItems.filter(item => item.currency === inv.currency)
+                         return (
+                           <React.Fragment key={inv.id}>
+                             {itemsForInvoice.length > 0 ? (
+                               itemsForInvoice.map((item, idx) => (
+                                 <tr key={item.id}>
+                                   <td><strong>{idx === 0 ? inv.feeType : ''}</strong></td>
+                                   <td>UGX {item.amount.toLocaleString()}</td>
+                                   <td style={{ color: '#059669' }}>UGX {item.paidAmount.toLocaleString()}</td>
+                                   <td style={{ color: item.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {item.balance.toLocaleString()}</td>
+                                   <td>
+                                     <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: statusColor, color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                                       {getStatusLabel(item.balance, item.paidAmount)}
+                                     </span>
+                                   </td>
+                                   <td>
+                                     {idx === 0 && inv.balance > 0 && (
+                                       <button className="secondary-button" onClick={() => { setSelectedInvoice(inv); setPaymentAmount(''); setReceiptNumber(''); }}>Record Payment</button>
+                                     )}
+                                   </td>
+                                 </tr>
+                               ))
+                             ) : (
+                               <tr key={inv.id}>
+                                 <td><strong>{inv.feeType}</strong></td>
+                                 <td>UGX {inv.amount.toLocaleString()}</td>
+                                 <td style={{ color: '#059669' }}>UGX {inv.paidAmount.toLocaleString()}</td>
+                                 <td style={{ color: inv.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {inv.balance.toLocaleString()}</td>
+                                 <td>
+                                   <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: statusColor, color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                                     {getStatusLabel(inv.balance, inv.paidAmount)}
+                                   </span>
+                                 </td>
+                                 <td>
+                                   {inv.balance > 0 && (
+                                     <button className="secondary-button" onClick={() => { setSelectedInvoice(inv); setPaymentAmount(''); setReceiptNumber(''); }}>Record Payment</button>
+                                   )}
+                                 </td>
+                               </tr>
+                             )}
+                           </React.Fragment>
+                         )
+                       })}
+                       <tr>
+                         <td><strong>Total</strong></td>
+                         <td><strong>UGX {totalAmount.toLocaleString()}</strong></td>
+                         <td style={{ color: '#059669' }}><strong>UGX {totalPaid.toLocaleString()}</strong></td>
+                         <td style={{ color: totalBalance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}><strong>UGX {totalBalance.toLocaleString()}</strong></td>
+                         <td><strong>{totalBalance === 0 ? 'Fully Paid' : 'Outstanding'}</strong></td>
+                         <td></td>
+                       </tr>
+                     </tbody>
+                   </table>
+                 )}
+               </div>
 
               <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
                 <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>

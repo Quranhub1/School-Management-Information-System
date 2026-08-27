@@ -41,6 +41,43 @@ public sealed class FinanceService(IFinanceRepository finance, SchoolManagementD
         };
 
         await finance.AddInvoiceAsync(invoice, cancellationToken);
+
+        var feeItems = await db.FeeItems.AsNoTracking().Where(x => x.FeeStructureId == fee.Id && x.IsActive).ToListAsync(cancellationToken);
+        if (feeItems.Count == 0)
+        {
+            var defaultItem = new StudentFee
+            {
+                StudentId = studentId,
+                StudentInvoiceId = invoice.Id,
+                FeeType = feeType.Trim(),
+                Name = fee.Name,
+                Amount = fee.TotalAmount,
+                PaidAmount = 0,
+                Currency = fee.Currency,
+                Status = "Unpaid"
+            };
+            db.StudentFees.Add(defaultItem);
+        }
+        else
+        {
+            foreach (var item in feeItems)
+            {
+                var studentFee = new StudentFee
+                {
+                    StudentId = studentId,
+                    StudentInvoiceId = invoice.Id,
+                    FeeItemId = item.Id,
+                    FeeType = item.FeeType,
+                    Name = item.Name,
+                    Amount = item.Amount,
+                    PaidAmount = 0,
+                    Currency = item.Currency,
+                    Status = "Unpaid"
+                };
+                db.StudentFees.Add(studentFee);
+            }
+        }
+
         await finance.SaveChangesAsync(cancellationToken);
         return invoice;
     }

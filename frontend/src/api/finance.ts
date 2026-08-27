@@ -156,6 +156,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const getInvoices = (studentId?: string) => request<Invoice[]>(`/api/finance/invoices${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`)
 export const createInvoice = (body: CreateInvoiceRequest) => request<Invoice>('/api/finance/invoices', { method: 'POST', body: JSON.stringify(body) })
 export const recordPayment = (invoiceId: string, body: RecordPaymentRequest) => request('/api/finance/invoices/' + invoiceId + '/payments', { method: 'POST', body: JSON.stringify(body) })
+export const getInvoiceFeeItems = (invoiceId: string) => request<{ id: string; feeType: string; name: string; amount: number; paidAmount: number; balance: number; currency: string; status: string }[]>(`/api/finance/invoices/${invoiceId}/fee-items`)
 
 export const getDashboard = () => request<FinanceDashboard>('/api/finance/dashboard')
 export const getOutstandingBalances = (programmeId?: string) => request<OutstandingBalance[]>('/api/finance/outstanding' + (programmeId ? `?programmeId=${encodeURIComponent(programmeId)}` : ''))
