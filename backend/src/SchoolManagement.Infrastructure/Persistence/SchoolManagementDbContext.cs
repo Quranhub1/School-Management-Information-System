@@ -108,6 +108,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<RegulatoryCircular> RegulatoryCirculars => Set<RegulatoryCircular>();
     public DbSet<AdmissionRequirement> AdmissionRequirements => Set<AdmissionRequirement>();
     public DbSet<StudentMedicalRecord> StudentMedicalRecords => Set<StudentMedicalRecord>();
+    public DbSet<CalendarReminder> CalendarReminders => Set<CalendarReminder>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -495,6 +496,17 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.ParentGuardianContact).HasMaxLength(20);
             e.Property(x => x.Notes).HasMaxLength(1000);
             e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<CalendarReminder>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.CalendarEventId, x.RemindOnUtc });
+            e.Property(x => x.RecipientType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.RecipientId).HasMaxLength(100);
+            e.Property(x => x.Message).HasMaxLength(1000);
+            e.Property(x => x.Channel).HasMaxLength(50).IsRequired();
+            e.HasOne<Domain.Calendar.CalendarEvent>().WithMany().HasForeignKey(x => x.CalendarEventId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

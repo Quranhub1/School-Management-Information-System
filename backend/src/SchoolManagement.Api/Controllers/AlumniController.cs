@@ -12,9 +12,25 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class AlumniController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    public async Task<IActionResult> List([FromQuery] string? search, [FromQuery] string? programme, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, CancellationToken cancellationToken)
     {
         var query = db.Alumni.AsNoTracking().Where(x => x.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(x => x.Student.FirstName.ToLower().Contains(term) || x.Student.LastName.ToLower().Contains(term) || x.Student.StudentNumber.ToLower().Contains(term) || x.Programme.ToLower().Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(programme))
+            query = query.Where(x => x.Programme.Contains(programme));
+
+        if (fromDate.HasValue)
+            query = query.Where(x => x.GraduationDate >= fromDate.Value);
+
+        if (toDate.HasValue)
+            query = query.Where(x => x.GraduationDate <= toDate.Value);
+
         return Ok(await query.OrderByDescending(x => x.GraduationDate).ToListAsync(cancellationToken));
     }
 
