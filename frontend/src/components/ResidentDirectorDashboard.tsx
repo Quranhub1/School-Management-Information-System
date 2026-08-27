@@ -13,8 +13,28 @@ import {
   type AttendanceSummary,
   type WelfareAlerts,
 } from '../api/residentDirector'
+import {
+  getRegulatoryRegistrations,
+  createRegulatoryRegistration,
+  getRegulatoryAssessments,
+  createRegulatoryAssessment,
+  getContinuousAssessments,
+  createContinuousAssessment,
+  getAssessmentResults,
+  createAssessmentResult,
+  getAssessmentCentres,
+  createAssessmentCentre,
+  getRegulatoryCirculars,
+  createRegulatoryCircular,
+  type RegulatoryRegistration,
+  type RegulatoryAssessment,
+  type ContinuousAssessment,
+  type AssessmentResult,
+  type AssessmentCentre,
+  type RegulatoryCircular,
+} from '../api/regulatory'
 
-type MainTab = 'overview' | 'students' | 'staff' | 'hostel' | 'welfare'
+type MainTab = 'overview' | 'students' | 'staff' | 'hostel' | 'welfare' | 'registrations' | 'assessments' | 'continuous' | 'results' | 'centres' | 'circulars'
 
 export function ResidentDirectorDashboard() {
   const [mainTab, setMainTab] = useState<MainTab>('overview')
@@ -27,17 +47,33 @@ export function ResidentDirectorDashboard() {
   const [attendance, setAttendance] = useState<AttendanceSummary | null>(null)
   const [welfare, setWelfare] = useState<WelfareAlerts | null>(null)
 
+  const [registrations, setRegistrations] = useState<RegulatoryRegistration[]>([])
+  const [assessments, setAssessments] = useState<RegulatoryAssessment[]>([])
+  const [continuous, setContinuous] = useState<ContinuousAssessment[]>([])
+  const [results, setResults] = useState<AssessmentResult[]>([])
+  const [centres, setCentres] = useState<AssessmentCentre[]>([])
+  const [circulars, setCirculars] = useState<RegulatoryCircular[]>([])
+
+  const [regulatoryBody, setRegulatoryBody] = useState('UHPAB')
+  const [subTab, setSubTab] = useState('list')
+
   async function loadAll() {
     setLoading(true)
     setError('')
     try {
-      const [dash, studentsData, staffData, hostelData, attendanceData, welfareData] = await Promise.all([
+      const [dash, studentsData, staffData, hostelData, attendanceData, welfareData, regs, assmts, cont, res, cents, circs] = await Promise.all([
         getResidentDirectorDashboard(),
         getResidentDirectorStudents(),
         getResidentDirectorStaff(),
         getResidentDirectorHostelStatus(),
         getResidentDirectorAttendanceSummary(),
         getResidentDirectorWelfareAlerts(),
+        getRegulatoryRegistrations(regulatoryBody || undefined),
+        getRegulatoryAssessments(regulatoryBody || undefined),
+        getContinuousAssessments(),
+        getAssessmentResults(regulatoryBody || undefined),
+        getAssessmentCentres(),
+        getRegulatoryCirculars(regulatoryBody || undefined),
       ])
       setDashboard(dash)
       setStudents(studentsData)
@@ -45,6 +81,12 @@ export function ResidentDirectorDashboard() {
       setHostel(hostelData)
       setAttendance(attendanceData)
       setWelfare(welfareData)
+      setRegistrations(regs)
+      setAssessments(assmts)
+      setContinuous(cont)
+      setResults(res)
+      setCentres(cents)
+      setCirculars(circs)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load resident director dashboard.')
     } finally {
@@ -54,16 +96,11 @@ export function ResidentDirectorDashboard() {
 
   useEffect(() => {
     void loadAll()
-  }, [])
-
-  function getGenderLabel(gender?: string) {
-    if (!gender) return '—'
-    return gender === 'Male' ? 'Male' : gender === 'Female' ? 'Female' : gender
-  }
+  }, [regulatoryBody])
 
   function getStatusColor(status: string): string {
-    if (status === 'Active' || status === 'Paid') return '#059669'
-    if (status === 'Pending' || status === 'Approved') return '#d97706'
+    if (status === 'Active' || status === 'Paid' || status === 'Released' || status === 'Registered' || status === 'Occupied') return '#059669'
+    if (status === 'Pending' || status === 'Approved' || status === 'Scheduled' || status === 'Submitted') return '#d97706'
     return '#dc2626'
   }
 
@@ -84,7 +121,13 @@ export function ResidentDirectorDashboard() {
         <button role="tab" aria-selected={mainTab === 'students'} className={mainTab === 'students' ? 'active' : ''} onClick={() => setMainTab('students')}>Students</button>
         <button role="tab" aria-selected={mainTab === 'staff'} className={mainTab === 'staff' ? 'active' : ''} onClick={() => setMainTab('staff')}>Staff</button>
         <button role="tab" aria-selected={mainTab === 'hostel'} className={mainTab === 'hostel' ? 'active' : ''} onClick={() => setMainTab('hostel')}>Hostel</button>
-        <button role="tab" aria-selected={mainTab === 'welfare'} className={mainTab === 'welfare' ? 'active' : ''} onClick={() => setMainTab('welfare')}>Welfare Alerts</button>
+        <button role="tab" aria-selected={mainTab === 'welfare'} className={mainTab === 'welfare' ? 'active' : ''} onClick={() => setMainTab('welfare')}>Welfare</button>
+        <button role="tab" aria-selected={mainTab === 'registrations'} className={mainTab === 'registrations' ? 'active' : ''} onClick={() => setMainTab('registrations')}>UHPAB/UVTAB Registration</button>
+        <button role="tab" aria-selected={mainTab === 'assessments'} className={mainTab === 'assessments' ? 'active' : ''} onClick={() => setMainTab('assessments')}>Assessments</button>
+        <button role="tab" aria-selected={mainTab === 'continuous'} className={mainTab === 'continuous' ? 'active' : ''} onClick={() => setMainTab('continuous')}>Continuous Assessment</button>
+        <button role="tab" aria-selected={mainTab === 'results'} className={mainTab === 'results' ? 'active' : ''} onClick={() => setMainTab('results')}>Results</button>
+        <button role="tab" aria-selected={mainTab === 'centres'} className={mainTab === 'centres' ? 'active' : ''} onClick={() => setMainTab('centres')}>Centres</button>
+        <button role="tab" aria-selected={mainTab === 'circulars'} className={mainTab === 'circulars' ? 'active' : ''} onClick={() => setMainTab('circulars')}>Circulars</button>
       </div>
 
       {loading ? (
@@ -234,7 +277,7 @@ export function ResidentDirectorDashboard() {
                         <tr key={student.id}>
                           <td><strong>{student.studentNumber}</strong></td>
                           <td>{student.firstName} {student.otherNames} {student.lastName}</td>
-                          <td>{getGenderLabel(student.gender)}</td>
+                          <td>{student.gender || '—'}</td>
                           <td>
                             <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(student.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
                               {student.status}
@@ -404,6 +447,302 @@ export function ResidentDirectorDashboard() {
                           <td>
                             <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: '#d97706', color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
                               {item.alertType}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {mainTab === 'registrations' && (
+            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                <div>
+                  <span className="eyebrow">UHPAB/UVTAB</span>
+                  <h3>Student Registrations</h3>
+                </div>
+                <select value={regulatoryBody} onChange={e => setRegulatoryBody(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }}>
+                  <option value="UHPAB">UHPAB</option>
+                  <option value="UVTAB">UVTAB</option>
+                </select>
+              </div>
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Registration No.</th>
+                      <th>Student</th>
+                      <th>Programme</th>
+                      <th>Level</th>
+                      <th>Status</th>
+                      <th>Assessment Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registrations.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="empty">No registrations found</td>
+                      </tr>
+                    ) : (
+                      registrations.map(reg => (
+                        <tr key={reg.id}>
+                          <td><strong>{reg.registrationNumber}</strong></td>
+                          <td>{reg.studentId}</td>
+                          <td>{reg.programmeName} ({reg.programmeCode})</td>
+                          <td>{reg.level}</td>
+                          <td>
+                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(reg.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                              {reg.status}
+                            </span>
+                          </td>
+                          <td>{reg.assessmentDate ? new Date(reg.assessmentDate).toLocaleDateString('en-UG') : '—'}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {mainTab === 'assessments' && (
+            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                <div>
+                  <span className="eyebrow">UHPAB/UVTAB</span>
+                  <h3>Assessments</h3>
+                </div>
+                <select value={regulatoryBody} onChange={e => setRegulatoryBody(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }}>
+                  <option value="UHPAB">UHPAB</option>
+                  <option value="UVTAB">UVTAB</option>
+                </select>
+              </div>
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Title</th>
+                      <th>Type</th>
+                      <th>Duration</th>
+                      <th>Pass Mark</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assessments.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="empty">No assessments found</td>
+                      </tr>
+                    ) : (
+                      assessments.map(a => (
+                        <tr key={a.id}>
+                          <td><strong>{a.assessmentCode}</strong></td>
+                          <td>{a.title}</td>
+                          <td>{a.assessmentType}</td>
+                          <td>{a.durationMinutes} mins</td>
+                          <td>{a.passMark}/{a.totalMarks}</td>
+                          <td>
+                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(a.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                              {a.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {mainTab === 'continuous' && (
+            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                <div>
+                  <span className="eyebrow">UHPAB/UVTAB</span>
+                  <h3>Continuous Assessments (SBA)</h3>
+                </div>
+              </div>
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Title</th>
+                      <th>Score</th>
+                      <th>Logbook</th>
+                      <th>Report</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {continuous.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="empty">No continuous assessments found</td>
+                      </tr>
+                    ) : (
+                      continuous.map(c => (
+                        <tr key={c.id}>
+                          <td>{c.assessmentType}</td>
+                          <td>{c.title}</td>
+                          <td>{c.score}/{c.maxScore}</td>
+                          <td>{c.logbookReference || '—'}</td>
+                          <td>{c.reportReference || '—'}</td>
+                          <td>
+                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(c.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                              {c.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {mainTab === 'results' && (
+            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                <div>
+                  <span className="eyebrow">UHPAB/UVTAB</span>
+                  <h3>Assessment Results</h3>
+                </div>
+                <select value={regulatoryBody} onChange={e => setRegulatoryBody(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }}>
+                  <option value="UHPAB">UHPAB</option>
+                  <option value="UVTAB">UVTAB</option>
+                </select>
+              </div>
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>Score</th>
+                      <th>Grade</th>
+                      <th>Result</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="empty">No results found</td>
+                      </tr>
+                    ) : (
+                      results.map(r => (
+                        <tr key={r.id}>
+                          <td>{r.studentId}</td>
+                          <td>{r.score}</td>
+                          <td><strong>{r.grade}</strong></td>
+                          <td>
+                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: r.passed ? '#059669' : '#dc2626', color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                              {r.passed ? 'Pass' : 'Fail'}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(r.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                              {r.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {mainTab === 'centres' && (
+            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                <div>
+                  <span className="eyebrow">UHPAB/UVTAB</span>
+                  <h3>Assessment Centres</h3>
+                </div>
+              </div>
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Name</th>
+                      <th>Regulatory Body</th>
+                      <th>Contact</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {centres.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="empty">No assessment centres found</td>
+                      </tr>
+                    ) : (
+                      centres.map(c => (
+                        <tr key={c.id}>
+                          <td><strong>{c.centreCode}</strong></td>
+                          <td>{c.centreName}</td>
+                          <td>{c.regulatoryBody}</td>
+                          <td>{c.contactPerson || '—'}<br/>{c.phone || '—'}</td>
+                          <td>
+                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(c.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                              {c.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {mainTab === 'circulars' && (
+            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                <div>
+                  <span className="eyebrow">UHPAB/UVTAB</span>
+                  <h3>Regulatory Circulars</h3>
+                </div>
+                <select value={regulatoryBody} onChange={e => setRegulatoryBody(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }}>
+                  <option value="UHPAB">UHPAB</option>
+                  <option value="UVTAB">UVTAB</option>
+                </select>
+              </div>
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Circular No.</th>
+                      <th>Title</th>
+                      <th>Issue Date</th>
+                      <th>Deadline</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {circulars.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="empty">No circulars found</td>
+                      </tr>
+                    ) : (
+                      circulars.map(c => (
+                        <tr key={c.id}>
+                          <td><strong>{c.circularNumber}</strong></td>
+                          <td>{c.title}</td>
+                          <td>{new Date(c.issueDate).toLocaleDateString('en-UG')}</td>
+                          <td>{c.deadline ? new Date(c.deadline).toLocaleDateString('en-UG') : '—'}</td>
+                          <td>
+                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: c.isActive ? '#059669' : '#dc2626', color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                              {c.isActive ? 'Active' : 'Inactive'}
                             </span>
                           </td>
                         </tr>

@@ -99,6 +99,12 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<AssessmentWeightingProfile> AssessmentWeightingProfiles => Set<AssessmentWeightingProfile>();
     public DbSet<AssessmentWeightingComponent> AssessmentWeightingComponents => Set<AssessmentWeightingComponent>();
     public DbSet<AssessmentPlanWeightingProfile> AssessmentPlanWeightingProfiles => Set<AssessmentPlanWeightingProfile>();
+    public DbSet<RegulatoryRegistration> RegulatoryRegistrations => Set<RegulatoryRegistration>();
+    public DbSet<Assessment> RegulatoryAssessments => Set<Assessment>();
+    public DbSet<ContinuousAssessment> ContinuousAssessments => Set<ContinuousAssessment>();
+    public DbSet<AssessmentResult> AssessmentResults => Set<AssessmentResult>();
+    public DbSet<AssessmentCentre> AssessmentCentres => Set<AssessmentCentre>();
+    public DbSet<RegulatoryCircular> RegulatoryCirculars => Set<RegulatoryCircular>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -379,6 +385,79 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.Notes).HasMaxLength(1000);
             e.HasIndex(x => new { x.StaffMemberId, x.Status });
             e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffMemberId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<RegulatoryRegistration>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.RegistrationNumber).IsUnique();
+            e.Property(x => x.RegistrationNumber).HasMaxLength(100).IsRequired();
+            e.Property(x => x.RegulatoryBody).HasMaxLength(100).IsRequired();
+            e.Property(x => x.ProgrammeCode).HasMaxLength(50).IsRequired();
+            e.Property(x => x.ProgrammeName).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Level).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.Property(x => x.VerificationCode).HasMaxLength(100);
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<Assessment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.AssessmentCode).IsUnique();
+            e.Property(x => x.AssessmentCode).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Title).HasMaxLength(200).IsRequired();
+            e.Property(x => x.RegulatoryBody).HasMaxLength(100).IsRequired();
+            e.Property(x => x.ProgrammeCode).HasMaxLength(50).IsRequired();
+            e.Property(x => x.AssessmentType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        });
+
+        m.Entity<ContinuousAssessment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.AssessmentType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Title).HasMaxLength(200).IsRequired();
+            e.Property(x => x.AssessorRemarks).HasMaxLength(1000);
+            e.Property(x => x.LogbookReference).HasMaxLength(100);
+            e.Property(x => x.ReportReference).HasMaxLength(100);
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<AssessmentResult>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.RegulatoryBody).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Grade).HasMaxLength(10).IsRequired();
+            e.Property(x => x.Remarks).HasMaxLength(500);
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<AssessmentCentre>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.CentreCode).IsUnique();
+            e.Property(x => x.CentreCode).HasMaxLength(50).IsRequired();
+            e.Property(x => x.CentreName).HasMaxLength(200).IsRequired();
+            e.Property(x => x.RegulatoryBody).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Address).HasMaxLength(500).IsRequired();
+            e.Property(x => x.ContactPerson).HasMaxLength(200);
+            e.Property(x => x.Phone).HasMaxLength(20);
+            e.Property(x => x.Email).HasMaxLength(100);
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        });
+
+        m.Entity<RegulatoryCircular>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.CircularNumber).IsUnique();
+            e.Property(x => x.CircularNumber).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Title).HasMaxLength(200).IsRequired();
+            e.Property(x => x.RegulatoryBody).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Content).HasMaxLength(4000).IsRequired();
+            e.Property(x => x.AttachmentUrl).HasMaxLength(500);
         });
     }
 }
