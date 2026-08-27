@@ -207,6 +207,59 @@ export interface StaffAdvance {
   notes?: string
 }
 
+export interface AccountsOverviewDashboard {
+  totalBilled: number
+  totalPaid: number
+  totalOutstanding: number
+  todayCollection: number
+  invoiceCount: number
+  paymentCount: number
+  outstandingCount: number
+}
+
+export interface AccountsOverviewOutstanding {
+  studentId: string
+  studentNumber: string
+  studentName: string
+  programmeName: string
+  balance: number
+  currency: string
+  status: string
+}
+
+export interface AccountsOverviewPayment {
+  id: string
+  receiptNumber: string
+  amount: number
+  paymentMethod: string
+  reference?: string
+  paidAt: string
+  studentName: string
+  invoiceNumber: string
+}
+
+export interface AccountsOverviewPayroll {
+  id: string
+  staffMemberId: string
+  staffName: string
+  staffNumber: string
+  month: number
+  year: number
+  basicSalary: number
+  allowances: number
+  deductions: number
+  netPay: number
+  status: string
+  paymentDate: string | null
+  paymentMethod?: string
+  reference?: string
+}
+
+export const getAccountsOverviewDashboard = () => request<AccountsOverviewDashboard>('/api/accounts-overview/dashboard')
+export const getAccountsOverviewOutstanding = () => request<AccountsOverviewOutstanding[]>('/api/accounts-overview/outstanding')
+export const getAccountsOverviewPayments = (receiptNumber?: string, paymentMethod?: string, from?: string, to?: string) => request<AccountsOverviewPayment[]>('/api/accounts-overview/payments' + (receiptNumber ? `?receiptNumber=${encodeURIComponent(receiptNumber)}` : '') + (paymentMethod ? `${receiptNumber ? '&' : '?'}paymentMethod=${encodeURIComponent(paymentMethod)}` : '') + (from ? `${receiptNumber || paymentMethod ? '&' : '?'}from=${encodeURIComponent(from)}` : '') + (to ? `${receiptNumber || paymentMethod || from ? '&' : '?'}to=${encodeURIComponent(to)}` : ''))
+export const getAccountsOverviewPayroll = (month?: number, year?: number) => request<AccountsOverviewPayroll[]>('/api/accounts-overview/payroll' + (month || year ? '?' : '') + (month ? `month=${encodeURIComponent(String(month))}` : '') + ((month && year) ? '&' : '') + (year ? `year=${encodeURIComponent(String(year))}` : ''))
+
 export const issueCreditNote = (body: { studentInvoiceId: string; creditNoteNumber: string; amount: number; reason: string; issuedBy?: string }) => request<CreditNote>('/api/finance/credit-notes', { method: 'POST', body: JSON.stringify(body) })
 export const getCreditNotes = (studentInvoiceId?: string) => request<CreditNote[]>('/api/finance/credit-notes' + (studentInvoiceId ? `?studentInvoiceId=${encodeURIComponent(studentInvoiceId)}` : ''))
 export const addInvoiceNote = (invoiceId: string, body: { note: string; createdBy?: string }) => request<InvoiceNote>(`/api/finance/invoices/${invoiceId}/notes`, { method: 'POST', body: JSON.stringify(body) })
@@ -215,3 +268,9 @@ export const requestStaffAdvance = (body: { staffMemberId: string; amount: numbe
 export const approveStaffAdvance = (advanceId: string, approvedBy: string) => request<StaffAdvance>(`/api/finance/staff-advances/${advanceId}/approve`, { method: 'PATCH', body: JSON.stringify({ approvedBy }) })
 export const recoverStaffAdvance = (advanceId: string, recoveredFromPayrollId: string) => request<StaffAdvance>(`/api/finance/staff-advances/${advanceId}/recover`, { method: 'PATCH', body: JSON.stringify({ recoveredFromPayrollId }) })
 export const getStaffAdvances = (staffMemberId?: string) => request<StaffAdvance[]>('/api/finance/staff-advances' + (staffMemberId ? `?staffMemberId=${encodeURIComponent(staffMemberId)}` : ''))
+
+export const getAccountsDashboard = () => request<{ totalBilled: number; totalPaid: number; totalOutstanding: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number }>('/api/accounts-overview/dashboard')
+export const getAccountsOutstanding = () => request<{ studentId: string; studentNumber: string; studentName: string; programmeName: string; balance: number; currency: string; status: string }[]>('/api/accounts-overview/outstanding')
+export const getAccountsPayments = (receiptNumber?: string, paymentMethod?: string, from?: string, to?: string) => request<{ id: string; receiptNumber: string; amount: number; paymentMethod: string; paidAt: string }[]>('/api/accounts-overview/payments' + (receiptNumber ? `?receiptNumber=${encodeURIComponent(receiptNumber)}` : '') + (paymentMethod ? `${receiptNumber ? '&' : '?'}paymentMethod=${encodeURIComponent(paymentMethod)}` : '') + (from ? `${receiptNumber || paymentMethod ? '&' : '?'}from=${encodeURIComponent(from)}` : '') + (to ? `${receiptNumber || paymentMethod || from ? '&' : '?'}to=${encodeURIComponent(to)}` : ''))
+export const getAccountsPayroll = (month?: number, year?: number) => request<{ id: string; staffMemberId: string; staffName: string; staffNumber: string; month: number; year: number; basicSalary: number; allowances: number; deductions: number; netPay: number; status: string; paymentDate?: string; paymentMethod?: string; reference?: string }[]>('/api/accounts-overview/payroll' + (month && year ? `?month=${month}&year=${year}` : ''))
+export const getAccountsStudentInvoices = (studentId: string) => request<{ id: string; invoiceNumber: string; amount: number; paidAmount: number; balance: number; currency: string; status: string; issuedAt: string }[]>(`/api/accounts-overview/students/${studentId}/invoices`)

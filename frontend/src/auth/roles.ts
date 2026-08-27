@@ -4,6 +4,7 @@ export function hasAnyRole(userRoles: string[], allowedRoles: readonly string[])
 export const ADMINISTRATION_ROLES = [ROLES.systemAdministrator, ROLES.principal] as const
 export const ACADEMIC_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.registrar, ROLES.academicRegistrar, ROLES.principal, ROLES.residentDirector, ROLES.assistantPrincipal, ROLES.headOfDepartment] as const
 export const FINANCE_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.financeOfficer, ROLES.principal, ROLES.residentDirector, ROLES.secretary] as const
+export const FINANCE_READ_ROLES = [ROLES.systemAdministrator, ROLES.financeOfficer, ROLES.principal, ROLES.headOfDepartment, ROLES.residentDirector, ROLES.secretary] as const
 export const EXAMINATION_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.examinationsOfficer, ROLES.principal, ROLES.residentDirector, ROLES.assistantPrincipal] as const
 export const STUDENT_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.registrar, ROLES.principal, ROLES.residentDirector, ROLES.secretary, ROLES.assistantPrincipal] as const
 export const INVENTORY_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.storeOfficer, ROLES.registrar, ROLES.principal, ROLES.residentDirector] as const
