@@ -105,6 +105,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<AssessmentResult> AssessmentResults => Set<AssessmentResult>();
     public DbSet<AssessmentCentre> AssessmentCentres => Set<AssessmentCentre>();
     public DbSet<RegulatoryCircular> RegulatoryCirculars => Set<RegulatoryCircular>();
+    public DbSet<AdmissionRequirement> AdmissionRequirements => Set<AdmissionRequirement>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -458,6 +459,14 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.RegulatoryBody).HasMaxLength(100).IsRequired();
             e.Property(x => x.Content).HasMaxLength(4000).IsRequired();
             e.Property(x => x.AttachmentUrl).HasMaxLength(500);
+        });
+
+        m.Entity<AdmissionRequirement>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.RequirementType).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(1000).IsRequired();
+            e.HasIndex(x => new { x.ProgrammeId, x.DisplayOrder });
         });
     }
 }
