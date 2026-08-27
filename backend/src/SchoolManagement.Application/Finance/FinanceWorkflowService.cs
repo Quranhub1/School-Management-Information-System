@@ -145,4 +145,52 @@ public sealed class FinanceWorkflowService(FinanceService finance, SchoolManagem
         var plans = await finance.GetInstalmentPlansAsync(studentId, cancellationToken);
         return plans.Select(InstalmentPlanDto.FromDomain).ToArray();
     }
+
+    public async Task<CreditNoteDto> IssueCreditNoteAsync(Guid studentInvoiceId, string creditNoteNumber, decimal amount, string reason, string? issuedBy, CancellationToken cancellationToken = default)
+    {
+        var creditNote = await finance.IssueCreditNoteAsync(studentInvoiceId, creditNoteNumber, amount, reason, issuedBy, cancellationToken);
+        return CreditNoteDto.FromDomain(creditNote);
+    }
+
+    public async Task<IReadOnlyList<CreditNoteDto>> GetCreditNotesAsync(Guid? studentInvoiceId = null, CancellationToken cancellationToken = default)
+    {
+        var notes = await finance.GetCreditNotesAsync(studentInvoiceId, cancellationToken);
+        return notes.Select(CreditNoteDto.FromDomain).ToArray();
+    }
+
+    public async Task<InvoiceNoteDto> AddInvoiceNoteAsync(Guid studentInvoiceId, string note, string? createdBy, CancellationToken cancellationToken = default)
+    {
+        var invoiceNote = await finance.AddInvoiceNoteAsync(studentInvoiceId, note, createdBy, cancellationToken);
+        return InvoiceNoteDto.FromDomain(invoiceNote);
+    }
+
+    public async Task<IReadOnlyList<InvoiceNoteDto>> GetInvoiceNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken = default)
+    {
+        var notes = await finance.GetInvoiceNotesAsync(studentInvoiceId, cancellationToken);
+        return notes.Select(InvoiceNoteDto.FromDomain).ToArray();
+    }
+
+    public async Task<StaffAdvanceDto> RequestStaffAdvanceAsync(Guid staffMemberId, decimal amount, string reason, string currency, CancellationToken cancellationToken = default)
+    {
+        var advance = await finance.RequestStaffAdvanceAsync(staffMemberId, amount, reason, currency, cancellationToken);
+        return StaffAdvanceDto.FromDomain(advance);
+    }
+
+    public async Task<StaffAdvanceDto> ApproveStaffAdvanceAsync(Guid advanceId, string approvedBy, CancellationToken cancellationToken = default)
+    {
+        var advance = await finance.ApproveStaffAdvanceAsync(advanceId, approvedBy, cancellationToken);
+        return StaffAdvanceDto.FromDomain(advance);
+    }
+
+    public async Task<StaffAdvanceDto> RecoverStaffAdvanceAsync(Guid advanceId, Guid recoveredFromPayrollId, CancellationToken cancellationToken = default)
+    {
+        var advance = await finance.RecoverStaffAdvanceAsync(advanceId, recoveredFromPayrollId, cancellationToken);
+        return StaffAdvanceDto.FromDomain(advance);
+    }
+
+    public async Task<IReadOnlyList<StaffAdvanceDto>> GetStaffAdvancesAsync(Guid? staffMemberId = null, CancellationToken cancellationToken = default)
+    {
+        var advances = await finance.GetStaffAdvancesAsync(staffMemberId, cancellationToken);
+        return advances.Select(StaffAdvanceDto.FromDomain).ToArray();
+    }
 }

@@ -135,3 +135,29 @@ public sealed class DailyCollectionPaymentConfiguration : IEntityTypeConfigurati
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
     }
 }
+
+public sealed class InvoiceNoteConfiguration : IEntityTypeConfiguration<InvoiceNote>
+{
+    public void Configure(EntityTypeBuilder<InvoiceNote> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Note).HasMaxLength(1000).IsRequired();
+        builder.Property(x => x.CreatedBy).HasMaxLength(200);
+        builder.HasIndex(x => new { x.StudentInvoiceId, x.CreatedAt });
+        builder.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public sealed class StaffAdvanceConfiguration : IEntityTypeConfiguration<StaffAdvance>
+{
+    public void Configure(EntityTypeBuilder<StaffAdvance> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.Property(x => x.Notes).HasMaxLength(1000);
+        builder.HasIndex(x => new { x.StaffMemberId, x.Status });
+        builder.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffMemberId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

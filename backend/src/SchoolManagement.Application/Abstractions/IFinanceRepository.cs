@@ -42,4 +42,17 @@ public interface IFinanceRepository
     Task UpdateDailyCollectionAsync(DailyCollection collection, CancellationToken cancellationToken);
     Task AddDailyCollectionPaymentAsync(DailyCollectionPayment payment, CancellationToken cancellationToken);
     Task<IReadOnlyList<DailyCollectionPayment>> GetDailyCollectionPaymentsAsync(Guid dailyCollectionId, CancellationToken cancellationToken = default);
+
+    Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid? studentInvoiceId = null, CancellationToken cancellationToken = default);
+    Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken);
+    Task UpdateCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<InvoiceNote>> GetInvoiceNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken = default);
+    Task AddInvoiceNoteAsync(InvoiceNote note, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<StaffAdvance>> GetStaffAdvancesAsync(Guid? staffMemberId = null, CancellationToken cancellationToken = default);
+    Task<StaffAdvance?> GetStaffAdvanceAsync(Guid advanceId, CancellationToken cancellationToken);
+    Task AddStaffAdvanceAsync(StaffAdvance advance, CancellationToken cancellationToken);
+    Task UpdateStaffAdvanceAsync(StaffAdvance advance, CancellationToken cancellationToken);
 }

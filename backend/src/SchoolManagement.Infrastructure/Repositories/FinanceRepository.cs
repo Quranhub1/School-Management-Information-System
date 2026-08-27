@@ -194,4 +194,53 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
             .Where(x => x.DailyCollectionId == dailyCollectionId)
             .OrderByDescending(x => x.Id)
             .ToListAsync(cancellationToken);
+
+    public Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken cancellationToken) =>
+        db.CreditNotes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == creditNoteId, cancellationToken);
+
+    public async Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid? studentInvoiceId = null, CancellationToken cancellationToken = default)
+    {
+        var query = db.CreditNotes.AsNoTracking().AsQueryable();
+        if (studentInvoiceId.HasValue)
+            query = query.Where(x => x.StudentInvoiceId == studentInvoiceId.Value);
+        return await query.OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
+    }
+
+    public async Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken) =>
+        await db.CreditNotes.AddAsync(creditNote, cancellationToken);
+
+    public Task UpdateCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken)
+    {
+        db.CreditNotes.Update(creditNote);
+        return Task.CompletedTask;
+    }
+
+    public async Task<IReadOnlyList<InvoiceNote>> GetInvoiceNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken = default) =>
+        await db.InvoiceNotes.AsNoTracking()
+            .Where(x => x.StudentInvoiceId == studentInvoiceId)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+    public async Task AddInvoiceNoteAsync(InvoiceNote note, CancellationToken cancellationToken) =>
+        await db.InvoiceNotes.AddAsync(note, cancellationToken);
+
+    public async Task<IReadOnlyList<StaffAdvance>> GetStaffAdvancesAsync(Guid? staffMemberId = null, CancellationToken cancellationToken = default)
+    {
+        var query = db.StaffAdvances.AsNoTracking().AsQueryable();
+        if (staffMemberId.HasValue)
+            query = query.Where(x => x.StaffMemberId == staffMemberId.Value);
+        return await query.OrderByDescending(x => x.RequestedAt).ToListAsync(cancellationToken);
+    }
+
+    public Task<StaffAdvance?> GetStaffAdvanceAsync(Guid advanceId, CancellationToken cancellationToken) =>
+        db.StaffAdvances.AsNoTracking().FirstOrDefaultAsync(x => x.Id == advanceId, cancellationToken);
+
+    public async Task AddStaffAdvanceAsync(StaffAdvance advance, CancellationToken cancellationToken) =>
+        await db.StaffAdvances.AddAsync(advance, cancellationToken);
+
+    public Task UpdateStaffAdvanceAsync(StaffAdvance advance, CancellationToken cancellationToken)
+    {
+        db.StaffAdvances.Update(advance);
+        return Task.CompletedTask;
+    }
 }

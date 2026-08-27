@@ -171,3 +171,47 @@ export const createSponsorship = (body: { studentId: string; sponsorName: string
 export const getInstalmentPlans = (studentId: string) => request<InstalmentPlan[]>('/api/finance/instalment-plans?studentId=' + encodeURIComponent(studentId))
 export const createInstalmentPlan = (body: { studentInvoiceId: string; studentId: string; numberOfInstalments: number }) => request<InstalmentPlan>('/api/finance/instalment-plans', { method: 'POST', body: JSON.stringify(body) })
 export const getPayments = (receiptNumber?: string, paymentMethod?: string, from?: string, to?: string) => request<{ id: string; receiptNumber: string; amount: number; paymentMethod: string; paidAt: string }[]>('/api/finance/payments' + (receiptNumber ? `?receiptNumber=${encodeURIComponent(receiptNumber)}` : '') + (paymentMethod ? `${receiptNumber ? '&' : '?'}paymentMethod=${encodeURIComponent(paymentMethod)}` : '') + (from ? `${receiptNumber || paymentMethod ? '&' : '?'}from=${encodeURIComponent(from)}` : '') + (to ? `${receiptNumber || paymentMethod || from ? '&' : '?'}to=${encodeURIComponent(to)}` : ''))
+
+export interface CreditNote {
+  id: string
+  studentInvoiceId: string
+  creditNoteNumber: string
+  amount: number
+  reason: string
+  status: string
+  issuedAt: string
+  issuedBy?: string
+  appliedAt?: string
+}
+
+export interface InvoiceNote {
+  id: string
+  studentInvoiceId: string
+  note: string
+  createdBy?: string
+  createdAt: string
+}
+
+export interface StaffAdvance {
+  id: string
+  staffMemberId: string
+  amount: number
+  currency: string
+  reason: string
+  status: string
+  requestedAt: string
+  approvedAt?: string
+  approvedBy?: string
+  recoveredAt?: string
+  recoveredFromPayrollId?: string
+  notes?: string
+}
+
+export const issueCreditNote = (body: { studentInvoiceId: string; creditNoteNumber: string; amount: number; reason: string; issuedBy?: string }) => request<CreditNote>('/api/finance/credit-notes', { method: 'POST', body: JSON.stringify(body) })
+export const getCreditNotes = (studentInvoiceId?: string) => request<CreditNote[]>('/api/finance/credit-notes' + (studentInvoiceId ? `?studentInvoiceId=${encodeURIComponent(studentInvoiceId)}` : ''))
+export const addInvoiceNote = (invoiceId: string, body: { note: string; createdBy?: string }) => request<InvoiceNote>(`/api/finance/invoices/${invoiceId}/notes`, { method: 'POST', body: JSON.stringify(body) })
+export const getInvoiceNotes = (invoiceId: string) => request<InvoiceNote[]>(`/api/finance/invoices/${invoiceId}/notes`)
+export const requestStaffAdvance = (body: { staffMemberId: string; amount: number; reason: string; currency?: string }) => request<StaffAdvance>('/api/finance/staff-advances', { method: 'POST', body: JSON.stringify(body) })
+export const approveStaffAdvance = (advanceId: string, approvedBy: string) => request<StaffAdvance>(`/api/finance/staff-advances/${advanceId}/approve`, { method: 'PATCH', body: JSON.stringify({ approvedBy }) })
+export const recoverStaffAdvance = (advanceId: string, recoveredFromPayrollId: string) => request<StaffAdvance>(`/api/finance/staff-advances/${advanceId}/recover`, { method: 'PATCH', body: JSON.stringify({ recoveredFromPayrollId }) })
+export const getStaffAdvances = (staffMemberId?: string) => request<StaffAdvance[]>('/api/finance/staff-advances' + (staffMemberId ? `?staffMemberId=${encodeURIComponent(staffMemberId)}` : ''))

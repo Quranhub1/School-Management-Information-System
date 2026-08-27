@@ -239,3 +239,70 @@ public sealed record InstalmentPaymentDto(
         p.PaymentMethod,
         p.Reference);
 }
+
+public sealed record CreditNoteDto(
+    Guid Id,
+    Guid StudentInvoiceId,
+    string CreditNoteNumber,
+    decimal Amount,
+    string Reason,
+    string Status,
+    DateTimeOffset IssuedAt,
+    string? IssuedBy,
+    DateTimeOffset? AppliedAt)
+{
+    public static CreditNoteDto FromDomain(CreditNote c) => new(
+        c.Id,
+        c.StudentInvoiceId,
+        c.CreditNoteNumber,
+        c.Amount,
+        c.Reason,
+        c.Status,
+        c.IssuedAt,
+        c.IssuedBy,
+        c.AppliedAt);
+}
+
+public sealed record InvoiceNoteDto(
+    Guid Id,
+    Guid StudentInvoiceId,
+    string Note,
+    string? CreatedBy,
+    DateTimeOffset CreatedAt)
+{
+    public static InvoiceNoteDto FromDomain(InvoiceNote n) => new(
+        n.Id,
+        n.StudentInvoiceId,
+        n.Note,
+        n.CreatedBy,
+        n.CreatedAt);
+}
+
+public sealed record StaffAdvanceDto(
+    Guid Id,
+    Guid StaffMemberId,
+    decimal Amount,
+    string Currency,
+    string Reason,
+    string Status,
+    DateTimeOffset RequestedAt,
+    DateTimeOffset? ApprovedAt,
+    string? ApprovedBy,
+    DateTimeOffset? RecoveredAt,
+    Guid? RecoveredFromPayrollId,
+    string? Notes)
+{
+    public static StaffAdvanceDto FromDomain(StaffAdvance a) => new(
+        a.Id,
+        a.StaffMemberId,
+        a.Amount,
+        a.Currency,
+        a.Reason,
+        a.Status,
+        a.RequestedAt,
+        a.ApprovedAt,
+        a.ApprovedBy,
+        a.RecoveredAt,
+        a.RecoveredFromPayrollId,
+        a.Notes);
+}

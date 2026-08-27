@@ -262,4 +262,116 @@ public sealed class FinanceService(IFinanceRepository finance, SchoolManagementD
 
     public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) =>
         finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken);
+
+    public async Task<CreditNote> IssueCreditNoteAsync(Guid studentInvoiceId, string creditNoteNumber, decimal amount, string reason, string? issuedBy, CancellationToken cancellationToken)
+    {
+        if (amount <= 0) throw new ArgumentException("Credit note amount must be greater than zero.");
+        if (string.IsNullOrWhiteSpace(creditNoteNumber)) throw new ArgumentException("Credit note number is required.");
+
+        var normalizedNumber = creditNoteNumber.Trim();
+        if (await db.CreditNotes.AnyAsync(x => x.CreditNoteNumber == normalizedNumber, cancellationToken))
+            throw new InvalidOperationException("Credit note number already exists.");
+
+        var invoice = await finance.GetInvoiceAsync(studentInvoiceId, cancellationToken)
+            ?? throw new ArgumentException("Invoice was not found.");
+
+        var creditNote = new CreditNote
+        {
+            StudentInvoiceId = studentInvoiceId,
+            CreditNoteNumber = normalizedNumber,
+            Amount = amount,
+            Reason = reason.Trim(),
+            Status = "Issued",
+            IssuedBy = string.IsNullOrWhiteSpace(issuedBy) ? null : issuedBy.Trim()
+        };
+
+        await finance.AddCreditNoteAsync(creditNote, cancellationToken);
+
+        invoice.PaidAmount = Math.Max(0, invoice.PaidAmount - amount);
+        invoice.Status = invoice.PaidAmount >= invoice.Amount ? "Paid" : (invoice.PaidAmount > 0 ? "PartiallyPaid" : "Unpaid");
+
+        await finance.SaveChangesAsync(cancellationToken);
+        return creditNote;
+    }
+
+    public async Task<InvoiceNote> AddInvoiceNoteAsync(Guid studentInvoiceId, string note, string? createdBy, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(note)) throw new ArgumentException("Note is required.");
+
+        var invoice = await finance.GetInvoiceAsync(studentInvoiceId, cancellationToken)
+            ?? throw new ArgumentException("Invoice was not found.");
+
+        var invoiceNote = new InvoiceNote
+        {
+            StudentInvoiceId = studentInvoiceId,
+            Note = note.Trim(),
+            CreatedBy = string.IsNullOrWhiteSpace(createdBy) ? null : createdBy.Trim()
+        };
+
+        await finance.AddInvoiceNoteAsync(invoiceNote, cancellationToken);
+        await finance.SaveChangesAsync(cancellationToken);
+        return invoiceNote;
+    }
+
+    public async Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid? studentInvoiceId = null, CancellationToken cancellationToken = default) =>
+        await finance.GetCreditNotesAsync(studentInvoiceId, cancellationToken);
+
+    public async Task<IReadOnlyList<InvoiceNote>> GetInvoiceNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken = default) =>
+        await finance.GetInvoiceNotesAsync(studentInvoiceId, cancellationToken);
+
+    public async Task<StaffAdvance> RequestStaffAdvanceAsync(Guid staffMemberId, decimal amount, string reason, string currency, CancellationToken cancellationToken)
+    {
+        if (amount <= 0) throw new ArgumentException("Advance amount must be greater than zero.");
+        if (string.IsNullOrWhiteSpace(reason)) throw new ArgumentException("Reason is required.");
+
+        var advance = new StaffAdvance
+        {
+            StaffMemberId = staffMemberId,
+            Amount = amount,
+            Currency = string.IsNullOrWhiteSpace(currency) ? "UGX" : currency.Trim(),
+            Reason = reason.Trim(),
+            Status = "Pending"
+        };
+
+        await finance.AddStaffAdvanceAsync(advance, cancellationToken);
+        await finance.SaveChangesAsync(cancellationToken);
+        return advance;
+    }
+
+    public async Task<StaffAdvance> ApproveStaffAdvanceAsync(Guid advanceId, string approvedBy, CancellationToken cancellationToken)
+    {
+        var advance = await finance.GetStaffAdvanceAsync(advanceId, cancellationToken)
+            ?? throw new ArgumentException("Advance was not found.");
+
+        if (advance.Status != "Pending")
+            throw new InvalidOperationException("Advance is not in pending status.");
+
+        advance.Status = "Approved";
+        advance.ApprovedAt = DateTimeOffset.UtcNow;
+        advance.ApprovedBy = approvedBy.Trim();
+
+        finance.UpdateStaffAdvanceAsync(advance, cancellationToken);
+        await finance.SaveChangesAsync(cancellationToken);
+        return advance;
+    }
+
+    public async Task<StaffAdvance> RecoverStaffAdvanceAsync(Guid advanceId, Guid recoveredFromPayrollId, CancellationToken cancellationToken)
+    {
+        var advance = await finance.GetStaffAdvanceAsync(advanceId, cancellationToken)
+            ?? throw new ArgumentException("Advance was not found.");
+
+        if (advance.Status != "Approved")
+            throw new InvalidOperationException("Advance must be approved before recovery.");
+
+        advance.Status = "Recovered";
+        advance.RecoveredAt = DateTimeOffset.UtcNow;
+        advance.RecoveredFromPayrollId = recoveredFromPayrollId;
+
+        finance.UpdateStaffAdvanceAsync(advance, cancellationToken);
+        await finance.SaveChangesAsync(cancellationToken);
+        return advance;
+    }
+
+    public async Task<IReadOnlyList<StaffAdvance>> GetStaffAdvancesAsync(Guid? staffMemberId = null, CancellationToken cancellationToken = default) =>
+        await finance.GetStaffAdvancesAsync(staffMemberId, cancellationToken);
 }

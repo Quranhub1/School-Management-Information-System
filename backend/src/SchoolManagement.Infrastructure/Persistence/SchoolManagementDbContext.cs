@@ -82,6 +82,8 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<MobileMoneyTransaction> MobileMoneyTransactions => Set<MobileMoneyTransaction>();
     public DbSet<DailyCollection> DailyCollections => Set<DailyCollection>();
     public DbSet<DailyCollectionPayment> DailyCollectionPayments => Set<DailyCollectionPayment>();
+    public DbSet<InvoiceNote> InvoiceNotes => Set<InvoiceNote>();
+    public DbSet<StaffAdvance> StaffAdvances => Set<StaffAdvance>();
     public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
     public DbSet<PayrollRecord> PayrollRecords => Set<PayrollRecord>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
@@ -357,6 +359,26 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.HasOne<DailyCollection>().WithMany().HasForeignKey(x => x.DailyCollectionId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<InvoiceNote>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Note).HasMaxLength(1000).IsRequired();
+            e.Property(x => x.CreatedBy).HasMaxLength(200);
+            e.HasIndex(x => new { x.StudentInvoiceId, x.CreatedAt });
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        m.Entity<StaffAdvance>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+            e.Property(x => x.Notes).HasMaxLength(1000);
+            e.HasIndex(x => new { x.StaffMemberId, x.Status });
+            e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffMemberId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

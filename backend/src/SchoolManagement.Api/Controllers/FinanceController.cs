@@ -277,6 +277,95 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
         return Ok(await finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken));
     }
 
+    [HttpPost("credit-notes")]
+    public async Task<IActionResult> IssueCreditNote(IssueCreditNoteRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var creditNote = await finance.IssueCreditNoteAsync(
+                request.StudentInvoiceId,
+                request.CreditNoteNumber,
+                request.Amount,
+                request.Reason,
+                request.IssuedBy,
+                cancellationToken);
+
+            return Ok(creditNote);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpGet("credit-notes")]
+    public async Task<IActionResult> GetCreditNotes([FromQuery] Guid? studentInvoiceId, CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetCreditNotesAsync(studentInvoiceId, cancellationToken));
+    }
+
+    [HttpPost("invoices/{invoiceId:guid}/notes")]
+    public async Task<IActionResult> AddInvoiceNote(Guid invoiceId, AddInvoiceNoteRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var note = await finance.AddInvoiceNoteAsync(invoiceId, request.Note, request.CreatedBy, cancellationToken);
+            return Ok(note);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpGet("invoices/{invoiceId:guid}/notes")]
+    public async Task<IActionResult> GetInvoiceNotes(Guid invoiceId, CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetInvoiceNotesAsync(invoiceId, cancellationToken));
+    }
+
+    [HttpPost("staff-advances")]
+    public async Task<IActionResult> RequestStaffAdvance(RequestStaffAdvanceRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var advance = await finance.RequestStaffAdvanceAsync(
+                request.StaffMemberId,
+                request.Amount,
+                request.Reason,
+                request.Currency,
+                cancellationToken);
+
+            return Ok(advance);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPatch("staff-advances/{advanceId:guid}/approve")]
+    public async Task<IActionResult> ApproveStaffAdvance(Guid advanceId, ApproveStaffAdvanceRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var advance = await finance.ApproveStaffAdvanceAsync(advanceId, request.ApprovedBy, cancellationToken);
+            return Ok(advance);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpPatch("staff-advances/{advanceId:guid}/recover")]
+    public async Task<IActionResult> RecoverStaffAdvance(Guid advanceId, RecoverStaffAdvanceRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var advance = await finance.RecoverStaffAdvanceAsync(advanceId, request.RecoveredFromPayrollId, cancellationToken);
+            return Ok(advance);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpGet("staff-advances")]
+    public async Task<IActionResult> GetStaffAdvances([FromQuery] Guid? staffMemberId, CancellationToken cancellationToken)
+    {
+        return Ok(await finance.GetStaffAdvancesAsync(staffMemberId, cancellationToken));
+    }
+
     public sealed record CreateInvoiceRequest(
         Guid StudentId,
         Guid FeeStructureId,
@@ -340,4 +429,27 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
         Guid StudentInvoiceId,
         Guid StudentId,
         int NumberOfInstalments);
+
+    public sealed record IssueCreditNoteRequest(
+        Guid StudentInvoiceId,
+        string CreditNoteNumber,
+        decimal Amount,
+        string Reason,
+        string? IssuedBy);
+
+    public sealed record AddInvoiceNoteRequest(
+        string Note,
+        string? CreatedBy);
+
+    public sealed record RequestStaffAdvanceRequest(
+        Guid StaffMemberId,
+        decimal Amount,
+        string Reason,
+        string? Currency);
+
+    public sealed record ApproveStaffAdvanceRequest(
+        string ApprovedBy);
+
+    public sealed record RecoverStaffAdvanceRequest(
+        Guid RecoveredFromPayrollId);
 }

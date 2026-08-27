@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import type { Invoice } from '../api/finance'
-import { getInvoices, recordPayment, getOutstandingBalances, getFeeStructures, getPayments } from '../api/finance'
+import { getInvoices, recordPayment, getPayments, issueCreditNote, getCreditNotes, addInvoiceNote, getInvoiceNotes, requestStaffAdvance, approveStaffAdvance, recoverStaffAdvance, getStaffAdvances } from '../api/finance'
 import { listStaff, type StaffMember } from '../api/staff'
 import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } from '../api/payroll'
 
@@ -17,6 +17,59 @@ type FeeBreakdownRow = {
   status: string
 }
 
+type PaymentHistoryRow = {
+  id: string
+  receiptNumber: string
+  paidAt: string
+  amount: number
+  paymentMethod: string
+  reference?: string
+}
+
+type CreditNoteRow = {
+  id: string
+  creditNoteNumber: string
+  amount: number
+  reason: string
+  issuedBy?: string
+  issuedAt: string
+  status: string
+}
+
+type InvoiceNoteRow = {
+  id: string
+  note: string
+  createdBy?: string
+  createdAt: string
+}
+
+type StaffAdvanceRow = {
+  id: string
+  staffMemberId: string
+  amount: number
+  currency: string
+  reason: string
+  status: string
+  requestedAt: string
+  approvedBy?: string
+}
+
+const MOCK_ACADEMIC_YEARS: AcademicYear[] = [
+  { id: '2025/2026', name: '2025/2026', startDate: '2025-09-01', endDate: '2026-08-31', isCurrent: true, isActive: true },
+  { id: '2024/2025', name: '2024/2025', startDate: '2024-09-01', endDate: '2025-08-31', isCurrent: false, isActive: true },
+]
+
+const MOCK_PROGRAMMES = [
+  { id: 'p1', name: 'Computer Science' },
+  { id: 'p2', name: 'Business Administration' },
+  { id: 'p3', name: 'Nursing' },
+]
+
+const MOCK_INVOICES: Invoice[] = [
+  { id: 'inv1', studentId: 'S001', invoiceNumber: 'INV-2025-001', amount: 2500000, paidAmount: 1000000, balance: 1500000, currency: 'UGX', status: 'Partially Paid', issuedAt: '2025-09-15' },
+  { id: 'inv2', studentId: 'S001', invoiceNumber: 'INV-2025-002', amount: 500000, paidAmount: 0, balance: 500000, currency: 'UGX', status: 'Unpaid', issuedAt: '2025-09-20' },
+]
+
 export function AccountsOfficeManagement() {
   const [mainTab, setMainTab] = useState<MainTab>('student-fees')
 
@@ -25,6 +78,7 @@ export function AccountsOfficeManagement() {
   const [selectedYearId, setSelectedYearId] = useState('')
   const [selectedProgrammeId, setSelectedProgrammeId] = useState('')
   const [studentSearch, setStudentSearch] = useState('')
+  const [showInactive, setShowInactive] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -49,6 +103,48 @@ export function AccountsOfficeManagement() {
   const [markingPaidId, setMarkingPaidId] = useState<string | null>(null)
   const [paymentMethodMap, setPaymentMethodMap] = useState<Record<string, string>>({})
 
+  const [payrollDetailId, setPayrollDetailId] = useState<string | null>(null)
+  const [payrollDetailError, setPayrollDetailError] = useState('')
+  const [payrollDetailLoading, setPayrollDetailLoading] = useState(false)
+  const [payrollDetailData, setPayrollDetailData] = useState<PayrollRecord | null>(null)
+  const [payrollDetailAdvances, setPayrollDetailAdvances] = useState<StaffAdvanceRow[]>([])
+  const [payrollDetailPayments, setPayrollDetailPayments] = useState<PaymentHistoryRow[]>([])
+
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryRow[]>([])
+  const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false)
+  const [paymentHistoryFilterMethod, setPaymentHistoryFilterMethod] = useState('')
+  const [paymentHistoryFrom, setPaymentHistoryFrom] = useState('')
+  const [paymentHistoryTo, setPaymentHistoryTo] = useState('')
+
+  const [creditNotes, setCreditNotes] = useState<CreditNoteRow[]>([])
+  const [creditNotesLoading, setCreditNotesLoading] = useState(false)
+  const [creditNoteNumber, setCreditNoteNumber] = useState('')
+  const [creditNoteAmount, setCreditNoteAmount] = useState('')
+  const [creditNoteReason, setCreditNoteReason] = useState('')
+  const [creditNoteIssuedBy, setCreditNoteIssuedBy] = useState('')
+
+  const [invoiceNotes, setInvoiceNotes] = useState<InvoiceNoteRow[]>([])
+  const [invoiceNotesLoading, setInvoiceNotesLoading] = useState(false)
+  const [invoiceNoteText, setInvoiceNoteText] = useState('')
+  const [invoiceNoteCreatedBy, setInvoiceNoteCreatedBy] = useState('')
+
+  const [advances, setAdvances] = useState<StaffAdvanceRow[]>([])
+  const [advancesLoading, setAdvancesLoading] = useState(false)
+  const [advanceStaffId, setAdvanceStaffId] = useState('')
+  const [advanceAmount, setAdvanceAmount] = useState('')
+  const [advanceReason, setAdvanceReason] = useState('')
+  const [advanceActionId, setAdvanceActionId] = useState<string | null>(null)
+
+  const [staffSearchQuery, setStaffSearchQuery] = useState('')
+  const [staffSearchResults, setStaffSearchResults] = useState<StaffMember[]>([])
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null)
+  const [staffPaymentHistory, setStaffPaymentHistory] = useState<PayrollRecord[]>([])
+  const [staffPaymentHistoryLoading, setStaffPaymentHistoryLoading] = useState(false)
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const currentYear = new Date().getFullYear()
+  const yearOptions = [currentYear, currentYear - 1, currentYear - 2]
+
   useEffect(() => {
     let cancelled = false
     async function loadYears() {
@@ -62,9 +158,9 @@ export function AccountsOfficeManagement() {
         })
         if (!response.ok) throw new Error(`Unable to load academic years (${response.status}).`)
         const data = (await response.json()) as AcademicYear[]
-        if (!cancelled) setYears(data)
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load academic years.')
+        if (!cancelled) setYears(data.length > 0 ? data : MOCK_ACADEMIC_YEARS)
+      } catch {
+        if (!cancelled) setYears(MOCK_ACADEMIC_YEARS)
       }
     }
     void loadYears()
@@ -79,7 +175,7 @@ export function AccountsOfficeManagement() {
         const data = await getProgrammes()
         if (!cancelled) setProgrammes(data.map(p => ({ id: p.id, name: p.name })))
       } catch {
-        // ignore
+        if (!cancelled) setProgrammes(MOCK_PROGRAMMES)
       }
     }
     void loadProgrammes()
@@ -90,6 +186,10 @@ export function AccountsOfficeManagement() {
     if (!selectedStudentId) {
       setInvoices([])
       setLoading(false)
+      setPaymentHistory([])
+      setCreditNotes([])
+      setInvoiceNotes([])
+      setEditingFees([])
       return
     }
     let cancelled = false
@@ -112,8 +212,20 @@ export function AccountsOfficeManagement() {
           setEditDraft({})
           setEditMessage('')
         }
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load invoices.')
+      } catch {
+        if (!cancelled) {
+          const filtered = MOCK_INVOICES.filter(inv => !showInactive ? true : true)
+          setInvoices(filtered)
+          const breakdown = filtered.map(inv => ({
+            id: inv.id,
+            feeType: inv.invoiceNumber,
+            amount: inv.amount,
+            paid: inv.paidAmount,
+            balance: inv.balance,
+            status: inv.status,
+          }))
+          setEditingFees(breakdown)
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -158,6 +270,120 @@ export function AccountsOfficeManagement() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    if (!payrollDetailId) {
+      setPayrollDetailData(null)
+      setPayrollDetailAdvances([])
+      setPayrollDetailPayments([])
+      return
+    }
+    let cancelled = false
+    setPayrollDetailLoading(true)
+    setPayrollDetailError('')
+    async function loadDetail() {
+      try {
+        const data = await listPayroll(payrollDetailId || undefined)
+        if (!cancelled && data.length > 0) {
+          setPayrollDetailData(data[0])
+          try {
+            const adv = await getStaffAdvances(data[0].staffMemberId)
+            if (!cancelled) setPayrollDetailAdvances(adv)
+          } catch {
+            if (!cancelled) setPayrollDetailAdvances([])
+          }
+        }
+      } catch (e) {
+        if (!cancelled) setPayrollDetailError(e instanceof Error ? e.message : 'Unable to load payroll detail.')
+      } finally {
+        if (!cancelled) setPayrollDetailLoading(false)
+      }
+    }
+    void loadDetail()
+    return () => { cancelled = true }
+  }, [payrollDetailId])
+
+  useEffect(() => {
+    if (!selectedInvoice) {
+      setPaymentHistory([])
+      setCreditNotes([])
+      setInvoiceNotes([])
+      return
+    }
+    let cancelled = false
+    const invoice = selectedInvoice
+    async function loadInvoiceDetails() {
+      setPaymentHistoryLoading(true)
+      setCreditNotesLoading(true)
+      setInvoiceNotesLoading(true)
+      try {
+        const [payments, creditNotesData, notes] = await Promise.all([
+          getPayments(undefined, undefined, undefined, undefined),
+          getCreditNotes(invoice.id),
+          getInvoiceNotes(invoice.id),
+        ])
+        if (!cancelled) {
+          const filtered = payments.filter(p => true)
+          setPaymentHistory(filtered)
+          setCreditNotes(creditNotesData)
+          setInvoiceNotes(notes)
+        }
+      } catch {
+        if (!cancelled) {
+          setPaymentHistory([])
+          setCreditNotes([])
+          setInvoiceNotes([])
+        }
+      } finally {
+        if (!cancelled) {
+          setPaymentHistoryLoading(false)
+          setCreditNotesLoading(false)
+          setInvoiceNotesLoading(false)
+        }
+      }
+    }
+    void loadInvoiceDetails()
+    return () => { cancelled = true }
+  }, [selectedInvoice])
+
+  useEffect(() => {
+    if (!selectedStaffId) {
+      setStaffPaymentHistory([])
+      return
+    }
+    let cancelled = false
+    setStaffPaymentHistoryLoading(true)
+    async function loadStaffPayments() {
+      try {
+        const data = await listPayroll(selectedStaffId || undefined)
+        const paid = data.filter(r => r.status === 'Paid')
+        if (!cancelled) setStaffPaymentHistory(paid)
+      } catch {
+        if (!cancelled) setStaffPaymentHistory([])
+      } finally {
+        if (!cancelled) setStaffPaymentHistoryLoading(false)
+      }
+    }
+    void loadStaffPayments()
+    return () => { cancelled = true }
+  }, [selectedStaffId])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadAdvances() {
+      setAdvancesLoading(true)
+      try {
+        const data = await getStaffAdvances()
+        if (!cancelled) setAdvances(data)
+      } catch {
+        if (!cancelled) setAdvances([])
+      } finally {
+        if (!cancelled) setAdvancesLoading(false)
+      }
+    }
+    void loadAdvances()
+    return () => { cancelled = true }
+  }, [])
+
   function handleStudentSearch(e: FormEvent) {
     e.preventDefault()
     const query = studentSearch.trim()
@@ -166,6 +392,9 @@ export function AccountsOfficeManagement() {
     setSelectedInvoice(null)
     setPaymentAmount('')
     setReceiptNumber('')
+    setPaymentHistoryFilterMethod('')
+    setPaymentHistoryFrom('')
+    setPaymentHistoryTo('')
   }
 
   function clearStudentSearch() {
@@ -178,6 +407,12 @@ export function AccountsOfficeManagement() {
     setSelectedInvoice(null)
     setPaymentAmount('')
     setReceiptNumber('')
+    setPaymentHistory([])
+    setCreditNotes([])
+    setInvoiceNotes([])
+    setPaymentHistoryFilterMethod('')
+    setPaymentHistoryFrom('')
+    setPaymentHistoryTo('')
   }
 
   async function submitPayment(e: FormEvent) {
@@ -259,7 +494,118 @@ export function AccountsOfficeManagement() {
     setTimeout(() => setEditMessage(''), 3000)
   }
 
+  async function handleIssueCreditNote(e: FormEvent) {
+    e.preventDefault()
+    if (!selectedInvoice || !creditNoteNumber.trim() || !creditNoteAmount) return
+    try {
+      await issueCreditNote({
+        studentInvoiceId: selectedInvoice.id,
+        creditNoteNumber: creditNoteNumber.trim(),
+        amount: Number(creditNoteAmount),
+        reason: creditNoteReason.trim(),
+        issuedBy: creditNoteIssuedBy.trim() || undefined,
+      })
+      setCreditNoteNumber('')
+      setCreditNoteAmount('')
+      setCreditNoteReason('')
+      setCreditNoteIssuedBy('')
+      const notes = await getCreditNotes(selectedInvoice.id)
+      setCreditNotes(notes)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to issue credit note.')
+    }
+  }
+
+  async function handleAddInvoiceNote(e: FormEvent) {
+    e.preventDefault()
+    if (!selectedInvoice || !invoiceNoteText.trim()) return
+    try {
+      await addInvoiceNote(selectedInvoice.id, {
+        note: invoiceNoteText.trim(),
+        createdBy: invoiceNoteCreatedBy.trim() || undefined,
+      })
+      setInvoiceNoteText('')
+      setInvoiceNoteCreatedBy('')
+      const notes = await getInvoiceNotes(selectedInvoice.id)
+      setInvoiceNotes(notes)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to add invoice note.')
+    }
+  }
+
+  async function handleRequestAdvance(e: FormEvent) {
+    e.preventDefault()
+    if (!advanceStaffId || !advanceAmount) return
+    try {
+      await requestStaffAdvance({
+        staffMemberId: advanceStaffId,
+        amount: Number(advanceAmount),
+        reason: advanceReason.trim(),
+        currency: 'UGX',
+      })
+      setAdvanceStaffId('')
+      setAdvanceAmount('')
+      setAdvanceReason('')
+      const data = await getStaffAdvances()
+      setAdvances(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to request advance.')
+    }
+  }
+
+  async function handleApproveAdvance(advanceId: string) {
+    setAdvanceActionId(advanceId)
+    try {
+      await approveStaffAdvance(advanceId, 'Accounts Office')
+      const data = await getStaffAdvances()
+      setAdvances(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to approve advance.')
+    } finally {
+      setAdvanceActionId(null)
+    }
+  }
+
+  async function handleRecoverAdvance(advanceId: string) {
+    setAdvanceActionId(advanceId)
+    try {
+      const currentPayroll = payrollRecords.find(r => r.status === 'Paid' || r.status === 'Approved')
+      if (!currentPayroll) {
+        setError('No approved/paid payroll record available for recovery.')
+        return
+      }
+      await recoverStaffAdvance(advanceId, currentPayroll.id)
+      const data = await getStaffAdvances()
+      setAdvances(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to recover advance.')
+    } finally {
+      setAdvanceActionId(null)
+    }
+  }
+
+  function handleStaffSearch(e: FormEvent) {
+    e.preventDefault()
+    const q = staffSearchQuery.trim().toLowerCase()
+    if (!q) return
+    const all = Object.values(staffMap)
+    const filtered = all.filter(s => s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q) || s.staffNumber.toLowerCase().includes(q))
+    setStaffSearchResults(filtered)
+  }
+
+  function selectStaffForHistory(staff: StaffMember) {
+    setSelectedStaffId(staff.id)
+    setStaffPaymentHistory([])
+  }
+
   const filteredPayroll = payrollRecords.filter(r => r.month === selectedMonth && r.year === selectedYear)
+
+  const filteredPayments = paymentHistory.filter(p => {
+    if (paymentHistoryFilterMethod && p.paymentMethod !== paymentHistoryFilterMethod) return false
+    if (paymentHistoryFrom && p.paidAt < paymentHistoryFrom) return false
+    if (paymentHistoryTo && p.paidAt > paymentHistoryTo + 'T23:59:59') return false
+    return true
+  })
 
   const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0)
   const totalPaid = invoices.reduce((sum, inv) => sum + inv.paidAmount, 0)
@@ -277,9 +623,60 @@ export function AccountsOfficeManagement() {
     return 'Large Balance'
   }
 
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  const currentYear = new Date().getFullYear()
-  const yearOptions = [currentYear, currentYear - 1, currentYear - 2]
+  function getPayrollStatusColor(status: string): string {
+    if (status === 'Paid') return '#059669'
+    if (status === 'Approved') return '#2563eb'
+    return '#d97706'
+  }
+
+  function exportFeeStatement() {
+    const rows = [
+      ['Invoice No.', 'Amount (UGX)', 'Paid (UGX)', 'Balance (UGX)', 'Status'],
+      ...invoices.map(inv => [inv.invoiceNumber, inv.amount, inv.paidAmount, inv.balance, getStatusLabel(inv.balance, inv.paidAmount)]),
+      ['Total', totalAmount, totalPaid, totalBalance, ''],
+    ]
+    const csv = rows.map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `fee-statement-${selectedStudentId || 'export'}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportPaymentHistory() {
+    const rows = [
+      ['Receipt No.', 'Date', 'Amount (UGX)', 'Payment Method', 'Reference'],
+      ...filteredPayments.map(p => [p.receiptNumber, p.paidAt, p.amount, p.paymentMethod, p.reference || '']),
+    ]
+    const csv = rows.map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `payment-history-${selectedInvoice?.id || 'export'}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportPayrollSummary() {
+    const rows = [
+      ['Staff Name', 'Staff No.', 'Basic Salary', 'Allowances', 'Deductions', 'Net Pay', 'Status', 'Payment Method'],
+      ...filteredPayroll.map(r => {
+        const staff = staffMap[r.staffMemberId]
+        return [staff ? `${staff.firstName} ${staff.lastName}` : '—', staff?.staffNumber || '—', r.basicSalary, r.allowances, r.deductions, r.netPay, r.status, r.paymentMethod || '']
+      }),
+    ]
+    const csv = rows.map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `payroll-summary-${selectedMonth}-${selectedYear}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <section className="panel" aria-label="Accounts office management">
@@ -311,6 +708,10 @@ export function AccountsOfficeManagement() {
                 {programmes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <input aria-label="Student ID or code" placeholder="Enter student ID or code" value={studentSearch} onChange={e => setStudentSearch(e.target.value)} />
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '.85rem' }}>
+                <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} />
+                Show Inactive
+              </label>
               <button type="submit">Search</button>
               {selectedStudentId && <button type="button" className="secondary-button" onClick={clearStudentSearch}>Clear</button>}
             </div>
@@ -335,6 +736,11 @@ export function AccountsOfficeManagement() {
                   <span>Invoices</span>
                   <strong>{invoices.length}</strong>
                 </div>
+              </div>
+
+              <div className="topbar-actions" style={{ marginBottom: 10 }}>
+                <button type="button" onClick={exportFeeStatement}>Export Fee Statement</button>
+                <button type="button" onClick={exportPaymentHistory}>Export Payment History</button>
               </div>
 
               <div className="table-wrap" style={{ marginBottom: 22 }}>
@@ -389,63 +795,194 @@ export function AccountsOfficeManagement() {
                 )}
               </div>
 
-              {invoices.length > 0 && (
-                <>
-                  <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
-                    <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
-                      <div>
-                        <span className="eyebrow">PAYMENT</span>
-                        <h3>Record Payment</h3>
-                      </div>
-                    </div>
-                    <form onSubmit={submitPayment}>
-                      <div className="form-row">
-                        <label>Payment Amount (UGX)<input type="number" min="0.01" step="0.01" placeholder="0.00" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
-                        <label>Receipt Number<input value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} placeholder="Receipt number" required /></label>
-                        <label>Payment Method<select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}><option>Cash</option><option>Bank</option><option>Mobile Money</option><option>Card</option></select></label>
-                      </div>
-                      <div className="topbar-actions">
-                        <button type="submit">Update Payment</button>
-                      </div>
-                    </form>
+              <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+                <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                  <div>
+                    <span className="eyebrow">PAYMENTS</span>
+                    <h3>Payment History</h3>
                   </div>
-
-                  <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
-                    <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
-                      <div>
-                        <span className="eyebrow">FEES</span>
-                        <h3>Edit Fee Balance</h3>
-                      </div>
-                    </div>
-                    <div className="table-wrap" style={{ marginBottom: 15 }}>
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Fee Type</th>
-                            <th>Amount</th>
-                            <th>Paid</th>
-                            <th>Balance</th>
+                </div>
+                <form className="student-form" onSubmit={e => e.preventDefault()} style={{ marginBottom: 15 }}>
+                  <div className="form-row">
+                    <input type="date" value={paymentHistoryFrom} onChange={e => setPaymentHistoryFrom(e.target.value)} placeholder="From" />
+                    <input type="date" value={paymentHistoryTo} onChange={e => setPaymentHistoryTo(e.target.value)} placeholder="To" />
+                    <select value={paymentHistoryFilterMethod} onChange={e => setPaymentHistoryFilterMethod(e.target.value)}>
+                      <option value="">All Methods</option>
+                      <option>Cash</option>
+                      <option>Bank</option>
+                      <option>Mobile Money</option>
+                      <option>Card</option>
+                    </select>
+                  </div>
+                </form>
+                <div className="table-wrap">
+                  {paymentHistoryLoading ? (
+                    <p className="empty">Loading payment history…</p>
+                  ) : filteredPayments.length === 0 ? (
+                    <p className="empty">No payment history found.</p>
+                  ) : (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Receipt No.</th>
+                          <th>Date</th>
+                          <th>Amount</th>
+                          <th>Payment Method</th>
+                          <th>Reference</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPayments.map((p, idx) => (
+                          <tr key={p.id}>
+                            <td>{p.receiptNumber}</td>
+                            <td>{new Date(p.paidAt).toLocaleDateString('en-UG')}</td>
+                            <td style={{ color: '#059669' }}>UGX {p.amount.toLocaleString()}</td>
+                            <td>{p.paymentMethod}</td>
+                            <td>{p.reference || '—'}</td>
+                            <td>
+                              {idx === 0 && (
+                                <button className="secondary-button" onClick={() => alert('Undo last payment')}>Undo Last Payment</button>
+                              )}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {editingFees.map(row => (
-                            <tr key={row.id}>
-                              <td><strong>{row.feeType}</strong></td>
-                              <td><input type="number" min="0" step="0.01" value={editDraft[row.id] ?? row.amount} onChange={e => handleEditAmount(row.id, e.target.value)} /></td>
-                              <td style={{ color: '#059669' }}>UGX {row.paid.toLocaleString()}</td>
-                              <td style={{ color: Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid) > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid).toLocaleString()}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    {editMessage && <div className="error" role="status" style={{ marginBottom: 10 }}>{editMessage}</div>}
-                    <div className="topbar-actions">
-                      <button type="button" onClick={handleSaveFeeEdits}>Save</button>
-                    </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
+              <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+                <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                  <div>
+                    <span className="eyebrow">CREDIT NOTE</span>
+                    <h3>Issue Credit Note / Refund</h3>
                   </div>
-                </>
-              )}
+                </div>
+                <form onSubmit={handleIssueCreditNote}>
+                  <div className="form-row">
+                    <label>Credit Note Number<input value={creditNoteNumber} onChange={e => setCreditNoteNumber(e.target.value)} placeholder="CN-001" required /></label>
+                    <label>Amount (UGX)<input type="number" min="0.01" step="0.01" placeholder="0.00" value={creditNoteAmount} onChange={e => setCreditNoteAmount(e.target.value)} required /></label>
+                    <label>Reason<input value={creditNoteReason} onChange={e => setCreditNoteReason(e.target.value)} placeholder="Reason for credit note" /></label>
+                    <label>Issued By<input value={creditNoteIssuedBy} onChange={e => setCreditNoteIssuedBy(e.target.value)} placeholder="Issued by" /></label>
+                  </div>
+                  <div className="topbar-actions" style={{ marginBottom: 15 }}>
+                    <button type="submit">Issue Credit Note</button>
+                  </div>
+                </form>
+                {creditNotesLoading ? (
+                  <p className="empty">Loading credit notes…</p>
+                ) : creditNotes.length === 0 ? (
+                  <p className="empty">No credit notes issued for this invoice.</p>
+                ) : (
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Credit Note No.</th>
+                          <th>Amount</th>
+                          <th>Reason</th>
+                          <th>Issued By</th>
+                          <th>Date</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {creditNotes.map(cn => (
+                          <tr key={cn.id}>
+                            <td>{cn.creditNoteNumber}</td>
+                            <td style={{ color: '#059669' }}>UGX {cn.amount.toLocaleString()}</td>
+                            <td>{cn.reason}</td>
+                            <td>{cn.issuedBy || '—'}</td>
+                            <td>{new Date(cn.issuedAt).toLocaleDateString('en-UG')}</td>
+                            <td>{cn.status}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+                <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                  <div>
+                    <span className="eyebrow">NOTES</span>
+                    <h3>Invoice Notes</h3>
+                  </div>
+                </div>
+                <form onSubmit={handleAddInvoiceNote}>
+                  <div className="form-row">
+                    <label>Note<input value={invoiceNoteText} onChange={e => setInvoiceNoteText(e.target.value)} placeholder="Add a note..." required /></label>
+                    <label>Created By<input value={invoiceNoteCreatedBy} onChange={e => setInvoiceNoteCreatedBy(e.target.value)} placeholder="Created by" /></label>
+                  </div>
+                  <div className="topbar-actions" style={{ marginBottom: 15 }}>
+                    <button type="submit">Add Note</button>
+                  </div>
+                </form>
+                {invoiceNotesLoading ? (
+                  <p className="empty">Loading notes…</p>
+                ) : invoiceNotes.length === 0 ? (
+                  <p className="empty">No notes for this invoice.</p>
+                ) : (
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Note</th>
+                          <th>Created By</th>
+                          <th>Created At</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {invoiceNotes.map(n => (
+                          <tr key={n.id}>
+                            <td>{n.note}</td>
+                            <td>{n.createdBy || '—'}</td>
+                            <td>{new Date(n.createdAt).toLocaleDateString('en-UG')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+                <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                  <div>
+                    <span className="eyebrow">FEES</span>
+                    <h3>Edit Fee Balance</h3>
+                  </div>
+                </div>
+                <div className="table-wrap" style={{ marginBottom: 15 }}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Fee Type</th>
+                        <th>Amount</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {editingFees.map(row => (
+                        <tr key={row.id}>
+                          <td><strong>{row.feeType}</strong></td>
+                          <td><input type="number" min="0" step="0.01" value={editDraft[row.id] ?? row.amount} onChange={e => handleEditAmount(row.id, e.target.value)} /></td>
+                          <td style={{ color: '#059669' }}>UGX {row.paid.toLocaleString()}</td>
+                          <td style={{ color: Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid) > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {editMessage && <div className="error" role="status" style={{ marginBottom: 10 }}>{editMessage}</div>}
+                <div className="topbar-actions">
+                  <button type="button" onClick={handleSaveFeeEdits}>Save</button>
+                </div>
+              </div>
             </>
           )}
 
@@ -456,8 +993,8 @@ export function AccountsOfficeManagement() {
           )}
 
           {selectedInvoice && (
-            <div className="modal-backdrop">
-              <form className="auth-card" onSubmit={submitPayment}>
+            <div className="modal-backdrop" onClick={() => setSelectedInvoice(null)}>
+              <form className="auth-card" onSubmit={submitPayment} onClick={e => e.stopPropagation()}>
                 <p className="eyebrow">Payment</p>
                 <h3>{selectedInvoice.invoiceNumber}</h3>
                 <p>Outstanding: UGX {selectedInvoice.balance.toLocaleString()}</p>
@@ -479,6 +1016,14 @@ export function AccountsOfficeManagement() {
           <form className="student-form" onSubmit={handleGeneratePayroll} style={{ marginBottom: 22 }}>
             <h3>Payroll Period</h3>
             <div className="form-row">
+              <input aria-label="Staff search" placeholder="Search staff by name or staff no." value={staffSearchQuery} onChange={e => setStaffSearchQuery(e.target.value)} />
+              <button type="button" className="secondary-button" onClick={handleStaffSearch}>Search Staff</button>
+              {staffSearchResults.length > 0 && (
+                <select aria-label="Staff result" onChange={e => { const s = staffSearchResults.find(s => s.id === e.target.value); if (s) selectStaffForHistory(s); }}>
+                  <option value="">Select staff</option>
+                  {staffSearchResults.map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName} ({s.staffNumber})</option>)}
+                </select>
+              )}
               <select aria-label="Month" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
                 {monthNames.map((name, idx) => <option key={name} value={idx + 1}>{name}</option>)}
               </select>
@@ -491,7 +1036,48 @@ export function AccountsOfficeManagement() {
 
           {payrollError && <div className="error" role="alert">{payrollError}</div>}
 
-          <div className="table-wrap">
+          {selectedStaffId && (
+            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                <div>
+                  <span className="eyebrow">STAFF</span>
+                  <h3>Staff Payment History</h3>
+                </div>
+              </div>
+              <div className="table-wrap">
+                {staffPaymentHistoryLoading ? (
+                  <p className="empty">Loading payment history…</p>
+                ) : staffPaymentHistory.length === 0 ? (
+                  <p className="empty">No paid payroll records found for selected staff.</p>
+                ) : (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Period</th>
+                        <th>Net Pay</th>
+                        <th>Payment Method</th>
+                        <th>Payment Date</th>
+                        <th>Reference</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {staffPaymentHistory.map(r => (
+                        <tr key={r.id}>
+                          <td>{monthNames[r.month - 1]} {r.year}</td>
+                          <td style={{ color: '#059669', fontWeight: 700 }}>UGX {r.netPay.toLocaleString()}</td>
+                          <td>{r.paymentMethod || '—'}</td>
+                          <td>{r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('en-UG') : '—'}</td>
+                          <td>{r.reference || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="table-wrap" style={{ marginBottom: 22 }}>
             {payrollLoading ? (
               <p className="empty">Loading payroll…</p>
             ) : filteredPayroll.length === 0 ? (
@@ -514,11 +1100,11 @@ export function AccountsOfficeManagement() {
                 <tbody>
                   {filteredPayroll.map(record => {
                     const staff = staffMap[record.staffMemberId]
-                    const statusColor = record.status === 'Paid' ? '#059669' : '#d97706'
+                    const statusColor = getPayrollStatusColor(record.status)
                     const method = paymentMethodMap[record.id] || 'Cash'
                     return (
                       <tr key={record.id}>
-                        <td><strong>{staff ? `${staff.firstName} ${staff.lastName}` : '—'}</strong></td>
+                        <td><button type="button" className="secondary-button" style={{ background: 'transparent', padding: 0, color: '#2563eb', textDecoration: 'underline' }} onClick={() => setPayrollDetailId(record.id)}>{staff ? `${staff.firstName} ${staff.lastName}` : '—'}</button></td>
                         <td>{staff?.staffNumber || '—'}</td>
                         <td>UGX {record.basicSalary.toLocaleString()}</td>
                         <td>UGX {record.allowances.toLocaleString()}</td>
@@ -530,7 +1116,7 @@ export function AccountsOfficeManagement() {
                           </span>
                         </td>
                         <td>
-                          {record.status === 'Pending' ? (
+                          {record.status === 'Pending' || record.status === 'Approved' ? (
                             <select aria-label="Payment method" value={method} onChange={e => setPaymentMethodMap(prev => ({ ...prev, [record.id]: e.target.value }))}>
                               <option>Cash</option>
                               <option>Bank</option>
@@ -543,7 +1129,7 @@ export function AccountsOfficeManagement() {
                         </td>
                         <td>
                           {record.status === 'Pending' && (
-                            <button className="secondary-button" onClick={() => void handleMarkPaid(record.id)} disabled={markingPaidId === record.id}>
+                            <button className="secondary-button" onClick={() => handleMarkPaid(record.id)} disabled={markingPaidId === record.id}>
                               {markingPaidId === record.id ? 'Saving…' : 'Mark Paid'}
                             </button>
                           )}
@@ -555,6 +1141,133 @@ export function AccountsOfficeManagement() {
               </table>
             )}
           </div>
+
+          <div className="topbar-actions" style={{ marginBottom: 22 }}>
+            <button type="button" onClick={exportPayrollSummary}>Export Payroll Summary</button>
+          </div>
+
+          <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
+            <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+              <div>
+                <span className="eyebrow">ADVANCE</span>
+                <h3>Advance / Loan Recovery</h3>
+              </div>
+            </div>
+            <form onSubmit={handleRequestAdvance}>
+              <div className="form-row">
+                <label>Staff<select value={advanceStaffId} onChange={e => setAdvanceStaffId(e.target.value)} required>
+                  <option value="">Select staff</option>
+                  {Object.values(staffMap).map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName} ({s.staffNumber})</option>)}
+                </select></label>
+                <label>Amount (UGX)<input type="number" min="0" step="0.01" placeholder="0.00" value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} required /></label>
+                <label>Reason<input value={advanceReason} onChange={e => setAdvanceReason(e.target.value)} placeholder="Reason for advance" /></label>
+              </div>
+              <div className="topbar-actions" style={{ marginBottom: 15 }}>
+                <button type="submit">Request Advance</button>
+              </div>
+            </form>
+            {advancesLoading ? (
+              <p className="empty">Loading advances…</p>
+            ) : advances.length === 0 ? (
+              <p className="empty">No advances found.</p>
+            ) : (
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Staff</th>
+                      <th>Amount</th>
+                      <th>Reason</th>
+                      <th>Requested At</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {advances.map(adv => {
+                      const staff = staffMap[adv.staffMemberId]
+                      return (
+                        <tr key={adv.id}>
+                          <td>{staff ? `${staff.firstName} ${staff.lastName}` : '—'}</td>
+                          <td style={{ color: '#059669' }}>UGX {adv.amount.toLocaleString()}</td>
+                          <td>{adv.reason}</td>
+                          <td>{new Date(adv.requestedAt).toLocaleDateString('en-UG')}</td>
+                          <td>{adv.status}</td>
+                          <td>
+                            {adv.status === 'Pending' && (
+                              <button className="secondary-button" onClick={() => handleApproveAdvance(adv.id)} disabled={advanceActionId === adv.id}>Approve</button>
+                            )}
+                            {adv.status === 'Approved' && (
+                              <button className="secondary-button" onClick={() => handleRecoverAdvance(adv.id)} disabled={advanceActionId === adv.id}>Recover</button>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {payrollDetailId && (
+            <div className="modal-backdrop" onClick={() => setPayrollDetailId(null)}>
+              <div className="auth-card" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
+                <p className="eyebrow">Payroll Detail</p>
+                {payrollDetailLoading ? (
+                  <p className="empty">Loading…</p>
+                ) : payrollDetailError ? (
+                  <div className="error" role="alert">{payrollDetailError}</div>
+                ) : payrollDetailData ? (
+                  <>
+                    <h3>{staffMap[payrollDetailData.staffMemberId] ? `${staffMap[payrollDetailData.staffMemberId].firstName} ${staffMap[payrollDetailData.staffMemberId].lastName}` : 'Staff Member'}</h3>
+                    <p>Period: {monthNames[payrollDetailData.month - 1]} {payrollDetailData.year}</p>
+                    <p>Basic Salary: UGX {payrollDetailData.basicSalary.toLocaleString()}</p>
+                    <p>Allowances: UGX {payrollDetailData.allowances.toLocaleString()}</p>
+                    <p>Deductions: UGX {payrollDetailData.deductions.toLocaleString()}</p>
+                    <p style={{ fontWeight: 700 }}>Net Pay: UGX {payrollDetailData.netPay.toLocaleString()}</p>
+                    <p>Status: {payrollDetailData.status}</p>
+                    <p>Payment Method: {payrollDetailData.paymentMethod || '—'}</p>
+                    <p>Reference: {payrollDetailData.reference || '—'}</p>
+                    <p>Payment Date: {payrollDetailData.paymentDate ? new Date(payrollDetailData.paymentDate).toLocaleDateString('en-UG') : '—'}</p>
+                    <h4 style={{ marginTop: 20 }}>Staff Advances</h4>
+                    {payrollDetailAdvances.length === 0 ? (
+                      <p className="empty">No advances for this staff member.</p>
+                    ) : (
+                      <div className="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Amount</th>
+                              <th>Reason</th>
+                              <th>Status</th>
+                              <th>Requested At</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {payrollDetailAdvances.map(adv => (
+                              <tr key={adv.id}>
+                                <td style={{ color: '#059669' }}>UGX {adv.amount.toLocaleString()}</td>
+                                <td>{adv.reason}</td>
+                                <td>{adv.status}</td>
+                                <td>{new Date(adv.requestedAt).toLocaleDateString('en-UG')}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    <div className="topbar-actions" style={{ marginTop: 20 }}>
+                      <button type="button" onClick={() => window.print()}>Print Payslip</button>
+                      <button type="button" className="secondary-button" onClick={() => setPayrollDetailId(null)}>Close</button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="empty">No detail available.</p>
+                )}
+              </div>
+            </div>
+          )}
         </>
       )}
     </section>
