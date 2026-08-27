@@ -6,6 +6,7 @@ public sealed class StudentInvoice
     public Guid StudentId { get; init; }
     public Guid? FeeStructureId { get; init; }
     public required string InvoiceNumber { get; init; }
+    public required string FeeType { get; init; }
     public decimal Amount { get; init; }
     public decimal PaidAmount { get; set; }
     public string Currency { get; init; } = "UGX";

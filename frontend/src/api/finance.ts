@@ -4,6 +4,7 @@ export interface Invoice {
   id: string
   studentId: string
   invoiceNumber: string
+  feeType: string
   amount: number
   paidAmount: number
   balance: number
@@ -16,7 +17,8 @@ export interface CreateInvoiceRequest {
   studentId: string
   feeStructureId?: string
   invoiceNumber: string
-  amount: number
+  feeType: string
+  amount?: number
   currency?: string
 }
 
@@ -53,6 +55,7 @@ export interface FeeStructure {
   programmeId: string
   academicYearId: string
   name: string
+  feeType: string
   totalAmount: number
   currency: string
   isActive: boolean
@@ -157,7 +160,7 @@ export const recordPayment = (invoiceId: string, body: RecordPaymentRequest) => 
 export const getDashboard = () => request<FinanceDashboard>('/api/finance/dashboard')
 export const getOutstandingBalances = (programmeId?: string) => request<OutstandingBalance[]>('/api/finance/outstanding' + (programmeId ? `?programmeId=${encodeURIComponent(programmeId)}` : ''))
 export const getFeeStructures = (academicYearId?: string) => request<FeeStructure[]>('/api/finance/fee-structures' + (academicYearId ? `?academicYearId=${encodeURIComponent(academicYearId)}` : ''))
-export const createFeeStructure = (body: { programmeId: string; academicYearId: string; name: string; totalAmount: number; currency?: string }) => request<FeeStructure>('/api/finance/fee-structures', { method: 'POST', body: JSON.stringify(body) })
+export const createFeeStructure = (body: { programmeId: string; academicYearId: string; name: string; totalAmount: number; currency?: string; feeType?: string }) => request<FeeStructure>('/api/finance/fee-structures', { method: 'POST', body: JSON.stringify(body) })
 export const createMobileMoneyTransaction = (body: { studentId: string; studentInvoiceId?: string; provider: string; phoneNumber: string; amount: number }) => request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(body) })
 export const confirmMobileMoneyTransaction = (transactionId: string, externalRef: string) => request(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ externalRef }) })
 export const getMobileMoneyTransactions = (status?: string) => request<MobileMoneyTransaction[]>('/api/finance/mobile-money' + (status ? `?status=${encodeURIComponent(status)}` : ''))
@@ -273,4 +276,4 @@ export const getAccountsDashboard = () => request<{ totalBilled: number; totalPa
 export const getAccountsOutstanding = () => request<{ studentId: string; studentNumber: string; studentName: string; programmeName: string; balance: number; currency: string; status: string }[]>('/api/accounts-overview/outstanding')
 export const getAccountsPayments = (receiptNumber?: string, paymentMethod?: string, from?: string, to?: string) => request<{ id: string; receiptNumber: string; amount: number; paymentMethod: string; paidAt: string }[]>('/api/accounts-overview/payments' + (receiptNumber ? `?receiptNumber=${encodeURIComponent(receiptNumber)}` : '') + (paymentMethod ? `${receiptNumber ? '&' : '?'}paymentMethod=${encodeURIComponent(paymentMethod)}` : '') + (from ? `${receiptNumber || paymentMethod ? '&' : '?'}from=${encodeURIComponent(from)}` : '') + (to ? `${receiptNumber || paymentMethod || from ? '&' : '?'}to=${encodeURIComponent(to)}` : ''))
 export const getAccountsPayroll = (month?: number, year?: number) => request<{ id: string; staffMemberId: string; staffName: string; staffNumber: string; month: number; year: number; basicSalary: number; allowances: number; deductions: number; netPay: number; status: string; paymentDate?: string; paymentMethod?: string; reference?: string }[]>('/api/accounts-overview/payroll' + (month && year ? `?month=${month}&year=${year}` : ''))
-export const getAccountsStudentInvoices = (studentId: string) => request<{ id: string; invoiceNumber: string; amount: number; paidAmount: number; balance: number; currency: string; status: string; issuedAt: string }[]>(`/api/accounts-overview/students/${studentId}/invoices`)
+export const getAccountsStudentInvoices = (studentId: string) => request<{ id: string; invoiceNumber: string; feeType: string; amount: number; paidAmount: number; balance: number; currency: string; status: string; issuedAt: string }[]>(`/api/accounts-overview/students/${studentId}/invoices`)

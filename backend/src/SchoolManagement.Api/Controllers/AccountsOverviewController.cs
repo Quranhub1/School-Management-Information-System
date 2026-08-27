@@ -134,6 +134,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
             {
                 x.Id,
                 x.InvoiceNumber,
+                x.FeeType,
                 x.Amount,
                 x.PaidAmount,
                 balance = x.Amount - x.PaidAmount,

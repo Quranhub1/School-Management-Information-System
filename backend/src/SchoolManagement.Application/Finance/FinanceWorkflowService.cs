@@ -72,7 +72,7 @@ public sealed class FinanceWorkflowService(FinanceService finance, SchoolManagem
         return structures.Select(FeeStructureDto.FromDomain).ToArray();
     }
 
-    public async Task<FeeStructureDto> CreateFeeStructureAsync(Guid programmeId, Guid academicYearId, string name, decimal totalAmount, string currency, CancellationToken cancellationToken = default)
+    public async Task<FeeStructureDto> CreateFeeStructureAsync(Guid programmeId, Guid academicYearId, string name, decimal totalAmount, string currency, string? feeType = null, CancellationToken cancellationToken = default)
     {
         var feeStructure = new FeeStructure
         {
@@ -81,6 +81,7 @@ public sealed class FinanceWorkflowService(FinanceService finance, SchoolManagem
             Name = name.Trim(),
             TotalAmount = totalAmount,
             Currency = string.IsNullOrWhiteSpace(currency) ? "UGX" : currency.Trim(),
+            FeeType = string.IsNullOrWhiteSpace(feeType) ? name.Trim() : feeType.Trim(),
             IsActive = true
         };
         await finance.AddFeeStructureAsync(feeStructure, cancellationToken);

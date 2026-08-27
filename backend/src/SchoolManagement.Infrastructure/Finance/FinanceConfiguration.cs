@@ -10,6 +10,7 @@ public sealed class FinanceConfiguration : IEntityTypeConfiguration<FeeStructure
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name).HasMaxLength(160).IsRequired();
+        builder.Property(x => x.FeeType).HasMaxLength(50).IsRequired();
         builder.Property(x => x.TotalAmount).HasPrecision(18, 2);
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         builder.HasIndex(x => new { x.ProgrammeId, x.AcademicYearId, x.Name }).IsUnique();
@@ -23,6 +24,7 @@ public sealed class StudentInvoiceConfiguration : IEntityTypeConfiguration<Stude
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.InvoiceNumber).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.FeeType).HasMaxLength(50).IsRequired();
         builder.Property(x => x.Amount).HasPrecision(18, 2);
         builder.Property(x => x.PaidAmount).HasPrecision(18, 2);
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();

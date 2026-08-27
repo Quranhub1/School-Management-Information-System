@@ -28,6 +28,7 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
                 request.StudentId,
                 request.FeeStructureId,
                 request.InvoiceNumber,
+                request.FeeType,
                 cancellationToken);
 
             return Created($"/api/finance/invoices/{invoice.Id}", invoice);
@@ -87,6 +88,7 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
                 request.Name,
                 request.TotalAmount,
                 request.Currency,
+                request.FeeType,
                 cancellationToken);
 
             return Ok(feeStructure);
@@ -369,7 +371,8 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
     public sealed record CreateInvoiceRequest(
         Guid StudentId,
         Guid FeeStructureId,
-        string InvoiceNumber);
+        string InvoiceNumber,
+        string FeeType);
 
     public sealed record RecordPaymentRequest(
         decimal Amount,
@@ -382,7 +385,8 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
         Guid AcademicYearId,
         string Name,
         decimal TotalAmount,
-        string? Currency);
+        string? Currency,
+        string? FeeType);
 
     public sealed record CreateMobileMoneyRequest(
         Guid StudentId,

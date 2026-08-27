@@ -10,12 +10,14 @@ public sealed class FinanceService(IFinanceRepository finance, SchoolManagementD
     public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) =>
         finance.GetStudentInvoicesAsync(studentId, cancellationToken);
 
-    public async Task<StudentInvoice> CreateInvoiceAsync(Guid studentId, Guid feeStructureId, string invoiceNumber, CancellationToken cancellationToken)
+    public async Task<StudentInvoice> CreateInvoiceAsync(Guid studentId, Guid feeStructureId, string invoiceNumber, string feeType, CancellationToken cancellationToken)
     {
         if (!await finance.StudentExistsAsync(studentId, cancellationToken))
             throw new ArgumentException("Student was not found.");
         if (string.IsNullOrWhiteSpace(invoiceNumber))
             throw new ArgumentException("Invoice number is required.");
+        if (string.IsNullOrWhiteSpace(feeType))
+            throw new ArgumentException("Fee type is required.");
 
         var normalizedInvoiceNumber = invoiceNumber.Trim();
         if (await finance.InvoiceNumberExistsAsync(normalizedInvoiceNumber, cancellationToken))
@@ -31,6 +33,7 @@ public sealed class FinanceService(IFinanceRepository finance, SchoolManagementD
             StudentId = studentId,
             FeeStructureId = fee.Id,
             InvoiceNumber = normalizedInvoiceNumber,
+            FeeType = feeType.Trim(),
             Amount = fee.TotalAmount,
             PaidAmount = 0,
             Currency = fee.Currency,

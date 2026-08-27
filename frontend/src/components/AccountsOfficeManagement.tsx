@@ -66,8 +66,9 @@ const MOCK_PROGRAMMES = [
 ]
 
 const MOCK_INVOICES: Invoice[] = [
-  { id: 'inv1', studentId: 'S001', invoiceNumber: 'INV-2025-001', amount: 2500000, paidAmount: 1000000, balance: 1500000, currency: 'UGX', status: 'Partially Paid', issuedAt: '2025-09-15' },
-  { id: 'inv2', studentId: 'S001', invoiceNumber: 'INV-2025-002', amount: 500000, paidAmount: 0, balance: 500000, currency: 'UGX', status: 'Unpaid', issuedAt: '2025-09-20' },
+  { id: 'inv1', studentId: 'S001', invoiceNumber: 'INV-2025-001', feeType: 'Tuition', amount: 2500000, paidAmount: 1000000, balance: 1500000, currency: 'UGX', status: 'Partially Paid', issuedAt: '2025-09-15' },
+  { id: 'inv2', studentId: 'S001', invoiceNumber: 'INV-2025-002', feeType: 'Functional', amount: 500000, paidAmount: 0, balance: 500000, currency: 'UGX', status: 'Unpaid', issuedAt: '2025-09-20' },
+  { id: 'inv3', studentId: 'S001', invoiceNumber: 'INV-2025-003', feeType: 'Guild', amount: 200000, paidAmount: 200000, balance: 0, currency: 'UGX', status: 'Paid', issuedAt: '2025-09-20' },
 ]
 
 export function AccountsOfficeManagement() {
@@ -77,6 +78,7 @@ export function AccountsOfficeManagement() {
   const [programmes, setProgrammes] = useState<{ id: string; name: string }[]>([])
   const [selectedYearId, setSelectedYearId] = useState('')
   const [selectedProgrammeId, setSelectedProgrammeId] = useState('')
+  const [selectedFeeType, setSelectedFeeType] = useState('')
   const [studentSearch, setStudentSearch] = useState('')
   const [showInactive, setShowInactive] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
@@ -199,10 +201,11 @@ export function AccountsOfficeManagement() {
       try {
         const data = await getInvoices(selectedStudentId ?? undefined)
         if (!cancelled) {
-          setInvoices(data)
-          const breakdown = data.map(inv => ({
+          const filtered = selectedFeeType ? data.filter(inv => inv.feeType === selectedFeeType) : data
+          setInvoices(filtered)
+          const breakdown = filtered.map(inv => ({
             id: inv.id,
-            feeType: inv.invoiceNumber,
+            feeType: inv.feeType,
             amount: inv.amount,
             paid: inv.paidAmount,
             balance: inv.balance,
@@ -214,11 +217,11 @@ export function AccountsOfficeManagement() {
         }
       } catch {
         if (!cancelled) {
-          const filtered = MOCK_INVOICES.filter(inv => !showInactive ? true : true)
+          const filtered = selectedFeeType ? MOCK_INVOICES.filter(inv => inv.feeType === selectedFeeType) : MOCK_INVOICES
           setInvoices(filtered)
           const breakdown = filtered.map(inv => ({
             id: inv.id,
-            feeType: inv.invoiceNumber,
+            feeType: inv.feeType,
             amount: inv.amount,
             paid: inv.paidAmount,
             balance: inv.balance,
@@ -232,7 +235,7 @@ export function AccountsOfficeManagement() {
     }
     void loadInvoices()
     return () => { cancelled = true }
-  }, [selectedStudentId])
+  }, [selectedStudentId, selectedFeeType])
 
   useEffect(() => {
     let cancelled = false
@@ -631,9 +634,9 @@ export function AccountsOfficeManagement() {
 
   function exportFeeStatement() {
     const rows = [
-      ['Invoice No.', 'Amount (UGX)', 'Paid (UGX)', 'Balance (UGX)', 'Status'],
-      ...invoices.map(inv => [inv.invoiceNumber, inv.amount, inv.paidAmount, inv.balance, getStatusLabel(inv.balance, inv.paidAmount)]),
-      ['Total', totalAmount, totalPaid, totalBalance, ''],
+      ['Fee Type', 'Invoice No.', 'Amount (UGX)', 'Paid (UGX)', 'Balance (UGX)', 'Status'],
+      ...invoices.map(inv => [inv.feeType, inv.invoiceNumber, inv.amount, inv.paidAmount, inv.balance, getStatusLabel(inv.balance, inv.paidAmount)]),
+      ['Total', '', totalAmount, totalPaid, totalBalance, ''],
     ]
     const csv = rows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -707,6 +710,16 @@ export function AccountsOfficeManagement() {
                 <option value="">All Programmes</option>
                 {programmes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
+              <select aria-label="Fee Type" value={selectedFeeType} onChange={e => setSelectedFeeType(e.target.value)}>
+                <option value="">All Fee Types</option>
+                <option value="Tuition">Tuition</option>
+                <option value="Functional">Functional</option>
+                <option value="Guild">Guild</option>
+                <option value="Debt">Debt</option>
+                <option value="Requirements">Requirements</option>
+                <option value="Placement Fee">Placement Fee</option>
+                <option value="Total Fees">Total Fees</option>
+              </select>
               <input aria-label="Student ID or code" placeholder="Enter student ID or code" value={studentSearch} onChange={e => setStudentSearch(e.target.value)} />
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '.85rem' }}>
                 <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} />
@@ -765,7 +778,7 @@ export function AccountsOfficeManagement() {
                         const statusColor = getStatusColor(inv.balance, inv.paidAmount)
                         return (
                           <tr key={inv.id}>
-                            <td><strong>{inv.invoiceNumber}</strong></td>
+                            <td><strong>{inv.feeType}</strong></td>
                             <td>UGX {inv.amount.toLocaleString()}</td>
                             <td style={{ color: '#059669' }}>UGX {inv.paidAmount.toLocaleString()}</td>
                             <td style={{ color: inv.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {inv.balance.toLocaleString()}</td>
@@ -996,7 +1009,7 @@ export function AccountsOfficeManagement() {
             <div className="modal-backdrop" onClick={() => setSelectedInvoice(null)}>
               <form className="auth-card" onSubmit={submitPayment} onClick={e => e.stopPropagation()}>
                 <p className="eyebrow">Payment</p>
-                <h3>{selectedInvoice.invoiceNumber}</h3>
+                <h3>{selectedInvoice.feeType} — {selectedInvoice.invoiceNumber}</h3>
                 <p>Outstanding: UGX {selectedInvoice.balance.toLocaleString()}</p>
                 <label>Payment Amount (UGX)<input type="number" min="0.01" max={selectedInvoice.balance} step="0.01" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
                 <label>Receipt Number<input value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>

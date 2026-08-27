@@ -11,6 +11,7 @@ export function FeeStructuresManagement() {
   const [programmeId, setProgrammeId] = useState('')
   const [academicYearId, setAcademicYearId] = useState('')
   const [totalAmount, setTotalAmount] = useState('')
+  const [feeType, setFeeType] = useState('Tuition')
 
   async function load() {
     setLoading(true)
@@ -38,11 +39,13 @@ export function FeeStructuresManagement() {
         name: name.trim(),
         totalAmount: Number(totalAmount),
         currency: 'UGX',
+        feeType,
       })
       setName('')
       setProgrammeId('')
       setAcademicYearId('')
       setTotalAmount('')
+      setFeeType('Tuition')
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to create fee structure.')
@@ -82,6 +85,7 @@ export function FeeStructuresManagement() {
       <form className="student-form" onSubmit={submit}>
         <h3>Create Fee Structure</h3>
         <div className="form-row">
+          <label>Fee Type<select value={feeType} onChange={e => setFeeType(e.target.value)}><option>Tuition</option><option>Functional</option><option>Guild</option><option>Debt</option><option>Requirements</option><option>Placement Fee</option><option>Total Fees</option></select></label>
           <label>Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Standard Tuition" required /></label>
           <label>Programme ID<input value={programmeId} onChange={e => setProgrammeId(e.target.value)} placeholder="Programme ID" required /></label>
           <label>Academic Year ID<input value={academicYearId} onChange={e => setAcademicYearId(e.target.value)} placeholder="Academic Year ID" required /></label>
@@ -101,6 +105,7 @@ export function FeeStructuresManagement() {
           <table>
             <thead>
               <tr>
+                <th>Fee Type</th>
                 <th>Name</th>
                 <th>Academic Year</th>
                 <th>Total Amount</th>
@@ -111,7 +116,8 @@ export function FeeStructuresManagement() {
             <tbody>
               {feeStructures.map(fs => (
                 <tr key={fs.id}>
-                  <td><strong>{fs.name}</strong></td>
+                  <td><strong>{fs.feeType}</strong></td>
+                  <td>{fs.name}</td>
                   <td>{fs.academicYearId}</td>
                   <td>UGX {fs.totalAmount.toLocaleString()}</td>
                   <td>{fs.isActive ? 'Active' : 'Inactive'}</td>

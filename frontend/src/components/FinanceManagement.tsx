@@ -61,7 +61,7 @@ export function FinanceManagement() {
   async function submitInvoice(event: FormEvent) {
     event.preventDefault()
     try {
-      await createInvoice({ studentId: studentId.trim(), invoiceNumber: invoiceNumber.trim(), amount: Number(amount), currency: 'UGX' })
+      await createInvoice({ studentId: studentId.trim(), invoiceNumber: invoiceNumber.trim(), feeType: 'Tuition', amount: Number(amount), currency: 'UGX' })
       setStudentId('')
       setInvoiceNumber('')
       setAmount('')
