@@ -187,8 +187,7 @@ Database:       ${DB_NAME}
 Database User:  ${DB_USER}
 Database Pass:  ${DB_PASS}
 JWT Key:        ${JWT_KEY}
-Default admin:  admin
-Default pass:   admin123
+${ADMIN_CREDS}
 PostgreSQL CLI: sudo -u postgres psql -d ${DB_NAME}
 ===============================================================================
 EOF
@@ -215,6 +214,13 @@ fi
 # Seed initial admin user
 if [[ -f "${INSTALL_DIR}/api/schoolmanagement" ]]; then
   "${INSTALL_DIR}/api/schoolmanagement" --seed || true
+fi
+
+# Read generated admin credentials if available
+if [[ -f "${INSTALL_DIR}/ADMIN_CREDENTIALS.txt" ]]; then
+  ADMIN_CREDS="$(cat "${INSTALL_DIR}/ADMIN_CREDENTIALS.txt")"
+else
+  ADMIN_CREDS="username: admin\npassword: <check application logs or seed output>"
 fi
 
 echo "  Database ready."
@@ -325,16 +331,12 @@ echo "Frontend : http://${LAN_IP}"
 echo "API      : http://${LAN_IP}:5000"
 echo "Health   : http://${LAN_IP}/health"
 echo ""
-echo "Default credentials:"
-echo "  Username: admin"
-echo "  Password: admin123"
-echo ""
-echo "Database credentials saved to:"
+echo "Login credentials saved to:"
 echo "  ${INSTALL_DIR}/DEPLOYMENT_CREDENTIALS.txt"
 echo ""
 echo "Next steps:"
 echo "  1. Open http://${LAN_IP} from a browser on the LAN."
-echo "  2. Log in with admin / admin123."
+echo "  2. Log in with the credentials from DEPLOYMENT_CREDENTIALS.txt."
 echo "  3. Configure KOHA/DSpace URLs in Administration if needed."
 echo "  4. Review ${INSTALL_DIR}/DEPLOYMENT_CREDENTIALS.txt for all settings."
 echo ""

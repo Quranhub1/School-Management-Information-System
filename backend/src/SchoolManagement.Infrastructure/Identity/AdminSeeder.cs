@@ -21,26 +21,44 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             db.Roles.Add(role);
         }
 
-        var user = await db.Users.SingleOrDefaultAsync(x => x.Username == "admin", cancellationToken);
-        if (user is null)
+        var admin = await db.Users.SingleOrDefaultAsync(x => x.Username == "admin", cancellationToken);
+        if (admin is null)
         {
-            user = new User
+            var password = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD")
+                ?? GenerateRandomPassword();
+            admin = new User
             {
                 Username = "admin",
-                PasswordHash = hasher.Hash("admin123"),
+                PasswordHash = hasher.Hash(password),
                 FirstName = "System",
                 LastName = "Administrator",
                 IsActive = true
             };
-            db.Users.Add(user);
+            db.Users.Add(admin);
             await db.SaveChangesAsync(cancellationToken);
-        }
 
-        var assigned = await db.UserRoles.AnyAsync(x => x.UserId == user.Id && x.RoleId == role.Id, cancellationToken);
-        if (!assigned)
+            db.UserRoles.Add(new UserRole { UserId = admin.Id, RoleId = role.Id });
+            await db.SaveChangesAsync(cancellationToken);
+
+            Console.WriteLine($"[AdminSeeder] Generated admin credentials -> username: admin | password: {password}");
+            try
+            {
+                await File.WriteAllTextAsync("/opt/schoolmanagement/ADMIN_CREDENTIALS.txt", $"username: admin\npassword: {password}\n", cancellationToken);
+            }
+            catch { /* ignore if path does not exist yet */ }
+        }
+        else if (!await db.UserRoles.AnyAsync(x => x.UserId == admin.Id && x.RoleId == role.Id, cancellationToken))
         {
-            db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+            db.UserRoles.Add(new UserRole { UserId = admin.Id, RoleId = role.Id });
             await db.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    private static string GenerateRandomPassword()
+    {
+        var bytes = new byte[16];
+        using var rng = Random.Shared;
+        rng.NextBytes(bytes);
+        return Convert.ToBase64String(bytes)[..22];
     }
 }
