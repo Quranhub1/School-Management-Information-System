@@ -11,6 +11,7 @@ export interface GatePass {
   authorizedBy: string | null
   parentGuardianContact: string | null
   expectedReturnDate: string
+  status: string
   issuedAtUtc: string
   approvedAtUtc: string | null
 }
