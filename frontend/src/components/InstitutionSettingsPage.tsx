@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
 import { createInstitutionSettings, getActiveInstitutionSettings, type CreateInstitutionSettingsRequest, type InstitutionSettings } from '../api/institutionSettings'
 
 type SettingsTab = 'general' | 'branding' | 'gallery'
@@ -60,7 +59,7 @@ export function InstitutionSettingsPage() {
     }
   }
 
-  async function submit(e: FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     setError('')

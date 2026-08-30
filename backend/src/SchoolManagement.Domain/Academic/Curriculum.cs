@@ -9,6 +9,7 @@ public sealed class Curriculum
     public int MinimumCredits { get; init; }
     public DateOnly EffectiveFrom { get; init; }
     public DateOnly? EffectiveTo { get; init; }
+    public ProgrammeType ProgrammeType { get; set; } = ProgrammeType.FullProgramme;
     public string Status { get; set; } = "Draft";
     public bool IsActive { get; set; } = true;
 }

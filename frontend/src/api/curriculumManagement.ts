@@ -16,7 +16,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? undefined as T : response.json() as Promise<T>
 }
 
-export interface Curriculum { id:string; programmeId:string; version:string; title:string; minimumCredits:number; effectiveFrom:string; effectiveTo?:string|null; status:string; isActive:boolean }
+export interface Curriculum { id:string; programmeId:string; version:string; title:string; minimumCredits:number; effectiveFrom:string; effectiveTo?:string|null; status:string; isActive:boolean; programmeType:number }
 export interface Course { id:string; code:string; name:string; creditUnits:number; description?:string|null; courseType?:string|null; isActive:boolean }
 export interface CurriculumCourse { id:string; curriculumId:string; courseId:string; yearOfStudy:number; semesterNumber:number; isCore:boolean }
 
