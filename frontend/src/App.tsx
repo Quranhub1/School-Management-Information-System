@@ -18,7 +18,6 @@ import {
   canManageInventory,
   canManagePrinters,
 } from './auth/roleGuards'
-import { RoleNavigation } from './components/RoleNavigation'
 import { AcademicManagement } from './components/AcademicManagement'
 import { CurriculumManagement } from './components/CurriculumManagement'
 import { AdministrationManagement } from './components/AdministrationManagement'
@@ -35,6 +34,7 @@ import { Receipts } from './components/Receipts'
 import { CertificateManagement } from './components/CertificateManagement'
 import { InventoryManagement } from './components/InventoryManagement'
 import { PrinterManagement } from './components/PrinterManagement'
+import { InstitutionSettingsPage } from './components/InstitutionSettingsPage'
 import { getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
 import './components/PrintStyles.css'
 
@@ -64,6 +64,7 @@ type ModuleKey =
   | 'student-portal'
   | 'parent-portal'
   | 'teaching'
+  | 'institution-settings'
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState('')
@@ -160,6 +161,7 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     { key: 'student-portal', label: 'Student Portal', roles: [] },
     { key: 'parent-portal', label: 'Parent Portal', roles: [] },
     { key: 'teaching', label: 'Teaching', roles: [] },
+    { key: 'institution-settings', label: 'Institution Settings', roles: [] },
   ]
 
   const visibleModules = modules.filter(m => {
@@ -188,6 +190,7 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     if (m.key === 'student-portal' && r.includes('Student')) return true
     if (m.key === 'parent-portal' && r.includes('Parent')) return true
     if (m.key === 'teaching' && r.includes('Lecturer')) return true
+    if (m.key === 'institution-settings' && a) return true
     return false
   })
 
@@ -248,6 +251,7 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
           {activeModule === 'student-portal' && r.includes('Student') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Student</p><h2>Student Portal</h2></div></div><p className="empty">Student portal is available.</p></div>}
           {activeModule === 'parent-portal' && r.includes('Parent') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Parent</p><h2>Parent Portal</h2></div></div><p className="empty">Parent portal is available.</p></div>}
           {activeModule === 'teaching' && r.includes('Lecturer') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Teaching</p><h2>Teaching Workspace</h2></div></div><p className="empty">Teaching module is available.</p></div>}
+          {activeModule === 'institution-settings' && a && <InstitutionSettingsPage />}
         </div>
       </div>
     </main>
