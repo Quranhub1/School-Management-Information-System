@@ -5,7 +5,7 @@ import { ParentStudentNotifications } from './ParentStudentNotifications';
 
 type CommunicationTab = 'notices' | 'messaging' | 'notifications';
 
-export function CommunicationWorkspace({ canManage }: { canManage: boolean }) {
+export function CommunicationWorkspace({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<CommunicationTab>('notices');
 
   return (

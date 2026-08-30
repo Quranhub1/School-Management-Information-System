@@ -6,7 +6,7 @@ import { LibraryIntegrations } from './LibraryIntegrations';
 
 type LibraryTab = 'circulation' | 'librarians' | 'integrations';
 
-export function LibraryManagementWorkspace({ canManage }: { canManage: boolean }) {
+export function LibraryManagementWorkspace({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<LibraryTab>('circulation');
 
   return (

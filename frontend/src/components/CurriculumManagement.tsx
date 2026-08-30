@@ -28,7 +28,7 @@ const UVTAB_SHORT_COURSES = [
   { name: 'Certificate in Building Construction', award: 'Certificate', duration: 1, regulator: 'UVTAB', authority: 'UVTAB', family: 'Construction' as const },
 ]
 
-export function CurriculumManagement({ canManage }: { canManage: boolean }) {
+export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<Tab>('full')
   const [curricula, setCurricula] = useState<Curriculum[]>([])
   const [courses, setCourses] = useState<Course[]>([])

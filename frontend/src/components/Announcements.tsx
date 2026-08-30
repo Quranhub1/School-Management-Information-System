@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function Announcements({ canManage }: { canManage: boolean }) {
+export function Announcements({ canManage }: { canManage?: boolean }) {
   const [message, setMessage] = useState('');
   return (
     <section className="panel" aria-label="Announcements">

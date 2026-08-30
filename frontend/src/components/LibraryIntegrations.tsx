@@ -8,7 +8,7 @@ import {
   type LibraryIntegrationConfig,
 } from '../api/libraryIntegrations';
 
-export function LibraryIntegrations({ canManage }: { canManage: boolean }) {
+export function LibraryIntegrations({ canManage }: { canManage?: boolean }) {
   const [integrations, setIntegrations] = useState<LibraryIntegration[]>(defaultLibraryIntegrations);
   const [config, setConfig] = useState<LibraryIntegrationConfig>(getLibraryIntegrationConfig());
   const [message, setMessage] = useState('');

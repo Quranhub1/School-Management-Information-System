@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getPaymentReceipt, type FeeReceipt } from '../api/reports'
 
-interface ReceiptsProps { canManage: boolean }
+interface ReceiptsProps { canManage?: boolean }
 
-export function Receipts({ canManage }: ReceiptsProps) {
+export function Receipts({ canManage = false }: ReceiptsProps) {
   const [paymentId, setPaymentId] = useState('')
   const [receipt, setReceipt] = useState<FeeReceipt | null>(null)
   const [loading, setLoading] = useState(false)

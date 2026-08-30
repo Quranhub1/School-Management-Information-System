@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function TransportManagement({ canManage }: { canManage: boolean }) {
+export function TransportManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<'vehicles' | 'routes' | 'assignments' | 'fees' | 'reports'>('vehicles');
   return (
     <section className="panel" aria-label="Transport management">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function AssessmentConfiguration({ canManage }: { canManage: boolean }) {
+export function AssessmentConfiguration({ canManage }: { canManage?: boolean }) {
   return (
     <section className="panel" aria-label="Assessment configuration">
       <div className="panel-heading">

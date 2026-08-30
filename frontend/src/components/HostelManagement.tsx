@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function HostelManagement({ canManage }: { canManage: boolean }) {
+export function HostelManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<'houses' | 'rooms' | 'beds' | 'allocations' | 'reports'>('houses');
   return (
     <section className="panel" aria-label="Hostel management">

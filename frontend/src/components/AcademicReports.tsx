@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function AcademicReports({ canManage }: { canManage: boolean }) {
+export function AcademicReports({ canManage }: { canManage?: boolean }) {
   return (
     <section className="panel" aria-label="Academic reports">
       <div className="panel-heading">

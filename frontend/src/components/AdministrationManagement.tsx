@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createUser, getUsers, setUserActive, type CreateUserRequest, type UserSummary } from '../api/administration'
+import { type InstitutionSettings } from '../api/institutionSettings'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 
 const roles = ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'FinanceOfficer', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'TransportOfficer', 'Principal', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'AssistantPrincipal']
@@ -32,6 +33,11 @@ export function AdministrationManagement() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [tab, setTab] = useState<AdminTab>('users')
+  const [institution, setInstitution] = useState<InstitutionSettings | null>(null)
+
+  function handleInstitutionSaved(settings: InstitutionSettings) {
+    setInstitution(settings)
+  }
 
   async function load() {
     setLoading(true)
@@ -153,7 +159,7 @@ export function AdministrationManagement() {
       </>
     )}
 
-    {tab === 'settings' && <InstitutionSettingsPage />}
+    {tab === 'settings' && <InstitutionSettingsPage onSaved={handleInstitutionSaved} />}
   </section>
 }
 

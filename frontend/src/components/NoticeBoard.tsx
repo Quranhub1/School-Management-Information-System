@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createNotice, listNotices, type Notice } from '../api/notices';
 
-export function NoticeBoard({ canManage }: { canManage: boolean }) {
+export function NoticeBoard({ canManage }: { canManage?: boolean }) {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
