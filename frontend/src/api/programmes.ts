@@ -11,6 +11,7 @@ export interface Programme {
   durationUnit: string
   studyMode: string
   deliveryType: string
+  type: number
   regulator?: string | null
   approvalReference?: string | null
   approvalDate?: string | null
@@ -27,6 +28,7 @@ export interface CreateProgrammeRequest {
   durationUnit?: string
   studyMode?: string
   deliveryType?: string
+  type?: number
   regulator?: string
   approvalReference?: string
   approvalDate?: string

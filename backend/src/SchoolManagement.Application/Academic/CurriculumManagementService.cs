@@ -3,7 +3,7 @@ using SchoolManagement.Domain.Academic;
 
 namespace SchoolManagement.Application.Academic;
 
-public sealed record CreateCurriculumRequest(Guid ProgrammeId, string Version, string Title, int MinimumCredits, DateOnly EffectiveFrom, DateOnly? EffectiveTo);
+public sealed record CreateCurriculumRequest(Guid ProgrammeId, string Version, string Title, int MinimumCredits, DateOnly EffectiveFrom, DateOnly? EffectiveTo, ProgrammeType ProgrammeType = ProgrammeType.FullProgramme);
 public sealed record CreateCourseRequest(string Code, string Name, int CreditUnits, string? Description, string? CourseType);
 public sealed record AddCurriculumCourseRequest(Guid CourseId, int YearOfStudy, int SemesterNumber, bool IsCore);
 
@@ -26,7 +26,7 @@ public sealed class CurriculumManagementService(
         if (request.MinimumCredits < 0) return (false, "Minimum credits cannot be negative.", null);
         if (request.EffectiveTo is not null && request.EffectiveTo < request.EffectiveFrom) return (false, "Effective-to date cannot precede effective-from date.", null);
         if (await curricula.VersionExistsAsync(request.ProgrammeId, version, cancellationToken: ct)) return (false, $"Curriculum version '{version}' already exists for this programme.", null);
-        var curriculum = new Curriculum { ProgrammeId = request.ProgrammeId, Version = version, Title = title, MinimumCredits = request.MinimumCredits, EffectiveFrom = request.EffectiveFrom, EffectiveTo = request.EffectiveTo };
+        var curriculum = new Curriculum { ProgrammeId = request.ProgrammeId, Version = version, Title = title, MinimumCredits = request.MinimumCredits, EffectiveFrom = request.EffectiveFrom, EffectiveTo = request.EffectiveTo, ProgrammeType = request.ProgrammeType };
         await curricula.AddAsync(curriculum, ct); await curricula.SaveChangesAsync(ct); return (true, null, curriculum);
     }
 

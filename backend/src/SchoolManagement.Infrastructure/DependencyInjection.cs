@@ -58,6 +58,8 @@ public static class DependencyInjection
         services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
         services.AddScoped<IGateLogRepository, GateLogRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IInstitutionSettingsRepository, InstitutionSettingsRepository>();
+        services.AddScoped<InstitutionSettingsService>();
         services.AddScoped<AdmissionService>();
         services.AddScoped<AdmissionsWorkflowService>();
         services.AddScoped<FinanceService>();

@@ -15,6 +15,7 @@ export function RoleNavigation({ roles }: RoleNavigationProps) {
     hasAnyRole(roles, ATTENDANCE_ROLES) ? 'Attendance' : null,
     hasAnyRole(roles, TRANSPORT_MANAGEMENT_ROLES) ? 'Transport' : null,
     hasAnyRole(roles, INVENTORY_MANAGEMENT_ROLES) ? 'Inventory' : null,
+    hasAnyRole(roles, ['System Administrator', 'Registrar', 'Principal', 'ResidentDirector', 'Secretary', 'StoreOfficer']) ? 'Printers' : null,
     hasAnyRole(roles, HOSTEL_MANAGEMENT_ROLES) ? 'Hostel' : null,
     hasAnyRole(roles, REPORTS_ROLES) ? 'Reports' : null,
     hasAnyRole(roles, COMMUNICATION_ROLES) ? 'Communication' : null,

@@ -40,7 +40,9 @@ public sealed class AuthService(IUserRepository users)
     private static bool VerifyPassword(string password, string encoded)
     {
         var parts = encoded.Split('$');
-        if (parts.Length != 4 || parts[0] != "PBKDF2-SHA256" || !int.TryParse(parts[1], out var iterations)) return false;
+        if (parts.Length != 4 || !int.TryParse(parts[1], out var iterations)) return false;
+        var algorithm = parts[0].ToUpperInvariant();
+        if (algorithm != "PBKDF2-SHA256") return false;
         try
         {
             var salt = Convert.FromBase64String(parts[2]); var expected = Convert.FromBase64String(parts[3]);

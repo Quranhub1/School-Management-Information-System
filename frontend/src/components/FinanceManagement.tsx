@@ -2,23 +2,15 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createInvoice, getInvoices, recordPayment, type Invoice } from '../api/finance'
 
-type PaymentTab = 'new' | 'history' | 'receipts'
-
-const STATUS_COLORS: Record<string, string> = {
-  Paid: '#059669',
-  Pending: '#d97706',
-  Overdue: '#dc2626',
-  Partial: '#2563eb',
-  Draft: '#78716c',
-}
+type FinanceTab = 'fees' | 'accounts'
 
 export function FinanceManagement() {
+  const [tab, setTab] = useState<FinanceTab>('fees')
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
-  const [tab, setTab] = useState<PaymentTab>('new')
 
   const [studentId, setStudentId] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState('')
@@ -65,7 +57,6 @@ export function FinanceManagement() {
       setStudentId('')
       setInvoiceNumber('')
       setAmount('')
-      setTab('history')
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to create invoice.')
@@ -80,7 +71,6 @@ export function FinanceManagement() {
       setPaymentInvoice(null)
       setPaymentAmount('')
       setReceiptNumber('')
-      setTab('history')
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to record payment.')
@@ -95,167 +85,129 @@ export function FinanceManagement() {
     <section className="panel" aria-label="Finance management">
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">FINANCE</span>
-          <h2>Fees, Invoices & Payments</h2>
+          <p className="eyebrow">FINANCE</p>
+          <h2>Finance & Accounts</h2>
         </div>
         <button className="secondary-button" onClick={() => void load()}>Refresh</button>
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
 
-      <form className="student-form" onSubmit={handleSearch} style={{ marginBottom: 22 }}>
-        <h3>Student Lookup</h3>
-        <div className="form-row">
-          <input aria-label="Student ID or code" placeholder="Enter student ID or code" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-          <button type="submit">Search</button>
-          {selectedStudent && <button type="button" className="secondary-button" onClick={clearSearch}>Clear</button>}
-        </div>
-      </form>
+      <div className="library-workspace-tabs" role="tablist" aria-label="Finance sections" style={{ marginBottom: 18 }}>
+        <button role="tab" aria-selected={tab === 'fees'} className={tab === 'fees' ? 'active' : ''} onClick={() => setTab('fees')}>Student Fees</button>
+        <button role="tab" aria-selected={tab === 'accounts'} className={tab === 'accounts' ? 'active' : ''} onClick={() => setTab('accounts')}>Accounts & Salaries</button>
+      </div>
 
-      {selectedStudent && (
+      {tab === 'fees' && (
         <>
-          <div className="summary-grid" style={{ marginBottom: 22 }}>
-            <div className="summary-card">
-              <span>Total Billed</span>
-              <strong>UGX {totalBilled.toLocaleString()}</strong>
+          <form className="student-form" onSubmit={handleSearch} style={{ marginBottom: 22 }}>
+            <h3>Student Lookup</h3>
+            <div className="form-row">
+              <input aria-label="Student ID or code" placeholder="Enter student ID or code" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+              <button type="submit">Search</button>
+              {selectedStudent && <button type="button" className="secondary-button" onClick={clearSearch}>Clear</button>}
             </div>
-            <div className="summary-card">
-              <span>Total Paid</span>
-              <strong style={{ color: '#059669' }}>UGX {totalPaid.toLocaleString()}</strong>
-            </div>
-            <div className="summary-card">
-              <span>Outstanding Balance</span>
-              <strong style={{ color: totalBalance > 0 ? '#dc2626' : '#059669' }}>UGX {totalBalance.toLocaleString()}</strong>
-            </div>
-            <div className="summary-card">
-              <span>Invoices</span>
-              <strong>{invoices.length}</strong>
-            </div>
-          </div>
+          </form>
 
-          <div className="library-workspace-tabs" role="tablist" aria-label="Finance sections" style={{ marginBottom: 18 }}>
-            <button role="tab" aria-selected={tab === 'new'} className={tab === 'new' ? 'active' : ''} onClick={() => setTab('new')}>New Invoice</button>
-            <button role="tab" aria-selected={tab === 'history'} className={tab === 'history' ? 'active' : ''} onClick={() => setTab('history')}>Payment History</button>
-            <button role="tab" aria-selected={tab === 'receipts'} className={tab === 'receipts' ? 'active' : ''} onClick={() => setTab('receipts')}>Receipts</button>
-          </div>
-
-          {tab === 'new' && (
-            <form className="student-form" onSubmit={submitInvoice}>
-              <h3>Create Invoice</h3>
-              <div className="form-row">
-                <label>Student ID<input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="Student ID" required /></label>
-                <label>Invoice Number<input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} placeholder="INV-001" required /></label>
-                <label>Amount (UGX)<input type="number" min="1" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" required /></label>
+          {selectedStudent && (
+            <>
+              <div className="summary-grid" style={{ marginBottom: 22 }}>
+                <div className="summary-card">
+                  <span>Total Billed</span>
+                  <strong>UGX {totalBilled.toLocaleString()}</strong>
+                </div>
+                <div className="summary-card">
+                  <span>Total Paid</span>
+                  <strong style={{ color: '#059669' }}>UGX {totalPaid.toLocaleString()}</strong>
+                </div>
+                <div className="summary-card">
+                  <span>Outstanding Balance</span>
+                  <strong style={{ color: totalBalance > 0 ? '#dc2626' : '#059669' }}>UGX {totalBalance.toLocaleString()}</strong>
+                </div>
+                <div className="summary-card">
+                  <span>Invoices</span>
+                  <strong>{invoices.length}</strong>
+                </div>
               </div>
-              <button type="submit">Create Invoice</button>
-            </form>
+
+              <form className="student-form" onSubmit={submitInvoice}>
+                <h3>Create Invoice</h3>
+                <div className="form-row">
+                  <label>Student ID<input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="Student ID" required /></label>
+                  <label>Invoice Number<input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} placeholder="INV-001" required /></label>
+                  <label>Amount (UGX)<input type="number" min="1" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" required /></label>
+                </div>
+                <button type="submit">Create Invoice</button>
+              </form>
+
+              <div className="table-wrap">
+                {loading ? (
+                  <p className="empty">Loading payment history…</p>
+                ) : invoices.length === 0 ? (
+                  <p className="empty">No invoices found for this student.</p>
+                ) : (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Invoice</th>
+                        <th>Amount</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoices.map(invoice => (
+                        <tr key={invoice.id}>
+                          <td><strong>{invoice.invoiceNumber}</strong></td>
+                          <td>{invoice.currency} {invoice.amount.toLocaleString()}</td>
+                          <td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
+                          <td style={{ color: invoice.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>
+                            {invoice.currency} {invoice.balance.toLocaleString()}
+                          </td>
+                          <td>
+                            <span style={{
+                              display: 'inline-flex',
+                              padding: '4px 10px',
+                              borderRadius: '999px',
+                              background: invoice.status === 'Paid' ? '#d1fae5' : invoice.status === 'Pending' ? '#fef3c7' : invoice.status === 'Overdue' ? '#fee2e2' : '#e5e7eb',
+                              color: invoice.status === 'Paid' ? '#059669' : invoice.status === 'Pending' ? '#92400e' : invoice.status === 'Overdue' ? '#dc2626' : '#374151',
+                              fontSize: '.72rem',
+                              fontWeight: 800,
+                            }}>
+                              {invoice.status}
+                            </span>
+                          </td>
+                          <td>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</td>
+                          <td>
+                            {invoice.balance > 0 && (
+                              <button className="secondary-button" onClick={() => setPaymentInvoice(invoice)}>
+                                Record Payment
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </>
           )}
 
-          {tab === 'history' && (
-            <div className="table-wrap">
-              {loading ? (
-                <p className="empty">Loading payment history…</p>
-              ) : invoices.length === 0 ? (
-                <p className="empty">No invoices found for this student.</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Invoice</th>
-                      <th>Amount</th>
-                      <th>Paid</th>
-                      <th>Balance</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoices.map(invoice => (
-                      <tr key={invoice.id}>
-                        <td><strong>{invoice.invoiceNumber}</strong></td>
-                        <td>{invoice.currency} {invoice.amount.toLocaleString()}</td>
-                        <td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
-                        <td style={{ color: invoice.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>
-                          {invoice.currency} {invoice.balance.toLocaleString()}
-                        </td>
-                        <td>
-                          <span style={{
-                            display: 'inline-flex',
-                            padding: '4px 10px',
-                            borderRadius: '999px',
-                            background: STATUS_COLORS[invoice.status] ?? '#78716c',
-                            color: 'white',
-                            fontSize: '.72rem',
-                            fontWeight: 800,
-                          }}>
-                            {invoice.status}
-                          </span>
-                        </td>
-                        <td>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</td>
-                        <td>
-                          {invoice.balance > 0 && (
-                            <button className="secondary-button" onClick={() => setPaymentInvoice(invoice)}>
-                              Record Payment
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {tab === 'receipts' && (
-            <div className="table-wrap">
-              {loading ? (
-                <p className="empty">Loading receipts…</p>
-              ) : invoices.filter(inv => inv.paidAmount > 0).length === 0 ? (
-                <p className="empty">No receipts found for this student.</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Invoice</th>
-                      <th>Amount Paid</th>
-                      <th>Currency</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoices.filter(inv => inv.paidAmount > 0).map(invoice => (
-                      <tr key={invoice.id}>
-                        <td><strong>{invoice.invoiceNumber}</strong></td>
-                        <td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
-                        <td>{invoice.currency}</td>
-                        <td>
-                          <span style={{
-                            display: 'inline-flex',
-                            padding: '4px 10px',
-                            borderRadius: '999px',
-                            background: STATUS_COLORS[invoice.status] ?? '#78716c',
-                            color: 'white',
-                            fontSize: '.72rem',
-                            fontWeight: 800,
-                          }}>
-                            {invoice.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+          {!selectedStudent && (
+            <div className="empty">
+              <p>Search for a student by ID or code to view their fee balance, invoices, and payment history.</p>
             </div>
           )}
         </>
       )}
 
-      {!selectedStudent && (
+      {tab === 'accounts' && (
         <div className="empty">
-          <p>Search for a student by ID or code to view their fee balance, invoices, and payment history.</p>
+          <p>Chart of accounts, journal entries, bills, payroll, and general ledger. Full accounts management coming soon.</p>
         </div>
       )}
 

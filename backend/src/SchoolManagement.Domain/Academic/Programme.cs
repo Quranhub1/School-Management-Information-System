@@ -1,5 +1,11 @@
 namespace SchoolManagement.Domain.Academic;
 
+public enum ProgrammeType
+{
+    FullProgramme = 0,
+    ShortCourse = 1
+}
+
 public sealed class Programme
 {
     public Guid Id { get; init; } = Guid.NewGuid();
@@ -12,6 +18,7 @@ public sealed class Programme
     public string DurationUnit { get; init; } = "Years";
     public string StudyMode { get; init; } = "Full-time";
     public string DeliveryType { get; init; } = "Academic";
+    public ProgrammeType Type { get; set; } = ProgrammeType.FullProgramme;
     public string? Regulator { get; init; }
     public string? ApprovalReference { get; init; }
     public DateOnly? ApprovalDate { get; init; }

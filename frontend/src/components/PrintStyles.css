@@ -2,8 +2,44 @@
 
 @media print {
   body * { visibility: hidden; }
-  #report-card-print, #report-card-print *, #receipt-print, #receipt-print *, #certificate-print, #certificate-print * { visibility: visible; }
-  #report-card-print, #receipt-print, #certificate-print { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; box-shadow: none; }
+  #report-card-print, #report-card-print *, #receipt-print, #receipt-print *, #certificate-print, #certificate-print *, #print-queue-section, #print-queue-section * { visibility: visible; }
+  #report-card-print, #receipt-print, #certificate-print, #print-queue-section { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; box-shadow: none; }
   .no-print { display: none !important; }
   @page { size: A4; margin: 15mm; }
 }
+
+/* Printer management */
+.printer-list { display: flex; flex-direction: column; gap: 10px; }
+.printer-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.printer-card.online { border-left: 4px solid #22c55e; }
+.printer-card.offline { border-left: 4px solid #f59e0b; }
+.printer-card.error { border-left: 4px solid #ef4444; }
+.printer-actions { display: flex; gap: 8px; }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 8px; }
+.status-dot.online { background: #22c55e; }
+.status-dot.offline { background: #f59e0b; }
+.status-dot.error { background: #ef4444; }
+.status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; text-transform: capitalize; }
+.status-badge.queued { background: #e0f2fe; color: #0369a1; }
+.status-badge.printing { background: #fef3c7; color: #92400e; }
+.status-badge.completed { background: #dcfce7; color: #166534; }
+.status-badge.failed { background: #fee2e2; color: #991b1b; }
+
+/* Inventory laboratories */
+.laboratory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }
+.laboratory-card { border: 1px solid var(--border); border-radius: 8px; padding: 16px; cursor: pointer; transition: box-shadow 0.2s; }
+.laboratory-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.laboratory-card.selected { border: 2px solid var(--accent); }
+.laboratory-card h5 { margin: 0 0 8px; }
+.laboratory-card p { margin: 4px 0; font-size: 13px; color: var(--muted); }
+.lab-placeholder-form { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.short-course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin: 16px 0; }
+.short-course-card { border: 1px solid var(--border); border-radius: 8px; padding: 16px; cursor: pointer; transition: background 0.2s; }
+.short-course-card:hover { background: var(--surface-hover); }
+.short-course-card h4 { margin: 0 0 8px; }
+.short-course-card p { margin: 4px 0; font-size: 13px; color: var(--muted); }
+.short-course-card .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--accent); color: #fff; margin-top: 8px; }
+.section-description { color: var(--muted); font-size: 14px; margin-top: -8px; margin-bottom: 12px; }
+.short-course-form-panel { margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--border); }
+.print-queue-section { margin-top: 24px; }
+
