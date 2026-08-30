@@ -13,10 +13,10 @@ public sealed record CreateProgrammeRequest(
     string? DurationUnit,
     string? StudyMode,
     string? DeliveryType,
-    ProgrammeType Type = ProgrammeType.FullProgramme,
     string? Regulator,
     string? ApprovalReference,
-    DateOnly? ApprovalDate);
+    DateOnly? ApprovalDate,
+    ProgrammeType Type = ProgrammeType.FullProgramme);
 
 public sealed class ProgrammeService(IProgrammeRepository programmes)
 {
