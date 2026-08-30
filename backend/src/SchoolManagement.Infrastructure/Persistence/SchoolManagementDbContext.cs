@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Academic;
+using SchoolManagement.Domain.Administration;
 using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Assessment;
 using SchoolManagement.Domain.Attendance;
@@ -27,6 +28,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<InstitutionSettings> InstitutionSettings => Set<InstitutionSettings>();
     public DbSet<Applicant> Applicants => Set<Applicant>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<StudentGuardian> StudentGuardians => Set<StudentGuardian>();
@@ -263,6 +265,24 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.Reason).HasMaxLength(500).IsRequired();
             e.Property(x => x.Status).HasMaxLength(20).IsRequired();
             e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<InstitutionSettings>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.InstitutionName).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Abbreviation).HasMaxLength(20);
+            e.Property(x => x.Motto).HasMaxLength(200);
+            e.Property(x => x.Address).HasMaxLength(500);
+            e.Property(x => x.Phone).HasMaxLength(50);
+            e.Property(x => x.Email).HasMaxLength(200);
+            e.Property(x => x.Website).HasMaxLength(200);
+            e.Property(x => x.PostalAddress).HasMaxLength(200);
+            e.Property(x => x.Country).HasMaxLength(100);
+            e.Property(x => x.InstitutionType).HasMaxLength(100);
+            e.Property(x => x.LogoPath).HasMaxLength(500);
+            e.Property(x => x.PrimaryColor).HasMaxLength(20);
+            e.Property(x => x.AccentColor).HasMaxLength(20);
         });
     }
 }

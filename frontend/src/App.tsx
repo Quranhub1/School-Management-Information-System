@@ -1,3 +1,142 @@
-import {useState} from 'react';import type {FormEvent} from 'react';import {getSession,login,logout} from './api/auth';import {canManageAcademics,canManageAdministration,canManageAdmissions,canManageExaminations,canManageFinance,canManageStudents,canManageTimetable,canManageStaff,canReadStaff,canReadLibrary,canManageLibrary,canManageCommunication,canManageReporting} from './auth/roleGuards';import {RoleNavigation} from './components/RoleNavigation';import {AcademicManagement} from './components/AcademicManagement';import {CurriculumManagement} from './components/CurriculumManagement';import {AdministrationManagement} from './components/AdministrationManagement';import {AdmissionsManagement} from './components/AdmissionsManagement';import {ExaminationResults} from './components/ExaminationResults';import {StudentManagement} from './components/StudentManagement';import {FinanceManagement} from './components/FinanceManagement';import {TimetableManagement} from './components/TimetableManagement';import {StaffManagement} from './components/StaffManagement';import {LibraryManagementWorkspace} from './components/LibraryManagementWorkspace';import {Announcements} from './components/Announcements';import {ReportCards} from './components/ReportCards';import {Receipts} from './components/Receipts';import {CertificateManagement} from './components/CertificateManagement';import './components/PrintStyles.css';
-function LoginScreen({onLogin}:{onLogin:()=>void}){const[username,setUsername]=useState(''),[password,setPassword]=useState(''),[loading,setLoading]=useState(false),[error,setError]=useState('');async function submit(e:FormEvent){e.preventDefault();setLoading(true);setError('');try{await login(username.trim(),password);onLogin()}catch(e){setError(e instanceof Error?e.message:'Unable to sign in.')}finally{setLoading(false)}}return <main className="auth-shell"><section className="auth-card"><p className="eyebrow">SMIS · Secure access</p><h1>Sign in to the School Management Information System</h1><form onSubmit={submit} className="auth-form"><label>Username</label><input value={username} onChange={e=>setUsername(e.target.value)}/><label>Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)}/>{error&&<div className="error" role="alert">{error}</div>}<button type="submit" disabled={loading}>{loading?'Signing in…':'Sign in'}</button></form></section></main>}
-function AuthenticatedWorkspace({onLogout}:{onLogout:()=>void}){const s=getSession(),r=s?.roles??[];const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),ex=canManageExaminations(r),st=canManageStudents(r),fi=canManageFinance(r),ti=canManageTimetable(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r);function signOut(){logout();onLogout()}return <main className="app-shell"><header className="topbar"><div><span className="eyebrow">SMIS</span><h1>Institutional Services</h1></div><button className="secondary-button" onClick={signOut}>Sign out</button></header><RoleNavigation roles={r}/>{a&&<AdministrationManagement/>}{ad&&<AdmissionsManagement/>}{st&&<StudentManagement canManage/>}{ac&&<AcademicManagement canManage/>}{ac&&<CurriculumManagement canManage/>}{ex&&<ExaminationResults/>}{fi&&<FinanceManagement/>}{ti&&<TimetableManagement/>}{sr&&<StaffManagement canManage={sm}/>}{lr&&<LibraryManagementWorkspace canManage={lm}/>}{cm&&<Announcements canManage={cm}/>}{rp&&<ReportCards canManage/>}{rp&&<Receipts canManage/>}{rp&&<CertificateManagement canManage/>}</main>}function App(){const[x,setX]=useState(()=>Boolean(getSession()));return x?<AuthenticatedWorkspace onLogout={()=>setX(false)}/>:<LoginScreen onLogin={()=>setX(true)}/>}export default App
+import { useState, useEffect } from 'react'
+import type { FormEvent } from 'react'
+import { getSession, login, logout } from './api/auth'
+import {
+  canManageAcademics,
+  canManageAdministration,
+  canManageAdmissions,
+  canManageExaminations,
+  canManageFinance,
+  canManageStudents,
+  canManageTimetable,
+  canManageStaff,
+  canReadStaff,
+  canReadLibrary,
+  canManageLibrary,
+  canManageCommunication,
+  canManageReporting,
+} from './auth/roleGuards'
+import { RoleNavigation } from './components/RoleNavigation'
+import { AcademicManagement } from './components/AcademicManagement'
+import { CurriculumManagement } from './components/CurriculumManagement'
+import { AdministrationManagement } from './components/AdministrationManagement'
+import { AdmissionsManagement } from './components/AdmissionsManagement'
+import { ExaminationResults } from './components/ExaminationResults'
+import { StudentManagement } from './components/StudentManagement'
+import { FinanceManagement } from './components/FinanceManagement'
+import { TimetableManagement } from './components/TimetableManagement'
+import { StaffManagement } from './components/StaffManagement'
+import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'
+import { Announcements } from './components/Announcements'
+import { ReportCards } from './components/ReportCards'
+import { Receipts } from './components/Receipts'
+import { CertificateManagement } from './components/CertificateManagement'
+import { InstitutionSettingsPage } from './components/InstitutionSettingsPage'
+import { getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
+import './components/PrintStyles.css'
+
+function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      await login(username.trim(), password)
+      onLogin()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to sign in.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <main className="auth-shell">
+      <section className="auth-card">
+        <p className="eyebrow">SMIS · Secure access</p>
+        <h1>Sign in to the School Management Information System</h1>
+        <form onSubmit={submit} className="auth-form">
+          <label>Username</label>
+          <input value={username} onChange={e => setUsername(e.target.value)} />
+          <label>Password</label>
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          {error && <div className="error" role="alert">{error}</div>}
+          <button type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
+        </form>
+      </section>
+    </main>
+  )
+}
+
+function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
+  const [institution, setInstitution] = useState<InstitutionSettings | null>(null)
+  const s = getSession()
+  const r = s?.roles ?? []
+  const a = canManageAdministration(r)
+  const ad = canManageAdmissions(r)
+  const ac = canManageAcademics(r)
+  const ex = canManageExaminations(r)
+  const st = canManageStudents(r)
+  const fi = canManageFinance(r)
+  const ti = canManageTimetable(r)
+  const sr = canReadStaff(r)
+  const sm = canManageStaff(r)
+  const lr = canReadLibrary(r)
+  const lm = canManageLibrary(r)
+  const cm = canManageCommunication(r)
+  const rp = canManageReporting(r)
+
+  function signOut() {
+    logout()
+    onLogout()
+  }
+
+  useEffect(() => {
+    void getActiveInstitutionSettings()
+      .then(setInstitution)
+      .catch(() => setInstitution(null))
+  }, [])
+
+  const eyebrow = institution?.abbreviation?.trim() || 'SMIS'
+  const title = institution?.institutionName?.trim() || 'Institutional Services'
+
+  return (
+    <main className="app-shell">
+      <header className="topbar">
+        <div>
+          <span className="eyebrow">{eyebrow}</span>
+          <h1>{title}</h1>
+        </div>
+        <button className="secondary-button" onClick={signOut}>Sign out</button>
+      </header>
+      <RoleNavigation roles={r} />
+      {a && <AdministrationManagement />}
+      {a && <InstitutionSettingsPage />}
+      {ad && <AdmissionsManagement />}
+      {st && <StudentManagement canManage />}
+      {ac && <AcademicManagement canManage />}
+      {ac && <CurriculumManagement canManage />}
+      {ex && <ExaminationResults />}
+      {fi && <FinanceManagement />}
+      {ti && <TimetableManagement />}
+      {sr && <StaffManagement canManage={sm} />}
+      {lr && <LibraryManagementWorkspace canManage={lm} />}
+      {cm && <Announcements canManage={cm} />}
+      {rp && <ReportCards canManage />}
+      {rp && <Receipts canManage />}
+      {rp && <CertificateManagement canManage />}
+    </main>
+  )
+}
+
+function App() {
+  const [x, setX] = useState(() => Boolean(getSession()))
+  return x ? <AuthenticatedWorkspace onLogout={() => setX(false)} /> : <LoginScreen onLogin={() => setX(true)} />
+}
+
+export default App
