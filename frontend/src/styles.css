@@ -165,10 +165,10 @@ td strong { display: block; }
 .danger-number { color: #dc2626; }
 .library-grid { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; align-items: start; }
 .library-main-card, .library-side-card, .library-catalogue, .library-add-card { border: 1px solid #e7e5e4; border-radius: 16px; background: white; box-shadow: 0 8px 25px rgba(28, 25, 23, .045); overflow: hidden; }
-.library-tabs { display: flex; gap: 22px; padding: 0 20px; border-bottom: 1px solid #f5f5f4; }
-.library-tabs button { position: relative; border: 0; padding: 16px 2px 13px; background: transparent; color: #78716c; font-weight: 750; cursor: pointer; transition: color 0.2s; }
-.library-tabs button.active { color: #f97316; }
-.library-tabs button.active::after { content: ''; position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: #f97316; }
+.library-tabs, .library-workspace-tabs { display: flex; gap: 22px; padding: 0 20px; border-bottom: 1px solid #f5f5f4; }
+.library-tabs button, .library-workspace-tabs button { position: relative; border: 0; padding: 16px 2px 13px; background: transparent; color: #78716c; font-weight: 750; cursor: pointer; transition: color 0.2s; }
+.library-tabs button.active, .library-workspace-tabs button.active { color: #f97316; }
+.library-tabs button.active::after, .library-workspace-tabs button.active::after { content: ''; position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: #f97316; }
 .library-tabs span { display: inline-flex; min-width: 21px; justify-content: center; margin-left: 4px; padding: 2px 5px; border-radius: 999px; background: #fee2e2; color: #dc2626; font-size: .68rem; }
 .library-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 18px 20px; }
 .library-toolbar h3, .library-side-card h3, .library-add-card h3 { margin: 0; font-size: 1rem; color: #1c1917; }
@@ -247,3 +247,10 @@ td strong { display: block; }
   .library-search { min-width: 0; }
   .library-book-form { grid-template-columns: 1fr; }
 }
+
+.settings-grid { display: grid; gap: 10px; }
+.logo-preview { margin-top: 12px; }
+.gallery-section h4 { margin: 0 0 8px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 14px; }
+.gallery-placeholder { border: 1px dashed #d6d3d1; border-radius: 12px; padding: 14px; text-align: center; color: #78716c; }
+.gallery-img { display: grid; place-items: center; height: 90px; border-radius: 8px; background: #f5f5f4; font-weight: 800; color: #a8a29e; }
