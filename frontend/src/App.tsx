@@ -18,6 +18,7 @@ import {
   canManageInventory,
   canManagePrinters,
 } from './auth/roleGuards'
+import { RoleNavigation } from './components/RoleNavigation'
 import { AcademicManagement } from './components/AcademicManagement'
 import { CurriculumManagement } from './components/CurriculumManagement'
 import { AdministrationManagement } from './components/AdministrationManagement'
@@ -35,7 +36,7 @@ import { CertificateManagement } from './components/CertificateManagement'
 import { InventoryManagement } from './components/InventoryManagement'
 import { PrinterManagement } from './components/PrinterManagement'
 import { InstitutionSettingsPage } from './components/InstitutionSettingsPage'
-import { getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
+import { getPublicInstitutionSettings, getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
 import './components/PrintStyles.css'
 
 type ModuleKey =
@@ -66,11 +67,34 @@ type ModuleKey =
   | 'teaching'
   | 'institution-settings'
 
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
+const DEFAULT_INSTITUTION: InstitutionSettings = {
+  id: '',
+  institutionName: 'Your Institution Name',
+  abbreviation: '',
+  motto: '',
+  address: '',
+  phone: '',
+  email: '',
+  website: '',
+  postalAddress: '',
+  country: '',
+  institutionType: '',
+  logoPath: null,
+  primaryColor: null,
+  accentColor: null,
+  isActive: false,
+  updatedAt: '',
+}
+
+function LoginScreen({ onLogin, institution }: { onLogin: () => void; institution: InstitutionSettings }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const brandName = institution.institutionName?.trim() || 'Your Institution Name'
+  const brandAbbr = institution.abbreviation?.trim()
+  const eyebrow = brandAbbr ? `${brandAbbr} · Secure access` : 'Secure access'
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -89,13 +113,19 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <p className="eyebrow">Secure access</p>
-        <h1>Sign in to the Institution Management System</h1>
+        {institution.logoPath && (
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <img src={institution.logoPath} alt={brandName} style={{ maxHeight: 80, maxWidth: 160, objectFit: 'contain' }} onError={e => (e.target as HTMLImageElement).style.display = 'none'} />
+          </div>
+        )}
+        <p className="eyebrow">{eyebrow}</p>
+        <h1>Sign in to {brandName}</h1>
+        <p className="auth-copy">School Management Information System</p>
         <form onSubmit={submit} className="auth-form">
           <label>Username</label>
-          <input value={username} onChange={e => setUsername(e.target.value)} />
+          <input value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" />
           <label>Password</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
           {error && <div className="error" role="alert">{error}</div>}
           <button type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
         </form>
@@ -104,12 +134,10 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   )
 }
 
-function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
+function AuthenticatedWorkspace({ onLogout, institution }: { onLogout: () => void; institution: InstitutionSettings }) {
+  const [settings, setSettings] = useState<InstitutionSettings>(institution)
   const s = getSession()
   const r = s?.roles ?? []
-  const [activeModule, setActiveModule] = useState<ModuleKey>('administration')
-  const [institution, setInstitution] = useState<InstitutionSettings | null>(null)
-
   const a = canManageAdministration(r)
   const ad = canManageAdmissions(r)
   const ac = canManageAcademics(r)
@@ -126,141 +154,75 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
   const inv = canManageInventory(r)
   const pr = canManagePrinters(r)
 
-  useEffect(() => {
-    void getActiveInstitutionSettings().then(setInstitution).catch(() => setInstitution(null))
-  }, [])
-
   function signOut() {
     logout()
     onLogout()
   }
 
-  const modules: { key: ModuleKey; label: string; roles: string[] }[] = [
-    { key: 'administration', label: 'Administration', roles: [] },
-    { key: 'admissions', label: 'Admissions', roles: [] },
-    { key: 'students', label: 'Student Management', roles: [] },
-    { key: 'academics', label: 'Academic Management', roles: [] },
-    { key: 'curriculum', label: 'Curriculum', roles: [] },
-    { key: 'examinations', label: 'Examinations', roles: [] },
-    { key: 'finance', label: 'Finance', roles: [] },
-    { key: 'timetable', label: 'Timetable', roles: [] },
-    { key: 'staff', label: 'Staff', roles: [] },
-    { key: 'library', label: 'Library', roles: [] },
-    { key: 'communication', label: 'Communication', roles: [] },
-    { key: 'inventory', label: 'Inventory', roles: [] },
-    { key: 'printers', label: 'Printers', roles: [] },
-    { key: 'reports', label: 'Reports', roles: [] },
-    { key: 'alumni', label: 'Alumni', roles: [] },
-    { key: 'calendar', label: 'Calendar', roles: [] },
-    { key: 'gate', label: 'Gate Log', roles: [] },
-    { key: 'audit', label: 'Audit Log', roles: [] },
-    { key: 'payroll', label: 'Payroll', roles: [] },
-    { key: 'hostel', label: 'Hostel', roles: [] },
-    { key: 'transport', label: 'Transport', roles: [] },
-    { key: 'attendance', label: 'Attendance', roles: [] },
-    { key: 'student-portal', label: 'Student Portal', roles: [] },
-    { key: 'parent-portal', label: 'Parent Portal', roles: [] },
-    { key: 'teaching', label: 'Teaching', roles: [] },
-    { key: 'institution-settings', label: 'Institution Settings', roles: [] },
-  ]
+  useEffect(() => {
+    void getActiveInstitutionSettings()
+      .then(setSettings)
+      .catch(() => setSettings(settings))
+  }, [])
 
-  const visibleModules = modules.filter(m => {
-    if (m.key === 'administration' && a) return true
-    if (m.key === 'admissions' && ad) return true
-    if (m.key === 'students' && st) return true
-    if (m.key === 'academics' && ac) return true
-    if (m.key === 'curriculum' && ac) return true
-    if (m.key === 'examinations' && ex) return true
-    if (m.key === 'finance' && fi) return true
-    if (m.key === 'timetable' && ti) return true
-    if (m.key === 'staff' && sr) return true
-    if (m.key === 'library' && lr) return true
-    if (m.key === 'communication' && cm) return true
-    if (m.key === 'inventory' && inv) return true
-    if (m.key === 'printers' && pr) return true
-    if (m.key === 'reports' && rp) return true
-    if (m.key === 'alumni' && st) return true
-    if (m.key === 'calendar' && ac) return true
-    if (m.key === 'gate' && sr) return true
-    if (m.key === 'audit' && a) return true
-    if (m.key === 'payroll' && r.includes('SystemAdministrator')) return true
-    if (m.key === 'hostel' && r.includes('SystemAdministrator')) return true
-    if (m.key === 'transport' && r.includes('SystemAdministrator')) return true
-    if (m.key === 'attendance' && sr) return true
-    if (m.key === 'student-portal' && r.includes('Student')) return true
-    if (m.key === 'parent-portal' && r.includes('Parent')) return true
-    if (m.key === 'teaching' && r.includes('Lecturer')) return true
-    if (m.key === 'institution-settings' && a) return true
-    return false
-  })
-
-  const institutionName = institution?.institutionName || institution?.abbreviation || 'SMIS'
+  const eyebrow = settings.abbreviation?.trim() || institution.abbreviation?.trim() || 'Management System'
+  const title = settings.institutionName?.trim() || institution.institutionName?.trim() || 'Institutional Services'
 
   return (
     <main className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <p className="eyebrow">Institution</p>
-          <h1>{institutionName}</h1>
-          {institution?.motto && <p style={{ fontSize: '.72rem', color: '#94a3b8', marginTop: 4 }}>{institution.motto}</p>}
+      <header className="topbar">
+        <div>
+          <span className="eyebrow">{eyebrow}</span>
+          <h1>{title}</h1>
         </div>
-        <nav className="sidebar-nav">
-          {visibleModules.map(m => (
-            <button key={m.key} className={`sidebar-item ${activeModule === m.key ? 'active' : ''}`} onClick={() => setActiveModule(m.key)}>
-              {m.label}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <p>Developed by Joes Technologies</p>
-        </div>
-      </aside>
-      <div className="main-content">
-        <header className="topbar">
-          <div>
-            <span className="eyebrow">{institutionName}</span>
-            <h1>Institutional Services</h1>
-          </div>
-          <button className="secondary-button" onClick={signOut}>Sign out</button>
-        </header>
-        <div className="content">
-          {activeModule === 'administration' && a && <AdministrationManagement />}
-          {activeModule === 'admissions' && ad && <AdmissionsManagement />}
-          {activeModule === 'students' && st && <StudentManagement canManage />}
-          {activeModule === 'academics' && ac && <AcademicManagement canManage />}
-          {activeModule === 'curriculum' && ac && <CurriculumManagement canManage />}
-          {activeModule === 'examinations' && ex && <ExaminationResults />}
-          {activeModule === 'finance' && fi && <FinanceManagement />}
-          {activeModule === 'timetable' && ti && <TimetableManagement />}
-          {activeModule === 'staff' && sr && <StaffManagement canManage={sm} />}
-          {activeModule === 'library' && lr && <LibraryManagementWorkspace canManage={lm} />}
-          {activeModule === 'communication' && cm && <Announcements canManage={cm} />}
-          {activeModule === 'inventory' && inv && <InventoryManagement canManage={inv} />}
-          {activeModule === 'printers' && pr && <PrinterManagement />}
-          {activeModule === 'reports' && rp && <ReportCards canManage />}
-          {activeModule === 'reports' && rp && <Receipts canManage />}
-          {activeModule === 'reports' && rp && <CertificateManagement canManage />}
-          {activeModule === 'alumni' && st && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Alumni</p><h2>Alumni Management</h2></div></div><p className="empty">Alumni module is available.</p></div>}
-          {activeModule === 'calendar' && ac && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Calendar</p><h2>Academic Calendar</h2></div></div><p className="empty">Calendar module is available.</p></div>}
-          {activeModule === 'gate' && sr && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Access Control</p><h2>Gate Log</h2></div></div><p className="empty">Gate log module is available.</p></div>}
-          {activeModule === 'audit' && a && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">System</p><h2>Audit Log</h2></div></div><p className="empty">Audit log module is available.</p></div>}
-          {activeModule === 'payroll' && r.includes('SystemAdministrator') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">HR</p><h2>Payroll Management</h2></div></div><p className="empty">Payroll module is available.</p></div>}
-          {activeModule === 'hostel' && r.includes('SystemAdministrator') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Hostel</p><h2>Hostel Management</h2></div></div><p className="empty">Hostel module is available.</p></div>}
-          {activeModule === 'transport' && r.includes('SystemAdministrator') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Transport</p><h2>Transport Management</h2></div></div><p className="empty">Transport module is available.</p></div>}
-          {activeModule === 'attendance' && sr && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Attendance</p><h2>Attendance Management</h2></div></div><p className="empty">Attendance module is available.</p></div>}
-          {activeModule === 'student-portal' && r.includes('Student') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Student</p><h2>Student Portal</h2></div></div><p className="empty">Student portal is available.</p></div>}
-          {activeModule === 'parent-portal' && r.includes('Parent') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Parent</p><h2>Parent Portal</h2></div></div><p className="empty">Parent portal is available.</p></div>}
-          {activeModule === 'teaching' && r.includes('Lecturer') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Teaching</p><h2>Teaching Workspace</h2></div></div><p className="empty">Teaching module is available.</p></div>}
-          {activeModule === 'institution-settings' && a && <InstitutionSettingsPage />}
-        </div>
-      </div>
+        <button className="secondary-button" onClick={signOut}>Sign out</button>
+      </header>
+      <RoleNavigation roles={r} />
+      {a && <AdministrationManagement />}
+      {a && <InstitutionSettingsPage onSaved={setSettings} />}
+      {ad && <AdmissionsManagement />}
+      {st && <StudentManagement canManage />}
+      {ac && <AcademicManagement canManage />}
+      {ac && <CurriculumManagement canManage />}
+      {ex && <ExaminationResults />}
+      {fi && <FinanceManagement />}
+      {ti && <TimetableManagement />}
+      {sr && <StaffManagement canManage={sm} />}
+      {lr && <LibraryManagementWorkspace canManage={lm} />}
+      {cm && <Announcements canManage={cm} />}
+      {rp && <ReportCards canManage />}
+      {rp && <Receipts canManage />}
+      {rp && <CertificateManagement canManage />}
+      {inv && <InventoryManagement />}
+      {pr && <PrinterManagement />}
     </main>
   )
 }
 
 function App() {
-  const [x, setX] = useState(() => Boolean(getSession()))
-  return x ? <AuthenticatedWorkspace onLogout={() => setX(false)} /> : <LoginScreen onLogin={() => setX(true)} />
+  const [authed, setAuthed] = useState(() => Boolean(getSession()))
+  const [institution, setInstitution] = useState<InstitutionSettings>(DEFAULT_INSTITUTION)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    void getPublicInstitutionSettings()
+      .then(setInstitution)
+      .catch(() => setInstitution(DEFAULT_INSTITUTION))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return (
+    <main className="auth-shell">
+      <section className="auth-card">
+        <p className="eyebrow">Management Information System</p>
+        <h1>Loading…</h1>
+      </section>
+    </main>
+  )
+
+  return authed
+    ? <AuthenticatedWorkspace onLogout={() => setAuthed(false)} institution={institution} />
+    : <LoginScreen onLogin={() => setAuthed(true)} institution={institution} />
 }
 
 export default App
