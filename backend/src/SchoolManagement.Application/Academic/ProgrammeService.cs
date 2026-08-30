@@ -13,6 +13,7 @@ public sealed record CreateProgrammeRequest(
     string? DurationUnit,
     string? StudyMode,
     string? DeliveryType,
+    ProgrammeType Type = ProgrammeType.FullProgramme,
     string? Regulator,
     string? ApprovalReference,
     DateOnly? ApprovalDate);
@@ -52,6 +53,7 @@ public sealed class ProgrammeService(IProgrammeRepository programmes)
             DurationUnit = string.IsNullOrWhiteSpace(request.DurationUnit) ? "Years" : request.DurationUnit.Trim(),
             StudyMode = string.IsNullOrWhiteSpace(request.StudyMode) ? "Full-time" : request.StudyMode.Trim(),
             DeliveryType = string.IsNullOrWhiteSpace(request.DeliveryType) ? "Academic" : request.DeliveryType.Trim(),
+            Type = request.Type,
             Regulator = string.IsNullOrWhiteSpace(request.Regulator) ? null : request.Regulator.Trim(),
             ApprovalReference = string.IsNullOrWhiteSpace(request.ApprovalReference) ? null : request.ApprovalReference.Trim(),
             ApprovalDate = request.ApprovalDate,
