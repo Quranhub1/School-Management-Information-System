@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { createUser, getUsers, setUserActive, type CreateUserRequest, type UserSummary } from '../api/administration'
+import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 
 const roles = ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'FinanceOfficer', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'TransportOfficer', 'Principal', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'AssistantPrincipal']
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['Registrar'] }
+
+type AdminTab = 'users' | 'settings'
 
 const ROLE_COLORS: Record<string, string> = {
   SystemAdministrator: '#1e40af',
@@ -28,6 +31,7 @@ export function AdministrationManagement() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [tab, setTab] = useState<AdminTab>('users')
 
   async function load() {
     setLoading(true)
@@ -62,81 +66,94 @@ export function AdministrationManagement() {
     <div className="panel-heading">
       <div>
         <p className="eyebrow">Administration</p>
-        <h2>User Management</h2>
+        <h2>Administration</h2>
       </div>
-      <span>{users.length} accounts</span>
     </div>
-    <form className="student-form" onSubmit={submit}>
-      <h3>Create institutional account</h3>
-      <div className="form-grid">
-        <label>Username<input value={form.username} onChange={e => setForm({...form, username: e.target.value})} required /></label>
-        <label>Temporary password<input type="password" minLength={8} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required /></label>
-        <label>First name<input value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} required /></label>
-        <label>Last name<input value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} required /></label>
-        <label>Email<input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></label>
-        <label>Role
-          <select value={form.roles[0]} onChange={e => setForm({...form, roles: [e.target.value]})}>
-            {roles.map(role => <option key={role} value={role}>{role}</option>)}
-          </select>
-        </label>
-      </div>
-      <button type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
-    </form>
+
+    <div className="library-workspace-tabs" role="tablist" aria-label="Administration sections">
+      <button role="tab" aria-selected={tab === 'users'} className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>User Management</button>
+      <button role="tab" aria-selected={tab === 'settings'} className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Institution Settings</button>
+    </div>
+
     {error && <div className="error" role="alert">{error}</div>}
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Roles</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? <tr><td colSpan={6} className="empty">Loading users…</td></tr> :
-           users.length === 0 ? <tr><td colSpan={6} className="empty">No accounts found.</td></tr> :
-           users.map(user => (
-            <tr key={user.id}>
-              <td>{user.username}</td>
-              <td>{user.firstName} {user.lastName}</td>
-              <td>{user.email ?? '—'}</td>
-              <td>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                  {user.roles.map(role => (
-                    <span key={role} style={{
-                      padding: '3px 10px',
+
+    {tab === 'users' && (
+      <>
+        <form className="student-form" onSubmit={submit}>
+          <h3>Create institutional account</h3>
+          <div className="form-grid">
+            <label>Username<input value={form.username} onChange={e => setForm({...form, username: e.target.value})} required /></label>
+            <label>Temporary password<input type="password" minLength={8} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required /></label>
+            <label>First name<input value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} required /></label>
+            <label>Last name<input value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} required /></label>
+            <label>Email<input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></label>
+            <label>Role
+              <select value={form.roles[0]} onChange={e => setForm({...form, roles: [e.target.value]})}>
+                {roles.map(role => <option key={role} value={role}>{role}</option>)}
+              </select>
+            </label>
+          </div>
+          <button type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
+        </form>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Roles</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? <tr><td colSpan={6} className="empty">Loading users…</td></tr> :
+               users.length === 0 ? <tr><td colSpan={6} className="empty">No accounts found.</td></tr> :
+               users.map(user => (
+                <tr key={user.id}>
+                  <td>{user.username}</td>
+                  <td>{user.firstName} {user.lastName}</td>
+                  <td>{user.email ?? '—'}</td>
+                  <td>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {user.roles.map(role => (
+                        <span key={role} style={{
+                          padding: '3px 10px',
+                          borderRadius: '999px',
+                          background: ROLE_COLORS[role] || '#78716c',
+                          color: 'white',
+                          fontSize: '.68rem',
+                          fontWeight: 800,
+                        }}>
+                          {role}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td>
+                    <span style={{
+                      display: 'inline-flex',
+                      padding: '4px 10px',
                       borderRadius: '999px',
-                      background: ROLE_COLORS[role] || '#78716c',
-                      color: 'white',
-                      fontSize: '.68rem',
+                      background: user.isActive ? '#d1fae5' : '#fee2e2',
+                      color: user.isActive ? '#059669' : '#dc2626',
+                      fontSize: '.72rem',
                       fontWeight: 800,
                     }}>
-                      {role}
+                      {user.isActive ? 'Active' : 'Inactive'}
                     </span>
-                  ))}
-                </div>
-              </td>
-              <td>
-                <span style={{
-                  display: 'inline-flex',
-                  padding: '4px 10px',
-                  borderRadius: '999px',
-                  background: user.isActive ? '#d1fae5' : '#fee2e2',
-                  color: user.isActive ? '#059669' : '#dc2626',
-                  fontSize: '.72rem',
-                  fontWeight: 800,
-                }}>
-                  {user.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </td>
-              <td><button type="button" className="secondary-button" onClick={() => void toggle(user)}>{user.isActive ? 'Deactivate' : 'Activate'}</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                  </td>
+                  <td><button type="button" className="secondary-button" onClick={() => void toggle(user)}>{user.isActive ? 'Deactivate' : 'Activate'}</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )}
+
+    {tab === 'settings' && <InstitutionSettingsPage />}
   </section>
 }
+
