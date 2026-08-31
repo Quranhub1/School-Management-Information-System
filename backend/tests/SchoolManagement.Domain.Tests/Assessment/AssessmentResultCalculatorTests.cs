@@ -1,4 +1,5 @@
 using SchoolManagement.Domain.Assessment;
+using SchoolManagement.Application.Assessment;
 using Xunit;
 
 namespace SchoolManagement.Domain.Tests.Assessment;
@@ -39,7 +40,8 @@ public sealed class AssessmentResultCalculatorTests
             new GradeBand { Id = Guid.NewGuid(), GradingScaleId = scaleId, Grade = "A", MinimumScore = 80m, MaximumScore = 100m, GradePoint = 5m, IsPass = true }
         };
 
-        var result = new AssessmentResultCalculator().Calculate(studentId, registrationId, assessments, plans, bands);
+        var calculator = new SchoolManagement.Application.Assessment.AssessmentResultCalculator();
+        var result = calculator.Calculate(studentId, registrationId, assessments, plans, bands);
 
         Assert.Equal(studentId, result.StudentId);
         Assert.Equal(registrationId, result.CourseRegistrationId);
