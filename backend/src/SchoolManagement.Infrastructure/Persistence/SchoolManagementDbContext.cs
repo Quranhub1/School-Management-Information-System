@@ -14,7 +14,6 @@ using SchoolManagement.Domain.Identity;
 using SchoolManagement.Domain.Library;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Students;
-using SchoolManagement.Domain.Administration;
 using SchoolManagement.Infrastructure.Attendance;
 using SchoolManagement.Infrastructure.Assessment;
 using SchoolManagement.Infrastructure.Admissions;
