@@ -10,4 +10,5 @@ public sealed class BudgetLine
     public decimal SpentAmount { get; set; }
     public string? Notes { get; init; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+    public Budget? Budget { get; init; }
 }

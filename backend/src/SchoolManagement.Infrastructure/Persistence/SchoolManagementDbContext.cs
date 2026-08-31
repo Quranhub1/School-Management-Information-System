@@ -192,7 +192,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<JournalEntryLine>(e =>
         {
             e.HasKey(x => x.Id);
-            e.HasOne<JournalEntry>().WithMany(j => j.Lines).HasForeignKey(x => x.JournalEntryId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.JournalEntry).WithMany(j => j.Lines).HasForeignKey(x => x.JournalEntryId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
             e.Property(x => x.Description).HasMaxLength(500);
         });
@@ -220,7 +220,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<BillPayment>(e =>
         {
             e.HasKey(x => x.Id);
-            e.HasOne<Bill>().WithMany(b => b.Payments).HasForeignKey(x => x.BillId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Bill).WithMany(b => b.Payments).HasForeignKey(x => x.BillId).OnDelete(DeleteBehavior.Cascade);
             e.Property(x => x.PaymentMethod).HasMaxLength(50).IsRequired();
             e.Property(x => x.Reference).HasMaxLength(100);
         });
@@ -235,7 +235,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<BudgetLine>(e =>
         {
             e.HasKey(x => x.Id);
-            e.HasOne<Budget>().WithMany(b => b.Lines).HasForeignKey(x => x.BudgetId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Budget).WithMany(b => b.Lines).HasForeignKey(x => x.BudgetId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
             e.Property(x => x.Category).HasMaxLength(100).IsRequired();
             e.Property(x => x.Notes).HasMaxLength(500);

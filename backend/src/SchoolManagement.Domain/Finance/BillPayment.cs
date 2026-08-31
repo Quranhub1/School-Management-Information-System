@@ -9,4 +9,5 @@ public sealed class BillPayment
     public string? Reference { get; init; }
     public DateTimeOffset PaidAt { get; init; } = DateTimeOffset.UtcNow;
     public string? PaidBy { get; init; }
+    public Bill? Bill { get; init; }
 }

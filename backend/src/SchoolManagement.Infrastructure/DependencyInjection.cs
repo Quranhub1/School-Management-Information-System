@@ -39,16 +39,16 @@ public static class DependencyInjection
         services.AddScoped<IAcademicYearRepository, AcademicYearRepository>();
         services.AddScoped<ISemesterRepository, SemesterRepository>();
         services.AddScoped<IAcademicRecordRepository, AcademicRecordRepository>();
-        services.AddScoped<IAssessmentRepository, AssessmentRepository>();
+        services.AddScoped<SchoolManagement.Application.Abstractions.IAssessmentRepository, AssessmentRepository>();
         services.AddScoped<ICurriculumRepository, CurriculumRepository>();
         services.AddScoped<ICourseRepository, CourseRepository>();
         services.AddScoped<ICurriculumCourseRepository, CurriculumCourseRepository>();
         services.AddScoped<ICourseRegistrationRepository, CourseRegistrationRepository>();
         services.AddScoped<IStudentPromotionRepository, StudentPromotionRepository>();
         services.AddScoped<ISemesterProgressionRepository, SemesterProgressionRepository>();
-        services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+        services.AddScoped<SchoolManagement.Application.Abstractions.IAttendanceRepository, AttendanceRepository>();
         services.AddScoped<IAdmissionRepository, AdmissionRepository>();
-        services.AddScoped<IFinanceRepository, FinanceRepository>();
+        services.AddScoped<SchoolManagement.Application.Abstractions.IFinanceRepository, FinanceRepository>();
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -61,7 +61,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IInstitutionSettingsRepository, InstitutionSettingsRepository>();
         services.AddScoped<IHrRepository, HrRepository>();
-        services.AddScoped<IStudentRecordsRepository, StudentRecordsRepository>();
+        services.AddScoped<SchoolManagement.Application.StudentRecords.IStudentRecordsRepository, StudentRecordsRepository>();
 
         services.AddScoped<ReportGenerator>();
         services.AddScoped<DatabaseHealthCheck>();
