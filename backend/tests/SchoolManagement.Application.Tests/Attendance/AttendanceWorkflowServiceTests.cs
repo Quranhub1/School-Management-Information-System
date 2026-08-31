@@ -1,6 +1,7 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Attendance;
 using SchoolManagement.Domain.Attendance;
+using Xunit;
 
 namespace SchoolManagement.Application.Tests.Attendance;
 

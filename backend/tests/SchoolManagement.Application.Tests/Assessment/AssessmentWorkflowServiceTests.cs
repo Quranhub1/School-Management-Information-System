@@ -1,6 +1,7 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Assessment;
 using SchoolManagement.Domain.Assessment;
+using Xunit;
 
 namespace SchoolManagement.Application.Tests.Assessment;
 

@@ -1,4 +1,5 @@
 using SchoolManagement.Domain.Assessment;
+using Xunit;
 
 namespace SchoolManagement.Domain.Tests.Assessment;
 

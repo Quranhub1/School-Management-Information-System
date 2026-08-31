@@ -1,6 +1,7 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Domain.Finance;
+using Xunit;
 
 namespace SchoolManagement.Application.Tests.Finance;
 
@@ -57,6 +58,9 @@ public sealed class FinanceWorkflowServiceTests
 
         public Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => Task.CompletedTask;
 
-        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Payment>>([]);
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }

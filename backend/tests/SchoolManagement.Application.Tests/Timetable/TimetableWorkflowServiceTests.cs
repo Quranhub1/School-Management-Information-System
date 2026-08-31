@@ -1,4 +1,5 @@
 using SchoolManagement.Application.Timetable;
+using Xunit;
 
 namespace SchoolManagement.Application.Tests.Timetable;
 
