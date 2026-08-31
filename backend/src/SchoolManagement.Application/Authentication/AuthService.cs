@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using SchoolManagement.Domain.Identity;
+using SchoolManagement.Application.Administration;
 
 namespace SchoolManagement.Application.Authentication;
 
