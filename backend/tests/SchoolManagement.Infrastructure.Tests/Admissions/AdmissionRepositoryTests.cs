@@ -17,7 +17,7 @@ public sealed class AdmissionRepositoryTests
 
         await using var db = new SchoolManagementDbContext(options);
         var repository = new AdmissionRepository(db);
-        var applicant = new Applicant { FirstName = "Test", LastName = "Applicant", Status = "Submitted" };
+        var applicant = new Applicant { ApplicationNumber = "APP-001", FirstName = "Test", LastName = "Applicant", Status = "Submitted" };
         db.Applicants.Add(applicant);
         await db.SaveChangesAsync();
 

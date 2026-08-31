@@ -1,4 +1,3 @@
-using SchoolManagement.Application.Assessment;
 using SchoolManagement.Domain.Assessment;
 using Xunit;
 

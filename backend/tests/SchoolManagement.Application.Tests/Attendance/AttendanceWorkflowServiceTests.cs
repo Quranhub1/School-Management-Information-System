@@ -32,7 +32,7 @@ public sealed class AttendanceWorkflowServiceTests
     private static AttendanceWorkflowService CreateService() =>
         new(new AttendanceService(new InMemoryAttendanceRepository()));
 
-    private sealed class InMemoryAttendanceRepository : Abstractions.IAttendanceRepository
+    private sealed class InMemoryAttendanceRepository : Attendance.IAttendanceRepository
     {
         public Task<AttendanceSession?> GetSessionAsync(Guid timetableEntryId, DateOnly sessionDate, CancellationToken cancellationToken = default) =>
             Task.FromResult<AttendanceSession?>(null);

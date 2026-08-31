@@ -16,7 +16,7 @@ public sealed class AssessmentWorkflowServiceTests
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.RecordBatchAsync([command]));
     }
 
-    private sealed class InMemoryAssessmentRepository : Abstractions.IAssessmentRepository
+    private sealed class InMemoryAssessmentRepository : Assessment.IAssessmentRepository
     {
         public Task<IReadOnlyList<AssessmentPlan>> GetPlansAsync(Guid? courseId = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<AssessmentPlan>>([]);
         public Task<IReadOnlyList<StudentAssessment>> GetStudentAssessmentsAsync(Guid courseRegistrationId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentAssessment>>([]);
