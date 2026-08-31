@@ -5,7 +5,7 @@ using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Repositories;
 
-public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRepository
+public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRepository, SchoolManagement.Application.Finance.IFinanceRepository
 {
     public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) =>
         db.StudentInvoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
