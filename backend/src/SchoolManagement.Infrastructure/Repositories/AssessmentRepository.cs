@@ -5,7 +5,7 @@ using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Repositories;
 
-public sealed class AssessmentRepository(SchoolManagementDbContext db) : IAssessmentRepository
+public sealed class AssessmentRepository(SchoolManagementDbContext db) : IAssessmentRepository, SchoolManagement.Application.Assessment.IAssessmentRepository
 {
     public async Task<IReadOnlyList<AssessmentPlan>> GetPlansAsync(Guid? courseId = null, CancellationToken cancellationToken = default)
     {
