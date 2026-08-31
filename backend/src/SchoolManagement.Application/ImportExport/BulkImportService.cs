@@ -4,7 +4,7 @@ using SchoolManagement.Domain.Staff;
 
 namespace SchoolManagement.Application.ImportExport;
 
-public sealed class BulkImportService(IStudentRepository students, IHrRepository staff)
+public sealed class BulkImportService(IStudentRepository students, HR.IHrRepository staff)
 {
     public async Task<BulkImportResult> ImportStudentsAsync(BulkImportRequest request, CancellationToken cancellationToken = default)
     {

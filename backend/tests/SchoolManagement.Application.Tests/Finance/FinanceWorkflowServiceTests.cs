@@ -33,7 +33,7 @@ public sealed class FinanceWorkflowServiceTests
     private static FinanceWorkflowService CreateService() =>
         new(new FinanceService(new InMemoryFinanceRepository()));
 
-    private sealed class InMemoryFinanceRepository : IFinanceRepository
+    private sealed class InMemoryFinanceRepository : Abstractions.IFinanceRepository
     {
         public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) =>
             Task.FromResult<StudentInvoice?>(null);
