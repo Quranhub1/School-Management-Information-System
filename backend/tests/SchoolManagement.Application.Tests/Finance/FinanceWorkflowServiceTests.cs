@@ -34,7 +34,7 @@ public sealed class FinanceWorkflowServiceTests
     private static FinanceWorkflowService CreateService() =>
         new(new FinanceService(new InMemoryFinanceRepository()));
 
-    private sealed class InMemoryFinanceRepository : Abstractions.IFinanceRepository
+    private sealed class InMemoryFinanceRepository : global::SchoolManagement.Application.Finance.IFinanceRepository
     {
         public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) =>
             Task.FromResult<StudentInvoice?>(null);
