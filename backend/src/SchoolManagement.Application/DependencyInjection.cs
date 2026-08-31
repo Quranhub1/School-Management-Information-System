@@ -7,6 +7,7 @@ using SchoolManagement.Application.Attendance;
 using SchoolManagement.Application.Authentication;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
+using SchoolManagement.Application.HR;
 using SchoolManagement.Application.ImportExport;
 using SchoolManagement.Application.Certificates;
 using SchoolManagement.Application.Payroll;
@@ -17,7 +18,9 @@ using SchoolManagement.Application.Access;
 using SchoolManagement.Application.Audit;
 using SchoolManagement.Application.Library;
 using SchoolManagement.Application.Progression;
+using SchoolManagement.Application.StudentRecords;
 using SchoolManagement.Application.Students;
+using SchoolManagement.Application.Timetable;
 
 namespace SchoolManagement.Application;
 
@@ -59,6 +62,10 @@ public static class DependencyInjection
         services.AddScoped<CalendarEventService>();
         services.AddScoped<GateLogService>();
         services.AddScoped<AuditLogService>();
+        services.AddScoped<AssessmentWorkflowService>();
+        services.AddScoped<HrWorkflowService>();
+        services.AddScoped<StudentRecordsWorkflowService>();
+        services.AddScoped<TimetableWorkflowService>();
         return services;
     }
 }
