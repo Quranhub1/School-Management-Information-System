@@ -3,7 +3,7 @@ using SchoolManagement.Domain.Finance;
 
 namespace SchoolManagement.Application.Finance;
 
-public sealed class FinanceService(IFinanceRepository finance)
+public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFinanceRepository finance)
 {
     public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) =>
         finance.GetStudentInvoicesAsync(studentId, cancellationToken);
