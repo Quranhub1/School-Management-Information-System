@@ -5,7 +5,7 @@ using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Repositories;
 
-public sealed class AttendanceRepository(SchoolManagementDbContext db) : IAttendanceRepository
+public sealed class AttendanceRepository(SchoolManagementDbContext db) : IAttendanceRepository, SchoolManagement.Application.Attendance.IAttendanceRepository
 {
     public Task<AttendanceSession?> GetSessionAsync(Guid timetableEntryId, DateOnly sessionDate, CancellationToken cancellationToken = default) =>
         db.AttendanceSessions.FirstOrDefaultAsync(
