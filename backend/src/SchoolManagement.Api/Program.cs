@@ -53,8 +53,6 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<SchoolManagementDbContext>();
-    db.Database.Migrate();
     await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
 }
 
