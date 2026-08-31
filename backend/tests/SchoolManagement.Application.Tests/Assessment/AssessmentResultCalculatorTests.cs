@@ -2,7 +2,7 @@ using SchoolManagement.Application.Assessment;
 using SchoolManagement.Domain.Assessment;
 using Xunit;
 
-namespace SchoolManagement.Domain.Tests.Assessment;
+namespace SchoolManagement.Application.Tests.Assessment;
 
 public sealed class AssessmentResultCalculatorTests
 {
