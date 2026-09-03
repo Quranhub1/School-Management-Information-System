@@ -1,0 +1,159 @@
+name: Full System CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'foundation/**', 'feature/**', 'fix/**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  ASPNETCORE_ENVIRONMENT: Development
+  ASPNETCORE_URLS: http://127.0.0.1:5080
+  ConnectionStrings__SchoolManagement: Host=127.0.0.1;Port=5432;Database=school_management_ci;Username=school_management;Password=ci_validation
+  Authentication__JwtKey: ci-only-jwt-signing-key-that-is-long-enough-for-hmac-sha256-validation
+  VITE_API_BASE_URL: http://127.0.0.1:5080
+
+jobs:
+  full-system:
+    name: PostgreSQL + API + Frontend + E2E smoke test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: school_management_ci
+          POSTGRES_USER: school_management
+          POSTGRES_PASSWORD: ci_validation
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U school_management -d school_management_ci"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore backend
+        working-directory: backend
+        run: dotnet restore SchoolManagement.sln
+
+      - name: Build backend
+        working-directory: backend
+        run: dotnet build SchoolManagement.sln --configuration Release --no-restore
+
+      - name: Restore pinned EF Core CLI
+        working-directory: backend
+        run: dotnet tool restore
+
+      - name: Apply database migrations
+        working-directory: backend
+        run: >-
+          dotnet ef database update
+          --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj
+          --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj
+          --configuration Release
+          --no-build
+
+      - name: Start API
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup dotnet run \
+            --project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
+            --configuration Release \
+            --no-build \
+            > /tmp/smis-api.log 2>&1 &
+          echo $! > /tmp/smis-api.pid
+
+      - name: Wait for API readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:5080/health > /tmp/smis-health.json; then
+              echo "API is ready: $(cat /tmp/smis-health.json)"
+              exit 0
+            fi
+            echo "Waiting for API... ($attempt/60)"
+            sleep 2
+          done
+          echo "API failed readiness check. Logs:"
+          cat /tmp/smis-api.log
+          exit 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+          cache-dependency-path: frontend/package.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend against running API
+        working-directory: frontend
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx --yes playwright@1.55.0 install --with-deps chromium
+
+      - name: Start frontend preview server
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup npm run preview -- --host 127.0.0.1 --port 4173 \
+            > /tmp/smis-frontend.log 2>&1 &
+          echo $! > /tmp/smis-frontend.pid
+
+      - name: Wait for frontend readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/ > /tmp/smis-frontend.html; then
+              grep -q '<div id="root">' /tmp/smis-frontend.html
+              echo "Frontend is ready."
+              exit 0
+            fi
+            echo "Waiting for frontend... ($attempt/30)"
+            sleep 2
+          done
+          echo "Frontend failed readiness check. Logs:"
+          cat /tmp/smis-frontend.log
+          exit 1
+
+      - name: Run end-to-end smoke tests
+        run: npx --yes playwright@1.55.0 test tests/e2e/full-system.spec.js --reporter=line
+
+      - name: Dump service logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo '===== API LOG ====='
+          cat /tmp/smis-api.log 2>/dev/null || true
+          echo '===== FRONTEND LOG ====='
+          cat /tmp/smis-frontend.log 2>/dev/null || true
+
+      - name: Stop application processes
+        if: always()
+        shell: bash
+        run: |
+          kill "$(cat /tmp/smis-frontend.pid 2>/dev/null)" 2>/dev/null || true
+          kill "$(cat /tmp/smis-api.pid 2>/dev/null)" 2>/dev/null || true
