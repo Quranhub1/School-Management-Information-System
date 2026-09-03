@@ -6,7 +6,6 @@ using SchoolManagement.Application.Assessment;
 using SchoolManagement.Domain.Assessment;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Infrastructure.Reporting;
-using System.Security.Claims;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -52,7 +51,7 @@ public sealed class StudentPortalController(SchoolManagementDbContext db, Progre
     public async Task<ActionResult<IReadOnlyList<TranscriptEntry>>> GetTranscript([FromQuery] Guid? academicYearId, [FromQuery] Guid? semesterId, CancellationToken ct)
     {
         var studentId = await ResolveStudentIdAsync(ct);
-        var entries = await db.AssessmentTranscriptEntries.AsNoTracking()
+        var entries = await db.TranscriptEntries.AsNoTracking()
             .Where(x => x.StudentId == studentId)
             .Where(x => !academicYearId.HasValue || x.AcademicYearId == academicYearId.Value)
             .Where(x => !semesterId.HasValue || x.SemesterId == semesterId.Value)
@@ -86,7 +85,7 @@ public sealed class StudentPortalController(SchoolManagementDbContext db, Progre
         if (summaries.Count == 0) return NotFound();
 
         var latest = summaries.First();
-        var transcript = await db.AssessmentTranscriptEntries.AsNoTracking()
+        var transcript = await db.TranscriptEntries.AsNoTracking()
             .Where(x => x.StudentId == studentId)
             .ToListAsync(ct);
 
@@ -107,7 +106,7 @@ public sealed class StudentPortalController(SchoolManagementDbContext db, Progre
             student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber,
             student.Email, student.CreatedAt, student.AdmissionId);
 
-        var entries = await db.AssessmentTranscriptEntries.AsNoTracking()
+        var entries = await db.TranscriptEntries.AsNoTracking()
             .Where(x => x.StudentId == studentId)
             .OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ThenBy(x => x.CourseCode)
             .ToListAsync(ct);
