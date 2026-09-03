@@ -86,7 +86,7 @@ public sealed class ReportsController(SchoolManagementDbContext db, ReportGenera
 
         var profile = new StudentPortalProfile(student.Id, student.StudentNumber, $"{student.FirstName} {student.LastName}".Trim(), student.Status, student.FirstName, student.LastName, student.OtherNames, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.CreatedAt, student.AdmissionId);
 
-        var entries = await db.AssessmentTranscriptEntries.AsNoTracking()
+        var entries = await db.TranscriptEntries.AsNoTracking()
             .Where(x => x.StudentId == studentId)
             .Where(x => !academicYearId.HasValue || x.AcademicYearId == academicYearId.Value)
             .Where(x => !semesterId.HasValue || x.SemesterId == semesterId.Value)
