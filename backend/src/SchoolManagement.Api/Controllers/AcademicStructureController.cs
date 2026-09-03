@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Academic;
 using SchoolManagement.Infrastructure.Persistence;
+using AcademicStream = SchoolManagement.Domain.Academic.Stream;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -80,14 +81,14 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
     }
 
     [HttpGet("streams")]
-    public async Task<ActionResult<IReadOnlyList<Stream>>> GetStreams(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<AcademicStream>>> GetStreams(CancellationToken ct)
         => Ok(await db.Streams.AsNoTracking().OrderBy(x => x.Code).ToListAsync(ct));
 
     [HttpPost("streams")]
-    public async Task<ActionResult<Stream>> CreateStream([FromBody] CreateStreamRequest request, CancellationToken ct)
+    public async Task<ActionResult<AcademicStream>> CreateStream([FromBody] CreateStreamRequest request, CancellationToken ct)
     {
         if (await db.Streams.AnyAsync(x => x.Code == request.Code.Trim(), ct)) return Conflict("A stream with this code already exists.");
-        var stream = new Stream { Name = request.Name.Trim(), Code = request.Code.Trim().ToUpperInvariant(), ClassFormId = request.ClassFormId, IsActive = true };
+        var stream = new AcademicStream { Name = request.Name.Trim(), Code = request.Code.Trim().ToUpperInvariant(), ClassFormId = request.ClassFormId, IsActive = true };
         db.Streams.Add(stream);
         await db.SaveChangesAsync(ct);
         return Created($"api/academic-structure/streams/{stream.Id}", stream);
