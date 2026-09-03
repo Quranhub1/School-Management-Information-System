@@ -77,6 +77,12 @@ export function FinanceManagement() {
     }
   }
 
+  function balanceColor(balance: number, billed: number) {
+    if (balance <= 0) return '#059669'
+    if (billed <= 0 || balance / billed > 0.5) return '#dc2626'
+    return '#d97706'
+  }
+
   const totalBilled = invoices.reduce((sum, inv) => sum + inv.amount, 0)
   const totalPaid = invoices.reduce((sum, inv) => sum + inv.paidAmount, 0)
   const totalBalance = invoices.reduce((sum, inv) => sum + inv.balance, 0)
@@ -122,7 +128,7 @@ export function FinanceManagement() {
                 </div>
                 <div className="summary-card">
                   <span>Outstanding Balance</span>
-                  <strong style={{ color: totalBalance > 0 ? '#dc2626' : '#059669' }}>UGX {totalBalance.toLocaleString()}</strong>
+                  <strong style={{ color: balanceColor(totalBalance, totalBilled) }}>UGX {totalBalance.toLocaleString()}</strong>
                 </div>
                 <div className="summary-card">
                   <span>Invoices</span>
@@ -164,7 +170,7 @@ export function FinanceManagement() {
                           <td><strong>{invoice.invoiceNumber}</strong></td>
                           <td>{invoice.currency} {invoice.amount.toLocaleString()}</td>
                           <td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
-                          <td style={{ color: invoice.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>
+                          <td style={{ color: balanceColor(invoice.balance, invoice.amount), fontWeight: 700 }}>
                             {invoice.currency} {invoice.balance.toLocaleString()}
                           </td>
                           <td>

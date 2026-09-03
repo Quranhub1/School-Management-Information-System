@@ -7,6 +7,7 @@ public sealed class TimetableEntry
 {
     public Guid Id { get; init; } = Guid.NewGuid();
     public Guid TeachingGroupId { get; init; }
+    public Guid? StaffMemberId { get; init; }
     public DayOfWeek DayOfWeek { get; init; }
     public TimeOnly StartTime { get; init; }
     public TimeOnly EndTime { get; init; }

@@ -10,5 +10,6 @@ public sealed class StaffMember
     public string? PhoneNumber { get; init; }
     public string? Email { get; init; }
     public required string EmploymentType { get; init; }
+    public required StaffType StaffType { get; init; }
     public bool IsActive { get; set; } = true;
 }

@@ -271,6 +271,28 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
         });
 
+        m.Entity<StaffMember>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.StaffNumber).HasMaxLength(50).IsRequired();
+            e.Property(x => x.EmploymentType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.StaffType).HasConversion<string>().HasMaxLength(20).IsRequired();
+            e.HasIndex(x => x.StaffNumber).IsUnique();
+        });
+
+        m.Entity<PayrollRecord>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffMemberId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<TimetableEntry>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffMemberId).OnDelete(DeleteBehavior.Restrict);
+        });
+
         m.Entity<InstitutionSettings>(e =>
         {
             e.HasKey(x => x.Id);

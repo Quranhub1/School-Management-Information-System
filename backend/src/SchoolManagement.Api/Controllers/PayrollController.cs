@@ -37,7 +37,10 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
             var existing = await db.PayrollRecords.AnyAsync(x => x.StaffMemberId == s.Id && x.Month == request.Month && x.Year == request.Year, cancellationToken);
             if (existing) continue;
             var basicSalary = configuration.GetValue<decimal>("PayrollDefaults:BasicSalary", 50000m);
-            var allowances = configuration.GetValue<decimal>("PayrollDefaults:Allowances", 10000m);
+            var isTeaching = s.StaffType == SchoolManagement.Domain.Staff.StaffType.Teaching;
+            var allowances = isTeaching
+                ? configuration.GetValue<decimal>("PayrollDefaults:TeachingAllowances", 15000m)
+                : configuration.GetValue<decimal>("PayrollDefaults:NonTeachingAllowances", 8000m);
             var deductions = configuration.GetValue<decimal>("PayrollDefaults:Deductions", 5000m);
             var record = new Domain.Staff.PayrollRecord
             {
@@ -67,4 +70,19 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
+
+    [HttpPatch("{id:guid}/allowances")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> UpdateAllowances(Guid id, [FromBody] UpdateAllowancesRequest request, CancellationToken cancellationToken)
+    {
+        var record = await db.PayrollRecords.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (record is null) return NotFound();
+        record.Allowances = request.Allowances;
+        record.Deductions = request.Deductions;
+        record.NetPay = record.BasicSalary + record.Allowances - record.Deductions;
+        await db.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
 }
+
+public sealed record UpdateAllowancesRequest(decimal Allowances, decimal Deductions);

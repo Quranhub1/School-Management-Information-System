@@ -3,6 +3,7 @@ import { getAccessToken } from './auth'
 export type TimetableEntry = {
   id: string
   teachingGroupId: string
+  staffMemberId?: string
   dayOfWeek: number
   startTime: string
   endTime: string

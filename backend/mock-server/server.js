@@ -298,7 +298,7 @@ app.get('/api/search', authMiddleware, (req, res) => {
   const results = {
     query: q,
     students: students.filter(s => (!from || new Date(s.createdAt) >= from) && (!to || new Date(s.createdAt) <= to)).filter(s => s.studentNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, studentNumber: s.studentNumber, fullName: `${s.firstName} ${s.lastName}`, status: s.status })),
-    staff: [],
+    staff: staff.filter(s => s.staffNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, staffNumber: s.staffNumber, fullName: `${s.firstName} ${s.lastName}`, employmentType: s.employmentType, staffType: s.staffType })),
     courses: courses.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)).slice(0, 20).map(c => ({ id: c.id, code: c.code, name: c.name, creditUnits: c.creditUnits })),
     programmes: programmes.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)).slice(0, 20).map(p => ({ id: p.id, code: p.code, name: p.name, award: p.award })),
     academicYears: academicYears.filter(y => y.name.toLowerCase().includes(q)).slice(0, 20).map(y => ({ id: y.id, name: y.name, startDate: y.startDate, endDate: y.endDate, isCurrent: y.isCurrent })),
@@ -321,6 +321,132 @@ app.get('/api/messages/:conversationId', authMiddleware, (req, res) => {
 
 app.post('/api/messages/send', authMiddleware, (req, res) => {
   res.status(201).json({ id: genId('msg'), ...req.body, sentAt: new Date().toISOString() });
+});
+
+const staff = [
+  { id: 'stf1', staffNumber: 'STF-001', firstName: 'Jane', lastName: 'Teacher', nationalId: '', phoneNumber: '0700111111', email: 'jane@school.ac.ug', employmentType: 'Permanent', staffType: 'Teaching', isActive: true },
+  { id: 'stf2', staffNumber: 'STF-002', firstName: 'John', lastName: 'Clerk', nationalId: '', phoneNumber: '0700222222', email: 'john@school.ac.ug', employmentType: 'Contract', staffType: 'NonTeaching', isActive: true }
+];
+
+const payrollRecords = [
+  { id: 'pay1', staffMemberId: 'stf1', month: 1, year: 2025, basicSalary: 50000, allowances: 15000, deductions: 5000, netPay: 60000, paymentDate: null, status: 'Pending' },
+  { id: 'pay2', staffMemberId: 'stf2', month: 1, year: 2025, basicSalary: 50000, allowances: 8000, deductions: 5000, netPay: 53000, paymentDate: null, status: 'Pending' }
+];
+
+const timetableEntries = [
+  { id: 'tt1', teachingGroupId: 'tg1', staffMemberId: 'stf1', dayOfWeek: 1, startTime: '08:00:00', endTime: '10:00:00', room: 'Room 1', sessionType: 'Lecture', isActive: true }
+];
+
+const leaveRequests = [];
+
+// STAFF
+app.get('/api/staff', authMiddleware, (req, res) => {
+  const activeOnly = req.query.activeOnly !== 'false';
+  const results = activeOnly ? staff.filter(s => s.isActive) : staff;
+  res.json(results);
+});
+
+app.get('/api/staff/:id', authMiddleware, (req, res) => {
+  const s = staff.find(x => x.id === req.params.id);
+  if (!s) return res.status(404).json({ message: 'Staff not found' });
+  res.json(s);
+});
+
+app.post('/api/staff', authMiddleware, (req, res) => {
+  const { staffNumber, firstName, lastName, nationalId, phoneNumber, email, employmentType, staffType } = req.body;
+  if (!staffNumber || !firstName || !lastName || !employmentType || !staffType) return res.status(400).json({ message: 'staffNumber, firstName, lastName, employmentType and staffType are required' });
+  if (staff.some(s => s.staffNumber === staffNumber)) return res.status(409).json({ message: 'Staff number already exists' });
+  const id = genId('stf');
+  const s = { id, staffNumber, firstName, lastName, nationalId: nationalId || '', phoneNumber: phoneNumber || '', email: email || '', employmentType, staffType, isActive: true };
+  staff.push(s);
+  res.status(201).json(s);
+});
+
+app.patch('/api/staff/:id/deactivate', authMiddleware, (req, res) => {
+  const s = staff.find(x => x.id === req.params.id);
+  if (!s) return res.status(404).json({ message: 'Staff not found' });
+  s.isActive = false;
+  res.sendStatus(204);
+});
+
+app.get('/api/staff/:id/leave', authMiddleware, (req, res) => {
+  res.json(leaveRequests.filter(l => l.staffMemberId === req.params.id));
+});
+
+app.post('/api/staff/:id/leave', authMiddleware, (req, res) => {
+  const { leaveType, startDate, endDate, reason } = req.body;
+  const id = genId('leave');
+  const leave = { id, staffMemberId: req.params.id, leaveType, startDate, endDate, reason, status: 'Pending', approvedBy: null, approvedAt: null };
+  leaveRequests.push(leave);
+  res.status(201).json(leave);
+});
+
+app.patch('/api/staff/leave/:id/approve', authMiddleware, (req, res) => {
+  const leave = leaveRequests.find(l => l.id === req.params.id);
+  if (!leave) return res.status(404).json({ message: 'Leave not found' });
+  leave.status = req.body.approved ? 'Approved' : 'Rejected';
+  leave.approvedBy = req.body.approvedBy;
+  leave.approvedAt = new Date().toISOString();
+  res.sendStatus(204);
+});
+
+// TIMETABLE
+app.get('/api/timetable', authMiddleware, (req, res) => {
+  res.json(timetableEntries);
+});
+
+app.post('/api/timetable', authMiddleware, (req, res) => {
+  const { teachingGroupId, staffMemberId, dayOfWeek, startTime, endTime, room, sessionType } = req.body;
+  if (!teachingGroupId || dayOfWeek === undefined || !startTime || !endTime) return res.status(400).json({ message: 'teachingGroupId, dayOfWeek, startTime and endTime are required' });
+  const id = genId('tt');
+  const entry = { id, teachingGroupId, staffMemberId: staffMemberId || null, dayOfWeek, startTime, endTime, room: room || null, sessionType: sessionType || null, isActive: true };
+  timetableEntries.push(entry);
+  res.status(201).json(entry);
+});
+
+app.delete('/api/timetable/:id', authMiddleware, (req, res) => {
+  const idx = timetableEntries.findIndex(x => x.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ message: 'Timetable entry not found' });
+  timetableEntries[idx].isActive = false;
+  res.sendStatus(204);
+});
+
+// PAYROLL
+app.get('/api/staff/payroll', authMiddleware, (req, res) => {
+  const staffMemberId = req.query.staffMemberId;
+  let results = payrollRecords;
+  if (staffMemberId) results = results.filter(r => r.staffMemberId === staffMemberId);
+  res.json(results);
+});
+
+app.post('/api/staff/payroll/generate', authMiddleware, (req, res) => {
+  const { month, year } = req.body;
+  staff.filter(s => s.isActive).forEach(s => {
+    if (payrollRecords.some(r => r.staffMemberId === s.id && r.month === month && r.year === year)) return;
+    const isTeaching = s.staffType === 'Teaching';
+    const allowances = isTeaching ? 15000 : 8000;
+    const deductions = 5000;
+    const basicSalary = 50000;
+    payrollRecords.push({ id: genId('pay'), staffMemberId: s.id, month, year, basicSalary, allowances, deductions, netPay: basicSalary + allowances - deductions, paymentDate: null, status: 'Pending' });
+  });
+  res.json({ message: 'Payroll generated.' });
+});
+
+app.patch('/api/staff/payroll/:id/pay', authMiddleware, (req, res) => {
+  const record = payrollRecords.find(r => r.id === req.params.id);
+  if (!record) return res.status(404).json({ message: 'Payroll record not found' });
+  record.paymentDate = new Date().toISOString();
+  record.status = 'Paid';
+  res.sendStatus(204);
+});
+
+app.patch('/api/staff/payroll/:id/allowances', authMiddleware, (req, res) => {
+  const record = payrollRecords.find(r => r.id === req.params.id);
+  if (!record) return res.status(404).json({ message: 'Payroll record not found' });
+  record.allowances = Number(req.body.allowances);
+  record.deductions = Number(req.body.deductions);
+  record.netPay = record.basicSalary + record.allowances - record.deductions;
+  res.sendStatus(204);
 });
 
 // ACADEMIC STRUCTURE
