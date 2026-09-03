@@ -9,6 +9,7 @@ public sealed class SchoolManagementDbContextFactory : IDesignTimeDbContextFacto
     public SchoolManagementDbContext CreateDbContext(string[] args)
     {
         var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: true)
             .AddJsonFile("appsettings.Production.json", optional: true)
             .AddEnvironmentVariables()
