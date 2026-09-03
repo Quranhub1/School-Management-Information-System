@@ -42,7 +42,7 @@ test.describe('SMIS full-system smoke tests', () => {
     await expect(page.getByRole('button', { name: 'Finance', exact: true })).toBeVisible();
   });
 
-  test('authenticated frontend request reaches the API', async ({ page }) => {
+  test('authenticated frontend request reaches the database-backed API', async ({ page }) => {
     await page.goto(FRONTEND_URL, { waitUntil: 'networkidle' });
     await signIn(page);
 
@@ -50,7 +50,7 @@ test.describe('SMIS full-system smoke tests', () => {
 
     const apiResponse = await page.evaluate(async (baseUrl) => {
       const token = sessionStorage.getItem('smis.accessToken');
-      const response = await fetch(`${baseUrl}/api/administration/institution-settings`, {
+      const response = await fetch(`${baseUrl}/api/administration/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return { status: response.status, contentType: response.headers.get('content-type') };
