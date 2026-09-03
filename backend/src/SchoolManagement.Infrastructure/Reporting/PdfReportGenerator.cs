@@ -23,7 +23,7 @@ public sealed class PdfReportGenerator : IPdfReportGenerator
             {
                 page.Margin(40);
                 page.Size(PageSizes.A4);
-                page.DefaultTextStyle(TextStyle.Default.FontSize(11).FontFamily(Fonts.Helvetica));
+                page.DefaultTextStyle(TextStyle.Default.FontSize(11));
 
                 page.Header().Element(c => ComposeHeader(c, $"Academic Transcript — {profile.FullName}"));
                 page.Content().PaddingVertical(20).Element(c => ComposeTranscript(c, profile, entries, summaries));
@@ -48,7 +48,7 @@ public sealed class PdfReportGenerator : IPdfReportGenerator
             {
                 page.Margin(40);
                 page.Size(PageSizes.A4);
-                page.DefaultTextStyle(TextStyle.Default.FontSize(11).FontFamily(Fonts.Helvetica));
+                page.DefaultTextStyle(TextStyle.Default.FontSize(11));
 
                 page.Header().Element(c => ComposeHeader(c, $"Report Card — {profile.FullName}"));
                 page.Content().PaddingVertical(20).Element(c => ComposeReportCard(c, profile, summary, entries));
