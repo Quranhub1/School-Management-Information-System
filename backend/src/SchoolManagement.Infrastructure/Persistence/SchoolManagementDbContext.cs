@@ -95,7 +95,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Notice> Notices => Set<Notice>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
-    public DbSet<Stream> Streams => Set<Stream>();
+    public DbSet<global::SchoolManagement.Domain.Academic.Stream> Streams => Set<global::SchoolManagement.Domain.Academic.Stream>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
