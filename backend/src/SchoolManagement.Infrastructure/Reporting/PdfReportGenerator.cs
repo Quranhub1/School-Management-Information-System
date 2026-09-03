@@ -107,8 +107,8 @@ public sealed class PdfReportGenerator : IPdfReportGenerator
                 foreach (var entry in entries)
                 {
                     table.Cell().Element(CellStyle).Text(entry.CourseCode ?? "—");
-                    table.Cell().Element(CellStyle).Text(entry.CourseName ?? "—");
-                    table.Cell().Element(CellStyle).Text(entry.Mark?.ToString("0.##") ?? "—");
+                    table.Cell().Element(CellStyle).Text(entry.CourseTitle ?? "—");
+                    table.Cell().Element(CellStyle).Text(entry.Score?.ToString("0.##") ?? "—");
                     table.Cell().Element(CellStyle).Text(entry.Grade ?? "—");
                 }
             });
@@ -118,7 +118,7 @@ public sealed class PdfReportGenerator : IPdfReportGenerator
                 column.Item().PaddingTop(8).Text("Academic Summary").Bold().FontSize(12);
                 foreach (var summary in summaries)
                 {
-                    column.Item().Text($"{summary.AcademicYear} — {summary.Semester}: GPA {summary.Gpa:0.00}, Credits {summary.CreditsEarned:0.##}");
+                    column.Item().Text($"Academic Year: {summary.AcademicYearId} — Semester: {summary.SemesterId}: GPA {summary.Gpa:0.00}, Credits {summary.TotalCreditUnits:0.##}");
                 }
             }
         });
@@ -131,8 +131,8 @@ public sealed class PdfReportGenerator : IPdfReportGenerator
             column.Spacing(10);
             column.Item().Text($"Student: {profile.FullName}").Bold();
             column.Item().Text($"Student Number: {profile.StudentNumber}");
-            column.Item().Text($"Academic Year: {summary.AcademicYear}");
-            column.Item().Text($"Semester: {summary.Semester}");
+            column.Item().Text($"Academic Year: {summary.AcademicYearId}");
+            column.Item().Text($"Semester: {summary.SemesterId}");
 
             column.Item().Table(table =>
             {
@@ -155,14 +155,14 @@ public sealed class PdfReportGenerator : IPdfReportGenerator
                 foreach (var entry in entries)
                 {
                     table.Cell().Element(CellStyle).Text(entry.CourseCode ?? "—");
-                    table.Cell().Element(CellStyle).Text(entry.CourseName ?? "—");
-                    table.Cell().Element(CellStyle).Text(entry.Mark?.ToString("0.##") ?? "—");
+                    table.Cell().Element(CellStyle).Text(entry.CourseTitle ?? "—");
+                    table.Cell().Element(CellStyle).Text(entry.Score?.ToString("0.##") ?? "—");
                     table.Cell().Element(CellStyle).Text(entry.Grade ?? "—");
                 }
             });
 
             column.Item().PaddingTop(8).Text($"GPA: {summary.Gpa:0.00}").Bold();
-            column.Item().Text($"Credits Earned: {summary.CreditsEarned:0.##}");
+            column.Item().Text($"Credits Earned: {summary.TotalCreditUnits:0.##}");
         });
     }
 
