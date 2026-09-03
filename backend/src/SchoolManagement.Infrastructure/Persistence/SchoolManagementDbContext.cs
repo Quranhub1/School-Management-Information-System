@@ -21,6 +21,7 @@ using SchoolManagement.Infrastructure.Admissions;
 using AssessmentTranscriptEntry = SchoolManagement.Domain.Assessment.TranscriptEntry;
 using AssessmentAcademicResultSummary = SchoolManagement.Domain.Assessment.AcademicResultSummary;
 using AdmissionEntity = SchoolManagement.Domain.Admissions.Admission;
+using AcademicStream = SchoolManagement.Domain.Academic.Stream;
 
 namespace SchoolManagement.Infrastructure.Persistence;
 
@@ -95,7 +96,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Notice> Notices => Set<Notice>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
-    public DbSet<Stream> Streams => Set<Stream>();
+    public DbSet<AcademicStream> Streams => Set<AcademicStream>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
