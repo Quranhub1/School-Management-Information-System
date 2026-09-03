@@ -127,7 +127,8 @@ app.get('/api/student-portal/me', authMiddleware, (req, res) => {
 
 app.get('/api/student-portal/me/transcript', authMiddleware, (req, res) => {
   const username = req.user.name;
-  const student = students.find(s => s.studentNumber === username);
+  const user = users.find(u => u.username === username);
+  const student = students.find(s => s.studentNumber === (user?.studentNumber || username));
   if (!student) return res.status(404).json({ message: 'Student not found' });
   const studentTranscripts = transcripts.filter(t => t.studentId === student.id);
   res.json(studentTranscripts);
@@ -135,7 +136,8 @@ app.get('/api/student-portal/me/transcript', authMiddleware, (req, res) => {
 
 app.get('/api/student-portal/me/summaries', authMiddleware, (req, res) => {
   const username = req.user.name;
-  const student = students.find(s => s.studentNumber === username);
+  const user = users.find(u => u.username === username);
+  const student = students.find(s => s.studentNumber === (user?.studentNumber || username));
   if (!student) return res.status(404).json({ message: 'Student not found' });
   const studentSummaries = summaries.filter(s => s.studentId === student.id);
   res.json(studentSummaries);
@@ -143,7 +145,8 @@ app.get('/api/student-portal/me/summaries', authMiddleware, (req, res) => {
 
 app.get('/api/student-portal/me/transcript/pdf', authMiddleware, (req, res) => {
   const username = req.user.name;
-  const student = students.find(s => s.studentNumber === username);
+  const user = users.find(u => u.username === username);
+  const student = students.find(s => s.studentNumber === (user?.studentNumber || username));
   if (!student) return res.status(404).json({ message: 'Student not found' });
   const studentTranscripts = transcripts.filter(t => t.studentId === student.id);
   const studentSummaries = summaries.filter(s => s.studentId === student.id);
