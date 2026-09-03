@@ -25,7 +25,7 @@ public sealed class PdfReportGenerator : IPdfReportGenerator
                 page.Size(PageSizes.A4);
                 page.DefaultTextStyle(TextStyle.Default.FontSize(11).FontFamily(Fonts.Helvetica));
 
-                page.Header().Element(c => ComposeHeader(c, $"Academic Transcript — {profile.FullName}`));
+                page.Header().Element(c => ComposeHeader(c, $"Academic Transcript — {profile.FullName}"));
                 page.Content().PaddingVertical(20).Element(c => ComposeTranscript(c, profile, entries, summaries));
                 page.Footer().AlignCenter().Text(x =>
                 {
@@ -50,7 +50,7 @@ public sealed class PdfReportGenerator : IPdfReportGenerator
                 page.Size(PageSizes.A4);
                 page.DefaultTextStyle(TextStyle.Default.FontSize(11).FontFamily(Fonts.Helvetica));
 
-                page.Header().Element(c => ComposeHeader(c, $"Report Card — {profile.FullName}`));
+                page.Header().Element(c => ComposeHeader(c, $"Report Card — {profile.FullName}"));
                 page.Content().PaddingVertical(20).Element(c => ComposeReportCard(c, profile, summary, entries));
                 page.Footer().AlignCenter().Text(x =>
                 {
