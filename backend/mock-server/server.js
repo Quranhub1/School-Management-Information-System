@@ -260,6 +260,19 @@ app.post('/api/finance/invoices/:id/payments', authMiddleware, (req, res) => {
 });
 
 // REPORTS
+app.get('/api/reports/summary', authMiddleware, (req, res) => {
+  res.json({
+    students: students.length,
+    staff: staff.length,
+    programmes: programmes.length,
+    courses: courses.length,
+    academicYears: academicYears.length,
+    currentAcademicYears: academicYears.filter(y => y.isCurrent).length,
+    activeLibraryBooks: 0,
+    activeLibraryLoans: 0
+  });
+});
+
 app.get('/api/reports/student/:studentId/report-card', authMiddleware, (req, res) => {
   const student = students.find(s => s.id === req.params.studentId);
   if (!student) return res.status(404).json({ message: 'Student not found' });
@@ -298,7 +311,7 @@ app.get('/api/search', authMiddleware, (req, res) => {
   const results = {
     query: q,
     students: students.filter(s => (!from || new Date(s.createdAt) >= from) && (!to || new Date(s.createdAt) <= to)).filter(s => s.studentNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, studentNumber: s.studentNumber, fullName: `${s.firstName} ${s.lastName}`, status: s.status })),
-    staff: staff.filter(s => s.staffNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, staffNumber: s.staffNumber, fullName: `${s.firstName} ${s.lastName}`, employmentType: s.employmentType, staffType: s.staffType })),
+    staff: staff.filter(s => s.staffNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q) || s.staffType.toLowerCase().includes(q) || s.employmentType.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, staffNumber: s.staffNumber, fullName: `${s.firstName} ${s.lastName}`, employmentType: s.employmentType, staffType: s.staffType })),
     courses: courses.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)).slice(0, 20).map(c => ({ id: c.id, code: c.code, name: c.name, creditUnits: c.creditUnits })),
     programmes: programmes.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)).slice(0, 20).map(p => ({ id: p.id, code: p.code, name: p.name, award: p.award })),
     academicYears: academicYears.filter(y => y.name.toLowerCase().includes(q)).slice(0, 20).map(y => ({ id: y.id, name: y.name, startDate: y.startDate, endDate: y.endDate, isCurrent: y.isCurrent })),
@@ -346,12 +359,6 @@ app.get('/api/staff', authMiddleware, (req, res) => {
   res.json(results);
 });
 
-app.get('/api/staff/:id', authMiddleware, (req, res) => {
-  const s = staff.find(x => x.id === req.params.id);
-  if (!s) return res.status(404).json({ message: 'Staff not found' });
-  res.json(s);
-});
-
 app.post('/api/staff', authMiddleware, (req, res) => {
   const { staffNumber, firstName, lastName, nationalId, phoneNumber, email, employmentType, staffType } = req.body;
   if (!staffNumber || !firstName || !lastName || !employmentType || !staffType) return res.status(400).json({ message: 'staffNumber, firstName, lastName, employmentType and staffType are required' });
@@ -360,13 +367,6 @@ app.post('/api/staff', authMiddleware, (req, res) => {
   const s = { id, staffNumber, firstName, lastName, nationalId: nationalId || '', phoneNumber: phoneNumber || '', email: email || '', employmentType, staffType, isActive: true };
   staff.push(s);
   res.status(201).json(s);
-});
-
-app.patch('/api/staff/:id/deactivate', authMiddleware, (req, res) => {
-  const s = staff.find(x => x.id === req.params.id);
-  if (!s) return res.status(404).json({ message: 'Staff not found' });
-  s.isActive = false;
-  res.sendStatus(204);
 });
 
 app.get('/api/staff/:id/leave', authMiddleware, (req, res) => {
@@ -390,28 +390,6 @@ app.patch('/api/staff/leave/:id/approve', authMiddleware, (req, res) => {
   res.sendStatus(204);
 });
 
-// TIMETABLE
-app.get('/api/timetable', authMiddleware, (req, res) => {
-  res.json(timetableEntries);
-});
-
-app.post('/api/timetable', authMiddleware, (req, res) => {
-  const { teachingGroupId, staffMemberId, dayOfWeek, startTime, endTime, room, sessionType } = req.body;
-  if (!teachingGroupId || dayOfWeek === undefined || !startTime || !endTime) return res.status(400).json({ message: 'teachingGroupId, dayOfWeek, startTime and endTime are required' });
-  const id = genId('tt');
-  const entry = { id, teachingGroupId, staffMemberId: staffMemberId || null, dayOfWeek, startTime, endTime, room: room || null, sessionType: sessionType || null, isActive: true };
-  timetableEntries.push(entry);
-  res.status(201).json(entry);
-});
-
-app.delete('/api/timetable/:id', authMiddleware, (req, res) => {
-  const idx = timetableEntries.findIndex(x => x.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ message: 'Timetable entry not found' });
-  timetableEntries[idx].isActive = false;
-  res.sendStatus(204);
-});
-
-// PAYROLL
 app.get('/api/staff/payroll', authMiddleware, (req, res) => {
   const staffMemberId = req.query.staffMemberId;
   let results = payrollRecords;
@@ -446,6 +424,40 @@ app.patch('/api/staff/payroll/:id/allowances', authMiddleware, (req, res) => {
   record.allowances = Number(req.body.allowances);
   record.deductions = Number(req.body.deductions);
   record.netPay = record.basicSalary + record.allowances - record.deductions;
+  res.sendStatus(204);
+});
+
+app.get('/api/staff/:id', authMiddleware, (req, res) => {
+  const s = staff.find(x => x.id === req.params.id);
+  if (!s) return res.status(404).json({ message: 'Staff not found' });
+  res.json(s);
+});
+
+app.patch('/api/staff/:id/deactivate', authMiddleware, (req, res) => {
+  const s = staff.find(x => x.id === req.params.id);
+  if (!s) return res.status(404).json({ message: 'Staff not found' });
+  s.isActive = false;
+  res.sendStatus(204);
+});
+
+// TIMETABLE
+app.get('/api/timetable', authMiddleware, (req, res) => {
+  res.json(timetableEntries);
+});
+
+app.post('/api/timetable', authMiddleware, (req, res) => {
+  const { teachingGroupId, staffMemberId, dayOfWeek, startTime, endTime, room, sessionType } = req.body;
+  if (!teachingGroupId || dayOfWeek === undefined || !startTime || !endTime) return res.status(400).json({ message: 'teachingGroupId, dayOfWeek, startTime and endTime are required' });
+  const id = genId('tt');
+  const entry = { id, teachingGroupId, staffMemberId: staffMemberId || null, dayOfWeek, startTime, endTime, room: room || null, sessionType: sessionType || null, isActive: true };
+  timetableEntries.push(entry);
+  res.status(201).json(entry);
+});
+
+app.delete('/api/timetable/:id', authMiddleware, (req, res) => {
+  const idx = timetableEntries.findIndex(x => x.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ message: 'Timetable entry not found' });
+  timetableEntries[idx].isActive = false;
   res.sendStatus(204);
 });
 
