@@ -23,42 +23,18 @@ public sealed class StudentPortalController(SchoolManagementDbContext db, Progre
     [HttpGet("me")]
     public async Task<ActionResult<StudentPortalProfile>> GetMe(CancellationToken ct)
     {
-        var userId = GetCurrentUserId();
         var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
             ?? throw new InvalidOperationException("Username claim not found in token.");
-
         var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == username, ct);
         if (student is null) return NotFound(new { message = "Student record not found. Contact administration." });
-
-        return Ok(new StudentPortalProfile(
-            student.Id,
-            student.StudentNumber,
-            $"{student.FirstName} {student.LastName}".Trim(),
-            student.Status,
-            student.FirstName,
-            student.LastName,
-            student.OtherNames,
-            student.DateOfBirth,
-            student.Gender,
-            student.NationalId,
-            student.PhoneNumber,
-            student.Email,
-            student.CreatedAt,
-            student.AdmissionId));
+        return Ok(new StudentPortalProfile(student.Id, student.StudentNumber, $"{student.FirstName} {student.LastName}".Trim(), student.Status, student.FirstName, student.LastName, student.OtherNames, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.CreatedAt, student.AdmissionId));
     }
 
     [HttpGet("me/transcript")]
     public async Task<ActionResult<IReadOnlyList<TranscriptEntry>>> GetTranscript([FromQuery] Guid? academicYearId, [FromQuery] Guid? semesterId, CancellationToken ct)
     {
         var studentId = await ResolveStudentIdAsync(ct);
-        var entries = await db.TranscriptEntries.AsNoTracking()
-            .Where(x => x.StudentId == studentId)
-            .Where(x => !academicYearId.HasValue || x.AcademicYearId == academicYearId.Value)
-            .Where(x => !semesterId.HasValue || x.SemesterId == semesterId.Value)
-            .OrderByDescending(x => x.AcademicYearId)
-            .ThenByDescending(x => x.SemesterId)
-            .ThenBy(x => x.CourseCode)
-            .ToListAsync(ct);
+        var entries = await db.TranscriptEntries.AsNoTracking().Where(x => x.StudentId == studentId).Where(x => !academicYearId.HasValue || x.AcademicYearId == academicYearId.Value).Where(x => !semesterId.HasValue || x.SemesterId == semesterId.Value).OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ThenBy(x => x.CourseCode).ToListAsync(ct);
         return Ok(entries);
     }
 
@@ -66,11 +42,7 @@ public sealed class StudentPortalController(SchoolManagementDbContext db, Progre
     public async Task<ActionResult<IReadOnlyList<AcademicResultSummary>>> GetSummaries(CancellationToken ct)
     {
         var studentId = await ResolveStudentIdAsync(ct);
-        var summaries = await db.AcademicResultSummaries.AsNoTracking()
-            .Where(x => x.StudentId == studentId)
-            .OrderByDescending(x => x.AcademicYearId)
-            .ThenByDescending(x => x.SemesterId)
-            .ToListAsync(ct);
+        var summaries = await db.AcademicResultSummaries.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ToListAsync(ct);
         return Ok(summaries);
     }
 
@@ -78,54 +50,28 @@ public sealed class StudentPortalController(SchoolManagementDbContext db, Progre
     public async Task<ActionResult<ProgressionDecision>> GetProgression(CancellationToken ct)
     {
         var studentId = await ResolveStudentIdAsync(ct);
-        var summaries = await db.AcademicResultSummaries.AsNoTracking()
-            .Where(x => x.StudentId == studentId)
-            .OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId)
-            .ToListAsync(ct);
+        var summaries = await db.AcademicResultSummaries.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ToListAsync(ct);
         if (summaries.Count == 0) return NotFound();
-
         var latest = summaries.First();
-        var transcript = await db.TranscriptEntries.AsNoTracking()
-            .Where(x => x.StudentId == studentId)
-            .ToListAsync(ct);
-
-        var decision = progression.Evaluate(latest, transcript);
-        return Ok(decision);
+        var transcript = await db.TranscriptEntries.AsNoTracking().Where(x => x.StudentId == studentId).ToListAsync(ct);
+        return Ok(progression.Evaluate(latest, transcript));
     }
 
     [HttpGet("me/transcript/pdf")]
     public async Task<IActionResult> DownloadTranscriptPdf(CancellationToken ct)
     {
         var studentId = await ResolveStudentIdAsync(ct);
-        var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == studentId, ct)
-            ?? throw new KeyNotFoundException("Student record not found.");
-
-        var profile = new StudentPortalProfile(
-            student.Id, student.StudentNumber, $"{student.FirstName} {student.LastName}".Trim(),
-            student.Status, student.FirstName, student.LastName, student.OtherNames,
-            student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber,
-            student.Email, student.CreatedAt, student.AdmissionId);
-
-        var entries = await db.TranscriptEntries.AsNoTracking()
-            .Where(x => x.StudentId == studentId)
-            .OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ThenBy(x => x.CourseCode)
-            .ToListAsync(ct);
-
-        var summaries = await db.AcademicResultSummaries.AsNoTracking()
-            .Where(x => x.StudentId == studentId)
-            .OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId)
-            .ToListAsync(ct);
-
+        var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == studentId, ct) ?? throw new KeyNotFoundException("Student record not found.");
+        var profile = new SchoolManagement.Infrastructure.Reporting.StudentPortalProfile(student.Id, student.StudentNumber, $"{student.FirstName} {student.LastName}".Trim(), student.Status, student.FirstName, student.LastName, student.OtherNames, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.CreatedAt, student.AdmissionId);
+        var entries = await db.TranscriptEntries.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ThenBy(x => x.CourseCode).ToListAsync(ct);
+        var summaries = await db.AcademicResultSummaries.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ToListAsync(ct);
         var bytes = pdf.GenerateTranscriptPdf(profile, entries, summaries);
         return File(bytes, "application/pdf", $"transcript-{student.StudentNumber}.pdf");
     }
 
     private async Task<Guid> ResolveStudentIdAsync(CancellationToken ct)
     {
-        var userId = GetCurrentUserId();
-        var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
-            ?? throw new InvalidOperationException("Username claim not found in token.");
-
+        var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? throw new InvalidOperationException("Username claim not found in token.");
         var student = await db.Students.SingleOrDefaultAsync(x => x.StudentNumber == username, ct);
         if (student is null) throw new KeyNotFoundException("Student record not found.");
         return student.Id;
