@@ -12,21 +12,21 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class GlobalSearchController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<GlobalSearchResponse>> Search([FromQuery] string? q, CancellationToken ct)
+    public async Task<ActionResult<GlobalSearchResponse>> Search([FromQuery] string? q, [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? to, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
             return Ok(new GlobalSearchResponse { Query = q ?? string.Empty, Students = [], Staff = [], Courses = [], Programmes = [], AcademicYears = [], Semesters = [], TeachingGroups = [], Applicants = [], Alumni = [] });
 
         var term = q.Trim().ToLower();
-        var students = await SearchStudents(term, ct);
+        var students = await SearchStudents(term, from, to, ct);
         var staff = await SearchStaff(term, ct);
         var courses = await SearchCourses(term, ct);
         var programmes = await SearchProgrammes(term, ct);
-        var academicYears = await SearchAcademicYears(term, ct);
-        var semesters = await SearchSemesters(term, ct);
+        var academicYears = await SearchAcademicYears(term, from, to, ct);
+        var semesters = await SearchSemesters(term, from, to, ct);
         var teachingGroups = await SearchTeachingGroups(term, ct);
-        var applicants = await SearchApplicants(term, ct);
-        var alumni = await SearchAlumni(term, ct);
+        var applicants = await SearchApplicants(term, from, to, ct);
+        var alumni = await SearchAlumni(term, from, to, ct);
 
         return Ok(new GlobalSearchResponse
         {
@@ -43,17 +43,21 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
         });
     }
 
-    private async Task<IReadOnlyList<StudentSearchResult>> SearchStudents(string term, CancellationToken ct)
+    private async Task<IReadOnlyList<StudentSearchResult>> SearchStudents(string term, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct)
     {
-        return await db.Students.AsNoTracking()
+        var query = db.Students.AsNoTracking()
             .Where(x => x.StudentNumber.ToLower().Contains(term)
                      || x.FirstName.ToLower().Contains(term)
                      || x.LastName.ToLower().Contains(term)
                      || (x.OtherNames != null && x.OtherNames.ToLower().Contains(term))
                      || (x.NationalId != null && x.NationalId.ToLower().Contains(term))
                      || (x.Email != null && x.Email.ToLower().Contains(term))
-                     || (x.PhoneNumber != null && x.PhoneNumber.ToLower().Contains(term)))
-            .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
+                     || (x.PhoneNumber != null && x.PhoneNumber.ToLower().Contains(term)));
+
+        if (from.HasValue) query = query.Where(x => x.CreatedAt >= from.Value);
+        if (to.HasValue) query = query.Where(x => x.CreatedAt <= to.Value);
+
+        return await query.OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
             .Select(x => new StudentSearchResult(x.Id, x.StudentNumber, $"{x.FirstName} {x.LastName}".Trim(), x.Status))
             .Take(20).ToListAsync(ct);
     }
@@ -90,20 +94,28 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
             .Take(20).ToListAsync(ct);
     }
 
-    private async Task<IReadOnlyList<AcademicYearSearchResult>> SearchAcademicYears(string term, CancellationToken ct)
+    private async Task<IReadOnlyList<AcademicYearSearchResult>> SearchAcademicYears(string term, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct)
     {
-        return await db.AcademicYears.AsNoTracking()
-            .Where(x => x.Name.ToLower().Contains(term))
-            .OrderByDescending(x => x.StartDate)
+        var query = db.AcademicYears.AsNoTracking()
+            .Where(x => x.Name.ToLower().Contains(term));
+
+        if (from.HasValue) query = query.Where(x => x.StartDate >= DateOnly.FromDateTime(from.Value.Date));
+        if (to.HasValue) query = query.Where(x => x.EndDate <= DateOnly.FromDateTime(to.Value.Date));
+
+        return await query.OrderByDescending(x => x.StartDate)
             .Select(x => new AcademicYearSearchResult(x.Id, x.Name, x.StartDate, x.EndDate, x.IsCurrent))
             .Take(20).ToListAsync(ct);
     }
 
-    private async Task<IReadOnlyList<SemesterSearchResult>> SearchSemesters(string term, CancellationToken ct)
+    private async Task<IReadOnlyList<SemesterSearchResult>> SearchSemesters(string term, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct)
     {
-        return await db.Semesters.AsNoTracking()
-            .Where(x => x.Name.ToLower().Contains(term))
-            .OrderByDescending(x => x.StartDate)
+        var query = db.Semesters.AsNoTracking()
+            .Where(x => x.Name.ToLower().Contains(term));
+
+        if (from.HasValue) query = query.Where(x => x.StartDate >= DateOnly.FromDateTime(from.Value.Date));
+        if (to.HasValue) query = query.Where(x => x.EndDate <= DateOnly.FromDateTime(to.Value.Date));
+
+        return await query.OrderByDescending(x => x.StartDate)
             .Select(x => new SemesterSearchResult(x.Id, x.Name, x.Sequence, x.StartDate, x.EndDate, x.AcademicYearId))
             .Take(20).ToListAsync(ct);
     }
@@ -117,24 +129,32 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
             .Take(20).ToListAsync(ct);
     }
 
-    private async Task<IReadOnlyList<ApplicantSearchResult>> SearchApplicants(string term, CancellationToken ct)
+    private async Task<IReadOnlyList<ApplicantSearchResult>> SearchApplicants(string term, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct)
     {
-        return await db.Applicants.AsNoTracking()
+        var query = db.Applicants.AsNoTracking()
             .Where(x => x.ApplicationNumber.ToLower().Contains(term)
                      || x.FirstName.ToLower().Contains(term)
                      || x.LastName.ToLower().Contains(term)
                      || (x.OtherNames != null && x.OtherNames.ToLower().Contains(term))
-                     || (x.NationalId != null && x.NationalId.ToLower().Contains(term)))
-            .OrderByDescending(x => x.AppliedAt)
+                     || (x.NationalId != null && x.NationalId.ToLower().Contains(term)));
+
+        if (from.HasValue) query = query.Where(x => x.AppliedAt >= from.Value);
+        if (to.HasValue) query = query.Where(x => x.AppliedAt <= to.Value);
+
+        return await query.OrderByDescending(x => x.AppliedAt)
             .Select(x => new ApplicantSearchResult(x.Id, x.ApplicationNumber, $"{x.FirstName} {x.LastName}".Trim(), x.Status))
             .Take(20).ToListAsync(ct);
     }
 
-    private async Task<IReadOnlyList<AlumniSearchResult>> SearchAlumni(string term, CancellationToken ct)
+    private async Task<IReadOnlyList<AlumniSearchResult>> SearchAlumni(string term, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct)
     {
-        return await db.Alumni.AsNoTracking()
-            .Where(x => x.FirstName.ToLower().Contains(term) || x.LastName.ToLower().Contains(term) || (x.OtherNames != null && x.OtherNames.ToLower().Contains(term)))
-            .OrderByDescending(x => x.GraduationDate)
+        var query = db.Alumni.AsNoTracking()
+            .Where(x => x.FirstName.ToLower().Contains(term) || x.LastName.ToLower().Contains(term) || (x.OtherNames != null && x.OtherNames.ToLower().Contains(term)));
+
+        if (from.HasValue) query = query.Where(x => x.GraduationDate >= DateOnly.FromDateTime(from.Value.Date));
+        if (to.HasValue) query = query.Where(x => x.GraduationDate <= DateOnly.FromDateTime(to.Value.Date));
+
+        return await query.OrderByDescending(x => x.GraduationDate)
             .Select(x => new AlumniSearchResult(x.Id, x.StudentId, $"{x.FirstName} {x.LastName}".Trim(), x.GraduationDate))
             .Take(20).ToListAsync(ct);
     }

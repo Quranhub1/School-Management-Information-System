@@ -16,6 +16,8 @@ const EMPTY: GlobalSearchResponse = {
 
 export function GlobalSearch() {
   const [query, setQuery] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
   const [results, setResults] = useState<GlobalSearchResponse>(EMPTY)
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
@@ -23,6 +25,7 @@ export function GlobalSearch() {
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     if (!query.trim() || query.trim().length < 2) {
@@ -35,7 +38,7 @@ export function GlobalSearch() {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       try {
-        const data = await globalSearch(query.trim())
+        const data = await globalSearch(query.trim(), from || undefined, to || undefined)
         setResults(data)
         setOpen(true)
       } catch {
@@ -45,7 +48,7 @@ export function GlobalSearch() {
       }
     }, 250)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [query])
+  }, [query, from, to])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -82,19 +85,34 @@ export function GlobalSearch() {
 
   return (
     <div className="global-search" ref={containerRef}>
-      <input
-        ref={inputRef}
-        type="search"
-        placeholder="Search students, courses, staff, programmes..."
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        onFocus={() => { if (total > 0) setOpen(true) }}
-        onKeyDown={handleKey}
-        aria-label="Global search"
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        role="combobox"
-      />
+      <div className="search-input-row">
+        <input
+          ref={inputRef}
+          type="search"
+          placeholder="Search students, courses, staff, programmes..."
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onFocus={() => { if (total > 0) setOpen(true) }}
+          onKeyDown={handleKey}
+          aria-label="Global search"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          role="combobox"
+        />
+        <button type="button" className="search-filter-toggle" onClick={() => setShowFilters(f => !f)} aria-pressed={showFilters}>Filters</button>
+      </div>
+      {showFilters && (
+        <div className="search-filters">
+          <label>
+            <span>From</span>
+            <input type="date" value={from} onChange={e => setFrom(e.target.value)} />
+          </label>
+          <label>
+            <span>To</span>
+            <input type="date" value={to} onChange={e => setTo(e.target.value)} />
+          </label>
+        </div>
+      )}
       {loading && <span className="search-status" aria-live="polite">Searching…</span>}
       {open && total > 0 && (
         <div className="search-dropdown" role="listbox" aria-label="Search results">
@@ -105,7 +123,7 @@ export function GlobalSearch() {
               role="option"
               aria-selected={idx === activeIndex}
               onMouseEnter={() => setActiveIndex(idx)}
-              onClick={() => { setOpen(false); setQuery(''); }}
+              onClick={() => { setOpen(false); setQuery(''); setFrom(''); setTo(''); }}
             >
               <span className="search-result-type">{item.type}</span>
               <span className="search-result-label">{item.label}</span>

@@ -39,6 +39,10 @@ export interface GlobalSearchResponse {
   alumni: AlumniSearchResult[]
 }
 
-export function globalSearch(q: string): Promise<GlobalSearchResponse> {
-  return request<GlobalSearchResponse>(`/api/search?q=${encodeURIComponent(q)}`)
+export function globalSearch(q: string, from?: string, to?: string): Promise<GlobalSearchResponse> {
+  const qs = new URLSearchParams()
+  qs.set('q', q)
+  if (from) qs.set('from', from)
+  if (to) qs.set('to', to)
+  return request<GlobalSearchResponse>(`/api/search?${qs.toString()}`)
 }
