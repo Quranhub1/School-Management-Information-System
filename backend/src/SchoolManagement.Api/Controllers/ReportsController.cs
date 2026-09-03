@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/reports")]
 [Authorize(Policy = AuthorizationPolicies.ReportingManagement)]
-public sealed class ReportsController(SchoolManagementDbContext db, ReportGenerator generator) : ControllerBase
+public sealed class ReportsController(SchoolManagementDbContext db, ReportGenerator generator, IPdfReportGenerator pdf) : ControllerBase
 {
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
@@ -76,6 +76,33 @@ public sealed class ReportsController(SchoolManagementDbContext db, ReportGenera
     {
         var report = await generator.GenerateStudentReportCardAsync(studentId, academicYearId, semesterId, cancellationToken);
         return report is null ? NotFound() : Ok(report);
+    }
+
+    [HttpGet("student/{studentId:guid}/report-card/pdf")]
+    public async Task<IActionResult> DownloadReportCardPdf(Guid studentId, [FromQuery] Guid? academicYearId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
+    {
+        var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == studentId, cancellationToken);
+        if (student is null) return NotFound();
+
+        var profile = new StudentPortalProfile(student.Id, student.StudentNumber, $"{student.FirstName} {student.LastName}".Trim(), student.Status, student.FirstName, student.LastName, student.OtherNames, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.CreatedAt, student.AdmissionId);
+
+        var entries = await db.AssessmentTranscriptEntries.AsNoTracking()
+            .Where(x => x.StudentId == studentId)
+            .Where(x => !academicYearId.HasValue || x.AcademicYearId == academicYearId.Value)
+            .Where(x => !semesterId.HasValue || x.SemesterId == semesterId.Value)
+            .OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ThenBy(x => x.CourseCode)
+            .ToListAsync(cancellationToken);
+
+        var summaries = await db.AcademicResultSummaries.AsNoTracking()
+            .Where(x => x.StudentId == studentId)
+            .Where(x => !academicYearId.HasValue || x.AcademicYearId == academicYearId.Value)
+            .Where(x => !semesterId.HasValue || x.SemesterId == semesterId.Value)
+            .OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId)
+            .ToListAsync(cancellationToken);
+
+        var latest = summaries.FirstOrDefault() ?? throw new InvalidOperationException("No summary available.");
+        var bytes = pdf.GenerateReportCardPdf(profile, latest, entries);
+        return File(bytes, "application/pdf", $"report-card-{student.StudentNumber}.pdf");
     }
 
     [HttpGet("payment/{paymentId:guid}/receipt")]

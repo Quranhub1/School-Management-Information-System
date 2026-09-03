@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getStudentPortalProfile, getStudentSummaries, getStudentTranscript, type StudentPortalProfile, type StudentSemesterResult } from '../api/studentPortal'
+import { downloadPdf } from '../api/pdf'
 import type { TranscriptEntry, AcademicResultSummary } from '../types/academic'
 
 function groupBySemester(summaries: AcademicResultSummary[], entries: TranscriptEntry[]): StudentSemesterResult[] {
@@ -61,6 +62,9 @@ export function StudentPortal() {
             <div className="summary-card"><span>Status</span><strong>{profile?.status ?? '—'}</strong><small>Enrollment status</small></div>
             <div className="summary-card"><span>Latest GPA</span><strong>{semesters[0]?.gpa.toFixed(2) ?? '—'}</strong><small>Most recent semester</small></div>
             <div className="summary-card"><span>CGPA</span><strong>{latestCgpa !== null ? latestCgpa.toFixed(2) : '—'}</strong><small>Cumulative</small></div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+            <button className="secondary-button" onClick={() => downloadPdf('/api/student-portal/me/transcript/pdf', `transcript-${profile?.studentNumber ?? 'student'}.pdf`)}>Download Transcript (PDF)</button>
           </div>
           <h3 style={{ margin: '22px 0 10px' }}>Results by Semester</h3>
           {semesters.length === 0 ? <p className="empty">No results found.</p> : (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getStudentReportCard, type StudentReportCard } from '../api/reports'
+import { downloadPdf } from '../api/pdf'
 
 interface ReportCardsProps { canManage: boolean }
 
@@ -38,7 +39,8 @@ export function ReportCards({ canManage }: ReportCardsProps) {
           <span className="eyebrow">REPORTS</span>
           <h3>Student Report Cards</h3>
         </div>
-        <button className="secondary-button" onClick={printReport} disabled={!report}>Print Report Card</button>
+          <button className="secondary-button" onClick={printReport} disabled={!report}>Print Report Card</button>
+          <button className="secondary-button" onClick={() => studentId.trim() && downloadPdf(`/api/reports/student/${studentId.trim()}/report-card/pdf`, `report-card-${studentId.trim()}.pdf`)} disabled={!studentId.trim() || !report}>Download PDF</button>
       </div>
 
       <form className="student-form" onSubmit={e => { e.preventDefault(); void load() }} style={{ marginBottom: 22 }}>

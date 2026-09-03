@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<SchoolManagement.Application.StudentRecords.IStudentRecordsRepository, StudentRecordsRepository>();
 
         services.AddScoped<ReportGenerator>();
+        services.AddScoped<IPdfReportGenerator, PdfReportGenerator>();
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
         services.AddScoped<AdminSeeder>();
