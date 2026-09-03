@@ -93,6 +93,28 @@ const alumni = [
   { id: 'al1', studentId: '1', firstName: 'Alice', lastName: 'Nakibuule', otherNames: '', graduationDate: '2024-06-15', programme: 'BSCS', currentOccupation: 'Software Engineer', employer: 'Tech Co', contactInfo: '', isActive: true },
 ];
 
+const invoices = [
+  { id: 'inv1', studentId: '1', invoiceNumber: 'INV-2024-001', amount: 1500000, paidAmount: 500000, balance: 1000000, currency: 'UGX', status: 'Partially Paid', issuedAt: new Date().toISOString() },
+];
+
+const payments = [
+  { id: 'pay1', studentInvoiceId: 'inv1', invoiceNumber: 'INV-2024-001', studentId: '1', receiptNumber: 'RCP-001', amount: 500000, currency: 'UGX', paymentMethod: 'Cash', reference: 'CASH-001', paidAt: new Date().toISOString() },
+];
+
+let nextId = 100;
+function genId(prefix = 'id') { return `${prefix}${nextId++}` }
+
+function getStudentByUsername(username) {
+  const user = users.find(u => u.username === username);
+  const student = students.find(s => s.studentNumber === (user?.studentNumber || username));
+  return student;
+}
+
+function getUserById(userId) {
+  return users.find(u => u.id === userId);
+}
+
+// AUTH
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body;
   const user = users.find(u => u.username === username);
@@ -101,52 +123,33 @@ app.post('/api/auth/login', (req, res) => {
   return res.json({ accessToken: token, expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(), username: user.username, roles: user.roles });
 });
 
+// STUDENT PORTAL
 app.get('/api/student-portal/me', authMiddleware, (req, res) => {
-  const username = req.user.name;
-  const user = users.find(u => u.username === username);
-  const student = students.find(s => s.studentNumber === (user?.studentNumber || username));
+  const student = getStudentByUsername(req.user.name);
   if (!student) return res.status(404).json({ message: 'Student record not found. Contact administration.' });
-  const profile = {
-    studentId: student.id,
-    studentNumber: student.studentNumber,
-    fullName: `${student.firstName} ${student.lastName}`.trim(),
-    status: student.status,
-    firstName: student.firstName,
-    lastName: student.lastName,
-    otherNames: student.otherNames,
-    dateOfBirth: student.dateOfBirth,
-    gender: student.gender,
-    nationalId: student.nationalId,
-    phoneNumber: student.phoneNumber,
-    email: student.email,
-    createdAt: student.createdAt,
-    admissionId: student.admissionId
-  };
-  res.json(profile);
+  res.json({
+    studentId: student.id, studentNumber: student.studentNumber,
+    fullName: `${student.firstName} ${student.lastName}`.trim(), status: student.status,
+    firstName: student.firstName, lastName: student.lastName, otherNames: student.otherNames,
+    dateOfBirth: student.dateOfBirth, gender: student.gender, nationalId: student.nationalId,
+    phoneNumber: student.phoneNumber, email: student.email, createdAt: student.createdAt, admissionId: student.admissionId
+  });
 });
 
 app.get('/api/student-portal/me/transcript', authMiddleware, (req, res) => {
-  const username = req.user.name;
-  const user = users.find(u => u.username === username);
-  const student = students.find(s => s.studentNumber === (user?.studentNumber || username));
+  const student = getStudentByUsername(req.user.name);
   if (!student) return res.status(404).json({ message: 'Student not found' });
-  const studentTranscripts = transcripts.filter(t => t.studentId === student.id);
-  res.json(studentTranscripts);
+  res.json(transcripts.filter(t => t.studentId === student.id));
 });
 
 app.get('/api/student-portal/me/summaries', authMiddleware, (req, res) => {
-  const username = req.user.name;
-  const user = users.find(u => u.username === username);
-  const student = students.find(s => s.studentNumber === (user?.studentNumber || username));
+  const student = getStudentByUsername(req.user.name);
   if (!student) return res.status(404).json({ message: 'Student not found' });
-  const studentSummaries = summaries.filter(s => s.studentId === student.id);
-  res.json(studentSummaries);
+  res.json(summaries.filter(s => s.studentId === student.id));
 });
 
 app.get('/api/student-portal/me/transcript/pdf', authMiddleware, (req, res) => {
-  const username = req.user.name;
-  const user = users.find(u => u.username === username);
-  const student = students.find(s => s.studentNumber === (user?.studentNumber || username));
+  const student = getStudentByUsername(req.user.name);
   if (!student) return res.status(404).json({ message: 'Student not found' });
   const studentTranscripts = transcripts.filter(t => t.studentId === student.id);
   const studentSummaries = summaries.filter(s => s.studentId === student.id);
@@ -170,10 +173,122 @@ function generateMockPdf(student, entries, summaries) {
   return Buffer.from(lines.join('\n'));
 }
 
+// ADMISSIONS
+app.get('/api/admissions', authMiddleware, (req, res) => {
+  res.json(applicants.map(a => ({ ...a, applicationNumber: a.applicationNumber, status: a.status, appliedAt: a.appliedAt })));
+});
+
+app.post('/api/admissions', authMiddleware, (req, res) => {
+  const { firstName, lastName, otherNames, dateOfBirth, gender, nationalId, phoneNumber, email } = req.body;
+  const id = genId('a');
+  const applicationNumber = `APP-${new Date().getFullYear()}-${String(applicants.length + 1).padStart(3, '0')}`;
+  const applicant = { id, applicationNumber, firstName, lastName, otherNames, dateOfBirth, gender, nationalId, phoneNumber, email, status: 'Submitted', appliedAt: new Date().toISOString() };
+  applicants.push(applicant);
+  res.status(201).json(applicant);
+});
+
+app.post('/api/admissions/:id/decision', authMiddleware, (req, res) => {
+  const { id } = req.params;
+  const { decision } = req.body;
+  const applicant = applicants.find(a => a.id === id);
+  if (!applicant) return res.status(404).json({ message: 'Applicant not found' });
+  if (['Accepted', 'Rejected'].includes(decision)) {
+    applicant.status = decision;
+  }
+  res.json(applicant);
+});
+
+// STUDENTS
+app.get('/api/students', authMiddleware, (req, res) => {
+  res.json(students.map(s => ({ ...s })));
+});
+
+app.get('/api/students/:id', authMiddleware, (req, res) => {
+  const student = students.find(s => s.id === req.params.id);
+  if (!student) return res.status(404).json({ message: 'Student not found' });
+  res.json(student);
+});
+
+app.post('/api/students', authMiddleware, (req, res) => {
+  const { studentNumber, firstName, lastName, otherNames, dateOfBirth, gender, nationalId, phoneNumber, email } = req.body;
+  if (!studentNumber || !firstName || !lastName) return res.status(400).json({ message: 'studentNumber, firstName, lastName are required' });
+  if (students.some(s => s.studentNumber === studentNumber)) return res.status(409).json({ message: 'Student number already exists' });
+  const id = genId('stu');
+  const student = { id, studentNumber, firstName, lastName, otherNames: otherNames || '', dateOfBirth: dateOfBirth || null, gender: gender || null, nationalId: nationalId || null, phoneNumber: phoneNumber || null, email: email || null, status: 'Active', createdAt: new Date().toISOString(), admissionId: null };
+  students.push(student);
+  res.status(201).json(student);
+});
+
+app.get('/api/students/:id/qrcode', authMiddleware, (req, res) => {
+  const student = students.find(s => s.id === req.params.id);
+  if (!student) return res.status(404).json({ message: 'Student not found' });
+  const qrData = Buffer.from(JSON.stringify({ studentId: student.id, studentNumber: student.studentNumber, name: `${student.firstName} ${student.lastName}` }));
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader('Content-Disposition', `attachment; filename="qrcode-${student.studentNumber}.txt"`);
+  res.send(qrData);
+});
+
+// FINANCE
+app.get('/api/finance/invoices', authMiddleware, (req, res) => {
+  const studentId = req.query.studentId;
+  let results = invoices;
+  if (studentId) results = results.filter(i => i.studentId === studentId);
+  res.json(results);
+});
+
+app.post('/api/finance/invoices', authMiddleware, (req, res) => {
+  const { studentId, invoiceNumber, amount, currency } = req.body;
+  if (!studentId || !invoiceNumber || !amount) return res.status(400).json({ message: 'studentId, invoiceNumber, amount are required' });
+  const id = genId('inv');
+  const invoice = { id, studentId, invoiceNumber, amount: Number(amount), paidAmount: 0, balance: Number(amount), currency: currency || 'UGX', status: 'Unpaid', issuedAt: new Date().toISOString() };
+  invoices.push(invoice);
+  res.status(201).json(invoice);
+});
+
+app.post('/api/finance/invoices/:id/payments', authMiddleware, (req, res) => {
+  const invoiceId = req.params.id;
+  const { amount, receiptNumber, paymentMethod, reference, currency } = req.body;
+  const invoice = invoices.find(i => i.id === invoiceId);
+  if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+  const paymentAmount = Number(amount);
+  invoice.paidAmount += paymentAmount;
+  invoice.balance = Math.max(0, invoice.amount - invoice.paidAmount);
+  invoice.status = invoice.balance === 0 ? 'Paid' : 'Partially Paid';
+  const payment = { id: genId('pay'), studentInvoiceId: invoice.id, invoiceNumber: invoice.invoiceNumber, studentId: invoice.studentId, receiptNumber: receiptNumber || genId('rcp'), amount: paymentAmount, currency: currency || invoice.currency, paymentMethod: paymentMethod || 'Cash', reference: reference || '', paidAt: new Date().toISOString() };
+  payments.push(payment);
+  res.status(201).json(payment);
+});
+
+// REPORTS
+app.get('/api/reports/student/:studentId/report-card', authMiddleware, (req, res) => {
+  const student = students.find(s => s.id === req.params.studentId);
+  if (!student) return res.status(404).json({ message: 'Student not found' });
+  const studentTranscripts = transcripts.filter(t => t.studentId === student.id);
+  const studentSummaries = summaries.filter(s => s.studentId === student.id);
+  const latestSummary = studentSummaries[0];
+  const gpa = latestSummary ? latestSummary.gpa : 0;
+  res.json({
+    studentNumber: student.studentNumber,
+    studentName: `${student.firstName} ${student.lastName}`,
+    results: studentTranscripts.map(t => ({
+      courseCode: t.courseCode,
+      courseName: t.courseTitle,
+      score: t.score,
+      grade: t.grade,
+      gradePoint: t.gradePoint,
+      status: t.status,
+      isFinal: true
+    })),
+    gpa
+  });
+});
+
+// NOTICES
 app.get('/api/notices/board', authMiddleware, (req, res) => {
   res.json(notices.filter(n => n.isActive));
 });
 
+// SEARCH
 app.get('/api/search', authMiddleware, (req, res) => {
   const q = (req.query.q || '').trim().toLowerCase();
   const from = req.query.from ? new Date(req.query.from) : null;
@@ -182,7 +297,7 @@ app.get('/api/search', authMiddleware, (req, res) => {
 
   const results = {
     query: q,
-    students: students.filter(s => !from && !to ? true : new Date(s.createdAt) >= from && new Date(s.createdAt) <= to).filter(s => s.studentNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, studentNumber: s.studentNumber, fullName: `${s.firstName} ${s.lastName}`, status: s.status })),
+    students: students.filter(s => (!from || new Date(s.createdAt) >= from) && (!to || new Date(s.createdAt) <= to)).filter(s => s.studentNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, studentNumber: s.studentNumber, fullName: `${s.firstName} ${s.lastName}`, status: s.status })),
     staff: [],
     courses: courses.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)).slice(0, 20).map(c => ({ id: c.id, code: c.code, name: c.name, creditUnits: c.creditUnits })),
     programmes: programmes.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)).slice(0, 20).map(p => ({ id: p.id, code: p.code, name: p.name, award: p.award })),
@@ -195,10 +310,7 @@ app.get('/api/search', authMiddleware, (req, res) => {
   res.json(results);
 });
 
-app.get('/api/academic-structure/streams', authMiddleware, (req, res) => {
-  res.json([]);
-});
-
+// MESSAGES
 app.get('/api/messages/conversations', authMiddleware, (req, res) => {
   res.json([]);
 });
@@ -208,9 +320,15 @@ app.get('/api/messages/:conversationId', authMiddleware, (req, res) => {
 });
 
 app.post('/api/messages/send', authMiddleware, (req, res) => {
-  res.status(201).json({ id: Date.now().toString(), ...req.body, sentAt: new Date().toISOString() });
+  res.status(201).json({ id: genId('msg'), ...req.body, sentAt: new Date().toISOString() });
 });
 
+// ACADEMIC STRUCTURE
+app.get('/api/academic-structure/streams', authMiddleware, (req, res) => {
+  res.json([]);
+});
+
+// HEALTH
 app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
