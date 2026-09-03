@@ -148,14 +148,25 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
 
     private async Task<IReadOnlyList<AlumniSearchResult>> SearchAlumni(string term, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct)
     {
-        var query = db.Alumni.AsNoTracking()
-            .Where(x => x.FirstName.ToLower().Contains(term) || x.LastName.ToLower().Contains(term) || (x.OtherNames != null && x.OtherNames.ToLower().Contains(term)));
+        var query = from alumni in db.Alumni.AsNoTracking()
+                    join student in db.Students.AsNoTracking() on alumni.StudentId equals student.Id
+                    where student.StudentNumber.ToLower().Contains(term)
+                       || student.FirstName.ToLower().Contains(term)
+                       || student.LastName.ToLower().Contains(term)
+                       || (student.OtherNames != null && student.OtherNames.ToLower().Contains(term))
+                       || (student.Email != null && student.Email.ToLower().Contains(term))
+                       || (student.PhoneNumber != null && student.PhoneNumber.ToLower().Contains(term))
+                    select new { alumni, student };
 
-        if (from.HasValue) query = query.Where(x => x.GraduationDate >= DateOnly.FromDateTime(from.Value.Date));
-        if (to.HasValue) query = query.Where(x => x.GraduationDate <= DateOnly.FromDateTime(to.Value.Date));
+        if (from.HasValue) query = query.Where(x => x.alumni.GraduationDate >= DateOnly.FromDateTime(from.Value.Date));
+        if (to.HasValue) query = query.Where(x => x.alumni.GraduationDate <= DateOnly.FromDateTime(to.Value.Date));
 
-        return await query.OrderByDescending(x => x.GraduationDate)
-            .Select(x => new AlumniSearchResult(x.Id, x.StudentId, $"{x.FirstName} {x.LastName}".Trim(), x.GraduationDate))
+        return await query.OrderByDescending(x => x.alumni.GraduationDate)
+            .Select(x => new AlumniSearchResult(
+                x.alumni.Id,
+                x.alumni.StudentId,
+                $"{x.student.FirstName} {x.student.LastName}".Trim(),
+                x.alumni.GraduationDate))
             .Take(20).ToListAsync(ct);
     }
 }
@@ -174,12 +185,12 @@ public sealed record GlobalSearchResponse
     public IReadOnlyList<AlumniSearchResult> Alumni { get; init; } = [];
 }
 
-public sealed record StudentSearchResult(string Id, string StudentNumber, string FullName, string Status);
-public sealed record StaffSearchResult(string Id, string StaffNumber, string FullName, string EmploymentType);
-public sealed record CourseSearchResult(string Id, string Code, string Name, int CreditUnits);
-public sealed record ProgrammeSearchResult(string Id, string Code, string Name, string Award);
-public sealed record AcademicYearSearchResult(string Id, string Name, DateOnly StartDate, DateOnly EndDate, bool IsCurrent);
-public sealed record SemesterSearchResult(string Id, string Name, int Sequence, DateOnly StartDate, DateOnly EndDate, Guid AcademicYearId);
-public sealed record TeachingGroupSearchResult(string Id, string GroupCode, string? Name, Guid CourseOfferingId);
-public sealed record ApplicantSearchResult(string Id, string ApplicationNumber, string FullName, string Status);
-public sealed record AlumniSearchResult(string Id, Guid StudentId, string FullName, DateOnly GraduationDate);
+public sealed record StudentSearchResult(Guid Id, string StudentNumber, string FullName, string Status);
+public sealed record StaffSearchResult(Guid Id, string StaffNumber, string FullName, string EmploymentType);
+public sealed record CourseSearchResult(Guid Id, string Code, string Name, int CreditUnits);
+public sealed record ProgrammeSearchResult(Guid Id, string Code, string Name, string Award);
+public sealed record AcademicYearSearchResult(Guid Id, string Name, DateOnly StartDate, DateOnly EndDate, bool IsCurrent);
+public sealed record SemesterSearchResult(Guid Id, string Name, int Sequence, DateOnly StartDate, DateOnly EndDate, Guid AcademicYearId);
+public sealed record TeachingGroupSearchResult(Guid Id, string GroupCode, string? Name, Guid CourseOfferingId);
+public sealed record ApplicantSearchResult(Guid Id, string ApplicationNumber, string FullName, string Status);
+public sealed record AlumniSearchResult(Guid Id, Guid StudentId, string FullName, DateOnly GraduationDate);
