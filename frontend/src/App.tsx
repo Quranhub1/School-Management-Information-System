@@ -35,6 +35,7 @@ import { CertificateManagement } from './components/CertificateManagement'
 import { InventoryManagement } from './components/InventoryManagement'
 import { PrinterManagement } from './components/PrinterManagement'
 import { InstitutionSettingsPage } from './components/InstitutionSettingsPage'
+import { StudentPortal } from './pages/StudentPortal'
 import { getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
 import './components/PrintStyles.css'
 
@@ -259,7 +260,7 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
           {activeModule === 'hostel' && r.includes('SystemAdministrator') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Hostel</p><h2>Hostel Management</h2></div></div><p className="empty">Hostel module is available.</p></div>}
           {activeModule === 'transport' && r.includes('SystemAdministrator') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Transport</p><h2>Transport Management</h2></div></div><p className="empty">Transport module is available.</p></div>}
           {activeModule === 'attendance' && sr && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Attendance</p><h2>Attendance Management</h2></div></div><p className="empty">Attendance module is available.</p></div>}
-          {activeModule === 'student-portal' && r.includes('Student') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Student</p><h2>Student Portal</h2></div></div><p className="empty">Student portal is available.</p></div>}
+          {activeModule === 'student-portal' && r.includes('Student') && <StudentPortal />}
           {activeModule === 'parent-portal' && r.includes('Parent') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Parent</p><h2>Parent Portal</h2></div></div><p className="empty">Parent portal is available.</p></div>}
           {activeModule === 'teaching' && r.includes('Lecturer') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Teaching</p><h2>Teaching Workspace</h2></div></div><p className="empty">Teaching module is available.</p></div>}
           {activeModule === 'institution-settings' && a && <InstitutionSettingsPage />}

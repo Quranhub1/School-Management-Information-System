@@ -79,18 +79,36 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
         return Created($"api/academic-structure/periods/{period.Id}", period);
     }
 
-    [HttpPut("periods/{id:guid}/current")]
-    public async Task<IActionResult> SetCurrentPeriod(Guid id, CancellationToken ct)
+    [HttpGet("streams")]
+    public async Task<ActionResult<IReadOnlyList<Stream>>> GetStreams(CancellationToken ct)
+        => Ok(await db.Streams.AsNoTracking().OrderBy(x => x.Code).ToListAsync(ct));
+
+    [HttpPost("streams")]
+    public async Task<ActionResult<Stream>> CreateStream([FromBody] CreateStreamRequest request, CancellationToken ct)
     {
-        var period = await db.Semesters.FindAsync([id], ct);
-        if (period is null) return NotFound();
-        await db.Semesters.Where(x => x.AcademicYearId == period.AcademicYearId && x.IsCurrent).ExecuteUpdateAsync(s => s.SetProperty(x => x.IsCurrent, false), ct);
-        period.IsCurrent = true;
-        period.IsActive = true;
+        if (await db.Streams.AnyAsync(x => x.Code == request.Code.Trim(), ct)) return Conflict("A stream with this code already exists.");
+        var stream = new Stream { Name = request.Name.Trim(), Code = request.Code.Trim().ToUpperInvariant(), ClassFormId = request.ClassFormId, IsActive = true };
+        db.Streams.Add(stream);
+        await db.SaveChangesAsync(ct);
+        return Created($"api/academic-structure/streams/{stream.Id}", stream);
+    }
+
+    [HttpPatch("streams/{id:guid}")]
+    public async Task<IActionResult> UpdateStream(Guid id, [FromBody] UpdateStreamRequest request, CancellationToken ct)
+    {
+        var stream = await db.Streams.FindAsync([id], ct);
+        if (stream is null) return NotFound();
+        stream.Name = request.Name.Trim();
+        stream.Code = request.Code.Trim().ToUpperInvariant();
+        stream.ClassFormId = request.ClassFormId;
+        stream.IsActive = request.IsActive;
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }
+
+public sealed record CreateStreamRequest(string Name, string Code, string? ClassFormId);
+public sealed record UpdateStreamRequest(string Name, string Code, string? ClassFormId, bool IsActive);
 
 public sealed record CreateAcademicYearRequest(string Name, DateOnly StartDate, DateOnly EndDate, bool IsCurrent = false);
 public sealed record CreateSemesterRequest(string Name, int Sequence, DateOnly StartDate, DateOnly EndDate, bool IsCurrent = false);

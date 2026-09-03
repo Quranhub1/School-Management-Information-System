@@ -8,6 +8,7 @@ using SchoolManagement.Domain.Audit;
 using SchoolManagement.Domain.Access;
 using SchoolManagement.Domain.Calendar;
 using SchoolManagement.Domain.Clinical;
+using SchoolManagement.Domain.Communication;
 using SchoolManagement.Domain.Examinations;
 using SchoolManagement.Domain.Finance;
 using SchoolManagement.Domain.Identity;
@@ -91,6 +92,10 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<AssessmentWeightingProfile> AssessmentWeightingProfiles => Set<AssessmentWeightingProfile>();
     public DbSet<AssessmentWeightingComponent> AssessmentWeightingComponents => Set<AssessmentWeightingComponent>();
     public DbSet<AssessmentPlanWeightingProfile> AssessmentPlanWeightingProfiles => Set<AssessmentPlanWeightingProfile>();
+    public DbSet<Notice> Notices => Set<Notice>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<Message> Messages => Set<Message>();
+    public DbSet<Stream> Streams => Set<Stream>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {

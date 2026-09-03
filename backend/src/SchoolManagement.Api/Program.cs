@@ -66,6 +66,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(LibraryPolicies.Management, p => p.RequireRole("System Administrator", "Librarian"));
     options.AddPolicy(AuthorizationPolicies.Administration, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdministrationManagement));
     options.AddPolicy(AuthorizationPolicies.ReportingManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.ReportingManagement));
+    options.AddPolicy(AuthorizationPolicies.CommunicationManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.CommunicationManagement));
+    options.AddPolicy(AuthorizationPolicies.CommunicationRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.CommunicationRead));
 });
 
 var app = builder.Build();

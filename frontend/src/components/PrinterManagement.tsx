@@ -39,14 +39,25 @@ const DOC_LABELS: Record<PrintDocType, string> = {
 
 export function PrinterManagement() {
   const [printers, setPrinters] = useState<PrinterConfig[]>(() => {
-    const stored = localStorage.getItem('smis_printers')
-    return stored ? JSON.parse(stored) : DEFAULT_PRINTERS
+    try {
+      const stored = localStorage.getItem('smis_printers')
+      return stored ? JSON.parse(stored) as PrinterConfig[] : DEFAULT_PRINTERS
+    } catch {
+      return DEFAULT_PRINTERS
+    }
   })
   const [jobs, setJobs] = useState<PrintJob[]>(() => {
-    const stored = localStorage.getItem('smis_print_jobs')
-    return stored ? JSON.parse(stored) : []
+    try {
+      const stored = localStorage.getItem('smis_print_jobs')
+      return stored ? JSON.parse(stored) as PrintJob[] : []
+    } catch {
+      return []
+    }
   })
-  const [selectedPrinter, setSelectedPrinter] = useState<string>(() => printers.find(p => p.isDefault)?.id ?? printers[0]?.id ?? '')
+  const [selectedPrinter, setSelectedPrinter] = useState<string>(() => {
+    const valid = printers.some(p => p.isDefault) ? printers.find(p => p.isDefault)!.id : printers[0]?.id ?? ''
+    return valid
+  })
   const [docType, setDocType] = useState<PrintDocType>('certificate')
   const [copies, setCopies] = useState(1)
   const [paperSize, setPaperSize] = useState<'A4' | 'A3' | 'Letter'>('A4')
