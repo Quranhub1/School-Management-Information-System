@@ -35,6 +35,7 @@ import { CertificateManagement } from './components/CertificateManagement'
 import { InventoryManagement } from './components/InventoryManagement'
 import { PrinterManagement } from './components/PrinterManagement'
 import { InstitutionSettingsPage } from './components/InstitutionSettingsPage'
+import { GlobalSearch } from './components/GlobalSearch'
 import { StudentPortal } from './pages/StudentPortal'
 import { getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
 import './components/PrintStyles.css'
@@ -220,10 +221,11 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
       </aside>
       <div className="main-content">
         <header className="topbar">
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
             <span className="eyebrow">{institutionName}</span>
             <h1>Institutional Services</h1>
           </div>
+          <GlobalSearch />
           <button className="secondary-button" onClick={signOut}>Sign out</button>
         </header>
         <div className="content">
