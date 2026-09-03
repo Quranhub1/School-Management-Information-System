@@ -207,8 +207,13 @@ export ConnectionStrings__SchoolManagement="Host=localhost;Port=5432;Database=${
 # Run EF Core migrations (if any exist) and ensure database is created
 if [[ -d "${INSTALL_DIR}/api" ]]; then
   pushd "${INSTALL_DIR}/api" >/dev/null
-  # Try to apply pending migrations; if none exist, ensure created
-  ./schoolmanagement database update || ./schoolmanagement database ensure-created || true
+  if ./schoolmanagement database update; then
+    echo "  Database migrations applied."
+  elif ./schoolmanagement database ensure-created; then
+    echo "  Database ensured (no migrations found)."
+  else
+    echo "  ERROR: Failed to initialize database. Check logs above."
+  fi
   popd >/dev/null
 fi
 

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Infrastructure.Reporting;
 
@@ -8,7 +9,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/reports")]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.ReportingManagement)]
 public sealed class ReportsController(SchoolManagementDbContext db, ReportGenerator generator) : ControllerBase
 {
     [HttpGet("summary")]

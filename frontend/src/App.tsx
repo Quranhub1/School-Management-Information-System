@@ -164,6 +164,8 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     { key: 'institution-settings', label: 'Institution Settings', roles: [] },
   ]
 
+  const [rptTab, setRptTab] = useState<'cards' | 'receipts' | 'certificates'>('cards')
+
   const visibleModules = modules.filter(m => {
     if (m.key === 'administration' && a) return true
     if (m.key === 'admissions' && ad) return true
@@ -237,9 +239,18 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
           {activeModule === 'communication' && cm && <Announcements canManage={cm} />}
           {activeModule === 'inventory' && inv && <InventoryManagement canManage={inv} />}
           {activeModule === 'printers' && pr && <PrinterManagement />}
-          {activeModule === 'reports' && rp && <ReportCards canManage />}
-          {activeModule === 'reports' && rp && <Receipts canManage />}
-          {activeModule === 'reports' && rp && <CertificateManagement canManage />}
+          {activeModule === 'reports' && rp && (
+            <div>
+              <div className="library-workspace-tabs" role="tablist" aria-label="Reports sections" style={{ marginBottom: 18 }}>
+                <button role="tab" aria-selected={rptTab === 'cards'} className={rptTab === 'cards' ? 'active' : ''} onClick={() => setRptTab('cards')}>Report Cards</button>
+                <button role="tab" aria-selected={rptTab === 'receipts'} className={rptTab === 'receipts' ? 'active' : ''} onClick={() => setRptTab('receipts')}>Receipts</button>
+                <button role="tab" aria-selected={rptTab === 'certificates'} className={rptTab === 'certificates' ? 'active' : ''} onClick={() => setRptTab('certificates')}>Certificates</button>
+              </div>
+              {rptTab === 'cards' && <ReportCards canManage />}
+              {rptTab === 'receipts' && <Receipts canManage />}
+              {rptTab === 'certificates' && <CertificateManagement canManage />}
+            </div>
+          )}
           {activeModule === 'alumni' && st && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Alumni</p><h2>Alumni Management</h2></div></div><p className="empty">Alumni module is available.</p></div>}
           {activeModule === 'calendar' && ac && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Calendar</p><h2>Academic Calendar</h2></div></div><p className="empty">Calendar module is available.</p></div>}
           {activeModule === 'gate' && sr && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Access Control</p><h2>Gate Log</h2></div></div><p className="empty">Gate log module is available.</p></div>}

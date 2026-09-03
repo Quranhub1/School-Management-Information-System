@@ -5,14 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000
 export type OfflineApiOptions = RequestInit & { skipQueue?: boolean };
 
 async function getToken(): Promise<string | undefined> {
-  const session = localStorage.getItem('smis_session');
-  if (!session) return undefined;
-  try {
-    const parsed = JSON.parse(session) as { accessToken?: string };
-    return parsed.accessToken;
-  } catch {
-    return undefined;
-  }
+  return sessionStorage.getItem('smis.accessToken') ?? undefined;
 }
 
 export async function offlineRequest<T>(path: string, options: OfflineApiOptions = {}): Promise<T> {
