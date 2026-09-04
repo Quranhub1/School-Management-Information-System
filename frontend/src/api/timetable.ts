@@ -3,15 +3,27 @@ import { getAccessToken } from './auth'
 export type TimetableEntry = {
   id: string
   teachingGroupId: string
+  courseId: string
+  teacherId: string
   dayOfWeek: number
   startTime: string
   endTime: string
   room?: string
   sessionType?: string
   isActive: boolean
+  generatedAt?: string
+  generationSource?: string
 }
 
-export type CreateTimetableEntry = Omit<TimetableEntry, 'id' | 'isActive'>
+export type CreateTimetableEntry = Omit<TimetableEntry, 'id' | 'isActive' | 'generatedAt' | 'generationSource'>
+export type GenerateTimetableResult = {
+  entries: TimetableEntry[]
+  conflicts: string[]
+  warnings: string[]
+  optimizationScore: number
+  unscheduled: string[]
+  isConflictFree: boolean
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken()
@@ -28,3 +40,4 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const listTimetable = (teachingGroupId?: string) => request<TimetableEntry[]>(`/api/timetable${teachingGroupId ? `?teachingGroupId=${encodeURIComponent(teachingGroupId)}` : ''}`)
 export const createTimetableEntry = (input: CreateTimetableEntry) => request<TimetableEntry>('/api/timetable', { method: 'POST', body: JSON.stringify(input) })
 export const deactivateTimetableEntry = (id: string) => request<void>(`/api/timetable/${id}`, { method: 'DELETE' })
+export const generateTimetable = (semesterId: string, teachingGroupId?: string) => request<GenerateTimetableResult>('/api/timetable/generate', { method: 'POST', body: JSON.stringify({ semesterId, teachingGroupId, rotationIntervalMinutes: 15, generationSource: 'Manual' }) })

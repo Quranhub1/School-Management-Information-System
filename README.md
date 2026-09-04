@@ -4,9 +4,18 @@ A comprehensive, modular and LAN-first School Management Information System (SMI
 
 ## Project status
 
-**Phase 1 — Architecture, institutional model and repository foundation**
+**Phase 2 — Feature-complete core system with analytics and offline-first readiness**
 
-GitHub is the persistent source of truth. The system is being built as a production-oriented application with a configurable institutional model rather than a school-specific hard-coded schema.
+The system is feature-complete across all core domains and passes backend and frontend builds. See [PROGRESS.md](PROGRESS.md) for detailed module coverage.
+
+New capabilities in this release:
+- Intelligent timetable generation with conflict detection
+- QR-based attendance with HMAC-SHA256 signed rotating tokens
+- Digital certificates with verification hashes and revocation
+- Student 360° unified profile view
+- Analytics dashboard (examination analytics, teacher workload, administration assistant Q&A)
+- Document management with upload/archive/download/delete
+- Workflow engine with history tracking
 
 ## Technology
 
@@ -53,7 +62,7 @@ Application → Admission → Student → Enrollment → Period Registration
 - Student and guardian management
 - Academic years, periods and intakes
 - Courses and course registration
-- Attendance
+- Attendance (including QR-based attendance)
 - Theory, practical, clinical and competency-based assessment
 - Results, progression and transcripts
 - Staff and teaching allocation
@@ -61,8 +70,10 @@ Application → Admission → Student → Enrollment → Period Registration
 - Library
 - Clinical/workplace attachment
 - Graduation, certification and alumni
+- Document management
 - Communication and notifications
-- Reporting and audit
+- Reporting, analytics and dashboards
+- Workflow automation
 - Parent/guardian and student self-service portals
 
 ## Uganda alignment

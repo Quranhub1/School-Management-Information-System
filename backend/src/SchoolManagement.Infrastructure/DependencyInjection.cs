@@ -7,6 +7,7 @@ using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Alumni;
 using SchoolManagement.Application.Audit;
 using SchoolManagement.Application.Authentication;
+using SchoolManagement.Application.Attendance;
 using SchoolManagement.Application.Calendar;
 using SchoolManagement.Application.Certificates;
 using SchoolManagement.Application.HR;
@@ -17,11 +18,16 @@ using SchoolManagement.Application.Progression;
 using SchoolManagement.Application.Staff;
 using SchoolManagement.Application.StudentRecords;
 using SchoolManagement.Application.Students;
+using SchoolManagement.Infrastructure.Analytics;
+using SchoolManagement.Infrastructure.Attendance;
+using SchoolManagement.Infrastructure.Documents;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Library;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Infrastructure.Repositories;
 using SchoolManagement.Infrastructure.Reporting;
+using SchoolManagement.Infrastructure.Student360;
+using SchoolManagement.Infrastructure.Timetable;
 
 namespace SchoolManagement.Infrastructure;
 
@@ -52,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IStudentDocumentRepository, StudentDocumentRepository>();
         services.AddScoped<ICertificateRepository, CertificateRepository>();
         services.AddScoped<IPayrollRepository, PayrollRepository>();
         services.AddScoped<IAlumniRepository, AlumniRepository>();
@@ -59,6 +66,8 @@ public static class DependencyInjection
         services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
         services.AddScoped<IGateLogRepository, GateLogRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IAttendanceQrRepository, AttendanceQrRepository>();
+        services.AddScoped<AttendanceQrService>();
         services.AddScoped<IInstitutionSettingsRepository, InstitutionSettingsRepository>();
         services.AddScoped<IHrRepository, HrRepository>();
         services.AddScoped<SchoolManagement.Application.StudentRecords.IStudentRecordsRepository, StudentRecordsRepository>();
@@ -68,6 +77,12 @@ public static class DependencyInjection
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
         services.AddScoped<AdminSeeder>();
+        services.AddScoped<TimetableGeneratorService>();
+        services.AddScoped<ExaminationAnalyticsService>();
+        services.AddScoped<TeacherWorkloadService>();
+        services.AddScoped<AdministrationAssistantService>();
+        services.AddScoped<Student360Service>();
+        services.AddScoped<StudentDocumentService>();
 
         var kohaSection = configuration.GetSection("LibraryIntegrations:Koha");
         var dspaceSection = configuration.GetSection("LibraryIntegrations:DSpace");

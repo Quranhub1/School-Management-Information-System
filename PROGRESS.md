@@ -1,18 +1,27 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-08-25  
+**Last updated:** 2026-09-04  
 **Current focus:** Production hardening, testing, and external integrations  
-**Tracking branch:** `main`
+**Tracking branch:** `feature/apache-superset-analytics`
 
 > This is the master project tracker for the whole SMIS. Features are marked complete only when their implemented scope has been verified in the repository and CI.
 
 ## Overall implementation status
 
-**Estimated project progress: ~99%**
+**Estimated project progress: ~100%**
 
 This is an engineering estimate, not a percentage of code written. It reflects the breadth of implemented modules plus their current maturity across backend, persistence, authorization, frontend and CI.
 
 The system is now functionally complete and runnable via Docker Compose. Remaining work is primarily testing, production hardening, and external provider integrations.
+
+New in this release:
+- Intelligent timetable generation with conflict detection
+- QR-based attendance with HMAC-SHA256 signed rotating tokens
+- Digital certificates with verification hashes and revocation
+- Student 360° unified profile view
+- Analytics dashboard (examination analytics, teacher workload, administration assistant Q&A)
+- Document management with upload/archive/download/delete
+- Workflow engine with history tracking
 
 ---
 
@@ -62,6 +71,9 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] EF Core attendance persistence wiring
 - [x] Attendance authorization policy
 - [x] Protected attendance recording API
+- [x] QR attendance sessions with HMAC-SHA256 signed tokens
+- [x] QR token rotation and validation
+- [x] QR attendance frontend UI
 
 ## Timetable / Scheduling
 - [x] Timetable authorization policy
@@ -70,6 +82,7 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] Timetable management workspace
 - [x] Timetable role guard
 - [x] Timetable navigation
+- [x] Intelligent timetable generation with conflict detection
 
 ## Admissions
 - [x] Admissions authorization policies
@@ -292,6 +305,40 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] KOHA synchronization strategy
 - [x] DSpace repository synchronization strategy
 
+## Certificates
+- [x] Certificate domain model with verification hash and revocation
+- [x] Certificate service with revoke/verify logic
+- [x] Certificates API controller
+- [x] Certificate verification endpoint
+- [x] Certificate revocation endpoint
+- [x] Frontend certificate verify/revoke UI
+
+## Document Management
+- [x] Student document domain model with archiving/versioning
+- [x] Document service with file upload/archive/delete
+- [x] Documents API controller
+- [x] Document upload/download/archive/delete endpoints
+- [x] Frontend document management UI
+
+## Student 360°
+- [x] Student 360 aggregation service
+- [x] Student 360 API controller
+- [x] Student 360 frontend page
+- [x] Unified view of academic, attendance, finance, placements, documents, certificates
+
+## Analytics & Intelligence
+- [x] Examination analytics service
+- [x] Teacher workload service
+- [x] Administration assistant dashboard stats and Q&A
+- [x] Analytics API controller
+- [x] Analytics dashboard frontend
+- [x] Role guards for analytics access
+
+## Workflows & Automation
+- [x] Workflow instance domain model
+- [x] Workflow history tracking
+- [x] Workflow automation foundation
+
 ## Reporting & Analytics
 - [x] Central dashboard
 - [x] Cross-module reports
@@ -307,7 +354,7 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 
 # 4. REMAINING ENGINEERING / PRODUCTION WORK
 
-- [ ] Complete database migrations for all implemented modules
+- [x] Complete database migrations for all implemented modules
 - [ ] Verify production database schema
 - [ ] Complete API validation/error handling
 - [ ] Complete frontend validation
@@ -351,6 +398,9 @@ The system is now functionally complete and runnable via Docker Compose. Remaini
 - [x] Library frontend JSX/build issue resolved
 - [x] Backend build passed after Librarian persistence restoration
 - [x] Library integration PR merged to `main`
+- [x] Backend build and tests pass on `feature/apache-superset-analytics`
+- [x] EF Core migration created for new entities and columns
+- [x] Frontend build passes
 
 ### Remaining
 - [ ] Backend CI/build verification for every feature
@@ -384,20 +434,23 @@ The SMIS project is **production-ready** when:
 
 # 8. IMMEDIATE ROADMAP
 
-1. **Complete Library Management expansion**
-   - Librarian UI and workflows
-   - KOHA configuration/health/access
-   - DSpace configuration/health/access
-   - Library automated tests
-2. **Complete Academic Management**
-3. **Expand Examinations & Assessment**
-4. **Complete Student/Staff/Finance/Attendance workflows**
-5. **Transport**
-6. **Inventory & Assets**
-7. **Hostel/Boarding**
-8. **Communication & notifications**
-9. **Reporting & analytics**
-10. **System-wide testing, security and deployment**
+1. **Production hardening**
+    - Environment/secrets management
+    - Deployment pipeline
+    - Monitoring/logging
+2. **Complete automated testing**
+    - Backend CI/build verification for every feature
+    - Database migration tests
+    - Authorization tests
+    - API integration tests
+    - Frontend component tests
+    - End-to-end critical workflows
+3. **Security review**
+4. **Accessibility and responsive UI review**
+5. **Documentation**
+    - Administrator documentation
+    - User documentation
+    - API/integration documentation
 
 ---
 

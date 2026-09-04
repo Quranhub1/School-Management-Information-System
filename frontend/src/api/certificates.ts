@@ -8,8 +8,13 @@ export interface CertificateDto {
   awardType: string
   graduationDate: string
   serialNumber: string
+  verificationHash: string
   issuedAt: string
   issuedBy: string
+  isRevoked: boolean
+  revokedAt: string | null
+  revokedBy: string | null
+  revocationReason: string | null
 }
 
 export interface GenerateCertificateRequest {
@@ -18,6 +23,11 @@ export interface GenerateCertificateRequest {
   awardType: string
   graduationDate: string
   issuedBy: string
+}
+
+export interface RevokeCertificateRequest {
+  revokedBy: string
+  reason?: string
 }
 
 export interface CertificatePrintView {
@@ -42,3 +52,5 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const generateCertificate = (studentId: string, body: GenerateCertificateRequest) => request<CertificateDto>(`/api/certificates/generate/${studentId}`, { method: 'POST', body: JSON.stringify({ ...body, studentId }) })
 export const getCertificate = (id: string) => request<CertificateDto>(`/api/certificates/${id}`)
 export const printCertificate = (id: string) => request<CertificatePrintView>(`/api/certificates/${id}/print`)
+export const revokeCertificate = (id: string, body: RevokeCertificateRequest) => request<void>(`/api/certificates/${id}/revoke`, { method: 'POST', body: JSON.stringify(body) })
+export const verifyCertificate = (serialNumber: string) => request<CertificateDto>(`/api/certificates/verify/${encodeURIComponent(serialNumber)}`)

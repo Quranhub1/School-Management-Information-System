@@ -9,12 +9,14 @@ using SchoolManagement.Domain.Access;
 using SchoolManagement.Domain.Calendar;
 using SchoolManagement.Domain.Clinical;
 using SchoolManagement.Domain.Communication;
+using SchoolManagement.Domain.Documents;
 using SchoolManagement.Domain.Examinations;
 using SchoolManagement.Domain.Finance;
 using SchoolManagement.Domain.Identity;
 using SchoolManagement.Domain.Library;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Students;
+using SchoolManagement.Domain.Workflows;
 using SchoolManagement.Infrastructure.Attendance;
 using SchoolManagement.Infrastructure.Assessment;
 using SchoolManagement.Infrastructure.Admissions;
@@ -86,6 +88,10 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<LibraryLoan> LibraryLoans => Set<LibraryLoan>();
     public DbSet<Librarian> Librarians => Set<Librarian>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
+    public DbSet<AttendanceQrSession> AttendanceQrSessions => Set<AttendanceQrSession>();
+    public DbSet<StudentDocument> StudentDocuments => Set<StudentDocument>();
+    public DbSet<WorkflowInstance> WorkflowInstances => Set<WorkflowInstance>();
+    public DbSet<WorkflowHistory> WorkflowHistories => Set<WorkflowHistory>();
     public DbSet<Alumni> Alumni => Set<Alumni>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<GateLog> GateLogs => Set<GateLog>();
@@ -112,6 +118,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.ApplyConfiguration(new AdmissionDecisionConfiguration());
 
         AttendanceConfiguration.Apply(m);
+        m.ApplyConfiguration(new SchoolManagement.Infrastructure.Certificates.CertificateConfiguration());
+        m.ApplyConfiguration(new SchoolManagement.Infrastructure.Documents.StudentDocumentConfiguration());
+        m.ApplyConfiguration(new SchoolManagement.Infrastructure.Workflows.WorkflowConfiguration());
         m.ApplyConfiguration(new AssessmentPlanConfiguration());
         m.ApplyConfiguration(new StudentAssessmentConfiguration());
 
