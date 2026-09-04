@@ -36,6 +36,7 @@ import { InventoryManagement } from './components/InventoryManagement'
 import { PrinterManagement } from './components/PrinterManagement'
 import { InstitutionSettingsPage } from './components/InstitutionSettingsPage'
 import { GlobalSearch } from './components/GlobalSearch'
+import { AnalyticsDashboard } from './components/AnalyticsDashboard'
 import { StudentPortal } from './pages/StudentPortal'
 import { getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
 import './components/PrintStyles.css'
@@ -55,6 +56,7 @@ type ModuleKey =
   | 'inventory'
   | 'printers'
   | 'reports'
+  | 'analytics'
   | 'alumni'
   | 'calendar'
   | 'gate'
@@ -152,6 +154,7 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     { key: 'inventory', label: 'Inventory', roles: [] },
     { key: 'printers', label: 'Printers', roles: [] },
     { key: 'reports', label: 'Reports', roles: [] },
+    { key: 'analytics', label: 'Analytics', roles: [] },
     { key: 'alumni', label: 'Alumni', roles: [] },
     { key: 'calendar', label: 'Calendar', roles: [] },
     { key: 'gate', label: 'Gate Log', roles: [] },
@@ -183,6 +186,7 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     if (m.key === 'inventory' && inv) return true
     if (m.key === 'printers' && pr) return true
     if (m.key === 'reports' && rp) return true
+    if (m.key === 'analytics' && rp) return true
     if (m.key === 'alumni' && st) return true
     if (m.key === 'calendar' && ac) return true
     if (m.key === 'gate' && sr) return true
@@ -254,6 +258,7 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
               {rptTab === 'certificates' && <CertificateManagement canManage />}
             </div>
           )}
+          {activeModule === 'analytics' && rp && <AnalyticsDashboard />}
           {activeModule === 'alumni' && st && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Alumni</p><h2>Alumni Management</h2></div></div><p className="empty">Alumni module is available.</p></div>}
           {activeModule === 'calendar' && ac && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Calendar</p><h2>Academic Calendar</h2></div></div><p className="empty">Calendar module is available.</p></div>}
           {activeModule === 'gate' && sr && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Access Control</p><h2>Gate Log</h2></div></div><p className="empty">Gate log module is available.</p></div>}
