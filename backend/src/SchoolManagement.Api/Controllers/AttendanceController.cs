@@ -17,12 +17,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     {
         try
         {
-            var session = await service.OpenSessionAsync(
-                request.TimetableEntryId,
-                request.SessionDate,
-                request.RecordedByUserId,
-                request.Remarks,
-                cancellationToken);
+            var session = await service.OpenSessionAsync(request.TimetableEntryId, request.SessionDate, request.RecordedByUserId, request.Remarks, cancellationToken);
             return Created($"/api/attendance/sessions/{session.Id}", session);
         }
         catch (InvalidOperationException ex)
@@ -49,22 +44,14 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     }
 
     [HttpPost("sessions/{attendanceSessionId:guid}/qr-records")]
-    public async Task<IActionResult> MarkWithQr(
-        Guid attendanceSessionId,
-        MarkQrAttendanceRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> MarkWithQr(Guid attendanceSessionId, MarkQrAttendanceRequest request, CancellationToken cancellationToken)
     {
         if (!IsValidQrToken(attendanceSessionId, request.Token))
             return Unauthorized(new { message = "The attendance QR code is invalid or has expired. Scan the current code and try again." });
 
         try
         {
-            var record = await service.MarkAsync(
-                attendanceSessionId,
-                request.StudentId,
-                request.Status ?? "Present",
-                request.Remarks,
-                cancellationToken);
+            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status ?? "Present", request.Remarks, cancellationToken);
             return Created($"/api/attendance/records/{record.Id}", record);
         }
         catch (ArgumentException ex)
@@ -78,19 +65,11 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     }
 
     [HttpPost("sessions/{attendanceSessionId:guid}/records")]
-    public async Task<IActionResult> Mark(
-        Guid attendanceSessionId,
-        MarkAttendanceRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Mark(Guid attendanceSessionId, MarkAttendanceRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var record = await service.MarkAsync(
-                attendanceSessionId,
-                request.StudentId,
-                request.Status,
-                request.Remarks,
-                cancellationToken);
+            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status, request.Remarks, cancellationToken);
             return Created($"/api/attendance/records/{record.Id}", record);
         }
         catch (ArgumentException ex)
@@ -104,20 +83,15 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     }
 
     [HttpGet("students/{studentId:guid}")]
-    public async Task<IActionResult> StudentHistory(
-        Guid studentId,
-        [FromQuery] DateOnly? from,
-        [FromQuery] DateOnly? to,
-        CancellationToken cancellationToken)
-    {
-        return Ok(await service.GetStudentHistoryAsync(studentId, from, to, cancellationToken));
-    }
+    public async Task<IActionResult> StudentHistory(Guid studentId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
+        => Ok(await service.GetStudentHistoryAsync(studentId, from, to, cancellationToken));
 
     private string CreateQrToken(Guid sessionId, long slot)
     {
-        var secret = configuration["Security:AttendanceQrSecret"];
+        var secret = configuration["Security:AttendanceQrSecret"]
+            ?? Environment.GetEnvironmentVariable("SMIS_ATTENDANCE_QR_SECRET");
         if (string.IsNullOrWhiteSpace(secret))
-            throw new InvalidOperationException("Security:AttendanceQrSecret is not configured.");
+            throw new InvalidOperationException("Attendance QR security secret is not configured. Set SMIS_ATTENDANCE_QR_SECRET on the server.");
 
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
         var payload = $"SMIS-ATTENDANCE-V1|{sessionId:N}|{slot}";
@@ -126,36 +100,19 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
 
     private bool IsValidQrToken(Guid sessionId, string? suppliedToken)
     {
-        if (string.IsNullOrWhiteSpace(suppliedToken))
-            return false;
+        if (string.IsNullOrWhiteSpace(suppliedToken)) return false;
 
         var currentSlot = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / 60;
         foreach (var slot in new[] { currentSlot, currentSlot - 1 })
         {
             var expected = CreateQrToken(sessionId, slot);
-            if (CryptographicOperations.FixedTimeEquals(
-                    Encoding.UTF8.GetBytes(expected),
-                    Encoding.UTF8.GetBytes(suppliedToken.Trim().ToLowerInvariant())))
+            if (CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(suppliedToken.Trim().ToLowerInvariant())))
                 return true;
         }
-
         return false;
     }
 }
 
-public sealed record OpenAttendanceSessionRequest(
-    Guid TimetableEntryId,
-    DateOnly SessionDate,
-    Guid? RecordedByUserId,
-    string? Remarks);
-
-public sealed record MarkAttendanceRequest(
-    Guid StudentId,
-    string Status,
-    string? Remarks);
-
-public sealed record MarkQrAttendanceRequest(
-    Guid StudentId,
-    string? Status,
-    string? Remarks,
-    string Token);
+public sealed record OpenAttendanceSessionRequest(Guid TimetableEntryId, DateOnly SessionDate, Guid? RecordedByUserId, string? Remarks);
+public sealed record MarkAttendanceRequest(Guid StudentId, string Status, string? Remarks);
+public sealed record MarkQrAttendanceRequest(Guid StudentId, string? Status, string? Remarks, string Token);
