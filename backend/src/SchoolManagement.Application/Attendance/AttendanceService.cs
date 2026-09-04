@@ -3,7 +3,7 @@ using SchoolManagement.Domain.Attendance;
 
 namespace SchoolManagement.Application.Attendance;
 
-public sealed class AttendanceService(IAttendanceRepository attendance)
+public sealed class AttendanceService(SchoolManagement.Application.Abstractions.IAttendanceRepository attendance)
 {
     public async Task<AttendanceSession> OpenSessionAsync(
         Guid timetableEntryId,

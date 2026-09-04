@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<ISemesterRepository, SemesterRepository>();
         services.AddScoped<IAcademicRecordRepository, AcademicRecordRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IAssessmentRepository, AssessmentRepository>();
+        services.AddScoped<SchoolManagement.Application.Assessment.IAssessmentRepository, AssessmentRepository>();
         services.AddScoped<ICurriculumRepository, CurriculumRepository>();
         services.AddScoped<ICourseRepository, CourseRepository>();
         services.AddScoped<ICurriculumCourseRepository, CurriculumCourseRepository>();
