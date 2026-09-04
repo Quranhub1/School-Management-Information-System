@@ -16,4 +16,4 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function listApplicants(status?: string) { return request<Applicant[]>(`/api/admissions${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
 export function submitApplicant(input: Omit<Applicant, 'id'|'applicationNumber'|'status'|'appliedAt'>) { return request<Applicant>('/api/admissions', { method: 'POST', body: JSON.stringify(input) }) }
-export function updateAdmissionStatus(id: string, status: string) { return request<Applicant>(`/api/admissions/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }) }
+export function updateAdmissionStatus(id: string, status: string) { return request<Applicant>(`/api/admissions/${id}/decision`, { method: 'POST', body: JSON.stringify({ decision: status }) }) }

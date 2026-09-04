@@ -1,7 +1,7 @@
 const BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('accessToken');
+  const token = sessionStorage.getItem('smis.accessToken');
   const response = await fetch(`${BASE}${path}`, {
     ...init,
     headers: {

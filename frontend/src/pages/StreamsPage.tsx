@@ -13,7 +13,7 @@ export default function StreamsPage() {
   async function load() {
     setLoading(true)
     try {
-      const response = await fetch('/api/academic-structure/streams', { headers: { Accept: 'application/json', ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}) } })
+      const response = await fetch('/api/academic-structure/streams', { headers: { Accept: 'application/json', ...(sessionStorage.getItem('smis.accessToken') ? { Authorization: `Bearer ${sessionStorage.getItem('smis.accessToken')}` } : {}) } })
       if (!response.ok) throw new Error(`Unable to load streams (${response.status}).`)
       setStreams(await response.json() as Stream[])
       setMessage('')
@@ -30,7 +30,7 @@ export default function StreamsPage() {
     try {
       const response = await fetch('/api/academic-structure/streams', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}) },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(sessionStorage.getItem('smis.accessToken') ? { Authorization: `Bearer ${sessionStorage.getItem('smis.accessToken')}` } : {}) },
         body: JSON.stringify({ name: name.trim(), code: code.trim().toUpperCase(), isActive: true }),
       })
       if (!response.ok) throw new Error(await response.text() || `Unable to create stream (${response.status}).`)
@@ -46,7 +46,7 @@ export default function StreamsPage() {
     try {
       const response = await fetch(`/api/academic-structure/streams/${stream.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}) },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(sessionStorage.getItem('smis.accessToken') ? { Authorization: `Bearer ${sessionStorage.getItem('smis.accessToken')}` } : {}) },
         body: JSON.stringify({ name: stream.name, code: stream.code, isActive: !stream.isActive }),
       })
       if (!response.ok) throw new Error(await response.text() || `Unable to update stream (${response.status}).`)

@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/staff/payroll")]
 [Authorize(Policy = StaffPolicies.Read)]
-public sealed class PayrollController(SchoolManagementDbContext db) : ControllerBase
+public sealed class PayrollController(SchoolManagementDbContext db, IConfiguration configuration) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] Guid? staffMemberId = null, CancellationToken cancellationToken = default)
@@ -36,9 +36,9 @@ public sealed class PayrollController(SchoolManagementDbContext db) : Controller
         {
             var existing = await db.PayrollRecords.AnyAsync(x => x.StaffMemberId == s.Id && x.Month == request.Month && x.Year == request.Year, cancellationToken);
             if (existing) continue;
-            var basicSalary = 50000m;
-            var allowances = 10000m;
-            var deductions = 5000m;
+            var basicSalary = configuration.GetValue<decimal>("PayrollDefaults:BasicSalary", 50000m);
+            var allowances = configuration.GetValue<decimal>("PayrollDefaults:Allowances", 10000m);
+            var deductions = configuration.GetValue<decimal>("PayrollDefaults:Deductions", 5000m);
             var record = new Domain.Staff.PayrollRecord
             {
                 StaffMemberId = s.Id,
