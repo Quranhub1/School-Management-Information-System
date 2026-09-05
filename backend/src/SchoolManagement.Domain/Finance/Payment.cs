@@ -12,6 +12,8 @@ public sealed class Payment
     public string? Reference { get; init; }
     public DateTimeOffset PaidAt { get; init; } = DateTimeOffset.UtcNow;
     public ICollection<PaymentAllocation> Allocations { get; init; } = new List<PaymentAllocation>();
-    public decimal AllocatedAmount => Allocations.Sum(x => x.AllocatedAmount);
+
+    // Legacy payments pre-dating PaymentAllocation remain fully allocated when their invoice link exists.
+    public decimal AllocatedAmount => Allocations.Count > 0 ? Allocations.Sum(x => x.AllocatedAmount) : (StudentInvoiceId.HasValue ? Amount : 0m);
     public decimal UnallocatedAmount => Math.Max(0, Amount - AllocatedAmount);
 }
