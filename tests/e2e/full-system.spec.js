@@ -26,7 +26,7 @@ test.describe('SMIS full-system smoke tests', () => {
     const payload = await response.json();
     expect(payload.accessToken).toBeTruthy();
     expect(payload.username).toBe('admin');
-    expect(payload.roles).toEqual(expect.arrayContaining(['System Administrator']));
+    expect(payload.roles).toEqual(expect.arrayContaining(['SystemAdministrator']));
   });
 
   test('frontend loads and administrator can sign in', async ({ page }) => {
