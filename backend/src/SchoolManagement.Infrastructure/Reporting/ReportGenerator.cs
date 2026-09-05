@@ -52,7 +52,7 @@ public sealed class ReportGenerator(SchoolManagementDbContext db)
             where payment.Id == paymentId
             select new FeeReceiptDto(
                 payment.Id,
-                payment.StudentInvoiceId,
+                payment.StudentInvoiceId!.Value,
                 invoice.InvoiceNumber,
                 invoice.StudentId,
                 payment.ReceiptNumber,
