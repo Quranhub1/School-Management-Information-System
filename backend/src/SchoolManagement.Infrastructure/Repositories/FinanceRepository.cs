@@ -7,15 +7,24 @@ namespace SchoolManagement.Infrastructure.Repositories;
 
 public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRepository, SchoolManagement.Application.Finance.IFinanceRepository
 {
-    public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => db.StudentInvoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
-    public async Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) => await db.StudentInvoices.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
-    public async Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) => await db.StudentInvoices.AsNoTracking().OrderBy(x => x.StudentId).ThenBy(x => x.IssuedAt).ToListAsync(cancellationToken);
-    public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken) => db.FeeStructures.AsNoTracking().FirstOrDefaultAsync(x => x.Id == feeStructureId && x.IsActive, cancellationToken);
+    public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) =>
+        db.StudentInvoices.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
+
+    public async Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) =>
+        await db.StudentInvoices.AsNoTracking().Include(x => x.Lines).Where(x => x.StudentId == studentId).OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) =>
+        await db.StudentInvoices.AsNoTracking().Include(x => x.Lines).OrderBy(x => x.StudentId).ThenBy(x => x.IssuedAt).ToListAsync(cancellationToken);
+
+    public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken) =>
+        db.FeeStructures.AsNoTracking().Include(x => x.Items.OrderBy(i => i.SortOrder)).FirstOrDefaultAsync(x => x.Id == feeStructureId && x.IsActive, cancellationToken);
+
     public Task<bool> StudentExistsAsync(Guid studentId, CancellationToken cancellationToken) => db.Students.AsNoTracking().AnyAsync(x => x.Id == studentId, cancellationToken);
     public Task<bool> InvoiceNumberExistsAsync(string invoiceNumber, CancellationToken cancellationToken) => db.StudentInvoices.AsNoTracking().AnyAsync(x => x.InvoiceNumber == invoiceNumber, cancellationToken);
     public Task<bool> ReceiptExistsAsync(string receiptNumber, CancellationToken cancellationToken) => db.Payments.AsNoTracking().AnyAsync(x => x.ReceiptNumber == receiptNumber, cancellationToken);
     public Task<bool> JournalEntryNumberExistsAsync(string entryNumber, CancellationToken cancellationToken) => db.JournalEntries.AsNoTracking().AnyAsync(x => x.EntryNumber == entryNumber, cancellationToken);
     public Task<Account?> GetActiveAccountByCodeAsync(string code, CancellationToken cancellationToken) => db.Accounts.AsNoTracking().FirstOrDefaultAsync(x => x.Code == code && x.IsActive, cancellationToken);
+    public Task<Account?> GetActiveAccountByIdAsync(Guid accountId, CancellationToken cancellationToken) => db.Accounts.AsNoTracking().FirstOrDefaultAsync(x => x.Id == accountId && x.IsActive, cancellationToken);
     public async Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => await db.StudentInvoices.AddAsync(invoice, cancellationToken);
     public async Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => await db.Payments.AddAsync(payment, cancellationToken);
     public async Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken) => await db.JournalEntries.AddAsync(journalEntry, cancellationToken);
@@ -40,5 +49,6 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
         if (to.HasValue) query = query.Where(p => p.PaidAt.Date <= to.Value.ToDateTime(TimeOnly.MaxValue));
         return await query.OrderByDescending(p => p.PaidAt).ToListAsync(cancellationToken);
     }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
 }
