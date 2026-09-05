@@ -66,6 +66,8 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<FeeStructure> FeeStructures => Set<FeeStructure>();
     public DbSet<StudentInvoice> StudentInvoices => Set<StudentInvoice>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
+    public DbSet<PaymentLedgerEntry> PaymentLedgerEntries => Set<PaymentLedgerEntry>();
     public DbSet<ChartOfAccounts> ChartOfAccounts => Set<ChartOfAccounts>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
@@ -114,6 +116,46 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         AttendanceConfiguration.Apply(m);
         m.ApplyConfiguration(new AssessmentPlanConfiguration());
         m.ApplyConfiguration(new StudentAssessmentConfiguration());
+
+        m.Entity<Payment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.ReceiptNumber).IsUnique();
+            e.Property(x => x.ReceiptNumber).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Currency).HasMaxLength(10).IsRequired();
+            e.Property(x => x.PaymentMethod).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Reference).HasMaxLength(100);
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        m.Entity<PaymentAllocation>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.PaymentId, x.StudentInvoiceId }).IsUnique();
+            e.HasOne<Payment>().WithMany(x => x.Allocations).HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.AllocatedAmount).HasPrecision(18, 2);
+            e.Property(x => x.Currency).HasMaxLength(10).IsRequired();
+            e.Property(x => x.Notes).HasMaxLength(500);
+        });
+
+        m.Entity<PaymentLedgerEntry>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.StudentId, x.EntryDate });
+            e.HasIndex(x => x.PaymentId);
+            e.HasIndex(x => x.StudentInvoiceId);
+            e.Property(x => x.EntryType).HasMaxLength(30).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(500).IsRequired();
+            e.Property(x => x.Currency).HasMaxLength(10).IsRequired();
+            e.Property(x => x.Reference).HasMaxLength(100);
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Payment>().WithMany().HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<PaymentAllocation>().WithMany().HasForeignKey(x => x.PaymentAllocationId).OnDelete(DeleteBehavior.Restrict);
+        });
 
         m.Entity<LibraryBook>(e =>
         {
