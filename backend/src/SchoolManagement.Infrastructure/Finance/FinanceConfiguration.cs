@@ -14,6 +14,25 @@ public sealed class FinanceConfiguration : IEntityTypeConfiguration<FeeStructure
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         builder.HasIndex(x => new { x.ProgrammeId, x.AcademicYearId, x.Name }).IsUnique();
         builder.HasIndex(x => new { x.AcademicYearId, x.IsActive });
+        builder.HasMany(x => x.Items)
+            .WithOne()
+            .HasForeignKey(x => x.FeeStructureId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public sealed class FeeStructureItemConfiguration : IEntityTypeConfiguration<FeeStructureItem>
+{
+    public void Configure(EntityTypeBuilder<FeeStructureItem> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Code).HasMaxLength(40).IsRequired();
+        builder.Property(x => x.Name).HasMaxLength(160).IsRequired();
+        builder.Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.HasIndex(x => new { x.FeeStructureId, x.Code }).IsUnique();
+        builder.HasIndex(x => new { x.FeeStructureId, x.SortOrder });
+        builder.HasOne<Account>().WithMany().HasForeignKey(x => x.IncomeAccountId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 
