@@ -7,4 +7,5 @@ public static class FinanceAccountCodes
     public const string Bank = "1020";
     public const string MobileMoney = "1030";
     public const string TuitionRevenue = "4100";
+    public const string DiscountAllowed = "4200";
 }

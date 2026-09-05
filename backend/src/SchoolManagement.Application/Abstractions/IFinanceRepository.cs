@@ -19,10 +19,13 @@ public interface IFinanceRepository
     Task<Account?> GetActiveAccountByIdAsync(Guid accountId, CancellationToken cancellationToken);
     Task<JournalEntry?> GetPostedJournalEntryAsync(Guid journalEntryId, CancellationToken cancellationToken);
     Task<bool> HasReversalAsync(Guid journalEntryId, CancellationToken cancellationToken);
+    Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid discountId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken);
     Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken);
     Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken);
     Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken);
     Task AddPaymentLedgerEntryAsync(PaymentLedgerEntry entry, CancellationToken cancellationToken);
+    Task AddInvoiceDiscountAsync(InvoiceDiscount discount, CancellationToken cancellationToken);
     Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken);
     Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken cancellationToken);
     Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
