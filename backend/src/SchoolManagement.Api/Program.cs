@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure;
+using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Persistence;
 using System.Text;
@@ -64,7 +65,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(AdmissionsPolicies.Management, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsManagement));
     options.AddPolicy(AdmissionsPolicies.Read, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsManagement));
     options.AddPolicy(TimetablePolicies.Management, p => p.RequireRole("System Administrator", "Registrar", "Academic Registrar", "Lecturer"));
-    options.AddPolicy(StaffPolicies.Read, p => p.RequireRole("System Administrator", "Registrar", "Academic Registrar", "HR Manager", "Lecturer"));
+    options.AddPolicy(StaffPolicies.Read, p => p.RequireRole("System Administrator", "Registrar", "Academic Registrar", "Lecturer"));
     options.AddPolicy(StaffPolicies.Management, p => p.RequireRole("System Administrator", "HR Manager", "Registrar"));
     options.AddPolicy(LibraryPolicies.Read, p => p.RequireRole("System Administrator", "Librarian", "Registrar", "Academic Registrar", "Lecturer"));
     options.AddPolicy(LibraryPolicies.Management, p => p.RequireRole("System Administrator", "Librarian"));
@@ -80,6 +81,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
+    await scope.ServiceProvider.GetRequiredService<FinanceAccountSeeder>().SeedAsync();
 }
 
 if (app.Environment.IsDevelopment())
