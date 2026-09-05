@@ -21,7 +21,15 @@ public sealed class FinanceService(IFinanceRepository finance)
 
         var fee = await finance.GetActiveFeeStructureAsync(feeStructureId, cancellationToken)
             ?? throw new ArgumentException("Active fee structure was not found.");
-        if (fee.TotalAmount <= 0)
+
+        var amount = fee.TotalAmount;
+        if (fee.Items.Count > 0)
+        {
+            fee.RecalculateTotal();
+            amount = fee.TotalAmount;
+        }
+
+        if (amount <= 0)
             throw new ArgumentException("Fee structure amount must be greater than zero.");
 
         var invoice = new StudentInvoice
@@ -29,11 +37,25 @@ public sealed class FinanceService(IFinanceRepository finance)
             StudentId = studentId,
             FeeStructureId = fee.Id,
             InvoiceNumber = normalizedInvoiceNumber,
-            Amount = fee.TotalAmount,
+            Amount = amount,
             PaidAmount = 0,
             Currency = fee.Currency,
             Status = "Unpaid"
         };
+
+        foreach (var item in fee.Items.Where(x => !x.IsOptional).OrderBy(x => x.SortOrder))
+        {
+            invoice.Lines.Add(new StudentInvoiceLine
+            {
+                StudentInvoiceId = invoice.Id,
+                Code = item.Code,
+                Description = item.Name,
+                Amount = item.Amount,
+                Currency = item.Currency,
+                IncomeAccountId = item.IncomeAccountId,
+                SortOrder = item.SortOrder
+            });
+        }
 
         await finance.AddInvoiceAsync(invoice, cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
@@ -52,7 +74,7 @@ public sealed class FinanceService(IFinanceRepository finance)
 
         var invoice = await finance.GetInvoiceAsync(invoiceId, cancellationToken)
             ?? throw new ArgumentException("Invoice was not found.");
-        var outstanding = invoice.Amount - invoice.PaidAmount;
+        var outstanding = invoice.OutstandingAmount;
         if (outstanding <= 0)
             throw new InvalidOperationException("Invoice is already fully paid.");
         if (amount > outstanding)
@@ -70,6 +92,13 @@ public sealed class FinanceService(IFinanceRepository finance)
             PaymentMethod = paymentMethod.Trim(),
             Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim()
         };
+
+        payment.Allocations.Add(new PaymentAllocation
+        {
+            PaymentId = payment.Id,
+            StudentInvoiceId = invoice.Id,
+            Amount = amount
+        });
 
         await finance.AddPaymentAsync(payment, cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
