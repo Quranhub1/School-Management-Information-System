@@ -17,6 +17,7 @@ using SchoolManagement.Application.Progression;
 using SchoolManagement.Application.Staff;
 using SchoolManagement.Application.StudentRecords;
 using SchoolManagement.Application.Students;
+using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Library;
 using SchoolManagement.Infrastructure.Persistence;
@@ -68,6 +69,7 @@ public static class DependencyInjection
         services.AddScoped<DatabaseHealthCheck>();
         services.AddSingleton<PasswordHasher>();
         services.AddScoped<AdminSeeder>();
+        services.AddScoped<FinanceAccountSeeder>();
 
         var kohaSection = configuration.GetSection("LibraryIntegrations:Koha");
         var dspaceSection = configuration.GetSection("LibraryIntegrations:DSpace");
