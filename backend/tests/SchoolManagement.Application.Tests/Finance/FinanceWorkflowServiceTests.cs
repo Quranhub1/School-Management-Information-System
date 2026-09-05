@@ -42,6 +42,9 @@ public sealed class FinanceWorkflowServiceTests
         public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
 
+        public Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
+
         public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken) =>
             Task.FromResult<FeeStructure?>(null);
 
@@ -54,9 +57,21 @@ public sealed class FinanceWorkflowServiceTests
         public Task<bool> ReceiptExistsAsync(string receiptNumber, CancellationToken cancellationToken) =>
             Task.FromResult(false);
 
+        public Task<Account?> GetActiveAccountByCodeAsync(string code, CancellationToken cancellationToken) =>
+            Task.FromResult<Account?>(null);
+
         public Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(
+            DateOnly? from,
+            DateOnly? to,
+            Guid? accountId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<JournalEntry>>([]);
 
         public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<Payment>>([]);
