@@ -1,4 +1,4 @@
-const { test, expect } = require('playwright/test');
+import { test, expect } from 'playwright/test';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:5080';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:4173';
