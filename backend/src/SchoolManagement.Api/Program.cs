@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure;
+using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Persistence;
 using System.Text;
@@ -80,6 +81,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
+    await scope.ServiceProvider.GetRequiredService<FinanceAccountSeeder>().SeedAsync();
 }
 
 if (app.Environment.IsDevelopment())

@@ -10,4 +10,5 @@ public sealed class JournalEntryLine
     public decimal Credit { get; set; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
     public JournalEntry? JournalEntry { get; init; }
+    public Account? Account { get; init; }
 }

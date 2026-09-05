@@ -199,7 +199,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         {
             e.HasKey(x => x.Id);
             e.HasOne(x => x.JournalEntry).WithMany(j => j.Lines).HasForeignKey(x => x.JournalEntryId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Account).WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
             e.Property(x => x.Description).HasMaxLength(500);
         });
 

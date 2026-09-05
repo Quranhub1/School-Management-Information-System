@@ -46,3 +46,17 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasIndex(x => new { x.StudentInvoiceId, x.PaidAt });
     }
 }
+
+public sealed class JournalEntryConfiguration : IEntityTypeConfiguration<JournalEntry>
+{
+    public void Configure(EntityTypeBuilder<JournalEntry> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.HasIndex(x => x.EntryNumber).IsUnique();
+        builder.Property(x => x.EntryNumber).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.SourceType).HasMaxLength(80);
+        builder.HasIndex(x => new { x.SourceType, x.SourceId });
+        builder.HasIndex(x => x.ReversalOfJournalEntryId).IsUnique();
+    }
+}
