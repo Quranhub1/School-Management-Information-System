@@ -42,7 +42,8 @@ public static class DependencyInjection
         services.AddScoped<IAcademicRecordRepository, AcademicRecordRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IAssessmentRepository, AssessmentRepository>();
         services.AddScoped<SchoolManagement.Application.Assessment.IAssessmentRepository>(sp =>
-            sp.GetRequiredService<AssessmentRepository>());
+            (SchoolManagement.Application.Assessment.IAssessmentRepository)
+            sp.GetRequiredService<SchoolManagement.Application.Abstractions.IAssessmentRepository>());
         services.AddScoped<ICurriculumRepository, CurriculumRepository>();
         services.AddScoped<ICourseRepository, CourseRepository>();
         services.AddScoped<ICurriculumCourseRepository, CurriculumCourseRepository>();
@@ -53,7 +54,8 @@ public static class DependencyInjection
         services.AddScoped<IAdmissionRepository, AdmissionRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IFinanceRepository, FinanceRepository>();
         services.AddScoped<SchoolManagement.Application.Finance.IFinanceRepository>(sp =>
-            sp.GetRequiredService<FinanceRepository>());
+            (SchoolManagement.Application.Finance.IFinanceRepository)
+            sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
