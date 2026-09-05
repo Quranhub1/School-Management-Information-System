@@ -46,13 +46,15 @@ public sealed class ReportGenerator(SchoolManagementDbContext db)
 
     public async Task<FeeReceiptDto?> GenerateFeeReceiptAsync(Guid paymentId, CancellationToken cancellationToken = default)
     {
+        // Fee receipts require an invoice-backed payment. On-account/unallocated
+        // payments are intentionally excluded because they do not yet have an invoice number.
         var receipt = await (
             from payment in db.Payments.AsNoTracking()
             join invoice in db.StudentInvoices.AsNoTracking() on payment.StudentInvoiceId equals invoice.Id
-            where payment.Id == paymentId
+            where payment.Id == paymentId && payment.StudentInvoiceId.HasValue
             select new FeeReceiptDto(
                 payment.Id,
-                payment.StudentInvoiceId,
+                payment.StudentInvoiceId!.Value,
                 invoice.InvoiceNumber,
                 invoice.StudentId,
                 payment.ReceiptNumber,
@@ -98,31 +100,8 @@ public sealed class ReportGenerator(SchoolManagementDbContext db)
                 s.Id,
                 s.SessionDate,
                 s.Status.ToString(),
-                records.Count(r => r.AttendanceSessionId == s.Id))).ToList());
-    }
-
-    public async Task<FinancialStatementDto> GenerateFinancialStatementAsync(string? period, CancellationToken cancellationToken = default)
-    {
-        var invoices = await db.StudentInvoices.AsNoTracking().ToListAsync(cancellationToken);
-        var bills = await db.Bills.AsNoTracking().ToListAsync(cancellationToken);
-        var totalRevenue = invoices.Sum(i => i.Amount);
-        var totalCollected = invoices.Sum(i => i.PaidAmount);
-        var totalExpenses = bills.Sum(b => b.TotalAmount);
-
-        return new FinancialStatementDto(
-            period ?? DateTime.UtcNow.ToString("yyyy-MM"),
-            totalRevenue,
-            totalCollected,
-            totalExpenses,
-            totalRevenue - totalCollected,
-            totalCollected - totalExpenses,
-            new List<FinancialStatementDto.PlEntry>
-            {
-                new("Tuition Fees", totalRevenue),
-                new("Other Income", 0m),
-                new("Total Revenue", totalRevenue),
-                new("Cost of Operations", totalExpenses),
-                new("Net Surplus", totalCollected - totalExpenses)
-            });
+                records.Count(r => r.AttendanceSessionId == s.Id),
+                records.Count(r => r.AttendanceSessionId == s.Id && r.Status.ToString() == "Present")
+            )).ToList());
     }
 }
