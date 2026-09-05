@@ -8,7 +8,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
-public sealed class FinanceController(FinanceWorkflowService finance, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId, CancellationToken cancellationToken)
@@ -25,6 +25,48 @@ public sealed class FinanceController(FinanceWorkflowService finance, FinanceRep
     public async Task<IActionResult> CreateInvoice(CreateInvoiceRequest request, CancellationToken cancellationToken)
     {
         try { var invoice = await finance.CreateInvoiceAsync(request.StudentId, request.FeeStructureId, request.InvoiceNumber, cancellationToken); return Created($"/api/finance/invoices/{invoice.Id}", invoice); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpGet("invoices/{invoiceId:guid}/discounts")]
+    public async Task<IActionResult> GetDiscounts(Guid invoiceId, CancellationToken cancellationToken) =>
+        Ok(await discounts.GetAsync(invoiceId, cancellationToken));
+
+    [HttpPost("invoices/{invoiceId:guid}/discounts")]
+    public async Task<IActionResult> RequestDiscount(Guid invoiceId, RequestDiscountRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var requestedBy = User.Identity?.Name;
+            return Ok(await discounts.RequestAsync(invoiceId, request.DiscountType, request.Percentage, request.Amount, request.Reason, requestedBy, cancellationToken));
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpPost("discounts/{discountId:guid}/approve")]
+    public async Task<IActionResult> ApproveDiscount(Guid discountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var approvedBy = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(approvedBy)) return Unauthorized(new { message = "Authenticated user identity is required for approval." });
+            return Ok(await discounts.ApproveAsync(discountId, approvedBy, cancellationToken));
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpPost("discounts/{discountId:guid}/reject")]
+    public async Task<IActionResult> RejectDiscount(Guid discountId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var rejectedBy = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(rejectedBy)) return Unauthorized(new { message = "Authenticated user identity is required for rejection." });
+            return Ok(await discounts.RejectAsync(discountId, rejectedBy, cancellationToken));
+        }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
@@ -87,6 +129,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, FinanceRep
         Ok(await reports.GetStudentReceivablesAsync(cancellationToken));
 
     public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
+    public sealed record RequestDiscountRequest(string DiscountType, decimal? Percentage, decimal? Amount, string Reason);
     public sealed record RecordPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Reference);
     public sealed record RecordUnallocatedPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string Currency = "UGX", string? Reference = null);
     public sealed record AllocatePaymentRequest(IReadOnlyCollection<PaymentAllocationRequest> Allocations);
