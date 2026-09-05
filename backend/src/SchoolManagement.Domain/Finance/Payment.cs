@@ -3,6 +3,7 @@ namespace SchoolManagement.Domain.Finance;
 public sealed class Payment
 {
     public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid StudentId { get; init; }
     public Guid? StudentInvoiceId { get; init; }
     public required string ReceiptNumber { get; init; }
     public decimal Amount { get; init; }
