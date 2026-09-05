@@ -4,9 +4,11 @@ A comprehensive, modular and LAN-first School Management Information System (SMI
 
 ## Project status
 
-**Phase 1 — Architecture, institutional model and repository foundation**
+**Active development — architecture, institutional model, core workflows and production foundations are being implemented incrementally.**
 
 GitHub is the persistent source of truth. The system is being built as a production-oriented application with a configurable institutional model rather than a school-specific hard-coded schema.
+
+See [`progress.md`](progress.md) for the current implementation tracker, covered capabilities and remaining work.
 
 ## Technology
 
@@ -65,6 +67,12 @@ Application → Admission → Student → Enrollment → Period Registration
 - Reporting and audit
 - Parent/guardian and student self-service portals
 
+## Finance accounting
+
+The Finance domain is being upgraded toward a proper double-entry accounting model rather than treating fees as isolated transactions. The current implementation connects student billing and payments to the general ledger, including chart-of-accounts foundations, automatic invoice/payment journal posting and core ledger reports.
+
+The accounting design is being strengthened incrementally with validation, posting controls, reversals, auditability, reconciliation and financial statements. See [`progress.md`](progress.md) for the exact status.
+
 ## Uganda alignment
 
 The institutional model is designed around Ugandan higher-education and TVET realities, including configurable programmes, approved curricula, admissions, competency-based education/training where applicable, practical/workplace learning and assessment. It is not hard-coded to one regulator or one institution.
@@ -73,6 +81,7 @@ See [`docs/UGANDA_INSTITUTIONAL_MODEL.md`](docs/UGANDA_INSTITUTIONAL_MODEL.md) f
 
 ## Documentation
 
+- [Implementation progress](progress.md)
 - [System architecture](docs/ARCHITECTURE.md)
 - [Requirements](docs/REQUIREMENTS.md)
 - [Uganda institutional data model](docs/UGANDA_INSTITUTIONAL_MODEL.md)
@@ -85,10 +94,11 @@ See [`docs/UGANDA_INSTITUTIONAL_MODEL.md`](docs/UGANDA_INSTITUTIONAL_MODEL.md) f
 ## Development workflow
 
 1. Define requirements.
-2. Record architecture decisions.
+2. Record architecture decisions where needed.
 3. Create a feature/fix branch.
 4. Implement the change.
 5. Add/update automated tests.
-6. Run GitHub Actions CI.
-7. Review the change.
-8. Merge only verified work into `main`.
+6. Update the implementation tracker and relevant documentation.
+7. Run GitHub Actions CI.
+8. Review the change.
+9. Merge only verified work into `main`.
