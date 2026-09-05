@@ -14,6 +14,7 @@ public sealed class StudentInvoice
     public DateTimeOffset IssuedAt { get; init; } = DateTimeOffset.UtcNow;
     public ICollection<StudentInvoiceLine> Lines { get; set; } = new List<StudentInvoiceLine>();
     public ICollection<InvoiceDiscount> Discounts { get; set; } = new List<InvoiceDiscount>();
+    public ICollection<InvoiceInstallment> Installments { get; set; } = new List<InvoiceInstallment>();
 
     public decimal NetAmount => Math.Max(0, Amount - DiscountAmount);
     public decimal OutstandingAmount => Math.Max(0, NetAmount - PaidAmount);

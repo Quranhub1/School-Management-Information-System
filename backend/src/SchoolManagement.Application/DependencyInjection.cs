@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<FinanceService>();
         services.AddScoped<FinanceWorkflowService>();
         services.AddScoped<InvoiceDiscountService>();
+        services.AddScoped<InvoiceInstallmentService>();
         services.AddScoped<FinanceReportService>();
         services.AddScoped<JournalReversalService>();
         services.AddScoped<FeeService>();

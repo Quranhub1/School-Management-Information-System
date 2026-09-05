@@ -71,9 +71,9 @@ Application → Admission → Student → Enrollment → Period Registration
 
 The Finance domain is being upgraded toward ERP-grade double-entry accounting, using mature ERP accounting patterns as design references while keeping the SMIS architecture and institutional workflows intact. The implemented foundation connects student billing and payments to the General Ledger through a chart of accounts, automatic invoice/payment posting, balanced journal validation, duplicate-posting protection and core ledger/report foundations.
 
-The current Phase 1 work also introduces controlled journal reversals and source/reversal metadata. A reversal creates a new balanced journal entry and preserves the original posted entry rather than editing historical ledger data.
+The current receivables workflow includes controlled journal reversals, source/reversal metadata, itemized fee billing, payment allocation/FIFO allocation, unallocated student payments, a student Payment Ledger, and approved discount/waiver workflows. Invoice installment schedules now support reusable percentage- or amount-based payment schedules with ordered due dates, outstanding/overdue tracking and automatic application of invoice payments across installment balances.
 
-The remaining Finance roadmap includes persistence-level posted-entry immutability, dedicated audit events, itemized fee structures, installments, discounts/waivers, student charges, payment allocation and a student Payment Ledger, credit notes/refunds, bank reconciliation, accounting dimensions and complete financial statements.
+The remaining Finance roadmap includes persistence-level posted-entry immutability, dedicated audit events, student charges, credit notes/refunds, bank reconciliation, accounting dimensions and complete financial statements.
 
 See [`PROGRESS.md`](PROGRESS.md) for the exact verified Finance status and roadmap.
 

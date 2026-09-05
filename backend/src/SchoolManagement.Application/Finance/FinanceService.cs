@@ -61,7 +61,8 @@ public sealed class FinanceService(IFinanceRepository finance)
         var paymentAccount = await GetAccountAsync(ResolvePaymentAccountCode(paymentMethod), cancellationToken);
         var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
         invoice.PaidAmount += amount;
-        invoice.Status = invoice.PaidAmount >= invoice.Amount ? "Paid" : "PartiallyPaid";
+        invoice.Status = invoice.PaidAmount >= invoice.NetAmount ? "Paid" : "PartiallyPaid";
+        ApplyPaymentToInstallments(invoice, amount);
         var payment = new Payment { StudentId = invoice.StudentId, StudentInvoiceId = invoice.Id, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = invoice.Currency, PaymentMethod = paymentMethod.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
         var allocation = new PaymentAllocation { PaymentId = payment.Id, StudentInvoiceId = invoice.Id, AllocatedAmount = amount, Currency = invoice.Currency, Notes = "Automatic allocation on receipt" };
         payment.Allocations.Add(allocation);
@@ -121,7 +122,8 @@ public sealed class FinanceService(IFinanceRepository finance)
         {
             var invoice = invoices[index++];
             invoice.PaidAmount += request.Amount;
-            invoice.Status = invoice.PaidAmount >= invoice.Amount ? "Paid" : "PartiallyPaid";
+            invoice.Status = invoice.PaidAmount >= invoice.NetAmount ? "Paid" : "PartiallyPaid";
+            ApplyPaymentToInstallments(invoice, request.Amount);
             var allocation = new PaymentAllocation { PaymentId = payment.Id, StudentInvoiceId = invoice.Id, AllocatedAmount = request.Amount, Currency = payment.Currency, Notes = string.IsNullOrWhiteSpace(request.Notes) ? "Manual allocation" : request.Notes.Trim() };
             payment.Allocations.Add(allocation);
             await finance.AddPaymentAllocationAsync(allocation, cancellationToken);
@@ -153,6 +155,25 @@ public sealed class FinanceService(IFinanceRepository finance)
 
     public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) =>
         finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken);
+
+    private static void ApplyPaymentToInstallments(StudentInvoice invoice, decimal amount)
+    {
+        if (invoice.Installments.Count == 0) return;
+        var remaining = amount;
+        foreach (var installment in invoice.Installments.OrderBy(x => x.Sequence))
+        {
+            if (remaining <= 0) break;
+            var allocation = Math.Min(remaining, installment.OutstandingAmount);
+            if (allocation <= 0) continue;
+            installment.PaidAmount += allocation;
+            installment.Status = installment.PaidAmount >= installment.Amount
+                ? "Paid"
+                : installment.PaidAmount > 0
+                    ? "PartiallyPaid"
+                    : "Pending";
+            remaining -= allocation;
+        }
+    }
 
     private async Task AddPostedJournalEntryAsync(JournalEntry entry, CancellationToken cancellationToken)
     {

@@ -5,36 +5,69 @@ using Xunit;
 
 namespace SchoolManagement.Application.Tests.Finance;
 
-public sealed class FinanceWorkflowServiceTests
+public sealed class InvoiceInstallmentServiceTests
 {
     [Fact]
-    public async Task RecordPaymentAsync_RejectsNonPositiveAmount()
+    public async Task CreateScheduleAsync_PercentageScheduleTotalsInvoiceOutstanding()
     {
-        var service = CreateService();
-        await Assert.ThrowsAsync<ArgumentException>(() => service.RecordPaymentAsync(Guid.NewGuid(), "RC-001", 0m, "Cash"));
+        var invoice = CreateInvoice(100000m);
+        var repository = new InMemoryFinanceRepository(invoice);
+        var service = new InvoiceInstallmentService(repository);
+
+        var result = await service.CreateScheduleAsync(invoice.Id,
+        [
+            new(1, new DateOnly(2026, 10, 1), 33.33m, null),
+            new(2, new DateOnly(2026, 11, 1), 33.33m, null),
+            new(3, new DateOnly(2026, 12, 1), 33.34m, null)
+        ], CancellationToken.None);
+
+        Assert.Equal(3, result.Count);
+        Assert.Equal(100000m, result.Sum(x => x.Amount));
+        Assert.Equal(33330m, result[0].Amount);
+        Assert.Equal(33340m, result[2].Amount);
     }
 
     [Fact]
-    public async Task RecordPaymentAsync_RejectsMissingPaymentMethod()
+    public async Task CreateScheduleAsync_RejectsMixedAmountAndPercentageTerms()
     {
-        var service = CreateService();
-        await Assert.ThrowsAsync<ArgumentException>(() => service.RecordPaymentAsync(Guid.NewGuid(), "RC-002", 100m, "   "));
+        var invoice = CreateInvoice(100000m);
+        var service = new InvoiceInstallmentService(new InMemoryFinanceRepository(invoice));
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateScheduleAsync(invoice.Id,
+        [
+            new(1, new DateOnly(2026, 10, 1), 50m, null),
+            new(2, new DateOnly(2026, 11, 1), null, 50000m)
+        ], CancellationToken.None));
     }
 
     [Fact]
-    public void Payment_UnallocatedAmountTracksAllocations()
+    public async Task CreateScheduleAsync_RejectsScheduleThatDoesNotTotalOutstanding()
     {
-        var payment = new Payment { StudentId = Guid.NewGuid(), ReceiptNumber = "RC-003", Amount = 100000m, PaymentMethod = "Cash" };
-        payment.Allocations.Add(new PaymentAllocation { PaymentId = payment.Id, StudentInvoiceId = Guid.NewGuid(), AllocatedAmount = 60000m });
-        Assert.Equal(60000m, payment.AllocatedAmount);
-        Assert.Equal(40000m, payment.UnallocatedAmount);
+        var invoice = CreateInvoice(100000m);
+        var service = new InvoiceInstallmentService(new InMemoryFinanceRepository(invoice));
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateScheduleAsync(invoice.Id,
+        [
+            new(1, new DateOnly(2026, 10, 1), null, 60000m),
+            new(2, new DateOnly(2026, 11, 1), null, 30000m)
+        ], CancellationToken.None));
     }
 
-    private static FinanceWorkflowService CreateService() => new(new FinanceService(new InMemoryFinanceRepository()));
-
-    private sealed class InMemoryFinanceRepository : global::SchoolManagement.Application.Finance.IFinanceRepository
+    private static StudentInvoice CreateInvoice(decimal amount) => new()
     {
-        public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<StudentInvoice?>(null);
+        StudentId = Guid.NewGuid(),
+        InvoiceNumber = "INV-TEST",
+        Amount = amount,
+        PaidAmount = 0,
+        Currency = "UGX",
+        Status = "Unpaid"
+    };
+
+    private sealed class InMemoryFinanceRepository(StudentInvoice invoice) : SchoolManagement.Application.Abstractions.IFinanceRepository
+    {
+        private readonly List<InvoiceInstallment> stored = [];
+
+        public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult(invoiceId == invoice.Id ? invoice : null);
         public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
         public Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
         public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken) => Task.FromResult<FeeStructure?>(null);
@@ -51,8 +84,8 @@ public sealed class FinanceWorkflowServiceTests
         public Task<bool> HasReversalAsync(Guid journalEntryId, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid discountId, CancellationToken cancellationToken) => Task.FromResult<InvoiceDiscount?>(null);
         public Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InvoiceDiscount>>([]);
-        public Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InvoiceInstallment>>([]);
-        public Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InvoiceInstallment>>(stored.Where(x => x.StudentInvoiceId == invoiceId).ToArray());
+        public Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken) { stored.Add(installment); return Task.CompletedTask; }
         public Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken) => Task.CompletedTask;
