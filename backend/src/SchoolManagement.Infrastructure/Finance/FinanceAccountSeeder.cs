@@ -28,7 +28,8 @@ public sealed class FinanceAccountSeeder(SchoolManagementDbContext db)
             (FinanceAccountCodes.Bank, "Bank Account", "Asset"),
             (FinanceAccountCodes.MobileMoney, "Mobile Money", "Asset"),
             (FinanceAccountCodes.StudentReceivables, "Student Receivables", "Asset"),
-            (FinanceAccountCodes.TuitionRevenue, "Tuition and Fee Revenue", "Revenue")
+            (FinanceAccountCodes.TuitionRevenue, "Tuition and Fee Revenue", "Revenue"),
+            (FinanceAccountCodes.DiscountAllowed, "Discounts and Waivers Allowed", "Expense")
         };
 
         foreach (var item in accounts)
