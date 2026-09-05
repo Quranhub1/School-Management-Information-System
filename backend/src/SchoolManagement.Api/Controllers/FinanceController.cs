@@ -8,7 +8,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
-public sealed class FinanceController(FinanceWorkflowService finance, FinanceReportService reports) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId, CancellationToken cancellationToken)
@@ -33,6 +33,21 @@ public sealed class FinanceController(FinanceWorkflowService finance, FinanceRep
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
+    [HttpPost("journal-entries/{journalEntryId:guid}/reverse")]
+    public async Task<IActionResult> ReverseJournalEntry(Guid journalEntryId, ReverseJournalEntryRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var performedBy = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(performedBy))
+                return Unauthorized(new { message = "Authenticated user identity is required for a reversal." });
+
+            return Ok(await reversals.ReverseAsync(journalEntryId, request.Reason, performedBy, cancellationToken));
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
     [HttpGet("reports/general-ledger")]
     public async Task<IActionResult> GeneralLedger([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? accountId, CancellationToken cancellationToken) =>
         Ok(await reports.GetGeneralLedgerAsync(from, to, accountId, cancellationToken));
@@ -47,4 +62,5 @@ public sealed class FinanceController(FinanceWorkflowService finance, FinanceRep
 
     public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
     public sealed record RecordPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Reference);
+    public sealed record ReverseJournalEntryRequest(string Reason);
 }
