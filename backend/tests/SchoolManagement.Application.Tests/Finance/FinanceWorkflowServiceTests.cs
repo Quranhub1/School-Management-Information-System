@@ -49,10 +49,13 @@ public sealed class FinanceWorkflowServiceTests
         public Task<Account?> GetActiveAccountByIdAsync(Guid accountId, CancellationToken cancellationToken) => Task.FromResult<Account?>(null);
         public Task<JournalEntry?> GetPostedJournalEntryAsync(Guid journalEntryId, CancellationToken cancellationToken) => Task.FromResult<JournalEntry?>(null);
         public Task<bool> HasReversalAsync(Guid journalEntryId, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid discountId, CancellationToken cancellationToken) => Task.FromResult<InvoiceDiscount?>(null);
+        public Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InvoiceDiscount>>([]);
         public Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddPaymentLedgerEntryAsync(PaymentLedgerEntry entry, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task AddInvoiceDiscountAsync(InvoiceDiscount discount, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<JournalEntry>>([]);
         public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>([]);
