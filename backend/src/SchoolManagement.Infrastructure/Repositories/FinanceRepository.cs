@@ -18,6 +18,7 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
 
     public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken) =>
         db.FeeStructures.AsNoTracking()
+            .Include(x => x.Items.OrderBy(i => i.SortOrder))
             .FirstOrDefaultAsync(x => x.Id == feeStructureId && x.IsActive, cancellationToken);
 
     public Task<bool> StudentExistsAsync(Guid studentId, CancellationToken cancellationToken) =>
