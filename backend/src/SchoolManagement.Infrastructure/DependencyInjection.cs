@@ -51,6 +51,9 @@ public static class DependencyInjection
         services.AddScoped<IStudentPromotionRepository, StudentPromotionRepository>();
         services.AddScoped<ISemesterProgressionRepository, SemesterProgressionRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IAttendanceRepository, AttendanceRepository>();
+        services.AddScoped<SchoolManagement.Application.Attendance.IAttendanceRepository>(sp =>
+            (SchoolManagement.Application.Attendance.IAttendanceRepository)
+            sp.GetRequiredService<SchoolManagement.Application.Abstractions.IAttendanceRepository>());
         services.AddScoped<IAdmissionRepository, AdmissionRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IFinanceRepository, FinanceRepository>();
         services.AddScoped<SchoolManagement.Application.Finance.IFinanceRepository>(sp =>
