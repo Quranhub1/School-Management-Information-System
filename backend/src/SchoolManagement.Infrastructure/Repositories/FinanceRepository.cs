@@ -22,6 +22,7 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
     public Task<bool> StudentExistsAsync(Guid studentId, CancellationToken cancellationToken) => db.Students.AsNoTracking().AnyAsync(x => x.Id == studentId, cancellationToken);
     public Task<bool> InvoiceNumberExistsAsync(string invoiceNumber, CancellationToken cancellationToken) => db.StudentInvoices.AsNoTracking().AnyAsync(x => x.InvoiceNumber == invoiceNumber, cancellationToken);
     public Task<bool> ReceiptExistsAsync(string receiptNumber, CancellationToken cancellationToken) => db.Payments.AsNoTracking().AnyAsync(x => x.ReceiptNumber == receiptNumber, cancellationToken);
+    public Task<bool> JournalEntryNumberExistsAsync(string entryNumber, CancellationToken cancellationToken) => db.JournalEntries.AsNoTracking().AnyAsync(x => x.EntryNumber == entryNumber, cancellationToken);
     public Task<Account?> GetActiveAccountByCodeAsync(string code, CancellationToken cancellationToken) => db.Accounts.AsNoTracking().FirstOrDefaultAsync(x => x.Code == code && x.IsActive, cancellationToken);
     public async Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => await db.StudentInvoices.AddAsync(invoice, cancellationToken);
     public async Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => await db.Payments.AddAsync(payment, cancellationToken);
