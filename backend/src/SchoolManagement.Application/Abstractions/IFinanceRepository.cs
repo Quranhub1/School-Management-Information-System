@@ -6,6 +6,7 @@ public interface IFinanceRepository
 {
     Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken);
     Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken);
     Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken);
     Task<bool> StudentExistsAsync(Guid studentId, CancellationToken cancellationToken);
     Task<bool> InvoiceNumberExistsAsync(string invoiceNumber, CancellationToken cancellationToken);
@@ -14,6 +15,7 @@ public interface IFinanceRepository
     Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken);
     Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken);
     Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken);
+    Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken cancellationToken);
     Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
