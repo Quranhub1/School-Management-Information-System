@@ -1,8 +1,8 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-09-05  
+**Last updated:** 2026-09-06  
 **Current focus:** Finance accounting integrity and ERP-grade receivables workflows  
-**Tracking branch:** `main`
+**Tracking branch:** `feature/finance-installments`
 
 > Master project tracker. A feature is complete only when its implemented scope is verified in the repository and CI. A model, placeholder endpoint or UI mockup alone does not make a workflow complete.
 
@@ -21,6 +21,14 @@
 - [x] Reversal entries preserve the original posted entry
 - [x] Source-document metadata on invoice/payment journal entries
 - [x] Reversal audit metadata (source entry, reason and performing user)
+- [x] Itemized invoice fee lines
+- [x] Payment allocation and FIFO allocation
+- [x] Unallocated student payments / advances
+- [x] Student Payment Ledger
+- [x] Discount and waiver request/approval/rejection workflow
+- [x] Percentage- and amount-based invoice installment schedules
+- [x] Installment due dates, outstanding and overdue tracking
+- [x] Invoice payments automatically applied across installment balances
 
 ## Finance — Phase 1: Accounting Integrity
 - [x] Central journal-entry validation
@@ -33,20 +41,20 @@
 - [ ] Automated persistence tests for immutability and reversal
 
 ## Finance — Phase 2: Student Billing
-- [ ] Fee categories
-- [ ] Itemized fee structures
-- [ ] Fee items
-- [ ] Installments / fee schedules
-- [ ] Discounts
-- [ ] Waivers
+- [x] Fee categories
+- [x] Itemized fee structures
+- [x] Fee items
+- [x] Installments / fee schedules
+- [x] Discounts
+- [x] Waivers
 - [ ] Student charges
 
 ## Finance — Phase 3: Receivables & Payment Ledger
-- [ ] Payment allocation
-- [ ] Partial payment allocation across invoice balances
-- [ ] Multi-invoice payment allocation
-- [ ] Unallocated payments / advances
-- [ ] Student payment ledger
+- [x] Payment allocation
+- [x] Partial payment allocation across invoice balances
+- [x] Multi-invoice payment allocation
+- [x] Unallocated payments / advances
+- [x] Student payment ledger
 - [ ] Receivables ageing
 - [ ] Receivables control-account reconciliation
 
@@ -77,9 +85,9 @@ The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, 
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Finish Finance Phase 1 with persistence-level immutability and dedicated audit events.
-2. Implement itemized student billing, schedules, discounts and waivers.
-3. Implement payment allocation and the student Payment Ledger.
+1. Complete Finance Phase 1 persistence-level immutability and dedicated audit events.
+2. Implement student charges.
+3. Add receivables ageing and control-account reconciliation.
 4. Implement credit notes, refunds and accounting corrections.
 5. Add accounting dimensions, bank reconciliation and complete financial statements.
 6. Continue system-wide tests, security, deployment and integration hardening.
