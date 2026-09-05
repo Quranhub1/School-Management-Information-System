@@ -79,6 +79,7 @@ public static class DependencyInjection
         services.AddSingleton<PasswordHasher>();
         services.AddScoped<AdminSeeder>();
         services.AddScoped<FinanceAccountSeeder>();
+        services.AddScoped<SchoolManagement.Application.Finance.StudentChargeService>();
 
         var kohaSection = configuration.GetSection("LibraryIntegrations:Koha");
         var dspaceSection = configuration.GetSection("LibraryIntegrations:DSpace");

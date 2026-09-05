@@ -1,3 +1,5 @@
+using SchoolManagement.Domain.Finance;
+
 namespace SchoolManagement.Domain.Students;
 
 public sealed class Student
@@ -15,4 +17,5 @@ public sealed class Student
     public string Status { get; set; } = "Active";
     public Guid? AdmissionId { get; init; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+    public ICollection<StudentCharge> FinanceCharges { get; set; } = new List<StudentCharge>();
 }
