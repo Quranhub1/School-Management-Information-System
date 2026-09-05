@@ -4,11 +4,11 @@ A comprehensive, modular and LAN-first School Management Information System (SMI
 
 ## Project status
 
-**Active development — architecture, institutional model, core workflows and production foundations are being implemented incrementally.**
+**Active development — core platform foundations are in place, while major business workflows are being hardened and expanded incrementally.**
 
 GitHub is the persistent source of truth. The system is being built as a production-oriented application with a configurable institutional model rather than a school-specific hard-coded schema.
 
-See [`progress.md`](progress.md) for the current implementation tracker, covered capabilities and remaining work.
+See [`PROGRESS.md`](PROGRESS.md) for the authoritative implementation tracker, verified capabilities and remaining work.
 
 ## Technology
 
@@ -69,9 +69,13 @@ Application → Admission → Student → Enrollment → Period Registration
 
 ## Finance accounting
 
-The Finance domain is being upgraded toward a proper double-entry accounting model rather than treating fees as isolated transactions. The current implementation connects student billing and payments to the general ledger, including chart-of-accounts foundations, automatic invoice/payment journal posting and core ledger reports.
+The Finance domain is being upgraded toward ERP-grade double-entry accounting, using mature ERP accounting patterns as design references while keeping the SMIS architecture and institutional workflows intact. The implemented foundation connects student billing and payments to the General Ledger through a chart of accounts, automatic invoice/payment posting, balanced journal validation, duplicate-posting protection and core ledger/report foundations.
 
-The accounting design is being strengthened incrementally with validation, posting controls, reversals, auditability, reconciliation and financial statements. See [`progress.md`](progress.md) for the exact status.
+The current Phase 1 work also introduces controlled journal reversals and source/reversal metadata. A reversal creates a new balanced journal entry and preserves the original posted entry rather than editing historical ledger data.
+
+The remaining Finance roadmap includes persistence-level posted-entry immutability, dedicated audit events, itemized fee structures, installments, discounts/waivers, student charges, payment allocation and a student Payment Ledger, credit notes/refunds, bank reconciliation, accounting dimensions and complete financial statements.
+
+See [`PROGRESS.md`](PROGRESS.md) for the exact verified Finance status and roadmap.
 
 ## Uganda alignment
 
@@ -81,7 +85,7 @@ See [`docs/UGANDA_INSTITUTIONAL_MODEL.md`](docs/UGANDA_INSTITUTIONAL_MODEL.md) f
 
 ## Documentation
 
-- [Implementation progress](progress.md)
+- [Implementation progress](PROGRESS.md)
 - [System architecture](docs/ARCHITECTURE.md)
 - [Requirements](docs/REQUIREMENTS.md)
 - [Uganda institutional data model](docs/UGANDA_INSTITUTIONAL_MODEL.md)
@@ -95,10 +99,10 @@ See [`docs/UGANDA_INSTITUTIONAL_MODEL.md`](docs/UGANDA_INSTITUTIONAL_MODEL.md) f
 
 1. Define requirements.
 2. Record architecture decisions where needed.
-3. Create a feature/fix branch.
+3. Create a feature/fix branch from the current verified baseline.
 4. Implement the change.
 5. Add/update automated tests.
-6. Update the implementation tracker and relevant documentation.
+6. Update `README.md`, `PROGRESS.md` and relevant documentation.
 7. Run GitHub Actions CI.
 8. Review the change.
 9. Merge only verified work into `main`.
