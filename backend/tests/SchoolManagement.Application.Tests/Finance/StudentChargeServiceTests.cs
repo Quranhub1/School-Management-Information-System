@@ -51,7 +51,7 @@ public sealed class StudentChargeServiceTests
         await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(Guid.NewGuid(), "LibraryFine", "Lost book", 1000m, "UGX", "admin"));
     }
 
-    private sealed class InMemoryFinanceRepository(Guid studentId) : IFinanceRepository
+    private sealed class InMemoryFinanceRepository(Guid studentId) : SchoolManagement.Application.Abstractions.IFinanceRepository
     {
         public List<StudentCharge> Charges { get; } = [];
         public List<JournalEntry> JournalEntries { get; } = [];
