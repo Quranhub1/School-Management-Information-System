@@ -63,7 +63,7 @@ public sealed class InvoiceInstallmentServiceTests
         Status = "Unpaid"
     };
 
-    private sealed class InMemoryFinanceRepository(StudentInvoice invoice) : IFinanceRepository
+    private sealed class InMemoryFinanceRepository(StudentInvoice invoice) : SchoolManagement.Application.Abstractions.IFinanceRepository
     {
         private readonly List<InvoiceInstallment> stored = [];
 
