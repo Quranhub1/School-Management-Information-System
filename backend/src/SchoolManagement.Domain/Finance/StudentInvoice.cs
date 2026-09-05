@@ -11,4 +11,7 @@ public sealed class StudentInvoice
     public string Currency { get; init; } = "UGX";
     public required string Status { get; set; }
     public DateTimeOffset IssuedAt { get; init; } = DateTimeOffset.UtcNow;
+    public ICollection<StudentInvoiceLine> Lines { get; set; } = new List<StudentInvoiceLine>();
+
+    public decimal OutstandingAmount => Math.Max(0, Amount - PaidAmount);
 }
