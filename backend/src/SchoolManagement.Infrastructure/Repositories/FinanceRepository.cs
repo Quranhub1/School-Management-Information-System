@@ -8,13 +8,13 @@ namespace SchoolManagement.Infrastructure.Repositories;
 public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRepository, SchoolManagement.Application.Finance.IFinanceRepository
 {
     public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) =>
-        db.StudentInvoices.Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
+        db.StudentInvoices.Include(x => x.Lines).Include(x => x.Discounts).FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
 
     public async Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) =>
-        await db.StudentInvoices.AsNoTracking().Include(x => x.Lines).Where(x => x.StudentId == studentId).OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
+        await db.StudentInvoices.AsNoTracking().Include(x => x.Lines).Include(x => x.Discounts).Where(x => x.StudentId == studentId).OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) =>
-        await db.StudentInvoices.AsNoTracking().Include(x => x.Lines).OrderBy(x => x.StudentId).ThenBy(x => x.IssuedAt).ToListAsync(cancellationToken);
+        await db.StudentInvoices.AsNoTracking().Include(x => x.Lines).Include(x => x.Discounts).OrderBy(x => x.StudentId).ThenBy(x => x.IssuedAt).ToListAsync(cancellationToken);
 
     public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken) =>
         db.FeeStructures.AsNoTracking().Include(x => x.Items.OrderBy(i => i.SortOrder)).FirstOrDefaultAsync(x => x.Id == feeStructureId && x.IsActive, cancellationToken);
@@ -31,7 +31,7 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
 
     public async Task<IReadOnlyList<StudentInvoice>> GetOutstandingInvoicesAsync(Guid studentId, string currency, CancellationToken cancellationToken) =>
         await db.StudentInvoices.AsNoTracking()
-            .Where(x => x.StudentId == studentId && x.Currency == currency && x.PaidAmount < x.Amount)
+            .Where(x => x.StudentId == studentId && x.Currency == currency && x.PaidAmount < x.NetAmount)
             .OrderBy(x => x.IssuedAt)
             .ThenBy(x => x.InvoiceNumber)
             .ToListAsync(cancellationToken);
@@ -43,10 +43,17 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
             .ThenBy(x => x.Id)
             .ToListAsync(cancellationToken);
 
+    public Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid discountId, CancellationToken cancellationToken) =>
+        db.Set<InvoiceDiscount>().FirstOrDefaultAsync(x => x.Id == discountId, cancellationToken);
+
+    public async Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken) =>
+        await db.Set<InvoiceDiscount>().AsNoTracking().Where(x => x.StudentInvoiceId == invoiceId).OrderBy(x => x.RequestedAt).ToListAsync(cancellationToken);
+
     public async Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => await db.StudentInvoices.AddAsync(invoice, cancellationToken);
     public async Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => await db.Payments.AddAsync(payment, cancellationToken);
     public async Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken) => await db.PaymentAllocations.AddAsync(allocation, cancellationToken);
     public async Task AddPaymentLedgerEntryAsync(PaymentLedgerEntry entry, CancellationToken cancellationToken) => await db.PaymentLedgerEntries.AddAsync(entry, cancellationToken);
+    public async Task AddInvoiceDiscountAsync(InvoiceDiscount discount, CancellationToken cancellationToken) => await db.Set<InvoiceDiscount>().AddAsync(discount, cancellationToken);
     public async Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken) => await db.JournalEntries.AddAsync(journalEntry, cancellationToken);
     public Task<JournalEntry?> GetPostedJournalEntryAsync(Guid journalEntryId, CancellationToken cancellationToken) => db.JournalEntries.AsNoTracking().Include(x => x.Lines).FirstOrDefaultAsync(x => x.Id == journalEntryId && x.Status == "Posted", cancellationToken);
     public Task<bool> HasReversalAsync(Guid journalEntryId, CancellationToken cancellationToken) => db.JournalEntries.AsNoTracking().AnyAsync(x => x.ReversalOfJournalEntryId == journalEntryId, cancellationToken);
