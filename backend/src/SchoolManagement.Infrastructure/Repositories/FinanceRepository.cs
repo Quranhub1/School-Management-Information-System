@@ -50,9 +50,9 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
         await db.Set<InvoiceDiscount>().AsNoTracking().Where(x => x.StudentInvoiceId == invoiceId).OrderBy(x => x.RequestedAt).ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken) =>
-        await db.InvoiceInstallments.AsNoTracking().Where(x => x.StudentInvoiceId == invoiceId).OrderBy(x => x.Sequence).ToListAsync(cancellationToken);
+        await db.Set<InvoiceInstallment>().AsNoTracking().Where(x => x.StudentInvoiceId == invoiceId).OrderBy(x => x.Sequence).ToListAsync(cancellationToken);
 
-    public async Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken) => await db.InvoiceInstallments.AddAsync(installment, cancellationToken);
+    public async Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken) => await db.Set<InvoiceInstallment>().AddAsync(installment, cancellationToken);
     public async Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => await db.StudentInvoices.AddAsync(invoice, cancellationToken);
     public async Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => await db.Payments.AddAsync(payment, cancellationToken);
     public async Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken) => await db.PaymentAllocations.AddAsync(allocation, cancellationToken);
