@@ -47,18 +47,17 @@ public sealed class JournalEntryValidatorTests
     [Fact]
     public void Validate_requires_posted_metadata_for_posted_entry()
     {
-        var entry = CreateEntry(100m, 100m);
-        entry.PostedBy = null;
+        var entry = CreateEntry(100m, 100m, postedBy: null);
 
         Assert.Throws<InvalidOperationException>(() => JournalEntryValidator.Validate(entry));
     }
 
-    private static JournalEntry CreateEntry(decimal debit, decimal credit) => new()
+    private static JournalEntry CreateEntry(decimal debit, decimal credit, string? postedBy = "Test") => new()
     {
         EntryNumber = "TEST-001",
         Status = "Posted",
         PostedAt = DateTimeOffset.UtcNow,
-        PostedBy = "Test",
+        PostedBy = postedBy,
         Lines =
         [
             new JournalEntryLine
