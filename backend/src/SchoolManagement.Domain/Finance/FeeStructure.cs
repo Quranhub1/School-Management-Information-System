@@ -6,7 +6,7 @@ public sealed class FeeStructure
     public Guid ProgrammeId { get; init; }
     public Guid AcademicYearId { get; init; }
     public required string Name { get; init; }
-    public decimal TotalAmount { get; private set; }
+    public decimal TotalAmount { get; set; }
     public string Currency { get; init; } = "UGX";
     public bool IsActive { get; set; } = true;
     public ICollection<FeeStructureItem> Items { get; set; } = new List<FeeStructureItem>();
