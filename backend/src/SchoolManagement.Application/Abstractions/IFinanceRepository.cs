@@ -21,6 +21,8 @@ public interface IFinanceRepository
     Task<bool> HasReversalAsync(Guid journalEntryId, CancellationToken cancellationToken);
     Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid discountId, CancellationToken cancellationToken);
     Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken);
+    Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken);
     Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken);
     Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken);
     Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken);
