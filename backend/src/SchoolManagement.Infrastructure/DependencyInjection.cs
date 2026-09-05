@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<ISemesterRepository, SemesterRepository>();
         services.AddScoped<IAcademicRecordRepository, AcademicRecordRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IAssessmentRepository, AssessmentRepository>();
+        services.AddScoped<SchoolManagement.Application.Assessment.IAssessmentRepository, AssessmentRepository>();
         services.AddScoped<ICurriculumRepository, CurriculumRepository>();
         services.AddScoped<ICourseRepository, CourseRepository>();
         services.AddScoped<ICurriculumCourseRepository, CurriculumCourseRepository>();
@@ -47,8 +48,10 @@ public static class DependencyInjection
         services.AddScoped<IStudentPromotionRepository, StudentPromotionRepository>();
         services.AddScoped<ISemesterProgressionRepository, SemesterProgressionRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IAttendanceRepository, AttendanceRepository>();
+        services.AddScoped<SchoolManagement.Application.Attendance.IAttendanceRepository, AttendanceRepository>();
         services.AddScoped<IAdmissionRepository, AdmissionRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IFinanceRepository, FinanceRepository>();
+        services.AddScoped<SchoolManagement.Application.Finance.IFinanceRepository, FinanceRepository>();
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
