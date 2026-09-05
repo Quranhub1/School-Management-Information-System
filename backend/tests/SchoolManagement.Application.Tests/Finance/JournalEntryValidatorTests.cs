@@ -1,5 +1,6 @@
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Domain.Finance;
+using Xunit;
 
 namespace SchoolManagement.Application.Tests.Finance;
 
