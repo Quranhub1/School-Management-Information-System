@@ -8,7 +8,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
-public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId, CancellationToken cancellationToken)
@@ -66,6 +66,26 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             var rejectedBy = User.Identity?.Name;
             if (string.IsNullOrWhiteSpace(rejectedBy)) return Unauthorized(new { message = "Authenticated user identity is required for rejection." });
             return Ok(await discounts.RejectAsync(discountId, rejectedBy, cancellationToken));
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpGet("invoices/{invoiceId:guid}/installments")]
+    public async Task<IActionResult> GetInstallments(Guid invoiceId, CancellationToken cancellationToken) =>
+        Ok(await installments.GetAsync(invoiceId, cancellationToken));
+
+    [HttpGet("invoices/{invoiceId:guid}/installments/overdue")]
+    public async Task<IActionResult> GetOverdueInstallments(Guid invoiceId, [FromQuery] DateOnly? asOf, CancellationToken cancellationToken) =>
+        Ok(await installments.GetOverdueAsync(invoiceId, asOf ?? DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken));
+
+    [HttpPost("invoices/{invoiceId:guid}/installments")]
+    public async Task<IActionResult> CreateInstallmentSchedule(Guid invoiceId, CreateInstallmentScheduleRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await installments.CreateScheduleAsync(invoiceId, request.Installments, cancellationToken);
+            return Ok(result);
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
@@ -130,6 +150,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
     public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
     public sealed record RequestDiscountRequest(string DiscountType, decimal? Percentage, decimal? Amount, string Reason);
+    public sealed record CreateInstallmentScheduleRequest(IReadOnlyCollection<InvoiceInstallmentService.InstallmentRequest> Installments);
     public sealed record RecordPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Reference);
     public sealed record RecordUnallocatedPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string Currency = "UGX", string? Reference = null);
     public sealed record AllocatePaymentRequest(IReadOnlyCollection<PaymentAllocationRequest> Allocations);
