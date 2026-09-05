@@ -29,11 +29,18 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
     public Task<bool> ReceiptExistsAsync(string receiptNumber, CancellationToken cancellationToken) =>
         db.Payments.AsNoTracking().AnyAsync(x => x.ReceiptNumber == receiptNumber, cancellationToken);
 
+    public Task<Account?> GetActiveAccountByCodeAsync(string code, CancellationToken cancellationToken) =>
+        db.Accounts.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Code == code && x.IsActive, cancellationToken);
+
     public async Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) =>
         await db.StudentInvoices.AddAsync(invoice, cancellationToken);
 
     public async Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) =>
         await db.Payments.AddAsync(payment, cancellationToken);
+
+    public async Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken) =>
+        await db.JournalEntries.AddAsync(journalEntry, cancellationToken);
 
     public async Task<IReadOnlyList<Payment>> GetPaymentsAsync(
         string? receiptNumber = null,
