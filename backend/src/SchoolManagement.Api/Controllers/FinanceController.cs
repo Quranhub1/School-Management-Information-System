@@ -8,7 +8,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
-public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId, CancellationToken cancellationToken)
@@ -49,6 +49,36 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             var performedBy = User.Identity?.Name;
             if (string.IsNullOrWhiteSpace(performedBy)) return Unauthorized(new { message = "Authenticated user identity is required for a charge void." });
             return Ok(await charges.VoidAsync(chargeId, request.Reason, performedBy, cancellationToken));
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpGet("invoices/{invoiceId:guid}/credit-notes")]
+    public async Task<IActionResult> GetCreditNotes(Guid invoiceId, CancellationToken cancellationToken) =>
+        Ok(await adjustments.GetCreditNotesAsync(invoiceId, cancellationToken));
+
+    [HttpPost("invoices/{invoiceId:guid}/credit-notes")]
+    public async Task<IActionResult> CreateCreditNote(Guid invoiceId, CreateCreditNoteRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var issuedBy = User.Identity?.Name;
+            var creditNote = await adjustments.CreateCreditNoteAsync(invoiceId, request.Amount, request.Reason, issuedBy, cancellationToken);
+            return Created($"/api/finance/invoices/{invoiceId}/credit-notes/{creditNote.Id}", creditNote);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpPost("payments/{paymentId:guid}/refund")]
+    public async Task<IActionResult> RefundPayment(Guid paymentId, CreateRefundRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var refundedBy = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(refundedBy)) return Unauthorized(new { message = "Authenticated user identity is required for a refund." });
+            return Ok(await adjustments.CreateRefundAsync(paymentId, request.Amount, request.RefundMethod, request.Reason, request.Reference, refundedBy, request.CreditNoteId, cancellationToken));
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
@@ -184,6 +214,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
     public sealed record CreateStudentChargeRequest(string ChargeType, string Description, decimal Amount, string Currency = "UGX");
     public sealed record VoidStudentChargeRequest(string Reason);
+    public sealed record CreateCreditNoteRequest(decimal Amount, string Reason);
+    public sealed record CreateRefundRequest(decimal Amount, string RefundMethod, string Reason, string? Reference = null, Guid? CreditNoteId = null);
     public sealed record RequestDiscountRequest(string DiscountType, decimal? Percentage, decimal? Amount, string Reason);
     public sealed record CreateInstallmentScheduleRequest(IReadOnlyCollection<InvoiceInstallmentService.InstallmentRequest> Installments);
     public sealed record RecordPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Reference);
