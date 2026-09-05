@@ -22,6 +22,8 @@ public interface IFinanceRepository
     Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid discountId, CancellationToken cancellationToken);
     Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken);
     Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid studentId, CancellationToken cancellationToken);
+    Task<StudentCharge?> GetStudentChargeAsync(Guid chargeId, CancellationToken cancellationToken);
     Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken);
     Task AddStudentChargeAsync(StudentCharge charge, CancellationToken cancellationToken);
     Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken);
