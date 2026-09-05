@@ -8,7 +8,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
-public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId, CancellationToken cancellationToken)
@@ -20,6 +20,39 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     [HttpGet("students/{studentId:guid}/ledger")]
     public async Task<IActionResult> GetStudentLedger(Guid studentId, CancellationToken cancellationToken) =>
         Ok(await finance.GetStudentLedgerAsync(studentId, cancellationToken));
+
+    [HttpGet("students/{studentId:guid}/charges")]
+    public async Task<IActionResult> GetStudentCharges(Guid studentId, CancellationToken cancellationToken)
+    {
+        try { return Ok(await charges.GetStudentChargesAsync(studentId, cancellationToken)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPost("students/{studentId:guid}/charges")]
+    public async Task<IActionResult> CreateStudentCharge(Guid studentId, CreateStudentChargeRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var createdBy = User.Identity?.Name;
+            var charge = await charges.CreateAsync(studentId, request.ChargeType, request.Description, request.Amount, request.Currency, createdBy, cancellationToken);
+            return Created($"/api/finance/students/{studentId}/charges/{charge.Id}", charge);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpPost("charges/{chargeId:guid}/void")]
+    public async Task<IActionResult> VoidStudentCharge(Guid chargeId, VoidStudentChargeRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var performedBy = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(performedBy)) return Unauthorized(new { message = "Authenticated user identity is required for a charge void." });
+            return Ok(await charges.VoidAsync(chargeId, request.Reason, performedBy, cancellationToken));
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
 
     [HttpPost("invoices")]
     public async Task<IActionResult> CreateInvoice(CreateInvoiceRequest request, CancellationToken cancellationToken)
@@ -149,6 +182,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         Ok(await reports.GetStudentReceivablesAsync(cancellationToken));
 
     public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
+    public sealed record CreateStudentChargeRequest(string ChargeType, string Description, decimal Amount, string Currency = "UGX");
+    public sealed record VoidStudentChargeRequest(string Reason);
     public sealed record RequestDiscountRequest(string DiscountType, decimal? Percentage, decimal? Amount, string Reason);
     public sealed record CreateInstallmentScheduleRequest(IReadOnlyCollection<InvoiceInstallmentService.InstallmentRequest> Installments);
     public sealed record RecordPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Reference);
