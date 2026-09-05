@@ -24,6 +24,9 @@ public sealed class FinanceService(IFinanceRepository finance)
         if (fee.TotalAmount <= 0)
             throw new ArgumentException("Fee structure amount must be greater than zero.");
 
+        var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
+        var revenueAccount = await GetAccountAsync(FinanceAccountCodes.TuitionRevenue, cancellationToken);
+
         var invoice = new StudentInvoice
         {
             StudentId = studentId,
@@ -36,6 +39,12 @@ public sealed class FinanceService(IFinanceRepository finance)
         };
 
         await finance.AddInvoiceAsync(invoice, cancellationToken);
+        await finance.AddJournalEntryAsync(CreateJournalEntry(
+            entryNumber: $"INV-{normalizedInvoiceNumber}",
+            description: $"Student invoice {normalizedInvoiceNumber}",
+            amount: invoice.Amount,
+            debitAccountId: receivableAccount.Id,
+            creditAccountId: revenueAccount.Id), cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
         return invoice;
     }
@@ -58,6 +67,10 @@ public sealed class FinanceService(IFinanceRepository finance)
         if (amount > outstanding)
             throw new ArgumentException($"Payment exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
 
+        var paymentAccountCode = ResolvePaymentAccountCode(paymentMethod);
+        var paymentAccount = await GetAccountAsync(paymentAccountCode, cancellationToken);
+        var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
+
         invoice.PaidAmount += amount;
         invoice.Status = invoice.PaidAmount >= invoice.Amount ? "Paid" : "PartiallyPaid";
 
@@ -72,10 +85,68 @@ public sealed class FinanceService(IFinanceRepository finance)
         };
 
         await finance.AddPaymentAsync(payment, cancellationToken);
+        await finance.AddJournalEntryAsync(CreateJournalEntry(
+            entryNumber: $"PAY-{normalizedReceipt}",
+            description: $"Payment receipt {normalizedReceipt} for invoice {invoice.InvoiceNumber}",
+            amount: payment.Amount,
+            debitAccountId: paymentAccount.Id,
+            creditAccountId: receivableAccount.Id), cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
         return payment;
     }
 
     public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) =>
         finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken);
+
+    private async Task<Account> GetAccountAsync(string code, CancellationToken cancellationToken) =>
+        await finance.GetActiveAccountByCodeAsync(code, cancellationToken)
+            ?? throw new InvalidOperationException($"Required finance account '{code}' is not configured.");
+
+    private static string ResolvePaymentAccountCode(string paymentMethod)
+    {
+        var method = paymentMethod.Trim().ToLowerInvariant();
+
+        if (method is "cash" or "cash payment")
+            return FinanceAccountCodes.Cash;
+
+        if (method.Contains("mobile") || method.Contains("momo") || method.Contains("mtn") || method.Contains("airtel"))
+            return FinanceAccountCodes.MobileMoney;
+
+        if (method.Contains("bank") || method.Contains("transfer") || method.Contains("card") || method.Contains("cheque") || method.Contains("check"))
+            return FinanceAccountCodes.Bank;
+
+        throw new ArgumentException("Unsupported payment method. Use Cash, Bank/Transfer/Card/Cheque, or Mobile Money.");
+    }
+
+    private static JournalEntry CreateJournalEntry(
+        string entryNumber,
+        string description,
+        decimal amount,
+        Guid debitAccountId,
+        Guid creditAccountId) =>
+        new()
+        {
+            EntryNumber = entryNumber,
+            Description = description,
+            Status = "Posted",
+            PostedAt = DateTimeOffset.UtcNow,
+            PostedBy = "FinanceService",
+            Lines =
+            [
+                new JournalEntryLine
+                {
+                    AccountId = debitAccountId,
+                    Description = description,
+                    Debit = amount,
+                    Credit = 0
+                },
+                new JournalEntryLine
+                {
+                    AccountId = creditAccountId,
+                    Description = description,
+                    Debit = 0,
+                    Credit = amount
+                }
+            ]
+        };
 }
