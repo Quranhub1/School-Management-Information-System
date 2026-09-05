@@ -100,8 +100,7 @@ public sealed class ReportGenerator(SchoolManagementDbContext db)
                 s.Id,
                 s.SessionDate,
                 s.Status.ToString(),
-                records.Count(r => r.AttendanceSessionId == s.Id),
-                records.Count(r => r.AttendanceSessionId == s.Id && r.Status.ToString() == "Present")
+                records.Count(r => r.AttendanceSessionId == s.Id)
             )).ToList());
     }
 }
