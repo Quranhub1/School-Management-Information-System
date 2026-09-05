@@ -23,6 +23,7 @@ public interface IFinanceRepository
     Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken);
     Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken);
     Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken);
+    Task AddStudentChargeAsync(StudentCharge charge, CancellationToken cancellationToken);
     Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken);
     Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken);
     Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken);
