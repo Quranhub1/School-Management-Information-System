@@ -22,15 +22,9 @@ public sealed class FinanceService(IFinanceRepository finance)
         var fee = await finance.GetActiveFeeStructureAsync(feeStructureId, cancellationToken)
             ?? throw new ArgumentException("Active fee structure was not found.");
 
+        if (fee.Items.Count > 0) fee.RecalculateTotal();
         var amount = fee.TotalAmount;
-        if (fee.Items.Count > 0)
-        {
-            fee.RecalculateTotal();
-            amount = fee.TotalAmount;
-        }
-
-        if (amount <= 0)
-            throw new ArgumentException("Fee structure amount must be greater than zero.");
+        if (amount <= 0) throw new ArgumentException("Fee structure amount must be greater than zero.");
 
         var invoice = new StudentInvoice
         {
@@ -58,6 +52,7 @@ public sealed class FinanceService(IFinanceRepository finance)
         }
 
         await finance.AddInvoiceAsync(invoice, cancellationToken);
+        await finance.PostInvoiceAccountingAsync(invoice, cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
         return invoice;
     }
@@ -75,10 +70,8 @@ public sealed class FinanceService(IFinanceRepository finance)
         var invoice = await finance.GetInvoiceAsync(invoiceId, cancellationToken)
             ?? throw new ArgumentException("Invoice was not found.");
         var outstanding = invoice.OutstandingAmount;
-        if (outstanding <= 0)
-            throw new InvalidOperationException("Invoice is already fully paid.");
-        if (amount > outstanding)
-            throw new ArgumentException($"Payment exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
+        if (outstanding <= 0) throw new InvalidOperationException("Invoice is already fully paid.");
+        if (amount > outstanding) throw new ArgumentException($"Payment exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
 
         invoice.PaidAmount += amount;
         invoice.Status = invoice.PaidAmount >= invoice.Amount ? "Paid" : "PartiallyPaid";
@@ -101,6 +94,7 @@ public sealed class FinanceService(IFinanceRepository finance)
         });
 
         await finance.AddPaymentAsync(payment, cancellationToken);
+        await finance.PostPaymentAccountingAsync(payment, "system:finance", cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
         return payment;
     }
