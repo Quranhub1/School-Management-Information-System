@@ -53,6 +53,7 @@ public sealed class FinanceWorkflowServiceTests
         public Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InvoiceDiscount>>([]);
         public Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InvoiceInstallment>>([]);
         public Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task AddStudentChargeAsync(StudentCharge charge, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken) => Task.CompletedTask;
