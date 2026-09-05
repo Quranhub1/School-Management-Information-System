@@ -29,11 +29,33 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
     public Task<bool> ReceiptExistsAsync(string receiptNumber, CancellationToken cancellationToken) =>
         db.Payments.AsNoTracking().AnyAsync(x => x.ReceiptNumber == receiptNumber, cancellationToken);
 
+    public Task<Payment?> GetPaymentAsync(Guid paymentId, CancellationToken cancellationToken) =>
+        db.Payments.Include(x => x.Allocations).FirstOrDefaultAsync(x => x.Id == paymentId, cancellationToken);
+
+    public async Task<IReadOnlyList<StudentInvoice>> GetOutstandingInvoicesAsync(Guid studentId, string currency, CancellationToken cancellationToken) =>
+        await db.StudentInvoices.AsNoTracking()
+            .Where(x => x.StudentId == studentId && x.Currency == currency && x.PaidAmount < x.Amount)
+            .OrderBy(x => x.IssuedAt)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<PaymentLedgerEntry>> GetStudentLedgerAsync(Guid studentId, CancellationToken cancellationToken) =>
+        await db.PaymentLedgerEntries.AsNoTracking()
+            .Where(x => x.StudentId == studentId)
+            .OrderBy(x => x.EntryDate)
+            .ThenBy(x => x.Id)
+            .ToListAsync(cancellationToken);
+
     public async Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) =>
         await db.StudentInvoices.AddAsync(invoice, cancellationToken);
 
     public async Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) =>
         await db.Payments.AddAsync(payment, cancellationToken);
+
+    public async Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken) =>
+        await db.PaymentAllocations.AddAsync(allocation, cancellationToken);
+
+    public async Task AddPaymentLedgerEntryAsync(PaymentLedgerEntry entry, CancellationToken cancellationToken) =>
+        await db.PaymentLedgerEntries.AddAsync(entry, cancellationToken);
 
     public async Task<IReadOnlyList<Payment>> GetPaymentsAsync(
         string? receiptNumber = null,
@@ -42,7 +64,7 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
         DateOnly? to = null,
         CancellationToken cancellationToken = default)
     {
-        var query = db.Payments.AsNoTracking().AsQueryable();
+        var query = db.Payments.AsNoTracking().Include(p => p.Allocations).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(receiptNumber))
             query = query.Where(p => p.ReceiptNumber.Contains(receiptNumber.Trim()));
