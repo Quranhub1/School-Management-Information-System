@@ -13,23 +13,20 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId, CancellationToken cancellationToken)
     {
-        if (!studentId.HasValue || studentId.Value == Guid.Empty)
-            return BadRequest(new { message = "studentId is required." });
-
+        if (!studentId.HasValue || studentId.Value == Guid.Empty) return BadRequest(new { message = "studentId is required." });
         return Ok(await finance.GetStudentInvoicesAsync(studentId.Value, cancellationToken));
     }
+
+    [HttpGet("students/{studentId:guid}/ledger")]
+    public async Task<IActionResult> GetStudentLedger(Guid studentId, CancellationToken cancellationToken) =>
+        Ok(await finance.GetStudentLedgerAsync(studentId, cancellationToken));
 
     [HttpPost("invoices")]
     public async Task<IActionResult> CreateInvoice(CreateInvoiceRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var invoice = await finance.CreateInvoiceAsync(
-                request.StudentId,
-                request.FeeStructureId,
-                request.InvoiceNumber,
-                cancellationToken);
-
+            var invoice = await finance.CreateInvoiceAsync(request.StudentId, request.FeeStructureId, request.InvoiceNumber, cancellationToken);
             return Created($"/api/finance/invoices/{invoice.Id}", invoice);
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
@@ -37,35 +34,55 @@ public sealed class FinanceController(FinanceWorkflowService finance) : Controll
     }
 
     [HttpPost("invoices/{invoiceId:guid}/payments")]
-    public async Task<IActionResult> RecordPayment(
-        Guid invoiceId,
-        RecordPaymentRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> RecordPayment(Guid invoiceId, RecordPaymentRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var payment = await finance.RecordPaymentAsync(
-                invoiceId,
-                request.ReceiptNumber,
-                request.Amount,
-                request.PaymentMethod,
-                request.Reference,
-                cancellationToken);
-
+            var payment = await finance.RecordPaymentAsync(invoiceId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Reference, cancellationToken);
             return Ok(payment);
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
-    public sealed record CreateInvoiceRequest(
-        Guid StudentId,
-        Guid FeeStructureId,
-        string InvoiceNumber);
+    [HttpPost("students/{studentId:guid}/payments")]
+    public async Task<IActionResult> RecordUnallocatedPayment(Guid studentId, RecordUnallocatedPaymentRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var payment = await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Currency, request.Reference, cancellationToken);
+            return Ok(payment);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
 
-    public sealed record RecordPaymentRequest(
-        decimal Amount,
-        string ReceiptNumber,
-        string PaymentMethod,
-        string? Reference);
+    [HttpPost("payments/{paymentId:guid}/allocate")]
+    public async Task<IActionResult> AllocatePayment(Guid paymentId, AllocatePaymentRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var payment = await finance.AllocatePaymentAsync(paymentId, request.Allocations, cancellationToken);
+            return Ok(payment);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    [HttpPost("payments/{paymentId:guid}/allocate-fifo")]
+    public async Task<IActionResult> AllocatePaymentFifo(Guid paymentId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var payment = await finance.AllocatePaymentFifoAsync(paymentId, cancellationToken);
+            return Ok(payment);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
+    public sealed record RecordPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Reference);
+    public sealed record RecordUnallocatedPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string Currency = "UGX", string? Reference = null);
+    public sealed record AllocatePaymentRequest(IReadOnlyCollection<PaymentAllocationRequest> Allocations);
 }
