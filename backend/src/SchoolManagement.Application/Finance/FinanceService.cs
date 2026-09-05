@@ -38,13 +38,15 @@ public sealed class FinanceService(IFinanceRepository finance)
             Status = "Unpaid"
         };
 
-        await finance.AddInvoiceAsync(invoice, cancellationToken);
-        await finance.AddJournalEntryAsync(CreateJournalEntry(
+        var journalEntry = CreateJournalEntry(
             entryNumber: $"INV-{normalizedInvoiceNumber}",
             description: $"Student invoice {normalizedInvoiceNumber}",
             amount: invoice.Amount,
             debitAccountId: receivableAccount.Id,
-            creditAccountId: revenueAccount.Id), cancellationToken);
+            creditAccountId: revenueAccount.Id);
+
+        await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
+        await finance.AddInvoiceAsync(invoice, cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
         return invoice;
     }
@@ -84,19 +86,30 @@ public sealed class FinanceService(IFinanceRepository finance)
             Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim()
         };
 
-        await finance.AddPaymentAsync(payment, cancellationToken);
-        await finance.AddJournalEntryAsync(CreateJournalEntry(
+        var journalEntry = CreateJournalEntry(
             entryNumber: $"PAY-{normalizedReceipt}",
             description: $"Payment receipt {normalizedReceipt} for invoice {invoice.InvoiceNumber}",
             amount: payment.Amount,
             debitAccountId: paymentAccount.Id,
-            creditAccountId: receivableAccount.Id), cancellationToken);
+            creditAccountId: receivableAccount.Id);
+
+        await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
+        await finance.AddPaymentAsync(payment, cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
         return payment;
     }
 
     public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) =>
         finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken);
+
+    private async Task AddPostedJournalEntryAsync(JournalEntry entry, CancellationToken cancellationToken)
+    {
+        if (await finance.JournalEntryNumberExistsAsync(entry.EntryNumber, cancellationToken))
+            throw new InvalidOperationException($"Journal entry number '{entry.EntryNumber}' already exists.");
+
+        JournalEntryValidator.Validate(entry);
+        await finance.AddJournalEntryAsync(entry, cancellationToken);
+    }
 
     private async Task<Account> GetAccountAsync(string code, CancellationToken cancellationToken) =>
         await finance.GetActiveAccountByCodeAsync(code, cancellationToken)
