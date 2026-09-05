@@ -58,6 +58,10 @@ public sealed class FinanceWorkflowServiceTests
 
         public Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => Task.CompletedTask;
 
+        public Task PostInvoiceAccountingAsync(StudentInvoice invoice, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task PostPaymentAccountingAsync(Payment payment, string postedBy, CancellationToken cancellationToken) => Task.CompletedTask;
+
         public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<Payment>>([]);
 
