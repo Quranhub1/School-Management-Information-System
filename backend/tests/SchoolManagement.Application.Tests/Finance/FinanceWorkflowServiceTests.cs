@@ -57,6 +57,9 @@ public sealed class FinanceWorkflowServiceTests
         public Task<bool> ReceiptExistsAsync(string receiptNumber, CancellationToken cancellationToken) =>
             Task.FromResult(false);
 
+        public Task<bool> JournalEntryNumberExistsAsync(string entryNumber, CancellationToken cancellationToken) =>
+            Task.FromResult(false);
+
         public Task<Account?> GetActiveAccountByCodeAsync(string code, CancellationToken cancellationToken) =>
             Task.FromResult<Account?>(null);
 
