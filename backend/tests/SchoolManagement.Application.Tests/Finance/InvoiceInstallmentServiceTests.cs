@@ -13,14 +13,7 @@ public sealed class InvoiceInstallmentServiceTests
         var invoice = CreateInvoice(100000m);
         var repository = new InMemoryFinanceRepository(invoice);
         var service = new InvoiceInstallmentService(repository);
-
-        var result = await service.CreateScheduleAsync(invoice.Id,
-        [
-            new(1, new DateOnly(2026, 10, 1), 33.33m, null),
-            new(2, new DateOnly(2026, 11, 1), 33.33m, null),
-            new(3, new DateOnly(2026, 12, 1), 33.34m, null)
-        ], CancellationToken.None);
-
+        var result = await service.CreateScheduleAsync(invoice.Id, [new(1, new DateOnly(2026, 10, 1), 33.33m, null), new(2, new DateOnly(2026, 11, 1), 33.33m, null), new(3, new DateOnly(2026, 12, 1), 33.34m, null)], CancellationToken.None);
         Assert.Equal(3, result.Count);
         Assert.Equal(100000m, result.Sum(x => x.Amount));
         Assert.Equal(33330m, result[0].Amount);
@@ -32,12 +25,7 @@ public sealed class InvoiceInstallmentServiceTests
     {
         var invoice = CreateInvoice(100000m);
         var service = new InvoiceInstallmentService(new InMemoryFinanceRepository(invoice));
-
-        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateScheduleAsync(invoice.Id,
-        [
-            new(1, new DateOnly(2026, 10, 1), 50m, null),
-            new(2, new DateOnly(2026, 11, 1), null, 50000m)
-        ], CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateScheduleAsync(invoice.Id, [new(1, new DateOnly(2026, 10, 1), 50m, null), new(2, new DateOnly(2026, 11, 1), null, 50000m)], CancellationToken.None));
     }
 
     [Fact]
@@ -45,28 +33,14 @@ public sealed class InvoiceInstallmentServiceTests
     {
         var invoice = CreateInvoice(100000m);
         var service = new InvoiceInstallmentService(new InMemoryFinanceRepository(invoice));
-
-        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateScheduleAsync(invoice.Id,
-        [
-            new(1, new DateOnly(2026, 10, 1), null, 60000m),
-            new(2, new DateOnly(2026, 11, 1), null, 30000m)
-        ], CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateScheduleAsync(invoice.Id, [new(1, new DateOnly(2026, 10, 1), null, 60000m), new(2, new DateOnly(2026, 11, 1), null, 30000m)], CancellationToken.None));
     }
 
-    private static StudentInvoice CreateInvoice(decimal amount) => new()
-    {
-        StudentId = Guid.NewGuid(),
-        InvoiceNumber = "INV-TEST",
-        Amount = amount,
-        PaidAmount = 0,
-        Currency = "UGX",
-        Status = "Unpaid"
-    };
+    private static StudentInvoice CreateInvoice(decimal amount) => new() { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-TEST", Amount = amount, PaidAmount = 0, Currency = "UGX", Status = "Unpaid" };
 
     private sealed class InMemoryFinanceRepository(StudentInvoice invoice) : SchoolManagement.Application.Abstractions.IFinanceRepository
     {
         private readonly List<InvoiceInstallment> stored = [];
-
         public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult(invoiceId == invoice.Id ? invoice : null);
         public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
         public Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
@@ -86,6 +60,7 @@ public sealed class InvoiceInstallmentServiceTests
         public Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InvoiceDiscount>>([]);
         public Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InvoiceInstallment>>(stored.Where(x => x.StudentInvoiceId == invoiceId).ToArray());
         public Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken) { stored.Add(installment); return Task.CompletedTask; }
+        public Task AddStudentChargeAsync(StudentCharge charge, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddPaymentAsync(Payment payment, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken) => Task.CompletedTask;
