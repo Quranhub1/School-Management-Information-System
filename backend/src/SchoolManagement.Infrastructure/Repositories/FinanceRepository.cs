@@ -5,7 +5,7 @@ using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Repositories;
 
-public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRepository, SchoolManagement.Application.Finance.IFinanceRepository
+public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRepository, IFinanceAdjustmentsRepository, SchoolManagement.Application.Finance.IFinanceRepository
 {
     public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) =>
         db.StudentInvoices.Include(x => x.Lines).Include(x => x.Discounts).Include(x => x.Installments).FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
@@ -26,6 +26,15 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
     public async Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken) => await db.Set<InvoiceInstallment>().AsNoTracking().Where(x => x.StudentInvoiceId == invoiceId).OrderBy(x => x.Sequence).ToListAsync(cancellationToken);
     public async Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid studentId, CancellationToken cancellationToken) => await db.Set<StudentCharge>().AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.CreatedAt).ToListAsync(cancellationToken);
     public Task<StudentCharge?> GetStudentChargeAsync(Guid chargeId, CancellationToken cancellationToken) => db.Set<StudentCharge>().FirstOrDefaultAsync(x => x.Id == chargeId, cancellationToken);
+    public Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken cancellationToken) => db.CreditNotes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == creditNoteId, cancellationToken);
+    public async Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken) => await db.CreditNotes.AsNoTracking().Where(x => x.StudentInvoiceId == studentInvoiceId).OrderBy(x => x.IssuedAt).ToListAsync(cancellationToken);
+    public Task<bool> CreditNoteNumberExistsAsync(string creditNoteNumber, CancellationToken cancellationToken) => db.CreditNotes.AsNoTracking().AnyAsync(x => x.CreditNoteNumber == creditNoteNumber, cancellationToken);
+    public async Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken) => await db.CreditNotes.AddAsync(creditNote, cancellationToken);
+    public Task<Refund?> GetRefundAsync(Guid refundId, CancellationToken cancellationToken) => db.Set<Refund>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == refundId, cancellationToken);
+    public async Task<IReadOnlyList<Refund>> GetRefundsAsync(Guid paymentId, CancellationToken cancellationToken) => await db.Set<Refund>().AsNoTracking().Where(x => x.PaymentId == paymentId).OrderBy(x => x.RefundedAt).ToListAsync(cancellationToken);
+    public Task<bool> RefundNumberExistsAsync(string refundNumber, CancellationToken cancellationToken) => db.Set<Refund>().AsNoTracking().AnyAsync(x => x.RefundNumber == refundNumber, cancellationToken);
+    public Task<decimal> GetRefundedAmountAsync(Guid paymentId, CancellationToken cancellationToken) => db.Set<Refund>().AsNoTracking().Where(x => x.PaymentId == paymentId && x.Status == "Completed").SumAsync(x => (decimal?)x.Amount, cancellationToken).ContinueWith(x => x.Result ?? 0m, cancellationToken);
+    public async Task AddRefundAsync(Refund refund, CancellationToken cancellationToken) => await db.Set<Refund>().AddAsync(refund, cancellationToken);
     public async Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken) => await db.Set<InvoiceInstallment>().AddAsync(installment, cancellationToken);
     public async Task AddStudentChargeAsync(StudentCharge charge, CancellationToken cancellationToken) => await db.Set<StudentCharge>().AddAsync(charge, cancellationToken);
     public async Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => await db.StudentInvoices.AddAsync(invoice, cancellationToken);
