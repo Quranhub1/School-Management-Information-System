@@ -59,10 +59,13 @@ The project is **not** treated as 99% complete. Remaining work includes producti
 - [x] Automatic double-entry posting for student payments
 - [x] Payment-method account mapping for cash, bank/transfer/card/cheque and mobile money
 - [x] Journal entry numbering for invoice/payment postings
+- [x] Central journal-entry integrity validation
+- [x] Mandatory balanced debit/credit enforcement for Finance postings
+- [x] Duplicate journal-entry-number protection
 - [x] General Ledger foundation
 - [x] Trial Balance foundation
 - [x] Student receivables foundation
-- [x] Finance workflow tests and CI verification for the implemented scope
+- [x] Finance workflow and accounting-integrity tests
 
 > Finance is deliberately not marked fully complete. Mature accounting workflows are being added in phases.
 
@@ -135,13 +138,13 @@ The project is **not** treated as 99% complete. Remaining work includes producti
 # 2. CURRENTLY BEING COVERED
 
 ## Finance — Phase 1: Accounting Integrity
-- [ ] Central journal-entry validation
-- [ ] Mandatory balanced debit/credit enforcement
-- [ ] Duplicate-posting protection
+- [x] Central journal-entry validation
+- [x] Mandatory balanced debit/credit enforcement
+- [x] Duplicate-posting protection
 - [ ] Posted-entry immutability
 - [ ] Controlled reversal mechanism
 - [ ] Finance-specific audit metadata
-- [ ] Accounting integrity automated tests
+- [x] Accounting integrity automated tests
 
 ## Finance — Phase 2: Student Billing
 - [ ] Fee categories
@@ -409,6 +412,7 @@ The project is **not** treated as 99% complete. Remaining work includes producti
 - [x] Backend build passed after Librarian persistence restoration
 - [x] Library integration PR merged to `main`
 - [x] Finance accounting-posting workflow CI verified for the implemented scope
+- [x] Finance journal-integrity tests added
 
 ### Remaining
 - [ ] Backend CI/build verification for every new feature
@@ -417,7 +421,7 @@ The project is **not** treated as 99% complete. Remaining work includes producti
 - [ ] API integration tests
 - [ ] Frontend tests
 - [ ] End-to-end critical workflows
-- [ ] Finance accounting integrity tests
+- [ ] Finance immutability/reversal tests
 - [ ] Security checks
 - [ ] Production smoke tests
 
@@ -446,10 +450,7 @@ The SMIS project is **production-ready** when:
 
 # 8. IMMEDIATE ROADMAP
 
-1. **Finance Phase 1 — Accounting Integrity**
-   - Central journal validation
-   - Balanced debit/credit enforcement
-   - Duplicate-posting protection
+1. **Finish Finance Phase 1 — Accounting Integrity**
    - Posted-entry immutability
    - Controlled reversals
    - Finance audit metadata
