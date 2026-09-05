@@ -10,5 +10,8 @@ public sealed class JournalEntry
     public DateTimeOffset? PostedAt { get; init; }
     public string? PostedBy { get; init; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+    public string? SourceType { get; init; }
+    public Guid? SourceId { get; init; }
+    public Guid? ReversalOfJournalEntryId { get; init; }
     public ICollection<JournalEntryLine> Lines { get; set; } = new List<JournalEntryLine>();
 }
