@@ -10,4 +10,5 @@ public sealed class Payment
     public required string PaymentMethod { get; init; }
     public string? Reference { get; init; }
     public DateTimeOffset PaidAt { get; init; } = DateTimeOffset.UtcNow;
+    public ICollection<PaymentAllocation> Allocations { get; set; } = new List<PaymentAllocation>();
 }
