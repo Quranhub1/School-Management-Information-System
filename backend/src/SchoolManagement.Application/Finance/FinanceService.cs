@@ -123,8 +123,9 @@ public sealed class FinanceService(IFinanceRepository finance)
         string description,
         decimal amount,
         Guid debitAccountId,
-        Guid creditAccountId) =>
-        new()
+        Guid creditAccountId)
+    {
+        var entry = new JournalEntry
         {
             EntryNumber = entryNumber,
             Description = description,
@@ -149,4 +150,8 @@ public sealed class FinanceService(IFinanceRepository finance)
                 }
             ]
         };
+
+        JournalEntryValidator.Validate(entry);
+        return entry;
+    }
 }
