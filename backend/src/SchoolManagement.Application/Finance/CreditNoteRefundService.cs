@@ -132,7 +132,7 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
         }, cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
 
-        return new RefundResult(payment.Id, payment.StudentId, creditNoteId, refundNumber, normalizedAmount, payment.Currency, refundMethod.Trim(), string.IsNullOrWhiteSpace(reference) ? null : reference.Trim(), reason.Trim(), "Completed", journal.PostedAt, refundedBy?.Trim());
+        return new RefundResult(payment.Id, payment.StudentId, creditNoteId, refundNumber, normalizedAmount, payment.Currency, refundMethod.Trim(), string.IsNullOrWhiteSpace(reference) ? null : reference.Trim(), reason.Trim(), "Completed", journal.PostedAt!.Value, refundedBy?.Trim());
     }
 
     private async Task<Account> GetAccountAsync(string code, CancellationToken cancellationToken) =>
