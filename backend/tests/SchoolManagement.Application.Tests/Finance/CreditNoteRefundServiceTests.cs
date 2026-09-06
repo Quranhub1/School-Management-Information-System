@@ -60,7 +60,7 @@ public sealed class CreditNoteRefundServiceTests
         public Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken) { CreditNotes.Add(creditNote); return Task.CompletedTask; }
     }
 
-    private sealed class InMemoryFinanceRepository : IFinanceRepository
+    private sealed class InMemoryFinanceRepository : global::SchoolManagement.Application.Finance.IFinanceRepository
     {
         private readonly StudentInvoice? invoice;
         private readonly Payment? payment;
