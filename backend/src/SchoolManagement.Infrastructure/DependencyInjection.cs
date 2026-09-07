@@ -37,6 +37,7 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString)
                    .AddInterceptors(new JournalImmutabilityInterceptor()));
 
+        services.AddDbContext<SchoolManagementDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IProgrammeRepository, ProgrammeRepository>();
         services.AddScoped<IAcademicYearRepository, AcademicYearRepository>();
