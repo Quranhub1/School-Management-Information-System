@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
+[Migration("20260908130000_AddFiscalPeriods")]
 public partial class AddFiscalPeriods : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,27 +22,12 @@ public partial class AddFiscalPeriods : Migration
                 ClosedBy = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                 CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
             },
-            constraints: table =>
-            {
-                table.PrimaryKey("PK_FiscalPeriods", x => x.Id);
-            });
+            constraints: table => table.PrimaryKey("PK_FiscalPeriods", x => x.Id));
 
-        migrationBuilder.CreateIndex(
-            name: "IX_FiscalPeriods_Name",
-            table: "FiscalPeriods",
-            column: "Name",
-            unique: true);
-
-        migrationBuilder.CreateIndex(
-            name: "IX_FiscalPeriods_StartDate_EndDate",
-            table: "FiscalPeriods",
-            columns: new[] { "StartDate", "EndDate" });
-
+        migrationBuilder.CreateIndex(name: "IX_FiscalPeriods_Name", table: "FiscalPeriods", column: "Name", unique: true);
+        migrationBuilder.CreateIndex(name: "IX_FiscalPeriods_StartDate_EndDate", table: "FiscalPeriods", columns: new[] { "StartDate", "EndDate" });
         migrationBuilder.Sql("ALTER TABLE \"FiscalPeriods\" ADD CONSTRAINT \"CK_FiscalPeriods_DateRange\" CHECK (\"StartDate\" <= \"EndDate\");");
     }
 
-    protected override void Down(MigrationBuilder migrationBuilder)
-    {
-        migrationBuilder.DropTable(name: "FiscalPeriods");
-    }
+    protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.DropTable(name: "FiscalPeriods");
 }
