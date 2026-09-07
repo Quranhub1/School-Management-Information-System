@@ -60,6 +60,19 @@ public sealed class FinanceAdministrationController(FinanceAdministrationService
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
+    [HttpPost("bank-reconciliations/{reconciliationId:guid}/close")]
+    public async Task<IActionResult> CloseBankReconciliation(Guid reconciliationId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var closedBy = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(closedBy)) return Unauthorized(new { message = "Authenticated user identity is required to close a reconciliation." });
+            return Ok(await finance.CloseBankReconciliationAsync(reconciliationId, closedBy, cancellationToken));
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
     public sealed record CreateBudgetRequest(Guid DepartmentId, Guid AcademicYearId, string Name, decimal TotalAmount, string Currency, DateTimeOffset StartDate, DateTimeOffset EndDate);
     public sealed record AddBudgetLineRequest(Guid AccountId, string Category, decimal AllocatedAmount, string? Notes = null);
     public sealed record CreateBankReconciliationRequest(Guid BankAccountId, DateTimeOffset StatementDate, decimal StatementBalance);
