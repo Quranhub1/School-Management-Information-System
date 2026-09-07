@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SchoolManagement.Domain.Finance;
+using SchoolManagement.Domain.Staff;
 
 namespace SchoolManagement.Infrastructure.Finance;
 
@@ -71,7 +72,7 @@ public sealed class PaymentAllocationConfiguration : IEntityTypeConfiguration<Pa
     public void Configure(EntityTypeBuilder<PaymentAllocation> builder)
     {
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Property(x => x.AllocatedAmount).HasPrecision(18, 2);
         builder.HasOne<Payment>().WithMany(x => x.Allocations).HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(x => new { x.PaymentId, x.StudentInvoiceId }).IsUnique();
