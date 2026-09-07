@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Domain.Administration;
 using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Administration;
 using SchoolManagement.Domain.Admissions;
@@ -111,7 +112,6 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<AdmissionDecision>().HasOne<AdmissionEntity>().WithMany().HasForeignKey(x => x.AdmissionId).OnDelete(DeleteBehavior.Cascade);
         m.ApplyConfiguration(new AdmissionsConfiguration());
         m.ApplyConfiguration(new AdmissionDecisionConfiguration());
-
         AttendanceConfiguration.Apply(m);
         m.ApplyConfiguration(new AssessmentPlanConfiguration());
         m.ApplyConfiguration(new StudentAssessmentConfiguration());
