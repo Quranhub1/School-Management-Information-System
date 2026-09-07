@@ -13,6 +13,7 @@ public interface IFinanceAdministrationRepository
     Task AddBankReconciliationAsync(BankReconciliation reconciliation, CancellationToken cancellationToken);
     Task AddBankStatementLineAsync(BankStatementLine line, CancellationToken cancellationToken);
     Task<IReadOnlyList<BankStatementLine>> GetBankStatementLinesAsync(Guid reconciliationId, CancellationToken cancellationToken);
+    Task<bool> IsJournalAlreadyMatchedAsync(Guid journalEntryId, CancellationToken cancellationToken);
     Task<IReadOnlyList<JournalEntry>> GetPostedJournalsForAccountAsync(Guid accountId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
