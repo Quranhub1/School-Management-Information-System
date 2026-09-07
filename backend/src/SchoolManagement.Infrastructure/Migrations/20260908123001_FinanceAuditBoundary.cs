@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
+[Migration("20260908123001_FinanceAuditBoundary")]
 public partial class FinanceAuditBoundary : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
