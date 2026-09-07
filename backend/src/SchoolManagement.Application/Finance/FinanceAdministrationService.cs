@@ -34,8 +34,16 @@ public sealed class FinanceAdministrationService(IFinanceAdministrationRepositor
     public async Task<IReadOnlyList<BankReconciliation>> GetBankReconciliationsAsync(Guid? bankAccountId, CancellationToken cancellationToken)
         => await repository.GetBankReconciliationsAsync(bankAccountId, cancellationToken);
 
+    public async Task<IReadOnlyList<BankStatementLine>> GetBankStatementLinesAsync(Guid reconciliationId, CancellationToken cancellationToken)
+    {
+        if (reconciliationId == Guid.Empty) throw new ArgumentException("Reconciliation ID is required.", nameof(reconciliationId));
+        if (await repository.GetBankReconciliationAsync(reconciliationId, cancellationToken) is null) throw new ArgumentException("Bank reconciliation was not found.", nameof(reconciliationId));
+        return await repository.GetBankStatementLinesAsync(reconciliationId, cancellationToken);
+    }
+
     public async Task<BankReconciliation> CreateBankReconciliationAsync(Guid bankAccountId, DateTimeOffset statementDate, decimal statementBalance, CancellationToken cancellationToken)
     {
+        if (bankAccountId == Guid.Empty) throw new ArgumentException("Bank account is required.", nameof(bankAccountId));
         if (statementBalance < 0) throw new ArgumentException("Statement balance cannot be negative.", nameof(statementBalance));
         var journals = await repository.GetPostedJournalsForAccountAsync(bankAccountId, DateTimeOffset.MinValue, statementDate, cancellationToken);
         var bookBalance = journals.SelectMany(x => x.Lines).Where(x => x.AccountId == bankAccountId).Sum(x => x.Debit - x.Credit);
@@ -77,6 +85,10 @@ public sealed class FinanceAdministrationService(IFinanceAdministrationRepositor
         reconciliation.ReconciledAmount += statementEffect;
         var allMatched = lines.All(x => x.IsMatched);
         reconciliation.Status = allMatched && Math.Abs(reconciliation.StatementBalance - reconciliation.BookBalance) <= 0.01m ? "Reconciled" : "Pending";
+        if (reconciliation.Status == "Reconciled")
+        {
+            reconciliation.ReconciledAt = DateTimeOffset.UtcNow;
+        }
         await repository.SaveChangesAsync(cancellationToken);
         return reconciliation;
     }
