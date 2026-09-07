@@ -14,24 +14,24 @@ public sealed class AlumniController(SchoolManagementDbContext db) : ControllerB
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] string? search, [FromQuery] string? programme, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, CancellationToken cancellationToken)
     {
-        var query = db.Alumni.AsNoTracking().Where(x => x.IsActive);
-
+        var query = from alumni in db.Alumni.AsNoTracking()
+                    join student in db.Students.AsNoTracking() on alumni.StudentId equals student.Id
+                    where alumni.IsActive
+                    select new { alumni, student };
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim().ToLower();
-            query = query.Where(x => x.Student.FirstName.ToLower().Contains(term) || x.Student.LastName.ToLower().Contains(term) || x.Student.StudentNumber.ToLower().Contains(term) || x.Programme.ToLower().Contains(term));
+            query = query.Where(x => x.student.FirstName.ToLower().Contains(term) || x.student.LastName.ToLower().Contains(term) || x.student.StudentNumber.ToLower().Contains(term) || x.alumni.Programme.ToLower().Contains(term));
         }
-
-        if (!string.IsNullOrWhiteSpace(programme))
-            query = query.Where(x => x.Programme.Contains(programme));
-
-        if (fromDate.HasValue)
-            query = query.Where(x => x.GraduationDate >= fromDate.Value);
-
-        if (toDate.HasValue)
-            query = query.Where(x => x.GraduationDate <= toDate.Value);
-
-        return Ok(await query.OrderByDescending(x => x.GraduationDate).ToListAsync(cancellationToken));
+        if (!string.IsNullOrWhiteSpace(programme)) query = query.Where(x => x.alumni.Programme.Contains(programme.Trim()));
+        if (fromDate.HasValue) query = query.Where(x => x.alumni.GraduationDate >= fromDate.Value);
+        if (toDate.HasValue) query = query.Where(x => x.alumni.GraduationDate <= toDate.Value);
+        return Ok(await query.OrderByDescending(x => x.alumni.GraduationDate).Select(x => new
+        {
+            x.alumni.Id, x.alumni.StudentId, studentNumber = x.student.StudentNumber,
+            studentName = x.student.FirstName + " " + x.student.LastName, x.alumni.GraduationDate,
+            x.alumni.Programme, x.alumni.CurrentOccupation, x.alumni.Employer, x.alumni.ContactInfo, x.alumni.IsActive
+        }).ToListAsync(cancellationToken));
     }
 
     [HttpGet("{id:guid}")]
@@ -44,21 +44,12 @@ public sealed class AlumniController(SchoolManagementDbContext db) : ControllerB
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAlumniRequest request, CancellationToken cancellationToken)
     {
-        if (!await db.Students.AnyAsync(x => x.Id == request.StudentId, cancellationToken))
-            return BadRequest(new { message = "Student not found." });
-        if (await db.Alumni.AnyAsync(x => x.StudentId == request.StudentId, cancellationToken))
-            return Conflict(new { message = "Alumni record already exists for this student." });
-
-        var alumni = new Domain.Students.Alumni
-        {
-            StudentId = request.StudentId,
-            GraduationDate = request.GraduationDate,
-            Programme = request.Programme,
-            IsActive = true
-        };
+        if (!await db.Students.AnyAsync(x => x.Id == request.StudentId, cancellationToken)) return BadRequest(new { message = "Student not found." });
+        if (await db.Alumni.AnyAsync(x => x.StudentId == request.StudentId, cancellationToken)) return Conflict(new { message = "Alumni record already exists for this student." });
+        var alumni = new Domain.Students.Alumni { StudentId = request.StudentId, GraduationDate = request.GraduationDate, Programme = request.Programme.Trim(), IsActive = true };
         db.Alumni.Add(alumni);
         await db.SaveChangesAsync(cancellationToken);
-        return Created($"api/alumni/{alumni.Id}", alumni);
+        return Created($"/api/alumni/{alumni.Id}", alumni);
     }
 
     [HttpPatch("{id:guid}")]
@@ -66,9 +57,7 @@ public sealed class AlumniController(SchoolManagementDbContext db) : ControllerB
     {
         var alumni = await db.Alumni.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (alumni is null) return NotFound();
-        alumni.CurrentOccupation = request.CurrentOccupation;
-        alumni.Employer = request.Employer;
-        alumni.ContactInfo = request.ContactInfo;
+        alumni.CurrentOccupation = request.CurrentOccupation; alumni.Employer = request.Employer; alumni.ContactInfo = request.ContactInfo;
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
