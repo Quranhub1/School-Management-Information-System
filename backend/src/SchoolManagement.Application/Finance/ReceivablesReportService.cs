@@ -45,10 +45,11 @@ public sealed class ReceivablesReportService(IFinanceRepository finance)
         foreach (var invoice in invoices)
         {
             if (!string.Equals(invoice.Currency, normalizedCurrency, StringComparison.OrdinalIgnoreCase)) continue;
-            if (DateOnly.FromDateTime(invoice.IssuedAt.UtcDateTime) > date) continue;
+            var issuedDate = DateOnly.FromDateTime(invoice.IssuedAt.UtcDateTime);
+            if (issuedDate > date) continue;
             var outstanding = invoice.OutstandingAmount;
             if (outstanding <= 0) continue;
-            var days = Math.Max(0, date.DayNumber - DateOnly.FromDateTime(invoice.IssuedAt.UtcDateTime).DayNumber);
+            var days = Math.Max(0, date.DayNumber - issuedDate.DayNumber);
             var index = days switch
             {
                 0 => 0,
@@ -81,12 +82,14 @@ public sealed class ReceivablesReportService(IFinanceRepository finance)
         var payments = await finance.GetPaymentsAsync(cancellationToken: cancellationToken);
         var journals = await finance.GetPostedJournalEntriesAsync(null, date, null, cancellationToken);
 
-        var invoiceSubledger = invoices
-            .Where(x => string.Equals(x.Currency, normalizedCurrency, StringComparison.OrdinalIgnoreCase) && DateOnly.FromDateTime(x.IssuedAt.UtcDateTime) <= date)
-            .Sum(x => x.OutstandingAmount);
+        var eligibleInvoices = invoices.Where(x =>
+            string.Equals(x.Currency, normalizedCurrency, StringComparison.OrdinalIgnoreCase) &&
+            DateOnly.FromDateTime(x.IssuedAt.UtcDateTime) <= date).ToList();
+
+        var invoiceSubledger = eligibleInvoices.Sum(x => x.OutstandingAmount);
 
         var creditByInvoice = creditNotes
-            .Where(x => x.Status == "Applied")
+            .Where(x => x.Status == "Applied" && DateOnly.FromDateTime(x.IssuedAt.UtcDateTime) <= date)
             .GroupBy(x => x.StudentInvoiceId)
             .ToDictionary(x => x.Key, x => x.Sum(n => n.Amount));
 
@@ -102,14 +105,17 @@ public sealed class ReceivablesReportService(IFinanceRepository finance)
                 refundsByInvoice[payment.StudentInvoiceId.Value] = refundsByInvoice.GetValueOrDefault(payment.StudentInvoiceId.Value) + refundAmount;
                 continue;
             }
+            var allocated = payment.AllocatedAmount;
+            if (allocated <= 0) continue;
+            var refundAppliedToAllocated = Math.Min(refundAmount, allocated);
             foreach (var allocation in payment.Allocations)
             {
                 refundsByInvoice[allocation.StudentInvoiceId] = refundsByInvoice.GetValueOrDefault(allocation.StudentInvoiceId) +
-                    refundAmount * allocation.AllocatedAmount / Math.Max(payment.AllocatedAmount, 1m);
+                    refundAppliedToAllocated * allocation.AllocatedAmount / allocated;
             }
         }
 
-        foreach (var invoice in invoices.Where(x => string.Equals(x.Currency, normalizedCurrency, StringComparison.OrdinalIgnoreCase)))
+        foreach (var invoice in eligibleInvoices)
         {
             invoiceSubledger -= creditByInvoice.GetValueOrDefault(invoice.Id);
             invoiceSubledger += refundsByInvoice.GetValueOrDefault(invoice.Id);
