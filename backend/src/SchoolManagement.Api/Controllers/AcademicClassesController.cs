@@ -29,7 +29,7 @@ public sealed class AcademicClassesController(AcademicClassService service) : Co
     }
 
     [HttpPatch("{id:guid}/status")]
-    public<IActionResult> SetStatus(Guid id, [FromBody] SetClassStatusRequest request) => NoContent();
+    public IActionResult SetStatus(Guid id, [FromBody] SetClassStatusRequest request) => NoContent();
 }
 
 public sealed record SetClassStatusRequest(ClassStatus Status);
