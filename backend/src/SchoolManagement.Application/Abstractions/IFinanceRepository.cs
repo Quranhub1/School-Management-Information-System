@@ -24,6 +24,9 @@ public interface IFinanceRepository
     Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken);
     Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid studentId, CancellationToken cancellationToken);
     Task<StudentCharge?> GetStudentChargeAsync(Guid chargeId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<CreditNote>> GetAllCreditNotesAsync(CancellationToken cancellationToken);
+    Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken cancellationToken);
     Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken);
     Task AddStudentChargeAsync(StudentCharge charge, CancellationToken cancellationToken);
     Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken);
@@ -31,6 +34,7 @@ public interface IFinanceRepository
     Task AddPaymentAllocationAsync(PaymentAllocation allocation, CancellationToken cancellationToken);
     Task AddPaymentLedgerEntryAsync(PaymentLedgerEntry entry, CancellationToken cancellationToken);
     Task AddInvoiceDiscountAsync(InvoiceDiscount discount, CancellationToken cancellationToken);
+    Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken);
     Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken);
     Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken cancellationToken);
     Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
