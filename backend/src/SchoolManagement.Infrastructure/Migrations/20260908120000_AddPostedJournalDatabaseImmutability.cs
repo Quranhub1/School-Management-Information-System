@@ -18,6 +18,8 @@ CREATE OR REPLACE FUNCTION prevent_posted_journal_mutation()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    journal_id uuid;
 BEGIN
     IF TG_TABLE_NAME = 'JournalEntries' THEN
         IF TG_OP IN ('UPDATE', 'DELETE')
@@ -29,10 +31,15 @@ BEGIN
     END IF;
 
     IF TG_TABLE_NAME = 'JournalEntryLines' THEN
+        journal_id := CASE
+            WHEN TG_OP = 'DELETE' THEN OLD.""JournalEntryId""
+            ELSE NEW.""JournalEntryId""
+        END;
+
         IF EXISTS (
             SELECT 1
             FROM ""JournalEntries"" je
-            WHERE je.""Id"" = COALESCE(OLD.""JournalEntryId"", NEW.""JournalEntryId"")
+            WHERE je.""Id"" = journal_id
               AND je.""Status"" = 'Posted'
         ) THEN
             RAISE EXCEPTION 'Lines belonging to a posted journal entry are immutable.'
