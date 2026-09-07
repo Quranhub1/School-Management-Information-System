@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { getStudentReportCard, type StudentReportCard } from '../api/reports'
 import { downloadPdf } from '../api/pdf'
 
-interface ReportCardsProps { canManage: boolean }
+interface ReportCardsProps { canManage?: boolean }
 
-export function ReportCards({ canManage }: ReportCardsProps) {
+export function ReportCards({ canManage = false }: ReportCardsProps) {
   const [studentId, setStudentId] = useState('')
   const [report, setReport] = useState<StudentReportCard | null>(null)
   const [loading, setLoading] = useState(false)

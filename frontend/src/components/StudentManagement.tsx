@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { createStudent, getStudentQrCode, getStudents, type CreateStudentRequest, type Student } from '../api/students'
 
-interface Props { canManage: boolean }
+interface Props { canManage?: boolean }
 
 const emptyForm: CreateStudentRequest = { studentNumber: '', firstName: '', lastName: '', otherNames: '', dateOfBirth: '', gender: '', phoneNumber: '', email: '' }
 
-export function StudentManagement({ canManage }: Props) {
+export function StudentManagement({ canManage = false }: Props) {
   const [students, setStudents] = useState<Student[]>([])
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(false)

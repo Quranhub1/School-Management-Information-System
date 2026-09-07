@@ -4,7 +4,8 @@ import { getStudents, type Student } from '../api/students'
 
 type Tab = 'generate' | 'view' | 'verify'
 
-export function CertificateManagement({ canManage }: { canManage: boolean }) {
+interface CertificateManagementProps { canManage?: boolean }
+export function CertificateManagement({ canManage }: CertificateManagementProps) {
   const [tab, setTab] = useState<Tab>('generate')
   const [students, setStudents] = useState<Student[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState('')
@@ -112,7 +113,7 @@ export function CertificateManagement({ canManage }: { canManage: boolean }) {
   }
 
   return (
-    <section className="panel" aria-label="Certificate management">
+    <section className="panel" aria-label="Certificate canManagement">
       <div className="panel-heading">
         <div>
           <span className="eyebrow">CERTIFICATES</span>

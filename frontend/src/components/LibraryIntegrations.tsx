@@ -8,7 +8,7 @@ import {
   type LibraryIntegrationConfig,
 } from '../api/libraryIntegrations';
 
-export function LibraryIntegrations({ canManage }: { canManage: boolean }) {
+export function LibraryIntegrations({ canManage }: { canManage?: boolean }) {
   const [integrations, setIntegrations] = useState<LibraryIntegration[]>(defaultLibraryIntegrations);
   const [config, setConfig] = useState<LibraryIntegrationConfig>(getLibraryIntegrationConfig());
   const [message, setMessage] = useState('');
@@ -27,7 +27,7 @@ export function LibraryIntegrations({ canManage }: { canManage: boolean }) {
 
   function save() {
     saveLibraryIntegrationConfig(config);
-    setMessage('Library integration settings saved on this SMIS workstation.');
+    setMessage('Library integration settings saved on this workstation.');
     void refresh();
   }
 
@@ -37,7 +37,7 @@ export function LibraryIntegrations({ canManage }: { canManage: boolean }) {
         <div>
           <span className="eyebrow">LIBRARY INTEGRATIONS</span>
           <h3 id="library-integrations-title">KOHA &amp; DSpace Configuration</h3>
-          <p>Configure the school's existing library services. Local network endpoints are supported; these integrations are not required for normal SMIS operation.</p>
+          <p>Configure the institution's existing library services. Local network endpoints are supported; these integrations are not required for normal operation.</p>
         </div>
       </div>
 
@@ -100,8 +100,8 @@ export function LibraryIntegrations({ canManage }: { canManage: boolean }) {
               </button>
               <span className="integration-note">
                 {integration.name === 'KOHA'
-                  ? 'KOHA can remain a separate local library system while SMIS manages school-level library workflows.'
-                  : 'DSpace can remain a separate local repository while SMIS provides controlled access from Library Management.'}
+                  ? 'KOHA can remain a separate local library system while the management system manages institution-level library workflows.'
+                  : 'DSpace can remain a separate local repository while management system provides controlled access from Library Management.'}
               </span>
             </div>
           </article>

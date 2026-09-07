@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, type StaffMember, type LeaveRequest } from '../api/staff';
 
-export function StaffManagement({ canManage }: { canManage: boolean }) {
+export function StaffManagement({ canManage }: { canManage?: boolean }) {
   const [staff,setStaff]=useState<StaffMember[]>([]); const [error,setError]=useState(''); const [loading,setLoading]=useState(true);
   const [form,setForm]=useState({staffNumber:'',firstName:'',lastName:'',nationalId:'',phoneNumber:'',email:'',employmentType:'Permanent',staffType:'Teaching'});
   const [tab,setTab]=useState<'staff'|'leave'>('staff');

@@ -10,7 +10,7 @@ const LABORATORIES = [
   { id: 'workshop', name: 'Technical Workshop', description: 'Engineering and trades practical workshop', items: 'Lathes, grinders, welding stations, hand tools' },
 ]
 
-export function InventoryManagement({ canManage }: { canManage: boolean }) {
+export function InventoryManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<InventoryTab>('assets')
   const [selectedLab, setSelectedLab] = useState<string | null>(null)
 

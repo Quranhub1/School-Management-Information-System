@@ -3,18 +3,24 @@ import { getAccessToken } from './auth'
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getAccessToken()
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) },
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
   })
-  if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null
     throw new Error(body?.message ?? `Request failed with status ${response.status}`)
   }
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
+}
+
+async function authedRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getAccessToken()
+  if (token) {
+    init = { ...init, headers: { ...(init?.headers ?? {}), Authorization: `Bearer ${token}` } }
+  }
+  return request<T>(path, init)
 }
 
 export interface InstitutionSettings {
@@ -52,6 +58,7 @@ export interface CreateInstitutionSettingsRequest {
   accentColor?: string
 }
 
-export const getInstitutionSettings = () => request<InstitutionSettings[]>('/api/administration/institution-settings')
-export const getActiveInstitutionSettings = () => request<InstitutionSettings>('/api/administration/institution-settings/active')
-export const createInstitutionSettings = (input: CreateInstitutionSettingsRequest) => request<InstitutionSettings>('/api/administration/institution-settings', { method: 'POST', body: JSON.stringify(input) })
+export const getPublicInstitutionSettings = () => request<InstitutionSettings>('/api/public/institution-settings/active')
+export const getInstitutionSettings = () => authedRequest<InstitutionSettings[]>('/api/administration/institution-settings')
+export const getActiveInstitutionSettings = () => authedRequest<InstitutionSettings>('/api/administration/institution-settings/active')
+export const createInstitutionSettings = (input: CreateInstitutionSettingsRequest) => authedRequest<InstitutionSettings>('/api/administration/institution-settings', { method: 'POST', body: JSON.stringify(input) })

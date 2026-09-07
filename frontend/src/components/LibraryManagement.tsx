@@ -26,7 +26,7 @@ const formatDate = (value: string) =>
     year: 'numeric',
   }).format(new Date(value));
 
-export function LibraryManagement({ canManage }: { canManage: boolean }) {
+export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [books, setBooks] = useState<LibraryBook[]>([]);
   const [loans, setLoans] = useState<LibraryLoan[]>([]);
   const [members, setMembers] = useState<LibraryMember[]>([]);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function SubjectManagement({ canManage }: { canManage: boolean }) {
+export function SubjectManagement({ canManage }: { canManage?: boolean }) {
   return (
     <section className="panel" aria-label="Subject management">
       <div className="panel-heading">

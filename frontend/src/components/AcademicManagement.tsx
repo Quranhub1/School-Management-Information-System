@@ -5,7 +5,7 @@ import { createProgramme, getProgrammes, setProgrammeActive, type Programme } fr
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
 
 interface AcademicManagementProps {
-  canManage: boolean
+  canManage?: boolean
 }
 
 type AcademicView = 'records' | 'programmes'

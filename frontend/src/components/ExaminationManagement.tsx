@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function ExaminationManagement({ canManage }: { canManage: boolean }) {
+export function ExaminationManagement({ canManage }: { canManage?: boolean }) {
   const [view, setView] = useState<'sessions' | 'marks' | 'report-cards' | 'approvals' | 'reports'>('sessions');
   return (
     <section className="panel" aria-label="Examination management">

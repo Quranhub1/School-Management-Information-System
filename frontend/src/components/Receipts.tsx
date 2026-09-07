@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { searchPayments, getPaymentReceipt, type PaymentSearchResult, type FeeReceipt } from '../api/receipts'
 
-interface ReceiptsProps { canManage: boolean }
+interface ReceiptsProps { canManage?: boolean }
 
 export function Receipts({ canManage }: ReceiptsProps) {
   const [searchReceiptNumber, setSearchReceiptNumber] = useState('')

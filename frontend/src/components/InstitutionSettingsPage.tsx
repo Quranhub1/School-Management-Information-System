@@ -3,7 +3,11 @@ import { createInstitutionSettings, getActiveInstitutionSettings, type CreateIns
 
 type SettingsTab = 'general' | 'branding' | 'gallery'
 
-export function InstitutionSettingsPage() {
+interface InstitutionSettingsPageProps {
+  onSaved: (settings: InstitutionSettings) => void
+}
+
+export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProps) {
   const [active, setActive] = useState<InstitutionSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -20,7 +24,7 @@ export function InstitutionSettingsPage() {
     email: '',
     website: '',
     postalAddress: '',
-    country: 'Uganda',
+    country: '',
     institutionType: '',
     logoPath: '',
     primaryColor: '#1e40af',
@@ -46,7 +50,7 @@ export function InstitutionSettingsPage() {
         email: data.email ?? '',
         website: data.website ?? '',
         postalAddress: data.postalAddress ?? '',
-        country: data.country ?? 'Uganda',
+        country: data.country ?? '',
         institutionType: data.institutionType ?? '',
         logoPath: data.logoPath ?? '',
         primaryColor: data.primaryColor ?? '#1e40af',
@@ -67,6 +71,7 @@ export function InstitutionSettingsPage() {
     try {
       const result = await createInstitutionSettings(form)
       setActive(result)
+      onSaved(result)
       setSuccess('Institution settings saved successfully.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save settings.')
@@ -104,30 +109,30 @@ export function InstitutionSettingsPage() {
         {tab === 'general' && (
           <div className="settings-grid">
             <div className="form-row">
-              <label>Institution Name<input required value={form.institutionName} onChange={e => updateField('institutionName', e.target.value)} placeholder="e.g. Kampala School of Health Sciences" /></label>
-              <label>Abbreviation<input value={form.abbreviation} onChange={e => updateField('abbreviation', e.target.value)} placeholder="e.g. KSHS" maxLength={10} /></label>
+              <label>Institution Name<input required value={form.institutionName} onChange={e => updateField('institutionName', e.target.value)} /></label>
+              <label>Abbreviation<input value={form.abbreviation} onChange={e => updateField('abbreviation', e.target.value)} maxLength={50} /></label>
             </div>
             <div className="form-row">
-              <label>Institution Type<select value={form.institutionType} onChange={e => updateField('institutionType', e.target.value)}><option value="">Select type</option><option>University</option><option>College</option><option>Health Training Institution</option><option>Vocational Institute</option><option>Polytechnic</option></select></label>
+              <label>Institution Type<select value={form.institutionType} onChange={e => updateField('institutionType', e.target.value)}><option value="">Select type</option><option>University</option><option>College</option><option>Health Training Institution</option><option>Vocational Institute</option><option>Polytechnic</option><option>School</option></select></label>
               <label>Country<input value={form.country} onChange={e => updateField('country', e.target.value)} /></label>
             </div>
             <div className="form-row">
-              <label>Address<input value={form.address} onChange={e => updateField('address', e.target.value)} placeholder="Physical address" /></label>
-              <label>Postal Address<input value={form.postalAddress} onChange={e => updateField('postalAddress', e.target.value)} placeholder="P.O. Box..." /></label>
+              <label>Address<input value={form.address} onChange={e => updateField('address', e.target.value)} /></label>
+              <label>Postal Address<input value={form.postalAddress} onChange={e => updateField('postalAddress', e.target.value)} /></label>
             </div>
             <div className="form-row">
-              <label>Phone<input value={form.phone} onChange={e => updateField('phone', e.target.value)} placeholder="+256..." /></label>
-              <label>Email<input type="email" value={form.email} onChange={e => updateField('email', e.target.value)} placeholder="info@institution.ac.ug" /></label>
+              <label>Phone<input value={form.phone} onChange={e => updateField('phone', e.target.value)} /></label>
+              <label>Email<input type="email" value={form.email} onChange={e => updateField('email', e.target.value)} /></label>
             </div>
-            <label>Website<input value={form.website} onChange={e => updateField('website', e.target.value)} placeholder="https://www.institution.ac.ug" /></label>
-            <label>Motto<textarea value={form.motto} onChange={e => updateField('motto', e.target.value)} placeholder="Institution motto" rows={2} /></label>
+            <label>Website<input value={form.website} onChange={e => updateField('website', e.target.value)} /></label>
+            <label>Motto<textarea value={form.motto} onChange={e => updateField('motto', e.target.value)} rows={2} /></label>
           </div>
         )}
 
         {tab === 'branding' && (
           <div className="settings-grid">
             <div className="form-row">
-              <label>Logo Path/URL<input value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="/uploads/logo.png or https://..." /></label>
+              <label>Logo Path/URL<input value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://... or /uploads/logo.png" /></label>
               <label>Primary Color<input type="color" value={form.primaryColor} onChange={e => updateField('primaryColor', e.target.value)} /></label>
             </div>
             <div className="form-row">
