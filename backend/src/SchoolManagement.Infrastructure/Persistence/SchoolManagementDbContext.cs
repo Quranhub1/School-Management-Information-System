@@ -66,7 +66,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Result> Results => Set<Result>();
     public DbSet<StudentPromotion> StudentPromotions => Set<StudentPromotion>();
     public DbSet<FeeStructure> FeeStructures => Set<FeeStructure>();
+    public DbSet<FeeItem> FeeItems => Set<FeeItem>();
     public DbSet<StudentInvoice> StudentInvoices => Set<StudentInvoice>();
+    public DbSet<StudentFee> StudentFees => Set<StudentFee>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
     public DbSet<PaymentLedgerEntry> PaymentLedgerEntries => Set<PaymentLedgerEntry>();
@@ -82,6 +84,14 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<BankReconciliation> BankReconciliations => Set<BankReconciliation>();
     public DbSet<BankStatementLine> BankStatementLines => Set<BankStatementLine>();
     public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
+    public DbSet<Sponsorship> Sponsorships => Set<Sponsorship>();
+    public DbSet<InstalmentPlan> InstalmentPlans => Set<InstalmentPlan>();
+    public DbSet<InstalmentPayment> InstalmentPayments => Set<InstalmentPayment>();
+    public DbSet<MobileMoneyTransaction> MobileMoneyTransactions => Set<MobileMoneyTransaction>();
+    public DbSet<DailyCollection> DailyCollections => Set<DailyCollection>();
+    public DbSet<DailyCollectionPayment> DailyCollectionPayments => Set<DailyCollectionPayment>();
+    public DbSet<InvoiceNote> InvoiceNotes => Set<InvoiceNote>();
+    public DbSet<StaffAdvance> StaffAdvances => Set<StaffAdvance>();
     public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
     public DbSet<PayrollRecord> PayrollRecords => Set<PayrollRecord>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
@@ -97,6 +107,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Alumni> Alumni => Set<Alumni>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<GateLog> GateLogs => Set<GateLog>();
+    public DbSet<GatePass> GatePasses => Set<GatePass>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<AssessmentWeightingProfile> AssessmentWeightingProfiles => Set<AssessmentWeightingProfile>();
     public DbSet<AssessmentWeightingComponent> AssessmentWeightingComponents => Set<AssessmentWeightingComponent>();
@@ -311,6 +322,30 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.Description).HasMaxLength(500);
             e.Property(x => x.TransactionType).HasMaxLength(50).IsRequired();
             e.Property(x => x.Reference).HasMaxLength(100);
+        });
+
+        m.Entity<FeeItem>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(160).IsRequired();
+            e.Property(x => x.FeeType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.HasIndex(x => new { x.FeeStructureId, x.FeeType });
+        });
+
+        m.Entity<StudentFee>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.FeeType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(160).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.PaidAmount).HasPrecision(18, 2);
+            e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(30).IsRequired();
+            e.HasIndex(x => new { x.StudentId, x.StudentInvoiceId, x.FeeType });
+            e.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
         });
 
         m.Entity<CreditNote>(e =>

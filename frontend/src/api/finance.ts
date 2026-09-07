@@ -4,6 +4,7 @@ export interface Invoice {
   id: string
   studentId: string
   invoiceNumber: string
+  feeType: string
   amount: number
   paidAmount: number
   balance: number
@@ -16,7 +17,8 @@ export interface CreateInvoiceRequest {
   studentId: string
   feeStructureId?: string
   invoiceNumber: string
-  amount: number
+  feeType: string
+  amount?: number
   currency?: string
 }
 

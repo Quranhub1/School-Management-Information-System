@@ -61,12 +61,14 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
 
     [HttpPatch("{id:guid}/pay")]
     [Authorize(Policy = StaffPolicies.Management)]
-    public async Task<IActionResult> MarkAsPaid(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> MarkAsPaid(Guid id, [FromBody] MarkPayrollPaidRequest request, CancellationToken cancellationToken)
     {
         var record = await db.PayrollRecords.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (record is null) return NotFound();
         record.PaymentDate = DateTimeOffset.UtcNow;
         record.Status = "Paid";
+        record.PaymentMethod = string.IsNullOrWhiteSpace(request.PaymentMethod) ? null : request.PaymentMethod.Trim();
+        record.Reference = string.IsNullOrWhiteSpace(request.Reference) ? null : request.Reference.Trim();
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }

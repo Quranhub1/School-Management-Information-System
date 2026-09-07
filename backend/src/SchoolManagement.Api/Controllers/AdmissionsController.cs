@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Admissions;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Domain.Admissions;
+using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/admissions")]
 [Authorize(Policy = AdmissionsPolicies.Management)]
-public sealed class AdmissionsController(AdmissionsWorkflowService workflow)
+public sealed class AdmissionsController(AdmissionsWorkflowService workflow, SchoolManagementDbContext db)
     : ControllerBase
 {
     [HttpGet]
@@ -144,3 +146,10 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow)
         return Created($"api/students/{student.Id}", new { student, admission, enrollment });
     }
 }
+
+public record CreateAdmissionRequirementRequest(
+    Guid ProgrammeId,
+    string RequirementType,
+    string Description,
+    bool IsMandatory,
+    int DisplayOrder);

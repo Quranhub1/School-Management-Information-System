@@ -40,11 +40,9 @@ Approximately 10–20 minutes depending on internet speed (for .NET download).
    http://<SERVER-IP>
    ```
 
-3. Log in with:
-   - Username: `admin`
-   - Password: `admin123`
-
-4. **Immediately change the default admin password** in Administration.
+3. Log in with the credentials saved during installation:
+   - Check `/opt/schoolmanagement/DEPLOYMENT_CREDENTIALS.txt`
+   - The installer generates a random admin password instead of a fixed default.
 
 ## Configuration Files
 

@@ -12,4 +12,6 @@ public sealed class PayrollRecord
     public decimal NetPay { get; init; }
     public DateTimeOffset? PaymentDate { get; set; }
     public string Status { get; set; } = "Pending";
+    public string? PaymentMethod { get; set; }
+    public string? Reference { get; set; }
 }

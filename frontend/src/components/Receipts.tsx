@@ -1,20 +1,37 @@
 import { useEffect, useState } from 'react'
-import { getPaymentReceipt, type FeeReceipt } from '../api/reports'
+import { searchPayments, getPaymentReceipt, type PaymentSearchResult, type FeeReceipt } from '../api/receipts'
 
 interface ReceiptsProps { canManage: boolean }
 
 export function Receipts({ canManage }: ReceiptsProps) {
-  const [paymentId, setPaymentId] = useState('')
+  const [searchReceiptNumber, setSearchReceiptNumber] = useState('')
+  const [searchPaymentMethod, setSearchPaymentMethod] = useState('')
+  const [searchFrom, setSearchFrom] = useState('')
+  const [searchTo, setSearchTo] = useState('')
+  const [payments, setPayments] = useState<PaymentSearchResult[]>([])
   const [receipt, setReceipt] = useState<FeeReceipt | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function load() {
-    if (!paymentId.trim()) return
+  async function search() {
+    setLoading(true)
+    setError('')
+    setReceipt(null)
+    try {
+      const data = await searchPayments(searchReceiptNumber || undefined, searchPaymentMethod || undefined, searchFrom || undefined, searchTo || undefined)
+      setPayments(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to search payments.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function viewReceipt(paymentId: string) {
     setLoading(true)
     setError('')
     try {
-      const data = await getPaymentReceipt(paymentId.trim())
+      const data = await getPaymentReceipt(paymentId)
       setReceipt(data)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load receipt.')
@@ -22,10 +39,6 @@ export function Receipts({ canManage }: ReceiptsProps) {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    if (paymentId.trim()) void load()
-  }, [paymentId])
 
   function printReceipt() {
     window.print()
@@ -41,14 +54,59 @@ export function Receipts({ canManage }: ReceiptsProps) {
         <button className="secondary-button" onClick={printReceipt} disabled={!receipt}>Print Receipt</button>
       </div>
 
-      <form className="student-form" onSubmit={e => { e.preventDefault(); void load() }} style={{ marginBottom: 22 }}>
+      <form className="student-form" onSubmit={e => { e.preventDefault(); void search() }} style={{ marginBottom: 22 }}>
         <div className="form-row">
-          <label>Payment ID<input value={paymentId} onChange={e => setPaymentId(e.target.value)} placeholder="Enter payment ID" required /></label>
-          <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Generate'}</button>
+          <label>Receipt Number<input value={searchReceiptNumber} onChange={e => setSearchReceiptNumber(e.target.value)} placeholder="Search receipt number" /></label>
+          <label>
+            Payment Method
+            <select value={searchPaymentMethod} onChange={e => setSearchPaymentMethod(e.target.value)}>
+              <option value="">All</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank">Bank</option>
+              <option value="Mobile Money">Mobile Money</option>
+              <option value="Card">Card</option>
+            </select>
+          </label>
+        </div>
+        <div className="form-row">
+          <label>From<input type="date" value={searchFrom} onChange={e => setSearchFrom(e.target.value)} /></label>
+          <label>To<input type="date" value={searchTo} onChange={e => setSearchTo(e.target.value)} /></label>
+          <button type="submit" disabled={loading}>{loading ? 'Searching…' : 'Search'}</button>
         </div>
       </form>
 
       {error && <div className="error" role="alert">{error}</div>}
+
+      {!receipt && payments.length > 0 && (
+        <div className="table-wrap" style={{ marginBottom: 22 }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Receipt No.</th>
+                <th>Student</th>
+                <th>Invoice</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payments.map(p => (
+                <tr key={p.id}>
+                  <td><strong>{p.receiptNumber}</strong></td>
+                  <td>{p.studentName}</td>
+                  <td>{p.invoiceNumber}</td>
+                  <td style={{ color: '#059669', fontWeight: 700 }}>UGX {p.amount.toLocaleString()}</td>
+                  <td>{p.paymentMethod}</td>
+                  <td>{new Date(p.paidAt).toLocaleDateString('en-UG')}</td>
+                  <td><button className="secondary-button" onClick={() => viewReceipt(p.id)}>View Receipt</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {receipt && (
         <div className="receipt" id="receipt-print">
@@ -83,8 +141,8 @@ export function Receipts({ canManage }: ReceiptsProps) {
         </div>
       )}
 
-      {!receipt && !loading && (
-        <p className="empty">Enter a payment ID to generate a receipt.</p>
+      {!receipt && !loading && payments.length === 0 && (
+        <p className="empty">Search for payments to view and reprint receipts.</p>
       )}
     </section>
   )

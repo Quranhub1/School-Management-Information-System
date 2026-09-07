@@ -21,10 +21,12 @@ public static class IdentitySeeder
         var admin = await db.Users.SingleOrDefaultAsync(x => x.Username == "admin", cancellationToken);
         if (admin is null)
         {
+            var password = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD")
+                ?? GenerateRandomPassword();
             admin = new User
             {
                 Username = "admin",
-                PasswordHash = AuthService.HashPassword("admin123"),
+                PasswordHash = AuthService.HashPassword(password),
                 FirstName = "System",
                 LastName = "Administrator",
                 Email = "admin@localhost",
@@ -32,6 +34,7 @@ public static class IdentitySeeder
             };
             db.Users.Add(admin);
             db.UserRoles.Add(new UserRole { UserId = admin.Id, RoleId = role.Id });
+            Console.WriteLine($"[IdentitySeeder] Generated admin credentials -> username: admin | password: {password}");
         }
         else if (!await db.UserRoles.AnyAsync(x => x.UserId == admin.Id && x.RoleId == role.Id, cancellationToken))
         {
@@ -39,5 +42,13 @@ public static class IdentitySeeder
         }
 
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string GenerateRandomPassword()
+    {
+        var bytes = new byte[16];
+        using var rng = Random.Shared;
+        rng.NextBytes(bytes);
+        return Convert.ToBase64String(bytes)[..22];
     }
 }

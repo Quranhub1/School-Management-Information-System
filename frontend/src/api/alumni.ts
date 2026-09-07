@@ -8,6 +8,14 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 export type Alumni = { id:string; studentId:string; graduationDate:string; programme:string; currentOccupation?:string; employer?:string; contactInfo?:string; isActive:boolean };
-export function listAlumni(){ return request<Alumni[]>('/api/alumni'); }
+export function listAlumni(search = '', programme = '', fromDate = '', toDate = '') {
+  const params = new URLSearchParams()
+  if (search.trim()) params.set('search', search.trim())
+  if (programme.trim()) params.set('programme', programme.trim())
+  if (fromDate) params.set('fromDate', fromDate)
+  if (toDate) params.set('toDate', toDate)
+  const qs = params.toString()
+  return request<Alumni[]>(`/api/alumni${qs ? `?${qs}` : ''}`)
+}
 export function createAlumni(input: Omit<Alumni,'id'|'isActive'>){ return request<Alumni>('/api/alumni',{method:'POST',body:JSON.stringify(input)}); }
 export function updateAlumni(id:string,input:Partial<Alumni>){ return request<void>(`/api/alumni/${id}`,{method:'PATCH',body:JSON.stringify(input)}); }

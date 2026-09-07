@@ -1,8 +1,10 @@
+using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Finance;
+using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Application.Finance;
 
-public sealed class FinanceWorkflowService(FinanceService finance)
+public sealed class FinanceWorkflowService(FinanceService finance, SchoolManagementDbContext db)
 {
     public async Task<IReadOnlyList<FeeDto>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken = default)
     {
