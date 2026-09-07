@@ -10,6 +10,8 @@ public sealed class TimetableWorkflowService
 {
     public TimetableEntry CreateEntry(
         Guid teachingGroupId,
+        Guid courseId,
+        Guid teacherId,
         DayOfWeek dayOfWeek,
         TimeOnly startTime,
         TimeOnly endTime,
@@ -18,6 +20,10 @@ public sealed class TimetableWorkflowService
     {
         if (teachingGroupId == Guid.Empty)
             throw new ArgumentException("A teaching group is required.", nameof(teachingGroupId));
+        if (courseId == Guid.Empty)
+            throw new ArgumentException("A course is required.", nameof(courseId));
+        if (teacherId == Guid.Empty)
+            throw new ArgumentException("A teacher is required.", nameof(teacherId));
 
         if (endTime <= startTime)
             throw new ArgumentException("End time must be after start time.", nameof(endTime));
@@ -25,6 +31,8 @@ public sealed class TimetableWorkflowService
         return new TimetableEntry
         {
             TeachingGroupId = teachingGroupId,
+            CourseId = courseId,
+            TeacherId = teacherId,
             DayOfWeek = dayOfWeek,
             StartTime = startTime,
             EndTime = endTime,

@@ -10,6 +10,9 @@ public sealed class CertificateRepository(SchoolManagementDbContext db) : ICerti
     public Task<Certificate?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.Certificates.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<Certificate?> GetBySerialNumberAsync(string serialNumber, CancellationToken cancellationToken = default) =>
+        db.Certificates.AsNoTracking().SingleOrDefaultAsync(x => x.SerialNumber == serialNumber, cancellationToken);
+
     public async Task<IReadOnlyList<Certificate>> GetByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default) =>
         await db.Certificates.AsNoTracking().Where(x => x.StudentId == studentId).ToListAsync(cancellationToken);
 

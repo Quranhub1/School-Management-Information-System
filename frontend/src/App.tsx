@@ -17,6 +17,8 @@ import {
   canManageReporting,
   canManageInventory,
   canManagePrinters,
+  canManageDocuments,
+  canViewAnalytics,
 } from './auth/roleGuards'
 import { AcademicManagement } from './components/AcademicManagement'
 import { CurriculumManagement } from './components/CurriculumManagement'
@@ -38,6 +40,9 @@ import { InstitutionSettingsPage } from './components/InstitutionSettingsPage'
 import { GlobalSearch } from './components/GlobalSearch'
 import { AnalyticsDashboard } from './components/AnalyticsDashboard'
 import { StudentPortal } from './pages/StudentPortal'
+import { Student360Page } from './pages/Student360Page'
+import { DocumentManagement } from './components/DocumentManagement'
+import { AnalyticsDashboard } from './components/AnalyticsDashboard'
 import { getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
 import './components/PrintStyles.css'
 
@@ -69,6 +74,9 @@ type ModuleKey =
   | 'parent-portal'
   | 'teaching'
   | 'institution-settings'
+  | 'documents'
+  | 'student360'
+  | 'analytics'
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState('')
@@ -129,6 +137,9 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
   const rp = canManageReporting(r)
   const inv = canManageInventory(r)
   const pr = canManagePrinters(r)
+  const docs = canManageDocuments(r)
+  const s360 = r.includes('SystemAdministrator') || r.includes('Registrar') || r.includes('AcademicRegistrar') || r.includes('Student')
+  const analytics = canViewAnalytics(r)
 
   useEffect(() => {
     void getActiveInstitutionSettings().then(setInstitution).catch(() => setInstitution(null))
@@ -167,6 +178,9 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     { key: 'parent-portal', label: 'Parent Portal', roles: [] },
     { key: 'teaching', label: 'Teaching', roles: [] },
     { key: 'institution-settings', label: 'Institution Settings', roles: [] },
+    { key: 'documents', label: 'Documents', roles: [] },
+    { key: 'student360', label: 'Student 360', roles: [] },
+    { key: 'analytics', label: 'Analytics', roles: [] },
   ]
 
   const [rptTab, setRptTab] = useState<'cards' | 'receipts' | 'certificates'>('cards')
@@ -199,6 +213,9 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     if (m.key === 'parent-portal' && r.includes('Parent')) return true
     if (m.key === 'teaching' && r.includes('Lecturer')) return true
     if (m.key === 'institution-settings' && a) return true
+    if (m.key === 'documents' && docs) return true
+    if (m.key === 'student360' && s360) return true
+    if (m.key === 'analytics' && analytics) return true
     return false
   })
 
@@ -271,6 +288,9 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
           {activeModule === 'parent-portal' && r.includes('Parent') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Parent</p><h2>Parent Portal</h2></div></div><p className="empty">Parent portal is available.</p></div>}
           {activeModule === 'teaching' && r.includes('Lecturer') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Teaching</p><h2>Teaching Workspace</h2></div></div><p className="empty">Teaching module is available.</p></div>}
           {activeModule === 'institution-settings' && a && <InstitutionSettingsPage />}
+          {activeModule === 'documents' && docs && <DocumentManagement canManage />}
+          {activeModule === 'student360' && s360 && <Student360Page />}
+          {activeModule === 'analytics' && analytics && <AnalyticsDashboard />}
         </div>
       </div>
     </main>

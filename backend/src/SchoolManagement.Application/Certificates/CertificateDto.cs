@@ -8,8 +8,13 @@ public sealed record CertificateDto(
     string AwardType,
     DateOnly GraduationDate,
     string SerialNumber,
+    string VerificationHash,
     DateTimeOffset IssuedAt,
-    string IssuedBy);
+    string IssuedBy,
+    bool IsRevoked,
+    DateTimeOffset? RevokedAt,
+    string? RevokedBy,
+    string? RevocationReason);
 
 public sealed record GenerateCertificateRequest(
     Guid StudentId,

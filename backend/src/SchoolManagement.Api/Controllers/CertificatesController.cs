@@ -34,4 +34,23 @@ public sealed class CertificatesController(CertificateService service) : Control
         if (certificate is null) return NotFound();
         return Ok(new { certificate, printReady = true, issuedAt = certificate.IssuedAt.ToString("MMMM dd, yyyy"), graduationDate = certificate.GraduationDate.ToString("MMMM dd, yyyy") });
     }
+
+    public sealed record RevokeCertificateRequest(string RevokedBy, string? Reason);
+
+    [HttpPost("{id:guid}/revoke")]
+    public async Task<IActionResult> Revoke(Guid id, [FromBody] RevokeCertificateRequest request, CancellationToken cancellationToken)
+    {
+        if (request is null) return BadRequest(new { message = "Request body is required." });
+        await service.RevokeAsync(id, request.RevokedBy, request.Reason, cancellationToken);
+        return NoContent();
+    }
+
+    [HttpGet("verify/{serialNumber}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Verify(string serialNumber, CancellationToken cancellationToken)
+    {
+        var result = await service.VerifyAsync(serialNumber, cancellationToken);
+        if (result is null) return NotFound(new { message = "Certificate not found." });
+        return Ok(result);
+    }
 }

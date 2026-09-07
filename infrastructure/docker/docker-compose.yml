@@ -32,6 +32,8 @@ services:
       Authentication__JwtKey: ${JWT_KEY:-change-me-in-production-32-chars-minimum}
       LibraryIntegrations__Koha__Enabled: "false"
       LibraryIntegrations__DSpace__Enabled: "false"
+      DocumentStorage__RootPath: /app/documents
+      AttendanceQr__SigningSecret: ${QR_SIGNING_SECRET:-change-me-in-production}
     ports:
       - "5000:5000"
     depends_on:
@@ -39,6 +41,7 @@ services:
         condition: service_healthy
     volumes:
       - smis_logs:/app/logs
+      - smis_documents:/app/documents
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
       interval: 30s
@@ -67,3 +70,4 @@ services:
 volumes:
   postgres_data:
   smis_logs:
+  smis_documents:

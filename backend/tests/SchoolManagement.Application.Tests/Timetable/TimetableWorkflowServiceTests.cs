@@ -11,9 +11,13 @@ public sealed class TimetableWorkflowServiceTests
     public void CreateEntry_CreatesNormalizedActiveEntry()
     {
         var teachingGroupId = Guid.NewGuid();
+        var courseId = Guid.NewGuid();
+        var teacherId = Guid.NewGuid();
 
         var entry = _service.CreateEntry(
             teachingGroupId,
+            courseId,
+            teacherId,
             DayOfWeek.Monday,
             new TimeOnly(8, 0),
             new TimeOnly(10, 0),
@@ -22,6 +26,8 @@ public sealed class TimetableWorkflowServiceTests
 
         Assert.NotEqual(Guid.Empty, entry.Id);
         Assert.Equal(teachingGroupId, entry.TeachingGroupId);
+        Assert.Equal(courseId, entry.CourseId);
+        Assert.Equal(teacherId, entry.TeacherId);
         Assert.Equal(DayOfWeek.Monday, entry.DayOfWeek);
         Assert.Equal(new TimeOnly(8, 0), entry.StartTime);
         Assert.Equal(new TimeOnly(10, 0), entry.EndTime);
@@ -36,6 +42,8 @@ public sealed class TimetableWorkflowServiceTests
         var exception = Assert.Throws<ArgumentException>(() =>
             _service.CreateEntry(
                 Guid.Empty,
+                Guid.NewGuid(),
+                Guid.NewGuid(),
                 DayOfWeek.Monday,
                 new TimeOnly(8, 0),
                 new TimeOnly(10, 0)));
@@ -44,10 +52,42 @@ public sealed class TimetableWorkflowServiceTests
     }
 
     [Fact]
+    public void CreateEntry_RejectsEmptyCourse()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            _service.CreateEntry(
+                Guid.NewGuid(),
+                Guid.Empty,
+                Guid.NewGuid(),
+                DayOfWeek.Monday,
+                new TimeOnly(8, 0),
+                new TimeOnly(10, 0)));
+
+        Assert.Equal("courseId", exception.ParamName);
+    }
+
+    [Fact]
+    public void CreateEntry_RejectsEmptyTeacher()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            _service.CreateEntry(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                Guid.Empty,
+                DayOfWeek.Monday,
+                new TimeOnly(8, 0),
+                new TimeOnly(10, 0)));
+
+        Assert.Equal("teacherId", exception.ParamName);
+    }
+
+    [Fact]
     public void CreateEntry_RejectsNonIncreasingTimeRange()
     {
         var exception = Assert.Throws<ArgumentException>(() =>
             _service.CreateEntry(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
                 Guid.NewGuid(),
                 DayOfWeek.Tuesday,
                 new TimeOnly(10, 0),
@@ -60,6 +100,8 @@ public sealed class TimetableWorkflowServiceTests
     public void CreateEntry_ConvertsBlankOptionalValuesToNull()
     {
         var entry = _service.CreateEntry(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
             Guid.NewGuid(),
             DayOfWeek.Wednesday,
             new TimeOnly(9, 0),
