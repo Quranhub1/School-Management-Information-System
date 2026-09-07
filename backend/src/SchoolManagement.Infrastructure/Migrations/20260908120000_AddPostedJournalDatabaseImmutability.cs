@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -9,6 +11,7 @@ namespace SchoolManagement.Infrastructure.Migrations;
 /// remains useful for application-level feedback, while this trigger protects the ledger
 /// even when rows are changed outside EF Core.
 /// </summary>
+[DbContext(typeof(SchoolManagement.Infrastructure.Persistence.SchoolManagementDbContext))]
 [Migration("20260908120000_AddPostedJournalDatabaseImmutability")]
 public partial class AddPostedJournalDatabaseImmutability : Migration
 {
