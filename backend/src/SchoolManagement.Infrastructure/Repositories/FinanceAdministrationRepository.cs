@@ -40,6 +40,9 @@ public sealed class FinanceAdministrationRepository(SchoolManagementDbContext db
     public async Task<IReadOnlyList<BankStatementLine>> GetBankStatementLinesAsync(Guid reconciliationId, CancellationToken cancellationToken) =>
         await db.BankStatementLines.Where(x => x.BankReconciliationId == reconciliationId).OrderBy(x => x.TransactionDate).ThenBy(x => x.Id).ToListAsync(cancellationToken);
 
+    public Task<bool> IsJournalAlreadyMatchedAsync(Guid journalEntryId, CancellationToken cancellationToken) =>
+        db.BankStatementLines.AnyAsync(x => x.MatchedJournalEntryId == journalEntryId, cancellationToken);
+
     public async Task<IReadOnlyList<JournalEntry>> GetPostedJournalsForAccountAsync(Guid accountId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken) =>
         await db.JournalEntries.AsNoTracking().Include(x => x.Lines).Where(x => x.Status == "Posted" && x.EntryDate >= from && x.EntryDate <= to && x.Lines.Any(l => l.AccountId == accountId)).OrderBy(x => x.EntryDate).ThenBy(x => x.EntryNumber).ToListAsync(cancellationToken);
 
