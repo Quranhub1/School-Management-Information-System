@@ -24,6 +24,7 @@ env:
   ASPNETCORE_URLS: http://127.0.0.1:5080
   ConnectionStrings__SchoolManagement: Host=127.0.0.1;Port=5432;Database=school_management_ci;Username=school_management;Password=ci_validation
   Authentication__JwtKey: ci-only-jwt-signing-key-that-is-long-enough-for-hmac-sha256-validation
+  SEED_ADMIN_PASSWORD: admin123
   VITE_API_BASE_URL: http://127.0.0.1:5080
   API_BASE_URL: http://127.0.0.1:5080
   FRONTEND_URL: http://127.0.0.1:4173
