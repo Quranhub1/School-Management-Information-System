@@ -8,9 +8,9 @@ public sealed class BankReconciliation
     public decimal StatementBalance { get; init; }
     public decimal BookBalance { get; init; }
     public decimal ReconciledAmount { get; set; }
-    public string Status { get; init; } = "Pending";
-    public DateTimeOffset? ReconciledAt { get; init; }
-    public string? ReconciledBy { get; init; }
-    public string? Notes { get; init; }
+    public string Status { get; set; } = "Pending";
+    public DateTimeOffset? ReconciledAt { get; set; }
+    public string? ReconciledBy { get; set; }
+    public string? Notes { get; set; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 }
