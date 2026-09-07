@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Domain.Administration;
 using SchoolManagement.Domain.Identity;
 using SchoolManagement.Infrastructure.Persistence;
 
@@ -44,6 +45,21 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
                 };
                 db.Roles.Add(role);
             }
+        }
+
+        var institution = await db.InstitutionSettings
+            .SingleOrDefaultAsync(x => x.IsActive, cancellationToken);
+        if (institution is null)
+        {
+            db.InstitutionSettings.Add(new InstitutionSettings
+            {
+                InstitutionName = "Institution Management System",
+                Abbreviation = "SMIS",
+                InstitutionType = "School",
+                IsActive = true,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+            await db.SaveChangesAsync(cancellationToken);
         }
 
         var admin = await db.Users.SingleOrDefaultAsync(x => x.Username == "admin", cancellationToken);
