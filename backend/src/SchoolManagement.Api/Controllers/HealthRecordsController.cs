@@ -15,23 +15,15 @@ public sealed class HealthRecordsController(SchoolManagementDbContext db) : Cont
     [HttpGet("student/{studentId:guid}")]
     public async Task<IActionResult> GetStudentMedicalRecords(Guid studentId, CancellationToken cancellationToken)
     {
-        var records = await db.StudentMedicalRecords.AsNoTracking()
+        var records = await db.Set<StudentMedicalRecord>().AsNoTracking()
             .Where(r => r.StudentId == studentId)
             .OrderByDescending(r => r.VisitDate)
             .Select(r => new
             {
-                r.Id,
-                r.RecordType,
-                r.Condition,
-                r.Treatment,
-                r.Medication,
-                r.Notes,
-                r.AttendedBy,
-                r.VisitDate,
-                r.CreatedAtUtc
+                r.Id, r.RecordType, r.Condition, r.Treatment, r.Medication, r.Notes,
+                r.AttendedBy, r.VisitDate, r.CreatedAtUtc
             })
             .ToListAsync(cancellationToken);
-
         return Ok(records);
     }
 
@@ -40,44 +32,32 @@ public sealed class HealthRecordsController(SchoolManagementDbContext db) : Cont
     {
         var record = new StudentMedicalRecord
         {
-            StudentId = studentId,
-            RecordType = request.RecordType,
-            Condition = request.Condition,
-            Treatment = request.Treatment,
-            Medication = request.Medication,
-            Notes = request.Notes,
-            AttendedBy = request.AttendedBy,
-            VisitDate = request.VisitDate
+            StudentId = studentId, RecordType = request.RecordType, Condition = request.Condition,
+            Treatment = request.Treatment, Medication = request.Medication, Notes = request.Notes,
+            AttendedBy = request.AttendedBy, VisitDate = request.VisitDate
         };
-
-        db.StudentMedicalRecords.Add(record);
+        db.Set<StudentMedicalRecord>().Add(record);
         await db.SaveChangesAsync(cancellationToken);
-
         return CreatedAtAction(nameof(GetStudentMedicalRecords), new { studentId }, new { record.Id });
     }
 
     [HttpGet("recent")]
     public async Task<IActionResult> GetRecentVisits([FromQuery] int days = 7, CancellationToken cancellationToken = default)
     {
+        if (days < 1 || days > 365) return BadRequest(new { message = "Days must be between 1 and 365." });
         var since = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-days));
-
-        var visits = await db.StudentMedicalRecords.AsNoTracking()
-            .Where(r => r.VisitDate >= since)
-            .OrderByDescending(r => r.VisitDate)
-            .Select(r => new
+        var visits = await (
+            from record in db.Set<StudentMedicalRecord>().AsNoTracking()
+            join student in db.Students.AsNoTracking() on record.StudentId equals student.Id
+            where record.VisitDate >= since
+            orderby record.VisitDate descending
+            select new
             {
-                r.Id,
-                studentId = r.StudentId,
-                studentNumber = r.Student.StudentNumber,
-                studentName = r.Student.FirstName + " " + r.Student.LastName,
-                r.RecordType,
-                r.Condition,
-                r.Treatment,
-                r.VisitDate,
-                r.AttendedBy
+                record.Id, studentId = student.Id, studentNumber = student.StudentNumber,
+                studentName = student.FirstName + " " + student.LastName,
+                record.RecordType, record.Condition, record.Treatment, record.VisitDate, record.AttendedBy
             })
             .ToListAsync(cancellationToken);
-
         return Ok(visits);
     }
 }
