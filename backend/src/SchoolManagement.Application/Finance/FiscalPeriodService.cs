@@ -32,7 +32,21 @@ public sealed class FiscalPeriodService(IFiscalPeriodRepository repository)
 
     public async Task<FiscalPeriod> RequireOpenPeriodAsync(DateOnly transactionDate, CancellationToken cancellationToken = default)
     {
-        var period = await repository.GetContainingPeriodAsync(transactionDate, cancellationToken);
+        var periods = await repository.GetFiscalPeriodsAsync(cancellationToken);
+        if (periods.Count == 0)
+        {
+            // Rollout-safe behavior: existing installations can continue posting until
+            // an administrator explicitly configures fiscal periods. Once any period
+            // exists, every posting must belong to an open period.
+            return new FiscalPeriod
+            {
+                Name = "Legacy posting mode",
+                StartDate = transactionDate,
+                EndDate = transactionDate
+            };
+        }
+
+        var period = periods.SingleOrDefault(x => x.Contains(transactionDate));
         if (period is null) throw new InvalidOperationException($"No fiscal period contains transaction date {transactionDate:yyyy-MM-dd}.");
         if (!string.Equals(period.Status, "Open", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException($"Fiscal period '{period.Name}' is closed.");
         return period;
