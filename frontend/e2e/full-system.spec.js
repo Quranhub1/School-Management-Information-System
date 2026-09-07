@@ -31,7 +31,7 @@ test.describe('SMIS full-system smoke tests', () => {
 
   test('frontend loads and administrator can sign in', async ({ page }) => {
     await page.goto(FRONTEND_URL, { waitUntil: 'networkidle' });
-    await expect(page.getByText('Sign in to the Institution Management System')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Sign in to/ })).toBeVisible();
 
     await signIn(page);
 
