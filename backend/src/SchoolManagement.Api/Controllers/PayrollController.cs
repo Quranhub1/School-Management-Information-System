@@ -31,18 +31,21 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> Generate([FromBody] GeneratePayrollRequest request, CancellationToken cancellationToken)
     {
+        if (request.Month is < 1 or > 12) return BadRequest(new { message = "Month must be between 1 and 12." });
+        if (request.Year < 2000) return BadRequest(new { message = "Year is invalid." });
+
         var staff = await db.StaffMembers.AsNoTracking().Where(x => x.IsActive).ToListAsync(cancellationToken);
+        var basicSalary = configuration.GetValue<decimal>("PayrollDefaults:BasicSalary", 50000m);
+        var teachingAllowance = configuration.GetValue<decimal>("PayrollDefaults:TeachingAllowances", 15000m);
+        var nonTeachingAllowance = configuration.GetValue<decimal>("PayrollDefaults:NonTeachingAllowances", 8000m);
+        var deductions = configuration.GetValue<decimal>("PayrollDefaults:Deductions", 5000m);
+
         foreach (var s in staff)
         {
             var existing = await db.PayrollRecords.AnyAsync(x => x.StaffMemberId == s.Id && x.Month == request.Month && x.Year == request.Year, cancellationToken);
             if (existing) continue;
-            var basicSalary = configuration.GetValue<decimal>("PayrollDefaults:BasicSalary", 50000m);
-            var isTeaching = s.StaffType == SchoolManagement.Domain.Staff.StaffType.Teaching;
-            var allowances = isTeaching
-                ? configuration.GetValue<decimal>("PayrollDefaults:TeachingAllowances", 15000m)
-                : configuration.GetValue<decimal>("PayrollDefaults:NonTeachingAllowances", 8000m);
-            var deductions = configuration.GetValue<decimal>("PayrollDefaults:Deductions", 5000m);
-            var record = new Domain.Staff.PayrollRecord
+            var allowances = s.StaffType == SchoolManagement.Domain.Staff.StaffType.Teaching ? teachingAllowance : nonTeachingAllowance;
+            db.PayrollRecords.Add(new Domain.Staff.PayrollRecord
             {
                 StaffMemberId = s.Id,
                 Month = request.Month,
@@ -52,8 +55,7 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
                 Deductions = deductions,
                 NetPay = basicSalary + allowances - deductions,
                 Status = "Pending"
-            };
-            db.PayrollRecords.Add(record);
+            });
         }
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new { message = "Payroll generated." });
@@ -77,11 +79,13 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> UpdateAllowances(Guid id, [FromBody] UpdateAllowancesRequest request, CancellationToken cancellationToken)
     {
+        if (request.Allowances < 0 || request.Deductions < 0) return BadRequest(new { message = "Allowances and deductions cannot be negative." });
         var record = await db.PayrollRecords.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (record is null) return NotFound();
-        record.Allowances = request.Allowances;
-        record.Deductions = request.Deductions;
-        record.NetPay = record.BasicSalary + record.Allowances - record.Deductions;
+
+        db.Entry(record).Property(x => x.Allowances).CurrentValue = request.Allowances;
+        db.Entry(record).Property(x => x.Deductions).CurrentValue = request.Deductions;
+        db.Entry(record).Property(x => x.NetPay).CurrentValue = record.BasicSalary + request.Allowances - request.Deductions;
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
