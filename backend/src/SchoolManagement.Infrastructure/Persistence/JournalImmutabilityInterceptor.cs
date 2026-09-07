@@ -29,8 +29,9 @@ public sealed class JournalImmutabilityInterceptor : SaveChangesInterceptor
 
         foreach (var entry in context.ChangeTracker.Entries<JournalEntry>())
         {
-            if (entry.State is EntityState.Modified or EntityState.Deleted &&
-                string.Equals(entry.OriginalValues[nameof(JournalEntry.Status)]?.ToString(), "Posted", StringComparison.OrdinalIgnoreCase))
+            var isMutation = entry.State is EntityState.Modified or EntityState.Deleted;
+            var wasPosted = string.Equals(entry.OriginalValues[nameof(JournalEntry.Status)]?.ToString(), "Posted", StringComparison.OrdinalIgnoreCase);
+            if (isMutation && wasPosted)
                 throw new InvalidOperationException("Posted journal entries are immutable. Create a reversal or adjustment journal instead.");
         }
 
