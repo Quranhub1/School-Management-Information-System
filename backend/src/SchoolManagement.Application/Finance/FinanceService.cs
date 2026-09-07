@@ -3,7 +3,7 @@ using SchoolManagement.Domain.Finance;
 
 namespace SchoolManagement.Application.Finance;
 
-public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFinanceRepository finance)
+public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
     public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) =>
         finance.GetStudentInvoicesAsync(studentId, cancellationToken);
@@ -32,16 +32,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var journalEntry = await CreateItemizedInvoiceJournalAsync(invoice, receivableAccount.Id, revenueAccount.Id, cancellationToken);
         await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         await finance.AddInvoiceAsync(invoice, cancellationToken);
-        await finance.AddPaymentLedgerEntryAsync(new PaymentLedgerEntry
-        {
-            StudentId = studentId,
-            StudentInvoiceId = invoice.Id,
-            EntryType = "Invoice",
-            Description = $"Invoice {invoice.InvoiceNumber}",
-            Amount = invoice.Amount,
-            Currency = invoice.Currency,
-            Reference = invoice.InvoiceNumber
-        }, cancellationToken);
+        await finance.AddPaymentLedgerEntryAsync(new PaymentLedgerEntry { StudentId = studentId, StudentInvoiceId = invoice.Id, EntryType = "Invoice", Description = $"Invoice {invoice.InvoiceNumber}", Amount = invoice.Amount, Currency = invoice.Currency, Reference = invoice.InvoiceNumber }, cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
         return invoice;
     }
@@ -60,14 +51,14 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
 
         var paymentAccount = await GetAccountAsync(ResolvePaymentAccountCode(paymentMethod), cancellationToken);
         var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
+        var payment = new Payment { StudentId = invoice.StudentId, StudentInvoiceId = invoice.Id, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = invoice.Currency, PaymentMethod = paymentMethod.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
+        var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Payment receipt {normalizedReceipt} for invoice {invoice.InvoiceNumber}", payment.Amount, paymentAccount.Id, receivableAccount.Id, "Payment", payment.Id);
+        await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         invoice.PaidAmount += amount;
         invoice.Status = invoice.PaidAmount >= invoice.NetAmount ? "Paid" : "PartiallyPaid";
         ApplyPaymentToInstallments(invoice, amount);
-        var payment = new Payment { StudentId = invoice.StudentId, StudentInvoiceId = invoice.Id, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = invoice.Currency, PaymentMethod = paymentMethod.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
         var allocation = new PaymentAllocation { PaymentId = payment.Id, StudentInvoiceId = invoice.Id, AllocatedAmount = amount, Currency = invoice.Currency, Notes = "Automatic allocation on receipt" };
         payment.Allocations.Add(allocation);
-        var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Payment receipt {normalizedReceipt} for invoice {invoice.InvoiceNumber}", payment.Amount, paymentAccount.Id, receivableAccount.Id, "Payment", payment.Id);
-        await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         await finance.AddPaymentAsync(payment, cancellationToken);
         await finance.AddPaymentAllocationAsync(allocation, cancellationToken);
         await finance.AddPaymentLedgerEntryAsync(new PaymentLedgerEntry { StudentId = invoice.StudentId, StudentInvoiceId = invoice.Id, PaymentId = payment.Id, PaymentAllocationId = allocation.Id, EntryType = "Payment", Description = $"Payment {payment.ReceiptNumber}", Amount = -amount, Currency = payment.Currency, Reference = payment.Reference ?? payment.ReceiptNumber }, cancellationToken);
@@ -101,11 +92,9 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         if (allocations.Count == 0) throw new ArgumentException("At least one allocation is required.");
         if (allocations.Any(x => x.Amount <= 0)) throw new ArgumentException("Allocation amounts must be greater than zero.");
         if (allocations.Select(x => x.StudentInvoiceId).Distinct().Count() != allocations.Count) throw new ArgumentException("An invoice may only appear once in an allocation request.");
-
         var payment = await finance.GetPaymentAsync(paymentId, cancellationToken) ?? throw new ArgumentException("Payment was not found.");
         var requested = allocations.Sum(x => x.Amount);
         if (requested > payment.UnallocatedAmount) throw new ArgumentException($"Allocation exceeds the payment's unallocated balance of {payment.UnallocatedAmount:0.00} {payment.Currency}.");
-
         var invoices = new List<StudentInvoice>();
         foreach (var request in allocations)
         {
@@ -116,7 +105,6 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
             if (request.Amount > outstanding) throw new ArgumentException($"Allocation exceeds invoice {invoice.InvoiceNumber}'s outstanding balance of {outstanding:0.00} {invoice.Currency}.");
             invoices.Add(invoice);
         }
-
         var index = 0;
         foreach (var request in allocations)
         {
@@ -143,11 +131,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         {
             if (remaining <= 0) break;
             var amount = Math.Min(remaining, invoice.OutstandingAmount);
-            if (amount > 0)
-            {
-                requests.Add(new PaymentAllocationRequest(invoice.Id, amount, "FIFO allocation"));
-                remaining -= amount;
-            }
+            if (amount > 0) { requests.Add(new PaymentAllocationRequest(invoice.Id, amount, "FIFO allocation")); remaining -= amount; }
         }
         if (requests.Count == 0) return payment;
         return await AllocatePaymentAsync(paymentId, requests, cancellationToken);
@@ -166,11 +150,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
             var allocation = Math.Min(remaining, installment.OutstandingAmount);
             if (allocation <= 0) continue;
             installment.PaidAmount += allocation;
-            installment.Status = installment.PaidAmount >= installment.Amount
-                ? "Paid"
-                : installment.PaidAmount > 0
-                    ? "PartiallyPaid"
-                    : "Pending";
+            installment.Status = installment.PaidAmount >= installment.Amount ? "Paid" : installment.PaidAmount > 0 ? "PartiallyPaid" : "Pending";
             remaining -= allocation;
         }
     }
@@ -179,6 +159,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
     {
         if (await finance.JournalEntryNumberExistsAsync(entry.EntryNumber, cancellationToken)) throw new InvalidOperationException($"Journal entry number '{entry.EntryNumber}' already exists.");
         JournalEntryValidator.Validate(entry);
+        await fiscalPeriods.RequireOpenPeriodAsync(DateOnly.FromDateTime(entry.EntryDate.UtcDateTime), cancellationToken);
         await finance.AddJournalEntryAsync(entry, cancellationToken);
     }
 
@@ -188,16 +169,10 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
     {
         var entry = new JournalEntry { EntryNumber = $"INV-{invoice.InvoiceNumber}", Description = $"Student invoice {invoice.InvoiceNumber}", Status = "Posted", PostedAt = DateTimeOffset.UtcNow, PostedBy = "FinanceService", SourceType = "StudentInvoice", SourceId = invoice.Id };
         entry.Lines.Add(new JournalEntryLine { AccountId = receivableAccountId, Description = $"Receivable - {invoice.InvoiceNumber}", Debit = invoice.Amount });
-        if (invoice.Lines.Count == 0)
-        {
-            entry.Lines.Add(new JournalEntryLine { AccountId = defaultRevenueAccountId, Description = "Student fees", Credit = invoice.Amount });
-            return entry;
-        }
+        if (invoice.Lines.Count == 0) { entry.Lines.Add(new JournalEntryLine { AccountId = defaultRevenueAccountId, Description = "Student fees", Credit = invoice.Amount }); return entry; }
         foreach (var group in invoice.Lines.GroupBy(x => x.IncomeAccountId))
         {
-            var accountId = group.Key.HasValue
-                ? (await finance.GetActiveAccountByIdAsync(group.Key.Value, cancellationToken))?.Id ?? throw new InvalidOperationException($"Income account '{group.Key.Value}' is not configured or inactive.")
-                : defaultRevenueAccountId;
+            var accountId = group.Key.HasValue ? (await finance.GetActiveAccountByIdAsync(group.Key.Value, cancellationToken))?.Id ?? throw new InvalidOperationException($"Income account '{group.Key.Value}' is not configured or inactive.") : defaultRevenueAccountId;
             entry.Lines.Add(new JournalEntryLine { AccountId = accountId, Description = $"Income - {invoice.InvoiceNumber}", Credit = group.Sum(x => x.Amount) });
         }
         return entry;
