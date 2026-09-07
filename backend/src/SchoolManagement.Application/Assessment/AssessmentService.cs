@@ -3,7 +3,7 @@ using SchoolManagement.Domain.Assessment;
 
 namespace SchoolManagement.Application.Assessment;
 
-public sealed class AssessmentService(IAssessmentRepository assessments)
+public sealed class AssessmentService(SchoolManagement.Application.Abstractions.IAssessmentRepository assessments)
 {
     public Task<IReadOnlyList<AssessmentPlan>> GetPlansAsync(Guid? courseId = null, CancellationToken cancellationToken = default) =>
         assessments.GetPlansAsync(courseId, cancellationToken);

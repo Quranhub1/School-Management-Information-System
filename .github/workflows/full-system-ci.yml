@@ -161,6 +161,7 @@ jobs:
           echo $! > /tmp/smis-frontend.pid
 
       - name: Wait for frontend readiness
+        working-directory: frontend
         shell: bash
         run: |
           set -euo pipefail

@@ -3,7 +3,7 @@ using SchoolManagement.Domain.Assessment;
 
 namespace SchoolManagement.Application.Assessment;
 
-public sealed class AssessmentWorkflowService(IAssessmentRepository assessments)
+public sealed class AssessmentWorkflowService(SchoolManagement.Application.Abstractions.IAssessmentRepository assessments)
 {
     public async Task<IReadOnlyList<StudentAssessment>> RecordBatchAsync(IEnumerable<RecordAssessmentCommand> commands, CancellationToken cancellationToken = default)
     {

@@ -12,6 +12,7 @@ public sealed class AssessmentResultCalculatorTests
     {
         var studentId = Guid.NewGuid();
         var registrationId = Guid.NewGuid();
+        var courseId = Guid.NewGuid();
         var plan1Id = Guid.NewGuid();
         var plan2Id = Guid.NewGuid();
         var scaleId = Guid.NewGuid();
@@ -32,10 +33,11 @@ public sealed class AssessmentResultCalculatorTests
 
         var plans = new[]
         {
-            new AssessmentPlan { Id = plan1Id, Name = "Coursework", AssessmentType = "Coursework", WeightPercentage = 40m },
-            new AssessmentPlan { Id = plan2Id, Name = "Final Examination", AssessmentType = "Examination", WeightPercentage = 60m }
+            new AssessmentPlan { Id = plan1Id, CourseId = courseId, Name = "Coursework", AssessmentType = "Coursework", WeightPercentage = 40m },
+            new AssessmentPlan { Id = plan2Id, CourseId = courseId, Name = "Final Examination", AssessmentType = "Examination", WeightPercentage = 60m }
         };
 
+        var gradingScale = new GradingScale { Id = scaleId, Name = "Default" };
         var bands = new[]
         {
             new GradeBand { Id = Guid.NewGuid(), GradingScaleId = scaleId, Grade = "A", MinimumScore = 80m, MaximumScore = 100m, GradePoint = 5m, IsPass = true }
