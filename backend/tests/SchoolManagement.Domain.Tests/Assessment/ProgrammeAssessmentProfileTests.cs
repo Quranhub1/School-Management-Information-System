@@ -12,20 +12,20 @@ public sealed class ProgrammeAssessmentProfileTests
         {
             Id = Guid.NewGuid(),
             ProgrammeId = Guid.NewGuid(),
-            Authority = AssessmentAuthority.Uhpab,
+            Authority = AssessmentAuthority.UHPAB,
             Model = AssessmentModel.Hybrid,
-            ContinuousAssessmentRequired = true,
-            TheoryAssessmentRequired = true,
-            PracticalAssessmentRequired = true,
-            ExternalAssessmentRequired = true
+            ContinuousAssessmentEnabled = true,
+            TheoryAssessmentEnabled = true,
+            PracticalAssessmentEnabled = true,
+            ExternalAssessmentEnabled = true
         };
 
-        Assert.Equal(AssessmentAuthority.Uhpab, profile.Authority);
+        Assert.Equal(AssessmentAuthority.UHPAB, profile.Authority);
         Assert.Equal(AssessmentModel.Hybrid, profile.Model);
-        Assert.True(profile.ContinuousAssessmentRequired);
-        Assert.True(profile.TheoryAssessmentRequired);
-        Assert.True(profile.PracticalAssessmentRequired);
-        Assert.True(profile.ExternalAssessmentRequired);
+        Assert.True(profile.ContinuousAssessmentEnabled);
+        Assert.True(profile.TheoryAssessmentEnabled);
+        Assert.True(profile.PracticalAssessmentEnabled);
+        Assert.True(profile.ExternalAssessmentEnabled);
     }
 
     [Fact]
@@ -35,20 +35,20 @@ public sealed class ProgrammeAssessmentProfileTests
         {
             Id = Guid.NewGuid(),
             ProgrammeId = Guid.NewGuid(),
-            Authority = AssessmentAuthority.Uvtab,
+            Authority = AssessmentAuthority.UVTAB,
             Model = AssessmentModel.CompetencyBased,
-            ContinuousAssessmentRequired = true,
-            PracticalAssessmentRequired = true,
-            IndustrialTrainingRequired = true,
-            RealLifeProjectRequired = true,
-            ExternalAssessmentRequired = true
+            ContinuousAssessmentEnabled = true,
+            PracticalAssessmentEnabled = true,
+            IndustrialTrainingEnabled = true,
+            RealLifeProjectEnabled = true,
+            ExternalAssessmentEnabled = true
         };
 
-        Assert.Equal(AssessmentAuthority.Uvtab, profile.Authority);
+        Assert.Equal(AssessmentAuthority.UVTAB, profile.Authority);
         Assert.Equal(AssessmentModel.CompetencyBased, profile.Model);
-        Assert.True(profile.IndustrialTrainingRequired);
-        Assert.True(profile.RealLifeProjectRequired);
-        Assert.True(profile.PracticalAssessmentRequired);
+        Assert.True(profile.IndustrialTrainingEnabled);
+        Assert.True(profile.RealLifeProjectEnabled);
+        Assert.True(profile.PracticalAssessmentEnabled);
     }
 
     [Fact]
@@ -60,15 +60,15 @@ public sealed class ProgrammeAssessmentProfileTests
             ProgrammeId = Guid.NewGuid(),
             Authority = AssessmentAuthority.Institutional,
             Model = AssessmentModel.Academic,
-            ContinuousAssessmentRequired = true,
-            TheoryAssessmentRequired = true
+            ContinuousAssessmentEnabled = true,
+            TheoryAssessmentEnabled = true
         };
 
         Assert.Equal(AssessmentAuthority.Institutional, profile.Authority);
         Assert.Equal(AssessmentModel.Academic, profile.Model);
-        Assert.True(profile.ContinuousAssessmentRequired);
-        Assert.True(profile.TheoryAssessmentRequired);
-        Assert.False(profile.IndustrialTrainingRequired);
+        Assert.True(profile.ContinuousAssessmentEnabled);
+        Assert.True(profile.TheoryAssessmentEnabled);
+        Assert.False(profile.IndustrialTrainingEnabled);
     }
 
     [Fact]
@@ -78,17 +78,17 @@ public sealed class ProgrammeAssessmentProfileTests
         {
             Id = Guid.NewGuid(),
             ProgrammeId = Guid.NewGuid(),
-            Authority = AssessmentAuthority.Uhpab,
+            Authority = AssessmentAuthority.UHPAB,
             Model = AssessmentModel.Hybrid,
-            ContinuousAssessmentRequired = true,
-            TheoryAssessmentRequired = true,
-            PracticalAssessmentRequired = true,
-            IndustrialTrainingRequired = true
+            ContinuousAssessmentEnabled = true,
+            TheoryAssessmentEnabled = true,
+            PracticalAssessmentEnabled = true,
+            IndustrialTrainingEnabled = true
         };
 
         Assert.Equal(AssessmentModel.Hybrid, profile.Model);
-        Assert.True(profile.TheoryAssessmentRequired);
-        Assert.True(profile.PracticalAssessmentRequired);
-        Assert.True(profile.IndustrialTrainingRequired);
+        Assert.True(profile.TheoryAssessmentEnabled);
+        Assert.True(profile.PracticalAssessmentEnabled);
+        Assert.True(profile.IndustrialTrainingEnabled);
     }
 }
