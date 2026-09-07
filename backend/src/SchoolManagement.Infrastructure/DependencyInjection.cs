@@ -41,9 +41,7 @@ public static class DependencyInjection
         services.AddScoped<ISemesterRepository, SemesterRepository>();
         services.AddScoped<IAcademicRecordRepository, AcademicRecordRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IAssessmentRepository, AssessmentRepository>();
-        services.AddScoped<SchoolManagement.Application.Assessment.IAssessmentRepository>(sp =>
-            (SchoolManagement.Application.Assessment.IAssessmentRepository)
-            sp.GetRequiredService<SchoolManagement.Application.Abstractions.IAssessmentRepository>());
+        services.AddScoped<SchoolManagement.Application.Assessment.IAssessmentRepository>(sp => (SchoolManagement.Application.Assessment.IAssessmentRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IAssessmentRepository>());
         services.AddScoped<ICurriculumRepository, CurriculumRepository>();
         services.AddScoped<ICourseRepository, CourseRepository>();
         services.AddScoped<ICurriculumCourseRepository, CurriculumCourseRepository>();
@@ -51,16 +49,12 @@ public static class DependencyInjection
         services.AddScoped<IStudentPromotionRepository, StudentPromotionRepository>();
         services.AddScoped<ISemesterProgressionRepository, SemesterProgressionRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IAttendanceRepository, AttendanceRepository>();
-        services.AddScoped<SchoolManagement.Application.Attendance.IAttendanceRepository>(sp =>
-            (SchoolManagement.Application.Attendance.IAttendanceRepository)
-            sp.GetRequiredService<SchoolManagement.Application.Abstractions.IAttendanceRepository>());
+        services.AddScoped<SchoolManagement.Application.Attendance.IAttendanceRepository>(sp => (SchoolManagement.Application.Attendance.IAttendanceRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IAttendanceRepository>());
         services.AddScoped<IAdmissionRepository, AdmissionRepository>();
         services.AddScoped<SchoolManagement.Application.Abstractions.IFinanceRepository, FinanceRepository>();
-        services.AddScoped<SchoolManagement.Application.Finance.IFinanceRepository>(sp =>
-            (SchoolManagement.Application.Finance.IFinanceRepository)
-            sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
-        services.AddScoped<IFinanceAdjustmentsRepository>(sp =>
-            (IFinanceAdjustmentsRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
+        services.AddScoped<SchoolManagement.Application.Finance.IFinanceRepository>(sp => (SchoolManagement.Application.Finance.IFinanceRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
+        services.AddScoped<IFinanceAdjustmentsRepository>(sp => (IFinanceAdjustmentsRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
+        services.AddScoped<IFinanceAdministrationRepository, FinanceAdministrationRepository>();
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -85,12 +79,7 @@ public static class DependencyInjection
 
         var kohaSection = configuration.GetSection("LibraryIntegrations:Koha");
         var dspaceSection = configuration.GetSection("LibraryIntegrations:DSpace");
-        var librarySettings = new LibraryIntegrationSettings
-        {
-            KohaBaseUrl = kohaSection["BaseUrl"] ?? string.Empty,
-            DSpaceBaseUrl = dspaceSection["BaseUrl"] ?? string.Empty
-        };
-
+        var librarySettings = new LibraryIntegrationSettings { KohaBaseUrl = kohaSection["BaseUrl"] ?? string.Empty, DSpaceBaseUrl = dspaceSection["BaseUrl"] ?? string.Empty };
         services.AddLibraryExternalIntegration(librarySettings);
         return services;
     }
