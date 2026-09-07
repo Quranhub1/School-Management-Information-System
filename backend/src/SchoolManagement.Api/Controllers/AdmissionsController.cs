@@ -16,8 +16,7 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class AdmissionsController(AdmissionsWorkflowService workflow, SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<AdmissionDto>>> GetAll(CancellationToken cancellationToken)
-        => Ok(await workflow.GetAllAsync(cancellationToken));
+    public async Task<ActionResult<IReadOnlyList<AdmissionDto>>> GetAll(CancellationToken cancellationToken) => Ok(await workflow.GetAllAsync(cancellationToken));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
@@ -29,11 +28,7 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
     [HttpPost]
     public async Task<IActionResult> Create(CreateAdmissionRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var admission = await workflow.CreateAsync(request, cancellationToken);
-            return Created($"/api/admissions/{admission.Id}", admission);
-        }
+        try { var admission = await workflow.CreateAsync(request, cancellationToken); return Created($"/api/admissions/{admission.Id}", admission); }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
@@ -46,11 +41,7 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-    {
-        var deleted = await workflow.DeleteAsync(id, cancellationToken);
-        return deleted ? NoContent() : NotFound();
-    }
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) => await workflow.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
 
     [HttpPost("{id:guid}/decision")]
     public async Task<IActionResult> Decide(Guid id, DecideAdmissionRequest request, CancellationToken cancellationToken)
@@ -65,71 +56,36 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
     {
         var applicant = await db.Applicants.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (applicant is null) return NotFound();
-        if (!string.Equals(applicant.Status, "Accepted", StringComparison.OrdinalIgnoreCase))
-            return Conflict(new { message = "Only an accepted application can be admitted." });
-        if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId, cancellationToken))
-            return BadRequest(new { message = "The selected programme does not exist." });
-        if (!await db.Intakes.AnyAsync(x => x.Id == request.IntakeId, cancellationToken))
-            return BadRequest(new { message = "The selected intake does not exist." });
-        if (!await db.AcademicYears.AnyAsync(x => x.Id == request.AcademicYearId, cancellationToken))
-            return BadRequest(new { message = "The selected academic year does not exist." });
-        if (await db.Admissions.AnyAsync(x => x.ApplicantId == id && x.Status == "Admitted", cancellationToken))
-            return Conflict(new { message = "This applicant has already been admitted." });
-        if (await db.Students.AnyAsync(x => x.StudentNumber == request.StudentNumber, cancellationToken))
-            return Conflict(new { message = "The student number is already in use." });
-
-        var student = new Student
-        {
-            StudentNumber = request.StudentNumber.Trim(),
-            FirstName = applicant.FirstName,
-            LastName = applicant.LastName,
-            OtherNames = applicant.OtherNames,
-            DateOfBirth = applicant.DateOfBirth,
-            Gender = applicant.Gender,
-            NationalId = applicant.NationalId,
-            PhoneNumber = applicant.PhoneNumber,
-            Email = applicant.Email,
-            AdmissionId = applicant.Id,
-            Status = "Active"
-        };
+        if (!string.Equals(applicant.Status, "Accepted", StringComparison.OrdinalIgnoreCase)) return Conflict(new { message = "Only an accepted application can be admitted." });
+        if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId, cancellationToken)) return BadRequest(new { message = "The selected programme does not exist." });
+        if (!await db.Intakes.AnyAsync(x => x.Id == request.IntakeId, cancellationToken)) return BadRequest(new { message = "The selected intake does not exist." });
+        if (!await db.AcademicYears.AnyAsync(x => x.Id == request.AcademicYearId, cancellationToken)) return BadRequest(new { message = "The selected academic year does not exist." });
+        if (await db.Admissions.AnyAsync(x => x.ApplicantId == id && x.Status == "Admitted", cancellationToken)) return Conflict(new { message = "This applicant has already been admitted." });
+        if (await db.Students.AnyAsync(x => x.StudentNumber == request.StudentNumber.Trim(), cancellationToken)) return Conflict(new { message = "The student number is already in use." });
 
         var admission = new Admission
         {
-            ApplicantId = applicant.Id,
-            ProgrammeId = request.ProgrammeId,
-            IntakeId = request.IntakeId,
-            AcademicYearId = request.AcademicYearId,
-            Status = "Admitted"
+            ApplicantId = applicant.Id, ProgrammeId = request.ProgrammeId, IntakeId = request.IntakeId,
+            AcademicYearId = request.AcademicYearId, Status = "Admitted"
         };
-
+        var student = new Student
+        {
+            StudentNumber = request.StudentNumber.Trim(), FirstName = applicant.FirstName, LastName = applicant.LastName,
+            OtherNames = applicant.OtherNames, DateOfBirth = applicant.DateOfBirth, Gender = applicant.Gender,
+            NationalId = applicant.NationalId, PhoneNumber = applicant.PhoneNumber, Email = applicant.Email,
+            AdmissionId = admission.Id, Status = "Active"
+        };
         var enrollment = new StudentEnrollment
         {
-            StudentId = student.Id,
-            ProgrammeId = request.ProgrammeId,
-            IntakeId = request.IntakeId,
-            AdmissionDate = request.ReportingDate ?? DateOnly.FromDateTime(DateTime.UtcNow),
-            Status = "Active",
-            CurrentYear = 1
+            StudentId = student.Id, ProgrammeId = request.ProgrammeId, IntakeId = request.IntakeId,
+            AdmissionDate = request.ReportingDate ?? DateOnly.FromDateTime(DateTime.UtcNow), Status = "Active", CurrentYear = 1
         };
-
-        db.Students.Add(student);
-        db.Admissions.Add(admission);
-        db.StudentEnrollments.Add(enrollment);
+        db.Admissions.Add(admission); db.Students.Add(student); db.StudentEnrollments.Add(enrollment);
         applicant.Status = "Admitted";
         await db.SaveChangesAsync(cancellationToken);
-
         return Created($"/api/students/{student.Id}", new { student, admission, enrollment });
     }
 }
 
-public sealed record AdmitApplicantRequest(
-    Guid ProgrammeId,
-    Guid IntakeId,
-    Guid AcademicYearId,
-    string StudentNumber,
-    string? AdmissionNumber,
-    string? AdmissionType,
-    DateOnly? ReportingDate,
-    string? DecisionReference);
-
+public sealed record AdmitApplicantRequest(Guid ProgrammeId, Guid IntakeId, Guid AcademicYearId, string StudentNumber, string? AdmissionNumber, string? AdmissionType, DateOnly? ReportingDate, string? DecisionReference);
 public record CreateAdmissionRequirementRequest(Guid ProgrammeId, string RequirementType, string Description, bool IsMandatory, int DisplayOrder);
