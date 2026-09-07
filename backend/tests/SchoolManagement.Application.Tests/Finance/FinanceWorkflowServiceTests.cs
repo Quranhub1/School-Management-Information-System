@@ -30,7 +30,23 @@ public sealed class FinanceWorkflowServiceTests
         Assert.Equal(40000m, payment.UnallocatedAmount);
     }
 
-    private static FinanceWorkflowService CreateService() => new(new FinanceService(new InMemoryFinanceRepository()));
+    private static FinanceWorkflowService CreateService()
+    {
+        var periods = new FiscalPeriodService(new InMemoryFiscalPeriodRepository());
+        return new FinanceWorkflowService(new FinanceService(new InMemoryFinanceRepository(), periods));
+    }
+
+    private sealed class InMemoryFiscalPeriodRepository : IFiscalPeriodRepository
+    {
+        public Task<IReadOnlyList<FiscalPeriod>> GetFiscalPeriodsAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<FiscalPeriod>>([]);
+        public Task<FiscalPeriod?> GetFiscalPeriodAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<FiscalPeriod?>(null);
+        public Task<FiscalPeriod?> GetContainingPeriodAsync(DateOnly date, CancellationToken cancellationToken) => Task.FromResult<FiscalPeriod?>(null);
+        public Task<bool> NameExistsAsync(string name, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task<bool> HasOverlappingPeriodAsync(DateOnly startDate, DateOnly endDate, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task AddAsync(FiscalPeriod period, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
 
     private sealed class InMemoryFinanceRepository : global::SchoolManagement.Application.Finance.IFinanceRepository
     {
