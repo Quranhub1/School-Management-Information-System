@@ -87,4 +87,6 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
     }
 }
 
+public sealed record GeneratePayrollRequest(int Month, int Year);
+public sealed record MarkPayrollPaidRequest(string? PaymentMethod, string? Reference);
 public sealed record UpdateAllowancesRequest(decimal Allowances, decimal Deductions);
