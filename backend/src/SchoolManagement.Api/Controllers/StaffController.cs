@@ -38,7 +38,7 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
         if (await db.StaffMembers.AnyAsync(x => x.StaffNumber == request.StaffNumber.Trim(), cancellationToken))
             return Conflict(new { message = "A staff member with this staff number already exists." });
 
-        var staff = new StaffMember { StaffNumber = request.StaffNumber.Trim(), FirstName = request.FirstName.Trim(), LastName = request.LastName.Trim(), NationalId = request.NationalId, PhoneNumber = request.PhoneNumber, Email = request.Email, EmploymentType = request.EmploymentType.Trim() };
+        var staff = new StaffMember { StaffNumber = request.StaffNumber.Trim(), FirstName = request.FirstName.Trim(), LastName = request.LastName.Trim(), NationalId = request.NationalId, PhoneNumber = request.PhoneNumber, Email = request.Email, EmploymentType = request.EmploymentType.Trim(), StaffType = request.StaffType };
         db.StaffMembers.Add(staff);
         await db.SaveChangesAsync(cancellationToken);
         return Created($"api/staff/{staff.Id}", staff);

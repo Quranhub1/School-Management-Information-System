@@ -77,10 +77,11 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
         var firstNameIdx = Array.IndexOf(headers, "firstname");
         var lastNameIdx = Array.IndexOf(headers, "lastname");
         var employmentTypeIdx = Array.IndexOf(headers, "employmenttype");
+        var staffTypeIdx = Array.IndexOf(headers, "stafftype");
         var nationalIdIdx = Array.IndexOf(headers, "nationalid");
         var phoneIdx = Array.IndexOf(headers, "phonenumber");
         var emailIdx = Array.IndexOf(headers, "email");
-        if (staffNumberIdx < 0 || firstNameIdx < 0 || lastNameIdx < 0 || employmentTypeIdx < 0) return new BulkImportResult(0, 1, new[] { "CSV must contain: StaffNumber, FirstName, LastName, EmploymentType." }, Array.Empty<string>());
+        if (staffNumberIdx < 0 || firstNameIdx < 0 || lastNameIdx < 0 || employmentTypeIdx < 0 || staffTypeIdx < 0) return new BulkImportResult(0, 1, new[] { "CSV must contain: StaffNumber, FirstName, LastName, EmploymentType, StaffType." }, Array.Empty<string>());
         var existingStaff = await staff.GetAllAsync(cancellationToken: cancellationToken);
         var existingNumbers = new HashSet<string>(existingStaff.Select(s => s.StaffNumber), StringComparer.OrdinalIgnoreCase);
         for (var i = 1; i < lines.Length; i++)
@@ -91,7 +92,8 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
             var firstName = values.ElementAtOrDefault(firstNameIdx)?.Trim();
             var lastName = values.ElementAtOrDefault(lastNameIdx)?.Trim();
             var employmentType = values.ElementAtOrDefault(employmentTypeIdx)?.Trim();
-            if (string.IsNullOrWhiteSpace(staffNumber) || string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) || string.IsNullOrWhiteSpace(employmentType)) { errors.Add($"Row {i + 1}: StaffNumber, FirstName, LastName and EmploymentType are required."); continue; }
+            var staffType = values.ElementAtOrDefault(staffTypeIdx)?.Trim();
+            if (string.IsNullOrWhiteSpace(staffNumber) || string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) || string.IsNullOrWhiteSpace(employmentType) || string.IsNullOrWhiteSpace(staffType)) { errors.Add($"Row {i + 1}: StaffNumber, FirstName, LastName, EmploymentType and StaffType are required."); continue; }
             if (existingNumbers.Contains(staffNumber)) { warnings.Add($"Row {i + 1}: Staff with number {staffNumber} already exists."); continue; }
             var nationalId = values.ElementAtOrDefault(nationalIdIdx)?.Trim();
             var phone = values.ElementAtOrDefault(phoneIdx)?.Trim();
@@ -102,6 +104,7 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
                 FirstName = firstName,
                 LastName = lastName,
                 EmploymentType = employmentType,
+                StaffType = Enum.Parse<SchoolManagement.Domain.Staff.StaffType>(staffType),
                 NationalId = nationalId,
                 PhoneNumber = phone,
                 Email = email

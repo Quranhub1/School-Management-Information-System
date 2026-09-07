@@ -14,7 +14,10 @@ export function TimetableManagement() {
   async function load() {
     try { setEntries(await listTimetable()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load timetable.') }
   }
-  useEffect(() => { void load() }, [])
+  async function loadStaff() {
+    try { setStaff(await listStaff(false)) } catch (e) { /* ignore */ }
+  }
+  useEffect(() => { void load(); void loadStaff() }, [])
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault(); setError(''); setGeneratedResult(null)

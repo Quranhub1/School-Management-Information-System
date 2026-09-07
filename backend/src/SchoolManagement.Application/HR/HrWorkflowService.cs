@@ -35,6 +35,7 @@ public sealed class HrWorkflowService(IHrRepository repository)
         var firstName = Required(request.FirstName, nameof(request.FirstName), "First name is required.");
         var lastName = Required(request.LastName, nameof(request.LastName), "Last name is required.");
         var employmentType = Required(request.EmploymentType, nameof(request.EmploymentType), "Employment type is required.");
+        var staffType = Required(request.StaffType, nameof(request.StaffType), "Staff type is required.");
 
         if (await repository.ExistsByStaffNumberAsync(staffNumber, cancellationToken))
             throw new InvalidOperationException("A staff member with this staff number already exists.");
@@ -47,7 +48,8 @@ public sealed class HrWorkflowService(IHrRepository repository)
             NationalId = Normalize(request.NationalId),
             PhoneNumber = Normalize(request.PhoneNumber),
             Email = Normalize(request.Email),
-            EmploymentType = employmentType
+            EmploymentType = employmentType,
+            StaffType = Enum.Parse<SchoolManagement.Domain.Staff.StaffType>(staffType)
         };
 
         await repository.AddAsync(staff, cancellationToken);
@@ -74,7 +76,7 @@ public sealed class HrWorkflowService(IHrRepository repository)
     private static HrStaffDto Map(StaffMember staff) =>
         new(staff.Id, staff.StaffNumber, staff.FirstName, staff.LastName,
             staff.NationalId, staff.PhoneNumber, staff.Email,
-            staff.EmploymentType, staff.IsActive);
+            staff.EmploymentType, staff.StaffType.ToString(), staff.IsActive);
 
     private static string Required(string? value, string parameterName, string message)
     {

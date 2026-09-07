@@ -9,6 +9,7 @@ public sealed record HrStaffDto(
     string? PhoneNumber,
     string? Email,
     string EmploymentType,
+    string StaffType,
     bool IsActive);
 
 public sealed record CreateHrStaffRequest(
@@ -18,4 +19,5 @@ public sealed record CreateHrStaffRequest(
     string? NationalId,
     string? PhoneNumber,
     string? Email,
-    string EmploymentType);
+    string EmploymentType,
+    string StaffType);

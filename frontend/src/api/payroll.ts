@@ -11,3 +11,4 @@ export type PayrollRecord = { id:string; staffMemberId:string; month:number; yea
 export function listPayroll(staffMemberId?:string){ return request<PayrollRecord[]>(`/api/staff/payroll${staffMemberId ? `?staffMemberId=${staffMemberId}` : ''}`); }
 export function generatePayroll(month:number,year:number){ return request<void>('/api/staff/payroll/generate',{method:'POST',body:JSON.stringify({month,year})}); }
 export function markPayrollPaid(id:string){ return request<void>(`/api/staff/payroll/${id}/pay`,{method:'PATCH'}); }
+export function updatePayrollAllowances(id:string,allowances:number,deductions:number){ return request<void>(`/api/staff/payroll/${id}/allowances`,{method:'PATCH',body:JSON.stringify({allowances,deductions})}); }
