@@ -8,6 +8,9 @@ public sealed class FiscalPeriodService(IFiscalPeriodRepository repository)
     public Task<IReadOnlyList<FiscalPeriod>> GetAsync(CancellationToken cancellationToken = default) =>
         repository.GetFiscalPeriodsAsync(cancellationToken);
 
+    public Task<FiscalPeriod?> GetContainingAsync(DateOnly date, CancellationToken cancellationToken = default) =>
+        repository.GetContainingPeriodAsync(date, cancellationToken);
+
     public async Task<FiscalPeriod> CreateAsync(string name, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Fiscal period name is required.", nameof(name));
@@ -35,15 +38,7 @@ public sealed class FiscalPeriodService(IFiscalPeriodRepository repository)
         var periods = await repository.GetFiscalPeriodsAsync(cancellationToken);
         if (periods.Count == 0)
         {
-            // Rollout-safe behavior: existing installations can continue posting until
-            // an administrator explicitly configures fiscal periods. Once any period
-            // exists, every posting must belong to an open period.
-            return new FiscalPeriod
-            {
-                Name = "Legacy posting mode",
-                StartDate = transactionDate,
-                EndDate = transactionDate
-            };
+            return new FiscalPeriod { Name = "Legacy posting mode", StartDate = transactionDate, EndDate = transactionDate };
         }
 
         var period = periods.SingleOrDefault(x => x.Contains(transactionDate));
