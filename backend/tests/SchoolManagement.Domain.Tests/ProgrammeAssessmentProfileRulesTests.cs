@@ -48,7 +48,9 @@ public sealed class ProgrammeAssessmentProfileRulesTests
             Model = AssessmentModel.CompetencyBased
         };
 
-        Assert.Contains("must enable competency assessment", ProgrammeAssessmentProfileRules.Validate(profile));
+        Assert.Contains(
+            ProgrammeAssessmentProfileRules.Validate(profile),
+            error => error.Contains("must enable competency assessment", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
