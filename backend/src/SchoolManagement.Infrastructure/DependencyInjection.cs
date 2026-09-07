@@ -35,13 +35,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("SchoolManagement")
-            ?? throw new InvalidOperationException("Connection string 'SchoolManagement' is not configured.");
-
-        services.AddDbContext<SchoolManagementDbContext>(options =>
-            options.UseNpgsql(connectionString)
-                   .AddInterceptors(new JournalImmutabilityInterceptor()));
-
+        var connectionString = configuration.GetConnectionString("SchoolManagement") ?? throw new InvalidOperationException("Connection string 'SchoolManagement' is not configured.");
+        services.AddDbContext<SchoolManagementDbContext>(options => options.UseNpgsql(connectionString).AddInterceptors(new JournalImmutabilityInterceptor()));
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IProgrammeRepository, ProgrammeRepository>();
         services.AddScoped<IAcademicYearRepository, AcademicYearRepository>();
@@ -62,6 +57,7 @@ public static class DependencyInjection
         services.AddScoped<SchoolManagement.Application.Finance.IFinanceRepository>(sp => (SchoolManagement.Application.Finance.IFinanceRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
         services.AddScoped<IFinanceAdjustmentsRepository>(sp => (IFinanceAdjustmentsRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
         services.AddScoped<IFinanceAdministrationRepository, FinanceAdministrationRepository>();
+        services.AddScoped<IFiscalPeriodRepository, FiscalPeriodRepository>();
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -78,7 +74,6 @@ public static class DependencyInjection
         services.AddScoped<IInstitutionSettingsRepository, InstitutionSettingsRepository>();
         services.AddScoped<IHrRepository, HrRepository>();
         services.AddScoped<SchoolManagement.Application.StudentRecords.IStudentRecordsRepository, StudentRecordsRepository>();
-
         services.AddScoped<ReportGenerator>();
         services.AddScoped<IPdfReportGenerator, PdfReportGenerator>();
         services.AddScoped<DatabaseHealthCheck>();
@@ -86,7 +81,6 @@ public static class DependencyInjection
         services.AddScoped<AdminSeeder>();
         services.AddScoped<FinanceAccountSeeder>();
         services.AddScoped<SchoolManagement.Application.Finance.StudentChargeService>();
-
         var kohaSection = configuration.GetSection("LibraryIntegrations:Koha");
         var dspaceSection = configuration.GetSection("LibraryIntegrations:DSpace");
         var librarySettings = new LibraryIntegrationSettings { KohaBaseUrl = kohaSection["BaseUrl"] ?? string.Empty, DSpaceBaseUrl = dspaceSection["BaseUrl"] ?? string.Empty };
