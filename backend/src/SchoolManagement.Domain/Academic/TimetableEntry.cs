@@ -9,6 +9,8 @@ public sealed class TimetableEntry
     public Guid TeachingGroupId { get; init; }
     public Guid CourseId { get; init; }
     public Guid TeacherId { get; init; }
+    // Compatibility alias used by the persistence model; both identify the assigned staff member.
+    public Guid StaffMemberId { get; init; }
     public DayOfWeek DayOfWeek { get; init; }
     public TimeOnly StartTime { get; init; }
     public TimeOnly EndTime { get; init; }
