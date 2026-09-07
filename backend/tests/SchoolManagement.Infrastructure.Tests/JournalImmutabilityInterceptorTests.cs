@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Finance;
 using SchoolManagement.Infrastructure.Persistence;
+using Xunit;
 
 namespace SchoolManagement.Infrastructure.Tests;
 
