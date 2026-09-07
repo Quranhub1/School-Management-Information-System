@@ -9,12 +9,18 @@ permissions:
 
 jobs:
   wire:
-    if: startsWith(github.event.head_commit.message, 'wire-finance-model:')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Add remaining finance entities to DbContext
+      - name: Apply EF Core model wiring
+        env:
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
+          set -euo pipefail
+          case "$HEAD_MESSAGE" in
+            wire-finance-model:*) ;;
+            *) echo 'Not a finance wiring trigger; nothing to do.'; exit 0;;
+          esac
           python3 - <<'PY'
           from pathlib import Path
           p = Path('backend/src/SchoolManagement.Infrastructure/Persistence/SchoolManagementDbContext.cs')
@@ -101,11 +107,10 @@ jobs:
               s = s.replace(config_marker, config + config_marker)
           p.write_text(s)
           PY
-      - name: Commit model wiring
-        run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add backend/src/SchoolManagement.Infrastructure/Persistence/SchoolManagementDbContext.cs
           git commit -m 'feat(finance): wire remaining entities into EF Core model' || exit 0
-          git pull --rebase origin feat/complete-remaining-finance
+          git fetch origin feat/complete-remaining-finance
+          git rebase origin/feat/complete-remaining-finance
           git push origin HEAD:feat/complete-remaining-finance
