@@ -247,8 +247,8 @@ function AuthenticatedWorkspace({ onLogout, institution }: { onLogout: () => voi
 
   return (
     <main className="app-shell">
-      <header className="topbar">
-        <div>
+      <aside className="sidebar">
+        <div style={{ padding: 12 }}>
           <span className="eyebrow">{eyebrow}</span>
           <h1>{title}</h1>
         </div>
