@@ -115,6 +115,13 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<AcademicStream> Streams => Set<AcademicStream>();
+    public DbSet<AccountingDimension> AccountingDimensions => Set<AccountingDimension>();
+    public DbSet<JournalLineDimension> JournalLineDimensions => Set<JournalLineDimension>();
+    public DbSet<FiscalPeriod> FiscalPeriods => Set<FiscalPeriod>();
+    public DbSet<OpeningBalance> OpeningBalances => Set<OpeningBalance>();
+    public DbSet<FinanceAuditEvent> FinanceAuditEvents => Set<FinanceAuditEvent>();
+    public DbSet<AdjustmentCancellation> AdjustmentCancellations => Set<AdjustmentCancellation>();
+    public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -313,6 +320,72 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.Status).HasMaxLength(20).IsRequired();
             e.Property(x => x.Notes).HasMaxLength(1000);
         });
+
+        m.Entity<AccountingDimension>(e =>
+    {
+        e.HasKey(x => x.Id);
+        e.HasIndex(x => new { x.DimensionType, x.Code }).IsUnique();
+        e.Property(x => x.DimensionType).HasMaxLength(50).IsRequired();
+        e.Property(x => x.Code).HasMaxLength(50).IsRequired();
+        e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+    });
+
+    m.Entity<JournalLineDimension>(e =>
+    {
+        e.HasKey(x => x.Id);
+        e.HasIndex(x => new { x.JournalEntryLineId, x.AccountingDimensionId }).IsUnique();
+        e.HasOne<JournalEntryLine>().WithMany().HasForeignKey(x => x.JournalEntryLineId).OnDelete(DeleteBehavior.Cascade);
+        e.HasOne<AccountingDimension>().WithMany().HasForeignKey(x => x.AccountingDimensionId).OnDelete(DeleteBehavior.Restrict);
+    });
+
+    m.Entity<FiscalPeriod>(e =>
+    {
+        e.HasKey(x => x.Id);
+        e.HasIndex(x => x.Code).IsUnique();
+        e.Property(x => x.Code).HasMaxLength(30).IsRequired();
+        e.Property(x => x.Name).HasMaxLength(150).IsRequired();
+        e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+    });
+
+    m.Entity<OpeningBalance>(e =>
+    {
+        e.HasKey(x => x.Id);
+        e.HasIndex(x => new { x.FiscalPeriodId, x.AccountId }).IsUnique();
+        e.Property(x => x.Debit).HasPrecision(18, 2);
+        e.Property(x => x.Credit).HasPrecision(18, 2);
+        e.Property(x => x.Currency).HasMaxLength(10).IsRequired();
+        e.HasOne<FiscalPeriod>().WithMany().HasForeignKey(x => x.FiscalPeriodId).OnDelete(DeleteBehavior.Restrict);
+        e.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
+    });
+
+    m.Entity<FinanceAuditEvent>(e =>
+    {
+        e.HasKey(x => x.Id);
+        e.Property(x => x.Action).HasMaxLength(80).IsRequired();
+        e.Property(x => x.EntityType).HasMaxLength(100).IsRequired();
+        e.Property(x => x.PerformedBy).HasMaxLength(200).IsRequired();
+        e.Property(x => x.Reason).HasMaxLength(1000);
+        e.Property(x => x.Metadata).HasMaxLength(4000);
+        e.HasIndex(x => new { x.EntityType, x.EntityId, x.OccurredAt });
+    });
+
+    m.Entity<AdjustmentCancellation>(e =>
+    {
+        e.HasKey(x => x.Id);
+        e.HasIndex(x => x.AdjustmentId).IsUnique();
+        e.Property(x => x.Reason).HasMaxLength(1000).IsRequired();
+        e.Property(x => x.CancelledBy).HasMaxLength(200).IsRequired();
+    });
+
+    m.Entity<BankTransaction>(e =>
+    {
+        e.HasKey(x => x.Id);
+        e.HasIndex(x => new { x.BankAccountId, x.TransactionDate, x.Reference }).IsUnique();
+        e.Property(x => x.Reference).HasMaxLength(120).IsRequired();
+        e.Property(x => x.Description).HasMaxLength(500);
+        e.Property(x => x.Amount).HasPrecision(18, 2);
+        e.HasOne<BankStatementLine>().WithMany().HasForeignKey(x => x.BankStatementLineId).OnDelete(DeleteBehavior.SetNull);
+    });
 
         m.Entity<BankStatementLine>(e =>
         {
