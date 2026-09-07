@@ -1,12 +1,6 @@
-
 using Microsoft.EntityFrameworkCore;
-<<<<<<< ours
-using SchoolManagement.Application.Alumni;
 using AlumniEntity = SchoolManagement.Domain.Students.Alumni;
-=======
-using SchoolManagement.Application.AlumniManagement;
-using SchoolManagement.Domain.Students;
->>>>>>> theirs
+using SchoolManagement.Application.Alumni;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Repositories;
@@ -24,16 +18,12 @@ public sealed class AlumniRepository(SchoolManagementDbContext db) : IAlumniRepo
     public Task<AlumniEntity?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default) =>
-        db.Alumni.SingleOrDefaultAsync(
-            x => x.Id == id,
-            cancellationToken);
+        db.Alumni.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<AlumniEntity?> GetByStudentAsync(
         Guid studentId,
         CancellationToken cancellationToken = default) =>
-        db.Alumni.SingleOrDefaultAsync(
-            x => x.StudentId == studentId,
-            cancellationToken);
+        db.Alumni.SingleOrDefaultAsync(x => x.StudentId == studentId, cancellationToken);
 
     public async Task AddAsync(
         AlumniEntity alumni,
