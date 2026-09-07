@@ -4,13 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - 'docs/**'
-      - 'README.md'
-      - '.gitignore'
-      - '.editorconfig'
-      - '.github/workflows/foundation-ci.yml'
   pull_request:
     branches: [main]
     paths:
