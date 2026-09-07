@@ -30,6 +30,37 @@ public sealed record StudentReceivableRow(
     decimal Paid,
     decimal Outstanding);
 
+public sealed record IncomeStatementRow(
+    Guid AccountId,
+    string AccountCode,
+    string AccountName,
+    string AccountType,
+    decimal Amount);
+
+public sealed record IncomeStatementReport(
+    IReadOnlyList<IncomeStatementRow> Revenue,
+    IReadOnlyList<IncomeStatementRow> Expenses,
+    decimal TotalRevenue,
+    decimal TotalExpenses,
+    decimal NetIncome);
+
+public sealed record BalanceSheetRow(
+    Guid AccountId,
+    string AccountCode,
+    string AccountName,
+    string AccountType,
+    decimal Balance);
+
+public sealed record BalanceSheetReport(
+    IReadOnlyList<BalanceSheetRow> Assets,
+    IReadOnlyList<BalanceSheetRow> Liabilities,
+    IReadOnlyList<BalanceSheetRow> Equity,
+    decimal TotalAssets,
+    decimal TotalLiabilities,
+    decimal TotalEquity,
+    decimal CurrentPeriodNetIncome,
+    decimal TotalLiabilitiesAndEquity);
+
 public sealed class FinanceReportService(IFinanceRepository finance)
 {
     public async Task<IReadOnlyList<AccountLedgerRow>> GetGeneralLedgerAsync(
@@ -43,18 +74,16 @@ public sealed class FinanceReportService(IFinanceRepository finance)
         var running = new Dictionary<Guid, decimal>();
 
         foreach (var entry in entries.OrderBy(x => x.EntryDate).ThenBy(x => x.EntryNumber))
+        foreach (var line in entry.Lines)
         {
-            foreach (var line in entry.Lines)
-            {
-                if (accountId.HasValue && line.AccountId != accountId.Value) continue;
-                var account = line.Account!;
-                running.TryGetValue(account.Id, out var balance);
-                balance += line.Debit - line.Credit;
-                running[account.Id] = balance;
-                rows.Add(new AccountLedgerRow(account.Id, account.Code, account.Name, account.AccountType,
-                    entry.EntryDate, entry.EntryNumber, line.Description ?? entry.Description ?? string.Empty,
-                    line.Debit, line.Credit, balance));
-            }
+            if (accountId.HasValue && line.AccountId != accountId.Value) continue;
+            var account = line.Account!;
+            running.TryGetValue(account.Id, out var balance);
+            balance += line.Debit - line.Credit;
+            running[account.Id] = balance;
+            rows.Add(new AccountLedgerRow(account.Id, account.Code, account.Name, account.AccountType,
+                entry.EntryDate, entry.EntryNumber, line.Description ?? entry.Description ?? string.Empty,
+                line.Debit, line.Credit, balance));
         }
         return rows;
     }
@@ -65,16 +94,7 @@ public sealed class FinanceReportService(IFinanceRepository finance)
         CancellationToken cancellationToken = default)
     {
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
-        var totals = new Dictionary<Guid, (Account Account, decimal Debit, decimal Credit)>();
-
-        foreach (var entry in entries)
-        foreach (var line in entry.Lines)
-        {
-            var account = line.Account!;
-            totals.TryGetValue(account.Id, out var current);
-            totals[account.Id] = (account, current.Debit + line.Debit, current.Credit + line.Credit);
-        }
-
+        var totals = Aggregate(entries);
         return totals.Values
             .OrderBy(x => x.Account.Code)
             .Select(x => new TrialBalanceRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType,
@@ -82,8 +102,50 @@ public sealed class FinanceReportService(IFinanceRepository finance)
             .ToList();
     }
 
-    public async Task<IReadOnlyList<StudentReceivableRow>> GetStudentReceivablesAsync(
+    public async Task<IncomeStatementReport> GetIncomeStatementAsync(
+        DateOnly? from = null,
+        DateOnly? to = null,
         CancellationToken cancellationToken = default)
+    {
+        var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
+        var rows = Aggregate(entries).Values
+            .Select(x => new IncomeStatementRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType,
+                IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit))
+            .Where(x => IsRevenue(x.AccountType) || IsExpense(x.AccountType))
+            .OrderBy(x => x.AccountCode)
+            .ToList();
+
+        var revenue = rows.Where(x => IsRevenue(x.AccountType)).ToList();
+        var expenses = rows.Where(x => IsExpense(x.AccountType)).ToList();
+        var totalRevenue = revenue.Sum(x => x.Amount);
+        var totalExpenses = expenses.Sum(x => x.Amount);
+        return new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
+    }
+
+    public async Task<BalanceSheetReport> GetBalanceSheetAsync(
+        DateOnly? asOf = null,
+        CancellationToken cancellationToken = default)
+    {
+        var entries = await finance.GetPostedJournalEntriesAsync(null, asOf, null, cancellationToken);
+        var totals = Aggregate(entries).Values
+            .Select(x => new BalanceSheetRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType,
+                IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit))
+            .Where(x => IsAsset(x.AccountType) || IsLiability(x.AccountType) || IsEquity(x.AccountType))
+            .OrderBy(x => x.AccountCode)
+            .ToList();
+
+        var assets = totals.Where(x => IsAsset(x.AccountType)).ToList();
+        var liabilities = totals.Where(x => IsLiability(x.AccountType)).ToList();
+        var equity = totals.Where(x => IsEquity(x.AccountType)).ToList();
+        var netIncome = await GetIncomeStatementAsync(null, asOf, cancellationToken);
+        var totalAssets = assets.Sum(x => x.Balance);
+        var totalLiabilities = liabilities.Sum(x => x.Balance);
+        var totalEquity = equity.Sum(x => x.Balance);
+        return new BalanceSheetReport(assets, liabilities, equity, totalAssets, totalLiabilities,
+            totalEquity, netIncome.NetIncome, totalLiabilities + totalEquity + netIncome.NetIncome);
+    }
+
+    public async Task<IReadOnlyList<StudentReceivableRow>> GetStudentReceivablesAsync(CancellationToken cancellationToken = default)
     {
         var invoices = await finance.GetAllStudentInvoicesAsync(cancellationToken);
         return invoices.GroupBy(x => x.StudentId)
@@ -92,4 +154,25 @@ public sealed class FinanceReportService(IFinanceRepository finance)
             .OrderByDescending(x => x.Outstanding)
             .ToList();
     }
+
+    private static Dictionary<Guid, (Account Account, decimal Debit, decimal Credit)> Aggregate(IEnumerable<JournalEntry> entries)
+    {
+        var totals = new Dictionary<Guid, (Account Account, decimal Debit, decimal Credit)>();
+        foreach (var entry in entries)
+        foreach (var line in entry.Lines)
+        {
+            var account = line.Account!;
+            totals.TryGetValue(account.Id, out var current);
+            totals[account.Id] = (account, current.Debit + line.Debit, current.Credit + line.Credit);
+        }
+        return totals;
+    }
+
+    private static string Normalize(string? type) => (type ?? string.Empty).Trim().ToLowerInvariant();
+    private static bool IsAsset(string? type) => Normalize(type) is "asset" or "assets";
+    private static bool IsLiability(string? type) => Normalize(type) is "liability" or "liabilities";
+    private static bool IsEquity(string? type) => Normalize(type) is "equity" or "capital";
+    private static bool IsRevenue(string? type) => Normalize(type) is "revenue" or "income";
+    private static bool IsExpense(string? type) => Normalize(type) is "expense" or "expenses" or "cost" or "costofgoods";
+    private static bool IsCreditNormal(string? type) => IsLiability(type) || IsEquity(type) || IsRevenue(type);
 }
