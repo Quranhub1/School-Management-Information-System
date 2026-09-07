@@ -6,10 +6,10 @@ namespace SchoolManagement.Domain.Tests;
 
 public class AssessmentResultCalculatorTests
 {
-    private static GradeBand Band(string grade, decimal min, decimal max, decimal points, bool pass = true)
+    private static GradeBand Band(Guid scaleId, string grade, decimal min, decimal max, decimal points, bool pass = true)
         => new()
         {
-            GradingScaleId = Guid.NewGuid(),
+            GradingScaleId = scaleId,
             Grade = grade,
             MinimumScore = min,
             MaximumScore = max,
@@ -21,7 +21,7 @@ public class AssessmentResultCalculatorTests
     public void Calculate_SingleAssessmentWithFullScore_ReturnsTopGrade()
     {
         var scaleId = Guid.NewGuid();
-        var bands = new[] { Band("A", 70, 100, 5.0m), Band("B", 60, 69, 4.0m) };
+        var bands = new[] { Band(scaleId, "A", 70, 100, 5.0m), Band(scaleId, "B", 60, 69, 4.0m) };
         var plan = new AssessmentPlan
         {
             CourseId = Guid.NewGuid(),
@@ -52,7 +52,7 @@ public class AssessmentResultCalculatorTests
     public void Calculate_MultipleWeightedAssessments_ReturnsWeightedTotal()
     {
         var scaleId = Guid.NewGuid();
-        var bands = new[] { Band("A", 70, 100, 5.0m), Band("B", 60, 69, 4.0m) };
+        var bands = new[] { Band(scaleId, "A", 70, 100, 5.0m), Band(scaleId, "B", 60, 69, 4.0m) };
         var plan1 = new AssessmentPlan { CourseId = Guid.NewGuid(), Name = "CAT", AssessmentType = "Theory", WeightPercentage = 30 };
         var plan2 = new AssessmentPlan { CourseId = plan1.CourseId, Name = "Final", AssessmentType = "Theory", WeightPercentage = 70 };
         var studentId = Guid.NewGuid();
@@ -91,7 +91,7 @@ public class AssessmentResultCalculatorTests
         var assessment = new StudentAssessment { StudentId = Guid.NewGuid(), AssessmentPlanId = plan.Id, MaximumScore = 100, Score = 50, IsFinal = true };
 
         Action act = () => AssessmentResultCalculator.Calculate(new[] { assessment }, new[] { plan },
-            new GradingScale { Id = scaleId }, new[] { Band("C", 0, 100, 2.0m) }, Guid.NewGuid());
+            new GradingScale { Id = scaleId }, new[] { Band(scaleId, "C", 0, 100, 2.0m) }, Guid.NewGuid());
 
         act.Should().Throw<InvalidOperationException>();
     }
