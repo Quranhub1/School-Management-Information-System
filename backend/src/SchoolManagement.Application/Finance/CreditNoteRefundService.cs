@@ -17,7 +17,7 @@ public sealed record RefundResult(
     DateTimeOffset RefundedAt,
     string? RefundedBy);
 
-public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinanceAdjustmentsRepository adjustments)
+public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinanceAdjustmentsRepository adjustments, FiscalPeriodService fiscalPeriods)
 {
     public async Task<CreditNote> CreateCreditNoteAsync(Guid invoiceId, decimal amount, string reason, string? issuedBy, CancellationToken cancellationToken = default)
     {
@@ -142,6 +142,7 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
     {
         if (await finance.JournalEntryNumberExistsAsync(entry.EntryNumber, cancellationToken)) throw new InvalidOperationException($"Journal entry number '{entry.EntryNumber}' already exists.");
         JournalEntryValidator.Validate(entry);
+        await fiscalPeriods.RequireOpenPeriodAsync(DateOnly.FromDateTime(entry.EntryDate.UtcDateTime), cancellationToken);
         await finance.AddJournalEntryAsync(entry, cancellationToken);
     }
 
