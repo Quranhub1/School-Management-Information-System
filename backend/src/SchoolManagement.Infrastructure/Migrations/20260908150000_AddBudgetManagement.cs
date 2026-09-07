@@ -1,9 +1,12 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
+[DbContext(typeof(SchoolManagement.Infrastructure.Persistence.SchoolManagementDbContext))]
 [Migration("20260908150000_AddBudgetManagement")]
 public partial class AddBudgetManagement : Migration
 {
