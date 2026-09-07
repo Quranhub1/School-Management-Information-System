@@ -17,7 +17,10 @@ import {
   canManageReporting,
   canManageInventory,
   canManagePrinters,
+  canManageDocuments,
+  canViewAnalytics,
 } from './auth/roleGuards'
+import { RoleNavigation } from './components/RoleNavigation'
 import { AcademicManagement } from './components/AcademicManagement'
 import { CurriculumManagement } from './components/CurriculumManagement'
 import { AdministrationManagement } from './components/AdministrationManagement'
@@ -36,14 +39,21 @@ import { InventoryManagement } from './components/InventoryManagement'
 import { PrinterManagement } from './components/PrinterManagement'
 import { InstitutionSettingsPage } from './components/InstitutionSettingsPage'
 import { GlobalSearch } from './components/GlobalSearch'
+<<<<<<< ours
 import { AlumniManagement } from './components/AlumniManagement'
 import { AttendanceManagement } from './components/AttendanceManagement'
 import { GateLogManagement } from './components/GateLog'
 import { AuditLogManagement } from './components/AuditLog'
 import { PayrollManagement } from './components/PayrollManagement'
 import { CalendarView } from './components/CalendarView'
+=======
+import { AnalyticsDashboard } from './components/AnalyticsDashboard'
+>>>>>>> theirs
 import { StudentPortal } from './pages/StudentPortal'
-import { getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
+import { Student360Page } from './pages/Student360Page'
+import { DocumentManagement } from './components/DocumentManagement'
+import { AttendanceManagement } from './components/AttendanceManagement'
+import { getActiveInstitutionSettings, getPublicInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
 import './components/PrintStyles.css'
 
 type ModuleKey =
@@ -61,6 +71,7 @@ type ModuleKey =
   | 'inventory'
   | 'printers'
   | 'reports'
+  | 'analytics'
   | 'alumni'
   | 'calendar'
   | 'gate'
@@ -73,12 +84,37 @@ type ModuleKey =
   | 'parent-portal'
   | 'teaching'
   | 'institution-settings'
+  | 'documents'
+  | 'student360'
 
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
+const DEFAULT_INSTITUTION: InstitutionSettings = {
+  id: '',
+  institutionName: 'Your Institution Name',
+  abbreviation: '',
+  motto: '',
+  address: '',
+  phone: '',
+  email: '',
+  website: '',
+  postalAddress: '',
+  country: '',
+  institutionType: '',
+  logoPath: null,
+  primaryColor: null,
+  accentColor: null,
+  isActive: false,
+  updatedAt: '',
+}
+
+function LoginScreen({ onLogin, institution }: { onLogin: () => void; institution: InstitutionSettings }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const brandName = institution.institutionName?.trim() || 'Your Institution Name'
+  const brandAbbr = institution.abbreviation?.trim()
+  const eyebrow = brandAbbr ? `${brandAbbr} · Secure access` : 'Secure access'
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -97,13 +133,19 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <p className="eyebrow">Secure access</p>
-        <h1>Sign in to the Institution Management System</h1>
+        {institution.logoPath && (
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <img src={institution.logoPath} alt={brandName} style={{ maxHeight: 80, maxWidth: 160, objectFit: 'contain' }} onError={e => (e.target as HTMLImageElement).style.display = 'none'} />
+          </div>
+        )}
+        <p className="eyebrow">{eyebrow}</p>
+        <h1>Sign in to {brandName}</h1>
+        <p className="auth-copy">School Management Information System</p>
         <form onSubmit={submit} className="auth-form">
           <label>Username</label>
-          <input value={username} onChange={e => setUsername(e.target.value)} />
+          <input value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" />
           <label>Password</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
           {error && <div className="error" role="alert">{error}</div>}
           <button type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
         </form>
@@ -112,12 +154,10 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   )
 }
 
-function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
+function AuthenticatedWorkspace({ onLogout, institution }: { onLogout: () => void; institution: InstitutionSettings }) {
+  const [settings, setSettings] = useState<InstitutionSettings>(institution)
   const s = getSession()
   const r = s?.roles ?? []
-  const [activeModule, setActiveModule] = useState<ModuleKey>('administration')
-  const [institution, setInstitution] = useState<InstitutionSettings | null>(null)
-
   const a = canManageAdministration(r)
   const ad = canManageAdmissions(r)
   const ac = canManageAcademics(r)
@@ -133,10 +173,13 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
   const rp = canManageReporting(r)
   const inv = canManageInventory(r)
   const pr = canManagePrinters(r)
+  const docs = canManageDocuments(r)
+  const s360 = r.includes('SystemAdministrator') || r.includes('Registrar') || r.includes('AcademicRegistrar') || r.includes('Student')
+  const analytics = canViewAnalytics(r)
 
-  useEffect(() => {
-    void getActiveInstitutionSettings().then(setInstitution).catch(() => setInstitution(null))
-  }, [])
+  const [activeModule, setActiveModule] = useState<ModuleKey>('administration')
+  const eyebrow = institution.abbreviation?.trim() || institution.institutionName?.trim() || 'SMIS'
+  const title = 'Institutional Services'
 
   function signOut() {
     logout()
@@ -158,6 +201,7 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     { key: 'inventory', label: 'Inventory', roles: [] },
     { key: 'printers', label: 'Printers', roles: [] },
     { key: 'reports', label: 'Reports', roles: [] },
+    { key: 'analytics', label: 'Analytics', roles: [] },
     { key: 'alumni', label: 'Alumni', roles: [] },
     { key: 'calendar', label: 'Calendar', roles: [] },
     { key: 'gate', label: 'Gate Log', roles: [] },
@@ -170,6 +214,9 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     { key: 'parent-portal', label: 'Parent Portal', roles: [] },
     { key: 'teaching', label: 'Teaching', roles: [] },
     { key: 'institution-settings', label: 'Institution Settings', roles: [] },
+    { key: 'documents', label: 'Documents', roles: [] },
+    { key: 'student360', label: 'Student 360', roles: [] },
+    { key: 'analytics', label: 'Analytics', roles: [] },
   ]
 
   const [rptTab, setRptTab] = useState<'cards' | 'receipts' | 'certificates'>('cards')
@@ -189,6 +236,7 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     if (m.key === 'inventory' && inv) return true
     if (m.key === 'printers' && pr) return true
     if (m.key === 'reports' && rp) return true
+    if (m.key === 'analytics' && rp) return true
     if (m.key === 'alumni' && st) return true
     if (m.key === 'calendar' && ac) return true
     if (m.key === 'gate' && sr) return true
@@ -201,6 +249,9 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
     if (m.key === 'parent-portal' && r.includes('Parent')) return true
     if (m.key === 'teaching' && r.includes('Lecturer')) return true
     if (m.key === 'institution-settings' && a) return true
+    if (m.key === 'documents' && docs) return true
+    if (m.key === 'student360' && s360) return true
+    if (m.key === 'analytics' && analytics) return true
     return false
   })
 
@@ -209,10 +260,9 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <div className="sidebar-header">
-          <p className="eyebrow">Institution</p>
-          <h1>{institutionName}</h1>
-          {institution?.motto && <p style={{ fontSize: '.72rem', color: '#94a3b8', marginTop: 4 }}>{institution.motto}</p>}
+        <div style={{ padding: 12 }}>
+          <span className="eyebrow">{eyebrow}</span>
+          <h1>{title}</h1>
         </div>
         <nav className="sidebar-nav">
           {visibleModules.map(m => (
@@ -260,18 +310,30 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
               {rptTab === 'certificates' && <CertificateManagement canManage />}
             </div>
           )}
+<<<<<<< ours
           {activeModule === 'alumni' && st && <AlumniManagement />}
           {activeModule === 'calendar' && ac && <CalendarView />}
           {activeModule === 'gate' && sr && <GateLogManagement />}
           {activeModule === 'audit' && a && <AuditLogManagement />}
           {activeModule === 'payroll' && r.includes('SystemAdministrator') && <PayrollManagement />}
+=======
+          {activeModule === 'analytics' && rp && <AnalyticsDashboard />}
+          {activeModule === 'alumni' && st && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Alumni</p><h2>Alumni Management</h2></div></div><p className="empty">Alumni module is available.</p></div>}
+          {activeModule === 'calendar' && ac && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Calendar</p><h2>Academic Calendar</h2></div></div><p className="empty">Calendar module is available.</p></div>}
+          {activeModule === 'gate' && sr && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Access Control</p><h2>Gate Log</h2></div></div><p className="empty">Gate log module is available.</p></div>}
+          {activeModule === 'audit' && a && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">System</p><h2>Audit Log</h2></div></div><p className="empty">Audit log module is available.</p></div>}
+          {activeModule === 'payroll' && r.includes('SystemAdministrator') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">HR</p><h2>Payroll Management</h2></div></div><p className="empty">Payroll module is available.</p></div>}
+>>>>>>> theirs
           {activeModule === 'hostel' && r.includes('SystemAdministrator') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Hostel</p><h2>Hostel Management</h2></div></div><p className="empty">Hostel module is available.</p></div>}
           {activeModule === 'transport' && r.includes('SystemAdministrator') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Transport</p><h2>Transport Management</h2></div></div><p className="empty">Transport module is available.</p></div>}
           {activeModule === 'attendance' && sr && <AttendanceManagement />}
           {activeModule === 'student-portal' && r.includes('Student') && <StudentPortal />}
           {activeModule === 'parent-portal' && r.includes('Parent') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Parent</p><h2>Parent Portal</h2></div></div><p className="empty">Parent portal is available.</p></div>}
           {activeModule === 'teaching' && r.includes('Lecturer') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Teaching</p><h2>Teaching Workspace</h2></div></div><p className="empty">Teaching module is available.</p></div>}
-          {activeModule === 'institution-settings' && a && <InstitutionSettingsPage />}
+          {activeModule === 'institution-settings' && a && <InstitutionSettingsPage onSaved={setSettings} />}
+          {activeModule === 'documents' && docs && <DocumentManagement canManage />}
+          {activeModule === 'student360' && s360 && <Student360Page />}
+          {activeModule === 'analytics' && analytics && <AnalyticsDashboard />}
         </div>
       </div>
     </main>
@@ -279,8 +341,29 @@ function AuthenticatedWorkspace({ onLogout }: { onLogout: () => void }) {
 }
 
 function App() {
-  const [x, setX] = useState(() => Boolean(getSession()))
-  return x ? <AuthenticatedWorkspace onLogout={() => setX(false)} /> : <LoginScreen onLogin={() => setX(true)} />
+  const [authed, setAuthed] = useState(() => Boolean(getSession()))
+  const [institution, setInstitution] = useState<InstitutionSettings>(DEFAULT_INSTITUTION)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    void getPublicInstitutionSettings()
+      .then(setInstitution)
+      .catch(() => setInstitution(DEFAULT_INSTITUTION))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return (
+    <main className="auth-shell">
+      <section className="auth-card">
+        <p className="eyebrow">Management Information System</p>
+        <h1>Loading…</h1>
+      </section>
+    </main>
+  )
+
+  return authed
+    ? <AuthenticatedWorkspace onLogout={() => setAuthed(false)} institution={institution} />
+    : <LoginScreen onLogin={() => setAuthed(true)} institution={institution} />
 }
 
 export default App

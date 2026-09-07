@@ -7,6 +7,7 @@ using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Alumni;
 using SchoolManagement.Application.Audit;
 using SchoolManagement.Application.Authentication;
+using SchoolManagement.Application.Attendance;
 using SchoolManagement.Application.Calendar;
 using SchoolManagement.Application.Certificates;
 using SchoolManagement.Application.HR;
@@ -23,6 +24,8 @@ using SchoolManagement.Infrastructure.Library;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Infrastructure.Repositories;
 using SchoolManagement.Infrastructure.Reporting;
+using SchoolManagement.Infrastructure.Student360;
+using SchoolManagement.Infrastructure.Timetable;
 
 namespace SchoolManagement.Infrastructure;
 
@@ -37,6 +40,7 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString)
                    .AddInterceptors(new JournalImmutabilityInterceptor()));
 
+        services.AddDbContext<SchoolManagementDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IProgrammeRepository, ProgrammeRepository>();
         services.AddScoped<IAcademicYearRepository, AcademicYearRepository>();
@@ -60,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IStudentDocumentRepository, StudentDocumentRepository>();
         services.AddScoped<ICertificateRepository, CertificateRepository>();
         services.AddScoped<IPayrollRepository, PayrollRepository>();
         services.AddScoped<IAlumniRepository, AlumniRepository>();
@@ -67,6 +72,8 @@ public static class DependencyInjection
         services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
         services.AddScoped<IGateLogRepository, GateLogRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IAttendanceQrRepository, AttendanceQrRepository>();
+        services.AddScoped<AttendanceQrService>();
         services.AddScoped<IInstitutionSettingsRepository, InstitutionSettingsRepository>();
         services.AddScoped<IHrRepository, HrRepository>();
         services.AddScoped<SchoolManagement.Application.StudentRecords.IStudentRecordsRepository, StudentRecordsRepository>();
