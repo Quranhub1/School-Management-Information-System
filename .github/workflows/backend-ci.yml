@@ -47,7 +47,7 @@ jobs:
 
       - name: Test
         working-directory: backend
-        run: dotnet test SchoolManagement.sln --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test SchoolManagement.sln --configuration Release --no-restore --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
         if: always()
@@ -55,3 +55,4 @@ jobs:
         with:
           name: test-results
           path: '**/test-results.trx'
+          if-no-files-found: warn
