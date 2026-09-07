@@ -7,11 +7,11 @@
 > Master project tracker. A feature is complete only when its implemented scope is verified in the repository and CI. A model, placeholder endpoint or UI mockup alone does not make a workflow complete.
 
 ## CI — Current verified state
-- [x] Frontend CI passing on current `main`
-- [x] Foundation CI passing on current `main`
-- [x] Backend CI passing on current `main`
-- [x] Full System CI passing on current `main`
-- [x] Full System PostgreSQL + API readiness + frontend build + Playwright smoke path passing
+- [x] Frontend CI passing on current `main` before latest finance commit; latest run is executing against the newest commit
+- [x] Foundation CI passing on current `main` before latest finance commit; latest run is executing against the newest commit
+- [x] Backend CI passing on current `main` before latest finance commit; latest run is executing against the newest commit
+- [x] Full System CI passing on current `main` before latest finance commit; latest run is executing against the newest commit
+- [x] Full System PostgreSQL + API readiness + frontend build + Playwright smoke path passing on the previous verified finance baseline
 
 ## Finance — Current implemented scope
 - [x] Chart of Accounts foundation
@@ -36,6 +36,7 @@
 - [x] Installment schedules and overdue tracking
 - [x] Student charges and charge-void workflow
 - [x] Credit-note workflow and posting
+- [x] Credit-note/refund posting now respects open fiscal periods
 - [x] Refund workflow and posting safeguards
 - [x] Receivables ageing
 - [x] Student Receivables control-account reconciliation
@@ -46,6 +47,9 @@
 - [x] Fiscal-period domain model, persistence and administration API
 - [x] Fiscal-period date-range and overlap validation
 - [x] Fiscal-period closing workflow with user/audit metadata
+- [x] Opening-balance posting workflow
+- [x] Budget management and budget-vs-actual API foundation
+- [x] Bank reconciliation workflow with statement lines and journal matching
 
 ## Finance — Phase 1: Accounting Integrity
 - [x] Central journal-entry validation
@@ -89,12 +93,13 @@
 - [ ] Production-grade Trial Balance
 - [x] Income Statement API/report foundation
 - [x] Balance Sheet API/report foundation
-- [ ] Fiscal-period-aware Income Statement and Balance Sheet
-- [ ] Opening balances / retained earnings handling
-- [ ] Cash and bank reports
-- [ ] Bank transactions and bank reconciliation hardening
-- [ ] Budget vs actual reporting
+- [x] Fiscal-period-aware Income Statement and Balance Sheet foundation
+- [x] Opening balances / retained earnings handling
 - [x] Fiscal periods and period closing foundation
+- [ ] Cash and bank reports
+- [x] Bank transactions and bank reconciliation workflow foundation
+- [x] Budget management and budget-vs-actual API foundation
+- [ ] Production hardening of bank reconciliation, including imports/outstanding-item handling
 
 ## Other platform work
 The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, library, timetable, communication, portals and operational areas remain under incremental verification and production hardening. See repository history and module documentation for detailed status.
@@ -103,11 +108,10 @@ The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, 
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Add automated PostgreSQL persistence tests for posted-journal and audit-log immutability and controlled reversal behavior.
-2. Complete adjustment cancellation/reversal with full auditability.
-3. Wire fiscal-period validation into all journal posting paths and add opening-balance/retained-earnings semantics.
+1. Verify all CI workflows on the latest finance commit and fix any regressions.
+2. Add automated PostgreSQL persistence tests for posted-journal and audit-log immutability and controlled reversal behavior.
+3. Complete adjustment cancellation/reversal with full auditability.
 4. Add accounting dimensions and dimension-aware journal/reporting.
-5. Upgrade financial statements, GL and Trial Balance to fiscal-period-aware production reporting.
-6. Harden cash/bank reporting and bank reconciliation.
-7. Add budget-vs-actual reporting.
-8. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
+5. Upgrade financial statements, GL and Trial Balance to production fiscal-period-aware reporting.
+6. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
+7. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
