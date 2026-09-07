@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SchoolManagement.Domain.Academic;
+using AcademicStream = SchoolManagement.Domain.Academic.Stream;
 
 namespace SchoolManagement.Infrastructure.Academic;
 
@@ -17,9 +18,9 @@ public sealed class AcademicClassConfiguration : IEntityTypeConfiguration<Academ
     }
 }
 
-public sealed class StreamConfiguration : IEntityTypeConfiguration<Stream>
+public sealed class StreamConfiguration : IEntityTypeConfiguration<AcademicStream>
 {
-    public void Configure(EntityTypeBuilder<Stream> builder)
+    public void Configure(EntityTypeBuilder<AcademicStream> builder)
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Code).HasMaxLength(40).IsRequired();
