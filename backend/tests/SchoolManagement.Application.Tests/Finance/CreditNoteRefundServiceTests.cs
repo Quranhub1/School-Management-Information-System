@@ -1,0 +1,103 @@
+using SchoolManagement.Application.Abstractions;
+using SchoolManagement.Application.Finance;
+using SchoolManagement.Domain.Finance;
+using Xunit;
+
+namespace SchoolManagement.Application.Tests.Finance;
+
+public sealed class CreditNoteRefundServiceTests
+{
+    [Fact]
+    public async Task CreateCreditNoteAsync_PostsReversalAndNegativeLedgerEntry()
+    {
+        var invoice = new StudentInvoice { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-001", Amount = 100000m, PaidAmount = 100000m, Currency = "UGX", Status = "Paid" };
+        var finance = new InMemoryFinanceRepository(invoice);
+        var adjustments = new InMemoryAdjustmentsRepository();
+        var service = new CreditNoteRefundService(finance, adjustments);
+
+        var creditNote = await service.CreateCreditNoteAsync(invoice.Id, 25000m, "Fee overcharge", "manager");
+
+        Assert.Equal("Applied", creditNote.Status);
+        Assert.Equal(25000m, creditNote.Amount);
+        Assert.Single(adjustments.CreditNotes);
+        Assert.Single(finance.JournalEntries);
+        Assert.Equal(-25000m, finance.LedgerEntries.Single().Amount);
+        Assert.Equal("CreditNote", finance.JournalEntries.Single().SourceType);
+    }
+
+    [Fact]
+    public async Task CreateCreditNoteAsync_RejectsCreditBeyondInvoiceValue()
+    {
+        var invoice = new StudentInvoice { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-002", Amount = 50000m, PaidAmount = 50000m, Currency = "UGX", Status = "Paid" };
+        var service = new CreditNoteRefundService(new InMemoryFinanceRepository(invoice), new InMemoryAdjustmentsRepository());
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateCreditNoteAsync(invoice.Id, 50001m, "Invalid credit", "manager"));
+    }
+
+    [Fact]
+    public async Task CreateRefundAsync_PreventsRefundingMoreThanPayment()
+    {
+        var studentId = Guid.NewGuid();
+        var payment = new Payment { StudentId = studentId, ReceiptNumber = "RCT-001", Amount = 40000m, Currency = "UGX", PaymentMethod = "Cash" };
+        var finance = new InMemoryFinanceRepository(null, payment);
+        var service = new CreditNoteRefundService(finance, new InMemoryAdjustmentsRepository());
+
+        var refund = await service.CreateRefundAsync(payment.Id, 15000m, "Cash", "Approved refund", null, "manager");
+
+        Assert.Equal(15000m, refund.Amount);
+        Assert.Equal("Completed", refund.Status);
+        Assert.Equal("Refund", finance.JournalEntries.Single().SourceType);
+        Assert.Equal(15000m, finance.LedgerEntries.Single().Amount);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateRefundAsync(payment.Id, 25001m, "Cash", "Second refund", null, "manager"));
+    }
+
+    private sealed class InMemoryAdjustmentsRepository : IFinanceAdjustmentsRepository
+    {
+        public List<CreditNote> CreditNotes { get; } = [];
+        public Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken cancellationToken) => Task.FromResult(CreditNotes.FirstOrDefault(x => x.Id == creditNoteId));
+        public Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<CreditNote>>(CreditNotes.Where(x => x.StudentInvoiceId == studentInvoiceId).ToArray());
+        public Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken) { CreditNotes.Add(creditNote); return Task.CompletedTask; }
+    }
+
+    private sealed class InMemoryFinanceRepository : global::SchoolManagement.Application.Finance.IFinanceRepository
+    {
+        private readonly StudentInvoice? invoice;
+        private readonly Payment? payment;
+        public List<JournalEntry> JournalEntries { get; } = [];
+        public List<PaymentLedgerEntry> LedgerEntries { get; } = [];
+
+        public InMemoryFinanceRepository(StudentInvoice? invoice, Payment? payment = null) { this.invoice = invoice; this.payment = payment; }
+        public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult(invoice?.Id == invoiceId ? invoice : null);
+        public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentInvoice>>(invoice is null ? [] : [invoice]);
+        public Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentInvoice>>(invoice is null ? [] : [invoice]);
+        public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid id, CancellationToken ct) => Task.FromResult<FeeStructure?>(null);
+        public Task<bool> StudentExistsAsync(Guid id, CancellationToken ct) => Task.FromResult((invoice?.StudentId == id) || (payment?.StudentId == id));
+        public Task<bool> InvoiceNumberExistsAsync(string n, CancellationToken ct) => Task.FromResult(false);
+        public Task<bool> ReceiptExistsAsync(string n, CancellationToken ct) => Task.FromResult(false);
+        public Task<Payment?> GetPaymentAsync(Guid id, CancellationToken ct) => Task.FromResult(payment?.Id == id ? payment : null);
+        public Task<IReadOnlyList<StudentInvoice>> GetOutstandingInvoicesAsync(Guid id, string currency, CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
+        public Task<IReadOnlyList<PaymentLedgerEntry>> GetStudentLedgerAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<PaymentLedgerEntry>>(LedgerEntries);
+        public Task<bool> JournalEntryNumberExistsAsync(string n, CancellationToken ct) => Task.FromResult(JournalEntries.Any(x => x.EntryNumber == n));
+        public Task<Account?> GetActiveAccountByCodeAsync(string code, CancellationToken ct) => Task.FromResult<Account?>(new Account { Code = code, Name = code, AccountType = code == FinanceAccountCodes.StudentReceivables ? "Asset" : "Income", ChartOfAccountsId = Guid.NewGuid(), IsActive = true });
+        public Task<Account?> GetActiveAccountByIdAsync(Guid id, CancellationToken ct) => Task.FromResult<Account?>(null);
+        public Task<JournalEntry?> GetPostedJournalEntryAsync(Guid id, CancellationToken ct) => Task.FromResult<JournalEntry?>(JournalEntries.FirstOrDefault(x => x.Id == id));
+        public Task<bool> HasReversalAsync(Guid id, CancellationToken ct) => Task.FromResult(false);
+        public Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid id, CancellationToken ct) => Task.FromResult<InvoiceDiscount?>(null);
+        public Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<InvoiceDiscount>>([]);
+        public Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<InvoiceInstallment>>([]);
+        public Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentCharge>>([]);
+        public Task<StudentCharge?> GetStudentChargeAsync(Guid id, CancellationToken ct) => Task.FromResult<StudentCharge?>(null);
+        public Task AddInvoiceInstallmentAsync(InvoiceInstallment x, CancellationToken ct) => Task.CompletedTask;
+        public Task AddStudentChargeAsync(StudentCharge x, CancellationToken ct) => Task.CompletedTask;
+        public Task AddInvoiceAsync(StudentInvoice x, CancellationToken ct) => Task.CompletedTask;
+        public Task AddPaymentAsync(Payment x, CancellationToken ct) => Task.CompletedTask;
+        public Task AddPaymentAllocationAsync(PaymentAllocation x, CancellationToken ct) => Task.CompletedTask;
+        public Task AddPaymentLedgerEntryAsync(PaymentLedgerEntry x, CancellationToken ct) { LedgerEntries.Add(x); return Task.CompletedTask; }
+        public Task AddInvoiceDiscountAsync(InvoiceDiscount x, CancellationToken ct) => Task.CompletedTask;
+        public Task AddJournalEntryAsync(JournalEntry x, CancellationToken ct) { JournalEntries.Add(x); return Task.CompletedTask; }
+        public Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken ct) => Task.FromResult<IReadOnlyList<JournalEntry>>(JournalEntries);
+        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>(payment is null ? [] : [payment]);
+        public Task SaveChangesAsync(CancellationToken ct = default) => Task.CompletedTask;
+    }
+}

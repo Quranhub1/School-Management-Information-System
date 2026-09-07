@@ -59,6 +59,8 @@ public static class DependencyInjection
         services.AddScoped<SchoolManagement.Application.Finance.IFinanceRepository>(sp =>
             (SchoolManagement.Application.Finance.IFinanceRepository)
             sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
+        services.AddScoped<IFinanceAdjustmentsRepository>(sp =>
+            (IFinanceAdjustmentsRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
         services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
