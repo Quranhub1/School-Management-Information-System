@@ -14,39 +14,43 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
     {
-        var totalBilled = await db.StudentInvoices.AsNoTracking().SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0m;
+        var totalBilled = await db.StudentInvoices.AsNoTracking().SumAsync(x => (decimal?)x.NetAmount, cancellationToken) ?? 0m;
         var totalPaid = await db.StudentInvoices.AsNoTracking().SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var todayPayments = await db.Payments
-            .Where(p => DateOnly.FromDateTime(p.PaidAt) == today)
+        var todayPayments = await db.Payments.AsNoTracking()
+            .Where(p => p.PaidAt.UtcDateTime.Date == today.ToDateTime(TimeOnly.MinValue).Date)
             .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
 
         return Ok(new
         {
             totalBilled,
             totalPaid,
-            totalOutstanding = totalBilled - totalPaid,
+            totalOutstanding = Math.Max(0m, totalBilled - totalPaid),
             todayCollection = todayPayments,
             invoiceCount = await db.StudentInvoices.LongCountAsync(cancellationToken),
             paymentCount = await db.Payments.LongCountAsync(cancellationToken),
-            outstandingCount = await db.StudentInvoices.CountAsync(x => x.PaidAmount < x.Amount, cancellationToken)
+            outstandingCount = await db.StudentInvoices.LongCountAsync(x => x.OutstandingAmount > 0, cancellationToken)
         });
     }
 
     [HttpGet("outstanding")]
     public async Task<IActionResult> GetOutstanding(CancellationToken cancellationToken)
     {
-        var data = await db.StudentInvoices.AsNoTracking()
-            .Where(x => x.PaidAmount < x.Amount)
-            .Select(x => new
+        var data = await (
+            from invoice in db.StudentInvoices.AsNoTracking()
+            join student in db.Students.AsNoTracking() on invoice.StudentId equals student.Id
+            join fee in db.FeeStructures.AsNoTracking() on invoice.FeeStructureId equals fee.Id into fees
+            from fee in fees.DefaultIfEmpty()
+            where invoice.OutstandingAmount > 0
+            select new
             {
-                studentId = x.StudentId,
-                studentNumber = x.Student.StudentNumber,
-                studentName = x.Student.FirstName + " " + x.Student.OtherNames + " " + x.Student.LastName,
-                programmeName = x.FeeStructure.Name,
-                balance = x.Amount - x.PaidAmount,
-                currency = x.Currency,
-                status = x.Status
+                studentId = student.Id,
+                studentNumber = student.StudentNumber,
+                studentName = student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName,
+                programmeName = fee == null ? invoice.FeeType : fee.Name,
+                balance = invoice.OutstandingAmount,
+                invoice.Currency,
+                invoice.Status
             })
             .ToListAsync(cancellationToken);
 
@@ -56,32 +60,33 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
     [HttpGet("payments")]
     public async Task<IActionResult> GetPayments([FromQuery] string? receiptNumber, [FromQuery] string? paymentMethod, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
     {
-        var query = db.Payments.AsNoTracking().AsQueryable();
+        var query =
+            from payment in db.Payments.AsNoTracking()
+            join student in db.Students.AsNoTracking() on payment.StudentId equals student.Id
+            join invoice in db.StudentInvoices.AsNoTracking() on payment.StudentInvoiceId equals invoice.Id into invoices
+            from invoice in invoices.DefaultIfEmpty()
+            select new { payment, student, invoice };
 
         if (!string.IsNullOrWhiteSpace(receiptNumber))
-            query = query.Where(p => p.ReceiptNumber.Contains(receiptNumber.Trim()));
-
+            query = query.Where(x => x.payment.ReceiptNumber.Contains(receiptNumber.Trim()));
         if (!string.IsNullOrWhiteSpace(paymentMethod))
-            query = query.Where(p => p.PaymentMethod == paymentMethod.Trim());
-
+            query = query.Where(x => x.payment.PaymentMethod == paymentMethod.Trim());
         if (from.HasValue)
-            query = query.Where(p => p.PaidAt.Date >= from.Value.ToDateTime(TimeOnly.MinValue));
-
+            query = query.Where(x => x.payment.PaidAt >= from.Value.ToDateTime(TimeOnly.MinValue));
         if (to.HasValue)
-            query = query.Where(p => p.PaidAt.Date <= to.Value.ToDateTime(TimeOnly.MaxValue));
+            query = query.Where(x => x.payment.PaidAt <= to.Value.ToDateTime(TimeOnly.MaxValue));
 
-        var payments = await query
-            .OrderByDescending(p => p.PaidAt)
-            .Select(p => new
+        var payments = await query.OrderByDescending(x => x.payment.PaidAt)
+            .Select(x => new
             {
-                p.Id,
-                p.ReceiptNumber,
-                p.Amount,
-                p.PaymentMethod,
-                p.Reference,
-                p.PaidAt,
-                studentName = p.StudentInvoice.Student.FirstName + " " + p.StudentInvoice.Student.OtherNames + " " + p.StudentInvoice.Student.LastName,
-                invoiceNumber = p.StudentInvoice.InvoiceNumber
+                x.payment.Id,
+                x.payment.ReceiptNumber,
+                x.payment.Amount,
+                x.payment.PaymentMethod,
+                x.payment.Reference,
+                x.payment.PaidAt,
+                studentName = x.student.FirstName + " " + (x.student.OtherNames ?? "") + " " + x.student.LastName,
+                invoiceNumber = x.invoice == null ? null : x.invoice.InvoiceNumber
             })
             .ToListAsync(cancellationToken);
 
@@ -91,33 +96,33 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
     [HttpGet("payroll")]
     public async Task<IActionResult> GetPayroll([FromQuery] int? month, [FromQuery] int? year, CancellationToken cancellationToken)
     {
-        var query = db.PayrollRecords.AsNoTracking().AsQueryable();
+        var query =
+            from payroll in db.PayrollRecords.AsNoTracking()
+            join staff in db.StaffMembers.AsNoTracking() on payroll.StaffMemberId equals staff.Id
+            select new { payroll, staff };
 
-        if (month.HasValue)
-            query = query.Where(x => x.Month == month.Value);
-
-        if (year.HasValue)
-            query = query.Where(x => x.Year == year.Value);
+        if (month.HasValue) query = query.Where(x => x.payroll.Month == month.Value);
+        if (year.HasValue) query = query.Where(x => x.payroll.Year == year.Value);
 
         var records = await query
-            .OrderByDescending(x => x.Year)
-            .ThenByDescending(x => x.Month)
+            .OrderByDescending(x => x.payroll.Year)
+            .ThenByDescending(x => x.payroll.Month)
             .Select(x => new
             {
-                x.Id,
-                x.StaffMemberId,
-                staffName = x.StaffMember.FirstName + " " + x.StaffMember.LastName,
-                staffNumber = x.StaffMember.StaffNumber,
-                x.Month,
-                x.Year,
-                x.BasicSalary,
-                x.Allowances,
-                x.Deductions,
-                x.NetPay,
-                x.Status,
-                x.PaymentDate,
-                x.PaymentMethod,
-                x.Reference
+                x.payroll.Id,
+                x.payroll.StaffMemberId,
+                staffName = x.staff.FirstName + " " + x.staff.LastName,
+                x.staff.StaffNumber,
+                x.payroll.Month,
+                x.payroll.Year,
+                x.payroll.BasicSalary,
+                x.payroll.Allowances,
+                x.payroll.Deductions,
+                x.payroll.NetPay,
+                x.payroll.Status,
+                x.payroll.PaymentDate,
+                x.payroll.PaymentMethod,
+                x.payroll.Reference
             })
             .ToListAsync(cancellationToken);
 
@@ -137,7 +142,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
                 x.FeeType,
                 x.Amount,
                 x.PaidAmount,
-                balance = x.Amount - x.PaidAmount,
+                balance = x.OutstandingAmount,
                 x.Currency,
                 x.Status,
                 x.IssuedAt
