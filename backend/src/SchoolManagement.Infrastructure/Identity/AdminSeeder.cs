@@ -61,14 +61,19 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             };
             db.Users.Add(admin);
             await db.SaveChangesAsync(cancellationToken);
+        }
 
-        var adminRole = await db.Roles.SingleOrDefaultAsync(x => x.Name == InstitutionalRoles.SystemAdministrator, cancellationToken);
+        var adminRole = await db.Roles.SingleOrDefaultAsync(
+            x => x.Name == InstitutionalRoles.SystemAdministrator,
+            cancellationToken);
         if (adminRole is not null)
         {
-            var assigned = await db.UserRoles.AnyAsync(x => x.UserId == user.Id && x.RoleId == adminRole.Id, cancellationToken);
+            var assigned = await db.UserRoles.AnyAsync(
+                x => x.UserId == admin.Id && x.RoleId == adminRole.Id,
+                cancellationToken);
             if (!assigned)
             {
-                db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = adminRole.Id });
+                db.UserRoles.Add(new UserRole { UserId = admin.Id, RoleId = adminRole.Id });
                 await db.SaveChangesAsync(cancellationToken);
             }
         }
@@ -77,8 +82,7 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
     private static string GenerateRandomPassword()
     {
         var bytes = new byte[16];
-        using var rng = Random.Shared;
-        rng.NextBytes(bytes);
+        Random.Shared.NextBytes(bytes);
         return Convert.ToBase64String(bytes)[..22];
     }
 }
