@@ -57,7 +57,7 @@ public sealed class HealthRecordsController(SchoolManagementDbContext db) : Cont
     }
 
     [HttpGet("recent")]
-    public async Task<IActionResult> GetRecentVisits([FromQuery] int days = 7, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetRecentVisits([FromQuery] int days = 7, CancellationToken cancellationToken = default)
     {
         var since = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-days));
 
