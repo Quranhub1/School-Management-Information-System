@@ -37,20 +37,16 @@ public sealed class JournalImmutabilityInterceptor : SaveChangesInterceptor
 
         foreach (var entry in context.ChangeTracker.Entries<JournalEntryLine>())
         {
+            if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted)) continue;
+
             var journalId = entry.Property(x => x.JournalEntryId).CurrentValue;
             var journal = context.Set<JournalEntry>().Local.FirstOrDefault(x => x.Id == journalId);
 
             if (journal is not null && string.Equals(journal.Status, "Posted", StringComparison.OrdinalIgnoreCase))
-            {
-                if (entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
-                    throw new InvalidOperationException("Lines belonging to a posted journal entry are immutable.");
-            }
+                throw new InvalidOperationException("Lines belonging to a posted journal entry are immutable.");
 
-            if (journal is null && entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
-            {
-                if (context.Set<JournalEntry>().AsNoTracking().Any(x => x.Id == journalId && x.Status == "Posted"))
-                    throw new InvalidOperationException("Lines belonging to a posted journal entry are immutable.");
-            }
+            if (journal is null && context.Set<JournalEntry>().AsNoTracking().Any(x => x.Id == journalId && string.Equals(x.Status, "Posted", StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("Lines belonging to a posted journal entry are immutable.");
         }
     }
 }
