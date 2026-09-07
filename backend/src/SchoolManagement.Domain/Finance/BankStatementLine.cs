@@ -11,4 +11,7 @@ public sealed class BankStatementLine
     public string? Reference { get; init; }
     public bool IsMatched { get; set; }
     public Guid? MatchedJournalEntryId { get; set; }
+    public string Status { get; set; } = "Unmatched";
+    public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? UpdatedAt { get; set; }
 }
