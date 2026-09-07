@@ -9,6 +9,7 @@ namespace SchoolManagement.Infrastructure.Migrations;
 /// remains useful for application-level feedback, while this trigger protects the ledger
 /// even when rows are changed outside EF Core.
 /// </summary>
+[Migration("20260908120000_AddPostedJournalDatabaseImmutability")]
 public partial class AddPostedJournalDatabaseImmutability : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
