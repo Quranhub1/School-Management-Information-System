@@ -57,5 +57,6 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
         if (to.HasValue) query = query.Where(p => p.PaidAt.Date <= to.Value.ToDateTime(TimeOnly.MaxValue));
         return await query.OrderByDescending(p => p.PaidAt).ToListAsync(cancellationToken);
     }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
 }
