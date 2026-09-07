@@ -1,91 +1,70 @@
 # SMIS Implementation Progress
 
-> This file is the working implementation tracker for the School Management Information System. Items are marked complete only when the corresponding repository implementation and tests/CI evidence support the status.
+> This file mirrors the master implementation status in `PROGRESS.md`. Items are marked complete only when repository implementation and CI evidence support the status.
 
-## Status legend
-
-- ✅ **Covered** — implemented in the repository.
-- 🔄 **In progress** — actively being implemented or hardened.
-- ⏳ **Remaining** — planned work not yet implemented.
-- 🚧 **Known gap** — implemented foundation exists, but important production controls or completeness are still missing.
+## CI — verified on current main
+- ✅ Frontend CI
+- ✅ Foundation CI
+- ✅ Backend CI
+- ✅ Full System CI (PostgreSQL + API + frontend + Playwright smoke path)
 
 ## Finance & Accounting
 
 ### Covered
-
 - ✅ Finance repository abstraction and EF Core persistence.
-- ✅ Chart of Accounts foundation.
-- ✅ Standard school accounting seed accounts for cash, bank, mobile money, student receivables and tuition/fee revenue.
-- ✅ Student invoice creation.
-- ✅ Automatic invoice journal posting: DR Student Receivables / CR Tuition & Fee Revenue.
-- ✅ Student payment recording.
-- ✅ Payment-method account mapping for cash, bank/transfer/card/cheque and mobile money.
-- ✅ Automatic payment journal posting: DR Cash/Bank/Mobile Money / CR Student Receivables.
-- ✅ Unsupported payment methods are rejected.
-- ✅ Journal entry numbering derived from invoice/receipt references.
-- ✅ Posted journal metadata.
-- ✅ Journal and operational transaction persistence through the same EF Core save operation.
-- ✅ General Ledger report foundation.
-- ✅ Trial Balance report foundation.
-- ✅ Student Receivables report foundation.
-- ✅ Finance API endpoints for invoices, payments and reports.
-- ✅ Automated Finance workflow test repository updated for the expanded accounting contract.
-- ✅ Dependency-injection compatibility registrations for feature-namespace repository contracts.
+- ✅ Chart of Accounts and standard school accounting seed accounts.
+- ✅ Student invoicing and automatic double-entry invoice posting.
+- ✅ Student payments and payment-method account mapping.
+- ✅ Journal numbering, duplicate protection and balanced journal validation.
+- ✅ General Ledger, Trial Balance and Student Receivables report foundations.
+- ✅ Controlled journal reversal with source/reversal metadata.
+- ✅ Itemized fees, payment allocation/FIFO and student payment ledger.
+- ✅ Discounts, waivers and installment schedules.
+- ✅ Student charges and charge-void workflow.
+- ✅ Credit notes and refunds with double-entry journal posting.
+- ✅ Receivables ageing and control-account reconciliation.
+- ✅ Database-level posted-journal immutability boundary.
+- ✅ Database-level audit-log immutability boundary.
+- ✅ Income Statement API/report foundation.
+- ✅ Balance Sheet API/report foundation.
 
-### In progress / next accounting hardening
-
-- 🔄 Central journal-entry validation: minimum lines, valid debit/credit sides, non-negative amounts and balanced totals.
-- 🔄 Duplicate-posting protection beyond journal-number uniqueness.
-- 🔄 Strong posted-entry immutability enforcement.
-- 🔄 Reversal/correction journals with audit linkage.
-- 🔄 Accounting audit trail and source-document references.
-- 🔄 Account-type-aware ledger balance calculations.
-- 🔄 Proper accounting-period and opening/closing balance semantics.
-- 🔄 Student receivables subledger reconciliation against the 1100 control account.
-
-### Remaining Finance capabilities
-
-- ⏳ Income & Expenditure / Profit & Loss reporting.
-- ⏳ Balance Sheet.
-- ⏳ Cash and Bank reports.
-- ⏳ Budget vs Actual reporting.
-- ⏳ Financial-period controls and period closing.
-- ⏳ Credit notes and refunds integrated into double-entry posting.
-- ⏳ Vendor/payables accounting integrated with the general ledger.
-- ⏳ Payroll accounting integration.
-- ⏳ Fixed-asset accounting where required.
-- ⏳ Finance dashboard and full frontend workflows.
-- ⏳ Comprehensive accounting integration and regression test suite.
+### Hardening / remaining
+- 🔄 Automated PostgreSQL persistence tests for immutability and reversal.
+- 🔄 Adjustment cancellation/reversal workflow.
+- 🔄 Fiscal periods, closing and opening balances.
+- 🔄 Accounting dimensions: campus/faculty/department/programme.
+- 🔄 Dimension-aware journal lines and reports.
+- 🔄 Fiscal-period-aware production GL and Trial Balance.
+- 🔄 Production financial statement semantics, including retained earnings.
+- 🔄 Cash/bank reporting and bank transactions.
+- 🔄 Bank reconciliation workflow.
+- 🔄 Budget vs actual reporting.
+- 🔄 Vendor/payables, payroll and fixed-asset accounting integration where required.
+- 🔄 Finance dashboard and complete frontend workflows.
 
 ## Core system
 
-### Covered foundations
-
+### Foundations covered
 - ✅ Modular .NET application architecture.
 - ✅ React + TypeScript + Vite frontend foundation.
 - ✅ PostgreSQL/EF Core persistence foundation.
 - ✅ GitHub Actions CI foundation.
 - ✅ LAN-first/on-premises deployment direction.
 - ✅ Configurable institution/campus/faculty/department/programme structure.
-- ✅ Student lifecycle domain foundation.
-- ✅ Identity and authorization foundations.
-- ✅ Admissions, academic, attendance, assessment and progression domain foundations.
+- ✅ Student lifecycle, identity/authorization, admissions, academic, attendance, assessment and progression foundations.
 - ✅ Library, staff/HR, payroll, certificates, alumni and supporting domain foundations.
 
-### Remaining / ongoing system work
+### Remaining / ongoing
+- ⏳ Production-grade workflows across all domains.
+- ⏳ Frontend parity for backend capabilities.
+- ⏳ Major user-journey E2E coverage.
+- ⏳ Cross-domain reporting and analytics.
+- ⏳ Security, authorization and audit hardening.
+- ⏳ Deployment, backup, monitoring and disaster recovery.
+- ⏳ Institutional configuration and Uganda-specific operational requirements.
 
-- ⏳ Complete production-grade workflows across all domains.
-- ⏳ Complete frontend coverage for backend capabilities.
-- ⏳ Expand end-to-end coverage across major user journeys.
-- ⏳ Complete reporting and analytics across academic, administrative and financial domains.
-- ⏳ Harden auditability, security, authorization and operational controls.
-- ⏳ Complete deployment, backup, monitoring and disaster-recovery procedures.
-- ⏳ Complete institutional configuration and Uganda-specific operational requirements.
-
-## CI / quality rule
-
-A feature is not considered fully complete merely because the code compiles. The implementation should have appropriate automated tests and a successful relevant GitHub Actions run before being moved to **Covered** as production-ready.
+## Definition of Done
+A feature is not production-complete merely because it compiles. It requires appropriate business/domain logic, persistence, authorization, validation, UI where applicable, automated tests and successful relevant CI evidence. Finance additionally requires balanced accounting effects, source traceability and controlled corrections without editing posted ledger history.
 
 ## Current priority
-
-**Finance accounting hardening** is the current implementation priority. The goal is to evolve the existing Finance module toward reliable school accounting practices while preserving the existing SMIS architecture and integrating improvements rather than replacing the system.
+**Finance accounting hardening → fiscal-period accounting → dimensions → bank/budget controls → system-wide workflow parity and production hardening.**
