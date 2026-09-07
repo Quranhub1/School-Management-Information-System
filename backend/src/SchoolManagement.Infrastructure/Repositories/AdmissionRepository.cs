@@ -14,7 +14,7 @@ public sealed class AdmissionRepository(SchoolManagementDbContext db) : IAdmissi
         db.Admissions.FirstOrDefaultAsync(x => x.Id == admissionId, cancellationToken);
 
     public async Task<IReadOnlyList<Admission>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        await db.Admissions.AsNoTracking().OrderByDescending(x => x.AppliedAt).ToListAsync(cancellationToken);
+        await db.Admissions.AsNoTracking().OrderByDescending(x => x.CreatedAt).ToListAsync(cancellationToken);
 
     public async Task AddAdmissionAsync(Admission admission, CancellationToken cancellationToken = default) =>
         await db.Admissions.AddAsync(admission, cancellationToken);
