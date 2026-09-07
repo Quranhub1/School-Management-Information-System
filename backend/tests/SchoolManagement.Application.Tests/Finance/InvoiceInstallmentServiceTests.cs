@@ -38,7 +38,7 @@ public sealed class InvoiceInstallmentServiceTests
 
     private static StudentInvoice CreateInvoice(decimal amount) => new() { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-TEST", Amount = amount, PaidAmount = 0, Currency = "UGX", Status = "Unpaid" };
 
-    private sealed class InMemoryFinanceRepository(StudentInvoice invoice) : IFinanceRepository
+    private sealed class InMemoryFinanceRepository(StudentInvoice invoice) : SchoolManagement.Application.Abstractions.IFinanceRepository
     {
         private readonly List<InvoiceInstallment> stored = [];
         public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult(invoiceId == invoice.Id ? invoice : null);
