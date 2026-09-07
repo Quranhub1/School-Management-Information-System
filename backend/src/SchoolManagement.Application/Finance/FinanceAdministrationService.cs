@@ -34,18 +34,9 @@ public sealed class FinanceAdministrationService(IFinanceAdministrationRepositor
 
     public async Task<BankReconciliation> CreateBankReconciliationAsync(Guid bankAccountId, DateTimeOffset statementDate, decimal statementBalance, CancellationToken cancellationToken)
     {
-        var from = DateTimeOffset.MinValue;
-        var journals = await repository.GetPostedJournalsForAccountAsync(bankAccountId, from, statementDate, cancellationToken);
-        var bookBalance = journals.SelectMany(x => x.Lines).Where(x => x.AccountId == bankAccountId).Sum(x => x.DebitAmount - x.CreditAmount);
-        var reconciliation = new BankReconciliation
-        {
-            BankAccountId = bankAccountId,
-            StatementDate = statementDate,
-            StatementBalance = statementBalance,
-            BookBalance = bookBalance,
-            ReconciledAmount = 0,
-            Status = Math.Abs(statementBalance - bookBalance) <= 0.01m ? "Reconciled" : "Pending"
-        };
+        var journals = await repository.GetPostedJournalsForAccountAsync(bankAccountId, DateTimeOffset.MinValue, statementDate, cancellationToken);
+        var bookBalance = journals.SelectMany(x => x.Lines).Where(x => x.AccountId == bankAccountId).Sum(x => x.Debit - x.Credit);
+        var reconciliation = new BankReconciliation { BankAccountId = bankAccountId, StatementDate = statementDate, StatementBalance = statementBalance, BookBalance = bookBalance, ReconciledAmount = 0, Status = Math.Abs(statementBalance - bookBalance) <= 0.01m ? "Reconciled" : "Pending" };
         await repository.AddBankReconciliationAsync(reconciliation, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return reconciliation;
@@ -70,9 +61,9 @@ public sealed class FinanceAdministrationService(IFinanceAdministrationRepositor
         var lines = await repository.GetBankStatementLinesAsync(reconciliationId, cancellationToken);
         var line = lines.FirstOrDefault(x => x.Id == statementLineId) ?? throw new ArgumentException("Statement line was not found in this reconciliation.", nameof(statementLineId));
         if (line.IsMatched) throw new InvalidOperationException("Statement line is already matched.");
-        var journals = await repository.GetPostedJournalsForAccountAsync(reconciliation.BankAccountId, reconciliation.StatementDate.AddDays(-1), reconciliation.StatementDate.AddDays(1), cancellationToken);
+        var journals = await repository.GetPostedJournalsForAccountAsync(reconciliation.BankAccountId, line.TransactionDate.AddDays(-1), line.TransactionDate.AddDays(1), cancellationToken);
         var journal = journals.FirstOrDefault(x => x.Id == journalEntryId) ?? throw new ArgumentException("Posted journal entry was not found for the bank account.", nameof(journalEntryId));
-        var bankEffect = journal.Lines.Where(x => x.AccountId == reconciliation.BankAccountId).Sum(x => x.DebitAmount - x.CreditAmount);
+        var bankEffect = journal.Lines.Where(x => x.AccountId == reconciliation.BankAccountId).Sum(x => x.Debit - x.Credit);
         var statementEffect = line.TransactionType.Equals("Credit", StringComparison.OrdinalIgnoreCase) ? line.Amount : -line.Amount;
         if (Math.Abs(bankEffect - statementEffect) > 0.01m) throw new InvalidOperationException("Statement line amount does not match the selected bank journal entry.");
         line.IsMatched = true;
