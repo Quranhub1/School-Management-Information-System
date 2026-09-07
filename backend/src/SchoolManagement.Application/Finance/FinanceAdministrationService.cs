@@ -83,12 +83,7 @@ public sealed class FinanceAdministrationService(IFinanceAdministrationRepositor
         line.IsMatched = true;
         line.MatchedJournalEntryId = journalEntryId;
         reconciliation.ReconciledAmount += statementEffect;
-        var allMatched = lines.All(x => x.IsMatched);
-        reconciliation.Status = allMatched && Math.Abs(reconciliation.StatementBalance - reconciliation.BookBalance) <= 0.01m ? "Reconciled" : "Pending";
-        if (reconciliation.Status == "Reconciled")
-        {
-            reconciliation.ReconciledAt = DateTimeOffset.UtcNow;
-        }
+        reconciliation.Status = "Pending";
         await repository.SaveChangesAsync(cancellationToken);
         return reconciliation;
     }
