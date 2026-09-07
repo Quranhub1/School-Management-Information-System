@@ -5,9 +5,9 @@ using SchoolManagement.Domain.Finance;
 namespace SchoolManagement.Infrastructure.Persistence;
 
 /// <summary>
-/// Protects posted journals from mutation or deletion at the EF Core persistence boundary.
-/// Corrections must be made through a new journal (normally a reversal/adjustment), never by
-/// rewriting the historical posted entry.
+/// Protects posted journals from mutation, line additions, or deletion at the EF Core
+/// persistence boundary. Corrections must be made through a new journal (normally a
+/// reversal/adjustment), never by rewriting the historical posted entry.
 /// </summary>
 public sealed class JournalImmutabilityInterceptor : SaveChangesInterceptor
 {
@@ -37,15 +37,20 @@ public sealed class JournalImmutabilityInterceptor : SaveChangesInterceptor
 
         foreach (var entry in context.ChangeTracker.Entries<JournalEntryLine>())
         {
-            if (entry.State is not (EntityState.Modified or EntityState.Deleted)) continue;
-
-            var journalId = entry.Property(x => x.JournalEntryId).OriginalValue;
+            var journalId = entry.Property(x => x.JournalEntryId).CurrentValue;
             var journal = context.Set<JournalEntry>().Local.FirstOrDefault(x => x.Id == journalId);
-            if (journal is not null && string.Equals(journal.Status, "Posted", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Lines belonging to a posted journal entry are immutable.");
 
-            if (journal is null && context.Set<JournalEntry>().AsNoTracking().Any(x => x.Id == journalId && x.Status == "Posted"))
-                throw new InvalidOperationException("Lines belonging to a posted journal entry are immutable.");
+            if (journal is not null && string.Equals(journal.Status, "Posted", StringComparison.OrdinalIgnoreCase))
+            {
+                if (entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+                    throw new InvalidOperationException("Lines belonging to a posted journal entry are immutable.");
+            }
+
+            if (journal is null && entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            {
+                if (context.Set<JournalEntry>().AsNoTracking().Any(x => x.Id == journalId && x.Status == "Posted"))
+                    throw new InvalidOperationException("Lines belonging to a posted journal entry are immutable.");
+            }
         }
     }
 }
