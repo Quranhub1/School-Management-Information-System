@@ -21,82 +21,82 @@ jobs:
           s = p.read_text()
           marker = '    public DbSet<AcademicStream> Streams => Set<AcademicStream>();'
           additions = '''    public DbSet<AccountingDimension> AccountingDimensions => Set<AccountingDimension>();
-              public DbSet<JournalLineDimension> JournalLineDimensions => Set<JournalLineDimension>();
-              public DbSet<FiscalPeriod> FiscalPeriods => Set<FiscalPeriod>();
-              public DbSet<OpeningBalance> OpeningBalances => Set<OpeningBalance>();
-              public DbSet<FinanceAuditEvent> FinanceAuditEvents => Set<FinanceAuditEvent>();
-              public DbSet<AdjustmentCancellation> AdjustmentCancellations => Set<AdjustmentCancellation>();
-              public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();'''
+    public DbSet<JournalLineDimension> JournalLineDimensions => Set<JournalLineDimension>();
+    public DbSet<FiscalPeriod> FiscalPeriods => Set<FiscalPeriod>();
+    public DbSet<OpeningBalance> OpeningBalances => Set<OpeningBalance>();
+    public DbSet<FinanceAuditEvent> FinanceAuditEvents => Set<FinanceAuditEvent>();
+    public DbSet<AdjustmentCancellation> AdjustmentCancellations => Set<AdjustmentCancellation>();
+    public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();'''
           if 'DbSet<AccountingDimension>' not in s:
               s = s.replace(marker, marker + '\n' + additions)
           config_marker = '        m.Entity<BankStatementLine>(e =>'
           config = '''        m.Entity<AccountingDimension>(e =>
-              {
-                  e.HasKey(x => x.Id);
-                  e.HasIndex(x => new { x.DimensionType, x.Code }).IsUnique();
-                  e.Property(x => x.DimensionType).HasMaxLength(50).IsRequired();
-                  e.Property(x => x.Code).HasMaxLength(50).IsRequired();
-                  e.Property(x => x.Name).HasMaxLength(200).IsRequired();
-              });
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.DimensionType, x.Code }).IsUnique();
+            e.Property(x => x.DimensionType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Code).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(200).IsRequired();
+        });
 
-              m.Entity<JournalLineDimension>(e =>
-              {
-                  e.HasKey(x => x.Id);
-                  e.HasIndex(x => new { x.JournalEntryLineId, x.AccountingDimensionId }).IsUnique();
-                  e.HasOne<JournalEntryLine>().WithMany().HasForeignKey(x => x.JournalEntryLineId).OnDelete(DeleteBehavior.Cascade);
-                  e.HasOne<AccountingDimension>().WithMany().HasForeignKey(x => x.AccountingDimensionId).OnDelete(DeleteBehavior.Restrict);
-              });
+        m.Entity<JournalLineDimension>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.JournalEntryLineId, x.AccountingDimensionId }).IsUnique();
+            e.HasOne<JournalEntryLine>().WithMany().HasForeignKey(x => x.JournalEntryLineId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<AccountingDimension>().WithMany().HasForeignKey(x => x.AccountingDimensionId).OnDelete(DeleteBehavior.Restrict);
+        });
 
-              m.Entity<FiscalPeriod>(e =>
-              {
-                  e.HasKey(x => x.Id);
-                  e.HasIndex(x => x.Code).IsUnique();
-                  e.Property(x => x.Code).HasMaxLength(30).IsRequired();
-                  e.Property(x => x.Name).HasMaxLength(150).IsRequired();
-                  e.Property(x => x.Status).HasMaxLength(20).IsRequired();
-              });
+        m.Entity<FiscalPeriod>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Code).IsUnique();
+            e.Property(x => x.Code).HasMaxLength(30).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(150).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        });
 
-              m.Entity<OpeningBalance>(e =>
-              {
-                  e.HasKey(x => x.Id);
-                  e.HasIndex(x => new { x.FiscalPeriodId, x.AccountId }).IsUnique();
-                  e.Property(x => x.Debit).HasPrecision(18, 2);
-                  e.Property(x => x.Credit).HasPrecision(18, 2);
-                  e.Property(x => x.Currency).HasMaxLength(10).IsRequired();
-                  e.HasOne<FiscalPeriod>().WithMany().HasForeignKey(x => x.FiscalPeriodId).OnDelete(DeleteBehavior.Restrict);
-                  e.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
-              });
+        m.Entity<OpeningBalance>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.FiscalPeriodId, x.AccountId }).IsUnique();
+            e.Property(x => x.Debit).HasPrecision(18, 2);
+            e.Property(x => x.Credit).HasPrecision(18, 2);
+            e.Property(x => x.Currency).HasMaxLength(10).IsRequired();
+            e.HasOne<FiscalPeriod>().WithMany().HasForeignKey(x => x.FiscalPeriodId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
+        });
 
-              m.Entity<FinanceAuditEvent>(e =>
-              {
-                  e.HasKey(x => x.Id);
-                  e.Property(x => x.Action).HasMaxLength(80).IsRequired();
-                  e.Property(x => x.EntityType).HasMaxLength(100).IsRequired();
-                  e.Property(x => x.PerformedBy).HasMaxLength(200).IsRequired();
-                  e.Property(x => x.Reason).HasMaxLength(1000);
-                  e.Property(x => x.Metadata).HasMaxLength(4000);
-                  e.HasIndex(x => new { x.EntityType, x.EntityId, x.OccurredAt });
-              });
+        m.Entity<FinanceAuditEvent>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Action).HasMaxLength(80).IsRequired();
+            e.Property(x => x.EntityType).HasMaxLength(100).IsRequired();
+            e.Property(x => x.PerformedBy).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Reason).HasMaxLength(1000);
+            e.Property(x => x.Metadata).HasMaxLength(4000);
+            e.HasIndex(x => new { x.EntityType, x.EntityId, x.OccurredAt });
+        });
 
-              m.Entity<AdjustmentCancellation>(e =>
-              {
-                  e.HasKey(x => x.Id);
-                  e.HasIndex(x => x.AdjustmentId).IsUnique();
-                  e.Property(x => x.Reason).HasMaxLength(1000).IsRequired();
-                  e.Property(x => x.CancelledBy).HasMaxLength(200).IsRequired();
-              });
+        m.Entity<AdjustmentCancellation>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.AdjustmentId).IsUnique();
+            e.Property(x => x.Reason).HasMaxLength(1000).IsRequired();
+            e.Property(x => x.CancelledBy).HasMaxLength(200).IsRequired();
+        });
 
-              m.Entity<BankTransaction>(e =>
-              {
-                  e.HasKey(x => x.Id);
-                  e.HasIndex(x => new { x.BankAccountId, x.TransactionDate, x.Reference }).IsUnique();
-                  e.Property(x => x.Reference).HasMaxLength(120).IsRequired();
-                  e.Property(x => x.Description).HasMaxLength(500);
-                  e.Property(x => x.Amount).HasPrecision(18, 2);
-                  e.HasOne<BankStatementLine>().WithMany().HasForeignKey(x => x.BankStatementLineId).OnDelete(DeleteBehavior.SetNull);
-              });
+        m.Entity<BankTransaction>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.BankAccountId, x.TransactionDate, x.Reference }).IsUnique();
+            e.Property(x => x.Reference).HasMaxLength(120).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(500);
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.HasOne<BankStatementLine>().WithMany().HasForeignKey(x => x.BankStatementLineId).OnDelete(DeleteBehavior.SetNull);
+        });
 
-          '''
+'''
           if 'm.Entity<AccountingDimension>' not in s:
               s = s.replace(config_marker, config + config_marker)
           p.write_text(s)
@@ -107,4 +107,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add backend/src/SchoolManagement.Infrastructure/Persistence/SchoolManagementDbContext.cs
           git commit -m 'feat(finance): wire remaining entities into EF Core model' || exit 0
-          git push
+          git pull --rebase origin feat/complete-remaining-finance
+          git push origin HEAD:feat/complete-remaining-finance
