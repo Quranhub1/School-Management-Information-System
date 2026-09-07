@@ -8,7 +8,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
-public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, JournalReversalService reversals) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, ReceivablesReportService receivables, JournalReversalService reversals) : ControllerBase
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId, CancellationToken cancellationToken)
@@ -20,6 +20,21 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     [HttpGet("students/{studentId:guid}/ledger")]
     public async Task<IActionResult> GetStudentLedger(Guid studentId, CancellationToken cancellationToken) =>
         Ok(await finance.GetStudentLedgerAsync(studentId, cancellationToken));
+
+    [HttpGet("reports/receivables-ageing")]
+    public async Task<IActionResult> ReceivablesAgeing([FromQuery] DateOnly? asOf, [FromQuery] string currency = "UGX", CancellationToken cancellationToken = default)
+    {
+        try { return Ok(await receivables.GetAgeingAsync(asOf, currency, cancellationToken)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpGet("reports/receivables-reconciliation")]
+    public async Task<IActionResult> ReceivablesReconciliation([FromQuery] DateOnly? asOf, [FromQuery] string currency = "UGX", CancellationToken cancellationToken = default)
+    {
+        try { return Ok(await receivables.GetReconciliationAsync(asOf, currency, cancellationToken)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
 
     [HttpGet("students/{studentId:guid}/charges")]
     public async Task<IActionResult> GetStudentCharges(Guid studentId, CancellationToken cancellationToken)

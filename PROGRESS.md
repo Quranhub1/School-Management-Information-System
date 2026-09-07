@@ -1,8 +1,8 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-09-06  
-**Current focus:** Finance accounting integrity and ERP-grade receivables workflows  
-**Tracking branch:** `feature/finance-installments`
+**Last updated:** 2026-09-07  
+**Current focus:** Finance receivables controls, accounting integrity and production hardening  
+**Tracking branch:** `feature/finance-receivables-ageing-reconciliation`
 
 > Master project tracker. A feature is complete only when its implemented scope is verified in the repository and CI. A model, placeholder endpoint or UI mockup alone does not make a workflow complete.
 
@@ -29,6 +29,12 @@
 - [x] Percentage- and amount-based invoice installment schedules
 - [x] Installment due dates, outstanding and overdue tracking
 - [x] Invoice payments automatically applied across installment balances
+- [x] Student charges and charge-void workflow
+- [x] Credit-note workflow and invoice credit-note listing
+- [x] Refund workflow with payment and credit-note safeguards
+- [x] Credit-note and refund journal posting
+- [x] Receivables ageing buckets
+- [x] Student Receivables control-account reconciliation
 
 ## Finance — Phase 1: Accounting Integrity
 - [x] Central journal-entry validation
@@ -47,7 +53,7 @@
 - [x] Installments / fee schedules
 - [x] Discounts
 - [x] Waivers
-- [ ] Student charges
+- [x] Student charges
 
 ## Finance — Phase 3: Receivables & Payment Ledger
 - [x] Payment allocation
@@ -55,15 +61,15 @@
 - [x] Multi-invoice payment allocation
 - [x] Unallocated payments / advances
 - [x] Student payment ledger
-- [ ] Receivables ageing
-- [ ] Receivables control-account reconciliation
+- [x] Receivables ageing
+- [x] Receivables control-account reconciliation
 
 ## Finance — Phase 4: Adjustments
-- [ ] Credit-note workflow
-- [ ] Credit-note application to invoices
-- [ ] Refund workflow
-- [ ] Refund journal posting
-- [ ] Cancellation/reversal workflow
+- [x] Credit-note workflow
+- [x] Credit-note application to invoices
+- [x] Refund workflow
+- [x] Refund journal posting
+- [ ] Adjustment cancellation/reversal workflow
 
 ## Finance — Phase 5–6
 - [ ] Campus/faculty/department/programme accounting dimensions
@@ -85,9 +91,9 @@ The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, 
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Complete Finance Phase 1 persistence-level immutability and dedicated audit events.
-2. Implement student charges.
-3. Add receivables ageing and control-account reconciliation.
-4. Implement credit notes, refunds and accounting corrections.
-5. Add accounting dimensions, bank reconciliation and complete financial statements.
+1. Complete Finance Phase 1 persistence-level immutability, dedicated audit events and persistence tests.
+2. Add adjustment cancellation/reversal with full auditability.
+3. Add accounting dimensions and dimension-aware reporting.
+4. Complete production-grade financial statements, fiscal periods and opening balances.
+5. Implement bank transactions and bank reconciliation.
 6. Continue system-wide tests, security, deployment and integration hardening.
