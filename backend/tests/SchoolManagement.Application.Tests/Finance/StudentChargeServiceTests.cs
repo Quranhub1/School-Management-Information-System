@@ -55,6 +55,7 @@ public sealed class StudentChargeServiceTests
         public List<StudentCharge> Charges { get; } = [];
         public List<JournalEntry> JournalEntries { get; } = [];
         public List<PaymentLedgerEntry> LedgerEntries { get; } = [];
+        private readonly List<CreditNote> creditNotes = [];
 
         public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<StudentInvoice?>(null);
         public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
@@ -76,6 +77,9 @@ public sealed class StudentChargeServiceTests
         public Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<InvoiceInstallment>>([]);
         public Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentCharge>>(Charges.Where(x => x.StudentId == id).ToArray());
         public Task<StudentCharge?> GetStudentChargeAsync(Guid id, CancellationToken ct) => Task.FromResult(Charges.FirstOrDefault(x => x.Id == id));
+        public Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid studentInvoiceId, CancellationToken ct) => Task.FromResult<IReadOnlyList<CreditNote>>(creditNotes.Where(x => x.StudentInvoiceId == studentInvoiceId).ToArray());
+        public Task<IReadOnlyList<CreditNote>> GetAllCreditNotesAsync(CancellationToken ct) => Task.FromResult<IReadOnlyList<CreditNote>>(creditNotes.ToArray());
+        public Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken ct) => Task.FromResult(creditNotes.FirstOrDefault(x => x.Id == creditNoteId));
         public Task AddInvoiceInstallmentAsync(InvoiceInstallment x, CancellationToken ct) => Task.CompletedTask;
         public Task AddStudentChargeAsync(StudentCharge x, CancellationToken ct) { Charges.Add(x); return Task.CompletedTask; }
         public Task AddInvoiceAsync(StudentInvoice x, CancellationToken ct) => Task.CompletedTask;
@@ -83,6 +87,7 @@ public sealed class StudentChargeServiceTests
         public Task AddPaymentAllocationAsync(PaymentAllocation x, CancellationToken ct) => Task.CompletedTask;
         public Task AddPaymentLedgerEntryAsync(PaymentLedgerEntry x, CancellationToken ct) { LedgerEntries.Add(x); return Task.CompletedTask; }
         public Task AddInvoiceDiscountAsync(InvoiceDiscount x, CancellationToken ct) => Task.CompletedTask;
+        public Task AddCreditNoteAsync(CreditNote x, CancellationToken ct) { creditNotes.Add(x); return Task.CompletedTask; }
         public Task AddJournalEntryAsync(JournalEntry x, CancellationToken ct) { JournalEntries.Add(x); return Task.CompletedTask; }
         public Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken ct) => Task.FromResult<IReadOnlyList<JournalEntry>>(JournalEntries);
         public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>([]);
