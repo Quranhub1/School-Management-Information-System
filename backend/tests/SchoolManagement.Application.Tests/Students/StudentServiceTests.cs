@@ -32,7 +32,7 @@ public sealed class StudentServiceTests
         var result = await service.GetByIdAsync(student.Id);
 
         Assert.NotNull(result);
-        Assert.Equal(student.Id, result.Value.Id);
+        Assert.Equal(student.Id, result!.Id);
     }
 
     [Fact]
@@ -46,9 +46,9 @@ public sealed class StudentServiceTests
             student.Id, "STU-003-UPD", "New", "Name", "Other", new DateOnly(2001, 1, 1), "Female", "NAT-002", "0711111111", "new@test.com"), default);
 
         Assert.NotNull(updated);
-        Assert.Equal("STU-003-UPD", updated.Value.StudentNumber);
-        Assert.Equal("New", updated.Value.FirstName);
-        Assert.Equal("Name", updated.Value.LastName);
+        Assert.Equal("STU-003-UPD", updated!.StudentNumber);
+        Assert.Equal("New", updated.FirstName);
+        Assert.Equal("Name", updated.LastName);
     }
 
     [Fact]
