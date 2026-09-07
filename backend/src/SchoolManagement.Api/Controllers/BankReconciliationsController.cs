@@ -13,16 +13,14 @@ public sealed class BankReconciliationsController(BankReconciliationService serv
 {
     [HttpGet]
     public Task<IReadOnlyList<BankReconciliation>> Get(Guid? bankAccountId, DateOnly? from, DateOnly? to, CancellationToken cancellationToken) => service.GetAsync(bankAccountId, from, to, cancellationToken);
-
     [HttpPost]
     public async Task<ActionResult<BankReconciliation>> Create([FromBody] CreateBankReconciliationRequest request, CancellationToken cancellationToken) => Ok(await service.CreateAsync(request, cancellationToken));
-
     [HttpGet("{id:guid}/lines")]
     public async Task<ActionResult<IReadOnlyList<BankStatementLine>>> GetLines(Guid id, CancellationToken cancellationToken) => Ok(await service.GetLinesAsync(id, cancellationToken));
-
     [HttpPost("{id:guid}/lines")]
     public async Task<ActionResult<BankStatementLine>> AddLine(Guid id, [FromBody] AddBankStatementLineRequest request, CancellationToken cancellationToken) => Ok(await service.AddLineAsync(id, request, cancellationToken));
-
+    [HttpPost("lines/{lineId:guid}/match/{journalEntryId:guid}")]
+    public async Task<ActionResult<BankStatementLine>> MatchLine(Guid lineId, Guid journalEntryId, CancellationToken cancellationToken) => Ok(await service.MatchLineAsync(lineId, journalEntryId, cancellationToken));
     [HttpPost("{id:guid}/reconcile")]
     public async Task<ActionResult<BankReconciliation>> Reconcile(Guid id, CancellationToken cancellationToken)
     {
