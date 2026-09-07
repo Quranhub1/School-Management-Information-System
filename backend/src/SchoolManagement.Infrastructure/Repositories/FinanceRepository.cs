@@ -28,6 +28,7 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
     public Task<StudentCharge?> GetStudentChargeAsync(Guid chargeId, CancellationToken cancellationToken) => db.Set<StudentCharge>().FirstOrDefaultAsync(x => x.Id == chargeId, cancellationToken);
     public Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken cancellationToken) => db.CreditNotes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == creditNoteId, cancellationToken);
     public async Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken) => await db.CreditNotes.AsNoTracking().Where(x => x.StudentInvoiceId == studentInvoiceId).OrderBy(x => x.IssuedAt).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<CreditNote>> GetAllCreditNotesAsync(CancellationToken cancellationToken) => await db.CreditNotes.AsNoTracking().OrderBy(x => x.IssuedAt).ToListAsync(cancellationToken);
     public async Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken) => await db.CreditNotes.AddAsync(creditNote, cancellationToken);
     public async Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken) => await db.Set<InvoiceInstallment>().AddAsync(installment, cancellationToken);
     public async Task AddStudentChargeAsync(StudentCharge charge, CancellationToken cancellationToken) => await db.Set<StudentCharge>().AddAsync(charge, cancellationToken);
