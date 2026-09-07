@@ -23,6 +23,14 @@ public sealed class AssessmentsController(AssessmentService service) : Controlle
         CancellationToken cancellationToken) =>
         Ok(await service.GetStudentAssessmentsAsync(courseRegistrationId, cancellationToken));
 
+    [HttpGet("records/{id:guid}")]
+    public async Task<ActionResult<StudentAssessment>> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var assessments = await service.GetStudentAssessmentsAsync(Guid.Empty, cancellationToken);
+        var assessment = assessments.SingleOrDefault(x => x.Id == id);
+        return assessment is null ? NotFound() : Ok(assessment);
+    }
+
     [HttpPost]
     public async Task<ActionResult<StudentAssessment>> Record(
         [FromBody] RecordAssessmentRequest request,
@@ -36,7 +44,7 @@ public sealed class AssessmentsController(AssessmentService service) : Controlle
             request.MaximumScore,
             request.CompetencyLevel,
             cancellationToken);
-        return Created($"/api/assessments/registrations/{assessment.CourseRegistrationId}", assessment);
+        return Created($"/api/assessments/records/{assessment.Id}", assessment);
     }
 
     public sealed record RecordAssessmentRequest(

@@ -17,4 +17,7 @@ public static class InstitutionalRoles
     public const string ResidentDirector = "ResidentDirector";
     public const string HeadOfDepartment = "HeadOfDepartment";
     public const string AssistantPrincipal = "AssistantPrincipal";
+    public const string Librarian = "Librarian";
+    public const string HrManager = "HR Manager";
+    public const string Parent = "Parent";
 }

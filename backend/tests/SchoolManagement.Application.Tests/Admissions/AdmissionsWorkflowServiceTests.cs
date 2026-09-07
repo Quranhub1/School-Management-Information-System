@@ -23,6 +23,58 @@ public sealed class AdmissionsWorkflowServiceTests
     }
 
     [Fact]
+    public async Task GetAllAsync_returns_all_admissions()
+    {
+        var applicantId = Guid.NewGuid();
+        var admission = new Admission { ApplicantId = applicantId, ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
+        var repository = new FakeAdmissionRepository(admission);
+        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+
+        var results = await workflow.GetAllAsync();
+
+        Assert.Single(results);
+        Assert.Equal(admission.Id, results[0].Id);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_returns_admission_when_exists()
+    {
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
+        var repository = new FakeAdmissionRepository(admission);
+        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+
+        var result = await workflow.GetByIdAsync(admission.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal(admission.Id, result.Value.Id);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_updates_status()
+    {
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
+        var repository = new FakeAdmissionRepository(admission);
+        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+
+        var result = await workflow.UpdateAsync(admission.Id, new UpdateAdmissionRequest(admission.Id, "Accepted"));
+
+        Assert.NotNull(result);
+        Assert.Equal("Accepted", result.Value.Status);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_removes_admission()
+    {
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
+        var repository = new FakeAdmissionRepository(admission);
+        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+
+        var result = await workflow.DeleteAsync(admission.Id);
+
+        Assert.True(result);
+    }
+
+    [Fact]
     public async Task DecideAsync_updates_status_and_records_decision()
     {
         var admission = new Admission
@@ -64,9 +116,24 @@ public sealed class AdmissionsWorkflowServiceTests
         public Task<Admission?> GetAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default) =>
             Task.FromResult(_admissions.TryGetValue(admissionId, out var admission) ? admission : null);
 
+        public Task<IReadOnlyList<Admission>> GetAllAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Admission>>(_admissions.Values.ToList());
+
         public Task AddAdmissionAsync(Admission admission, CancellationToken cancellationToken = default)
         {
             _admissions[admission.Id] = admission;
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateAdmissionAsync(Admission admission, CancellationToken cancellationToken = default)
+        {
+            _admissions[admission.Id] = admission;
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default)
+        {
+            _admissions.Remove(admissionId);
             return Task.CompletedTask;
         }
 

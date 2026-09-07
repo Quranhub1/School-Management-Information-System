@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { listApplicants, submitApplicant, updateAdmissionStatus, type Applicant } from '../api/admissions'
 import { getAccessToken } from '../api/auth'
 
-const statuses = ['Submitted', 'UnderReview', 'Accepted', 'Rejected', 'Withdrawn']
+const statuses = ['Pending', 'Accepted', 'Rejected']
 
 export function AdmissionsManagement() {
   const [applicants, setApplicants] = useState<Applicant[]>([]); const [error, setError] = useState(''); const [loading, setLoading] = useState(true); const [uploading, setUploading] = useState<string | null>(null)

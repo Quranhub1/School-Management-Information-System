@@ -6,6 +6,10 @@ public sealed record CreateAdmissionRequest(
     Guid AcademicYearId,
     Guid IntakeId);
 
+public sealed record UpdateAdmissionRequest(
+    Guid Id,
+    string? Status = null);
+
 public sealed record DecideAdmissionRequest(
     string Decision,
     string? Reason,

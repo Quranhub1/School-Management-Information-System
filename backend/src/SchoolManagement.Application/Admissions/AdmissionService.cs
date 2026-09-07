@@ -5,6 +5,12 @@ namespace SchoolManagement.Application.Admissions;
 
 public sealed class AdmissionService(IAdmissionRepository repository)
 {
+    public async Task<IReadOnlyList<Admission>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await repository.GetAllAsync(cancellationToken);
+
+    public async Task<Admission?> GetByIdAsync(Guid admissionId, CancellationToken cancellationToken = default) =>
+        await repository.GetAdmissionAsync(admissionId, cancellationToken);
+
     public async Task<Admission> CreateAsync(Guid applicantId, Guid programmeId, Guid academicYearId, Guid intakeId, CancellationToken cancellationToken = default)
     {
         if (await repository.GetApplicantAsync(applicantId, cancellationToken) is null)
@@ -22,6 +28,27 @@ public sealed class AdmissionService(IAdmissionRepository repository)
         await repository.AddAdmissionAsync(admission, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return admission;
+    }
+
+    public async Task<Admission?> UpdateAsync(Guid admissionId, string? status = null, CancellationToken cancellationToken = default)
+    {
+        var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken);
+        if (admission is null) return null;
+
+        if (!string.IsNullOrWhiteSpace(status))
+            admission.Status = status.Trim();
+
+        await repository.UpdateAdmissionAsync(admission, cancellationToken);
+        return admission;
+    }
+
+    public async Task<bool> DeleteAsync(Guid admissionId, CancellationToken cancellationToken = default)
+    {
+        var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken);
+        if (admission is null) return false;
+
+        await repository.DeleteAdmissionAsync(admissionId, cancellationToken);
+        return true;
     }
 
     public async Task<AdmissionDecision> DecideAsync(Guid admissionId, string decision, string? reason = null, string? decidedBy = null, CancellationToken cancellationToken = default)
