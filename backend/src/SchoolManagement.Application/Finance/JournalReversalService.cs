@@ -7,7 +7,7 @@ namespace SchoolManagement.Application.Finance;
 /// Reverses posted journal entries by creating a new, balanced journal entry.
 /// The original posted entry is never edited or deleted.
 /// </summary>
-public sealed class JournalReversalService(IFinanceRepository finance)
+public sealed class JournalReversalService(IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
     public async Task<JournalEntry> ReverseAsync(Guid journalEntryId, string reason, string performedBy, CancellationToken cancellationToken)
     {
@@ -30,13 +30,19 @@ public sealed class JournalReversalService(IFinanceRepository finance)
         if (await finance.JournalEntryNumberExistsAsync(reversalNumber, cancellationToken))
             throw new InvalidOperationException($"Reversal journal entry '{reversalNumber}' already exists.");
 
+        // Reversals are new posted transactions and therefore must obey the same
+        // fiscal-period controls as every other posting. The reversal is dated
+        // today so it cannot silently alter a closed historical period.
+        var reversalDate = DateTimeOffset.UtcNow;
+        await fiscalPeriods.RequireOpenPeriodAsync(DateOnly.FromDateTime(reversalDate.UtcDateTime), cancellationToken);
+
         var reversal = new JournalEntry
         {
             EntryNumber = reversalNumber,
-            EntryDate = DateTimeOffset.UtcNow,
+            EntryDate = reversalDate,
             Description = $"Reversal of {original.EntryNumber}: {reason.Trim()}",
             Status = "Posted",
-            PostedAt = DateTimeOffset.UtcNow,
+            PostedAt = reversalDate,
             PostedBy = performedBy.Trim(),
             SourceType = "JournalReversal",
             SourceId = original.Id,
