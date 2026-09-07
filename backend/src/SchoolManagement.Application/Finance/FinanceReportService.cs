@@ -3,76 +3,21 @@ using SchoolManagement.Domain.Finance;
 
 namespace SchoolManagement.Application.Finance;
 
-public sealed record AccountLedgerRow(
-    Guid AccountId,
-    string AccountCode,
-    string AccountName,
-    string AccountType,
-    DateTimeOffset Date,
-    string EntryNumber,
-    string Description,
-    decimal Debit,
-    decimal Credit,
-    decimal Balance);
+public sealed record AccountLedgerRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, DateTimeOffset Date, string EntryNumber, string Description, decimal Debit, decimal Credit, decimal Balance);
+public sealed record TrialBalanceRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Debit, decimal Credit, decimal Balance);
+public sealed record StudentReceivableRow(Guid StudentId, decimal Invoiced, decimal Paid, decimal Outstanding);
+public sealed record IncomeStatementRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Amount);
+public sealed record IncomeStatementReport(IReadOnlyList<IncomeStatementRow> Revenue, IReadOnlyList<IncomeStatementRow> Expenses, decimal TotalRevenue, decimal TotalExpenses, decimal NetIncome);
+public sealed record BalanceSheetRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Balance);
+public sealed record BalanceSheetReport(IReadOnlyList<BalanceSheetRow> Assets, IReadOnlyList<BalanceSheetRow> Liabilities, IReadOnlyList<BalanceSheetRow> Equity, decimal TotalAssets, decimal TotalLiabilities, decimal TotalEquity, decimal CurrentPeriodNetIncome, decimal TotalLiabilitiesAndEquity);
 
-public sealed record TrialBalanceRow(
-    Guid AccountId,
-    string AccountCode,
-    string AccountName,
-    string AccountType,
-    decimal Debit,
-    decimal Credit,
-    decimal Balance);
-
-public sealed record StudentReceivableRow(
-    Guid StudentId,
-    decimal Invoiced,
-    decimal Paid,
-    decimal Outstanding);
-
-public sealed record IncomeStatementRow(
-    Guid AccountId,
-    string AccountCode,
-    string AccountName,
-    string AccountType,
-    decimal Amount);
-
-public sealed record IncomeStatementReport(
-    IReadOnlyList<IncomeStatementRow> Revenue,
-    IReadOnlyList<IncomeStatementRow> Expenses,
-    decimal TotalRevenue,
-    decimal TotalExpenses,
-    decimal NetIncome);
-
-public sealed record BalanceSheetRow(
-    Guid AccountId,
-    string AccountCode,
-    string AccountName,
-    string AccountType,
-    decimal Balance);
-
-public sealed record BalanceSheetReport(
-    IReadOnlyList<BalanceSheetRow> Assets,
-    IReadOnlyList<BalanceSheetRow> Liabilities,
-    IReadOnlyList<BalanceSheetRow> Equity,
-    decimal TotalAssets,
-    decimal TotalLiabilities,
-    decimal TotalEquity,
-    decimal CurrentPeriodNetIncome,
-    decimal TotalLiabilitiesAndEquity);
-
-public sealed class FinanceReportService(IFinanceRepository finance)
+public sealed class FinanceReportService(IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
-    public async Task<IReadOnlyList<AccountLedgerRow>> GetGeneralLedgerAsync(
-        DateOnly? from = null,
-        DateOnly? to = null,
-        Guid? accountId = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AccountLedgerRow>> GetGeneralLedgerAsync(DateOnly? from = null, DateOnly? to = null, Guid? accountId = null, CancellationToken cancellationToken = default)
     {
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, accountId, cancellationToken);
         var rows = new List<AccountLedgerRow>();
         var running = new Dictionary<Guid, decimal>();
-
         foreach (var entry in entries.OrderBy(x => x.EntryDate).ThenBy(x => x.EntryNumber))
         foreach (var line in entry.Lines)
         {
@@ -81,40 +26,23 @@ public sealed class FinanceReportService(IFinanceRepository finance)
             running.TryGetValue(account.Id, out var balance);
             balance += line.Debit - line.Credit;
             running[account.Id] = balance;
-            rows.Add(new AccountLedgerRow(account.Id, account.Code, account.Name, account.AccountType,
-                entry.EntryDate, entry.EntryNumber, line.Description ?? entry.Description ?? string.Empty,
-                line.Debit, line.Credit, balance));
+            rows.Add(new AccountLedgerRow(account.Id, account.Code, account.Name, account.AccountType, entry.EntryDate, entry.EntryNumber, line.Description ?? entry.Description ?? string.Empty, line.Debit, line.Credit, balance));
         }
         return rows;
     }
 
-    public async Task<IReadOnlyList<TrialBalanceRow>> GetTrialBalanceAsync(
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TrialBalanceRow>> GetTrialBalanceAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default)
     {
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
         var totals = Aggregate(entries);
-        return totals.Values
-            .OrderBy(x => x.Account.Code)
-            .Select(x => new TrialBalanceRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType,
-                x.Debit, x.Credit, x.Debit - x.Credit))
-            .ToList();
+        return totals.Values.OrderBy(x => x.Account.Code).Select(x => new TrialBalanceRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, x.Debit, x.Credit, x.Debit - x.Credit)).ToList();
     }
 
-    public async Task<IncomeStatementReport> GetIncomeStatementAsync(
-        DateOnly? from = null,
-        DateOnly? to = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IncomeStatementReport> GetIncomeStatementAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default)
     {
+        (from, to) = await ResolveIncomeStatementRangeAsync(from, to, cancellationToken);
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
-        var rows = Aggregate(entries).Values
-            .Select(x => new IncomeStatementRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType,
-                IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit))
-            .Where(x => IsRevenue(x.AccountType) || IsExpense(x.AccountType))
-            .OrderBy(x => x.AccountCode)
-            .ToList();
-
+        var rows = Aggregate(entries).Values.Select(x => new IncomeStatementRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit)).Where(x => IsRevenue(x.AccountType) || IsExpense(x.AccountType)).OrderBy(x => x.AccountCode).ToList();
         var revenue = rows.Where(x => IsRevenue(x.AccountType)).ToList();
         var expenses = rows.Where(x => IsExpense(x.AccountType)).ToList();
         var totalRevenue = revenue.Sum(x => x.Amount);
@@ -122,37 +50,41 @@ public sealed class FinanceReportService(IFinanceRepository finance)
         return new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
     }
 
-    public async Task<BalanceSheetReport> GetBalanceSheetAsync(
-        DateOnly? asOf = null,
-        CancellationToken cancellationToken = default)
+    public async Task<BalanceSheetReport> GetBalanceSheetAsync(DateOnly? asOf = null, CancellationToken cancellationToken = default)
     {
-        var entries = await finance.GetPostedJournalEntriesAsync(null, asOf, null, cancellationToken);
-        var totals = Aggregate(entries).Values
-            .Select(x => new BalanceSheetRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType,
-                IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit))
-            .Where(x => IsAsset(x.AccountType) || IsLiability(x.AccountType) || IsEquity(x.AccountType))
-            .OrderBy(x => x.AccountCode)
-            .ToList();
-
+        var effectiveAsOf = asOf ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var entries = await finance.GetPostedJournalEntriesAsync(null, effectiveAsOf, null, cancellationToken);
+        var totals = Aggregate(entries).Values.Select(x => new BalanceSheetRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit)).Where(x => IsAsset(x.AccountType) || IsLiability(x.AccountType) || IsEquity(x.AccountType)).OrderBy(x => x.AccountCode).ToList();
         var assets = totals.Where(x => IsAsset(x.AccountType)).ToList();
         var liabilities = totals.Where(x => IsLiability(x.AccountType)).ToList();
         var equity = totals.Where(x => IsEquity(x.AccountType)).ToList();
-        var netIncome = await GetIncomeStatementAsync(null, asOf, cancellationToken);
+        var netIncome = await GetIncomeStatementAsync(null, effectiveAsOf, cancellationToken);
         var totalAssets = assets.Sum(x => x.Balance);
         var totalLiabilities = liabilities.Sum(x => x.Balance);
         var totalEquity = equity.Sum(x => x.Balance);
-        return new BalanceSheetReport(assets, liabilities, equity, totalAssets, totalLiabilities,
-            totalEquity, netIncome.NetIncome, totalLiabilities + totalEquity + netIncome.NetIncome);
+        return new BalanceSheetReport(assets, liabilities, equity, totalAssets, totalLiabilities, totalEquity, netIncome.NetIncome, totalLiabilities + totalEquity + netIncome.NetIncome);
     }
 
     public async Task<IReadOnlyList<StudentReceivableRow>> GetStudentReceivablesAsync(CancellationToken cancellationToken = default)
     {
         var invoices = await finance.GetAllStudentInvoicesAsync(cancellationToken);
-        return invoices.GroupBy(x => x.StudentId)
-            .Select(g => new StudentReceivableRow(g.Key,
-                g.Sum(x => x.Amount), g.Sum(x => x.PaidAmount), g.Sum(x => x.Amount - x.PaidAmount)))
-            .OrderByDescending(x => x.Outstanding)
-            .ToList();
+        return invoices.GroupBy(x => x.StudentId).Select(g => new StudentReceivableRow(g.Key, g.Sum(x => x.Amount), g.Sum(x => x.PaidAmount), g.Sum(x => x.Amount - x.PaidAmount))).OrderByDescending(x => x.Outstanding).ToList();
+    }
+
+    private async Task<(DateOnly? From, DateOnly? To)> ResolveIncomeStatementRangeAsync(DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
+    {
+        if (to.HasValue)
+        {
+            var period = await fiscalPeriods.GetContainingAsync(to.Value, cancellationToken);
+            if (period is not null && (!from.HasValue || from.Value < period.StartDate)) from = period.StartDate;
+        }
+        else if (!from.HasValue)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var period = await fiscalPeriods.GetContainingAsync(today, cancellationToken);
+            if (period is not null) { from = period.StartDate; to = today; }
+        }
+        return (from, to);
     }
 
     private static Dictionary<Guid, (Account Account, decimal Debit, decimal Credit)> Aggregate(IEnumerable<JournalEntry> entries)
