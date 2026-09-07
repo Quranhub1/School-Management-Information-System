@@ -18,10 +18,10 @@ public sealed class CourseRegistrationRepository(SchoolManagementDbContext db) :
     public Task AddAsync(CourseRegistration registration, CancellationToken cancellationToken = default)
         => db.CourseRegistrations.AddAsync(registration, cancellationToken).AsTask();
 
-    public Task UpdateAsync(CourseRegistration registration, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(CourseRegistration registration, CancellationToken cancellationToken = default)
     {
         db.CourseRegistrations.Update(registration);
-        return Task.CompletedTask;
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)

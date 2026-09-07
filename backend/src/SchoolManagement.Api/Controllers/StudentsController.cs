@@ -46,4 +46,28 @@ public sealed class StudentsController(StudentService service) : ControllerBase
         var student = await service.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = student.Id }, student);
     }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, UpdateStudentRequest request, CancellationToken cancellationToken)
+    {
+        if (id != request.Id)
+            return BadRequest(new { message = "Route ID and body ID must match." });
+
+        if (string.IsNullOrWhiteSpace(request.StudentNumber) ||
+            string.IsNullOrWhiteSpace(request.FirstName) ||
+            string.IsNullOrWhiteSpace(request.LastName))
+        {
+            return BadRequest(new { message = "Student number, first name, and last name are required." });
+        }
+
+        var updated = await service.UpdateAsync(request, cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var deleted = await service.DeleteAsync(id, cancellationToken);
+        return deleted ? NoContent() : NotFound();
+    }
 }

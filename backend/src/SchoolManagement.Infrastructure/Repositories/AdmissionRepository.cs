@@ -13,8 +13,25 @@ public sealed class AdmissionRepository(SchoolManagementDbContext db) : IAdmissi
     public Task<Admission?> GetAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default) =>
         db.Admissions.FirstOrDefaultAsync(x => x.Id == admissionId, cancellationToken);
 
+    public async Task<IReadOnlyList<Admission>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await db.Admissions.AsNoTracking().OrderByDescending(x => x.AppliedAt).ToListAsync(cancellationToken);
+
     public async Task AddAdmissionAsync(Admission admission, CancellationToken cancellationToken = default) =>
         await db.Admissions.AddAsync(admission, cancellationToken);
+
+    public async Task UpdateAdmissionAsync(Admission admission, CancellationToken cancellationToken = default)
+    {
+        db.Admissions.Update(admission);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task DeleteAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default)
+    {
+        var admission = await db.Admissions.SingleOrDefaultAsync(x => x.Id == admissionId, cancellationToken);
+        if (admission is null) return;
+        db.Admissions.Remove(admission);
+        await db.SaveChangesAsync(cancellationToken);
+    }
 
     public async Task AddDecisionAsync(AdmissionDecision decision, CancellationToken cancellationToken = default) =>
         await db.AdmissionDecisions.AddAsync(decision, cancellationToken);

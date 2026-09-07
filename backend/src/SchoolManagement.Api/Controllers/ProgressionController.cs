@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Progression;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/progression")]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class ProgressionController : ControllerBase
 {
     private readonly ProgressionWorkflowService _workflow;

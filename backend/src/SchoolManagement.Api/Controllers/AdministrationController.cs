@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Authorization;
-using System.Text;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -35,13 +34,13 @@ public sealed class AdministrationController(AdministrationService service) : Co
     [HttpGet("backup")]
     public IActionResult Backup()
     {
-        return File(Encoding.UTF8.GetBytes("-- Database backup placeholder"), "application/sql", "backup.sql");
+        return StatusCode(StatusCodes.Status501NotImplemented, new { message = "Database backup is not yet implemented. Use pg_dump for production backups." });
     }
 
     [HttpPost("restore")]
     public IActionResult Restore([FromBody] RestoreRequest request)
     {
-        return Ok(new { message = "Restore endpoint placeholder. Implement database restore logic." });
+        return StatusCode(StatusCodes.Status501NotImplemented, new { message = "Database restore is not yet implemented. Use pg_restore for production restores." });
     }
 
     public sealed record SetActiveRequest(bool Active);

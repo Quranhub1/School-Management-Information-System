@@ -15,3 +15,6 @@ export function deactivateStaff(id:string){ return request<void>(`/api/staff/${i
 export function listLeave(staffId:string){ return request<LeaveRequest[]>(`/api/staff/${staffId}/leave`); }
 export function requestLeave(staffId:string,input: Omit<LeaveRequest,'id'|'status'|'approvedBy'|'approvedAt'>){ return request<LeaveRequest>(`/api/staff/${staffId}/leave`,{method:'POST',body:JSON.stringify(input)}); }
 export function approveLeave(id:string,approvedBy:string,approved:boolean){ return request<void>(`/api/staff/leave/${id}/approve`,{method:'PATCH',body:JSON.stringify({approvedBy,approved})}); }
+export type UpdateStaffRequest = { id:string; staffNumber:string; firstName:string; lastName:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string }
+export function updateStaff(id:string, input: UpdateStaffRequest){ return request<StaffMember>(`/api/staff/${id}`,{method:'PUT',body:JSON.stringify(input)}); }
+export function deleteStaff(id:string){ return request<void>(`/api/staff/${id}`,{method:'DELETE'}); }

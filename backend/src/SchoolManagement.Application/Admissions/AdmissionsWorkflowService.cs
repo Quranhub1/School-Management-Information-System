@@ -5,6 +5,18 @@ namespace SchoolManagement.Application.Admissions;
 
 public sealed class AdmissionsWorkflowService(AdmissionService admissionService)
 {
+    public async Task<IReadOnlyList<AdmissionDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        var admissions = await admissionService.GetAllAsync(cancellationToken);
+        return admissions.Select(ToDto).ToList();
+    }
+
+    public async Task<AdmissionDto?> GetByIdAsync(Guid admissionId, CancellationToken cancellationToken = default)
+    {
+        var admission = await admissionService.GetByIdAsync(admissionId, cancellationToken);
+        return admission is null ? null : ToDto(admission);
+    }
+
     public async Task<AdmissionDto> CreateAsync(CreateAdmissionRequest request, CancellationToken cancellationToken = default)
     {
         var admission = await admissionService.CreateAsync(
@@ -15,6 +27,17 @@ public sealed class AdmissionsWorkflowService(AdmissionService admissionService)
             cancellationToken);
 
         return ToDto(admission);
+    }
+
+    public async Task<AdmissionDto?> UpdateAsync(Guid admissionId, UpdateAdmissionRequest request, CancellationToken cancellationToken = default)
+    {
+        var admission = await admissionService.UpdateAsync(admissionId, request.Status, cancellationToken);
+        return admission is null ? null : ToDto(admission);
+    }
+
+    public async Task<bool> DeleteAsync(Guid admissionId, CancellationToken cancellationToken = default)
+    {
+        return await admissionService.DeleteAsync(admissionId, cancellationToken);
     }
 
     public async Task<AdmissionDecisionDto> DecideAsync(

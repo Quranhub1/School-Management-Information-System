@@ -9,16 +9,41 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
 {
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        var role = await db.Roles.SingleOrDefaultAsync(x => x.Name == InstitutionalRoles.SystemAdministrator, cancellationToken);
-        if (role is null)
+        var roles = new[]
         {
-            role = new Role
+            InstitutionalRoles.SystemAdministrator,
+            InstitutionalRoles.Registrar,
+            InstitutionalRoles.AcademicRegistrar,
+            InstitutionalRoles.FinanceOfficer,
+            InstitutionalRoles.Lecturer,
+            InstitutionalRoles.ExaminationsOfficer,
+            InstitutionalRoles.Student,
+            InstitutionalRoles.StoreOfficer,
+            InstitutionalRoles.HostelWarden,
+            InstitutionalRoles.TransportOfficer,
+            InstitutionalRoles.Principal,
+            InstitutionalRoles.Secretary,
+            InstitutionalRoles.ResidentDirector,
+            InstitutionalRoles.HeadOfDepartment,
+            InstitutionalRoles.AssistantPrincipal,
+            InstitutionalRoles.Librarian,
+            InstitutionalRoles.HrManager,
+            InstitutionalRoles.Parent
+        };
+
+        foreach (var roleName in roles)
+        {
+            var role = await db.Roles.SingleOrDefaultAsync(x => x.Name == roleName, cancellationToken);
+            if (role is null)
             {
-                Name = InstitutionalRoles.SystemAdministrator,
-                Description = "Full institutional system administration access.",
-                IsSystemRole = true
-            };
-            db.Roles.Add(role);
+                role = new Role
+                {
+                    Name = roleName,
+                    Description = $"{roleName} role.",
+                    IsSystemRole = true
+                };
+                db.Roles.Add(role);
+            }
         }
 
         var user = await db.Users.SingleOrDefaultAsync(x => x.Username == "admin", cancellationToken);
@@ -36,11 +61,15 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        var assigned = await db.UserRoles.AnyAsync(x => x.UserId == user.Id && x.RoleId == role.Id, cancellationToken);
-        if (!assigned)
+        var adminRole = await db.Roles.SingleOrDefaultAsync(x => x.Name == InstitutionalRoles.SystemAdministrator, cancellationToken);
+        if (adminRole is not null)
         {
-            db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
-            await db.SaveChangesAsync(cancellationToken);
+            var assigned = await db.UserRoles.AnyAsync(x => x.UserId == user.Id && x.RoleId == adminRole.Id, cancellationToken);
+            if (!assigned)
+            {
+                db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = adminRole.Id });
+                await db.SaveChangesAsync(cancellationToken);
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 import { getAccessToken } from './auth'
 
-export type Applicant = { id: string; applicationNumber: string; firstName: string; lastName: string; otherNames?: string; dateOfBirth?: string; gender?: string; nationalId?: string; phoneNumber?: string; email?: string; status: string; appliedAt: string }
+export type Admission = { id: string; applicantId: string; programmeId: string; academicYearId: string; intakeId: string; status: string; decidedAt?: string }
+export type AdmissionDecision = { id: string; admissionId: string; decision: string; reason?: string; decidedBy?: string }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken()
@@ -14,6 +15,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? (undefined as T) : response.json() as Promise<T>
 }
 
-export function listApplicants(status?: string) { return request<Applicant[]>(`/api/admissions${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
-export function submitApplicant(input: Omit<Applicant, 'id'|'applicationNumber'|'status'|'appliedAt'>) { return request<Applicant>('/api/admissions', { method: 'POST', body: JSON.stringify(input) }) }
-export function updateAdmissionStatus(id: string, status: string) { return request<Applicant>(`/api/admissions/${id}/decision`, { method: 'POST', body: JSON.stringify({ decision: status }) }) }
+export function getAdmissions() { return request<Admission[]>('/api/admissions') }
+export function getAdmission(id: string) { return request<Admission>(`/api/admissions/${id}`) }
+export function createAdmission(input: { applicantId: string; programmeId: string; academicYearId: string; intakeId: string }) { return request<Admission>('/api/admissions', { method: 'POST', body: JSON.stringify(input) }) }
+export function updateAdmission(id: string, input: { id: string; status?: string }) { return request<Admission>(`/api/admissions/${id}`, { method: 'PUT', body: JSON.stringify(input) }) }
+export function deleteAdmission(id: string) { return request<void>(`/api/admissions/${id}`, { method: 'DELETE' }) }
+export function decideAdmission(id: string, decision: string, reason?: string, decidedBy?: string) { return request<AdmissionDecision>(`/api/admissions/${id}/decision`, { method: 'POST', body: JSON.stringify({ decision, reason, decidedBy }) }) }

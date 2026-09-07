@@ -55,6 +55,40 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
         return NoContent();
     }
 
+    [HttpPut("{id:guid}")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> Update(Guid id, UpdateStaffRequest request, CancellationToken cancellationToken)
+    {
+        if (id != request.Id)
+            return BadRequest(new { message = "Route ID and body ID must match." });
+
+        var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (staff is null) return NotFound();
+
+        staff.StaffNumber = request.StaffNumber.Trim();
+        staff.FirstName = request.FirstName.Trim();
+        staff.LastName = request.LastName.Trim();
+        staff.NationalId = request.NationalId?.Trim();
+        staff.PhoneNumber = request.PhoneNumber?.Trim();
+        staff.Email = request.Email?.Trim();
+        staff.EmploymentType = request.EmploymentType.Trim();
+
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(staff);
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (staff is null) return NotFound();
+
+        db.StaffMembers.Remove(staff);
+        await db.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     [HttpGet("{id:guid}/leave")]
     [Authorize(Policy = StaffPolicies.Read)]
     public async Task<IActionResult> GetLeave(Guid id, CancellationToken cancellationToken)
@@ -96,4 +130,5 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
 }
 
 public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType);
+public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType);
 public sealed record ApproveLeaveRequest(Guid ApprovedBy, bool Approved);
