@@ -1,4 +1,5 @@
 using SchoolManagement.Domain.Finance;
+using Xunit;
 
 namespace SchoolManagement.Domain.Tests;
 
@@ -9,9 +10,9 @@ public sealed class FiscalPeriodTests
     {
         var period = new FiscalPeriod { Name = "FY2026", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 12, 31) };
 
-        period.Contains(new DateOnly(2026, 1, 1)).Should().BeTrue();
-        period.Contains(new DateOnly(2026, 12, 31)).Should().BeTrue();
-        period.Contains(new DateOnly(2027, 1, 1)).Should().BeFalse();
+        Assert.True(period.Contains(new DateOnly(2026, 1, 1)));
+        Assert.True(period.Contains(new DateOnly(2026, 12, 31)));
+        Assert.False(period.Contains(new DateOnly(2027, 1, 1)));
     }
 
     [Fact]
@@ -19,10 +20,10 @@ public sealed class FiscalPeriodTests
     {
         var period = new FiscalPeriod { Name = "FY2026", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 12, 31) };
 
-        period.Invoking(x => x.Close(" ")).Should().Throw<ArgumentException>();
+        Assert.Throws<ArgumentException>(() => period.Close(" "));
         period.Close("admin");
-        period.Status.Should().Be("Closed");
-        period.ClosedBy.Should().Be("admin");
-        period.Invoking(x => x.Close("admin")).Should().Throw<InvalidOperationException>();
+        Assert.Equal("Closed", period.Status);
+        Assert.Equal("admin", period.ClosedBy);
+        Assert.Throws<InvalidOperationException>(() => period.Close("admin"));
     }
 }
