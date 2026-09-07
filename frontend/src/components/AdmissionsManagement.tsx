@@ -1,16 +1,105 @@
-import { useEffect, useState } from 'react'
-import { listApplicants, submitApplicant, updateAdmissionStatus, type Applicant } from '../api/admissions'
-import { getAccessToken } from '../api/auth'
+import { useEffect, useState, type FormEvent } from 'react'
+import { getAdmissions, createAdmission, updateAdmission, deleteAdmission, decideAdmission, type Admission } from '../api/admissions'
 
 const statuses = ['Pending', 'Accepted', 'Rejected']
 
 export function AdmissionsManagement() {
-  const [applicants, setApplicants] = useState<Applicant[]>([]); const [error, setError] = useState(''); const [loading, setLoading] = useState(true); const [uploading, setUploading] = useState<string | null>(null)
-  const [form, setForm] = useState({ firstName: '', lastName: '', otherNames: '', dateOfBirth: '', gender: '', nationalId: '', phoneNumber: '', email: '' })
-  async function refresh() { setLoading(true); try { setApplicants(await listApplicants()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load applications.') } finally { setLoading(false) } }
+  const [admissions, setAdmissions] = useState<Admission[]>([])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [form, setForm] = useState({ applicantId: '', programmeId: '', academicYearId: '', intakeId: '' })
+
+  async function refresh() {
+    setLoading(true)
+    try {
+      setAdmissions(await getAdmissions())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load admissions.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => { void refresh() }, [])
-  async function submit(e: React.FormEvent) { e.preventDefault(); setError(''); try { await submitApplicant(form); setForm({ firstName:'',lastName:'',otherNames:'',dateOfBirth:'',gender:'',nationalId:'',phoneNumber:'',email:'' }); await refresh() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to submit application.') } }
-  async function changeStatus(id: string, status: string) { try { await updateAdmissionStatus(id, status); await refresh() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update status.') } }
-  async function uploadScan(applicantId: string, file: File) { setUploading(applicantId); setError(''); try { const token = getAccessToken(); const body = new FormData(); body.append('file', file); const r = await fetch(`/api/admission-documents/applicant/${applicantId}`, { method:'POST', body, headers: token ? { Authorization:`Bearer ${token}` } : undefined }); if (!r.ok) throw new Error(await r.text()); } catch (e) { setError(e instanceof Error ? e.message : 'Unable to store scanned admission form.') } finally { setUploading(null) } }
-  return <section className="panel"><div className="panel-heading"><div><span className="eyebrow">Admissions</span><h2>Applicant Management</h2><p>Fill the application, then attach the scanned signed form. It is stored locally with the admission record.</p></div></div>{error && <div className="error" role="alert">{error}</div>}<form className="form-grid" onSubmit={submit}><input placeholder="First name" value={form.firstName} onChange={e=>setForm({...form,firstName:e.target.value})} required/><input placeholder="Last name" value={form.lastName} onChange={e=>setForm({...form,lastName:e.target.value})} required/><input placeholder="Other names" value={form.otherNames} onChange={e=>setForm({...form,otherNames:e.target.value})}/><input type="date" value={form.dateOfBirth} onChange={e=>setForm({...form,dateOfBirth:e.target.value})}/><input placeholder="Gender" value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})}/><input placeholder="National ID" value={form.nationalId} onChange={e=>setForm({...form,nationalId:e.target.value})}/><input placeholder="Phone" value={form.phoneNumber} onChange={e=>setForm({...form,phoneNumber:e.target.value})}/><input type="email" placeholder="Email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/><button type="submit">Submit application</button></form><div className="table-wrap"><table><thead><tr><th>Application</th><th>Applicant</th><th>Contact</th><th>Status</th><th>Applied</th><th>Scanned form</th></tr></thead><tbody>{loading ? <tr><td colSpan={6}>Loading…</td></tr> : applicants.map(a=><tr key={a.id}><td>{a.applicationNumber}</td><td>{a.firstName} {a.lastName}</td><td>{a.email ?? a.phoneNumber ?? '—'}</td><td><select value={a.status} onChange={e=>void changeStatus(a.id,e.target.value)}>{statuses.map(s=><option key={s}>{s}</option>)}</select></td><td>{new Date(a.appliedAt).toLocaleDateString()}</td><td><label className="secondary-button" style={{display:'inline-block',cursor:'pointer'}}>{uploading === a.id ? 'Saving…' : 'Attach scan'}<input type="file" accept="application/pdf,image/*" hidden disabled={uploading !== null} onChange={e=>{ const f=e.target.files?.[0]; if(f) void uploadScan(a.id,f); e.currentTarget.value='' }}/></label></td></tr>)}</tbody></table></div></section>
+
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    setError('')
+    try {
+      await createAdmission({
+        applicantId: form.applicantId,
+        programmeId: form.programmeId,
+        academicYearId: form.academicYearId,
+        intakeId: form.intakeId
+      })
+      setForm({ applicantId: '', programmeId: '', academicYearId: '', intakeId: '' })
+      await refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create admission.')
+    }
+  }
+
+  async function changeStatus(id: string, status: string) {
+    setError('')
+    try {
+      await decideAdmission(id, status, 'Updated via management')
+      await refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update status.')
+    }
+  }
+
+  async function remove(id: string) {
+    setError('')
+    try {
+      await deleteAdmission(id)
+      await refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to delete admission.')
+    }
+  }
+
+  return <section className="panel" aria-label="Admissions">
+    <div className="panel-heading">
+      <div><span className="eyebrow">Admissions</span><h2>Admission Management</h2></div>
+    </div>
+    {error && <div className="error" role="alert">{error}</div>}
+    <form className="form-grid" onSubmit={submit} style={{ marginBottom: 22 }}>
+      <h3>New Admission</h3>
+      <input placeholder="Applicant ID" value={form.applicantId} onChange={e => setForm({ ...form, applicantId: e.target.value })} required />
+      <input placeholder="Programme ID" value={form.programmeId} onChange={e => setForm({ ...form, programmeId: e.target.value })} required />
+      <input placeholder="Academic Year ID" value={form.academicYearId} onChange={e => setForm({ ...form, academicYearId: e.target.value })} required />
+      <input placeholder="Intake ID" value={form.intakeId} onChange={e => setForm({ ...form, intakeId: e.target.value })} required />
+      <button type="submit">Create Admission</button>
+    </form>
+    <div className="table-wrap">
+      {loading ? <p className="empty">Loading admissions…</p> : admissions.length === 0 ? <p className="empty">No admissions found.</p> : (
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Applicant</th>
+              <th>Programme</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {admissions.map(a => (
+              <tr key={a.id}>
+                <td>{a.id.slice(0, 8)}...</td>
+                <td>{a.applicantId.slice(0, 8)}...</td>
+                <td>{a.programmeId.slice(0, 8)}...</td>
+                <td>{a.status}</td>
+                <td>
+                  <select value={a.status} onChange={e => changeStatus(a.id, e.target.value)}>{statuses.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                  <button className="secondary-button" onClick={() => remove(a.id)} style={{ marginLeft: 8 }}>Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  </section>
 }

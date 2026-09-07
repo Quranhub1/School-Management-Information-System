@@ -336,7 +336,7 @@ export function AccountsOfficeManagement() {
       setFeeItemsLoading(true)
       try {
         const [payments, creditNotesData, notes, feeItems] = await Promise.all([
-          getPayments(undefined, undefined, undefined, undefined),
+          getPayments(),
           getCreditNotes(invoice.id),
           getInvoiceNotes(invoice.id),
           getInvoiceFeeItems(invoice.id),
@@ -521,12 +521,9 @@ export function AccountsOfficeManagement() {
     e.preventDefault()
     if (!selectedInvoice || !creditNoteNumber.trim() || !creditNoteAmount) return
     try {
-      await issueCreditNote({
-        studentInvoiceId: selectedInvoice.id,
-        creditNoteNumber: creditNoteNumber.trim(),
+      await issueCreditNote(selectedInvoice.id, {
         amount: Number(creditNoteAmount),
         reason: creditNoteReason.trim(),
-        issuedBy: creditNoteIssuedBy.trim() || undefined,
       })
       setCreditNoteNumber('')
       setCreditNoteAmount('')
@@ -543,10 +540,7 @@ export function AccountsOfficeManagement() {
     e.preventDefault()
     if (!selectedInvoice || !invoiceNoteText.trim()) return
     try {
-      await addInvoiceNote(selectedInvoice.id, {
-        note: invoiceNoteText.trim(),
-        createdBy: invoiceNoteCreatedBy.trim() || undefined,
-      })
+      await addInvoiceNote(selectedInvoice.id, invoiceNoteText.trim(), invoiceNoteCreatedBy.trim() || undefined)
       setInvoiceNoteText('')
       setInvoiceNoteCreatedBy('')
       const notes = await getInvoiceNotes(selectedInvoice.id)
@@ -560,12 +554,7 @@ export function AccountsOfficeManagement() {
     e.preventDefault()
     if (!advanceStaffId || !advanceAmount) return
     try {
-      await requestStaffAdvance({
-        staffMemberId: advanceStaffId,
-        amount: Number(advanceAmount),
-        reason: advanceReason.trim(),
-        currency: 'UGX',
-      })
+      await requestStaffAdvance(advanceStaffId, Number(advanceAmount), advanceReason.trim())
       setAdvanceStaffId('')
       setAdvanceAmount('')
       setAdvanceReason('')
@@ -579,7 +568,7 @@ export function AccountsOfficeManagement() {
   async function handleApproveAdvance(advanceId: string) {
     setAdvanceActionId(advanceId)
     try {
-      await approveStaffAdvance(advanceId, 'Accounts Office')
+      await approveStaffAdvance(advanceId, 'Accounts Office', true)
       const data = await getStaffAdvances()
       setAdvances(data)
     } catch (e) {
@@ -597,7 +586,7 @@ export function AccountsOfficeManagement() {
         setError('No approved/paid payroll record available for recovery.')
         return
       }
-      await recoverStaffAdvance(advanceId, currentPayroll.id)
+      await recoverStaffAdvance(advanceId, currentPayroll.netPay)
       const data = await getStaffAdvances()
       setAdvances(data)
     } catch (e) {

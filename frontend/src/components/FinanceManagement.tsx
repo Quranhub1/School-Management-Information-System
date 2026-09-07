@@ -210,13 +210,6 @@ export function FinanceManagement() {
               <p>Search for a student by ID or code to view their fee balance, invoices, and payment history.</p>
             </div>
           )}
-
-          {tab === 'structures' && (
-            <div className="card">
-              <h3>Fee Structures</h3>
-              <p className="empty">Fee structure management will be available here. Configure tuition, registration, and other fees per programme.</p>
-            </div>
-          )}
         </>
       )}
 

@@ -43,8 +43,8 @@ import { AnalyticsDashboard } from './components/AnalyticsDashboard'
 import { StudentPortal } from './pages/StudentPortal'
 import { Student360Page } from './pages/Student360Page'
 import { DocumentManagement } from './components/DocumentManagement'
-import { AnalyticsDashboard } from './components/AnalyticsDashboard'
-import { getActiveInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
+import { AttendanceManagement } from './components/AttendanceManagement'
+import { getActiveInstitutionSettings, getPublicInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'
 import './components/PrintStyles.css'
 
 type ModuleKey =
@@ -77,7 +77,6 @@ type ModuleKey =
   | 'institution-settings'
   | 'documents'
   | 'student360'
-  | 'analytics'
 
 const DEFAULT_INSTITUTION: InstitutionSettings = {
   id: '',
@@ -168,6 +167,10 @@ function AuthenticatedWorkspace({ onLogout, institution }: { onLogout: () => voi
   const docs = canManageDocuments(r)
   const s360 = r.includes('SystemAdministrator') || r.includes('Registrar') || r.includes('AcademicRegistrar') || r.includes('Student')
   const analytics = canViewAnalytics(r)
+
+  const [activeModule, setActiveModule] = useState<ModuleKey>('administration')
+  const eyebrow = institution.abbreviation?.trim() || institution.institutionName?.trim() || 'SMIS'
+  const title = 'Institutional Services'
 
   function signOut() {
     logout()
@@ -310,7 +313,7 @@ function AuthenticatedWorkspace({ onLogout, institution }: { onLogout: () => voi
           {activeModule === 'student-portal' && r.includes('Student') && <StudentPortal />}
           {activeModule === 'parent-portal' && r.includes('Parent') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Parent</p><h2>Parent Portal</h2></div></div><p className="empty">Parent portal is available.</p></div>}
           {activeModule === 'teaching' && r.includes('Lecturer') && <div className="panel"><div className="panel-heading"><div><p className="eyebrow">Teaching</p><h2>Teaching Workspace</h2></div></div><p className="empty">Teaching module is available.</p></div>}
-          {activeModule === 'institution-settings' && a && <InstitutionSettingsPage />}
+          {activeModule === 'institution-settings' && a && <InstitutionSettingsPage onSaved={setSettings} />}
           {activeModule === 'documents' && docs && <DocumentManagement canManage />}
           {activeModule === 'student360' && s360 && <Student360Page />}
           {activeModule === 'analytics' && analytics && <AnalyticsDashboard />}

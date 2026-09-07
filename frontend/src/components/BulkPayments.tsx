@@ -10,11 +10,11 @@ interface StudentRow extends OutstandingBalance {
 }
 
 const MOCK_STUDENTS: OutstandingBalance[] = [
-  { studentId: 'STU-2024-001', studentNumber: 'STU-2024-001', studentName: 'Amina Nalubega', programmeName: 'Bachelor of Science in Computer Science', balance: 850000, currency: 'UGX', status: 'Outstanding' },
-  { studentId: 'STU-2024-002', studentNumber: 'STU-2024-002', studentName: 'Brian Okello', programmeName: 'Bachelor of Business Administration', balance: 620000, currency: 'UGX', status: 'Outstanding' },
-  { studentId: 'STU-2024-003', studentNumber: 'STU-2024-003', studentName: 'Catherine Nakamya', programmeName: 'Bachelor of Education', balance: 410000, currency: 'UGX', status: 'Partial' },
-  { studentId: 'STU-2024-004', studentNumber: 'STU-2024-004', studentName: 'David Ssentongo', programmeName: 'Bachelor of Science in Computer Science', balance: 950000, currency: 'UGX', status: 'Outstanding' },
-  { studentId: 'STU-2024-005', studentNumber: 'STU-2024-005', studentName: 'Esther Namuli', programmeName: 'Bachelor of Nursing', balance: 730000, currency: 'UGX', status: 'Outstanding' },
+  { studentId: 'STU-2024-001', studentNumber: 'STU-2024-001', studentName: 'Amina Nalubega', programmeName: 'Bachelor of Science in Computer Science', amount: 850000, paidAmount: 0, balance: 850000, currency: 'UGX', status: 'Outstanding' },
+  { studentId: 'STU-2024-002', studentNumber: 'STU-2024-002', studentName: 'Brian Okello', programmeName: 'Bachelor of Business Administration', amount: 620000, paidAmount: 0, balance: 620000, currency: 'UGX', status: 'Outstanding' },
+  { studentId: 'STU-2024-003', studentNumber: 'STU-2024-003', studentName: 'Catherine Nakamya', programmeName: 'Bachelor of Education', amount: 410000, paidAmount: 0, balance: 410000, currency: 'UGX', status: 'Partial' },
+  { studentId: 'STU-2024-004', studentNumber: 'STU-2024-004', studentName: 'David Ssentongo', programmeName: 'Bachelor of Science in Computer Science', amount: 950000, paidAmount: 0, balance: 950000, currency: 'UGX', status: 'Outstanding' },
+  { studentId: 'STU-2024-005', studentNumber: 'STU-2024-005', studentName: 'Esther Namuli', programmeName: 'Bachelor of Nursing', amount: 730000, paidAmount: 0, balance: 730000, currency: 'UGX', status: 'Outstanding' },
 ]
 
 export function BulkPayments() {
