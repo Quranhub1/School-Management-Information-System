@@ -52,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<ReceivablesReportService>();
         services.AddScoped<JournalReversalService>();
         services.AddScoped<FinanceAdministrationService>();
+        services.AddScoped<FiscalPeriodService>();
         services.AddScoped<FeeService>();
         services.AddScoped<FeeWorkflowService>();
         services.AddScoped<LibraryService>();
@@ -74,16 +75,6 @@ public static class DependencyInjection
         services.AddScoped<HrWorkflowService>();
         services.AddScoped<StudentRecordsWorkflowService>();
         services.AddScoped<TimetableWorkflowService>();
-        services.AddScoped<CertificateService>();
-        services.AddScoped<PayrollService>();
-        services.AddScoped<AlumniService>();
-        services.AddScoped<LeaveRequestService>();
-        services.AddScoped<CalendarEventService>();
-        services.AddScoped<GateLogService>();
-        services.AddScoped<AuditLogService>();
-        services.AddScoped<AssessmentWorkflowService>();
-        services.AddScoped<HrWorkflowService>();
-        services.AddScoped<StudentRecordsWorkflowService>();
         return services;
     }
 }
