@@ -13,7 +13,8 @@ public sealed class CreditNoteRefundServiceTests
         var invoice = new StudentInvoice { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-001", Amount = 100000m, PaidAmount = 100000m, Currency = "UGX", Status = "Paid" };
         var finance = new InMemoryFinanceRepository(invoice);
         var adjustments = new InMemoryAdjustmentsRepository();
-        var service = CreateService(finance, adjustments);
+        var periods = new InMemoryFiscalPeriodRepository();
+        var service = new CreditNoteRefundService(finance, adjustments, new FiscalPeriodService(periods));
 
         var creditNote = await service.CreateCreditNoteAsync(invoice.Id, 25000m, "Fee overcharge", "manager");
 
@@ -29,7 +30,8 @@ public sealed class CreditNoteRefundServiceTests
     public async Task CreateCreditNoteAsync_RejectsCreditBeyondInvoiceValue()
     {
         var invoice = new StudentInvoice { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-002", Amount = 50000m, PaidAmount = 50000m, Currency = "UGX", Status = "Paid" };
-        var service = CreateService(new InMemoryFinanceRepository(invoice), new InMemoryAdjustmentsRepository());
+        var periods = new InMemoryFiscalPeriodRepository();
+        var service = new CreditNoteRefundService(new InMemoryFinanceRepository(invoice), new InMemoryAdjustmentsRepository(), new FiscalPeriodService(periods));
 
         await Assert.ThrowsAsync<ArgumentException>(() => service.CreateCreditNoteAsync(invoice.Id, 50001m, "Invalid credit", "manager"));
     }
@@ -39,8 +41,9 @@ public sealed class CreditNoteRefundServiceTests
     {
         var studentId = Guid.NewGuid();
         var payment = new Payment { StudentId = studentId, ReceiptNumber = "RCT-001", Amount = 40000m, Currency = "UGX", PaymentMethod = "Cash" };
+        var periods = new InMemoryFiscalPeriodRepository();
         var finance = new InMemoryFinanceRepository(null, payment);
-        var service = CreateService(finance, new InMemoryAdjustmentsRepository());
+        var service = new CreditNoteRefundService(finance, new InMemoryAdjustmentsRepository(), new FiscalPeriodService(periods));
 
         var refund = await service.CreateRefundAsync(payment.Id, 15000m, "Cash", "Approved refund", null, "manager");
 
@@ -52,17 +55,15 @@ public sealed class CreditNoteRefundServiceTests
         await Assert.ThrowsAsync<ArgumentException>(() => service.CreateRefundAsync(payment.Id, 25001m, "Cash", "Second refund", null, "manager"));
     }
 
-    private static CreditNoteRefundService CreateService(IFinanceRepository finance, IFinanceAdjustmentsRepository adjustments)
-        => new(finance, adjustments, new FiscalPeriodService(new EmptyFiscalPeriodRepository()));
-
-    private sealed class EmptyFiscalPeriodRepository : IFiscalPeriodRepository
+    private sealed class InMemoryFiscalPeriodRepository : IFiscalPeriodRepository
     {
-        public Task<IReadOnlyList<FiscalPeriod>> GetFiscalPeriodsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<FiscalPeriod>>([]);
-        public Task<FiscalPeriod?> GetFiscalPeriodAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<FiscalPeriod?>(null);
-        public Task<FiscalPeriod?> GetContainingPeriodAsync(DateOnly date, CancellationToken cancellationToken) => Task.FromResult<FiscalPeriod?>(null);
-        public Task<bool> NameExistsAsync(string name, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(false);
-        public Task<bool> HasOverlappingPeriodAsync(DateOnly startDate, DateOnly endDate, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(false);
-        public Task AddAsync(FiscalPeriod period, CancellationToken cancellationToken) => Task.CompletedTask;
+        private readonly List<FiscalPeriod> periods = [];
+        public Task<IReadOnlyList<FiscalPeriod>> GetFiscalPeriodsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<FiscalPeriod>>(periods);
+        public Task<FiscalPeriod?> GetFiscalPeriodAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(periods.SingleOrDefault(x => x.Id == id));
+        public Task<FiscalPeriod?> GetContainingPeriodAsync(DateOnly date, CancellationToken cancellationToken) => Task.FromResult(periods.SingleOrDefault(x => x.Contains(date)));
+        public Task<bool> NameExistsAsync(string name, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(periods.Any(x => x.Name == name && x.Id != excludingId));
+        public Task<bool> HasOverlappingPeriodAsync(DateOnly startDate, DateOnly endDate, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(periods.Any(x => x.Id != excludingId && x.StartDate <= endDate && startDate <= x.EndDate));
+        public Task AddAsync(FiscalPeriod period, CancellationToken cancellationToken) { periods.Add(period); return Task.CompletedTask; }
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
