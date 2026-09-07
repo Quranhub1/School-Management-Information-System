@@ -42,8 +42,7 @@ public sealed class BankReconciliationService(IBankReconciliationRepository repo
         var line = await repository.GetLineAsync(lineId, cancellationToken) ?? throw new KeyNotFoundException("Bank statement line was not found.");
         var reconciliation = await repository.GetAsync(line.BankReconciliationId, cancellationToken) ?? throw new KeyNotFoundException("Bank reconciliation was not found.");
         if (string.Equals(reconciliation.Status, "Reconciled", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("A completed reconciliation cannot be changed.");
-        var entries = await finance.GetPostedJournalEntriesAsync(null, null, null, cancellationToken);
-        var entry = entries.SingleOrDefault(x => x.Id == journalEntryId) ?? throw new ArgumentException("The journal entry was not found or is not posted.");
+        var entry = await finance.GetPostedJournalEntryAsync(journalEntryId, cancellationToken) ?? throw new ArgumentException("The journal entry was not found or is not posted.");
         var expected = line.TransactionType.Equals("Debit", StringComparison.OrdinalIgnoreCase) ? line.Amount : -line.Amount;
         var journalNet = entry.Lines.Where(x => x.AccountId == reconciliation.BankAccountId).Sum(x => x.Debit - x.Credit);
         if (Math.Abs(journalNet - expected) > 0.01m) throw new InvalidOperationException("The journal entry amount does not match the bank statement line for this bank account.");
