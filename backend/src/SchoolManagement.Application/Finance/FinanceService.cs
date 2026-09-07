@@ -1,7 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Finance;
-using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Application.Finance;
 
