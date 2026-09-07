@@ -24,7 +24,6 @@ using AdmissionEntity = SchoolManagement.Domain.Admissions.Admission;
 using AcademicStream = SchoolManagement.Domain.Academic.Stream;
 
 namespace SchoolManagement.Infrastructure.Persistence;
-
 public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
