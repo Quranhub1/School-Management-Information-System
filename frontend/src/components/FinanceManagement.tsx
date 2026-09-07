@@ -15,10 +15,12 @@ export function FinanceManagement() {
   const [studentId, setStudentId] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [amount, setAmount] = useState('')
+  const [feeStructure, setFeeStructure] = useState('')
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null)
   const [paymentAmount, setPaymentAmount] = useState('')
   const [receiptNumber, setReceiptNumber] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Cash')
+  const [reference, setReference] = useState('')
 
   async function load() {
     setLoading(true)
@@ -67,7 +69,7 @@ export function FinanceManagement() {
     event.preventDefault()
     if (!paymentInvoice) return
     try {
-      await recordPayment(paymentInvoice.id, { amount: Number(paymentAmount), receiptNumber: receiptNumber.trim(), paymentMethod, currency: paymentInvoice.currency })
+      await recordPayment(paymentInvoice.id, { amount: Number(paymentAmount), receiptNumber: receiptNumber.trim(), paymentMethod, reference: reference.trim(), currency: paymentInvoice.currency })
       setPaymentInvoice(null)
       setPaymentAmount('')
       setReceiptNumber('')
@@ -208,6 +210,13 @@ export function FinanceManagement() {
               <p>Search for a student by ID or code to view their fee balance, invoices, and payment history.</p>
             </div>
           )}
+
+          {tab === 'structures' && (
+            <div className="card">
+              <h3>Fee Structures</h3>
+              <p className="empty">Fee structure management will be available here. Configure tuition, registration, and other fees per programme.</p>
+            </div>
+          )}
         </>
       )}
 
@@ -230,7 +239,9 @@ export function FinanceManagement() {
               <option>Bank</option>
               <option>Mobile Money</option>
               <option>Card</option>
+              <option>Cheque</option>
             </select>
+            <input aria-label="Reference" placeholder="Reference number (optional)" value={reference} onChange={e => setReference(e.target.value)} />
             <div className="topbar-actions">
               <button type="button" className="secondary-button" onClick={() => setPaymentInvoice(null)}>Cancel</button>
               <button type="submit">Record Payment</button>
