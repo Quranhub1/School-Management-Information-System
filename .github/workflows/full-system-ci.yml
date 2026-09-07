@@ -70,23 +70,7 @@ jobs:
         working-directory: backend
         run: dotnet tool restore
 
-      - name: Create temporary integration-test migration
-        working-directory: backend
-        run: |
-          set -euo pipefail
-          rm -rf src/SchoolManagement.Infrastructure/Persistence/Migrations/CiIntegration
-          dotnet ef migrations add CiIntegrationTest \
-            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
-            --configuration Release \
-            --output-dir Persistence/Migrations/CiIntegration \
-            --no-build
-          test -f src/SchoolManagement.Infrastructure/Persistence/Migrations/CiIntegration/*_CiIntegrationTest.cs
-
-      - name: Rebuild backend with temporary migration
-        working-directory: backend
-        run: dotnet build SchoolManagement.sln --configuration Release --no-restore
-
-      - name: Apply database schema
+      - name: Apply permanent database migrations
         working-directory: backend
         run: |
           set -euo pipefail
@@ -96,10 +80,9 @@ jobs:
             --configuration Release \
             --no-build
 
-      - name: Remove temporary migration from workspace
-        if: always()
+      - name: Run permanent PostgreSQL integration tests
         working-directory: backend
-        run: rm -rf src/SchoolManagement.Infrastructure/Persistence/Migrations/CiIntegration
+        run: dotnet test tests/SchoolManagement.Infrastructure.Tests/SchoolManagement.Infrastructure.Tests.csproj --configuration Release --no-restore --no-build --verbosity normal
 
       - name: Start API
         working-directory: backend
