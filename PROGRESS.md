@@ -1,10 +1,17 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-09-07  
-**Current focus:** Frontend CI fixes, merge conflict resolution, and production hardening  
+**Last updated:** 2026-09-08  
+**Current focus:** Production finance hardening, accounting/reporting completeness, and system-wide verification  
 **Tracking branch:** `main`
 
 > Master project tracker. A feature is complete only when its implemented scope is verified in the repository and CI. A model, placeholder endpoint or UI mockup alone does not make a workflow complete.
+
+## CI — Current verified state
+- [x] Frontend CI passing on current `main`
+- [x] Foundation CI passing on current `main`
+- [x] Backend CI passing on current `main`
+- [x] Full System CI passing on current `main`
+- [x] Full System PostgreSQL + API readiness + frontend build + Playwright smoke path passing
 
 ## Finance — Current verified scope
 - [x] Chart of Accounts foundation
@@ -35,16 +42,20 @@
 - [x] Credit-note and refund journal posting
 - [x] Receivables ageing buckets
 - [x] Student Receivables control-account reconciliation
+- [x] Database-level posted journal immutability migration
+- [x] Database-level audit-log immutability boundary
+- [x] Income Statement API/report foundation
+- [x] Balance Sheet API/report foundation
 
 ## Finance — Phase 1: Accounting Integrity
 - [x] Central journal-entry validation
 - [x] Mandatory balanced debit/credit enforcement
 - [x] Duplicate-posting protection
-- [ ] Database-level posted-entry immutability enforcement
+- [x] Database-level posted-entry immutability enforcement
 - [x] Controlled reversal mechanism
 - [x] Finance-specific journal source/reversal metadata
-- [ ] Finance-specific immutable audit event history
-- [ ] Automated persistence tests for immutability and reversal
+- [x] Finance-specific immutable audit-log database boundary
+- [ ] Automated persistence tests for database immutability and reversal
 
 ## Finance — Phase 2: Student Billing
 - [x] Fee categories
@@ -76,12 +87,13 @@
 - [ ] Dimension-aware journal lines and reports
 - [ ] Production-grade General Ledger
 - [ ] Production-grade Trial Balance
-- [ ] Income Statement / Profit & Loss
-- [ ] Balance Sheet
+- [x] Income Statement API/report foundation
+- [x] Balance Sheet API/report foundation
+- [ ] Fiscal-period-aware Income Statement and Balance Sheet
 - [ ] Cash and bank reports
 - [ ] Budget vs actual
 - [ ] Fiscal periods and period closing
-- [ ] Opening balances
+- [ ] Opening balances / retained earnings handling
 - [ ] Bank transactions and bank reconciliation
 
 ## Other platform work
@@ -91,9 +103,11 @@ The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, 
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Complete Finance Phase 1 persistence-level immutability, dedicated audit events and persistence tests.
-2. Add adjustment cancellation/reversal with full auditability.
-3. Add accounting dimensions and dimension-aware reporting.
-4. Complete production-grade financial statements, fiscal periods and opening balances.
-5. Implement bank transactions and bank reconciliation.
-6. Continue system-wide tests, security, deployment and integration hardening.
+1. Add automated PostgreSQL persistence tests for posted-journal and audit-log immutability and controlled reversal behavior.
+2. Complete adjustment cancellation/reversal with full auditability.
+3. Introduce fiscal periods, period closing and opening-balance controls.
+4. Add accounting dimensions and dimension-aware journal/reporting.
+5. Upgrade financial statements, GL and Trial Balance to fiscal-period-aware production reporting.
+6. Implement cash/bank reporting, bank transactions and bank reconciliation.
+7. Add budget-vs-actual reporting.
+8. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
