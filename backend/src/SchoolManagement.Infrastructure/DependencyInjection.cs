@@ -33,7 +33,9 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("SchoolManagement")
             ?? throw new InvalidOperationException("Connection string 'SchoolManagement' is not configured.");
 
-        services.AddDbContext<SchoolManagementDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<SchoolManagementDbContext>(options =>
+            options.UseNpgsql(connectionString)
+                   .AddInterceptors(new JournalImmutabilityInterceptor()));
 
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IProgrammeRepository, ProgrammeRepository>();
