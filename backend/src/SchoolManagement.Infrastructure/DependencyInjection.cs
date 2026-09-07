@@ -18,6 +18,8 @@ using SchoolManagement.Application.Progression;
 using SchoolManagement.Application.Staff;
 using SchoolManagement.Application.StudentRecords;
 using SchoolManagement.Application.Students;
+using SchoolManagement.Infrastructure.Attendance;
+using SchoolManagement.Infrastructure.Documents;
 using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Library;
@@ -40,7 +42,6 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString)
                    .AddInterceptors(new JournalImmutabilityInterceptor()));
 
-        services.AddDbContext<SchoolManagementDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IProgrammeRepository, ProgrammeRepository>();
         services.AddScoped<IAcademicYearRepository, AcademicYearRepository>();
@@ -57,7 +58,7 @@ public static class DependencyInjection
         services.AddScoped<SchoolManagement.Application.Abstractions.IAttendanceRepository, AttendanceRepository>();
         services.AddScoped<SchoolManagement.Application.Attendance.IAttendanceRepository>(sp => (SchoolManagement.Application.Attendance.IAttendanceRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IAttendanceRepository>());
         services.AddScoped<IAdmissionRepository, AdmissionRepository>();
-        services.AddScoped<SchoolManagement.Application.Abstractions.IFinanceRepository, FinanceRepository>();
+        services.AddScoped<SchoolManagement.Application.Abstractions.IFinanceRepository, SchoolManagement.Infrastructure.Persistence.FinanceRepository>();
         services.AddScoped<SchoolManagement.Application.Finance.IFinanceRepository>(sp => (SchoolManagement.Application.Finance.IFinanceRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
         services.AddScoped<IFinanceAdjustmentsRepository>(sp => (IFinanceAdjustmentsRepository)sp.GetRequiredService<SchoolManagement.Application.Abstractions.IFinanceRepository>());
         services.AddScoped<IFinanceAdministrationRepository, FinanceAdministrationRepository>();
