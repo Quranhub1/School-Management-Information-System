@@ -44,6 +44,13 @@ public sealed class FinanceAdministrationController(FinanceAdministrationService
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
+    [HttpGet("bank-reconciliations/{reconciliationId:guid}/lines")]
+    public async Task<IActionResult> GetStatementLines(Guid reconciliationId, CancellationToken cancellationToken)
+    {
+        try { return Ok(await finance.GetBankStatementLinesAsync(reconciliationId, cancellationToken)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
     [HttpPost("bank-reconciliations/{reconciliationId:guid}/lines")]
     public async Task<IActionResult> AddStatementLine(Guid reconciliationId, AddStatementLineRequest request, CancellationToken cancellationToken)
     {
