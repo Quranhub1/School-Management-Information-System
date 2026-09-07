@@ -1,6 +1,7 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Admissions;
 using SchoolManagement.Domain.Admissions;
+using SchoolManagement.Domain.Students;
 using Xunit;
 
 namespace SchoolManagement.Application.Tests.Admissions;
@@ -12,7 +13,7 @@ public sealed class AdmissionsWorkflowServiceTests
     {
         var applicantId = Guid.NewGuid();
         var repository = new FakeAdmissionRepository(applicantId);
-        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+        var workflow = CreateWorkflow(repository);
 
         var result = await workflow.CreateAsync(new CreateAdmissionRequest(
             applicantId, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()));
@@ -28,7 +29,7 @@ public sealed class AdmissionsWorkflowServiceTests
         var applicantId = Guid.NewGuid();
         var admission = new Admission { ApplicantId = applicantId, ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
         var repository = new FakeAdmissionRepository(admission);
-        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+        var workflow = CreateWorkflow(repository);
 
         var results = await workflow.GetAllAsync();
 
@@ -41,12 +42,12 @@ public sealed class AdmissionsWorkflowServiceTests
     {
         var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
         var repository = new FakeAdmissionRepository(admission);
-        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+        var workflow = CreateWorkflow(repository);
 
         var result = await workflow.GetByIdAsync(admission.Id);
 
         Assert.NotNull(result);
-        Assert.Equal(admission.Id, result.Value.Id);
+        Assert.Equal(admission.Id, result!.Id);
     }
 
     [Fact]
@@ -54,12 +55,12 @@ public sealed class AdmissionsWorkflowServiceTests
     {
         var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
         var repository = new FakeAdmissionRepository(admission);
-        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+        var workflow = CreateWorkflow(repository);
 
         var result = await workflow.UpdateAsync(admission.Id, new UpdateAdmissionRequest(admission.Id, "Accepted"));
 
         Assert.NotNull(result);
-        Assert.Equal("Accepted", result.Value.Status);
+        Assert.Equal("Accepted", result!.Status);
     }
 
     [Fact]
@@ -67,7 +68,7 @@ public sealed class AdmissionsWorkflowServiceTests
     {
         var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
         var repository = new FakeAdmissionRepository(admission);
-        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+        var workflow = CreateWorkflow(repository);
 
         var result = await workflow.DeleteAsync(admission.Id);
 
@@ -86,7 +87,8 @@ public sealed class AdmissionsWorkflowServiceTests
             Status = "Pending"
         };
         var repository = new FakeAdmissionRepository(admission);
-        var workflow = new AdmissionsWorkflowService(new AdmissionService(repository));
+        var studentRepository = new FakeStudentRepository();
+        var workflow = CreateWorkflow(repository, studentRepository);
 
         var result = await workflow.DecideAsync(admission.Id,
             new DecideAdmissionRequest("Accepted", "Meets requirements", "tester"));
@@ -94,6 +96,39 @@ public sealed class AdmissionsWorkflowServiceTests
         Assert.Equal("Accepted", result.Decision);
         Assert.Equal("Accepted", admission.Status);
         Assert.NotNull(repository.LastDecision);
+        Assert.Single(studentRepository.Students);
+    }
+
+    private static AdmissionsWorkflowService CreateWorkflow(
+        IAdmissionRepository repository,
+        IStudentRepository? studentRepository = null) =>
+        new(new AdmissionService(repository, studentRepository ?? new FakeStudentRepository()));
+
+    private sealed class FakeStudentRepository : IStudentRepository
+    {
+        public List<Student> Students { get; } = new();
+
+        public Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Student>>(Students);
+
+        public Task<Student?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Students.SingleOrDefault(x => x.Id == id));
+
+        public Task AddAsync(Student student, CancellationToken cancellationToken = default)
+        {
+            Students.Add(student);
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateAsync(Student student, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            Students.RemoveAll(x => x.Id == id);
+            return Task.CompletedTask;
+        }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     private sealed class FakeAdmissionRepository : IAdmissionRepository
