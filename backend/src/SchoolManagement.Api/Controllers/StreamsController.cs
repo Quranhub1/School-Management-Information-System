@@ -16,10 +16,10 @@ public sealed class StreamsController(StreamService service) : ControllerBase
         => Ok(await service.GetByClassAsync(classId, ct));
 
     [HttpPost]
-    public async Task<ActionResult<Stream>> Create([FromBody] CreateStreamRequest request, CancellationToken ct)
+    public async Task<ActionResult<Stream>> Create([FromBody] SchoolManagement.Application.Academic.CreateStreamRequest request, CancellationToken ct)
     {
-        var (success, error, result) = await service.CreateAsync(request, ct);
-        if (!success) return BadRequest(new { message = error });
-        return Created($"api/streams/{result!.Id}", result);
+        var result = await service.CreateAsync(request, ct);
+        if (!result.Success) return BadRequest(new { message = result.Error });
+        return Created($"/api/streams/{result.Stream!.Id}", result.Stream);
     }
 }
