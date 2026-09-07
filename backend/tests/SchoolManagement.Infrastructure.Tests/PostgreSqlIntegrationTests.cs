@@ -57,6 +57,74 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
     }
 
     [Fact]
+    public async Task Posted_journal_update_and_delete_are_rejected_by_the_database_boundary()
+    {
+        await using var connection = await fixture.OpenConnectionAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        var journalId = Guid.NewGuid();
+        var entryNumber = $"CI-IMMUTABILITY-{Guid.NewGuid():N}";
+
+        try
+        {
+            await using (var insert = new NpgsqlCommand("""
+                INSERT INTO "JournalEntries"
+                    ("Id", "EntryNumber", "EntryDate", "Description", "Status", "PostedAt", "PostedBy", "CreatedAt", "SourceType", "SourceId", "ReversalOfJournalEntryId")
+                VALUES
+                    (@id, @entryNumber, CURRENT_TIMESTAMP, 'PostgreSQL immutability integration test', 'Posted', CURRENT_TIMESTAMP, 'ci-test', CURRENT_TIMESTAMP, 'CiTest', @sourceId, NULL);
+                """, connection, transaction))
+            {
+                insert.Parameters.AddWithValue("id", journalId);
+                insert.Parameters.AddWithValue("entryNumber", entryNumber);
+                insert.Parameters.AddWithValue("sourceId", journalId);
+                await insert.ExecuteNonQueryAsync();
+            }
+
+            await AssertDatabaseMutationRejectedAsync(connection, transaction, $"UPDATE \"JournalEntries\" SET \"Description\" = 'tampered' WHERE \"Id\" = '{journalId}';");
+            await AssertDatabaseMutationRejectedAsync(connection, transaction, $"DELETE FROM \"JournalEntries\" WHERE \"Id\" = '{journalId}';");
+
+            await transaction.RollbackAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    [Fact]
+    public async Task Posted_journal_line_insert_is_rejected_before_foreign_key_validation()
+    {
+        await using var connection = await fixture.OpenConnectionAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        var journalId = Guid.NewGuid();
+        var entryNumber = $"CI-LINE-IMMUTABILITY-{Guid.NewGuid():N}";
+
+        try
+        {
+            await using (var insert = new NpgsqlCommand("""
+                INSERT INTO "JournalEntries"
+                    ("Id", "EntryNumber", "EntryDate", "Description", "Status", "PostedAt", "PostedBy", "CreatedAt", "SourceType", "SourceId", "ReversalOfJournalEntryId")
+                VALUES
+                    (@id, @entryNumber, CURRENT_TIMESTAMP, 'PostgreSQL line immutability integration test', 'Posted', CURRENT_TIMESTAMP, 'ci-test', CURRENT_TIMESTAMP, 'CiTest', @sourceId, NULL);
+                """, connection, transaction))
+            {
+                insert.Parameters.AddWithValue("id", journalId);
+                insert.Parameters.AddWithValue("entryNumber", entryNumber);
+                insert.Parameters.AddWithValue("sourceId", journalId);
+                await insert.ExecuteNonQueryAsync();
+            }
+
+            await AssertDatabaseMutationRejectedAsync(connection, transaction, $"INSERT INTO \"JournalEntryLines\" (\"Id\", \"JournalEntryId\", \"AccountId\", \"Description\", \"Debit\", \"Credit\", \"CreatedAt\") VALUES ('{Guid.NewGuid()}', '{journalId}', '{Guid.NewGuid()}', 'tampered line', 1, 0, CURRENT_TIMESTAMP);");
+            await transaction.RollbackAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    [Fact]
     public async Task Finance_migrations_are_applied_to_the_ci_database()
     {
         await using var connection = await fixture.OpenConnectionAsync();
@@ -73,6 +141,24 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
             """, connection);
 
         Assert.Equal(6L, (long)(await command.ExecuteScalarAsync())!);
+    }
+
+    private static async Task AssertDatabaseMutationRejectedAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string sql)
+    {
+        await using var savepoint = new NpgsqlCommand("SAVEPOINT mutation_attempt;", connection, transaction);
+        await savepoint.ExecuteNonQueryAsync();
+
+        try
+        {
+            await using var command = new NpgsqlCommand(sql, connection, transaction);
+            var exception = await Assert.ThrowsAsync<PostgresException>(() => command.ExecuteNonQueryAsync());
+            Assert.Equal("restrict_violation", exception.SqlState);
+        }
+        finally
+        {
+            await using var rollback = new NpgsqlCommand("ROLLBACK TO SAVEPOINT mutation_attempt;", connection, transaction);
+            await rollback.ExecuteNonQueryAsync();
+        }
     }
 }
 
