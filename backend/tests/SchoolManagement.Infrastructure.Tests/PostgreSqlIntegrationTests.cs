@@ -65,11 +65,14 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
             FROM "__EFMigrationsHistory"
             WHERE "MigrationId" IN (
                 '20260908120000_AddPostedJournalDatabaseImmutability',
+                '20260908123001_FinanceAuditBoundary',
                 '20260908130000_AddFiscalPeriods',
+                '20260908140000_EnforceJournalFiscalPeriods',
+                '20260908150000_AddBudgetManagement',
                 '20260908150000_HardenBankReconciliation');
             """, connection);
 
-        Assert.Equal(3L, (long)(await command.ExecuteScalarAsync())!);
+        Assert.Equal(6L, (long)(await command.ExecuteScalarAsync())!);
     }
 }
 
