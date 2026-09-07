@@ -14,6 +14,22 @@ public sealed class FinanceConfiguration : IEntityTypeConfiguration<FeeStructure
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         builder.HasIndex(x => new { x.ProgrammeId, x.AcademicYearId, x.Name }).IsUnique();
         builder.HasIndex(x => new { x.AcademicYearId, x.IsActive });
+        builder.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.FeeStructureId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public sealed class FeeStructureItemConfiguration : IEntityTypeConfiguration<FeeStructureItem>
+{
+    public void Configure(EntityTypeBuilder<FeeStructureItem> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Code).HasMaxLength(40).IsRequired();
+        builder.Property(x => x.Name).HasMaxLength(160).IsRequired();
+        builder.Property(x => x.Amount).HasPrecision(18, 2);
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.HasIndex(x => new { x.FeeStructureId, x.Code }).IsUnique();
+        builder.HasIndex(x => new { x.FeeStructureId, x.SortOrder });
+        builder.HasOne<Account>().WithMany().HasForeignKey(x => x.IncomeAccountId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -44,6 +60,19 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(x => x.Reference).HasMaxLength(120);
         builder.HasIndex(x => x.ReceiptNumber).IsUnique();
         builder.HasIndex(x => new { x.StudentInvoiceId, x.PaidAt });
+        builder.HasMany(x => x.Allocations).WithOne().HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public sealed class PaymentAllocationConfiguration : IEntityTypeConfiguration<PaymentAllocation>
+{
+    public void Configure(EntityTypeBuilder<PaymentAllocation> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Amount).HasPrecision(18, 2);
+        builder.HasOne<Payment>().WithMany(x => x.Allocations).HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(x => new { x.PaymentId, x.StudentInvoiceId }).IsUnique();
     }
 }
 
