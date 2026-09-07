@@ -63,9 +63,11 @@ Application → Admission → Student → Enrollment → Period Registration
 - Library
 - Clinical/workplace attachment
 - Graduation, certification and alumni
-- Communication and notifications
+- Communication and local notifications
 - Reporting and audit
-- Parent/guardian and student self-service portals
+- System administration
+
+Student/guardian self-service portals are **not part of the current scope**. Academic results, transcripts and institutional records are managed by authorized school staff through the local SMIS.
 
 ## Finance accounting
 
