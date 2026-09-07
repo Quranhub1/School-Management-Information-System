@@ -35,7 +35,7 @@ test.describe('SMIS full-system smoke tests', () => {
 
     await signIn(page);
 
-    await expect(page.getByRole('heading', { name: 'Institutional Services' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('complementary').getByRole('heading', { name: 'Institutional Services' })).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Administration', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Student Management', exact: true })).toBeVisible();
@@ -46,7 +46,7 @@ test.describe('SMIS full-system smoke tests', () => {
     await page.goto(FRONTEND_URL, { waitUntil: 'networkidle' });
     await signIn(page);
 
-    await expect(page.getByRole('heading', { name: 'Institutional Services' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('complementary').getByRole('heading', { name: 'Institutional Services' })).toBeVisible({ timeout: 15000 });
 
     const apiResponse = await page.evaluate(async (baseUrl) => {
       const token = sessionStorage.getItem('smis.accessToken');
