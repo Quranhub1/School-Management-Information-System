@@ -2,13 +2,20 @@ name: Full System CI
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, 'foundation/**', 'feature/**', 'fix/**']
   pull_request:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docs/API.md'
+      - '.github/workflows/full-system-ci.yml'
 
 permissions:
   contents: read
+
+concurrency:
+  group: full-system-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   ASPNETCORE_ENVIRONMENT: Development
@@ -128,7 +135,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm install
+        run: npm ci
 
       - name: Install Playwright for E2E tests
         working-directory: frontend
