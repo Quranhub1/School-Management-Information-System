@@ -15,7 +15,12 @@ public sealed class StreamService(IStreamRepository streams)
         var code = request.Code.Trim();
         if (string.IsNullOrWhiteSpace(code)) return (false, "Stream code is required.", null);
 
-        var stream = new SchoolManagement.Domain.Academic.Stream { ClassFormId = request.ClassFormId, Code = code, Name = request.Name?.Trim() };
+        var stream = new SchoolManagement.Domain.Academic.Stream
+        {
+            ClassFormId = request.ClassFormId.ToString(),
+            Code = code,
+            Name = string.IsNullOrWhiteSpace(request.Name) ? code : request.Name.Trim()
+        };
         await streams.AddAsync(stream, ct);
         await streams.SaveChangesAsync(ct);
         return (true, null, stream);
