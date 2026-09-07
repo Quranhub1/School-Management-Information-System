@@ -10,5 +10,5 @@ public sealed class BankStatementLine
     public string TransactionType { get; init; } = string.Empty;
     public string? Reference { get; init; }
     public bool IsMatched { get; set; }
-    public Guid? MatchedJournalEntryId { get; init; }
+    public Guid? MatchedJournalEntryId { get; set; }
 }
