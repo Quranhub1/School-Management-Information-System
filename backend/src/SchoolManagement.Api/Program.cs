@@ -19,6 +19,7 @@ builder.Services.AddControllers().AddJsonOptions(o =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
+builder.Services.AddHttpClient("Superset");
 
 builder.Services.AddCors(options =>
 {

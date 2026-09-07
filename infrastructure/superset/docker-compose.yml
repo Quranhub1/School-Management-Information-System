@@ -1,0 +1,127 @@
+services:
+  superset-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: ${SUPERSET_METADATA_DB_PASSWORD:?set SUPERSET_METADATA_DB_PASSWORD}
+    volumes:
+      - superset-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superset -d superset"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - superset-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  superset-init:
+    build: .
+    restart: "no"
+    depends_on:
+      superset-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?set SUPERSET_SECRET_KEY}
+      GUEST_TOKEN_JWT_SECRET: ${GUEST_TOKEN_JWT_SECRET:?set GUEST_TOKEN_JWT_SECRET}
+      GUEST_TOKEN_JWT_AUDIENCE: ${GUEST_TOKEN_JWT_AUDIENCE:-superset}
+      SUPERSET_DATABASE_URI: postgresql+psycopg2://superset:${SUPERSET_METADATA_DB_PASSWORD}@superset-postgres:5432/superset
+    volumes:
+      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
+    command: >-
+      /bin/bash -c "
+      superset db upgrade &&
+      (superset fab create-admin
+        --username \"${SUPERSET_ADMIN_USERNAME:?set SUPERSET_ADMIN_USERNAME}\"
+        --firstname \"${SUPERSET_ADMIN_FIRSTNAME:-SMIS}\"
+        --lastname \"${SUPERSET_ADMIN_LASTNAME:-Administrator}\"
+        --email \"${SUPERSET_ADMIN_EMAIL:?set SUPERSET_ADMIN_EMAIL}\"
+        --password \"${SUPERSET_ADMIN_PASSWORD:?set SUPERSET_ADMIN_PASSWORD}\" || true) &&
+      superset init"
+
+  superset:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${SUPERSET_PORT:-8088}:8088"
+    environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?set SUPERSET_SECRET_KEY}
+      GUEST_TOKEN_JWT_SECRET: ${GUEST_TOKEN_JWT_SECRET:?set GUEST_TOKEN_JWT_SECRET}
+      GUEST_TOKEN_JWT_AUDIENCE: ${GUEST_TOKEN_JWT_AUDIENCE:-superset}
+      SUPERSET_DATABASE_URI: postgresql+psycopg2://superset:${SUPERSET_METADATA_DB_PASSWORD}@superset-postgres:5432/superset
+    volumes:
+      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
+    command: >-
+      gunicorn
+      --bind 0.0.0.0:8088
+      --workers ${SUPERSET_WORKERS:-3}
+      --timeout 120
+      --limit-request-line 0
+      --limit-request-field_size 0
+      "superset.app:create_app()"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8088/health', timeout=3)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  superset-worker:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?set SUPERSET_SECRET_KEY}
+      GUEST_TOKEN_JWT_SECRET: ${GUEST_TOKEN_JWT_SECRET:?set GUEST_TOKEN_JWT_SECRET}
+      GUEST_TOKEN_JWT_AUDIENCE: ${GUEST_TOKEN_JWT_AUDIENCE:-superset}
+      SUPERSET_DATABASE_URI: postgresql+psycopg2://superset:${SUPERSET_METADATA_DB_PASSWORD}@superset-postgres:5432/superset
+    volumes:
+      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
+    command: celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c ${CELERY_WORKERS:-2}
+
+  superset-beat:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?set SUPERSET_SECRET_KEY}
+      GUEST_TOKEN_JWT_SECRET: ${GUEST_TOKEN_JWT_SECRET:?set GUEST_TOKEN_JWT_SECRET}
+      GUEST_TOKEN_JWT_AUDIENCE: ${GUEST_TOKEN_JWT_AUDIENCE:-superset}
+      SUPERSET_DATABASE_URI: postgresql+psycopg2://superset:${SUPERSET_METADATA_DB_PASSWORD}@superset-postgres:5432/superset
+    volumes:
+      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
+    command: celery --app=superset.tasks.celery_app:app beat --pidfile=/tmp/celerybeat.pid
+
+volumes:
+  superset-postgres-data:
+  superset-redis-data:
