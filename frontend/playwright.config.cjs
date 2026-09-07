@@ -1,9 +1,9 @@
 const { defineConfig } = require('playwright/test');
 
 module.exports = defineConfig({
-  // The E2E suite lives at the repository root so it can validate the
-  // complete API + frontend integration rather than only frontend internals.
-  testDir: '../tests/e2e',
+  // The E2E suite lives beside the frontend so CI runs the tests checked into
+  // the frontend workspace after starting the real API and preview server.
+  testDir: './e2e',
   testMatch: '**/*.spec.{js,mjs,cjs}',
   timeout: 30_000,
   expect: {
