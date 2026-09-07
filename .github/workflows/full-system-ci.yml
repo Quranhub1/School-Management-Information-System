@@ -141,7 +141,7 @@ jobs:
 
       - name: Install Playwright for E2E tests
         working-directory: frontend
-        run: npm install --no-save playwright@1.55.0
+        run: npm install --no-save @playwright/test@1.55.0
 
       - name: Build frontend against running API
         working-directory: frontend
