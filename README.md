@@ -4,7 +4,7 @@ A comprehensive, modular and LAN-first School Management Information System (SMI
 
 ## Project status
 
-**Active development — core platform foundations are in place, while major business workflows are being hardened and expanded incrementally.**
+**Active development — all feature branches merged into `main`. Frontend and backend build successfully. CI is green.**
 
 The system is feature-complete across all core domains and passes backend and frontend builds. See [PROGRESS.md](PROGRESS.md) for detailed module coverage.
 
@@ -16,6 +16,10 @@ New capabilities in this release:
 - Analytics dashboard (examination analytics, teacher workload, administration assistant Q&A)
 - Document management with upload/archive/download/delete
 - Workflow engine with history tracking
+- Complete Finance module: invoices, payments, installments, credit notes, refunds, ledger, journal
+- Admissions workflow: application → decision → enrollment
+- Staff/HR management with leave and payroll
+- Library management with circulation and external integrations
 
 See [`PROGRESS.md`](PROGRESS.md) for the authoritative implementation tracker, verified capabilities and remaining work.
 

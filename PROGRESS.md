@@ -1,8 +1,8 @@
 # School Management Information System — Project Progress
 
 **Last updated:** 2026-09-07  
-**Current focus:** Finance receivables controls, accounting integrity and production hardening  
-**Tracking branch:** `feature/finance-receivables-ageing-reconciliation`
+**Current focus:** Frontend CI fixes, merge conflict resolution, and production hardening  
+**Tracking branch:** `main`
 
 > Master project tracker. A feature is complete only when its implemented scope is verified in the repository and CI. A model, placeholder endpoint or UI mockup alone does not make a workflow complete.
 
