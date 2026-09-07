@@ -4,18 +4,18 @@ namespace SchoolManagement.Domain.Students;
 
 public sealed class Student
 {
-    public Guid Id { get; init; } = Guid.NewGuid();
-    public required string StudentNumber { get; init; }
-    public required string FirstName { get; init; }
-    public required string LastName { get; init; }
-    public string? OtherNames { get; init; }
-    public DateOnly? DateOfBirth { get; init; }
-    public string? Gender { get; init; }
-    public string? NationalId { get; init; }
-    public string? PhoneNumber { get; init; }
-    public string? Email { get; init; }
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public required string StudentNumber { get; set; }
+    public required string FirstName { get; set; }
+    public required string LastName { get; set; }
+    public string? OtherNames { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
+    public string? Gender { get; set; }
+    public string? NationalId { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? Email { get; set; }
     public string Status { get; set; } = "Active";
-    public Guid? AdmissionId { get; init; }
-    public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+    public Guid? AdmissionId { get; set; }
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public ICollection<StudentCharge> FinanceCharges { get; set; } = new List<StudentCharge>();
 }

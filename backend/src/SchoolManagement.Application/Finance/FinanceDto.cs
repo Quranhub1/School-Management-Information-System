@@ -15,7 +15,7 @@ public sealed record FinanceInvoiceDto(
     string Status,
     DateTimeOffset IssuedAt)
 {
-    public static FinanceInvoiceDto FromDomain(StudentInvoice invoice) => new(invoice.Id, invoice.StudentId, invoice.FeeStructureId, invoice.InvoiceNumber, invoice.Amount, invoice.PaidAmount, Math.Max(0, invoice.Amount - invoice.PaidAmount), invoice.Currency, invoice.Status, invoice.IssuedAt);
+    public static FinanceInvoiceDto FromDomain(StudentInvoice invoice) => new(invoice.Id, invoice.StudentId, invoice.FeeStructureId, invoice.InvoiceNumber, invoice.FeeType, invoice.Amount, invoice.PaidAmount, Math.Max(0, invoice.Amount - invoice.PaidAmount), invoice.Currency, invoice.Status, invoice.IssuedAt);
 }
 
 public sealed record FinancePaymentDto(
