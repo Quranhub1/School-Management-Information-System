@@ -1,0 +1,82 @@
+SCHOOL MANAGEMENT INFORMATION SYSTEM (SMIS)
+PRIVACY POLICY AND INSTALLATION TERMS
+
+Effective date: 9 September 2026
+Version: 1.0
+
+IMPORTANT
+By selecting “I Agree”, you confirm that you have read and understood this Privacy Policy and Installation Terms and agree to proceed with installation of the School Management Information System (SMIS). If you do not agree, select “I Do Not Agree” and the installation will be cancelled.
+
+1. SOFTWARE AND INSTITUTIONAL RESPONSIBILITY
+
+SMIS is software for managing educational institutional records. The institution that installs and operates SMIS is responsible for determining the purposes and lawful basis for processing personal data, configuring user access, setting retention periods, providing required notices, and responding to data-subject requests.
+
+This installer notice is a software-level privacy and use baseline. It does not replace the institution’s own legally required privacy notice or other applicable legal obligations.
+
+2. PERSONAL DATA THAT MAY BE PROCESSED
+
+Depending on enabled modules and institutional configuration, SMIS may process:
+
+- Student names, admission/assessment numbers, dates of birth, contact details and identifiers.
+- Guardian/parent contact and relationship information.
+- Admission, enrollment, programme, course and academic records.
+- Attendance, assessment, examination, results, progression and certification records.
+- Staff identity, employment, teaching, attendance and payroll-related records where those modules are enabled.
+- Finance information such as charges, invoices, payments, installment records, balances and audit information.
+- Hostel, transport, library, clinical/workplace-learning and document records where enabled.
+- User account information, roles, authentication records and security/audit logs.
+- Photographs or uploaded documents where the institution chooses to store them.
+
+Institutions should configure SMIS to collect only information that is necessary for legitimate educational and administrative purposes.
+
+3. PURPOSES OF PROCESSING
+
+Personal data may be used to administer admissions and enrollment; manage academic programmes and student records; conduct assessment and examinations; record attendance; administer fees and payments; operate institutional services; communicate with authorized users; produce reports and certificates; maintain audit trails; secure the system; and meet applicable institutional or legal obligations.
+
+4. CHILDREN AND SENSITIVE DATA
+
+Educational institutions may process information relating to minors and may process sensitive or confidential information depending on their services. The institution must apply appropriate safeguards, lawful authority and access restrictions for such information.
+
+5. ACCESS AND SECURITY
+
+SMIS uses authenticated accounts and role-based authorization. Access to personal data should be limited to authorized personnel who require it for their duties. Institutions must protect administrator credentials, use strong passwords and secrets, maintain supported software versions, use HTTPS for production deployments, restrict database access and maintain appropriate backups.
+
+Audit and security records may be retained to investigate access, changes, financial actions and security incidents.
+
+6. STORAGE, HOSTING AND BACKUPS
+
+The institution determines where its SMIS database, uploaded documents and backups are hosted. Backups may contain the same personal data as the live system and must therefore receive equivalent protection. Restore testing should be performed using appropriately secured environments.
+
+7. DISCLOSURE AND THIRD PARTIES
+
+Personal data should not be disclosed outside the institution except where authorized by the institution, required or permitted by applicable law, necessary for an approved service provider, or otherwise supported by a lawful basis. Institutions are responsible for evaluating and governing their hosting, email, payment, analytics, storage and other service providers.
+
+8. DATA RETENTION AND DELETION
+
+The institution must define retention periods appropriate to its records, legal duties and educational requirements. Data should not be retained indefinitely without a legitimate reason. Deletion, anonymization or archival must be performed according to the institution’s approved retention schedule and applicable law.
+
+9. DATA-SUBJECT RIGHTS
+
+Depending on applicable law and the circumstances of processing, individuals may have rights concerning access to, correction of, objection to, restriction of, or other lawful control over their personal data. Requests should be directed to the institution or its designated data-protection contact.
+
+10. SECURITY INCIDENTS
+
+If the institution suspects unauthorized access, disclosure, loss, alteration or destruction of personal data, it should activate its incident-response procedure, secure affected accounts and systems, preserve relevant evidence, assess the impact and make any required notifications under applicable law.
+
+11. COOKIES AND LOCAL STORAGE
+
+The web application may use browser storage or similar mechanisms required for authentication, session management and application operation. Institutions should review browser, proxy and device configurations when deploying SMIS on shared computers.
+
+12. PRIVACY POLICY AVAILABILITY
+
+The full SMIS Privacy Policy is available in the repository as PRIVACY_POLICY.md and in the running application through its Privacy Policy link. The installer presents this policy before installation and requires an affirmative agreement before continuing.
+
+13. GOVERNING REQUIREMENTS
+
+This policy is intended to support responsible processing under applicable data-protection requirements, including Uganda’s Data Protection and Privacy Act, 2019 (Act No. 9 of 2019) and the Data Protection and Privacy Regulations, 2021, where applicable. The deploying institution remains responsible for determining and meeting the requirements applicable to its operations.
+
+14. ACCEPTANCE
+
+Selecting “I Agree” means you have reviewed this Privacy Policy and Installation Terms and authorize the installer to continue. Selecting “I Do Not Agree” means you do not accept these terms and the installer must not proceed.
+
+For the institution’s official privacy contact, retention schedule, complaint process and other institution-specific details, consult the institution’s own privacy notice and designated data-protection contact.
