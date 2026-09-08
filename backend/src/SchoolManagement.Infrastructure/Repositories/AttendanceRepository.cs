@@ -15,6 +15,34 @@ public sealed class AttendanceRepository(SchoolManagementDbContext db) : IAttend
     public Task<AttendanceSession?> GetSessionByIdAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default) =>
         db.AttendanceSessions.FirstOrDefaultAsync(x => x.Id == attendanceSessionId, cancellationToken);
 
+    public Task<bool> IsStudentEligibleForSessionAsync(Guid attendanceSessionId, Guid studentId, CancellationToken cancellationToken = default) =>
+        db.AttendanceSessions
+            .Where(session => session.Id == attendanceSessionId)
+            .Join(
+                db.TimetableEntries,
+                session => session.TimetableEntryId,
+                timetable => timetable.Id,
+                (session, timetable) => timetable)
+            .Join(
+                db.TeachingGroups,
+                timetable => timetable.TeachingGroupId,
+                group => group.Id,
+                (timetable, group) => group)
+            .Join(
+                db.CourseOfferings,
+                group => group.CourseOfferingId,
+                offering => offering.Id,
+                (group, offering) => offering)
+            .Join(
+                db.CourseRegistrations,
+                offering => new { offering.CourseId, offering.SemesterId },
+                registration => new { registration.CourseId, registration.SemesterId },
+                (offering, registration) => registration)
+            .AnyAsync(
+                registration => registration.StudentId == studentId
+                    && (registration.Status == "Registered" || registration.Status == "Active"),
+                cancellationToken);
+
     public Task<StudentAttendance?> GetStudentAttendanceAsync(Guid attendanceSessionId, Guid studentId, CancellationToken cancellationToken = default) =>
         db.StudentAttendances.FirstOrDefaultAsync(
             x => x.AttendanceSessionId == attendanceSessionId && x.StudentId == studentId,
