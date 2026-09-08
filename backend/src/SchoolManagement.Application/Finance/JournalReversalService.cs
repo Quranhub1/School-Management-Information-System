@@ -9,7 +9,7 @@ namespace SchoolManagement.Application.Finance;
 /// </summary>
 public sealed class JournalReversalService(IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
-    public async Task<JournalEntry> ReverseAsync(Guid journalEntryId, string reason, string performedBy, CancellationToken cancellationToken)
+    public async Task<JournalEntry> ReverseAsync(Guid journalEntryId, string reason, string performedBy, CancellationToken cancellationToken, bool saveChanges = true)
     {
         if (journalEntryId == Guid.Empty)
             throw new ArgumentException("Journal entry id is required.");
@@ -59,7 +59,8 @@ public sealed class JournalReversalService(IFinanceRepository finance, FiscalPer
 
         JournalEntryValidator.Validate(reversal);
         await finance.AddJournalEntryAsync(reversal, cancellationToken);
-        await finance.SaveChangesAsync(cancellationToken);
+        if (saveChanges)
+            await finance.SaveChangesAsync(cancellationToken);
         return reversal;
     }
 }
