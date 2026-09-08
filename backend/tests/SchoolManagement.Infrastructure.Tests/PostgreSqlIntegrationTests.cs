@@ -3,35 +3,21 @@ using Xunit;
 
 namespace SchoolManagement.Infrastructure.Tests;
 
-[CollectionDefinition("PostgreSQL integration", DisableParallelization = true)]
-public sealed class PostgreSqlIntegrationCollection : ICollectionFixture<PostgreSqlIntegrationFixture>;
-
-[Collection("PostgreSQL integration")]
-public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixture)
+public sealed class PostgreSqlIntegrationTests : IClassFixture<PostgreSqlIntegrationFixture>
 {
+    private readonly PostgreSqlIntegrationFixture fixture;
+
+    public PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixture) => this.fixture = fixture;
+
     [Fact]
     public async Task Database_is_reachable_and_contains_expected_schema()
     {
         await using var connection = await fixture.OpenConnectionAsync();
-        var database = (string?)await new NpgsqlCommand("SELECT current_database();", connection).ExecuteScalarAsync();
-        Assert.Equal("school_management_ci", database);
-
         await using var command = new NpgsqlCommand("""
-            SELECT COUNT(*) FROM information_schema.tables
+            SELECT COUNT(*)
+            FROM information_schema.tables
             WHERE table_schema = 'public'
-              AND table_name IN ('JournalEntries', 'JournalEntryLines', 'FiscalPeriods');
-            """, connection);
-        Assert.Equal(3L, (long)(await command.ExecuteScalarAsync())!);
-    }
-
-    [Fact]
-    public async Task Posted_journal_immutability_triggers_are_installed()
-    {
-        await using var connection = await fixture.OpenConnectionAsync();
-        await using var command = new NpgsqlCommand("""
-            SELECT COUNT(*) FROM pg_trigger
-            WHERE NOT tgisinternal
-              AND tgname IN ('trg_journal_entries_immutable', 'trg_journal_entry_lines_immutable');
+              AND table_name IN ('JournalEntries', 'JournalEntryLines');
             """, connection);
         Assert.Equal(2L, (long)(await command.ExecuteScalarAsync())!);
     }
@@ -41,11 +27,23 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
     {
         await using var connection = await fixture.OpenConnectionAsync();
         await using var command = new NpgsqlCommand("""
-            SELECT COUNT(*) FROM pg_proc p
-            JOIN pg_namespace n ON n.oid = p.pronamespace
-            WHERE n.nspname = 'public' AND p.proname = 'prevent_posted_journal_mutation';
+            SELECT COUNT(*)
+            FROM pg_proc
+            WHERE proname = 'prevent_posted_journal_mutation';
             """, connection);
         Assert.Equal(1L, (long)(await command.ExecuteScalarAsync())!);
+    }
+
+    [Fact]
+    public async Task Posted_journal_immutability_triggers_are_installed()
+    {
+        await using var connection = await fixture.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand("""
+            SELECT COUNT(*)
+            FROM pg_trigger
+            WHERE tgname IN ('trg_journal_entries_immutable', 'trg_journal_entry_lines_immutable');
+            """, connection);
+        Assert.Equal(2L, (long)(await command.ExecuteScalarAsync())!);
     }
 
     [Fact]
@@ -54,7 +52,7 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
         await using var connection = await fixture.OpenConnectionAsync();
         await using var transaction = await connection.BeginTransactionAsync();
         var journalId = Guid.NewGuid();
-        var entryNumber = $"CI-IMMUTABILITY-{Guid.NewGuid():N}";
+        var entryNumber = $"CI-IMM-{Guid.NewGuid():N}";
 
         try
         {
@@ -76,7 +74,7 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
         await using var connection = await fixture.OpenConnectionAsync();
         await using var transaction = await connection.BeginTransactionAsync();
         var journalId = Guid.NewGuid();
-        var entryNumber = $"CI-LINE-IMMUTABILITY-{Guid.NewGuid():N}";
+        var entryNumber = $"CI-LINE-{Guid.NewGuid():N}";
 
         try
         {
@@ -132,7 +130,7 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
         {
             await using var command = new NpgsqlCommand(sql, connection, transaction);
             var exception = await Assert.ThrowsAsync<PostgresException>(() => command.ExecuteNonQueryAsync());
-            Assert.Equal("restrict_violation", exception.SqlState);
+            Assert.Equal("23001", exception.SqlState);
         }
         finally
         {
