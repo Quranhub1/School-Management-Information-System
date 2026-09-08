@@ -33,6 +33,15 @@ public sealed class FiscalPeriodService(IFiscalPeriodRepository repository)
         return period;
     }
 
+    public async Task<FiscalPeriod> ReopenAsync(Guid id, string reopenedBy, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("Fiscal period is required.", nameof(id));
+        var period = await repository.GetFiscalPeriodAsync(id, cancellationToken) ?? throw new ArgumentException("Fiscal period was not found.", nameof(id));
+        period.Reopen(reopenedBy);
+        await repository.SaveChangesAsync(cancellationToken);
+        return period;
+    }
+
     public async Task<FiscalPeriod> RequireOpenPeriodAsync(DateOnly transactionDate, CancellationToken cancellationToken = default)
     {
         var periods = await repository.GetFiscalPeriodsAsync(cancellationToken);
