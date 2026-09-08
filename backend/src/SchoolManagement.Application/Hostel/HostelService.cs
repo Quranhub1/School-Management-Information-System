@@ -1,16 +1,17 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Hostel;
+using HostelEntity = SchoolManagement.Domain.Hostel.Hostel;
 
 namespace SchoolManagement.Application.Hostel;
 
 public sealed class HostelService(IHostelRepository repository)
 {
-    public Task<IReadOnlyList<Hostel>> GetAsync(CancellationToken cancellationToken = default) => repository.GetHostelsAsync(cancellationToken);
+    public Task<IReadOnlyList<HostelEntity>> GetAsync(CancellationToken cancellationToken = default) => repository.GetHostelsAsync(cancellationToken);
 
-    public async Task<Hostel> CreateHostelAsync(string name, string? description, CancellationToken cancellationToken = default)
+    public async Task<HostelEntity> CreateHostelAsync(string name, string? description, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Hostel name is required.", nameof(name));
-        var hostel = new Hostel { Name = name.Trim(), Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim() };
+        var hostel = new HostelEntity { Name = name.Trim(), Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim() };
         await repository.AddAsync(hostel, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return hostel;
