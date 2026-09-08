@@ -132,8 +132,7 @@ public sealed class CreditNoteRefundServiceTests
             {
                 Name = $"Test FY {DateTime.UtcNow:yyyy}",
                 StartDate = new DateOnly(DateTime.UtcNow.Year, 1, 1),
-                EndDate = new DateOnly(DateTime.UtcNow.Year, 12, 31),
-                Status = "Open"
+                EndDate = new DateOnly(DateTime.UtcNow.Year, 12, 31)
             }
         ];
 
@@ -182,7 +181,7 @@ public sealed class CreditNoteRefundServiceTests
         public Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid id, CancellationToken ct) => Task.FromResult<InvoiceDiscount?>(null);
         public Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<InvoiceDiscount>>([]);
         public Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<InvoiceInstallment>>([]);
-        public Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentCharge>([]);
+        public Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentCharge>>([]);
         public Task<StudentCharge?> GetStudentChargeAsync(Guid id, CancellationToken ct) => Task.FromResult<StudentCharge?>(null);
         public Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid studentInvoiceId, CancellationToken ct) => Task.FromResult<IReadOnlyList<CreditNote>>(creditNotes.Where(x => x.StudentInvoiceId == studentInvoiceId).ToArray());
         public Task<IReadOnlyList<CreditNote>> GetAllCreditNotesAsync(CancellationToken ct) => Task.FromResult<IReadOnlyList<CreditNote>>(creditNotes.ToArray());
