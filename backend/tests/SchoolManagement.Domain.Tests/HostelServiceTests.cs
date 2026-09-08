@@ -37,6 +37,7 @@ public sealed class HostelServiceTests
         public Hostel? Hostel { get; set; }
         public HostelRoom? Room { get; set; }
         public HostelBed? Bed { get; set; }
+        public HostelAllocation? Allocation { get; set; }
         public HostelAllocation? ActiveBedAllocation { get; set; }
         public HostelAllocation? ActiveStudentAllocation { get; set; }
         public List<Hostel> Hostels { get; } = [];
@@ -45,9 +46,10 @@ public sealed class HostelServiceTests
         public Task<Hostel?> GetHostelAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Hostel?.Id == id ? Hostel : new Hostel { Id = id, Name = "Test" });
         public Task<HostelRoom?> GetRoomAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Room?.Id == id ? Room : null);
         public Task<HostelBed?> GetBedAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Bed?.Id == id ? Bed : null);
+        public Task<HostelAllocation?> GetAllocationAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Allocation?.Id == id ? Allocation : null);
         public Task<HostelAllocation?> GetActiveAllocationByBedAsync(Guid bedId, CancellationToken cancellationToken = default) => Task.FromResult(ActiveBedAllocation);
         public Task<HostelAllocation?> GetActiveAllocationByStudentAsync(Guid studentId, CancellationToken cancellationToken = default) => Task.FromResult(ActiveStudentAllocation);
-        public Task AddAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class { return Task.CompletedTask; }
+        public Task AddAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class => Task.CompletedTask;
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }
