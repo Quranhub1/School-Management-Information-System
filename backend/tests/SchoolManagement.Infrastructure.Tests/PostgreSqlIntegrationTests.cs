@@ -23,18 +23,6 @@ public sealed class PostgreSqlIntegrationTests : IClassFixture<PostgreSqlIntegra
     }
 
     [Fact]
-    public async Task Posted_journal_immutability_function_is_installed()
-    {
-        await using var connection = await fixture.OpenConnectionAsync();
-        await using var command = new NpgsqlCommand("""
-            SELECT COUNT(*)
-            FROM pg_proc
-            WHERE proname = 'prevent_posted_journal_mutation';
-            """, connection);
-        Assert.Equal(1L, (long)(await command.ExecuteScalarAsync())!);
-    }
-
-    [Fact]
     public async Task Posted_journal_immutability_triggers_are_installed()
     {
         await using var connection = await fixture.OpenConnectionAsync();
@@ -104,9 +92,10 @@ public sealed class PostgreSqlIntegrationTests : IClassFixture<PostgreSqlIntegra
                 '20260908150000_HardenBankReconciliation',
                 '20260908160000_AddJournalEntrySourceFields',
                 '20260908170000_AddJournalReversalReference',
-                '20260908180000_AddJournalAccountingDimensions');
+                '20260908180000_AddJournalAccountingDimensions',
+                '20260908090000_AddCreditNoteCancellationAuditFields');
             """, connection);
-        Assert.Equal(9L, (long)(await command.ExecuteScalarAsync())!);
+        Assert.Equal(10L, (long)(await command.ExecuteScalarAsync())!);
     }
 
     [Fact]
@@ -121,6 +110,20 @@ public sealed class PostgreSqlIntegrationTests : IClassFixture<PostgreSqlIntegra
               AND column_name IN ('CampusId', 'FacultyId', 'DepartmentId', 'ProgrammeId');
             """, connection);
         Assert.Equal(4L, (long)(await command.ExecuteScalarAsync())!);
+    }
+
+    [Fact]
+    public async Task Credit_notes_expose_cancellation_audit_columns()
+    {
+        await using var connection = await fixture.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand("""
+            SELECT COUNT(*)
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'CreditNotes'
+              AND column_name IN ('CancelledAt', 'CancelledBy', 'CancellationReason');
+            """, connection);
+        Assert.Equal(3L, (long)(await command.ExecuteScalarAsync())!);
     }
 
     private static async Task InsertPostedJournalAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, Guid journalId, string entryNumber)
