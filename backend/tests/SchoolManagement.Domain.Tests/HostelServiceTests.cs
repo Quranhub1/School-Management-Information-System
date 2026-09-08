@@ -1,5 +1,6 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Hostel;
+using HostelEntity = SchoolManagement.Domain.Hostel.Hostel;
 using SchoolManagement.Domain.Hostel;
 using Xunit;
 
@@ -30,8 +31,8 @@ public sealed class HostelServiceTests
         public HostelRoom? Room { get; init; }
         public HostelBed? Bed { get; init; }
         public HostelAllocation? ActiveStudentAllocation { get; init; }
-        public Task<IReadOnlyList<Hostel>> GetHostelsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Hostel>>(Array.Empty<Hostel>());
-        public Task<Hostel?> GetHostelAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<Hostel?>(new Hostel { Name = "H" });
+        public Task<IReadOnlyList<HostelEntity>> GetHostelsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<HostelEntity>>(Array.Empty<HostelEntity>());
+        public Task<HostelEntity?> GetHostelAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<HostelEntity?>(new HostelEntity { Name = "H" });
         public Task<HostelRoom?> GetRoomAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Room);
         public Task<HostelBed?> GetBedAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Bed);
         public Task<HostelAllocation?> GetAllocationAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<HostelAllocation?>(null);
