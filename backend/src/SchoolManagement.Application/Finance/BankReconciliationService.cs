@@ -44,6 +44,7 @@ public sealed class BankReconciliationService(IBankReconciliationRepository repo
         if (string.IsNullOrWhiteSpace(request.TransactionType)) throw new ArgumentException("Transaction type is required.");
         var reconciliation = await repository.GetAsync(reconciliationId, cancellationToken) ?? throw new KeyNotFoundException("Bank reconciliation was not found.");
         if (string.Equals(reconciliation.Status, "Reconciled", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("A completed reconciliation cannot receive new statement lines.");
+        if (request.TransactionDate > reconciliation.StatementDate) throw new ArgumentException("A bank statement line cannot be dated after the reconciliation statement date.", nameof(request));
         var type = request.TransactionType.Trim();
         if (!type.Equals("Credit", StringComparison.OrdinalIgnoreCase) && !type.Equals("Debit", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("Transaction type must be Credit or Debit.");
         var line = new BankStatementLine { BankReconciliationId = reconciliationId, TransactionDate = request.TransactionDate, Amount = request.Amount, TransactionType = type, Description = request.Description?.Trim(), Reference = request.Reference?.Trim(), Status = "Unmatched" };
