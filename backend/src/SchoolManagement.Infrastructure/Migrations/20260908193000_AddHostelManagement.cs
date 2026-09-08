@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
@@ -20,7 +21,6 @@ CREATE TABLE IF NOT EXISTS "Hostels" (
     CONSTRAINT "PK_Hostels" PRIMARY KEY ("Id")
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "IX_Hostels_Name" ON "Hostels" ("Name");
-
 CREATE TABLE IF NOT EXISTS "HostelRooms" (
     "Id" uuid NOT NULL,
     "HostelId" uuid NOT NULL,
@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS "HostelRooms" (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "IX_HostelRooms_HostelId_RoomNumber" ON "HostelRooms" ("HostelId", "RoomNumber");
 CREATE INDEX IF NOT EXISTS "IX_HostelRooms_HostelId" ON "HostelRooms" ("HostelId");
-
 CREATE TABLE IF NOT EXISTS "HostelBeds" (
     "Id" uuid NOT NULL,
     "RoomId" uuid NOT NULL,
@@ -44,7 +43,6 @@ CREATE TABLE IF NOT EXISTS "HostelBeds" (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "IX_HostelBeds_RoomId_BedNumber" ON "HostelBeds" ("RoomId", "BedNumber");
 CREATE INDEX IF NOT EXISTS "IX_HostelBeds_RoomId" ON "HostelBeds" ("RoomId");
-
 CREATE TABLE IF NOT EXISTS "HostelAllocations" (
     "Id" uuid NOT NULL,
     "BedId" uuid NOT NULL,
