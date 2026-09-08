@@ -37,13 +37,17 @@ public sealed class FiscalPeriodService(IFiscalPeriodRepository repository)
     {
         var periods = await repository.GetFiscalPeriodsAsync(cancellationToken);
         if (periods.Count == 0)
-        {
-            return new FiscalPeriod { Name = "Legacy posting mode", StartDate = transactionDate, EndDate = transactionDate };
-        }
+            throw new InvalidOperationException("No fiscal period is configured. Create and open a fiscal period before posting financial transactions.");
 
-        var period = periods.SingleOrDefault(x => x.Contains(transactionDate));
-        if (period is null) throw new InvalidOperationException($"No fiscal period contains transaction date {transactionDate:yyyy-MM-dd}.");
-        if (!string.Equals(period.Status, "Open", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException($"Fiscal period '{period.Name}' is closed.");
+        var containingPeriods = periods.Where(x => x.Contains(transactionDate)).ToList();
+        if (containingPeriods.Count == 0)
+            throw new InvalidOperationException($"No fiscal period contains transaction date {transactionDate:yyyy-MM-dd}.");
+        if (containingPeriods.Count > 1)
+            throw new InvalidOperationException($"Multiple fiscal periods contain transaction date {transactionDate:yyyy-MM-dd}. Overlapping fiscal periods must be corrected before posting.");
+
+        var period = containingPeriods[0];
+        if (!string.Equals(period.Status, "Open", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Fiscal period '{period.Name}' is closed.");
         return period;
     }
 }
