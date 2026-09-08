@@ -12,6 +12,9 @@ public sealed class AttendanceRepository(SchoolManagementDbContext db) : IAttend
             x => x.TimetableEntryId == timetableEntryId && x.SessionDate == sessionDate,
             cancellationToken);
 
+    public Task<AttendanceSession?> GetSessionByIdAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default) =>
+        db.AttendanceSessions.FirstOrDefaultAsync(x => x.Id == attendanceSessionId, cancellationToken);
+
     public Task<StudentAttendance?> GetStudentAttendanceAsync(Guid attendanceSessionId, Guid studentId, CancellationToken cancellationToken = default) =>
         db.StudentAttendances.FirstOrDefaultAsync(
             x => x.AttendanceSessionId == attendanceSessionId && x.StudentId == studentId,
