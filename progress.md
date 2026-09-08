@@ -2,12 +2,17 @@
 
 > This file mirrors the master implementation status in `PROGRESS.md`. Items are marked complete only when repository implementation and CI evidence support the status.
 
-## CI — verified on current main
-- 🔄 Latest finance hardening commits are running through GitHub Actions; completion is not marked until CI confirms them.
-- ✅ Frontend CI (previous verified baseline)
-- ✅ Foundation CI (previous verified baseline)
-- ✅ Backend CI (previous verified baseline)
-- ✅ Full System CI (previous verified baseline)
+## Current status
+- 🔄 Final production-readiness closure is in progress.
+- 🔄 Approved SMIS application icon integration is being completed.
+- 🔄 Native desktop packaging remains part of the production gate.
+
+## CI — verified baseline
+- ✅ Frontend CI
+- ✅ Foundation CI
+- ✅ Backend CI
+- ✅ Full System CI
+- ✅ Native desktop CI foundation for Windows x86/x64 and Ubuntu x64
 
 ## Finance & Accounting
 
@@ -34,21 +39,6 @@
 - ✅ Controlled fiscal-period closing.
 - ✅ Controlled fiscal-period reopening with identity and closure metadata reset.
 
-### Hardening / remaining
-- 🔄 Automated PostgreSQL persistence tests for immutability and reversal.
-- 🔄 Adjustment cancellation/reversal workflow.
-- 🔄 Opening-balance import/posting with balanced double-entry controls.
-- 🔄 Fiscal-year closing/opening-balance carry-forward workflow.
-- 🔄 Accounting dimensions: campus/faculty/department/programme.
-- 🔄 Dimension-aware journal lines and reports.
-- 🔄 Fiscal-period-aware production GL and Trial Balance.
-- 🔄 Production financial statement semantics, including retained earnings.
-- 🔄 Cash/bank reporting and bank transactions.
-- 🔄 Bank reconciliation workflow, including one-to-one matching controls and bank statement polarity validation.
-- 🔄 Budget vs actual reporting.
-- 🔄 Vendor/payables, payroll and fixed-asset accounting integration where required.
-- 🔄 Finance dashboard and complete frontend workflows.
-
 ## Core system
 
 ### Foundations covered
@@ -61,17 +51,21 @@
 - ✅ Student lifecycle, identity/authorization, admissions, academic, attendance, assessment and progression foundations.
 - ✅ Library, staff/HR, payroll, certificates, alumni and supporting domain foundations.
 
-### Remaining / ongoing
-- ⏳ Production-grade workflows across all domains.
-- ⏳ Frontend parity for backend capabilities.
-- ⏳ Major user-journey E2E coverage.
-- ⏳ Cross-domain reporting and analytics.
-- ⏳ Security, authorization and audit hardening.
-- ⏳ Deployment, backup, monitoring and disaster recovery.
-- ⏳ Institutional configuration and Uganda-specific operational requirements.
+## Native desktop
+- ✅ .NET 8 WPF desktop shell foundation.
+- ✅ WebView2 shell with restricted trusted origin navigation.
+- ✅ Windows x86/x64 publish CI.
+- 🔄 Approved icon integration and final asset verification.
+- ⏳ Bundle approved frontend build into the desktop installer/local application origin.
+- ⏳ Implement production Windows installer with mandatory server setup/resource validation.
+- ⏳ Implement and package Ubuntu native client.
+- ⏳ Clean-machine installation verification.
 
-## Definition of Done
-A feature is not production-complete merely because it compiles. It requires appropriate business/domain logic, persistence, authorization, validation, UI where applicable, automated tests and successful relevant CI evidence. Finance additionally requires balanced accounting effects, source traceability and controlled corrections without editing posted ledger history.
-
-## Current priority
-**Finance accounting hardening → opening balances/fiscal-year workflow → dimensions → bank/budget controls → system-wide workflow parity and production hardening.**
+## Final production gate
+1. Complete approved icon integration and verify all application icon references.
+2. Bundle the approved frontend locally so the installed client does not depend on an external browser.
+3. Implement and validate Windows installer packaging for x86/x64 with mandatory server connection setup and resource validation.
+4. Implement and validate Ubuntu native packaging.
+5. Add API/integration tests for authorized attendance manual and QR attendance paths.
+6. Audit EF Core migration snapshots/designer artifacts and deployment configuration.
+7. Verify backup/restore, monitoring, secrets and Uganda-specific operational configuration before production sign-off.
