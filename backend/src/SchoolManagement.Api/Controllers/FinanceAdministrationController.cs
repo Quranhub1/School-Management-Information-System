@@ -8,62 +8,98 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance/administration")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
-public sealed class FinanceAdministrationController(FinanceAdministrationService finance) : ControllerBase
+public sealed class FinanceAdministrationController(BudgetService budgets, BankReconciliationService bankReconciliations) : ControllerBase
 {
     [HttpGet("budgets")]
-    public async Task<IActionResult> GetBudgets([FromQuery] Guid? departmentId, [FromQuery] Guid? academicYearId, [FromQuery] bool activeOnly = false, CancellationToken cancellationToken = default) =>
-        Ok(await finance.GetBudgetsAsync(departmentId, academicYearId, activeOnly, cancellationToken));
+    public async Task<IActionResult> GetBudgets([FromQuery] Guid? academicYearId, [FromQuery] bool activeOnly = false, CancellationToken cancellationToken = default) =>
+        Ok(await budgets.GetAsync(academicYearId, activeOnly, cancellationToken));
 
     [HttpPost("budgets")]
     public async Task<IActionResult> CreateBudget(CreateBudgetRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var budget = await finance.CreateBudgetAsync(request.DepartmentId, request.AcademicYearId, request.Name, request.TotalAmount, request.Currency, request.StartDate, request.EndDate, cancellationToken);
+            var budget = await budgets.CreateAsync(new BudgetServiceCreateBudgetRequest(
+                request.DepartmentId,
+                request.AcademicYearId,
+                request.Name,
+                request.Currency,
+                request.StartDate,
+                request.EndDate,
+                request.Lines.Select(x => new BudgetLineRequest(x.AccountId, x.Category, x.AllocatedAmount, x.Notes)).ToArray()), cancellationToken);
             return Created($"/api/finance/administration/budgets/{budget.Id}", budget);
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
-    [HttpPost("budgets/{budgetId:guid}/lines")]
-    public async Task<IActionResult> AddBudgetLine(Guid budgetId, AddBudgetLineRequest request, CancellationToken cancellationToken)
+    [HttpGet("budgets/{budgetId:guid}/vs-actual")]
+    public async Task<IActionResult> GetBudgetVsActual(Guid budgetId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
     {
-        try { return Ok(await finance.AddBudgetLineAsync(budgetId, request.AccountId, request.Category, request.AllocatedAmount, request.Notes, cancellationToken)); }
+        try { return Ok(await budgets.GetVsActualAsync(budgetId, from, to, cancellationToken)); }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
-        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
     [HttpGet("bank-reconciliations")]
-    public async Task<IActionResult> GetBankReconciliations([FromQuery] Guid? bankAccountId, CancellationToken cancellationToken) =>
-        Ok(await finance.GetBankReconciliationsAsync(bankAccountId, cancellationToken));
+    public async Task<IActionResult> GetBankReconciliations([FromQuery] Guid? bankAccountId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken) =>
+        Ok(await bankReconciliations.GetAsync(bankAccountId, from, to, cancellationToken));
 
     [HttpPost("bank-reconciliations")]
     public async Task<IActionResult> CreateBankReconciliation(CreateBankReconciliationRequest request, CancellationToken cancellationToken)
     {
-        try { return Ok(await finance.CreateBankReconciliationAsync(request.BankAccountId, request.StatementDate, request.StatementBalance, cancellationToken)); }
+        try
+        {
+            var result = await bankReconciliations.CreateAsync(new BankReconciliationServiceCreateRequest(
+                request.BankAccountId,
+                request.StatementDate,
+                request.StatementBalance,
+                request.BookBalance,
+                request.ReconciledAmount,
+                request.Notes), cancellationToken);
+            return Ok(result);
+        }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpGet("bank-reconciliations/{reconciliationId:guid}/lines")]
     public async Task<IActionResult> GetStatementLines(Guid reconciliationId, CancellationToken cancellationToken)
     {
-        try { return Ok(await finance.GetBankStatementLinesAsync(reconciliationId, cancellationToken)); }
+        try { return Ok(await bankReconciliations.GetLinesAsync(reconciliationId, cancellationToken)); }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpGet("bank-reconciliations/{reconciliationId:guid}/outstanding")]
+    public async Task<IActionResult> GetOutstanding(Guid reconciliationId, [FromQuery] DateTimeOffset? asOf, CancellationToken cancellationToken)
+    {
+        try { return Ok(await bankReconciliations.GetOutstandingReportAsync(reconciliationId, asOf, cancellationToken)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
     [HttpPost("bank-reconciliations/{reconciliationId:guid}/lines")]
     public async Task<IActionResult> AddStatementLine(Guid reconciliationId, AddStatementLineRequest request, CancellationToken cancellationToken)
     {
-        try { return Ok(await finance.AddStatementLineAsync(reconciliationId, request.TransactionDate, request.Description, request.Amount, request.TransactionType, request.Reference, cancellationToken)); }
+        try
+        {
+            return Ok(await bankReconciliations.AddLineAsync(reconciliationId, new AddBankStatementLineRequest(
+                request.TransactionDate, request.Amount, request.TransactionType, request.Description, request.Reference), cancellationToken));
+        }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpPost("bank-reconciliations/{reconciliationId:guid}/lines/{statementLineId:guid}/match")]
     public async Task<IActionResult> MatchStatementLine(Guid reconciliationId, Guid statementLineId, MatchStatementLineRequest request, CancellationToken cancellationToken)
     {
-        try { return Ok(await finance.MatchStatementLineAsync(reconciliationId, statementLineId, request.JournalEntryId, cancellationToken)); }
+        try
+        {
+            var line = await bankReconciliations.MatchLineAsync(statementLineId, request.JournalEntryId, cancellationToken);
+            if (line.BankReconciliationId != reconciliationId) return BadRequest(new { message = "The statement line does not belong to the specified reconciliation." });
+            return Ok(line);
+        }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
@@ -74,15 +110,20 @@ public sealed class FinanceAdministrationController(FinanceAdministrationService
         {
             var closedBy = User.Identity?.Name;
             if (string.IsNullOrWhiteSpace(closedBy)) return Unauthorized(new { message = "Authenticated user identity is required to close a reconciliation." });
-            return Ok(await finance.CloseBankReconciliationAsync(reconciliationId, closedBy, cancellationToken));
+            return Ok(await bankReconciliations.ReconcileAsync(reconciliationId, closedBy, cancellationToken));
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
-    public sealed record CreateBudgetRequest(Guid DepartmentId, Guid AcademicYearId, string Name, decimal TotalAmount, string Currency, DateTimeOffset StartDate, DateTimeOffset EndDate);
+    // API-layer request names are kept stable while application services own their domain contracts.
+    public sealed record CreateBudgetRequest(Guid DepartmentId, Guid AcademicYearId, string Name, string Currency, DateTimeOffset StartDate, DateTimeOffset EndDate, IReadOnlyCollection<AddBudgetLineRequest> Lines);
     public sealed record AddBudgetLineRequest(Guid AccountId, string Category, decimal AllocatedAmount, string? Notes = null);
-    public sealed record CreateBankReconciliationRequest(Guid BankAccountId, DateTimeOffset StatementDate, decimal StatementBalance);
-    public sealed record AddStatementLineRequest(DateTimeOffset TransactionDate, string? Description, decimal Amount, string TransactionType, string? Reference = null);
+    public sealed record CreateBankReconciliationRequest(Guid BankAccountId, DateTimeOffset StatementDate, decimal StatementBalance, decimal BookBalance, decimal ReconciledAmount, string? Notes = null);
+    public sealed record AddStatementLineRequest(DateTimeOffset TransactionDate, decimal Amount, string TransactionType, string? Description = null, string? Reference = null);
     public sealed record MatchStatementLineRequest(Guid JournalEntryId);
+
+    private sealed record BudgetServiceCreateBudgetRequest(Guid DepartmentId, Guid AcademicYearId, string Name, string Currency, DateTimeOffset StartDate, DateTimeOffset EndDate, IReadOnlyCollection<BudgetLineRequest> Lines) : BudgetService.CreateBudgetRequest(DepartmentId, AcademicYearId, Name, Currency, StartDate, EndDate, Lines);
+    private sealed record BankReconciliationServiceCreateRequest(Guid BankAccountId, DateTimeOffset StatementDate, decimal StatementBalance, decimal BookBalance, decimal ReconciledAmount, string? Notes) : BankReconciliationService.CreateBankReconciliationRequest(BankAccountId, StatementDate, StatementBalance, BookBalance, ReconciledAmount, Notes);
 }
