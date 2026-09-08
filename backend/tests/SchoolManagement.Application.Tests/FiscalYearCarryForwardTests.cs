@@ -11,6 +11,7 @@ public sealed class FiscalYearCarryForwardTests
     {
         var cash = new Account { Code = "1000", Name = "Cash", AccountType = "Asset" };
         var payable = new Account { Code = "2000", Name = "Payables", AccountType = "Liability" };
+        var retainedEarnings = new Account { Code = "3000", Name = "Retained Earnings", AccountType = "Equity" };
         var revenue = new Account { Code = "4000", Name = "Tuition Income", AccountType = "Revenue" };
         var campusId = Guid.NewGuid();
 
@@ -32,14 +33,17 @@ public sealed class FiscalYearCarryForwardTests
                 Lines = new List<JournalEntryLine>
                 {
                     new() { AccountId = cash.Id, Account = cash, Credit = 25_000m, CampusId = campusId },
-                    new() { AccountId = payable.Id, Account = payable, Debit = 10_000m, CampusId = campusId }
+                    new() { AccountId = payable.Id, Account = payable, Debit = 10_000m, CampusId = campusId },
+                    // The closed-period result is represented by retained earnings before carry-forward.
+                    // This keeps the source ledger balanced while revenue remains excluded from opening balances.
+                    new() { AccountId = retainedEarnings.Id, Account = retainedEarnings, Credit = 15_000m, CampusId = campusId }
                 }
             }
         };
 
         var lines = FiscalYearCarryForwardService.BuildOpeningBalanceLines(entries);
 
-        Assert.Equal(2, lines.Count);
+        Assert.Equal(3, lines.Count);
         var cashLine = Assert.Single(lines, x => x.AccountId == cash.Id);
         Assert.Equal(125_000m, cashLine.Debit);
         Assert.Equal(0m, cashLine.Credit);
@@ -48,6 +52,13 @@ public sealed class FiscalYearCarryForwardTests
         var payableLine = Assert.Single(lines, x => x.AccountId == payable.Id);
         Assert.Equal(0m, payableLine.Debit);
         Assert.Equal(40_000m, payableLine.Credit);
+        Assert.Equal(campusId, payableLine.CampusId);
+
+        var retainedEarningsLine = Assert.Single(lines, x => x.AccountId == retainedEarnings.Id);
+        Assert.Equal(0m, retainedEarningsLine.Debit);
+        Assert.Equal(15_000m, retainedEarningsLine.Credit);
+        Assert.Equal(campusId, retainedEarningsLine.CampusId);
+
         Assert.DoesNotContain(lines, x => x.AccountId == revenue.Id);
         Assert.Equal(lines.Sum(x => x.Debit), lines.Sum(x => x.Credit));
     }
