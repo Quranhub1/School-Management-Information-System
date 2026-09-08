@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createInvoice, getInvoices, recordPayment, type Invoice } from '../api/finance'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { CashBankPositionReport } from './CashBankPositionReport'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
 
@@ -56,7 +57,7 @@ export function FinanceManagement() {
   async function submitInvoice(event: FormEvent) {
     event.preventDefault()
     try {
-      await createInvoice({ studentId: studentId.trim(), invoiceNumber: invoiceNumber.trim(), feeType: 'Tuition', amount: Number(amount), currency: 'UGX' })
+      await createInvoice({ studentId: studentId.trim(), invoiceNumber: invoiceNumber.trim(), feeType: 'Tuition', amount: Number(amount), currency: SYSTEM_CURRENCY })
       setStudentId('')
       setInvoiceNumber('')
       setAmount('')
@@ -70,7 +71,7 @@ export function FinanceManagement() {
     event.preventDefault()
     if (!paymentInvoice) return
     try {
-      await recordPayment(paymentInvoice.id, { amount: Number(paymentAmount), receiptNumber: receiptNumber.trim(), paymentMethod, reference: reference.trim(), currency: paymentInvoice.currency })
+      await recordPayment(paymentInvoice.id, { amount: Number(paymentAmount), receiptNumber: receiptNumber.trim(), paymentMethod, reference: reference.trim(), currency: SYSTEM_CURRENCY })
       setPaymentInvoice(null)
       setPaymentAmount('')
       setReceiptNumber('')
@@ -125,9 +126,9 @@ export function FinanceManagement() {
           {selectedStudent && (
             <>
               <div className="summary-grid" style={{ marginBottom: 22 }}>
-                <div className="summary-card"><span>Total Billed</span><strong>UGX {totalBilled.toLocaleString()}</strong></div>
-                <div className="summary-card"><span>Total Paid</span><strong style={{ color: '#059669' }}>UGX {totalPaid.toLocaleString()}</strong></div>
-                <div className="summary-card"><span>Outstanding Balance</span><strong style={{ color: balanceColor(totalBalance, totalBilled) }}>UGX {totalBalance.toLocaleString()}</strong></div>
+                <div className="summary-card"><span>Total Billed</span><strong>{formatCurrency(totalBilled)}</strong></div>
+                <div className="summary-card"><span>Total Paid</span><strong style={{ color: '#059669' }}>{formatCurrency(totalPaid)}</strong></div>
+                <div className="summary-card"><span>Outstanding Balance</span><strong style={{ color: balanceColor(totalBalance, totalBilled) }}>{formatCurrency(totalBalance)}</strong></div>
                 <div className="summary-card"><span>Invoices</span><strong>{invoices.length}</strong></div>
               </div>
 
@@ -145,8 +146,8 @@ export function FinanceManagement() {
                 {loading ? <p className="empty">Loading payment history…</p> : invoices.length === 0 ? <p className="empty">No invoices found for this student.</p> : (
                   <table><thead><tr><th>Invoice</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
                     <tbody>{invoices.map(invoice => <tr key={invoice.id}>
-                      <td><strong>{invoice.invoiceNumber}</strong></td><td>{invoice.currency} {invoice.amount.toLocaleString()}</td><td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
-                      <td style={{ color: balanceColor(invoice.balance, invoice.amount), fontWeight: 700 }}>{invoice.currency} {invoice.balance.toLocaleString()}</td>
+                      <td><strong>{invoice.invoiceNumber}</strong></td><td>{formatCurrency(invoice.amount)}</td><td style={{ color: '#059669' }}>{formatCurrency(invoice.paidAmount)}</td>
+                      <td style={{ color: balanceColor(invoice.balance, invoice.amount), fontWeight: 700 }}>{formatCurrency(invoice.balance)}</td>
                       <td><span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: invoice.status === 'Paid' ? '#d1fae5' : invoice.status === 'Pending' ? '#fef3c7' : invoice.status === 'Overdue' ? '#fee2e2' : '#e5e7eb', color: invoice.status === 'Paid' ? '#059669' : invoice.status === 'Pending' ? '#92400e' : invoice.status === 'Overdue' ? '#dc2626' : '#374151', fontSize: '.72rem', fontWeight: 800 }}>{invoice.status}</span></td>
                       <td>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</td><td>{invoice.balance > 0 && <button className="secondary-button" onClick={() => setPaymentInvoice(invoice)}>Record Payment</button>}</td>
                     </tr>)}</tbody>
@@ -163,7 +164,7 @@ export function FinanceManagement() {
       {paymentInvoice && (
         <div className="modal-backdrop">
           <form className="auth-card" onSubmit={submitPayment}>
-            <p className="eyebrow">Payment</p><h3>{paymentInvoice.invoiceNumber}</h3><p>Outstanding: {paymentInvoice.currency} {paymentInvoice.balance.toLocaleString()}</p>
+            <p className="eyebrow">Payment</p><h3>{paymentInvoice.invoiceNumber}</h3><p>Outstanding: {formatCurrency(paymentInvoice.balance)}</p>
             <input aria-label="Payment amount" type="number" min="0.01" max={paymentInvoice.balance} step="0.01" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required />
             <input aria-label="Receipt number" placeholder="Receipt number" value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required />
             <select aria-label="Payment method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}><option>Cash</option><option>Bank</option><option>Mobile Money</option><option>Card</option><option>Cheque</option></select>
