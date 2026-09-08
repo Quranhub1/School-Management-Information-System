@@ -35,13 +35,16 @@
       "icons/icon.png",
       "icons/icon.ico"
     ],
+    "licenseFile": "installer/SMIS-Privacy-and-License.txt",
     "windows": {
       "nsis": {
         "installMode": "perMachine",
         "displayLanguageSelector": true,
         "installerIcon": "icons/icon.ico",
         "headerImage": "icons/icon.png",
-        "sidebarImage": "icons/icon.png"
+        "sidebarImage": "icons/icon.png",
+        "uninstallerIcon": "icons/icon.ico",
+        "uninstallerHeaderImage": "icons/icon.png"
       }
     }
   }
