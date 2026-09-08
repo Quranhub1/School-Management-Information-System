@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application.Authentication;
@@ -11,6 +12,7 @@ namespace SchoolManagement.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(AuthService auth, IConfiguration configuration) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
     {
