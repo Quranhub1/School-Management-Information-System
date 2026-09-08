@@ -7,7 +7,7 @@ public sealed class CreditNote
     public required string CreditNoteNumber { get; init; }
     public decimal Amount { get; init; }
     public string Reason { get; init; } = string.Empty;
-    public string Status { get; private set; } = "Issued";
+    public string Status { get; set; } = "Issued";
     public DateTimeOffset IssuedAt { get; init; } = DateTimeOffset.UtcNow;
     public string? IssuedBy { get; init; }
     public DateTimeOffset? AppliedAt { get; init; }
