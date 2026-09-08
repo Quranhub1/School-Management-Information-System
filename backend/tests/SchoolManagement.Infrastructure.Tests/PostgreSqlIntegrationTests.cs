@@ -137,10 +137,11 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
                 '20260908130000_AddFiscalPeriods',
                 '20260908140000_EnforceJournalFiscalPeriods',
                 '20260908150000_AddBudgetManagement',
-                '20260908150000_HardenBankReconciliation');
+                '20260908150000_HardenBankReconciliation',
+                '20260908160000_AddJournalEntrySourceFields');
             """, connection);
 
-        Assert.Equal(6L, (long)(await command.ExecuteScalarAsync())!);
+        Assert.Equal(7L, (long)(await command.ExecuteScalarAsync())!);
     }
 
     private static async Task AssertDatabaseMutationRejectedAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string sql)
