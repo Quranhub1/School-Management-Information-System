@@ -1,3 +1,4 @@
+using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Domain.Finance;
 using Xunit;
@@ -11,7 +12,8 @@ public sealed class StudentChargeServiceTests
     {
         var studentId = Guid.NewGuid();
         var repository = new InMemoryFinanceRepository(studentId);
-        var service = new StudentChargeService(repository);
+        var fiscalPeriods = new StubFiscalPeriodRepository();
+        var service = new StudentChargeService(repository, new FiscalPeriodService(fiscalPeriods));
 
         var charge = await service.CreateAsync(studentId, "LibraryFine", "Lost textbook", 12500.567m, "ugx", "admin");
 
@@ -29,7 +31,8 @@ public sealed class StudentChargeServiceTests
     {
         var studentId = Guid.NewGuid();
         var repository = new InMemoryFinanceRepository(studentId);
-        var service = new StudentChargeService(repository);
+        var fiscalPeriods = new StubFiscalPeriodRepository();
+        var service = new StudentChargeService(repository, new FiscalPeriodService(fiscalPeriods));
         var charge = await service.CreateAsync(studentId, "ExamFee", "Special examination", 50000m, "UGX", "admin");
 
         var voided = await service.VoidAsync(charge.Id, "Charge entered in error", "manager");
@@ -46,11 +49,23 @@ public sealed class StudentChargeServiceTests
     public async Task CreateAsync_RejectsUnknownStudent()
     {
         var repository = new InMemoryFinanceRepository(Guid.NewGuid());
-        var service = new StudentChargeService(repository);
+        var service = new StudentChargeService(repository, new FiscalPeriodService(new StubFiscalPeriodRepository()));
         await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(Guid.NewGuid(), "LibraryFine", "Lost book", 1000m, "UGX", "admin"));
     }
 
-    private sealed class InMemoryFinanceRepository(Guid studentId) : global::SchoolManagement.Application.Finance.IFinanceRepository
+    private sealed class StubFiscalPeriodRepository : IFiscalPeriodRepository
+    {
+        private readonly FiscalPeriod period = new() { Name = "Test Period", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 12, 31) };
+        public Task<IReadOnlyList<FiscalPeriod>> GetFiscalPeriodsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<FiscalPeriod>>([period]);
+        public Task<FiscalPeriod?> GetFiscalPeriodAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<FiscalPeriod?>(period.Id == id ? period : null);
+        public Task<FiscalPeriod?> GetContainingPeriodAsync(DateOnly date, CancellationToken cancellationToken = default) => Task.FromResult<FiscalPeriod?>(period.Contains(date) ? period : null);
+        public Task<bool> NameExistsAsync(string name, Guid? excludingId = null, CancellationToken cancellationToken = default) => Task.FromResult(false);
+        public Task<bool> HasOverlappingPeriodAsync(DateOnly startDate, DateOnly endDate, Guid? excludingId = null, CancellationToken cancellationToken = default) => Task.FromResult(false);
+        public Task AddAsync(FiscalPeriod fiscalPeriod, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class InMemoryFinanceRepository(Guid studentId) : IFinanceRepository
     {
         public List<StudentCharge> Charges { get; } = [];
         public List<JournalEntry> JournalEntries { get; } = [];
