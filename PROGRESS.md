@@ -55,6 +55,8 @@
 - [x] Bank reconciliation workflow with statement lines and journal matching
 - [x] Campus/faculty/department/programme accounting dimensions
 - [x] Dimension-aware journal lines and reports
+- [x] Fiscal-period-aware General Ledger reporting with opening balances
+- [x] Fiscal-period-aware Trial Balance reporting with opening balances
 
 ## Finance — Phase 1: Accounting Integrity
 - [x] Central journal-entry validation
@@ -95,8 +97,8 @@
 ## Finance — Phase 5–6: Production Accounting
 - [x] Campus/faculty/department/programme accounting dimensions
 - [x] Dimension-aware journal lines and reports
-- [ ] Production-grade General Ledger
-- [ ] Production-grade Trial Balance
+- [x] Production-grade General Ledger
+- [x] Production-grade Trial Balance
 - [x] Income Statement API/report foundation
 - [x] Balance Sheet API/report foundation
 - [x] Fiscal-period-aware Income Statement and Balance Sheet foundation
@@ -104,7 +106,6 @@
 - [x] Fiscal periods and period closing foundation
 - [ ] Cash and bank reports
 - [x] Bank transactions and bank reconciliation workflow foundation
-- [x] Budget management and budget-vs-actual API foundation
 - [ ] Production hardening of bank reconciliation, including imports/outstanding-item handling
 
 ## Other platform work
@@ -114,7 +115,6 @@ The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, 
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Upgrade financial statements, GL and Trial Balance to production fiscal-period-aware reporting.
-2. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
-3. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
-4. Audit EF Core migration snapshots/designer artifacts so manually added schema migrations are fully synchronized with the model snapshot before the next migration-generation cycle.
+1. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
+2. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
+3. Audit EF Core migration snapshots/designer artifacts so manually added schema migrations are fully synchronized with the model snapshot before the next migration-generation cycle.
