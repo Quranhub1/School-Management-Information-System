@@ -1,7 +1,7 @@
 # School Management Information System — Project Progress
 
 **Last updated:** 2026-09-08  
-**Current focus:** Production finance hardening, accounting/reporting completeness, and system-wide verification  
+**Current focus:** System-wide feature parity, authorization/audit hardening, user-journey E2E coverage, and production readiness  
 **Tracking branch:** `main`
 
 > Master project tracker. A feature is complete only when its implemented scope is verified in the repository and CI. A model, placeholder endpoint or UI mockup alone does not make a workflow complete.
@@ -59,6 +59,11 @@
 - [x] Dimension-aware journal lines and reports
 - [x] Fiscal-period-aware General Ledger reporting with opening balances
 - [x] Fiscal-period-aware Trial Balance reporting with opening balances
+- [x] Cash position reporting
+- [x] Bank position reporting
+- [x] Mobile-money liquidity position reporting
+- [x] Cash/bank reporting frontend workspace
+- [x] Accounts Overview dashboard workspace for dashboard, outstanding, payments and payroll views
 
 ## Finance — Phase 1: Accounting Integrity
 - [x] Central journal-entry validation
@@ -106,17 +111,17 @@
 - [x] Fiscal-period-aware Income Statement and Balance Sheet foundation
 - [x] Opening balances / retained earnings handling
 - [x] Fiscal periods and period closing foundation
-- [ ] Cash and bank reports beyond reconciliation/account-level reporting
+- [x] Cash and bank position reporting
 - [x] Bank transactions and bank reconciliation workflow foundation
 - [x] Production hardening of bank reconciliation, including JSON statement imports and outstanding-item handling
 
 ## Other platform work
-The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, library, timetable, communication, portals and operational areas remain under incremental verification and production hardening. See repository history and module documentation for detailed status.
+The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, library, timetable, communication, portals and operational areas remain under incremental verification and production hardening. In particular, remaining work must replace any UI placeholders with real, authorized workflows and close discovered vertical-slice gaps in attendance, teaching, hostel and transport.
 
 ## Definition of Done
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Complete cash/bank position reporting and broader finance dashboard/report parity beyond reconciliation.
-2. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
-3. Audit EF Core migration snapshots/designer artifacts so manually added schema migrations are fully synchronized with the model snapshot before the next migration-generation cycle.
+1. Close system-wide vertical-slice gaps: attendance, lecturer/teaching workflows, hostel and transport; remove remaining placeholders.
+2. Harden authorization and audit boundaries, then add major end-to-end user journeys across the completed modules.
+3. Audit EF Core migration snapshots/designer artifacts, deployment configuration, backup/restore, monitoring and Uganda-specific operational configuration.
