@@ -93,23 +93,24 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         if (from.HasValue && to.HasValue && to.Value < from.Value)
             throw new ArgumentException("Report end date cannot be before the start date.");
 
-        if (to.HasValue)
+        if (from.HasValue || to.HasValue)
         {
-            var period = await fiscalPeriods.GetContainingAsync(to.Value, cancellationToken);
-            if (period is not null && (!from.HasValue || from.Value < period.StartDate))
-                from = period.StartDate;
+            var anchor = to ?? from!.Value;
+            var period = await fiscalPeriods.GetContainingAsync(anchor, cancellationToken)
+                ?? throw new ArgumentException($"No fiscal period contains report date {anchor:yyyy-MM-dd}.");
+
+            var effectiveFrom = from ?? period.StartDate;
+            var effectiveTo = to ?? period.EndDate;
+            if (effectiveFrom < period.StartDate || effectiveFrom > period.EndDate ||
+                effectiveTo < period.StartDate || effectiveTo > period.EndDate)
+                throw new ArgumentException($"Report range must remain within fiscal period '{period.Name}' ({period.StartDate:yyyy-MM-dd} to {period.EndDate:yyyy-MM-dd}).");
+
+            return (effectiveFrom, effectiveTo);
         }
-        else if (!from.HasValue)
-        {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var period = await fiscalPeriods.GetContainingAsync(today, cancellationToken);
-            if (period is not null)
-            {
-                from = period.StartDate;
-                to = today;
-            }
-        }
-        return (from, to);
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentPeriod = await fiscalPeriods.GetContainingAsync(today, cancellationToken);
+        return currentPeriod is null ? (null, null) : (currentPeriod.StartDate, today);
     }
 
     private static Dictionary<Guid, decimal> BuildOpeningBalances(IEnumerable<JournalEntry> entries, Guid? accountId, Guid? campusId, Guid? facultyId, Guid? departmentId, Guid? programmeId)
@@ -150,18 +151,24 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
 
     private async Task<(DateOnly? From, DateOnly? To)> ResolveIncomeStatementRangeAsync(DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
     {
-        if (to.HasValue)
+        if (from.HasValue && to.HasValue && to.Value < from.Value)
+            throw new ArgumentException("Report end date cannot be before the start date.");
+
+        if (from.HasValue || to.HasValue)
         {
-            var period = await fiscalPeriods.GetContainingAsync(to.Value, cancellationToken);
-            if (period is not null && (!from.HasValue || from.Value < period.StartDate)) from = period.StartDate;
+            var anchor = to ?? from!.Value;
+            var period = await fiscalPeriods.GetContainingAsync(anchor, cancellationToken)
+                ?? throw new ArgumentException($"No fiscal period contains report date {anchor:yyyy-MM-dd}.");
+            var effectiveFrom = from ?? period.StartDate;
+            var effectiveTo = to ?? period.EndDate;
+            if (effectiveFrom < period.StartDate || effectiveFrom > period.EndDate || effectiveTo < period.StartDate || effectiveTo > period.EndDate)
+                throw new ArgumentException($"Report range must remain within fiscal period '{period.Name}' ({period.StartDate:yyyy-MM-dd} to {period.EndDate:yyyy-MM-dd}).");
+            return (effectiveFrom, effectiveTo);
         }
-        else if (!from.HasValue)
-        {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var period = await fiscalPeriods.GetContainingAsync(today, cancellationToken);
-            if (period is not null) { from = period.StartDate; to = today; }
-        }
-        return (from, to);
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentPeriod = await fiscalPeriods.GetContainingAsync(today, cancellationToken);
+        return currentPeriod is null ? (null, null) : (currentPeriod.StartDate, today);
     }
 
     private static Dictionary<Guid, (Account Account, decimal Debit, decimal Credit)> Aggregate(IEnumerable<JournalEntry> entries)
