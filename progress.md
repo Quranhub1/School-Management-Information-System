@@ -16,6 +16,7 @@
 - ✅ Chart of Accounts and standard school accounting seed accounts.
 - ✅ Student invoicing and automatic double-entry invoice posting.
 - ✅ Student payments and payment-method account mapping.
+- ✅ Unapplied student payment control account and allocation reclassification.
 - ✅ Journal numbering, duplicate protection and balanced journal validation.
 - ✅ General Ledger, Trial Balance and Student Receivables report foundations.
 - ✅ Controlled journal reversal with source/reversal metadata.
@@ -43,7 +44,7 @@
 - 🔄 Fiscal-period-aware production GL and Trial Balance.
 - 🔄 Production financial statement semantics, including retained earnings.
 - 🔄 Cash/bank reporting and bank transactions.
-- 🔄 Bank reconciliation workflow.
+- 🔄 Bank reconciliation workflow, including one-to-one matching controls and bank statement polarity validation.
 - 🔄 Budget vs actual reporting.
 - 🔄 Vendor/payables, payroll and fixed-asset accounting integration where required.
 - 🔄 Finance dashboard and complete frontend workflows.
