@@ -2,12 +2,21 @@
 
 > This file mirrors the master implementation status in `PROGRESS.md`. Items are marked complete only when repository implementation and CI evidence support the status.
 
-## CI — verified on current main
-- 🔄 Latest finance hardening commits are running through GitHub Actions; completion is not marked until CI confirms them.
-- ✅ Frontend CI (previous verified baseline)
-- ✅ Foundation CI (previous verified baseline)
-- ✅ Backend CI (previous verified baseline)
-- ✅ Full System CI (previous verified baseline)
+## 2026-09-09 documentation and acceptance work
+- ✅ Added `INSTALLATION.md` covering PostgreSQL, API, frontend, LAN/Nginx, native Windows client, Windows installer, icon packaging, administrator bootstrap, backups, security, troubleshooting and release procedure.
+- ✅ Updated `README.md` to point to the complete installation guide and document the end-to-end acceptance path.
+- ✅ Updated `BACKEND_SETUP.md` to match the current backend and production setup.
+- ✅ Documented the controlled golden-path test student: Kaigwa Akram / `U075/042` / `2026-09-09`.
+- ✅ Documented administrator login, creation of a restricted test user, authorization checks and the complete admission → enrollment → finance installments → attendance → assessment/results path.
+- ⚠️ The live end-to-end scenario has **not** been executed against a connected school database from this session. It must run against a dedicated test database before production data is touched. No live student record has been fabricated in the repository or claimed as completed.
+- ⚠️ Repository-wide build/test and native installer verification still require an actual CI runner or connected build environment; this session cannot honestly mark those checks green without their results.
+
+## CI
+- 🔄 Latest finance hardening commits require fresh GitHub Actions evidence.
+- ✅ Frontend CI — previous verified baseline.
+- ✅ Foundation CI — previous verified baseline.
+- ✅ Backend CI — previous verified baseline.
+- ✅ Full System CI — previous verified baseline.
 
 ## Finance & Accounting
 
@@ -35,19 +44,12 @@
 - ✅ Controlled fiscal-period reopening with identity and closure metadata reset.
 
 ### Hardening / remaining
-- 🔄 Automated PostgreSQL persistence tests for immutability and reversal.
-- 🔄 Adjustment cancellation/reversal workflow.
-- 🔄 Opening-balance import/posting with balanced double-entry controls.
-- 🔄 Fiscal-year closing/opening-balance carry-forward workflow.
-- 🔄 Accounting dimensions: campus/faculty/department/programme.
-- 🔄 Dimension-aware journal lines and reports.
-- 🔄 Fiscal-period-aware production GL and Trial Balance.
-- 🔄 Production financial statement semantics, including retained earnings.
-- 🔄 Cash/bank reporting and bank transactions.
-- 🔄 Bank reconciliation workflow, including one-to-one matching controls and bank statement polarity validation.
-- 🔄 Budget vs actual reporting.
-- 🔄 Vendor/payables, payroll and fixed-asset accounting integration where required.
-- 🔄 Finance dashboard and complete frontend workflows.
+- 🔄 Fresh automated PostgreSQL persistence verification for the newest finance hardening commits.
+- 🔄 Fresh CI verification of adjustment cancellation/reversal workflow.
+- 🔄 Fresh CI verification of opening-balance/carry-forward workflow.
+- 🔄 Fresh CI verification of accounting dimensions and dimension-aware reporting.
+- 🔄 Fresh CI verification of bank reconciliation and budget-vs-actual paths.
+- 🔄 Full frontend finance workflow smoke test.
 
 ## Core system
 
@@ -60,18 +62,81 @@
 - ✅ Configurable institution/campus/faculty/department/programme structure.
 - ✅ Student lifecycle, identity/authorization, admissions, academic, attendance, assessment and progression foundations.
 - ✅ Library, staff/HR, payroll, certificates, alumni and supporting domain foundations.
+- ✅ Hostel and transport vertical slices.
+- ✅ Teaching-to-attendance vertical slice.
 
 ### Remaining / ongoing
-- ⏳ Production-grade workflows across all domains.
-- ⏳ Frontend parity for backend capabilities.
-- ⏳ Major user-journey E2E coverage.
-- ⏳ Cross-domain reporting and analytics.
-- ⏳ Security, authorization and audit hardening.
-- ⏳ Deployment, backup, monitoring and disaster recovery.
-- ⏳ Institutional configuration and Uganda-specific operational requirements.
+- ⏳ Execute the documented system-wide golden-path acceptance test on an isolated database.
+- ⏳ Execute administrator/restricted-user authorization test.
+- ⏳ Smoke-test every enabled frontend screen and workflow.
+- ⏳ Add/complete major user-journey E2E automation where missing.
+- ⏳ Final authorization/audit boundary audit across remaining modules.
+- ⏳ Final EF Core migration snapshot/designer audit.
+- ⏳ Backup/restore and clean-machine installation verification.
+- ⏳ Native Windows installer and GitHub Release verification.
+- ⏳ Ubuntu native package verification.
 
-## Definition of Done
-A feature is not production-complete merely because it compiles. It requires appropriate business/domain logic, persistence, authorization, validation, UI where applicable, automated tests and successful relevant CI evidence. Finance additionally requires balanced accounting effects, source traceability and controlled corrections without editing posted ledger history.
+## Acceptance test — required golden path
 
-## Current priority
-**Finance accounting hardening → opening balances/fiscal-year workflow → dimensions → bank/budget controls → system-wide workflow parity and production hardening.**
+Test database only:
+
+- Student: **Kaigwa Akram**
+- Assessment/admission number: **U075/042**
+- Admission/reporting date: **2026-09-09**
+- Currency: **UGX**
+
+Required journey:
+
+```text
+admin login
+→ configure/verify institution + academic structure
+→ create application/admission
+→ accept decision
+→ admit student U075/042
+→ enroll student
+→ register courses
+→ generate UGX fees
+→ create installment schedule
+→ record installment payment 1
+→ verify allocation/outstanding balance
+→ record subsequent installment payment(s)
+→ verify ledger/reports
+→ record attendance
+→ enter assessment marks
+→ verify results/transcript/progression behavior
+→ inspect student 360/profile
+→ inspect audit/reporting
+```
+
+Authorization journey:
+
+```text
+admin123 (development/test only)
+→ login
+→ create second test user
+→ assign limited role
+→ login as limited user
+→ verify permitted screens/actions
+→ verify restricted actions return authorization failure
+→ return to admin
+→ deactivate/remove test user
+```
+
+**Important:** `admin123` is a development/test credential only. Production administrators must use a unique strong password.
+
+## Final production gate
+
+1. Fresh backend Release build passes.
+2. Fresh backend test suite passes.
+3. Fresh frontend production build passes.
+4. EF Core migration and snapshot/designer artifacts are consistent.
+5. Isolated golden-path acceptance test passes.
+6. Administrator and restricted-role authorization test passes.
+7. Every enabled screen is smoke-tested without unhandled exceptions.
+8. Backup and restore are verified.
+9. Native Windows x86/x64 installers build successfully.
+10. The installer `.exe` visibly uses the approved SMIS icon.
+11. GitHub Release contains verified Windows installer assets.
+12. Clean-machine installation and first-run server connection succeed.
+13. Ubuntu native package is produced and verified if required for the release.
+14. Production secrets and Uganda-specific operational configuration are reviewed.
