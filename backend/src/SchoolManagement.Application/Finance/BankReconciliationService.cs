@@ -26,7 +26,7 @@ public sealed class BankReconciliationService(IBankReconciliationRepository repo
 
     public async Task<BankStatementLine> AddLineAsync(Guid reconciliationId, AddBankStatementLineRequest request, CancellationToken cancellationToken = default)
     {
-        if (request.Amount < 0) throw new ArgumentException("Statement line amount cannot be negative.");
+        if (request.Amount <= 0) throw new ArgumentException("Statement line amount must be greater than zero.");
         if (string.IsNullOrWhiteSpace(request.TransactionType)) throw new ArgumentException("Transaction type is required.");
         var reconciliation = await repository.GetAsync(reconciliationId, cancellationToken) ?? throw new KeyNotFoundException("Bank reconciliation was not found.");
         if (string.Equals(reconciliation.Status, "Reconciled", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("A completed reconciliation cannot receive new statement lines.");
