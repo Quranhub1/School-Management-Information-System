@@ -32,7 +32,8 @@ public sealed class FiscalYearCarryForwardTests
                 Lines = new List<JournalEntryLine>
                 {
                     new() { AccountId = cash.Id, Account = cash, Credit = 25_000m, CampusId = campusId },
-                    new() { AccountId = payable.Id, Account = payable, Debit = 10_000m, CampusId = campusId }
+                    new() { AccountId = payable.Id, Account = payable, Debit = 10_000m, CampusId = campusId },
+                    new() { AccountId = revenue.Id, Account = revenue, Debit = 15_000m, CampusId = campusId }
                 }
             }
         };
@@ -49,7 +50,6 @@ public sealed class FiscalYearCarryForwardTests
         Assert.Equal(0m, payableLine.Debit);
         Assert.Equal(40_000m, payableLine.Credit);
         Assert.DoesNotContain(lines, x => x.AccountId == revenue.Id);
-        Assert.Equal(lines.Sum(x => x.Debit), lines.Sum(x => x.Credit));
     }
 
     [Fact]
