@@ -32,6 +32,7 @@ public sealed class FinanceProductionHardeningTests
         var charge = new StudentCharge
         {
             StudentId = Guid.NewGuid(),
+            ChargeType = "Adjustment",
             Amount = 125_000m,
             Currency = "UGX",
             Description = "Test charge",
