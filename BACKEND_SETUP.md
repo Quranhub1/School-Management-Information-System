@@ -1,148 +1,220 @@
 # Running the SMIS Backend
 
-## Option 1: Mock Backend (Quick Testing - No .NET Required)
+This file is the backend-specific quick reference. For the complete installation of PostgreSQL, API, frontend, LAN deployment, native Windows client, installer, backups, security and end-to-end acceptance testing, use [`INSTALLATION.md`](INSTALLATION.md).
 
-Use this to quickly test the frontend without needing .NET or PostgreSQL.
+## 1. Quick mock-backend testing
 
-### Start the mock API:
+The mock server can be used for UI smoke testing without .NET/PostgreSQL:
+
 ```bash
 cd backend/mock-server
 npm install
 npm start
 ```
 
-The mock API runs at `http://localhost:5000`
+It normally runs at `http://localhost:5000`.
 
-### Test accounts:
-- **Student:** `student1` / `password`
-- **Admin:** `admin` / `password`
+Start the frontend in another terminal:
 
-### Start the frontend:
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-The frontend will be at `http://localhost:5173`
+The mock server is not a production backend and must not be used for institutional records.
 
-**Note:** The mock server uses in-memory data. It implements:
-- Authentication (`/api/auth/login`)
-- Student portal (`/api/student-portal/*`)
-- Global search (`/api/search`)
-- Notices board (`/api/notices/board`)
-- Messages (`/api/messages/*`)
-- Academic streams (`/api/academic-structure/streams`)
-- Health check (`/api/health`)
+## 2. Real backend prerequisites
 
----
+- .NET 8 SDK
+- PostgreSQL 15/16 recommended
+- Git
+- Node.js 24/npm for the frontend
 
-## Option 2: Real .NET Backend (Production Development)
+## 3. PostgreSQL
 
-### Prerequisites:
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- PostgreSQL database
+Ubuntu/Debian:
 
-### 1. Start PostgreSQL:
 ```bash
-# Ubuntu/Debian
-sudo systemctl start postgresql
-
-# Or using Docker:
-docker run --name smis-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+sudo apt update
+sudo apt install -y postgresql postgresql-contrib
+sudo systemctl enable --now postgresql
 ```
 
-### 2. Configure connection string:
-Edit `backend/src/SchoolManagement.Api/appsettings.json`:
-```json
-{
-  "ConnectionStrings": {
-    "SchoolManagement": "Host=localhost;Port=5432;Database=school_management;Username=postgres;Password=postgres"
-  },
-  "Authentication": {
-    "JwtKey": "your-secret-key-here-min-32-chars-long"
-  }
-}
+Create a dedicated application role/database. Never commit the production password.
+
+Example:
+
+```sql
+CREATE USER smis_app WITH PASSWORD 'REPLACE_WITH_A_LONG_RANDOM_PASSWORD';
+CREATE DATABASE school_management OWNER smis_app;
+GRANT ALL PRIVILEGES ON DATABASE school_management TO smis_app;
 ```
 
-### 3. Run database migrations:
-```bash
-cd backend/src/SchoolManagement.Api
-dotnet ef database update
+## 4. API configuration
+
+Project:
+
+```text
+backend/src/SchoolManagement.Api
 ```
 
-If migrations don't exist yet, create them:
+Recommended production environment variables:
+
 ```bash
-cd backend
-dotnet ef migrations add InitialCreate --project src/SchoolManagement.Infrastructure --startup-project src/SchoolManagement.Api
+export ConnectionStrings__SchoolManagement='Host=localhost;Port=5432;Database=school_management;Username=smis_app;Password=REPLACE_ME'
+export Authentication__JwtKey='REPLACE_WITH_A_RANDOM_SECRET_AT_LEAST_32_CHARACTERS'
+export ASPNETCORE_ENVIRONMENT='Production'
+```
+
+The institutional currency is **UGX (Ugandan Shilling)**.
+
+## 5. Database migration
+
+From `backend/`:
+
+```bash
+dotnet restore
 dotnet ef database update --project src/SchoolManagement.Infrastructure --startup-project src/SchoolManagement.Api
 ```
 
-### 4. Start the backend:
+Install EF tooling if required:
+
 ```bash
-cd backend/src/SchoolManagement.Api
-dotnet watch run
+dotnet tool install --global dotnet-ef --version 8.*
 ```
 
-The API will be available at:
-- HTTP: `http://localhost:5000`
-- HTTPS: `https://localhost:5001`
-- Swagger UI: `https://localhost:5001/swagger`
+Review migrations before applying them to production.
 
-### 5. Start the frontend (separate terminal):
+## 6. Build/test/run
+
+```bash
+cd backend
+dotnet build SchoolManagement.sln --configuration Release
+dotnet test SchoolManagement.sln --configuration Release
+cd src/SchoolManagement.Api
+dotnet run
+```
+
+Health endpoint:
+
+```text
+/api/health
+```
+
+Swagger is available when enabled by the environment.
+
+## 7. Administrator bootstrap
+
+In a controlled development/bootstrap database, create a System Administrator using the registration endpoint if registration is enabled:
+
+```bash
+curl -X POST http://localhost:5000/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"REPLACE_WITH_A_STRONG_PASSWORD","firstName":"System","lastName":"Administrator","roles":["SystemAdministrator"]}'
+```
+
+The development seed may provide `admin` / `admin123` where that seed is enabled. This credential is **development-only** and must be changed before production deployment.
+
+## 8. Frontend connection
+
 ```bash
 cd frontend
-npm install
+npm ci
+npm run build
 npm run dev
 ```
 
-The frontend will be at `http://localhost:5173`
+If the API is hosted on a different origin, configure the frontend's supported Vite API-base environment setting for that environment.
 
-### 6. Create admin user:
-```bash
-curl -X POST https://localhost:5001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"YourSecurePassword123!","firstName":"System","lastName":"Admin","roles":["SystemAdministrator"]}'
-```
+## 9. Production service
 
----
-
-## Environment Variables (Production)
-
-Set these environment variables for production deployment:
+Publish:
 
 ```bash
-export ConnectionStrings__SchoolManagement="Host=localhost;Port=5432;Database=school_management;Username=postgres;Password=secure_password"
-export Authentication__JwtKey="your-very-secure-secret-key-at-least-32-characters"
-export ASPNETCORE_ENVIRONMENT="Production"
+cd backend/src/SchoolManagement.Api
+dotnet publish -c Release -o /opt/schoolmanagement/api
 ```
 
----
+A systemd service should execute:
 
-## Default Credentials (Development Only)
+```text
+/usr/bin/dotnet /opt/schoolmanagement/api/SchoolManagement.Api.dll
+```
 
-After running the setup script or seeding:
-- Username: `admin`
-- Password: `admin123`
+Then:
 
-**Change these immediately in production!**
-
----
-
-## Troubleshooting
-
-**Port already in use:**
 ```bash
-# Change port in launchSettings.json or use:
-dotnet run --urls http://localhost:5002
+sudo systemctl daemon-reload
+sudo systemctl enable --now schoolmanagement.service
+sudo systemctl status schoolmanagement.service
 ```
 
-**Database connection fails:**
-- Ensure PostgreSQL is running: `sudo systemctl status postgresql`
-- Verify connection string in `appsettings.json`
-- Check firewall rules if using remote database
+## 10. Full acceptance path
 
-**Frontend can't connect to backend:**
-- Ensure backend is running on port 5000
-- Check CORS settings in `Program.cs`
-- Verify `VITE_API_BASE_URL` in frontend `.env` if set
+Do not use production data for acceptance testing. Use a dedicated test database.
+
+The required golden-path test student is:
+
+- **Name:** Kaigwa Akram
+- **Assessment/admission number:** `U075/042`
+- **Test admission/reporting date:** `2026-09-09`
+
+Verify the complete path:
+
+```text
+Administrator login
+→ institution/academic structure
+→ application/admission
+→ acceptance/decision
+→ admission
+→ enrollment
+→ course registration
+→ UGX billing
+→ installment schedule
+→ payment 1
+→ payment allocation/balance
+→ payment 2/final installment as applicable
+→ ledger/report verification
+→ attendance
+→ assessment/results
+→ student profile/360
+→ audit/reporting
+```
+
+Also create a second test user with restricted permissions, log in as that user, verify permitted screens, verify restricted operations are rejected, then deactivate/delete the test account as appropriate.
+
+## 11. Troubleshooting
+
+### PostgreSQL connection failure
+
+```bash
+sudo systemctl status postgresql
+sudo journalctl -u schoolmanagement.service -n 200
+```
+
+Check the database name, role, password, host, port and migration history.
+
+### Frontend/API mismatch
+
+Verify the configured API origin, CORS policy, HTTPS certificate and `/api/health`.
+
+### Authentication failure
+
+Verify the user exists, the password is correct, the account is active, the JWT key is configured, and the user has the required role/policy.
+
+### Migration failure
+
+Do not delete/reset a production database. Capture the exact error, inspect migration history/schema state, and correct the migration safely.
+
+## 12. Production security
+
+- Replace all development/default credentials.
+- Keep JWT/database secrets out of Git.
+- Use HTTPS.
+- Do not expose PostgreSQL directly to clients.
+- Back up PostgreSQL and test restores.
+- Review audit logs.
+- Verify authorization server-side for sensitive operations.
+
+See [`INSTALLATION.md`](INSTALLATION.md) for the complete release checklist.
