@@ -15,49 +15,14 @@ public sealed class BankReconciliationService(IBankReconciliationRepository repo
 
     public async Task<BankReconciliationOutstandingReport> GetOutstandingReportAsync(Guid reconciliationId, DateTimeOffset? asOf = null, CancellationToken cancellationToken = default)
     {
-        var reconciliation = await repository.GetAsync(reconciliationId, cancellationToken)
-            ?? throw new KeyNotFoundException("Bank reconciliation was not found.");
-
+        var reconciliation = await repository.GetAsync(reconciliationId, cancellationToken) ?? throw new KeyNotFoundException("Bank reconciliation was not found.");
         var lines = await repository.GetLinesAsync(reconciliationId, cancellationToken);
         var reportDate = asOf ?? DateTimeOffset.UtcNow;
-        if (reportDate < reconciliation.StatementDate)
-            throw new ArgumentException("Report date cannot be earlier than the statement date.", nameof(asOf));
-
-        var outstanding = lines
-            .Where(x => !x.IsMatched)
-            .OrderBy(x => x.TransactionDate)
-            .ThenBy(x => x.CreatedAt)
-            .Select(x => new OutstandingBankStatementLine(
-                x.Id,
-                x.TransactionDate,
-                x.Amount,
-                x.TransactionType,
-                x.Description,
-                x.Reference,
-                Math.Max(0, (int)Math.Floor((reportDate - x.TransactionDate).TotalDays))))
-            .ToArray();
-
-        var credits = outstanding
-            .Where(x => x.TransactionType.Equals("Credit", StringComparison.OrdinalIgnoreCase))
-            .Sum(x => x.Amount);
-        var debits = outstanding
-            .Where(x => x.TransactionType.Equals("Debit", StringComparison.OrdinalIgnoreCase))
-            .Sum(x => x.Amount);
-
-        return new BankReconciliationOutstandingReport(
-            reconciliation.Id,
-            reconciliation.BankAccountId,
-            reconciliation.StatementDate,
-            reconciliation.Status,
-            reconciliation.StatementBalance,
-            reconciliation.BookBalance,
-            reconciliation.StatementBalance - reconciliation.BookBalance,
-            lines.Count,
-            lines.Count(x => x.IsMatched),
-            outstanding.Length,
-            credits,
-            debits,
-            outstanding);
+        if (reportDate < reconciliation.StatementDate) throw new ArgumentException("Report date cannot be earlier than the statement date.", nameof(asOf));
+        var outstanding = lines.Where(x => !x.IsMatched).OrderBy(x => x.TransactionDate).ThenBy(x => x.CreatedAt).Select(x => new OutstandingBankStatementLine(x.Id, x.TransactionDate, x.Amount, x.TransactionType, x.Description, x.Reference, Math.Max(0, (int)Math.Floor((reportDate - x.TransactionDate).TotalDays)))).ToArray();
+        var credits = outstanding.Where(x => x.TransactionType.Equals("Credit", StringComparison.OrdinalIgnoreCase)).Sum(x => x.Amount);
+        var debits = outstanding.Where(x => x.TransactionType.Equals("Debit", StringComparison.OrdinalIgnoreCase)).Sum(x => x.Amount);
+        return new BankReconciliationOutstandingReport(reconciliation.Id, reconciliation.BankAccountId, reconciliation.StatementDate, reconciliation.Status, reconciliation.StatementBalance, reconciliation.BookBalance, reconciliation.StatementBalance - reconciliation.BookBalance, lines.Count, lines.Count(x => x.IsMatched), outstanding.Length, credits, debits, outstanding);
     }
 
     public async Task<BankReconciliation> CreateAsync(CreateBankReconciliationRequest request, CancellationToken cancellationToken = default)
@@ -92,7 +57,8 @@ public sealed class BankReconciliationService(IBankReconciliationRepository repo
         var reconciliation = await repository.GetAsync(line.BankReconciliationId, cancellationToken) ?? throw new KeyNotFoundException("Bank reconciliation was not found.");
         if (string.Equals(reconciliation.Status, "Reconciled", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("A completed reconciliation cannot be changed.");
         var entry = await finance.GetPostedJournalEntryAsync(journalEntryId, cancellationToken) ?? throw new ArgumentException("The journal entry was not found or is not posted.");
-        var expected = line.TransactionType.Equals("Debit", StringComparison.OrdinalIgnoreCase) ? line.Amount : -line.Amount;
+        // Bank statement credits increase the bank asset (debit in the GL); statement debits decrease it (credit in the GL).
+        var expected = line.TransactionType.Equals("Credit", StringComparison.OrdinalIgnoreCase) ? line.Amount : -line.Amount;
         var journalNet = entry.Lines.Where(x => x.AccountId == reconciliation.BankAccountId).Sum(x => x.Debit - x.Credit);
         if (Math.Abs(journalNet - expected) > 0.01m) throw new InvalidOperationException("The journal entry amount does not match the bank statement line for this bank account.");
         line.IsMatched = true; line.MatchedJournalEntryId = journalEntryId; line.Status = "Matched"; line.UpdatedAt = DateTimeOffset.UtcNow;
