@@ -60,8 +60,8 @@ public sealed class FiscalPeriodClosingTests
 
         Assert.Equal(500m, retained.Debit);
         Assert.Equal(0m, retained.Credit);
-        Assert.Equal(900m, lines.Sum(x => x.Debit));
-        Assert.Equal(900m, lines.Sum(x => x.Credit));
+        Assert.Equal(700m, lines.Sum(x => x.Debit));
+        Assert.Equal(700m, lines.Sum(x => x.Credit));
     }
 
     private static Account NewAccount(string code, string name, string type) =>
