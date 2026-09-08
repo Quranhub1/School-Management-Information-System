@@ -1,0 +1,30 @@
+name: Desktop CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/desktop-ci.yml'
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/desktop-ci.yml'
+
+jobs:
+  build-windows-desktop:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore desktop/SchoolManagement.Desktop/SchoolManagement.Desktop.csproj
+
+      - name: Build
+        run: dotnet build desktop/SchoolManagement.Desktop/SchoolManagement.Desktop.csproj --configuration Release --no-restore
