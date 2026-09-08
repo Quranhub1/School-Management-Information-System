@@ -18,6 +18,23 @@ public sealed class BankReconciliationController(BankReconciliationService servi
     public async Task<IActionResult> GetLines(Guid reconciliationId, CancellationToken cancellationToken)
         => Ok(await service.GetLinesAsync(reconciliationId, cancellationToken));
 
+    [HttpGet("{reconciliationId:guid}/outstanding")]
+    public async Task<IActionResult> GetOutstanding(Guid reconciliationId, [FromQuery] DateTimeOffset? asOf, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await service.GetOutstandingReportAsync(reconciliationId, asOf, cancellationToken));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreateBankReconciliationRequest request, CancellationToken cancellationToken)
     {
