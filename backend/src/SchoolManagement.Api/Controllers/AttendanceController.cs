@@ -119,6 +119,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     private string CreateQrToken(Guid sessionId, long slot)
     {
         var secret = configuration["Security:AttendanceQrSecret"]
+            ?? configuration["SMIS_ATTENDANCE_QR_SECRET"]
             ?? Environment.GetEnvironmentVariable("SMIS_ATTENDANCE_QR_SECRET");
         if (string.IsNullOrWhiteSpace(secret))
             throw new InvalidOperationException("Attendance QR security secret is not configured. Set SMIS_ATTENDANCE_QR_SECRET on the server.");
