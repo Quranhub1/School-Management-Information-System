@@ -7,7 +7,7 @@
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build && npx @tauri-apps/cli@2.8.4 icon src-tauri/icons/smis.svg"
+    "beforeBuildCommand": "npm run build && npx @tauri-apps/cli@2.8.4 icon public/icon.png"
   },
   "app": {
     "windows": [
