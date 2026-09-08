@@ -28,6 +28,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> GetCreditNotes(Guid invoiceId, CancellationToken cancellationToken) => Ok(await adjustments.GetCreditNotesAsync(invoiceId, cancellationToken));
     [HttpPost("invoices/{invoiceId:guid}/credit-notes")]
     public async Task<IActionResult> CreateCreditNote(Guid invoiceId, CreateCreditNoteRequest request, CancellationToken cancellationToken) { try { return Created($"/api/finance/invoices/{invoiceId}/credit-notes", await adjustments.CreateCreditNoteAsync(invoiceId, request.Amount, request.Reason, User.Identity?.Name, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    [HttpPost("credit-notes/{creditNoteId:guid}/cancel")]
+    public async Task<IActionResult> CancelCreditNote(Guid creditNoteId, CancelCreditNoteRequest request, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a credit note cancellation." }); return Ok(await adjustments.CancelCreditNoteAsync(creditNoteId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
     [HttpPost("payments/{paymentId:guid}/refund")]
     public async Task<IActionResult> RefundPayment(Guid paymentId, CreateRefundRequest request, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a refund." }); return Ok(await adjustments.CreateRefundAsync(paymentId, request.Amount, request.RefundMethod, request.Reason, request.Reference, user, request.CreditNoteId, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
     [HttpPost("invoices")]
@@ -71,6 +73,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public sealed record CreateStudentChargeRequest(string ChargeType, string Description, decimal Amount, string Currency = "UGX");
     public sealed record VoidStudentChargeRequest(string Reason);
     public sealed record CreateCreditNoteRequest(decimal Amount, string Reason);
+    public sealed record CancelCreditNoteRequest(string Reason);
     public sealed record CreateRefundRequest(decimal Amount, string RefundMethod, string Reason, string? Reference = null, Guid? CreditNoteId = null);
     public sealed record RequestDiscountRequest(string DiscountType, decimal? Percentage, decimal? Amount, string Reason);
     public sealed record CreateInstallmentScheduleRequest(IReadOnlyCollection<InvoiceInstallmentService.InstallmentRequest> Installments);
