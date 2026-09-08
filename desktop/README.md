@@ -1,26 +1,24 @@
 # SMIS Desktop Client
 
-The School Management Information System includes a native Windows desktop client intended to feel like a conventional installed school-management application rather than a browser tab.
+The School Management Information System desktop client is being packaged as a standalone installed application for Windows and Ubuntu/Linux.
 
-## Architecture
+## Target behavior
 
-- **Shell:** .NET 8 WPF
-- **Embedded UI:** Microsoft WebView2
-- **Backend:** the existing authenticated SMIS ASP.NET Core API
-- **Database:** PostgreSQL remains server-side; the desktop client never connects directly to PostgreSQL
+- Opens from a desktop shortcut/application menu like a conventional school-management application.
+- No Chrome/Edge/Firefox address bar, tabs or browser controls are exposed.
+- Uses the computer's existing Ethernet/Wi-Fi network connection automatically.
+- Connects to the configured SMIS server over HTTPS/LAN without connecting directly to PostgreSQL.
+- Provides a server connection/health check so an unavailable network or server produces a useful message instead of a crash.
 
-The shell owns the application window, title, lifecycle, navigation policy, and browser-feature restrictions. Users do not see an address bar, tabs, browser chrome, or developer tools.
+## Supported client targets
 
-## Production configuration
+- Windows 10 and Windows 11, x64.
+- Supported Ubuntu LTS releases, x64.
 
-Before packaging for deployment, replace the production system URI in `MainWindow.xaml.cs` with the institution's final HTTPS frontend origin. The final packaging phase should also bundle the approved frontend build and serve it through the desktop shell's local application origin so the installed client does not depend on a normal browser session.
+Compatibility is validated by CI against the operating-system/runtime combinations used for release builds. No installer can honestly guarantee every historical Ubuntu release indefinitely because operating-system libraries and security support change over time.
 
-## Local build
+## Packaging architecture
 
-From a Windows machine with the .NET 8 SDK and WebView2 Runtime installed:
+The desktop package will contain the approved React frontend as local application assets. The native shell loads those assets itself and communicates with the remote SMIS API. This keeps the application independent of a user's normal web browser while retaining the central server/database architecture.
 
-```powershell
-dotnet build desktop/SchoolManagement.Desktop/SchoolManagement.Desktop.csproj -c Release
-```
-
-The WebView2 Runtime is a Windows prerequisite for the embedded UI.
+Windows uses the Windows WebView2 runtime. Ubuntu/Linux uses the platform WebKit runtime supplied by the operating system/package dependencies. The application does not install or modify network adapters, Wi-Fi settings, or PostgreSQL on client computers.
