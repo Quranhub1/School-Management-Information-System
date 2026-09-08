@@ -40,6 +40,7 @@
 - [x] Credit-note workflow and posting
 - [x] Credit-note/refund posting now respects open fiscal periods
 - [x] Refund workflow and posting safeguards
+- [x] Credit-note cancellation/reversal with audit trail and duplicate-cancellation protection
 - [x] Receivables ageing
 - [x] Student Receivables control-account reconciliation
 - [x] Database-level posted journal immutability
@@ -87,7 +88,9 @@
 - [x] Credit-note application to invoices
 - [x] Refund workflow
 - [x] Refund journal posting
-- [ ] Adjustment cancellation/reversal workflow
+- [x] Adjustment cancellation/reversal workflow
+- [x] Cancellation audit fields and API endpoint
+- [x] Cancellation idempotency and re-credit safeguards
 
 ## Finance — Phase 5–6: Production Accounting
 - [x] Campus/faculty/department/programme accounting dimensions
@@ -111,7 +114,7 @@ The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, 
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Complete adjustment cancellation/reversal with full auditability.
-2. Upgrade financial statements, GL and Trial Balance to production fiscal-period-aware reporting.
-3. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
-4. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
+1. Upgrade financial statements, GL and Trial Balance to production fiscal-period-aware reporting.
+2. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
+3. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
+4. Audit EF Core migration snapshots/designer artifacts so manually added schema migrations are fully synchronized with the model snapshot before the next migration-generation cycle.
