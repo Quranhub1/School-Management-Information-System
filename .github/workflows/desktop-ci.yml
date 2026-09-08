@@ -14,6 +14,10 @@ on:
 jobs:
   build-windows-desktop:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [win-x86, win-x64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,12 +34,12 @@ jobs:
         run: dotnet build desktop/SchoolManagement.Desktop/SchoolManagement.Desktop.csproj --configuration Release --no-restore
 
       - name: Publish self-contained Windows client
-        run: dotnet publish desktop/SchoolManagement.Desktop/SchoolManagement.Desktop.csproj --configuration Release --runtime win-x64 --self-contained true --output desktop/publish/win-x64 --no-restore
+        run: dotnet publish desktop/SchoolManagement.Desktop/SchoolManagement.Desktop.csproj --configuration Release --runtime ${{ matrix.architecture }} --self-contained true --output desktop/publish/${{ matrix.architecture }} --no-restore
 
       - name: Upload Windows publish artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SchoolManagement-Desktop-win-x64
-          path: desktop/publish/win-x64
+          name: SchoolManagement-Desktop-${{ matrix.architecture }}
+          path: desktop/publish/${{ matrix.architecture }}
           if-no-files-found: error
           retention-days: 14
