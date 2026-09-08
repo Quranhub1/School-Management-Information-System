@@ -1,4 +1,3 @@
-using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Attendance;
 using SchoolManagement.Domain.Attendance;
 using Xunit;
@@ -96,7 +95,7 @@ public sealed class AttendanceServiceHardeningTests
         Status = "Open"
     };
 
-    private sealed class FakeAttendanceRepository : IAttendanceRepository
+    private sealed class FakeAttendanceRepository : SchoolManagement.Application.Abstractions.IAttendanceRepository
     {
         public AttendanceSession? Session { get; set; }
         public bool StudentEligible { get; set; }
