@@ -76,6 +76,9 @@ public sealed class AttendanceService(SchoolManagement.Application.Abstractions.
         if (!string.Equals(session.Status, "Open", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Attendance cannot be recorded after the session has been closed.");
 
+        if (!await attendance.IsStudentEligibleForSessionAsync(attendanceSessionId, studentId, cancellationToken))
+            throw new InvalidOperationException("The student is not registered for the course associated with this attendance session.");
+
         var existing = await attendance.GetStudentAttendanceAsync(attendanceSessionId, studentId, cancellationToken);
         if (existing is not null)
             throw new InvalidOperationException("Attendance has already been recorded for this student in this session.");
