@@ -54,16 +54,14 @@ public sealed class FiscalYearCarryForwardService(
         if (lines.Count == 0)
             throw new InvalidOperationException($"Fiscal period '{source.Name}' has no balance-sheet balances to carry forward.");
 
-        var entry = await openingBalances.CreateAsync(
+        return await openingBalances.CreateAsync(
             target.Id,
             lines,
             request.PerformedBy.Trim(),
             cancellationToken);
-
-        return entry;
     }
 
-    internal static IReadOnlyList<OpeningBalanceLineRequest> BuildOpeningBalanceLines(
+    public static IReadOnlyList<OpeningBalanceLineRequest> BuildOpeningBalanceLines(
         IEnumerable<JournalEntry> entries)
     {
         var balances = entries
