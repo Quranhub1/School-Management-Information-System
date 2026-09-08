@@ -1,3 +1,4 @@
+using SchoolManagement.Application.Finance;
 using SchoolManagement.Domain.Finance;
 using Xunit;
 
