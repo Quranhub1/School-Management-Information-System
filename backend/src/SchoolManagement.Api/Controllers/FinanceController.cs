@@ -12,9 +12,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId, CancellationToken cancellationToken) =>
-        !studentId.HasValue || studentId.Value == Guid.Empty
-            ? BadRequest(new { message = "studentId is required." })
-            : Ok(await finance.GetStudentInvoicesAsync(studentId.Value, cancellationToken));
+        !studentId.HasValue || studentId.Value == Guid.Empty ? BadRequest(new { message = "studentId is required." }) : Ok(await finance.GetStudentInvoicesAsync(studentId.Value, cancellationToken));
 
     [HttpGet("students/{studentId:guid}/ledger")]
     public async Task<IActionResult> GetStudentLedger(Guid studentId, CancellationToken cancellationToken) => Ok(await finance.GetStudentLedgerAsync(studentId, cancellationToken));
@@ -92,13 +90,13 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a reversal." }); return Ok(await reversals.ReverseAsync(journalEntryId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
 
     [HttpGet("reports/general-ledger")]
-    public async Task<IActionResult> GeneralLedger([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? accountId, CancellationToken cancellationToken) => Ok(await reports.GetGeneralLedgerAsync(from, to, accountId, cancellationToken));
+    public async Task<IActionResult> GeneralLedger([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? accountId, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken) => Ok(await reports.GetGeneralLedgerAsync(from, to, accountId, campusId, facultyId, departmentId, programmeId, cancellationToken));
     [HttpGet("reports/trial-balance")]
-    public async Task<IActionResult> TrialBalance([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken) => Ok(await reports.GetTrialBalanceAsync(from, to, cancellationToken));
+    public async Task<IActionResult> TrialBalance([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken) => Ok(await reports.GetTrialBalanceAsync(from, to, campusId, facultyId, departmentId, programmeId, cancellationToken));
     [HttpGet("reports/income-statement")]
-    public async Task<IActionResult> IncomeStatement([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken) => Ok(await reports.GetIncomeStatementAsync(from, to, cancellationToken));
+    public async Task<IActionResult> IncomeStatement([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken) => Ok(await reports.GetIncomeStatementAsync(from, to, campusId, facultyId, departmentId, programmeId, cancellationToken));
     [HttpGet("reports/balance-sheet")]
-    public async Task<IActionResult> BalanceSheet([FromQuery] DateOnly? asOf, CancellationToken cancellationToken) => Ok(await reports.GetBalanceSheetAsync(asOf, cancellationToken));
+    public async Task<IActionResult> BalanceSheet([FromQuery] DateOnly? asOf, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken) => Ok(await reports.GetBalanceSheetAsync(asOf, campusId, facultyId, departmentId, programmeId, cancellationToken));
     [HttpGet("reports/student-receivables")]
     public async Task<IActionResult> StudentReceivables(CancellationToken cancellationToken) => Ok(await reports.GetStudentReceivablesAsync(cancellationToken));
 
