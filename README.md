@@ -4,37 +4,94 @@ A comprehensive, modular and LAN-first School Management Information System (SMI
 
 ## Project status
 
-**Active development — all feature branches merged into `main`. Frontend and backend build successfully. CI is green.**
+**Active development — final production-readiness and deployment verification.** The repository contains the core academic, admissions, student, assessment, attendance, finance, staff, hostel, transport, library, clinical/workplace-learning, reporting and administration capabilities. The authoritative implementation tracker is [`PROGRESS.md`](PROGRESS.md).
 
-The system is feature-complete across all core domains and passes backend and frontend builds. See [PROGRESS.md](PROGRESS.md) for detailed module coverage.
+## Complete installation
 
-New capabilities in this release:
-- Intelligent timetable generation with conflict detection
-- QR-based attendance with HMAC-SHA256 signed rotating tokens
-- Digital certificates with verification hashes and revocation
-- Student 360° unified profile view
-- Analytics dashboard (examination analytics, teacher workload, administration assistant Q&A)
-- Document management with upload/archive/download/delete
-- Workflow engine with history tracking
-- Complete Finance module: invoices, payments, installments, credit notes, refunds, ledger, journal
-- Admissions workflow: application → decision → enrollment
-- Staff/HR management with leave and payroll
-- Library management with circulation and external integrations
+**Start here:** [`INSTALLATION.md`](INSTALLATION.md)
 
-See [`PROGRESS.md`](PROGRESS.md) for the authoritative implementation tracker, verified capabilities and remaining work.
+The complete installation guide covers the full stack, including:
 
-## Technology
+- PostgreSQL database installation and configuration
+- ASP.NET Core 8 API installation, configuration and migrations
+- React/Vite frontend installation and production build
+- LAN deployment and Nginx/HTTPS configuration
+- Native Windows desktop client
+- Windows x86/x64 installer generation
+- The approved `frontend/public/icon.png` and Windows installer icon handling
+- First-run server connection checks
+- Administrator bootstrap and role-based access
+- Institutional setup order
+- Backup/restore
+- Production security
+- Troubleshooting
+- Release and deployment checklist
+- End-to-end acceptance testing
 
-- **Frontend:** React + TypeScript + Vite
-- **Backend:** ASP.NET Core / C#
-- **Data access:** Entity Framework Core
-- **Database:** PostgreSQL preferred
-- **Production server:** Ubuntu Server
-- **Reverse proxy:** Nginx
-- **CI:** GitHub Actions
-- **Deployment:** on-premises / LAN-first
+## Quick development setup
 
-## Institutional structure
+### Prerequisites
+
+- .NET 8 SDK
+- PostgreSQL 15/16 recommended
+- Node.js 24 and npm
+- Git
+- Rust toolchain for Tauri Windows builds
+
+### Backend
+
+```bash
+cd backend
+dotnet restore
+dotnet build SchoolManagement.sln
+dotnet test SchoolManagement.sln
+```
+
+Configure PostgreSQL and the JWT key through environment variables or the appropriate local configuration. Then apply migrations:
+
+```bash
+dotnet ef database update --project src/SchoolManagement.Infrastructure --startup-project src/SchoolManagement.Api
+```
+
+Run the API:
+
+```bash
+cd src/SchoolManagement.Api
+dotnet run
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm ci
+npm run build
+npm run dev
+```
+
+For the complete production procedure, follow [`INSTALLATION.md`](INSTALLATION.md), not this abbreviated setup.
+
+## Authentication and administration
+
+The API uses JWT authentication and server-side authorization policies. A System Administrator account is required to configure the institution and exercise all administration workflows.
+
+Development/bootstrap environments may use the documented `admin` / `admin123` seed where that seed is enabled. **This is not a production credential. Change it immediately before production use and never commit production passwords.**
+
+The acceptance guide includes a controlled administrator test in which a second limited-role user is created and verified to ensure that authorization is enforced rather than merely hiding screens.
+
+## End-to-end acceptance test
+
+The repository includes an explicit golden-path acceptance procedure in [`INSTALLATION.md`](INSTALLATION.md). It uses a dedicated test database and the following test student data:
+
+- Name: **Kaigwa Akram**
+- Assessment/admission number: **U075/042**
+- Test admission/reporting date: **2026-09-09**
+
+The path covers admission, enrollment, course registration, UGX fee billing, installment payments, ledger verification, attendance, assessment/results, student profile and reporting. **Do not run this scenario against a production database.**
+
+## System scope
+
+### Institutional structure
 
 ```text
 Institution
@@ -51,7 +108,7 @@ Institution
     └── Intake
 ```
 
-## Student lifecycle
+### Student lifecycle
 
 ```text
 Application → Admission → Student → Enrollment → Period Registration
@@ -59,7 +116,7 @@ Application → Admission → Student → Enrollment → Period Registration
 → Assessment → Results → Progression → Completion → Graduation / Certification → Alumni
 ```
 
-## Core domains
+### Core domains
 
 - Identity and role-based access
 - Institution, campus, faculty and department management
@@ -68,11 +125,12 @@ Application → Admission → Student → Enrollment → Period Registration
 - Student and guardian management
 - Academic years, periods and intakes
 - Courses and course registration
-- Attendance (including QR-based attendance)
+- Attendance, including QR attendance
 - Theory, practical, clinical and competency-based assessment
 - Results, progression and transcripts
 - Staff and teaching allocation
 - Finance and fees
+- Hostel and transport
 - Library
 - Clinical/workplace attachment
 - Graduation, certification and alumni
@@ -82,42 +140,47 @@ Application → Admission → Student → Enrollment → Period Registration
 
 Student/guardian self-service portals are **not part of the current scope**. Academic results, transcripts and institutional records are managed by authorized school staff through the local SMIS.
 
-## Finance accounting
+## Finance and currency
 
-The Finance domain is being upgraded toward ERP-grade double-entry accounting, using mature ERP accounting patterns as design references while keeping the SMIS architecture and institutional workflows intact. The implemented foundation connects student billing and payments to the General Ledger through a chart of accounts, automatic invoice/payment posting, balanced journal validation, duplicate-posting protection and core ledger/report foundations.
+The institutional system currency is **UGX — Ugandan Shilling**. Finance workflows cover invoices, payments, installments, allocation, receivables, ledger, journals, credit notes/refunds, fiscal periods, budgets, bank reconciliation/reporting, accounting dimensions and financial statements foundations.
 
-The current receivables workflow includes controlled journal reversals, source/reversal metadata, itemized fee billing, payment allocation/FIFO allocation, unallocated student payments, a student Payment Ledger, and approved discount/waiver workflows. Invoice installment schedules now support reusable percentage- or amount-based payment schedules with ordered due dates, outstanding/overdue tracking and automatic application of invoice payments across installment balances.
+Amounts entered as `125000` represent **UGX 125,000**. Production deployments must not silently reinterpret institutional amounts as USD, EUR or another currency.
 
-The remaining Finance roadmap includes persistence-level posted-entry immutability, dedicated audit events, student charges, credit notes/refunds, bank reconciliation, accounting dimensions and complete financial statements.
+## Windows installer and icon
 
-See [`PROGRESS.md`](PROGRESS.md) for the exact verified Finance status and roadmap.
+The approved application icon is `frontend/public/icon.png` and must retain that exact filename. The Tauri packaging process generates the Windows icon assets from it. The resulting NSIS installer is a Windows `.exe` whose own file icon is the SMIS icon; the installed application and shortcuts use the same branding.
 
-## Uganda alignment
-
-The institutional model is designed around Ugandan higher-education and TVET realities, including configurable programmes, approved curricula, admissions, competency-based education/training where applicable, practical/workplace learning and assessment. It is not hard-coded to one regulator or one institution.
-
-See [`docs/UGANDA_INSTITUTIONAL_MODEL.md`](docs/UGANDA_INSTITUTIONAL_MODEL.md) for the authoritative table catalogue and field definitions.
+The installer is intended to be distributed through GitHub Releases and can then be copied to a flash disk for offline transfer to the target Windows machine.
 
 ## Documentation
 
-- [Implementation progress](PROGRESS.md)
-- [System architecture](docs/ARCHITECTURE.md)
-- [Requirements](docs/REQUIREMENTS.md)
-- [Uganda institutional data model](docs/UGANDA_INSTITUTIONAL_MODEL.md)
-- [Database architecture](docs/DATABASE.md)
-- [API architecture](docs/API.md)
-- [Security baseline](docs/SECURITY.md)
-- [Deployment architecture](docs/DEPLOYMENT.md)
-- [Architecture decisions](docs/adr/)
+- [`INSTALLATION.md`](INSTALLATION.md) — complete installation, deployment, acceptance testing and release checklist
+- [`PROGRESS.md`](PROGRESS.md) — authoritative implementation and production-gate tracker
+- [`BACKEND_SETUP.md`](BACKEND_SETUP.md) — backend-focused setup notes
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system architecture
+- [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) — requirements
+- [`docs/UGANDA_INSTITUTIONAL_MODEL.md`](docs/UGANDA_INSTITUTIONAL_MODEL.md) — Uganda institutional data model
+- [`docs/DATABASE.md`](docs/DATABASE.md) — database architecture
+- [`docs/API.md`](docs/API.md) — API architecture
+- [`docs/SECURITY.md`](docs/SECURITY.md) — security baseline
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — deployment architecture
+- [`docs/adr/`](docs/adr/) — architecture decisions
 
-## Development workflow
+## Verification policy
 
-1. Define requirements.
-2. Record architecture decisions where needed.
-3. Create a feature/fix branch from the current verified baseline.
-4. Implement the change.
-5. Add/update automated tests.
-6. Update `README.md`, `PROGRESS.md` and relevant documentation.
-7. Run GitHub Actions CI.
-8. Review the change.
-9. Merge only verified work into `main`.
+A feature is not considered production-ready merely because its screen exists. Release verification must cover build/test results, database migrations, authentication, authorization, real persistence, validation, audit behavior, the complete admission-to-finance-to-assessment golden path, and clean-machine installation.
+
+Run the full automated baseline before release:
+
+```bash
+cd backend
+dotnet restore SchoolManagement.sln
+dotnet build SchoolManagement.sln --configuration Release
+dotnet test SchoolManagement.sln --configuration Release
+
+cd ../frontend
+npm ci
+npm run build
+```
+
+Then require successful GitHub Actions results and a successful Windows installer build before distributing the installer.
