@@ -20,6 +20,28 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             var session = await service.OpenSessionAsync(request.TimetableEntryId, request.SessionDate, request.RecordedByUserId, request.Remarks, cancellationToken);
             return Created($"/api/attendance/sessions/{session.Id}", session);
         }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("sessions/{attendanceSessionId:guid}/close")]
+    public async Task<IActionResult> CloseSession(Guid attendanceSessionId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var session = await service.CloseSessionAsync(attendanceSessionId, cancellationToken);
+            return Ok(session);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return Conflict(new { message = ex.Message });
@@ -54,6 +76,10 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status ?? "Present", request.Remarks, cancellationToken);
             return Created($"/api/attendance/records/{record.Id}", record);
         }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
         catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
@@ -71,6 +97,10 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         {
             var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status, request.Remarks, cancellationToken);
             return Created($"/api/attendance/records/{record.Id}", record);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
         }
         catch (ArgumentException ex)
         {
