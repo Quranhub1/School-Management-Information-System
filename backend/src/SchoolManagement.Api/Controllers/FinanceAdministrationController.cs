@@ -19,7 +19,7 @@ public sealed class FinanceAdministrationController(BudgetService budgets, BankR
     {
         try
         {
-            var budget = await budgets.CreateAsync(new BudgetServiceCreateBudgetRequest(
+            var budget = await budgets.CreateAsync(new SchoolManagement.Application.Finance.CreateBudgetRequest(
                 request.DepartmentId,
                 request.AcademicYearId,
                 request.Name,
@@ -49,7 +49,7 @@ public sealed class FinanceAdministrationController(BudgetService budgets, BankR
     {
         try
         {
-            var result = await bankReconciliations.CreateAsync(new BankReconciliationServiceCreateRequest(
+            var result = await bankReconciliations.CreateAsync(new SchoolManagement.Application.Finance.CreateBankReconciliationRequest(
                 request.BankAccountId,
                 request.StatementDate,
                 request.StatementBalance,
@@ -66,6 +66,7 @@ public sealed class FinanceAdministrationController(BudgetService budgets, BankR
     {
         try { return Ok(await bankReconciliations.GetLinesAsync(reconciliationId, cancellationToken)); }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
     [HttpGet("bank-reconciliations/{reconciliationId:guid}/outstanding")]
@@ -123,7 +124,4 @@ public sealed class FinanceAdministrationController(BudgetService budgets, BankR
     public sealed record CreateBankReconciliationRequest(Guid BankAccountId, DateTimeOffset StatementDate, decimal StatementBalance, decimal BookBalance, decimal ReconciledAmount, string? Notes = null);
     public sealed record AddStatementLineRequest(DateTimeOffset TransactionDate, decimal Amount, string TransactionType, string? Description = null, string? Reference = null);
     public sealed record MatchStatementLineRequest(Guid JournalEntryId);
-
-    private sealed record BudgetServiceCreateBudgetRequest(Guid DepartmentId, Guid AcademicYearId, string Name, string Currency, DateTimeOffset StartDate, DateTimeOffset EndDate, IReadOnlyCollection<BudgetLineRequest> Lines) : BudgetService.CreateBudgetRequest(DepartmentId, AcademicYearId, Name, Currency, StartDate, EndDate, Lines);
-    private sealed record BankReconciliationServiceCreateRequest(Guid BankAccountId, DateTimeOffset StatementDate, decimal StatementBalance, decimal BookBalance, decimal ReconciledAmount, string? Notes) : BankReconciliationService.CreateBankReconciliationRequest(BankAccountId, StatementDate, StatementBalance, BookBalance, ReconciledAmount, Notes);
 }
