@@ -15,6 +15,8 @@ public sealed class BudgetService(IBudgetRepository budgets, IFinanceRepository 
 
     public async Task<Budget> CreateAsync(CreateBudgetRequest request, CancellationToken cancellationToken = default)
     {
+        if (request.DepartmentId == Guid.Empty) throw new ArgumentException("Department is required.");
+        if (request.AcademicYearId == Guid.Empty) throw new ArgumentException("Academic year is required.");
         if (string.IsNullOrWhiteSpace(request.Name)) throw new ArgumentException("Budget name is required.");
         if (request.EndDate < request.StartDate) throw new ArgumentException("Budget end date cannot be before the start date.");
         if (request.Lines.Count == 0) throw new ArgumentException("At least one budget line is required.");
@@ -49,9 +51,13 @@ public sealed class BudgetService(IBudgetRepository budgets, IFinanceRepository 
     public async Task<IReadOnlyList<BudgetVsActualRow>> GetVsActualAsync(Guid budgetId, DateOnly? from, DateOnly? to, CancellationToken cancellationToken = default)
     {
         var budget = await budgets.GetAsync(budgetId, cancellationToken) ?? throw new KeyNotFoundException("Budget was not found.");
-        var start = from ?? DateOnly.FromDateTime(budget.StartDate.UtcDateTime);
-        var end = to ?? DateOnly.FromDateTime(budget.EndDate.UtcDateTime);
+        var budgetStart = DateOnly.FromDateTime(budget.StartDate.UtcDateTime);
+        var budgetEnd = DateOnly.FromDateTime(budget.EndDate.UtcDateTime);
+        var start = from ?? budgetStart;
+        var end = to ?? budgetEnd;
         if (end < start) throw new ArgumentException("Report end date cannot be before the start date.");
+        if (start < budgetStart || end > budgetEnd)
+            throw new ArgumentException($"Budget actual reporting range must remain within {budgetStart:yyyy-MM-dd} and {budgetEnd:yyyy-MM-dd}.");
 
         var journals = await finance.GetPostedJournalEntriesAsync(start, end, null, cancellationToken);
         var actuals = journals.SelectMany(x => x.Lines)
