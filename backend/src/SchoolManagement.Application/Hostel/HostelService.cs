@@ -51,9 +51,7 @@ public sealed class HostelService(IHostelRepository repository)
 
     public async Task VacateAsync(Guid allocationId, DateOnly endDate, CancellationToken cancellationToken = default)
     {
-        var hostels = await repository.GetHostelsAsync(cancellationToken);
-        var allocation = hostels.SelectMany(h => h.Rooms).SelectMany(r => r.Beds).SelectMany(b => b.Allocations).FirstOrDefault(a => a.Id == allocationId);
-        if (allocation is null) throw new KeyNotFoundException("Allocation not found.");
+        var allocation = await repository.GetAllocationAsync(allocationId, cancellationToken) ?? throw new KeyNotFoundException("Allocation not found.");
         if (allocation.Status != "Active") throw new InvalidOperationException("Allocation is already closed.");
         if (endDate < allocation.StartDate) throw new ArgumentException("End date cannot be before the start date.", nameof(endDate));
         allocation.EndDate = endDate;
