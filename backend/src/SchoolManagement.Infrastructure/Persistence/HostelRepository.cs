@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Hostel;
 
@@ -29,5 +30,16 @@ public sealed class HostelRepository(SchoolManagementDbContext db) : IHostelRepo
 
     public Task AddAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class => db.Set<T>().AddAsync(entity, cancellationToken).AsTask();
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg &&
+            (pg.ConstraintName == "UX_HostelAllocations_ActiveBed" || pg.ConstraintName == "UX_HostelAllocations_ActiveStudent"))
+        {
+            throw new InvalidOperationException("The hostel allocation conflicts with an existing active allocation.", ex);
+        }
+    }
 }
