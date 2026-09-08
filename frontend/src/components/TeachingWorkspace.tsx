@@ -1,0 +1,39 @@
+import { useEffect, useMemo, useState } from 'react'
+import { getSession } from '../api/auth'
+import { listTimetable, type TimetableEntry } from '../api/timetable'
+
+const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+export function TeachingWorkspace() {
+  const session = getSession()
+  const username = session?.username ?? 'Lecturer'
+  const [entries, setEntries] = useState<TimetableEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let mounted = true
+    void listTimetable().then(result => {
+      if (!mounted) return
+      setEntries(result.filter(entry => entry.isActive))
+    }).catch(e => {
+      if (mounted) setError(e instanceof Error ? e.message : 'Unable to load teaching schedule.')
+    }).finally(() => { if (mounted) setLoading(false) })
+    return () => { mounted = false }
+  }, [])
+
+  const today = new Date().getDay()
+  const todayEntries = useMemo(() => entries.filter(entry => entry.dayOfWeek === today), [entries, today])
+
+  return <section className="panel" aria-label="Teaching workspace">
+    <div className="panel-heading"><div><p className="eyebrow">LECTURER</p><h2>Teaching Workspace</h2><p>Welcome, {username}. Review your active teaching schedule and move directly into attendance for a class.</p></div></div>
+    {error && <div className="error" role="alert">{error}</div>}
+    {loading ? <p className="empty">Loading teaching schedule…</p> : <>
+      <div className="table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Room</th><th>Session</th><th>Teaching group</th><th>Course</th><th>Action</th></tr></thead><tbody>
+        {entries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{entry.startTime.slice(0, 5)}–{entry.endTime.slice(0, 5)}</td><td>{entry.room ?? '—'}</td><td>{entry.sessionType ?? '—'}</td><td>{entry.teachingGroupId}</td><td>{entry.courseId}</td><td><button className="secondary-button" onClick={() => window.dispatchEvent(new CustomEvent('smis:navigate-module', { detail: 'attendance' }))}>Take attendance</button></td></tr>)}
+        {entries.length === 0 && <tr><td colSpan={7} className="empty">No active teaching sessions are assigned.</td></tr>}
+      </tbody></table></div>
+      <div className="panel" style={{ marginTop: 18 }}><div className="panel-heading"><div><p className="eyebrow">TODAY</p><h3>{days[today]} teaching sessions</h3></div></div><p>{todayEntries.length === 0 ? 'No classes are scheduled for today.' : `${todayEntries.length} active class${todayEntries.length === 1 ? '' : 'es'} scheduled today.`}</p></div>
+    </>}
+  </section>
+}
