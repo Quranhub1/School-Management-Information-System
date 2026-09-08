@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SchoolManagement.Api.Controllers;
@@ -6,6 +7,7 @@ namespace SchoolManagement.Api.Controllers;
 [Route("api/health")]
 public sealed class HealthController : ControllerBase
 {
+    [AllowAnonymous]
     [HttpGet]
     public IActionResult Get() => Ok(new
     {
