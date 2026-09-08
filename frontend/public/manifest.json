@@ -1,11 +1,11 @@
 {
-  "name": "Institution Management System",
-  "short_name": "IMS",
-  "description": "Tertiary Institution Management System",
+  "name": "School Management Information System",
+  "short_name": "SMIS",
+  "description": "School Management Information System",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#12375C",
+  "background_color": "#06439B",
+  "theme_color": "#06439B",
   "orientation": "any",
   "icons": [
     {
