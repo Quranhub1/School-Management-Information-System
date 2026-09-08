@@ -41,13 +41,13 @@ jobs:
           dotnet ef migrations add ${{ github.event.inputs.migration_name }} \
             --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
             --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
-            --output-dir src/SchoolManagement.Infrastructure/Persistence/Migrations
+            --output-dir Migrations
 
       - name: Commit migration
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add backend/src/SchoolManagement.Infrastructure/Persistence/Migrations
+          git add backend/src/SchoolManagement.Infrastructure/Migrations
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore(db): add EF Core migration ${{ github.event.inputs.migration_name }}"
           git push
