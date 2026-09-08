@@ -52,6 +52,8 @@
 - [x] Opening-balance posting workflow
 - [x] Budget management and budget-vs-actual API foundation
 - [x] Bank reconciliation workflow with statement lines and journal matching
+- [x] Campus/faculty/department/programme accounting dimensions
+- [x] Dimension-aware journal lines and reports
 
 ## Finance — Phase 1: Accounting Integrity
 - [x] Central journal-entry validation
@@ -66,7 +68,6 @@
 ## Finance — Phase 2: Student Billing
 - [x] Fee categories
 - [x] Itemized fee structures
-- [x] Fee items
 - [x] Installments / fee schedules
 - [x] Discounts
 - [x] Waivers
@@ -89,8 +90,8 @@
 - [ ] Adjustment cancellation/reversal workflow
 
 ## Finance — Phase 5–6: Production Accounting
-- [ ] Campus/faculty/department/programme accounting dimensions
-- [ ] Dimension-aware journal lines and reports
+- [x] Campus/faculty/department/programme accounting dimensions
+- [x] Dimension-aware journal lines and reports
 - [ ] Production-grade General Ledger
 - [ ] Production-grade Trial Balance
 - [x] Income Statement API/report foundation
@@ -111,7 +112,6 @@ A workflow is covered only when business/domain logic, persistence, authorizatio
 
 ## Immediate roadmap
 1. Complete adjustment cancellation/reversal with full auditability.
-2. Add accounting dimensions and dimension-aware journal/reporting.
-3. Upgrade financial statements, GL and Trial Balance to production fiscal-period-aware reporting.
-4. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
-5. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
+2. Upgrade financial statements, GL and Trial Balance to production fiscal-period-aware reporting.
+3. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
+4. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
