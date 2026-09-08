@@ -17,7 +17,9 @@
 - [x] Transport service test for duplicate active student assignment
 - [x] Hostel/attendance closure merged to `main` in PR #98
 - [x] Transport closure merged to `main` in PR #99
-- [ ] Re-run full CI after the latest merged changes
+- [x] Finance fiscal-closing calculation corrected to subtract expenses from revenue when transferring net income/loss
+- [x] Finance unit-test fixtures aligned with mandatory open fiscal-period enforcement
+- [ ] CI verification of the latest finance hardening changes
 
 ## Finance
 - [x] Double-entry invoice/payment posting, balanced journals and duplicate-posting protection
@@ -48,7 +50,7 @@
 - [ ] Replace any remaining non-functional placeholders discovered by final repository audit
 
 ## Final production gate
-1. Run the full CI/test suite on the latest `main` after PRs #98 and #99.
+1. Verify the latest finance hardening changes through CI.
 2. Add API/integration tests for authorized attendance manual and QR paths.
 3. Audit EF Core migration snapshots/designer artifacts and deployment configuration.
 4. Verify backup/restore, monitoring, secrets and Uganda-specific operational configuration before production sign-off.
