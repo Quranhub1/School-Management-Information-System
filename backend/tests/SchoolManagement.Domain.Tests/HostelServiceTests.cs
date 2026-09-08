@@ -2,6 +2,7 @@ using FluentAssertions;
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Hostel;
 using SchoolManagement.Domain.Hostel;
+using HostelEntity = SchoolManagement.Domain.Hostel.Hostel;
 
 namespace SchoolManagement.Domain.Tests;
 
@@ -34,16 +35,16 @@ public sealed class HostelServiceTests
 
     private sealed class FakeHostelRepository : IHostelRepository
     {
-        public Hostel? Hostel { get; set; }
+        public HostelEntity? Hostel { get; set; }
         public HostelRoom? Room { get; set; }
         public HostelBed? Bed { get; set; }
         public HostelAllocation? Allocation { get; set; }
         public HostelAllocation? ActiveBedAllocation { get; set; }
         public HostelAllocation? ActiveStudentAllocation { get; set; }
-        public List<Hostel> Hostels { get; } = [];
+        public List<HostelEntity> Hostels { get; } = [];
 
-        public Task<IReadOnlyList<Hostel>> GetHostelsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Hostel>>(Hostels);
-        public Task<Hostel?> GetHostelAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Hostel?.Id == id ? Hostel : new Hostel { Id = id, Name = "Test" });
+        public Task<IReadOnlyList<HostelEntity>> GetHostelsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<HostelEntity>>(Hostels);
+        public Task<HostelEntity?> GetHostelAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Hostel?.Id == id ? Hostel : new HostelEntity { Id = id, Name = "Test" });
         public Task<HostelRoom?> GetRoomAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Room?.Id == id ? Room : null);
         public Task<HostelBed?> GetBedAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Bed?.Id == id ? Bed : null);
         public Task<HostelAllocation?> GetAllocationAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Allocation?.Id == id ? Allocation : null);
