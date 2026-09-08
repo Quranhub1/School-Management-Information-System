@@ -1,4 +1,3 @@
-using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Attendance;
 using SchoolManagement.Domain.Attendance;
 using Xunit;
@@ -36,6 +35,12 @@ public sealed class AttendanceWorkflowServiceTests
     {
         public Task<AttendanceSession?> GetSessionAsync(Guid timetableEntryId, DateOnly sessionDate, CancellationToken cancellationToken = default) =>
             Task.FromResult<AttendanceSession?>(null);
+
+        public Task<AttendanceSession?> GetSessionByIdAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<AttendanceSession?>(null);
+
+        public Task<bool> IsStudentEligibleForSessionAsync(Guid attendanceSessionId, Guid studentId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
 
         public Task<StudentAttendance?> GetStudentAttendanceAsync(Guid attendanceSessionId, Guid studentId, CancellationToken cancellationToken = default) =>
             Task.FromResult<StudentAttendance?>(null);
