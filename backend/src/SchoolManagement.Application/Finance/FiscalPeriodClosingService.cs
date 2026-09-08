@@ -45,9 +45,6 @@ public sealed class FiscalPeriodClosingService(IFinanceRepository finance, IFisc
             await finance.AddJournalEntryAsync(entry, cancellationToken);
         }
 
-        // FinanceRepository and FiscalPeriodRepository share the scoped EF
-        // DbContext. Saving only here keeps the closing journal and the period
-        // status change in the same SaveChanges transaction.
         period.Close(performedBy);
         await periods.SaveChangesAsync(cancellationToken);
         return period;
@@ -72,9 +69,18 @@ public sealed class FiscalPeriodClosingService(IFinanceRepository finance, IFisc
         foreach (var item in balances.Where(x => IsExpense(x.Account.AccountType)))
             result.Add(new JournalEntryLine { AccountId = item.Key.AccountId, Description = $"Close expense - {item.Account.Name}", Debit = item.Credit > item.Debit ? item.Credit - item.Debit : 0m, Credit = item.Debit > item.Credit ? item.Debit - item.Credit : 0m, CampusId = item.Key.CampusId, FacultyId = item.Key.FacultyId, DepartmentId = item.Key.DepartmentId, ProgrammeId = item.Key.ProgrammeId });
 
+        // Net income is revenue less expenses. Revenue balances are normally
+        // credits and expense balances are normally debits, so expenses must
+        // reduce—not add to—the income transferred to retained earnings.
         var netIncomeByDimension = balances
             .GroupBy(x => new { x.Key.CampusId, x.Key.FacultyId, x.Key.DepartmentId, x.Key.ProgrammeId })
-            .Select(g => new { g.Key, Amount = g.Sum(x => IsRevenue(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit) })
+            .Select(g => new
+            {
+                g.Key,
+                Amount = g.Sum(x => IsRevenue(x.Account.AccountType)
+                    ? x.Credit - x.Debit
+                    : -(x.Debit - x.Credit))
+            })
             .Where(x => x.Amount != 0m);
 
         foreach (var item in netIncomeByDimension)
