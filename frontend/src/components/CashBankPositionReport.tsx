@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { getCashBankPosition, type CashBankPositionReport } from '../api/finance'
-
-function money(value: number) {
-  return `UGX ${value.toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
-}
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 
 export function CashBankPositionReport() {
   const [report, setReport] = useState<CashBankPositionReport | null>(null)
@@ -56,17 +53,17 @@ export function CashBankPositionReport() {
       {loading && !report ? <p className="empty">Loading cash and bank position…</p> : report && (
         <>
           <div className="summary-grid" style={{ marginBottom: 18 }}>
-            <div className="summary-card"><span>Opening Liquid Funds</span><strong>{money(report.totalOpeningBalance)}</strong></div>
-            <div className="summary-card"><span>Total Inflows</span><strong>{money(report.totalInflows)}</strong></div>
-            <div className="summary-card"><span>Total Outflows</span><strong>{money(report.totalOutflows)}</strong></div>
-            <div className="summary-card"><span>Closing Liquid Funds</span><strong>{money(report.totalClosingBalance)}</strong></div>
+            <div className="summary-card"><span>Opening Liquid Funds</span><strong>{formatCurrency(report.totalOpeningBalance)}</strong></div>
+            <div className="summary-card"><span>Total Inflows</span><strong>{formatCurrency(report.totalInflows)}</strong></div>
+            <div className="summary-card"><span>Total Outflows</span><strong>{formatCurrency(report.totalOutflows)}</strong></div>
+            <div className="summary-card"><span>Closing Liquid Funds</span><strong>{formatCurrency(report.totalClosingBalance)}</strong></div>
           </div>
 
           <div className="summary-grid" style={{ marginBottom: 18 }}>
-            <div className="summary-card"><span>Cash Closing</span><strong>{money(report.accounts.find(x => x.accountCode === '1010')?.closingBalance ?? 0)}</strong></div>
-            <div className="summary-card"><span>Bank Closing</span><strong>{money(report.accounts.find(x => x.accountCode === '1020')?.closingBalance ?? 0)}</strong></div>
-            <div className="summary-card"><span>Mobile Money Closing</span><strong>{money(report.accounts.find(x => x.accountCode === '1030')?.closingBalance ?? 0)}</strong></div>
-            <div className="summary-card"><span>Net Movement</span><strong>{money(report.netMovement)}</strong></div>
+            <div className="summary-card"><span>Cash Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1010')?.closingBalance ?? 0)}</strong></div>
+            <div className="summary-card"><span>Bank Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1020')?.closingBalance ?? 0)}</strong></div>
+            <div className="summary-card"><span>Mobile Money Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1030')?.closingBalance ?? 0)}</strong></div>
+            <div className="summary-card"><span>Net Movement</span><strong>{formatCurrency(report.netMovement)}</strong></div>
           </div>
 
           <div className="table-wrap">
@@ -76,19 +73,19 @@ export function CashBankPositionReport() {
                 {report.accounts.map(account => (
                   <tr key={account.accountId}>
                     <td><strong>{account.accountCode}</strong><br />{account.accountName}</td>
-                    <td>{money(account.openingBalance)}</td>
-                    <td>{money(account.inflows)}</td>
-                    <td>{money(account.outflows)}</td>
-                    <td>{money(account.netMovement)}</td>
-                    <td><strong>{money(account.closingBalance)}</strong></td>
+                    <td>{formatCurrency(account.openingBalance)}</td>
+                    <td>{formatCurrency(account.inflows)}</td>
+                    <td>{formatCurrency(account.outflows)}</td>
+                    <td>{formatCurrency(account.netMovement)}</td>
+                    <td><strong>{formatCurrency(account.closingBalance)}</strong></td>
                     <td>{account.reconciliationStatus}</td>
-                    <td>{account.reconciliationDifference === undefined ? '—' : money(account.reconciliationDifference)}</td>
+                    <td>{account.reconciliationDifference === undefined ? '—' : formatCurrency(account.reconciliationDifference)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="empty" style={{ marginTop: 12 }}>Period: {report.from} to {report.to} · Currency: {report.currency}</p>
+          <p className="empty" style={{ marginTop: 12 }}>Period: {report.from} to {report.to} · Currency: {SYSTEM_CURRENCY}</p>
         </>
       )}
     </section>
