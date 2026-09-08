@@ -1,0 +1,10 @@
+using SchoolManagement.Application.Abstractions;
+using SchoolManagement.Application.Transport;
+using SchoolManagement.Domain.Transport;
+using Xunit;
+namespace SchoolManagement.Domain.Tests;
+public sealed class TransportServiceTests
+{
+ [Fact] public async Task Assign_rejects_duplicate_active_student() { var route=new TransportRoute{Name="R",Fee=0}; var vehicle=new TransportVehicle{RegistrationNumber="UAA001A",VehicleType="Bus",Capacity=20}; var repo=new FakeRepo{Route=route,Vehicle=vehicle,Existing=new TransportAssignment{StudentId=Guid.NewGuid(),RouteId=route.Id,VehicleId=vehicle.Id,StartDate=new DateOnly(2026,1,1)}}; var service=new TransportService(repo); await Assert.ThrowsAsync<InvalidOperationException>(()=>service.AssignAsync(repo.Existing.StudentId,route.Id,vehicle.Id,new DateOnly(2026,9,8))); }
+ private sealed class FakeRepo:ITransportRepository { public TransportRoute? Route{get;init;} public TransportVehicle? Vehicle{get;init;} public TransportAssignment? Existing{get;init;} public Task<IReadOnlyList<TransportVehicle>> GetVehiclesAsync(CancellationToken c=default)=>Task.FromResult<IReadOnlyList<TransportVehicle>>(Array.Empty<TransportVehicle>()); public Task<IReadOnlyList<TransportRoute>> GetRoutesAsync(CancellationToken c=default)=>Task.FromResult<IReadOnlyList<TransportRoute>>(Array.Empty<TransportRoute>()); public Task<IReadOnlyList<TransportAssignment>> GetAssignmentsAsync(CancellationToken c=default)=>Task.FromResult<IReadOnlyList<TransportAssignment>>(Array.Empty<TransportAssignment>()); public Task<TransportRoute?> GetRouteAsync(Guid id,CancellationToken c=default)=>Task.FromResult(Route); public Task<TransportVehicle?> GetVehicleAsync(Guid id,CancellationToken c=default)=>Task.FromResult(Vehicle); public Task<TransportAssignment?> GetActiveAssignmentAsync(Guid studentId,CancellationToken c=default)=>Task.FromResult(Existing); public Task AddAsync<T>(T e,CancellationToken c=default) where T:class=>Task.CompletedTask; public Task SaveChangesAsync(CancellationToken c=default)=>Task.CompletedTask; }
+}
