@@ -18,6 +18,9 @@ public sealed class HostelRepository(SchoolManagementDbContext db) : IHostelRepo
     public Task<HostelBed?> GetBedAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.Set<HostelBed>().FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
+    public Task<HostelAllocation?> GetAllocationAsync(Guid id, CancellationToken cancellationToken = default) =>
+        db.Set<HostelAllocation>().FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+
     public Task<HostelAllocation?> GetActiveAllocationByBedAsync(Guid bedId, CancellationToken cancellationToken = default) =>
         db.Set<HostelAllocation>().FirstOrDefaultAsync(a => a.BedId == bedId && a.Status == "Active", cancellationToken);
 
