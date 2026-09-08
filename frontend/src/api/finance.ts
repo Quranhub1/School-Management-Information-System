@@ -77,6 +77,43 @@ export interface BankStatementLine {
   matchedJournalEntryId?: string
 }
 
+export interface CashBankPositionLine {
+  accountId: string
+  accountCode: string
+  accountName: string
+  accountType: string
+  openingBalance: number
+  inflows: number
+  outflows: number
+  netMovement: number
+  closingBalance: number
+  reconciliationStatus: string
+  reconciledAt?: string
+  statementBalance?: number
+  reconciliationDifference?: number
+}
+
+export interface CashBankPositionReport {
+  from: string
+  to: string
+  currency: string
+  accounts: CashBankPositionLine[]
+  openingCash: number
+  openingBank: number
+  openingMobileMoney: number
+  cashInflows: number
+  cashOutflows: number
+  bankInflows: number
+  bankOutflows: number
+  mobileMoneyInflows: number
+  mobileMoneyOutflows: number
+  totalOpeningBalance: number
+  totalInflows: number
+  totalOutflows: number
+  netMovement: number
+  totalClosingBalance: number
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken()
   const response = await fetch(`${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''}${path}`, {
@@ -115,6 +152,18 @@ export const getReceivablesAgeing = (asOf?: string, currency = 'UGX') =>
 
 export const getReceivablesReconciliation = (asOf?: string, currency = 'UGX') =>
   request(`/api/finance/reports/receivables-reconciliation?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
+
+export const getCashBankPosition = (params?: { from?: string; to?: string; currency?: string; campusId?: string; facultyId?: string; departmentId?: string; programmeId?: string }) => {
+  const query = new URLSearchParams()
+  if (params?.from) query.set('from', params.from)
+  if (params?.to) query.set('to', params.to)
+  query.set('currency', params?.currency ?? 'UGX')
+  if (params?.campusId) query.set('campusId', params.campusId)
+  if (params?.facultyId) query.set('facultyId', params.facultyId)
+  if (params?.departmentId) query.set('departmentId', params.departmentId)
+  if (params?.programmeId) query.set('programmeId', params.programmeId)
+  return request<CashBankPositionReport>(`/api/finance/reports/cash-bank-position?${query}`)
+}
 
 export async function addInvoiceNote(invoiceId: string, note: string, createdBy?: string) { return request<void>('/api/finance/invoices/' + invoiceId + '/notes', { method: 'POST', body: JSON.stringify({ note, createdBy }) }) }
 export async function getInvoiceNotes(invoiceId: string) { return request<any[]>(`/api/finance/invoices/${invoiceId}/notes`) }

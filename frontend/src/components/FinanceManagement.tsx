@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createInvoice, getInvoices, recordPayment, type Invoice } from '../api/finance'
+import { CashBankPositionReport } from './CashBankPositionReport'
 
-type FinanceTab = 'fees' | 'accounts'
+type FinanceTab = 'fees' | 'accounts' | 'reports'
 
 export function FinanceManagement() {
   const [tab, setTab] = useState<FinanceTab>('fees')
@@ -104,7 +105,10 @@ export function FinanceManagement() {
       <div className="library-workspace-tabs" role="tablist" aria-label="Finance sections" style={{ marginBottom: 18 }}>
         <button role="tab" aria-selected={tab === 'fees'} className={tab === 'fees' ? 'active' : ''} onClick={() => setTab('fees')}>Student Fees</button>
         <button role="tab" aria-selected={tab === 'accounts'} className={tab === 'accounts' ? 'active' : ''} onClick={() => setTab('accounts')}>Accounts & Salaries</button>
+        <button role="tab" aria-selected={tab === 'reports'} className={tab === 'reports' ? 'active' : ''} onClick={() => setTab('reports')}>Cash & Bank Reports</button>
       </div>
+
+      {tab === 'reports' && <CashBankPositionReport />}
 
       {tab === 'fees' && (
         <>
