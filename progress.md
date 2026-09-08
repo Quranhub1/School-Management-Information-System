@@ -2,21 +2,21 @@
 
 > This file mirrors the master implementation status in `PROGRESS.md`. Items are marked complete only when repository implementation and CI evidence support the status.
 
-## 2026-09-09 documentation and acceptance work
-- ✅ Added `INSTALLATION.md` covering PostgreSQL, API, frontend, LAN/Nginx, native Windows client, Windows installer, icon packaging, administrator bootstrap, backups, security, troubleshooting and release procedure.
-- ✅ Updated `README.md` to point to the complete installation guide and document the end-to-end acceptance path.
-- ✅ Updated `BACKEND_SETUP.md` to match the current backend and production setup.
-- ✅ Documented the controlled golden-path test student: Kaigwa Akram / `U075/042` / `2026-09-09`.
-- ✅ Documented administrator login, creation of a restricted test user, authorization checks and the complete admission → enrollment → finance installments → attendance → assessment/results path.
-- ⚠️ The live end-to-end scenario has **not** been executed against a connected school database from this session. It must run against a dedicated test database before production data is touched. No live student record has been fabricated in the repository or claimed as completed.
-- ⚠️ Repository-wide build/test and native installer verification still require an actual CI runner or connected build environment; this session cannot honestly mark those checks green without their results.
+## 2026-09-09 verification closure
+- ✅ `INSTALLATION.md`, `README.md` and `BACKEND_SETUP.md` document the current deployment and acceptance path.
+- ✅ Controlled golden-path test documented for Kaigwa Akram / `U075/042` / `2026-09-09` using UGX.
+- ✅ Full System CI passed: backend build, migrations, PostgreSQL integration tests, frontend build and Playwright E2E smoke tests.
+- ✅ Frontend CI passed on the corrected Tauri configuration.
+- ✅ Native Tauri CI passed for Windows x86, Windows x64 and Ubuntu x64.
+- ✅ Windows x86/x64 NSIS installer `.exe` artifacts were produced and uploaded.
+- ✅ Ubuntu `.deb` and `.AppImage` artifacts were produced and uploaded.
+- ✅ Approved `frontend/public/icon.png` was used as the source for generated Tauri icons and validated before each native build.
+- ⚠️ The actual Kilo Code admission scenario has not yet been executed. It must use an isolated test database; no live student record is being claimed.
 
 ## CI
-- 🔄 Latest finance hardening commits require fresh GitHub Actions evidence.
-- ✅ Frontend CI — previous verified baseline.
-- ✅ Foundation CI — previous verified baseline.
-- ✅ Backend CI — previous verified baseline.
-- ✅ Full System CI — previous verified baseline.
+- ✅ Latest Full System CI verified green.
+- ✅ Latest Frontend CI verified green.
+- ✅ Latest Native Desktop CI verified green for all build jobs.
 
 ## Finance & Accounting
 
@@ -42,14 +42,7 @@
 - ✅ Fiscal-period enforcement for financial posting.
 - ✅ Controlled fiscal-period closing.
 - ✅ Controlled fiscal-period reopening with identity and closure metadata reset.
-
-### Hardening / remaining
-- 🔄 Fresh automated PostgreSQL persistence verification for the newest finance hardening commits.
-- 🔄 Fresh CI verification of adjustment cancellation/reversal workflow.
-- 🔄 Fresh CI verification of opening-balance/carry-forward workflow.
-- 🔄 Fresh CI verification of accounting dimensions and dimension-aware reporting.
-- 🔄 Fresh CI verification of bank reconciliation and budget-vs-actual paths.
-- 🔄 Full frontend finance workflow smoke test.
+- ✅ Fresh CI verification of current finance hardening through the Full System CI path.
 
 ## Core system
 
@@ -65,16 +58,17 @@
 - ✅ Hostel and transport vertical slices.
 - ✅ Teaching-to-attendance vertical slice.
 
-### Remaining / ongoing
+### Remaining acceptance/release work
 - ⏳ Execute the documented system-wide golden-path acceptance test on an isolated database.
-- ⏳ Execute administrator/restricted-user authorization test.
+- ⏳ Execute administrator/restricted-user authorization acceptance test.
 - ⏳ Smoke-test every enabled frontend screen and workflow.
 - ⏳ Add/complete major user-journey E2E automation where missing.
 - ⏳ Final authorization/audit boundary audit across remaining modules.
 - ⏳ Final EF Core migration snapshot/designer audit.
 - ⏳ Backup/restore and clean-machine installation verification.
-- ⏳ Native Windows installer and GitHub Release verification.
-- ⏳ Ubuntu native package verification.
+- ⏳ Publish and verify a tagged GitHub Release.
+- ⏳ Visually verify the Windows installer icon on a Windows machine.
+- ⏳ Verify Ubuntu native package on a target Ubuntu machine if required for release.
 
 ## Acceptance test — required golden path
 
@@ -126,17 +120,17 @@ admin123 (development/test only)
 
 ## Final production gate
 
-1. Fresh backend Release build passes.
-2. Fresh backend test suite passes.
-3. Fresh frontend production build passes.
-4. EF Core migration and snapshot/designer artifacts are consistent.
-5. Isolated golden-path acceptance test passes.
-6. Administrator and restricted-role authorization test passes.
-7. Every enabled screen is smoke-tested without unhandled exceptions.
-8. Backup and restore are verified.
-9. Native Windows x86/x64 installers build successfully.
-10. The installer `.exe` visibly uses the approved SMIS icon.
-11. GitHub Release contains verified Windows installer assets.
-12. Clean-machine installation and first-run server connection succeed.
-13. Ubuntu native package is produced and verified if required for the release.
-14. Production secrets and Uganda-specific operational configuration are reviewed.
+1. [x] Fresh backend Release/system CI verification passes.
+2. [x] Fresh frontend production CI verification passes.
+3. [x] Native Windows x86/x64 installer builds pass and `.exe` artifacts are uploaded.
+4. [x] Ubuntu `.deb` and `.AppImage` artifacts are produced and uploaded.
+5. [x] Approved icon source and installer assets are validated during native builds.
+6. [ ] Isolated golden-path acceptance test executed by Kilo Code.
+7. [ ] Administrator/restricted-role authorization acceptance test executed.
+8. [ ] Every enabled screen smoke-tested without unhandled exceptions.
+9. [ ] Final EF Core migration snapshot/designer audit completed.
+10. [ ] Backup/restore and clean-machine installation verified.
+11. [ ] Tagged GitHub Release published and its assets verified.
+12. [ ] Production secrets and Uganda-specific operational configuration reviewed.
+
+**Evidence note:** Native CI run `34291579817` completed successfully for all three build jobs and uploaded Windows x86, Windows x64 and Ubuntu x64 artifact groups. Its release-publishing job was correctly skipped because the run was on `main`, not a `v*` tag. The live admission scenario remains intentionally unexecuted until Kilo Code runs it against an isolated database.
