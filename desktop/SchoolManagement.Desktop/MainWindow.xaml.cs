@@ -18,15 +18,27 @@ public partial class MainWindow : Window
         try
         {
             await SystemView.EnsureCoreWebView2Async();
-            SystemView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-            SystemView.CoreWebView2.Settings.AreDevToolsEnabled = false;
-            SystemView.CoreWebView2.Settings.IsStatusBarEnabled = false;
-            SystemView.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+            var settings = SystemView.CoreWebView2.Settings;
+            settings.AreDefaultContextMenusEnabled = false;
+            settings.AreDevToolsEnabled = false;
+            settings.IsStatusBarEnabled = false;
+            settings.AreBrowserAcceleratorKeysEnabled = false;
+            settings.IsZoomControlEnabled = false;
+            settings.IsPinchZoomEnabled = false;
+
             SystemView.CoreWebView2.NavigationStarting += (_, args) =>
             {
                 if (!IsTrustedNavigation(args.Uri))
                     args.Cancel = true;
             };
+
+            SystemView.CoreWebView2.NewWindowRequested += (_, args) =>
+            {
+                args.Handled = true;
+                if (IsTrustedNavigation(args.Uri))
+                    SystemView.CoreWebView2.Navigate(args.Uri);
+            };
+
             SystemView.Source = SystemUri;
         }
         catch (Exception ex)
