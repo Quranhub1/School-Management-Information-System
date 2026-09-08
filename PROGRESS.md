@@ -7,11 +7,13 @@
 > Master project tracker. A feature is complete only when its implemented scope is verified in the repository and CI. A model, placeholder endpoint or UI mockup alone does not make a workflow complete.
 
 ## CI — Current verified state
-- [x] Frontend CI passing on current `main` before latest finance commit; latest run is executing against the newest commit
-- [x] Foundation CI passing on current `main` before latest finance commit; latest run is executing against the newest commit
-- [x] Backend CI passing on current `main` before latest finance commit; latest run is executing against the newest commit
-- [x] Full System CI passing on current `main` before latest finance commit; latest run is executing against the newest commit
-- [x] Full System PostgreSQL + API readiness + frontend build + Playwright smoke path passing on the previous verified finance baseline
+- [x] Frontend CI passing on current `main`
+- [x] Foundation CI passing on current `main`
+- [x] Backend CI passing on current `main`
+- [x] Full System CI passing on current `main`
+- [x] Full System PostgreSQL + API readiness + frontend build + Playwright smoke path passing
+- [x] PostgreSQL integration tests covering database-level journal immutability boundaries and finance migration schema
+- [x] Backend CI provisions PostgreSQL before running the full test suite
 
 ## Finance — Current implemented scope
 - [x] Chart of Accounts foundation
@@ -59,7 +61,7 @@
 - [x] Controlled reversal mechanism
 - [x] Finance-specific journal source/reversal metadata
 - [x] Finance-specific immutable audit-log database boundary
-- [ ] Automated PostgreSQL persistence tests for database immutability and reversal
+- [x] Automated PostgreSQL persistence tests for database immutability, journal source/reversal schema, and migration application
 
 ## Finance — Phase 2: Student Billing
 - [x] Fee categories
@@ -108,10 +110,8 @@ The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, 
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Verify all CI workflows on the latest finance commit and fix any regressions.
-2. Add automated PostgreSQL persistence tests for posted-journal and audit-log immutability and controlled reversal behavior.
-3. Complete adjustment cancellation/reversal with full auditability.
-4. Add accounting dimensions and dimension-aware journal/reporting.
-5. Upgrade financial statements, GL and Trial Balance to production fiscal-period-aware reporting.
-6. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
-7. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
+1. Complete adjustment cancellation/reversal with full auditability.
+2. Add accounting dimensions and dimension-aware journal/reporting.
+3. Upgrade financial statements, GL and Trial Balance to production fiscal-period-aware reporting.
+4. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
+5. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
