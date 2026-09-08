@@ -7,7 +7,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/hostel")]
-[Authorize(Policy = AuthorizationPolicies.Administration)]
+[Authorize(Policy = AuthorizationPolicies.HostelManagement)]
 public sealed class HostelController(HostelService service) : ControllerBase
 {
     [HttpGet]
