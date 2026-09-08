@@ -28,3 +28,14 @@ jobs:
 
       - name: Build
         run: dotnet build desktop/SchoolManagement.Desktop/SchoolManagement.Desktop.csproj --configuration Release --no-restore
+
+      - name: Publish self-contained Windows client
+        run: dotnet publish desktop/SchoolManagement.Desktop/SchoolManagement.Desktop.csproj --configuration Release --runtime win-x64 --self-contained true --output desktop/publish/win-x64 --no-restore
+
+      - name: Upload Windows publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SchoolManagement-Desktop-win-x64
+          path: desktop/publish/win-x64
+          if-no-files-found: error
+          retention-days: 14
