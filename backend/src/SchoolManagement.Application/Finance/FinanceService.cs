@@ -5,11 +5,8 @@ namespace SchoolManagement.Application.Finance;
 
 public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
-    public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) =>
-        finance.GetStudentInvoicesAsync(studentId, cancellationToken);
-
-    public Task<IReadOnlyList<PaymentLedgerEntry>> GetStudentLedgerAsync(Guid studentId, CancellationToken cancellationToken) =>
-        finance.GetStudentLedgerAsync(studentId, cancellationToken);
+    public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) => finance.GetStudentInvoicesAsync(studentId, cancellationToken);
+    public Task<IReadOnlyList<PaymentLedgerEntry>> GetStudentLedgerAsync(Guid studentId, CancellationToken cancellationToken) => finance.GetStudentLedgerAsync(studentId, cancellationToken);
 
     public async Task<StudentInvoice> CreateInvoiceAsync(Guid studentId, Guid feeStructureId, string invoiceNumber, CancellationToken cancellationToken)
     {
@@ -20,15 +17,10 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var fee = await finance.GetActiveFeeStructureAsync(feeStructureId, cancellationToken) ?? throw new ArgumentException("Active fee structure was not found.");
         if (fee.Items.Count > 0) fee.RecalculateTotal();
         if (fee.TotalAmount <= 0) throw new ArgumentException("Fee structure amount must be greater than zero.");
-
         var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
         var revenueAccount = await GetAccountAsync(FinanceAccountCodes.TuitionRevenue, cancellationToken);
         var invoice = new StudentInvoice { StudentId = studentId, FeeStructureId = fee.Id, InvoiceNumber = normalizedInvoiceNumber, Amount = fee.TotalAmount, PaidAmount = 0, Currency = fee.Currency, Status = "Unpaid" };
-        foreach (var item in fee.Items.Where(x => !x.IsOptional).OrderBy(x => x.SortOrder))
-        {
-            invoice.Lines.Add(new StudentInvoiceLine { StudentInvoiceId = invoice.Id, Code = item.Code, Description = item.Name, Amount = item.Amount, Currency = item.Currency, IncomeAccountId = item.IncomeAccountId, SortOrder = item.SortOrder });
-        }
-
+        foreach (var item in fee.Items.Where(x => !x.IsOptional).OrderBy(x => x.SortOrder)) invoice.Lines.Add(new StudentInvoiceLine { StudentInvoiceId = invoice.Id, Code = item.Code, Description = item.Name, Amount = item.Amount, Currency = item.Currency, IncomeAccountId = item.IncomeAccountId, SortOrder = item.SortOrder });
         var journalEntry = await CreateItemizedInvoiceJournalAsync(invoice, receivableAccount.Id, revenueAccount.Id, cancellationToken);
         await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         await finance.AddInvoiceAsync(invoice, cancellationToken);
@@ -48,7 +40,6 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var outstanding = invoice.OutstandingAmount;
         if (outstanding <= 0) throw new InvalidOperationException("Invoice is already fully paid.");
         if (amount > outstanding) throw new ArgumentException($"Payment exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
-
         var paymentAccount = await GetAccountAsync(ResolvePaymentAccountCode(paymentMethod), cancellationToken);
         var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
         var payment = new Payment { StudentId = invoice.StudentId, StudentInvoiceId = invoice.Id, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = invoice.Currency, PaymentMethod = paymentMethod.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
@@ -77,9 +68,9 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         if (await finance.ReceiptExistsAsync(normalizedReceipt, cancellationToken)) throw new InvalidOperationException("Receipt number already exists.");
         var normalizedCurrency = currency.Trim().ToUpperInvariant();
         var paymentAccount = await GetAccountAsync(ResolvePaymentAccountCode(paymentMethod), cancellationToken);
-        var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
+        var unappliedAccount = await GetAccountAsync(FinanceAccountCodes.StudentUnappliedPayments, cancellationToken);
         var payment = new Payment { StudentId = studentId, StudentInvoiceId = null, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = normalizedCurrency, PaymentMethod = paymentMethod.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
-        var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Unallocated student payment {normalizedReceipt}", payment.Amount, paymentAccount.Id, receivableAccount.Id, "Payment", payment.Id);
+        var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Unallocated student payment {normalizedReceipt}", payment.Amount, paymentAccount.Id, unappliedAccount.Id, "Payment", payment.Id);
         await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         await finance.AddPaymentAsync(payment, cancellationToken);
         await finance.AddPaymentLedgerEntryAsync(new PaymentLedgerEntry { StudentId = studentId, PaymentId = payment.Id, EntryType = "Payment", Description = $"Payment {payment.ReceiptNumber}", Amount = -amount, Currency = payment.Currency, Reference = payment.Reference ?? payment.ReceiptNumber }, cancellationToken);
@@ -95,6 +86,8 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var payment = await finance.GetPaymentAsync(paymentId, cancellationToken) ?? throw new ArgumentException("Payment was not found.");
         var requested = allocations.Sum(x => x.Amount);
         if (requested > payment.UnallocatedAmount) throw new ArgumentException($"Allocation exceeds the payment's unallocated balance of {payment.UnallocatedAmount:0.00} {payment.Currency}.");
+        var unappliedAccount = await GetAccountAsync(FinanceAccountCodes.StudentUnappliedPayments, cancellationToken);
+        var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
         var invoices = new List<StudentInvoice>();
         foreach (var request in allocations)
         {
@@ -115,6 +108,8 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
             var allocation = new PaymentAllocation { PaymentId = payment.Id, StudentInvoiceId = invoice.Id, AllocatedAmount = request.Amount, Currency = payment.Currency, Notes = string.IsNullOrWhiteSpace(request.Notes) ? "Manual allocation" : request.Notes.Trim() };
             payment.Allocations.Add(allocation);
             await finance.AddPaymentAllocationAsync(allocation, cancellationToken);
+            var allocationJournal = CreateJournalEntry($"ALLOC-{allocation.Id:N}", $"Allocate payment {payment.ReceiptNumber} to invoice {invoice.InvoiceNumber}", request.Amount, unappliedAccount.Id, receivableAccount.Id, "PaymentAllocation", allocation.Id);
+            await AddPostedJournalEntryAsync(allocationJournal, cancellationToken);
         }
         await finance.SaveChangesAsync(cancellationToken);
         return payment;
@@ -137,8 +132,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         return await AllocatePaymentAsync(paymentId, requests, cancellationToken);
     }
 
-    public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) =>
-        finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken);
+    public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken);
 
     private static void ApplyPaymentToInstallments(StudentInvoice invoice, decimal amount)
     {
