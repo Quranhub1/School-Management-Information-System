@@ -99,10 +99,11 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
         if (sourceJournal is null)
             throw new InvalidOperationException($"Posted journal entry for credit note '{creditNote.CreditNoteNumber}' was not found.");
 
-        // Reverse the immutable posted accounting event first. The credit note is
-        // only marked cancelled after the corrective journal has been created.
+        // Add the reversal to the same DbContext unit of work, but defer SaveChanges
+        // until the credit-note audit fields are also updated. This keeps the reversal
+        // and cancellation state atomic when SaveChangesAsync fails.
         var reversalService = new JournalReversalService(finance, fiscalPeriods);
-        await reversalService.ReverseAsync(sourceJournal.Id, reason, cancelledBy, cancellationToken);
+        await reversalService.ReverseAsync(sourceJournal.Id, reason, cancelledBy, cancellationToken, saveChanges: false);
 
         creditNote.Cancel(cancelledBy, reason, DateTimeOffset.UtcNow);
         await finance.SaveChangesAsync(cancellationToken);
