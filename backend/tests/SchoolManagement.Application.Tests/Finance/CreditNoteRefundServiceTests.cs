@@ -126,7 +126,17 @@ public sealed class CreditNoteRefundServiceTests
 
     private sealed class InMemoryFiscalPeriodRepository : IFiscalPeriodRepository
     {
-        private readonly List<FiscalPeriod> periods = [];
+        private readonly List<FiscalPeriod> periods =
+        [
+            new FiscalPeriod
+            {
+                Name = $"Test FY {DateTime.UtcNow:yyyy}",
+                StartDate = new DateOnly(DateTime.UtcNow.Year, 1, 1),
+                EndDate = new DateOnly(DateTime.UtcNow.Year, 12, 31),
+                Status = "Open"
+            }
+        ];
+
         public Task<IReadOnlyList<FiscalPeriod>> GetFiscalPeriodsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<FiscalPeriod>>(periods);
         public Task<FiscalPeriod?> GetFiscalPeriodAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(periods.SingleOrDefault(x => x.Id == id));
         public Task<FiscalPeriod?> GetContainingPeriodAsync(DateOnly date, CancellationToken cancellationToken) => Task.FromResult(periods.SingleOrDefault(x => x.Contains(date)));
@@ -172,7 +182,7 @@ public sealed class CreditNoteRefundServiceTests
         public Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid id, CancellationToken ct) => Task.FromResult<InvoiceDiscount?>(null);
         public Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<InvoiceDiscount>>([]);
         public Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<InvoiceInstallment>>([]);
-        public Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentCharge>>([]);
+        public Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<StudentCharge>([]);
         public Task<StudentCharge?> GetStudentChargeAsync(Guid id, CancellationToken ct) => Task.FromResult<StudentCharge?>(null);
         public Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid studentInvoiceId, CancellationToken ct) => Task.FromResult<IReadOnlyList<CreditNote>>(creditNotes.Where(x => x.StudentInvoiceId == studentInvoiceId).ToArray());
         public Task<IReadOnlyList<CreditNote>> GetAllCreditNotesAsync(CancellationToken ct) => Task.FromResult<IReadOnlyList<CreditNote>>(creditNotes.ToArray());
