@@ -14,16 +14,13 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
     {
         await using var connection = await fixture.OpenConnectionAsync();
         var database = (string?)await new NpgsqlCommand("SELECT current_database();", connection).ExecuteScalarAsync();
-
         Assert.Equal("school_management_ci", database);
 
         await using var command = new NpgsqlCommand("""
-            SELECT COUNT(*)
-            FROM information_schema.tables
+            SELECT COUNT(*) FROM information_schema.tables
             WHERE table_schema = 'public'
               AND table_name IN ('JournalEntries', 'JournalEntryLines', 'FiscalPeriods');
             """, connection);
-
         Assert.Equal(3L, (long)(await command.ExecuteScalarAsync())!);
     }
 
@@ -32,12 +29,10 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
     {
         await using var connection = await fixture.OpenConnectionAsync();
         await using var command = new NpgsqlCommand("""
-            SELECT COUNT(*)
-            FROM pg_trigger
+            SELECT COUNT(*) FROM pg_trigger
             WHERE NOT tgisinternal
               AND tgname IN ('trg_journal_entries_immutable', 'trg_journal_entry_lines_immutable');
             """, connection);
-
         Assert.Equal(2L, (long)(await command.ExecuteScalarAsync())!);
     }
 
@@ -46,13 +41,10 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
     {
         await using var connection = await fixture.OpenConnectionAsync();
         await using var command = new NpgsqlCommand("""
-            SELECT COUNT(*)
-            FROM pg_proc p
+            SELECT COUNT(*) FROM pg_proc p
             JOIN pg_namespace n ON n.oid = p.pronamespace
-            WHERE n.nspname = 'public'
-              AND p.proname = 'prevent_posted_journal_mutation';
+            WHERE n.nspname = 'public' AND p.proname = 'prevent_posted_journal_mutation';
             """, connection);
-
         Assert.Equal(1L, (long)(await command.ExecuteScalarAsync())!);
     }
 
@@ -66,22 +58,9 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
 
         try
         {
-            await using (var insert = new NpgsqlCommand("""
-                INSERT INTO "JournalEntries"
-                    ("Id", "EntryNumber", "EntryDate", "Description", "Status", "PostedAt", "PostedBy", "CreatedAt", "SourceType", "SourceId", "ReversalOfJournalEntryId")
-                VALUES
-                    (@id, @entryNumber, CURRENT_TIMESTAMP, 'PostgreSQL immutability integration test', 'Posted', CURRENT_TIMESTAMP, 'ci-test', CURRENT_TIMESTAMP, 'CiTest', @sourceId, NULL);
-                """, connection, transaction))
-            {
-                insert.Parameters.AddWithValue("id", journalId);
-                insert.Parameters.AddWithValue("entryNumber", entryNumber);
-                insert.Parameters.AddWithValue("sourceId", journalId);
-                await insert.ExecuteNonQueryAsync();
-            }
-
+            await InsertPostedJournalAsync(connection, transaction, journalId, entryNumber);
             await AssertDatabaseMutationRejectedAsync(connection, transaction, $"UPDATE \"JournalEntries\" SET \"Description\" = 'tampered' WHERE \"Id\" = '{journalId}';");
             await AssertDatabaseMutationRejectedAsync(connection, transaction, $"DELETE FROM \"JournalEntries\" WHERE \"Id\" = '{journalId}';");
-
             await transaction.RollbackAsync();
         }
         catch
@@ -101,19 +80,7 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
 
         try
         {
-            await using (var insert = new NpgsqlCommand("""
-                INSERT INTO "JournalEntries"
-                    ("Id", "EntryNumber", "EntryDate", "Description", "Status", "PostedAt", "PostedBy", "CreatedAt", "SourceType", "SourceId", "ReversalOfJournalEntryId")
-                VALUES
-                    (@id, @entryNumber, CURRENT_TIMESTAMP, 'PostgreSQL line immutability integration test', 'Posted', CURRENT_TIMESTAMP, 'ci-test', CURRENT_TIMESTAMP, 'CiTest', @sourceId, NULL);
-                """, connection, transaction))
-            {
-                insert.Parameters.AddWithValue("id", journalId);
-                insert.Parameters.AddWithValue("entryNumber", entryNumber);
-                insert.Parameters.AddWithValue("sourceId", journalId);
-                await insert.ExecuteNonQueryAsync();
-            }
-
+            await InsertPostedJournalAsync(connection, transaction, journalId, entryNumber);
             await AssertDatabaseMutationRejectedAsync(connection, transaction, $"INSERT INTO \"JournalEntryLines\" (\"Id\", \"JournalEntryId\", \"AccountId\", \"Description\", \"Debit\", \"Credit\", \"CreatedAt\") VALUES ('{Guid.NewGuid()}', '{journalId}', '{Guid.NewGuid()}', 'tampered line', 1, 0, CURRENT_TIMESTAMP);");
             await transaction.RollbackAsync();
         }
@@ -129,8 +96,7 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
     {
         await using var connection = await fixture.OpenConnectionAsync();
         await using var command = new NpgsqlCommand("""
-            SELECT COUNT(*)
-            FROM "__EFMigrationsHistory"
+            SELECT COUNT(*) FROM "__EFMigrationsHistory"
             WHERE "MigrationId" IN (
                 '20260908120000_AddPostedJournalDatabaseImmutability',
                 '20260908123001_FinanceAuditBoundary',
@@ -138,17 +104,30 @@ public sealed class PostgreSqlIntegrationTests(PostgreSqlIntegrationFixture fixt
                 '20260908140000_EnforceJournalFiscalPeriods',
                 '20260908150000_AddBudgetManagement',
                 '20260908150000_HardenBankReconciliation',
-                '20260908160000_AddJournalEntrySourceFields');
+                '20260908160000_AddJournalEntrySourceFields',
+                '20260908170000_AddJournalReversalReference');
             """, connection);
+        Assert.Equal(8L, (long)(await command.ExecuteScalarAsync())!);
+    }
 
-        Assert.Equal(7L, (long)(await command.ExecuteScalarAsync())!);
+    private static async Task InsertPostedJournalAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, Guid journalId, string entryNumber)
+    {
+        await using var insert = new NpgsqlCommand("""
+            INSERT INTO "JournalEntries"
+                ("Id", "EntryNumber", "EntryDate", "Description", "Status", "PostedAt", "PostedBy", "CreatedAt", "SourceType", "SourceId", "ReversalOfJournalEntryId")
+            VALUES
+                (@id, @entryNumber, CURRENT_TIMESTAMP, 'PostgreSQL immutability integration test', 'Posted', CURRENT_TIMESTAMP, 'ci-test', CURRENT_TIMESTAMP, 'CiTest', @sourceId, NULL);
+            """, connection, transaction);
+        insert.Parameters.AddWithValue("id", journalId);
+        insert.Parameters.AddWithValue("entryNumber", entryNumber);
+        insert.Parameters.AddWithValue("sourceId", journalId);
+        await insert.ExecuteNonQueryAsync();
     }
 
     private static async Task AssertDatabaseMutationRejectedAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string sql)
     {
         await using var savepoint = new NpgsqlCommand("SAVEPOINT mutation_attempt;", connection, transaction);
         await savepoint.ExecuteNonQueryAsync();
-
         try
         {
             await using var command = new NpgsqlCommand(sql, connection, transaction);
