@@ -3,10 +3,11 @@
 > This file mirrors the master implementation status in `PROGRESS.md`. Items are marked complete only when repository implementation and CI evidence support the status.
 
 ## CI — verified on current main
-- ✅ Frontend CI
-- ✅ Foundation CI
-- ✅ Backend CI
-- ✅ Full System CI (PostgreSQL + API + frontend + Playwright smoke path)
+- 🔄 Latest finance hardening commits are running through GitHub Actions; completion is not marked until CI confirms them.
+- ✅ Frontend CI (previous verified baseline)
+- ✅ Foundation CI (previous verified baseline)
+- ✅ Backend CI (previous verified baseline)
+- ✅ Full System CI (previous verified baseline)
 
 ## Finance & Accounting
 
@@ -27,11 +28,16 @@
 - ✅ Database-level audit-log immutability boundary.
 - ✅ Income Statement API/report foundation.
 - ✅ Balance Sheet API/report foundation.
+- ✅ Fiscal-period creation, overlap validation and date containment.
+- ✅ Fiscal-period enforcement for financial posting.
+- ✅ Controlled fiscal-period closing.
+- ✅ Controlled fiscal-period reopening with identity and closure metadata reset.
 
 ### Hardening / remaining
 - 🔄 Automated PostgreSQL persistence tests for immutability and reversal.
 - 🔄 Adjustment cancellation/reversal workflow.
-- 🔄 Fiscal periods, closing and opening balances.
+- 🔄 Opening-balance import/posting with balanced double-entry controls.
+- 🔄 Fiscal-year closing/opening-balance carry-forward workflow.
 - 🔄 Accounting dimensions: campus/faculty/department/programme.
 - 🔄 Dimension-aware journal lines and reports.
 - 🔄 Fiscal-period-aware production GL and Trial Balance.
@@ -67,4 +73,4 @@
 A feature is not production-complete merely because it compiles. It requires appropriate business/domain logic, persistence, authorization, validation, UI where applicable, automated tests and successful relevant CI evidence. Finance additionally requires balanced accounting effects, source traceability and controlled corrections without editing posted ledger history.
 
 ## Current priority
-**Finance accounting hardening → fiscal-period accounting → dimensions → bank/budget controls → system-wide workflow parity and production hardening.**
+**Finance accounting hardening → opening balances/fiscal-year workflow → dimensions → bank/budget controls → system-wide workflow parity and production hardening.**
