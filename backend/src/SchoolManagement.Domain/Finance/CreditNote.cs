@@ -11,4 +11,7 @@ public sealed class CreditNote
     public DateTimeOffset IssuedAt { get; init; } = DateTimeOffset.UtcNow;
     public string? IssuedBy { get; init; }
     public DateTimeOffset? AppliedAt { get; init; }
+    public DateTimeOffset? CancelledAt { get; init; }
+    public string? CancelledBy { get; init; }
+    public string? CancellationReason { get; init; }
 }
