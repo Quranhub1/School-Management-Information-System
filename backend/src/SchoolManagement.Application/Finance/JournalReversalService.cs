@@ -38,9 +38,6 @@ public sealed class JournalReversalService(IFinanceRepository finance, FiscalPer
             EntryNumber = reversalNumber,
             EntryDate = reversalDate,
             Description = $"Reversal of {original.EntryNumber}: {reason.Trim()}",
-            Status = "Posted",
-            PostedAt = reversalDate,
-            PostedBy = performedBy.Trim(),
             SourceType = "JournalReversal",
             SourceId = original.Id,
             ReversalOfJournalEntryId = original.Id,
@@ -57,7 +54,7 @@ public sealed class JournalReversalService(IFinanceRepository finance, FiscalPer
             }).ToList()
         };
 
-        JournalEntryValidator.Validate(reversal);
+        reversal.Post(performedBy);
         await finance.AddJournalEntryAsync(reversal, cancellationToken);
         if (saveChanges)
             await finance.SaveChangesAsync(cancellationToken);
