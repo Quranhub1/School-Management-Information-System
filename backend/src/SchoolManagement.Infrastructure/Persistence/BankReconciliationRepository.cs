@@ -24,6 +24,9 @@ public sealed class BankReconciliationRepository(SchoolManagementDbContext db) :
     public Task<BankStatementLine?> GetLineAsync(Guid lineId, CancellationToken cancellationToken) =>
         db.BankStatementLines.FirstOrDefaultAsync(x => x.Id == lineId, cancellationToken);
 
+    public Task<bool> IsJournalEntryMatchedAsync(Guid journalEntryId, CancellationToken cancellationToken) =>
+        db.BankStatementLines.AnyAsync(x => x.MatchedJournalEntryId == journalEntryId && x.IsMatched, cancellationToken);
+
     public async Task AddAsync(BankReconciliation reconciliation, CancellationToken cancellationToken) =>
         await db.BankReconciliations.AddAsync(reconciliation, cancellationToken);
 
