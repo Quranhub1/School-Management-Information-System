@@ -93,7 +93,7 @@ public sealed class PostgreSqlIntegrationTests : IClassFixture<PostgreSqlIntegra
                 '20260908160000_AddJournalEntrySourceFields',
                 '20260908170000_AddJournalReversalReference',
                 '20260908180000_AddJournalAccountingDimensions',
-                '20260908090000_AddCreditNoteCancellationAuditFields');
+                '20260908190000_AddCreditNoteCancellationAuditFields');
             """, connection);
         Assert.Equal(10L, (long)(await command.ExecuteScalarAsync())!);
     }
