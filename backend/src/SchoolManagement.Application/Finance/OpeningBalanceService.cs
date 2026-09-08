@@ -3,7 +3,15 @@ using SchoolManagement.Domain.Finance;
 
 namespace SchoolManagement.Application.Finance;
 
-public sealed record OpeningBalanceLineRequest(Guid AccountId, decimal Debit, decimal Credit, string? Description = null);
+public sealed record OpeningBalanceLineRequest(
+    Guid AccountId,
+    decimal Debit,
+    decimal Credit,
+    string? Description = null,
+    Guid? CampusId = null,
+    Guid? FacultyId = null,
+    Guid? DepartmentId = null,
+    Guid? ProgrammeId = null);
 
 public sealed class OpeningBalanceService(IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
@@ -16,6 +24,7 @@ public sealed class OpeningBalanceService(IFinanceRepository finance, FiscalPeri
         if (fiscalPeriodId == Guid.Empty) throw new ArgumentException("Fiscal period is required.", nameof(fiscalPeriodId));
         if (lines.Count < 2) throw new ArgumentException("At least two opening-balance lines are required.", nameof(lines));
         if (string.IsNullOrWhiteSpace(performedBy)) throw new ArgumentException("The user performing the operation is required.", nameof(performedBy));
+        if (lines.Any(x => x.AccountId == Guid.Empty)) throw new ArgumentException("Every opening-balance line requires an account.", nameof(lines));
         if (lines.Any(x => x.Debit < 0 || x.Credit < 0)) throw new ArgumentException("Opening-balance amounts cannot be negative.");
         if (lines.Any(x => x.Debit > 0 && x.Credit > 0)) throw new ArgumentException("An opening-balance line cannot contain both debit and credit.");
         if (lines.All(x => x.Debit == 0 && x.Credit == 0)) throw new ArgumentException("Opening-balance amounts must contain at least one non-zero value.");
@@ -57,7 +66,11 @@ public sealed class OpeningBalanceService(IFinanceRepository finance, FiscalPeri
                 AccountId = account.Id,
                 Description = string.IsNullOrWhiteSpace(request.Description) ? $"Opening balance - {account.Name}" : request.Description.Trim(),
                 Debit = request.Debit,
-                Credit = request.Credit
+                Credit = request.Credit,
+                CampusId = request.CampusId,
+                FacultyId = request.FacultyId,
+                DepartmentId = request.DepartmentId,
+                ProgrammeId = request.ProgrammeId
             });
         }
 
