@@ -126,7 +126,15 @@ public sealed class CreditNoteRefundServiceTests
 
     private sealed class InMemoryFiscalPeriodRepository : IFiscalPeriodRepository
     {
-        private readonly List<FiscalPeriod> periods = [];
+        private readonly List<FiscalPeriod> periods =
+        [
+            new()
+            {
+                Name = "TEST-FY",
+                StartDate = new DateOnly(2000, 1, 1),
+                EndDate = new DateOnly(2100, 12, 31)
+            }
+        ];
         public Task<IReadOnlyList<FiscalPeriod>> GetFiscalPeriodsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<FiscalPeriod>>(periods);
         public Task<FiscalPeriod?> GetFiscalPeriodAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(periods.SingleOrDefault(x => x.Id == id));
         public Task<FiscalPeriod?> GetContainingPeriodAsync(DateOnly date, CancellationToken cancellationToken) => Task.FromResult(periods.SingleOrDefault(x => x.Contains(date)));
