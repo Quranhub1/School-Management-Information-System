@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createInvoice, getInvoices, recordPayment, type Invoice } from '../api/finance'
 import { CashBankPositionReport } from './CashBankPositionReport'
+import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
 
 type FinanceTab = 'fees' | 'accounts' | 'reports'
 
@@ -16,7 +17,6 @@ export function FinanceManagement() {
   const [studentId, setStudentId] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [amount, setAmount] = useState('')
-  const [feeStructure, setFeeStructure] = useState('')
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null)
   const [paymentAmount, setPaymentAmount] = useState('')
   const [receiptNumber, setReceiptNumber] = useState('')
@@ -109,6 +109,7 @@ export function FinanceManagement() {
       </div>
 
       {tab === 'reports' && <CashBankPositionReport />}
+      {tab === 'accounts' && <AccountsOverviewWorkspace />}
 
       {tab === 'fees' && (
         <>
@@ -124,22 +125,10 @@ export function FinanceManagement() {
           {selectedStudent && (
             <>
               <div className="summary-grid" style={{ marginBottom: 22 }}>
-                <div className="summary-card">
-                  <span>Total Billed</span>
-                  <strong>UGX {totalBilled.toLocaleString()}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Total Paid</span>
-                  <strong style={{ color: '#059669' }}>UGX {totalPaid.toLocaleString()}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Outstanding Balance</span>
-                  <strong style={{ color: balanceColor(totalBalance, totalBilled) }}>UGX {totalBalance.toLocaleString()}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Invoices</span>
-                  <strong>{invoices.length}</strong>
-                </div>
+                <div className="summary-card"><span>Total Billed</span><strong>UGX {totalBilled.toLocaleString()}</strong></div>
+                <div className="summary-card"><span>Total Paid</span><strong style={{ color: '#059669' }}>UGX {totalPaid.toLocaleString()}</strong></div>
+                <div className="summary-card"><span>Outstanding Balance</span><strong style={{ color: balanceColor(totalBalance, totalBilled) }}>UGX {totalBalance.toLocaleString()}</strong></div>
+                <div className="summary-card"><span>Invoices</span><strong>{invoices.length}</strong></div>
               </div>
 
               <form className="student-form" onSubmit={submitInvoice}>
@@ -153,96 +142,33 @@ export function FinanceManagement() {
               </form>
 
               <div className="table-wrap">
-                {loading ? (
-                  <p className="empty">Loading payment history…</p>
-                ) : invoices.length === 0 ? (
-                  <p className="empty">No invoices found for this student.</p>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Invoice</th>
-                        <th>Amount</th>
-                        <th>Paid</th>
-                        <th>Balance</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoices.map(invoice => (
-                        <tr key={invoice.id}>
-                          <td><strong>{invoice.invoiceNumber}</strong></td>
-                          <td>{invoice.currency} {invoice.amount.toLocaleString()}</td>
-                          <td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
-                          <td style={{ color: balanceColor(invoice.balance, invoice.amount), fontWeight: 700 }}>
-                            {invoice.currency} {invoice.balance.toLocaleString()}
-                          </td>
-                          <td>
-                            <span style={{
-                              display: 'inline-flex',
-                              padding: '4px 10px',
-                              borderRadius: '999px',
-                              background: invoice.status === 'Paid' ? '#d1fae5' : invoice.status === 'Pending' ? '#fef3c7' : invoice.status === 'Overdue' ? '#fee2e2' : '#e5e7eb',
-                              color: invoice.status === 'Paid' ? '#059669' : invoice.status === 'Pending' ? '#92400e' : invoice.status === 'Overdue' ? '#dc2626' : '#374151',
-                              fontSize: '.72rem',
-                              fontWeight: 800,
-                            }}>
-                              {invoice.status}
-                            </span>
-                          </td>
-                          <td>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</td>
-                          <td>
-                            {invoice.balance > 0 && (
-                              <button className="secondary-button" onClick={() => setPaymentInvoice(invoice)}>
-                                Record Payment
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
+                {loading ? <p className="empty">Loading payment history…</p> : invoices.length === 0 ? <p className="empty">No invoices found for this student.</p> : (
+                  <table><thead><tr><th>Invoice</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+                    <tbody>{invoices.map(invoice => <tr key={invoice.id}>
+                      <td><strong>{invoice.invoiceNumber}</strong></td><td>{invoice.currency} {invoice.amount.toLocaleString()}</td><td style={{ color: '#059669' }}>{invoice.currency} {invoice.paidAmount.toLocaleString()}</td>
+                      <td style={{ color: balanceColor(invoice.balance, invoice.amount), fontWeight: 700 }}>{invoice.currency} {invoice.balance.toLocaleString()}</td>
+                      <td><span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: invoice.status === 'Paid' ? '#d1fae5' : invoice.status === 'Pending' ? '#fef3c7' : invoice.status === 'Overdue' ? '#fee2e2' : '#e5e7eb', color: invoice.status === 'Paid' ? '#059669' : invoice.status === 'Pending' ? '#92400e' : invoice.status === 'Overdue' ? '#dc2626' : '#374151', fontSize: '.72rem', fontWeight: 800 }}>{invoice.status}</span></td>
+                      <td>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</td><td>{invoice.balance > 0 && <button className="secondary-button" onClick={() => setPaymentInvoice(invoice)}>Record Payment</button>}</td>
+                    </tr>)}</tbody>
                   </table>
                 )}
               </div>
             </>
           )}
 
-          {!selectedStudent && (
-            <div className="empty">
-              <p>Search for a student by ID or code to view their fee balance, invoices, and payment history.</p>
-            </div>
-          )}
+          {!selectedStudent && <div className="empty"><p>Search for a student by ID or code to view their fee balance, invoices, and payment history.</p></div>}
         </>
-      )}
-
-      {tab === 'accounts' && (
-        <div className="empty">
-          <p>Chart of accounts, journal entries, bills, payroll, and general ledger. Full accounts management coming soon.</p>
-        </div>
       )}
 
       {paymentInvoice && (
         <div className="modal-backdrop">
           <form className="auth-card" onSubmit={submitPayment}>
-            <p className="eyebrow">Payment</p>
-            <h3>{paymentInvoice.invoiceNumber}</h3>
-            <p>Outstanding: {paymentInvoice.currency} {paymentInvoice.balance.toLocaleString()}</p>
+            <p className="eyebrow">Payment</p><h3>{paymentInvoice.invoiceNumber}</h3><p>Outstanding: {paymentInvoice.currency} {paymentInvoice.balance.toLocaleString()}</p>
             <input aria-label="Payment amount" type="number" min="0.01" max={paymentInvoice.balance} step="0.01" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required />
             <input aria-label="Receipt number" placeholder="Receipt number" value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required />
-            <select aria-label="Payment method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
-              <option>Cash</option>
-              <option>Bank</option>
-              <option>Mobile Money</option>
-              <option>Card</option>
-              <option>Cheque</option>
-            </select>
+            <select aria-label="Payment method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}><option>Cash</option><option>Bank</option><option>Mobile Money</option><option>Card</option><option>Cheque</option></select>
             <input aria-label="Reference" placeholder="Reference number (optional)" value={reference} onChange={e => setReference(e.target.value)} />
-            <div className="topbar-actions">
-              <button type="button" className="secondary-button" onClick={() => setPaymentInvoice(null)}>Cancel</button>
-              <button type="submit">Record Payment</button>
-            </div>
+            <div className="topbar-actions"><button type="button" className="secondary-button" onClick={() => setPaymentInvoice(null)}>Cancel</button><button type="submit">Record Payment</button></div>
           </form>
         </div>
       )}
