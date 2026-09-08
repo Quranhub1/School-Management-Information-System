@@ -10,6 +10,16 @@ async function signIn(page) {
   await page.getByRole('button', { name: 'Sign in' }).click();
 }
 
+async function getAdminToken(request) {
+  const response = await request.post(`${API_BASE_URL}/api/auth/login`, {
+    data: { username: 'admin', password: 'admin123' },
+  });
+  expect(response.ok()).toBeTruthy();
+  const payload = await response.json();
+  expect(payload.accessToken).toBeTruthy();
+  return payload.accessToken;
+}
+
 test.describe('SMIS full-system smoke tests', () => {
   test('API health endpoint is available', async ({ request }) => {
     const response = await request.get(`${API_BASE_URL}/health`);
@@ -29,6 +39,45 @@ test.describe('SMIS full-system smoke tests', () => {
     expect(payload.roles).toEqual(expect.arrayContaining(['SystemAdministrator']));
   });
 
+  test('authenticated attendance API protects manual and QR recording paths', async ({ request }) => {
+    const token = await getAdminToken(request);
+    const headers = { Authorization: `Bearer ${token}` };
+    const unknownSessionId = '00000000-0000-0000-0000-000000000001';
+    const unknownStudentId = '00000000-0000-0000-0000-000000000002';
+
+    const manual = await request.post(`${API_BASE_URL}/api/attendance/sessions/${unknownSessionId}/records`, {
+      headers,
+      data: { studentId: unknownStudentId, status: 'Present', remarks: 'CI boundary test' },
+    });
+    expect(manual.status()).toBe(404);
+
+    const qr = await request.post(`${API_BASE_URL}/api/attendance/sessions/${unknownSessionId}/qr-records`, {
+      headers,
+      data: { studentId: unknownStudentId, status: 'Present', remarks: 'CI boundary test', token: 'invalid-token' },
+    });
+    expect(qr.status()).toBe(401);
+
+    const unauthenticated = await request.post(`${API_BASE_URL}/api/attendance/sessions/${unknownSessionId}/records`, {
+      data: { studentId: unknownStudentId, status: 'Present' },
+    });
+    expect([401, 403]).toContain(unauthenticated.status());
+  });
+
+  test('attendance QR endpoint returns a rotating token for an authenticated user', async ({ request }) => {
+    const token = await getAdminToken(request);
+    const sessionId = '00000000-0000-0000-0000-000000000003';
+    const response = await request.get(`${API_BASE_URL}/api/attendance/sessions/${sessionId}/qr`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    expect(response.ok()).toBeTruthy();
+    const payload = await response.json();
+    expect(payload.attendanceSessionId).toBe(sessionId);
+    expect(payload.token).toMatch(/^[a-f0-9]{64}$/);
+    expect(payload.rotationSeconds).toBe(60);
+    expect(payload.expiresAtUtc).toBeTruthy();
+  });
+
   test('frontend loads and administrator can sign in', async ({ page }) => {
     await page.goto(FRONTEND_URL, { waitUntil: 'networkidle' });
     await expect(page.getByRole('heading', { name: /Sign in to/ })).toBeVisible();
@@ -40,6 +89,22 @@ test.describe('SMIS full-system smoke tests', () => {
     await expect(page.getByRole('button', { name: 'Administration', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Student Management', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Finance', exact: true })).toBeVisible();
+  });
+
+  test('administrator can open the attendance workspace', async ({ page }) => {
+    await page.goto(FRONTEND_URL, { waitUntil: 'networkidle' });
+    await signIn(page);
+
+    const attendanceNav = page.getByRole('button', { name: 'Attendance', exact: true });
+    await expect(attendanceNav).toBeVisible({ timeout: 15000 });
+    await attendanceNav.click();
+
+    await expect(page.getByRole('region', { name: 'Attendance management' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Daily' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Student history' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'QR attendance' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open session' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Record attendance' })).toBeVisible();
   });
 
   test('authenticated frontend request reaches the database-backed API', async ({ page }) => {
