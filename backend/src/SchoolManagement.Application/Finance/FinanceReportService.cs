@@ -3,7 +3,7 @@ using SchoolManagement.Domain.Finance;
 
 namespace SchoolManagement.Application.Finance;
 
-public sealed record AccountLedgerRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, DateTimeOffset Date, string EntryNumber, string Description, decimal Debit, decimal Credit, decimal Balance);
+public sealed record AccountLedgerRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, DateTimeOffset Date, string EntryNumber, string Description, decimal Debit, decimal Credit, decimal Balance, Guid? CampusId = null, Guid? FacultyId = null, Guid? DepartmentId = null, Guid? ProgrammeId = null);
 public sealed record TrialBalanceRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Debit, decimal Credit, decimal Balance);
 public sealed record StudentReceivableRow(Guid StudentId, decimal Invoiced, decimal Paid, decimal Outstanding);
 public sealed record IncomeStatementRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Amount);
@@ -13,7 +13,7 @@ public sealed record BalanceSheetReport(IReadOnlyList<BalanceSheetRow> Assets, I
 
 public sealed class FinanceReportService(IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
-    public async Task<IReadOnlyList<AccountLedgerRow>> GetGeneralLedgerAsync(DateOnly? from = null, DateOnly? to = null, Guid? accountId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AccountLedgerRow>> GetGeneralLedgerAsync(DateOnly? from = null, DateOnly? to = null, Guid? accountId = null, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null, CancellationToken cancellationToken = default)
     {
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, accountId, cancellationToken);
         var rows = new List<AccountLedgerRow>();
@@ -21,28 +21,44 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         foreach (var entry in entries.OrderBy(x => x.EntryDate).ThenBy(x => x.EntryNumber))
         foreach (var line in entry.Lines)
         {
+            if (!MatchesDimensions(line, campusId, facultyId, departmentId, programmeId)) continue;
             if (accountId.HasValue && line.AccountId != accountId.Value) continue;
             var account = line.Account!;
             running.TryGetValue(account.Id, out var balance);
             balance += line.Debit - line.Credit;
             running[account.Id] = balance;
-            rows.Add(new AccountLedgerRow(account.Id, account.Code, account.Name, account.AccountType, entry.EntryDate, entry.EntryNumber, line.Description ?? entry.Description ?? string.Empty, line.Debit, line.Credit, balance));
+            rows.Add(new AccountLedgerRow(account.Id, account.Code, account.Name, account.AccountType, entry.EntryDate, entry.EntryNumber, line.Description ?? entry.Description ?? string.Empty, line.Debit, line.Credit, balance, line.CampusId, line.FacultyId, line.DepartmentId, line.ProgrammeId));
         }
         return rows;
     }
 
-    public async Task<IReadOnlyList<TrialBalanceRow>> GetTrialBalanceAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TrialBalanceRow>> GetTrialBalanceAsync(DateOnly? from = null, DateOnly? to = null, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null, CancellationToken cancellationToken = default)
     {
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
-        var totals = Aggregate(entries);
+        var filtered = entries.Select(e => new JournalEntry
+        {
+            Id = e.Id,
+            EntryNumber = e.EntryNumber,
+            EntryDate = e.EntryDate,
+            Description = e.Description,
+            Status = e.Status,
+            PostedAt = e.PostedAt,
+            PostedBy = e.PostedBy,
+            CreatedAt = e.CreatedAt,
+            SourceType = e.SourceType,
+            SourceId = e.SourceId,
+            ReversalOfJournalEntryId = e.ReversalOfJournalEntryId,
+            Lines = e.Lines.Where(l => MatchesDimensions(l, campusId, facultyId, departmentId, programmeId)).ToList()
+        }).Where(e => e.Lines.Count > 0).ToList();
+        var totals = Aggregate(filtered);
         return totals.Values.OrderBy(x => x.Account.Code).Select(x => new TrialBalanceRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, x.Debit, x.Credit, x.Debit - x.Credit)).ToList();
     }
 
-    public async Task<IncomeStatementReport> GetIncomeStatementAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default)
+    public async Task<IncomeStatementReport> GetIncomeStatementAsync(DateOnly? from = null, DateOnly? to = null, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null, CancellationToken cancellationToken = default)
     {
         (from, to) = await ResolveIncomeStatementRangeAsync(from, to, cancellationToken);
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
-        var rows = Aggregate(entries).Values.Select(x => new IncomeStatementRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit)).Where(x => IsRevenue(x.AccountType) || IsExpense(x.AccountType)).OrderBy(x => x.AccountCode).ToList();
+        var rows = Aggregate(entries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId))).Values.Select(x => new IncomeStatementRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit)).Where(x => IsRevenue(x.AccountType) || IsExpense(x.AccountType)).OrderBy(x => x.AccountCode).ToList();
         var revenue = rows.Where(x => IsRevenue(x.AccountType)).ToList();
         var expenses = rows.Where(x => IsExpense(x.AccountType)).ToList();
         var totalRevenue = revenue.Sum(x => x.Amount);
@@ -50,15 +66,15 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         return new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
     }
 
-    public async Task<BalanceSheetReport> GetBalanceSheetAsync(DateOnly? asOf = null, CancellationToken cancellationToken = default)
+    public async Task<BalanceSheetReport> GetBalanceSheetAsync(DateOnly? asOf = null, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null, CancellationToken cancellationToken = default)
     {
         var effectiveAsOf = asOf ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var entries = await finance.GetPostedJournalEntriesAsync(null, effectiveAsOf, null, cancellationToken);
-        var totals = Aggregate(entries).Values.Select(x => new BalanceSheetRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit)).Where(x => IsAsset(x.AccountType) || IsLiability(x.AccountType) || IsEquity(x.AccountType)).OrderBy(x => x.AccountCode).ToList();
+        var totals = Aggregate(entries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId))).Values.Select(x => new BalanceSheetRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit)).Where(x => IsAsset(x.AccountType) || IsLiability(x.AccountType) || IsEquity(x.AccountType)).OrderBy(x => x.AccountCode).ToList();
         var assets = totals.Where(x => IsAsset(x.AccountType)).ToList();
         var liabilities = totals.Where(x => IsLiability(x.AccountType)).ToList();
         var equity = totals.Where(x => IsEquity(x.AccountType)).ToList();
-        var netIncome = await GetIncomeStatementAsync(null, effectiveAsOf, cancellationToken);
+        var netIncome = await GetIncomeStatementAsync(null, effectiveAsOf, campusId, facultyId, departmentId, programmeId, cancellationToken);
         var totalAssets = assets.Sum(x => x.Balance);
         var totalLiabilities = liabilities.Sum(x => x.Balance);
         var totalEquity = equity.Sum(x => x.Balance);
@@ -70,6 +86,28 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         var invoices = await finance.GetAllStudentInvoicesAsync(cancellationToken);
         return invoices.GroupBy(x => x.StudentId).Select(g => new StudentReceivableRow(g.Key, g.Sum(x => x.Amount), g.Sum(x => x.PaidAmount), g.Sum(x => x.Amount - x.PaidAmount))).OrderByDescending(x => x.Outstanding).ToList();
     }
+
+    private static JournalEntry FilterEntry(JournalEntry entry, Guid? campusId, Guid? facultyId, Guid? departmentId, Guid? programmeId) => new()
+    {
+        Id = entry.Id,
+        EntryNumber = entry.EntryNumber,
+        EntryDate = entry.EntryDate,
+        Description = entry.Description,
+        Status = entry.Status,
+        PostedAt = entry.PostedAt,
+        PostedBy = entry.PostedBy,
+        CreatedAt = entry.CreatedAt,
+        SourceType = entry.SourceType,
+        SourceId = entry.SourceId,
+        ReversalOfJournalEntryId = entry.ReversalOfJournalEntryId,
+        Lines = entry.Lines.Where(l => MatchesDimensions(l, campusId, facultyId, departmentId, programmeId)).ToList()
+    };
+
+    private static bool MatchesDimensions(JournalEntryLine line, Guid? campusId, Guid? facultyId, Guid? departmentId, Guid? programmeId) =>
+        (!campusId.HasValue || line.CampusId == campusId) &&
+        (!facultyId.HasValue || line.FacultyId == facultyId) &&
+        (!departmentId.HasValue || line.DepartmentId == departmentId) &&
+        (!programmeId.HasValue || line.ProgrammeId == programmeId);
 
     private async Task<(DateOnly? From, DateOnly? To)> ResolveIncomeStatementRangeAsync(DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
     {
