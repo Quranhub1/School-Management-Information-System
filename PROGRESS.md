@@ -23,6 +23,8 @@
 - [x] Desktop shell uses WebView2 without browser tabs, address bar, status bar or developer tools
 - [x] Desktop navigation is restricted to the configured trusted HTTPS system origin
 - [x] Dedicated Windows desktop CI workflow added
+- [x] Self-contained `win-x64` desktop publish profile added
+- [x] Windows CI now publishes and uploads the desktop build as a GitHub Actions artifact
 - [ ] Bundle the approved frontend build into the desktop installer/local application origin
 - [ ] Produce signed/installable Windows desktop package and verify on a clean Windows machine
 
