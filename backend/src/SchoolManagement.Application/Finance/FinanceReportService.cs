@@ -4,7 +4,7 @@ using SchoolManagement.Domain.Finance;
 namespace SchoolManagement.Application.Finance;
 
 public sealed record AccountLedgerRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, DateTimeOffset Date, string EntryNumber, string Description, decimal Debit, decimal Credit, decimal Balance, Guid? CampusId = null, Guid? FacultyId = null, Guid? DepartmentId = null, Guid? ProgrammeId = null);
-public sealed record TrialBalanceRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Debit, decimal Credit, decimal Balance);
+public sealed record TrialBalanceRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Debit, decimal Credit, decimal Balance, Guid? CampusId = null, Guid? FacultyId = null, Guid? DepartmentId = null, Guid? ProgrammeId = null);
 public sealed record StudentReceivableRow(Guid StudentId, decimal Invoiced, decimal Paid, decimal Outstanding);
 public sealed record IncomeStatementRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Amount);
 public sealed record IncomeStatementReport(IReadOnlyList<IncomeStatementRow> Revenue, IReadOnlyList<IncomeStatementRow> Expenses, decimal TotalRevenue, decimal TotalExpenses, decimal NetIncome);
@@ -33,9 +33,10 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
             if (!MatchesDimensions(line, campusId, facultyId, departmentId, programmeId)) continue;
             if (accountId.HasValue && line.AccountId != accountId.Value) continue;
             var account = line.Account!;
-            running.TryGetValue(account.Id, out var balance);
+            var key = DimensionKey.For(line);
+            running.TryGetValue((account.Id, key), out var balance);
             balance += line.Debit - line.Credit;
-            running[account.Id] = balance;
+            running[(account.Id, key)] = balance;
             rows.Add(new AccountLedgerRow(account.Id, account.Code, account.Name, account.AccountType, entry.EntryDate, entry.EntryNumber, line.Description ?? entry.Description ?? string.Empty, line.Debit, line.Credit, balance, line.CampusId, line.FacultyId, line.DepartmentId, line.ProgrammeId));
         }
         return rows;
@@ -47,7 +48,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         var openingEntries = from.HasValue ? await finance.GetPostedJournalEntriesAsync(null, from.Value.AddDays(-1), null, cancellationToken) : Array.Empty<JournalEntry>();
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
         var totals = Aggregate(openingEntries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId)).Concat(entries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId))));
-        return totals.Values.OrderBy(x => x.Account.Code).Select(x => new TrialBalanceRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, x.Debit, x.Credit, x.Debit - x.Credit)).ToList();
+        return totals.Values.OrderBy(x => x.Account.Code).ThenBy(x => x.Key.CampusId).ThenBy(x => x.Key.FacultyId).ThenBy(x => x.Key.DepartmentId).ThenBy(x => x.Key.ProgrammeId).Select(x => new TrialBalanceRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, x.Debit, x.Credit, x.Debit - x.Credit, x.Key.CampusId, x.Key.FacultyId, x.Key.DepartmentId, x.Key.ProgrammeId)).ToList();
     }
 
     public async Task<IncomeStatementReport> GetIncomeStatementAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
@@ -100,16 +101,17 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         return currentPeriod is null ? (null, null) : (currentPeriod.StartDate, today);
     }
 
-    private static Dictionary<Guid, decimal> BuildOpeningBalances(IEnumerable<JournalEntry> entries, Guid? accountId, Guid? campusId, Guid? facultyId, Guid? departmentId, Guid? programmeId)
+    private static Dictionary<(Guid AccountId, DimensionKey Key), decimal> BuildOpeningBalances(IEnumerable<JournalEntry> entries, Guid? accountId, Guid? campusId, Guid? facultyId, Guid? departmentId, Guid? programmeId)
     {
-        var balances = new Dictionary<Guid, decimal>();
+        var balances = new Dictionary<(Guid AccountId, DimensionKey Key), decimal>();
         foreach (var entry in entries)
         foreach (var line in entry.Lines)
         {
             if (!MatchesDimensions(line, campusId, facultyId, departmentId, programmeId)) continue;
             if (accountId.HasValue && line.AccountId != accountId.Value) continue;
-            balances.TryGetValue(line.AccountId, out var balance);
-            balances[line.AccountId] = balance + line.Debit - line.Credit;
+            var key = DimensionKey.For(line);
+            balances.TryGetValue((line.AccountId, key), out var balance);
+            balances[(line.AccountId, key)] = balance + line.Debit - line.Credit;
         }
         return balances;
     }
@@ -138,15 +140,22 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         return currentPeriod is null ? (null, null) : (currentPeriod.StartDate, today);
     }
 
-    private static Dictionary<Guid, (Account Account, decimal Debit, decimal Credit)> Aggregate(IEnumerable<JournalEntry> entries)
+    private sealed record DimensionKey(Guid? CampusId, Guid? FacultyId, Guid? DepartmentId, Guid? ProgrammeId)
     {
-        var totals = new Dictionary<Guid, (Account Account, decimal Debit, decimal Credit)>();
+        public static DimensionKey For(JournalEntryLine line) => new(line.CampusId, line.FacultyId, line.DepartmentId, line.ProgrammeId);
+    }
+
+    private static Dictionary<(Guid AccountId, DimensionKey Key), (Account Account, DimensionKey Key, decimal Debit, decimal Credit)> Aggregate(IEnumerable<JournalEntry> entries)
+    {
+        var totals = new Dictionary<(Guid AccountId, DimensionKey Key), (Account Account, DimensionKey Key, decimal Debit, decimal Credit)>();
         foreach (var entry in entries)
         foreach (var line in entry.Lines)
         {
             var account = line.Account!;
-            totals.TryGetValue(account.Id, out var current);
-            totals[account.Id] = (account, current.Debit + line.Debit, current.Credit + line.Credit);
+            var key = DimensionKey.For(line);
+            var lookup = (account.Id, key);
+            totals.TryGetValue(lookup, out var current);
+            totals[lookup] = (account, key, current.Debit + line.Debit, current.Credit + line.Credit);
         }
         return totals;
     }
