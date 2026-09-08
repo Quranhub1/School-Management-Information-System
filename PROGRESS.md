@@ -50,9 +50,11 @@
 - [x] Fiscal-period domain model, persistence and administration API
 - [x] Fiscal-period date-range and overlap validation
 - [x] Fiscal-period closing workflow with user/audit metadata
-- [x] Opening-balance posting workflow
 - [x] Budget management and budget-vs-actual API foundation
 - [x] Bank reconciliation workflow with statement lines and journal matching
+- [x] Bank statement import workflow with duplicate-row protection
+- [x] Outstanding reconciliation reporting with ageing and unmatched-item analysis
+- [x] Bank reconciliation API endpoints for listing, creation, lines, import, matching, reconciliation and outstanding reporting
 - [x] Campus/faculty/department/programme accounting dimensions
 - [x] Dimension-aware journal lines and reports
 - [x] Fiscal-period-aware General Ledger reporting with opening balances
@@ -104,9 +106,9 @@
 - [x] Fiscal-period-aware Income Statement and Balance Sheet foundation
 - [x] Opening balances / retained earnings handling
 - [x] Fiscal periods and period closing foundation
-- [ ] Cash and bank reports
+- [ ] Cash and bank reports beyond reconciliation/account-level reporting
 - [x] Bank transactions and bank reconciliation workflow foundation
-- [ ] Production hardening of bank reconciliation, including imports/outstanding-item handling
+- [x] Production hardening of bank reconciliation, including JSON statement imports and outstanding-item handling
 
 ## Other platform work
 The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, library, timetable, communication, portals and operational areas remain under incremental verification and production hardening. See repository history and module documentation for detailed status.
@@ -115,6 +117,6 @@ The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, 
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Harden cash/bank reporting and bank reconciliation, including imports and outstanding items.
+1. Complete cash/bank position reporting and broader finance dashboard/report parity beyond reconciliation.
 2. Continue system-wide feature parity, authorization/audit hardening, major user-journey E2E coverage, deployment, backup/restore and Uganda-specific operational configuration.
 3. Audit EF Core migration snapshots/designer artifacts so manually added schema migrations are fully synchronized with the model snapshot before the next migration-generation cycle.
