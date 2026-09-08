@@ -92,15 +92,80 @@ public sealed class BankReconciliationServiceTests
         await Assert.ThrowsAsync<ArgumentException>(() => service.GetOutstandingReportAsync(reconciliationId, statementDate.AddDays(-1)));
     }
 
+    [Fact]
+    public async Task MatchLineAsync_RejectsAlreadyMatchedStatementLine()
+    {
+        var reconciliationId = Guid.NewGuid();
+        var lineId = Guid.NewGuid();
+        var statementDate = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
+        var repository = new InMemoryBankReconciliationRepository
+        {
+            Reconciliation = new BankReconciliation
+            {
+                Id = reconciliationId,
+                BankAccountId = Guid.NewGuid(),
+                StatementDate = statementDate,
+                Status = "Pending"
+            }
+        };
+        repository.Lines.Add(new BankStatementLine
+        {
+            Id = lineId,
+            BankReconciliationId = reconciliationId,
+            TransactionDate = statementDate,
+            Amount = 100m,
+            TransactionType = "Credit",
+            IsMatched = true,
+            MatchedJournalEntryId = Guid.NewGuid()
+        });
+
+        var service = new BankReconciliationService(repository, new NullFinanceRepository());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.MatchLineAsync(lineId, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task MatchLineAsync_RejectsJournalEntryAlreadyMatchedElsewhere()
+    {
+        var reconciliationId = Guid.NewGuid();
+        var lineId = Guid.NewGuid();
+        var journalEntryId = Guid.NewGuid();
+        var statementDate = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
+        var repository = new InMemoryBankReconciliationRepository
+        {
+            Reconciliation = new BankReconciliation
+            {
+                Id = reconciliationId,
+                BankAccountId = Guid.NewGuid(),
+                StatementDate = statementDate,
+                Status = "Pending"
+            }
+        };
+        repository.MatchedJournalEntryIds.Add(journalEntryId);
+        repository.Lines.Add(new BankStatementLine
+        {
+            Id = lineId,
+            BankReconciliationId = reconciliationId,
+            TransactionDate = statementDate,
+            Amount = 100m,
+            TransactionType = "Credit",
+            IsMatched = false
+        });
+
+        var service = new BankReconciliationService(repository, new NullFinanceRepository());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.MatchLineAsync(lineId, journalEntryId));
+    }
+
     private sealed class InMemoryBankReconciliationRepository : IBankReconciliationRepository
     {
         public BankReconciliation? Reconciliation { get; set; }
         public List<BankStatementLine> Lines { get; } = [];
+        public HashSet<Guid> MatchedJournalEntryIds { get; } = [];
 
         public Task<IReadOnlyList<BankReconciliation>> GetAsync(Guid? bankAccountId, DateOnly? from, DateOnly? to, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<BankReconciliation>>(Reconciliation is null ? [] : [Reconciliation]);
         public Task<BankReconciliation?> GetAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(Reconciliation?.Id == id ? Reconciliation : null);
         public Task<IReadOnlyList<BankStatementLine>> GetLinesAsync(Guid reconciliationId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<BankStatementLine>>(Lines.Where(x => x.BankReconciliationId == reconciliationId).ToArray());
         public Task<BankStatementLine?> GetLineAsync(Guid lineId, CancellationToken cancellationToken) => Task.FromResult(Lines.FirstOrDefault(x => x.Id == lineId));
+        public Task<bool> IsJournalEntryMatchedAsync(Guid journalEntryId, CancellationToken cancellationToken) => Task.FromResult(MatchedJournalEntryIds.Contains(journalEntryId) || Lines.Any(x => x.IsMatched && x.MatchedJournalEntryId == journalEntryId));
         public Task AddAsync(BankReconciliation reconciliation, CancellationToken cancellationToken) { Reconciliation = reconciliation; return Task.CompletedTask; }
         public Task AddLineAsync(BankStatementLine line, CancellationToken cancellationToken) { Lines.Add(line); return Task.CompletedTask; }
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
