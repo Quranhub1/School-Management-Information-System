@@ -5,11 +5,60 @@ namespace SchoolManagement.Application.Finance;
 
 public sealed record CreateBankReconciliationRequest(Guid BankAccountId, DateTimeOffset StatementDate, decimal StatementBalance, decimal BookBalance, decimal ReconciledAmount, string? Notes = null);
 public sealed record AddBankStatementLineRequest(DateTimeOffset TransactionDate, decimal Amount, string TransactionType, string? Description = null, string? Reference = null);
+public sealed record OutstandingBankStatementLine(Guid Id, DateTimeOffset TransactionDate, decimal Amount, string TransactionType, string? Description, string? Reference, int AgeDays);
+public sealed record BankReconciliationOutstandingReport(Guid ReconciliationId, Guid BankAccountId, DateTimeOffset StatementDate, string Status, decimal StatementBalance, decimal BookBalance, decimal Difference, int TotalLines, int MatchedLines, int UnmatchedLines, decimal UnmatchedCredits, decimal UnmatchedDebits, IReadOnlyList<OutstandingBankStatementLine> OutstandingLines);
 
 public sealed class BankReconciliationService(IBankReconciliationRepository repository, IFinanceRepository finance)
 {
     public Task<IReadOnlyList<BankReconciliation>> GetAsync(Guid? bankAccountId, DateOnly? from, DateOnly? to, CancellationToken cancellationToken = default) => repository.GetAsync(bankAccountId, from, to, cancellationToken);
     public Task<IReadOnlyList<BankStatementLine>> GetLinesAsync(Guid reconciliationId, CancellationToken cancellationToken = default) => repository.GetLinesAsync(reconciliationId, cancellationToken);
+
+    public async Task<BankReconciliationOutstandingReport> GetOutstandingReportAsync(Guid reconciliationId, DateTimeOffset? asOf = null, CancellationToken cancellationToken = default)
+    {
+        var reconciliation = await repository.GetAsync(reconciliationId, cancellationToken)
+            ?? throw new KeyNotFoundException("Bank reconciliation was not found.");
+
+        var lines = await repository.GetLinesAsync(reconciliationId, cancellationToken);
+        var reportDate = asOf ?? DateTimeOffset.UtcNow;
+        if (reportDate < reconciliation.StatementDate)
+            throw new ArgumentException("Report date cannot be earlier than the statement date.", nameof(asOf));
+
+        var outstanding = lines
+            .Where(x => !x.IsMatched)
+            .OrderBy(x => x.TransactionDate)
+            .ThenBy(x => x.CreatedAt)
+            .Select(x => new OutstandingBankStatementLine(
+                x.Id,
+                x.TransactionDate,
+                x.Amount,
+                x.TransactionType,
+                x.Description,
+                x.Reference,
+                Math.Max(0, (int)Math.Floor((reportDate - x.TransactionDate).TotalDays))))
+            .ToArray();
+
+        var credits = outstanding
+            .Where(x => x.TransactionType.Equals("Credit", StringComparison.OrdinalIgnoreCase))
+            .Sum(x => x.Amount);
+        var debits = outstanding
+            .Where(x => x.TransactionType.Equals("Debit", StringComparison.OrdinalIgnoreCase))
+            .Sum(x => x.Amount);
+
+        return new BankReconciliationOutstandingReport(
+            reconciliation.Id,
+            reconciliation.BankAccountId,
+            reconciliation.StatementDate,
+            reconciliation.Status,
+            reconciliation.StatementBalance,
+            reconciliation.BookBalance,
+            reconciliation.StatementBalance - reconciliation.BookBalance,
+            lines.Count,
+            lines.Count(x => x.IsMatched),
+            outstanding.Length,
+            credits,
+            debits,
+            outstanding);
+    }
 
     public async Task<BankReconciliation> CreateAsync(CreateBankReconciliationRequest request, CancellationToken cancellationToken = default)
     {
