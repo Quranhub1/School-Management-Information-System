@@ -11,51 +11,16 @@ using System.Text;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddControllers().AddJsonOptions(o =>
-{
-    o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-});
+builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpClient("Superset");
-
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
-        if (allowedOrigins.Length > 0)
-        {
-            policy.WithOrigins(allowedOrigins);
-        }
-        else
-        {
-            policy.AllowAnyOrigin();
-        }
-        policy.AllowAnyHeader().AllowAnyMethod();
-    });
-});
-
+builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? []; if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); else policy.AllowAnyOrigin(); policy.AllowAnyHeader().AllowAnyMethod(); }); });
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-
 var jwtKey = builder.Configuration["Authentication:JwtKey"] ?? throw new InvalidOperationException("Authentication:JwtKey is not configured.");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o =>
-    {
-        o.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(1)
-        };
-    });
-
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o => { o.TokenValidationParameters = new TokenValidationParameters { ValidateIssuerSigningKey = true, IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), ValidateIssuer = false, ValidateAudience = false, ValidateLifetime = true, ClockSkew = TimeSpan.FromMinutes(1) }; });
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(AuthorizationPolicies.AcademicManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.AcademicManagement));
@@ -63,6 +28,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(AuthorizationPolicies.FinanceManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.FinanceManagement));
     options.AddPolicy(AuthorizationPolicies.ExaminationManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.ExaminationManagement));
     options.AddPolicy(AuthorizationPolicies.AttendanceManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.AttendanceManagement));
+    options.AddPolicy(AuthorizationPolicies.HostelManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.HostelManagement));
     options.AddPolicy(AdmissionsPolicies.Management, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsManagement));
     options.AddPolicy(AdmissionsPolicies.Read, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsManagement));
     options.AddPolicy(TimetablePolicies.Management, p => p.RequireRole(InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Registrar, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.Lecturer));
@@ -78,21 +44,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(AuthorizationPolicies.ParentPortal, p => p.RequireRole(AuthorizationPolicies.RoleSets.ParentPortal));
     options.AddPolicy(AuthorizationPolicies.Student360, p => p.RequireRole(AuthorizationPolicies.RoleSets.Student360));
 });
-
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
-    await scope.ServiceProvider.GetRequiredService<FinanceAccountSeeder>().SeedAsync();
-}
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+using (var scope = app.Services.CreateScope()) { await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync(); await scope.ServiceProvider.GetRequiredService<FinanceAccountSeeder>().SeedAsync(); }
+if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
@@ -100,5 +54,4 @@ app.UseAuthorization();
 app.MapHealthChecks("/health");
 app.MapControllers();
 app.Run();
-
 public partial class Program { }
