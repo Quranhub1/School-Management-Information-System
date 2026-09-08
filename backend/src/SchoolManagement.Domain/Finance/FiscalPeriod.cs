@@ -21,5 +21,15 @@ public sealed class FiscalPeriod
         ClosedBy = closedBy.Trim();
     }
 
+    public void Reopen(string reopenedBy)
+    {
+        if (string.IsNullOrWhiteSpace(reopenedBy)) throw new ArgumentException("Reopening user identity is required.", nameof(reopenedBy));
+        if (!string.Equals(Status, "Closed", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Only a closed fiscal period can be reopened.");
+        Status = "Open";
+        ClosedAt = null;
+        ClosedBy = null;
+    }
+
     public bool Contains(DateOnly date) => date >= StartDate && date <= EndDate;
 }
