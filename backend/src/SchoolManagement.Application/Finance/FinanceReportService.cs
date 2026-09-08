@@ -6,9 +6,9 @@ namespace SchoolManagement.Application.Finance;
 public sealed record AccountLedgerRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, DateTimeOffset Date, string EntryNumber, string Description, decimal Debit, decimal Credit, decimal Balance, Guid? CampusId = null, Guid? FacultyId = null, Guid? DepartmentId = null, Guid? ProgrammeId = null);
 public sealed record TrialBalanceRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Debit, decimal Credit, decimal Balance, Guid? CampusId = null, Guid? FacultyId = null, Guid? DepartmentId = null, Guid? ProgrammeId = null);
 public sealed record StudentReceivableRow(Guid StudentId, decimal Invoiced, decimal Paid, decimal Outstanding);
-public sealed record IncomeStatementRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Amount);
+public sealed record IncomeStatementRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Amount, Guid? CampusId = null, Guid? FacultyId = null, Guid? DepartmentId = null, Guid? ProgrammeId = null);
 public sealed record IncomeStatementReport(IReadOnlyList<IncomeStatementRow> Revenue, IReadOnlyList<IncomeStatementRow> Expenses, decimal TotalRevenue, decimal TotalExpenses, decimal NetIncome);
-public sealed record BalanceSheetRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Balance);
+public sealed record BalanceSheetRow(Guid AccountId, string AccountCode, string AccountName, string AccountType, decimal Balance, Guid? CampusId = null, Guid? FacultyId = null, Guid? DepartmentId = null, Guid? ProgrammeId = null);
 public sealed record BalanceSheetReport(IReadOnlyList<BalanceSheetRow> Assets, IReadOnlyList<BalanceSheetRow> Liabilities, IReadOnlyList<BalanceSheetRow> Equity, decimal TotalAssets, decimal TotalLiabilities, decimal TotalEquity, decimal CurrentPeriodNetIncome, decimal TotalLiabilitiesAndEquity);
 
 public sealed class FinanceReportService(IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
@@ -55,7 +55,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
     {
         (from, to) = await ResolveIncomeStatementRangeAsync(from, to, cancellationToken);
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
-        var rows = Aggregate(entries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId))).Values.Select(x => new IncomeStatementRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit)).Where(x => IsRevenue(x.AccountType) || IsExpense(x.AccountType)).OrderBy(x => x.AccountCode).ToList();
+        var rows = BuildIncomeStatementRows(entries, campusId, facultyId, departmentId, programmeId);
         var revenue = rows.Where(x => IsRevenue(x.AccountType)).ToList();
         var expenses = rows.Where(x => IsExpense(x.AccountType)).ToList();
         var totalRevenue = revenue.Sum(x => x.Amount);
@@ -68,7 +68,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         var effectiveAsOf = asOf ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var containingPeriod = await fiscalPeriods.GetContainingAsync(effectiveAsOf, cancellationToken);
         var entries = await finance.GetPostedJournalEntriesAsync(null, effectiveAsOf, null, cancellationToken);
-        var totals = Aggregate(entries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId))).Values.Select(x => new BalanceSheetRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit)).Where(x => IsAsset(x.AccountType) || IsLiability(x.AccountType) || IsEquity(x.AccountType)).OrderBy(x => x.AccountCode).ToList();
+        var totals = BuildBalanceSheetRows(entries, campusId, facultyId, departmentId, programmeId);
         var assets = totals.Where(x => IsAsset(x.AccountType)).ToList();
         var liabilities = totals.Where(x => IsLiability(x.AccountType)).ToList();
         var equity = totals.Where(x => IsEquity(x.AccountType)).ToList();
@@ -86,6 +86,30 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         var invoices = await finance.GetAllStudentInvoicesAsync(cancellationToken);
         return invoices.GroupBy(x => x.StudentId).Select(g => new StudentReceivableRow(g.Key, g.Sum(x => x.Amount), g.Sum(x => x.PaidAmount), g.Sum(x => x.Amount - x.PaidAmount))).OrderByDescending(x => x.Outstanding).ToList();
     }
+
+    public static IReadOnlyList<IncomeStatementRow> BuildIncomeStatementRows(IEnumerable<JournalEntry> entries, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null) =>
+        Aggregate(entries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId)))
+            .Values
+            .Where(x => IsRevenue(x.Account.AccountType) || IsExpense(x.Account.AccountType))
+            .Select(x => new IncomeStatementRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit, x.Key.CampusId, x.Key.FacultyId, x.Key.DepartmentId, x.Key.ProgrammeId))
+            .OrderBy(x => x.AccountCode)
+            .ThenBy(x => x.CampusId)
+            .ThenBy(x => x.FacultyId)
+            .ThenBy(x => x.DepartmentId)
+            .ThenBy(x => x.ProgrammeId)
+            .ToList();
+
+    public static IReadOnlyList<BalanceSheetRow> BuildBalanceSheetRows(IEnumerable<JournalEntry> entries, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null) =>
+        Aggregate(entries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId)))
+            .Values
+            .Where(x => IsAsset(x.Account.AccountType) || IsLiability(x.Account.AccountType) || IsEquity(x.Account.AccountType))
+            .Select(x => new BalanceSheetRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit, x.Key.CampusId, x.Key.FacultyId, x.Key.DepartmentId, x.Key.ProgrammeId))
+            .OrderBy(x => x.AccountCode)
+            .ThenBy(x => x.CampusId)
+            .ThenBy(x => x.FacultyId)
+            .ThenBy(x => x.DepartmentId)
+            .ThenBy(x => x.ProgrammeId)
+            .ToList();
 
     private async Task<(DateOnly? From, DateOnly? To)> ResolveReportRangeAsync(DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
     {
