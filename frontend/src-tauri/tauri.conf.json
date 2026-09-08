@@ -39,7 +39,9 @@
       "nsis": {
         "installMode": "perMachine",
         "displayLanguageSelector": true,
-        "installerIcon": "icons/icon.ico"
+        "installerIcon": "icons/icon.ico",
+        "headerImage": "icons/icon.png",
+        "sidebarImage": "icons/icon.png"
       }
     }
   }
