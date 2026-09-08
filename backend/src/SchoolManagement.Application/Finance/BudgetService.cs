@@ -61,6 +61,11 @@ public sealed class BudgetService(IBudgetRepository budgets, IFinanceRepository 
 
         var journals = await finance.GetPostedJournalEntriesAsync(start, end, null, cancellationToken);
         var actuals = journals.SelectMany(x => x.Lines)
+            // A department budget must be compared with postings belonging to
+            // that department. Institution-wide (null department) postings are
+            // intentionally excluded rather than silently contaminating the
+            // department's budget-versus-actual result.
+            .Where(x => x.DepartmentId == budget.DepartmentId)
             .GroupBy(x => x.AccountId)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Debit - x.Credit));
 
