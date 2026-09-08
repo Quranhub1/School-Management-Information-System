@@ -14,7 +14,7 @@ public sealed class FinancialStatementsService(IFinanceRepository finance)
     {
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
         var lines = Flatten(entries).Where(x => IsType(x.Account.AccountType, "Revenue", "Income", "Expense", "Expenses"));
-        var rows = lines.GroupBy(x => x.Account.Id).Select(g => ToRow(g.Select(x => x.Account).First(), g.Sum(x => x.Debit - x.Credit))).OrderBy(x => x.AccountCode).ToList();
+        var rows = lines.GroupBy(x => x.Account.Id).Select(g => ToRow(g.Select(x => x.Account).First(), g.Sum(x => x.Line.Debit - x.Line.Credit))).OrderBy(x => x.AccountCode).ToList();
         var revenue = rows.Where(x => IsType(x.AccountType, "Revenue", "Income")).Sum(x => -x.Amount);
         var expenses = rows.Where(x => IsType(x.AccountType, "Expense", "Expenses")).Sum(x => x.Amount);
         return new IncomeStatement(revenue, expenses, revenue - expenses, rows);
@@ -24,7 +24,7 @@ public sealed class FinancialStatementsService(IFinanceRepository finance)
     {
         var entries = await finance.GetPostedJournalEntriesAsync(null, to, null, cancellationToken);
         var rows = Flatten(entries).Where(x => IsType(x.Account.AccountType, "Asset", "Assets", "Liability", "Liabilities", "Equity")).GroupBy(x => x.Account.Id)
-            .Select(g => ToRow(g.Select(x => x.Account).First(), g.Sum(x => x.Debit - x.Credit))).OrderBy(x => x.AccountCode).ToList();
+            .Select(g => ToRow(g.Select(x => x.Account).First(), g.Sum(x => x.Line.Debit - x.Line.Credit))).OrderBy(x => x.AccountCode).ToList();
         var assets = rows.Where(x => IsType(x.AccountType, "Asset", "Assets")).Sum(x => x.Amount);
         var liabilities = rows.Where(x => IsType(x.AccountType, "Liability", "Liabilities")).Sum(x => -x.Amount);
         var equity = rows.Where(x => string.Equals(x.AccountType, "Equity", StringComparison.OrdinalIgnoreCase)).Sum(x => -x.Amount);
@@ -36,8 +36,8 @@ public sealed class FinancialStatementsService(IFinanceRepository finance)
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
         var rows = Flatten(entries).Where(x => IsType(x.Account.AccountType, "Asset", "Assets") &&
             (x.Account.Name.Contains("cash", StringComparison.OrdinalIgnoreCase) || x.Account.Name.Contains("bank", StringComparison.OrdinalIgnoreCase)));
-        var cash = rows.Where(x => x.Account.Name.Contains("cash", StringComparison.OrdinalIgnoreCase)).Sum(x => x.Debit - x.Credit);
-        var bank = rows.Where(x => x.Account.Name.Contains("bank", StringComparison.OrdinalIgnoreCase)).Sum(x => x.Debit - x.Credit);
+        var cash = rows.Where(x => x.Account.Name.Contains("cash", StringComparison.OrdinalIgnoreCase)).Sum(x => x.Line.Debit - x.Line.Credit);
+        var bank = rows.Where(x => x.Account.Name.Contains("bank", StringComparison.OrdinalIgnoreCase)).Sum(x => x.Line.Debit - x.Line.Credit);
         return new CashBankSummary(cash, bank, cash + bank);
     }
 
