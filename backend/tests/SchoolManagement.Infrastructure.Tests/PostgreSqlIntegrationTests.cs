@@ -103,9 +103,24 @@ public sealed class PostgreSqlIntegrationTests : IClassFixture<PostgreSqlIntegra
                 '20260908150000_AddBudgetManagement',
                 '20260908150000_HardenBankReconciliation',
                 '20260908160000_AddJournalEntrySourceFields',
-                '20260908170000_AddJournalReversalReference');
+                '20260908170000_AddJournalReversalReference',
+                '20260908180000_AddJournalAccountingDimensions');
             """, connection);
-        Assert.Equal(8L, (long)(await command.ExecuteScalarAsync())!);
+        Assert.Equal(9L, (long)(await command.ExecuteScalarAsync())!);
+    }
+
+    [Fact]
+    public async Task Journal_entry_lines_expose_accounting_dimension_columns()
+    {
+        await using var connection = await fixture.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand("""
+            SELECT COUNT(*)
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'JournalEntryLines'
+              AND column_name IN ('CampusId', 'FacultyId', 'DepartmentId', 'ProgrammeId');
+            """, connection);
+        Assert.Equal(4L, (long)(await command.ExecuteScalarAsync())!);
     }
 
     private static async Task InsertPostedJournalAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, Guid journalId, string entryNumber)
