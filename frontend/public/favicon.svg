@@ -1,12 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect x="32" y="32" width="448" height="448" rx="92" fill="#12375C"/>
-  <path d="M118 190 256 102 394 190H118Z" fill="#28B8A6"/>
-  <rect x="118" y="194" width="276" height="202" rx="18" fill="#F5F9FC"/>
-  <rect x="150" y="244" width="34" height="78" rx="7" fill="#12375C"/>
-  <rect x="210" y="244" width="34" height="78" rx="7" fill="#12375C"/>
-  <rect x="268" y="244" width="34" height="78" rx="7" fill="#12375C"/>
-  <rect x="328" y="244" width="34" height="78" rx="7" fill="#12375C"/>
-  <rect x="224" y="338" width="64" height="42" rx="8" fill="#28B8A6"/>
-  <rect x="242" y="328" width="28" height="62" rx="6" fill="#28B8A6"/>
-  <rect x="92" y="404" width="328" height="24" rx="12" fill="#28B8A6"/>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0758B8"/><stop offset="0.55" stop-color="#06439B"/><stop offset="1" stop-color="#062F79"/></linearGradient>
+  <linearGradient id="book" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#20B8F0"/><stop offset="1" stop-color="#10A8E4"/></linearGradient>
+</defs>
+<rect width="512" height="512" rx="55" fill="url(#bg)"/>
+<path d="M168 77 256 43 344 77 256 112Z" fill="#fff"/>
+<path d="M201 91v42l55 27 55-27V91l-55 21Z" fill="#fff"/>
+<path d="M327 77v55" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+<path d="M327 130c-6 0-9 5-9 11l-3 21c0 4 5 7 12 7s12-3 12-7l-3-21c0-6-3-11-9-11Z" fill="#fff"/>
+<path d="M155 178 256 121 357 178 348 194 256 144 164 194Z" fill="#fff"/>
+<path d="M180 184h152v112H180Z" fill="#fff"/>
+<path d="M171 178h170l-9 13H180Z" fill="#fff"/>
+<path d="M197 197h31v64h-31Zm44 0h30v64h-30Zm43 0h31v64h-31Z" fill="#06439B"/>
+<path d="M184 196 256 151 328 196v106H184Z" fill="#fff"/>
+<circle cx="256" cy="211" r="30" fill="#159EEB"/>
+<rect x="251" y="186" width="10" height="50" rx="2" fill="#fff"/><rect x="231" y="206" width="50" height="10" rx="2" fill="#fff"/>
+<path d="M232 238h48v64h-48Z" fill="#fff"/><path d="M244 238h24v64h-24Z" fill="#06439B"/>
+<path d="M65 316 Q157 288 256 333 Q355 288 447 316 L428 365 Q347 341 256 365 Q165 341 84 365Z" fill="#fff"/>
+<path d="M70 354 Q165 326 256 369 Q347 326 442 354 L425 386 Q345 361 256 389 Q167 361 87 386Z" fill="url(#book)"/>
+<path d="M256 333v57" stroke="#fff" stroke-width="5"/>
+<text x="256" y="462" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="70" font-weight="800" letter-spacing="3" fill="#fff">SMIS</text>
 </svg>
