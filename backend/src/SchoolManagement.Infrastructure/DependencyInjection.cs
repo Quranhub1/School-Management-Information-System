@@ -18,6 +18,7 @@ using SchoolManagement.Application.Progression;
 using SchoolManagement.Application.Staff;
 using SchoolManagement.Application.StudentRecords;
 using SchoolManagement.Application.Students;
+using SchoolManagement.Application.Hostel;
 using SchoolManagement.Infrastructure.Attendance;
 using SchoolManagement.Infrastructure.Documents;
 using SchoolManagement.Infrastructure.Finance;
@@ -46,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<SchoolManagement.Application.Finance.FiscalPeriodService>(); services.AddScoped<SchoolManagement.Application.Finance.FiscalPeriodClosingService>();
         services.AddScoped<SchoolManagement.Application.Finance.JournalReversalService>(); services.AddScoped<SchoolManagement.Application.Finance.CreditNoteRefundService>();
         services.AddScoped<SchoolManagement.Application.Finance.StudentChargeService>();
+        services.AddScoped<IHostelRepository, HostelRepository>(); services.AddScoped<HostelService>();
         services.AddScoped<ILibraryRepository, LibraryRepository>(); services.AddScoped<IUserRepository, UserRepository>(); services.AddScoped<IStudentDocumentRepository, StudentDocumentRepository>(); services.AddScoped<ICertificateRepository, CertificateRepository>(); services.AddScoped<IPayrollRepository, PayrollRepository>(); services.AddScoped<IAlumniRepository, AlumniRepository>(); services.AddScoped<ILeaveRequestRepository, LeaveRequestRepository>(); services.AddScoped<ICalendarEventRepository, CalendarEventRepository>(); services.AddScoped<IGateLogRepository, GateLogRepository>(); services.AddScoped<IAuditLogRepository, AuditLogRepository>(); services.AddScoped<IAttendanceQrRepository, AttendanceQrRepository>(); services.AddScoped<AttendanceQrService>(); services.AddScoped<IInstitutionSettingsRepository, InstitutionSettingsRepository>(); services.AddScoped<IHrRepository, HrRepository>(); services.AddScoped<SchoolManagement.Application.StudentRecords.IStudentRecordsRepository, StudentRecordsRepository>(); services.AddScoped<ReportGenerator>(); services.AddScoped<IPdfReportGenerator, PdfReportGenerator>(); services.AddScoped<DatabaseHealthCheck>(); services.AddSingleton<PasswordHasher>(); services.AddScoped<AdminSeeder>(); services.AddScoped<FinanceAccountSeeder>();
         var kohaSection = configuration.GetSection("LibraryIntegrations:Koha"); var dspaceSection = configuration.GetSection("LibraryIntegrations:DSpace"); var librarySettings = new LibraryIntegrationSettings { KohaBaseUrl = kohaSection["BaseUrl"] ?? string.Empty, DSpaceBaseUrl = dspaceSection["BaseUrl"] ?? string.Empty }; services.AddLibraryExternalIntegration(librarySettings);
         return services;
