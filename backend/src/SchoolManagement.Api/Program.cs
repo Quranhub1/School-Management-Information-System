@@ -75,6 +75,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(AuthorizationPolicies.CommunicationManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.CommunicationManagement));
     options.AddPolicy(AuthorizationPolicies.CommunicationRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.CommunicationRead));
     options.AddPolicy(AuthorizationPolicies.StudentPortal, p => p.RequireRole(AuthorizationPolicies.RoleSets.StudentPortal));
+    options.AddPolicy(AuthorizationPolicies.ParentPortal, p => p.RequireRole(AuthorizationPolicies.RoleSets.ParentPortal));
     options.AddPolicy(AuthorizationPolicies.Student360, p => p.RequireRole(AuthorizationPolicies.RoleSets.Student360));
 });
 
