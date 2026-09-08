@@ -124,8 +124,9 @@
 - [x] Attendance status validation (Present/Absent/Late/Excused)
 - [x] Controlled session closing endpoint
 - [x] Attendance recording blocked after session closure
-- [ ] Verify student enrollment/registration against the timetable entry before marking attendance
-- [ ] Add automated service/API tests for session lifecycle and QR/manual paths
+- [x] Verify active course registration for the course/semester behind the timetable entry before marking attendance
+- [x] Automated application-service tests for registration eligibility, session closure, duplicate records and valid marking
+- [ ] Add automated API/integration tests covering authorized manual and QR attendance paths
 - [ ] Complete frontend lecturer attendance workflow and end-to-end journey
 
 ## Other platform work
@@ -135,7 +136,7 @@ The wider SMIS foundation, academic, admissions, student, staff/HR, library, tim
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Finish attendance enrollment validation, automated tests and frontend lecturer journey.
-2. Close lecturer/teaching, hostel and transport vertical-slice gaps and remove remaining placeholders.
+1. Add automated attendance API/integration coverage, complete the frontend lecturer attendance journey, then move to lecturer/teaching vertical-slice gaps.
+2. Close hostel and transport vertical-slice gaps and remove remaining placeholders.
 3. Harden authorization/audit boundaries and add major end-to-end user journeys.
 4. Audit EF Core migration snapshots/designer artifacts, deployment configuration, backup/restore, monitoring and Uganda-specific operational configuration.
