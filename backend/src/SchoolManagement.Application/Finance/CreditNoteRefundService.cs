@@ -27,7 +27,8 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
 
         var invoice = await finance.GetInvoiceAsync(invoiceId, cancellationToken) ?? throw new ArgumentException("Invoice was not found.");
         var existing = await adjustments.GetCreditNotesAsync(invoiceId, cancellationToken);
-        var remainingCreditable = Math.Max(0, invoice.Amount - existing.Sum(x => x.Amount));
+        var activeCreditNotes = existing.Where(x => !string.Equals(x.Status, "Cancelled", StringComparison.OrdinalIgnoreCase));
+        var remainingCreditable = Math.Max(0, invoice.Amount - activeCreditNotes.Sum(x => x.Amount));
         var normalizedAmount = decimal.Round(amount, 2, MidpointRounding.AwayFromZero);
         if (normalizedAmount > remainingCreditable) throw new ArgumentException($"Credit note exceeds the remaining creditable invoice amount of {remainingCreditable:0.00} {invoice.Currency}.");
 
@@ -78,6 +79,36 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
     public Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid invoiceId, CancellationToken cancellationToken = default) =>
         adjustments.GetCreditNotesAsync(invoiceId, cancellationToken);
 
+    public async Task<CreditNote> CancelCreditNoteAsync(Guid creditNoteId, string reason, string cancelledBy, CancellationToken cancellationToken = default)
+    {
+        if (creditNoteId == Guid.Empty) throw new ArgumentException("Credit note id is required.", nameof(creditNoteId));
+        if (string.IsNullOrWhiteSpace(reason)) throw new ArgumentException("A credit note cancellation reason is required.", nameof(reason));
+        if (string.IsNullOrWhiteSpace(cancelledBy)) throw new ArgumentException("The user cancelling the credit note is required.", nameof(cancelledBy));
+
+        var creditNote = await adjustments.GetCreditNoteForUpdateAsync(creditNoteId, cancellationToken)
+            ?? throw new ArgumentException("Credit note was not found.");
+
+        if (string.Equals(creditNote.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Credit note '{creditNote.CreditNoteNumber}' has already been cancelled.");
+        if (string.Equals(creditNote.Status, "Refunded", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Credit note '{creditNote.CreditNoteNumber}' has already been refunded and cannot be cancelled.");
+
+        var sourceEntries = await finance.GetPostedJournalEntriesAsync(null, null, null, cancellationToken);
+        var sourceJournal = sourceEntries.SingleOrDefault(x =>
+            string.Equals(x.SourceType, "CreditNote", StringComparison.OrdinalIgnoreCase) && x.SourceId == creditNote.Id);
+        if (sourceJournal is null)
+            throw new InvalidOperationException($"Posted journal entry for credit note '{creditNote.CreditNoteNumber}' was not found.");
+
+        // Reverse the immutable posted accounting event first. The credit note is
+        // only marked cancelled after the corrective journal has been created.
+        var reversalService = new JournalReversalService(finance, fiscalPeriods);
+        await reversalService.ReverseAsync(sourceJournal.Id, reason, cancelledBy, cancellationToken);
+
+        creditNote.Cancel(cancelledBy, reason, DateTimeOffset.UtcNow);
+        await finance.SaveChangesAsync(cancellationToken);
+        return creditNote;
+    }
+
     public async Task<RefundResult> CreateRefundAsync(Guid paymentId, decimal amount, string refundMethod, string reason, string? reference, string? refundedBy, Guid? creditNoteId = null, CancellationToken cancellationToken = default)
     {
         if (paymentId == Guid.Empty) throw new ArgumentException("Payment is required.", nameof(paymentId));
@@ -97,6 +128,8 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
         if (creditNoteId.HasValue)
         {
             var creditNote = await adjustments.GetCreditNoteAsync(creditNoteId.Value, cancellationToken) ?? throw new ArgumentException("Credit note was not found.");
+            if (!string.Equals(creditNote.Status, "Applied", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException($"Credit note '{creditNote.CreditNoteNumber}' is not available for refund because its status is '{creditNote.Status}'.");
             var invoice = await finance.GetInvoiceAsync(creditNote.StudentInvoiceId, cancellationToken);
             if (invoice is null || invoice.StudentId != payment.StudentId) throw new InvalidOperationException("Refund credit note and payment must belong to the same student.");
             if (normalizedAmount > creditNote.Amount) throw new ArgumentException("Refund cannot exceed the credit note amount.");
