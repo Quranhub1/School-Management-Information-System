@@ -30,9 +30,6 @@ public sealed class JournalReversalService(IFinanceRepository finance, FiscalPer
         if (await finance.JournalEntryNumberExistsAsync(reversalNumber, cancellationToken))
             throw new InvalidOperationException($"Reversal journal entry '{reversalNumber}' already exists.");
 
-        // Reversals are new posted transactions and therefore must obey the same
-        // fiscal-period controls as every other posting. The reversal is dated
-        // today so it cannot silently alter a closed historical period.
         var reversalDate = DateTimeOffset.UtcNow;
         await fiscalPeriods.RequireOpenPeriodAsync(DateOnly.FromDateTime(reversalDate.UtcDateTime), cancellationToken);
 
@@ -52,7 +49,11 @@ public sealed class JournalReversalService(IFinanceRepository finance, FiscalPer
                 AccountId = line.AccountId,
                 Description = $"Reversal of {original.EntryNumber}",
                 Debit = line.Credit,
-                Credit = line.Debit
+                Credit = line.Debit,
+                CampusId = line.CampusId,
+                FacultyId = line.FacultyId,
+                DepartmentId = line.DepartmentId,
+                ProgrammeId = line.ProgrammeId
             }).ToList()
         };
 
