@@ -6,7 +6,10 @@ namespace SchoolManagement.Infrastructure.Persistence;
 
 public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRepository
 {
-    public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => db.StudentInvoices.AsNoTracking().SingleOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
+    // These aggregate roots are returned tracked because application workflows
+    // intentionally mutate them before SaveChangesAsync (payments, discounts,
+    // charges, installments and invoice balances).
+    public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => db.StudentInvoices.SingleOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
     public async Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) => await db.StudentInvoices.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
     public async Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) => await db.StudentInvoices.AsNoTracking().OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
     public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken) => db.FeeStructures.AsNoTracking().SingleOrDefaultAsync(x => x.Id == feeStructureId && x.IsActive, cancellationToken);
@@ -19,13 +22,13 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
     public Task<bool> JournalEntryNumberExistsAsync(string entryNumber, CancellationToken cancellationToken) => db.JournalEntries.AnyAsync(x => x.EntryNumber == entryNumber, cancellationToken);
     public Task<Account?> GetActiveAccountByCodeAsync(string code, CancellationToken cancellationToken) => db.Accounts.AsNoTracking().SingleOrDefaultAsync(x => x.Code == code && x.IsActive, cancellationToken);
     public Task<Account?> GetActiveAccountByIdAsync(Guid accountId, CancellationToken cancellationToken) => db.Accounts.AsNoTracking().SingleOrDefaultAsync(x => x.Id == accountId && x.IsActive, cancellationToken);
-    public Task<JournalEntry?> GetPostedJournalEntryAsync(Guid journalEntryId, CancellationToken cancellationToken) => db.JournalEntries.AsNoTracking().SingleOrDefaultAsync(x => x.Id == journalEntryId && x.Status == "Posted", cancellationToken);
+    public Task<JournalEntry?> GetPostedJournalEntryAsync(Guid journalEntryId, CancellationToken cancellationToken) => db.JournalEntries.AsNoTracking().Include(x => x.Lines).SingleOrDefaultAsync(x => x.Id == journalEntryId && x.Status == "Posted", cancellationToken);
     public Task<bool> HasReversalAsync(Guid journalEntryId, CancellationToken cancellationToken) => db.JournalEntries.AnyAsync(x => x.ReversalOfJournalEntryId == journalEntryId, cancellationToken);
-    public Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid discountId, CancellationToken cancellationToken) => db.Set<InvoiceDiscount>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == discountId, cancellationToken);
+    public Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid discountId, CancellationToken cancellationToken) => db.Set<InvoiceDiscount>().SingleOrDefaultAsync(x => x.Id == discountId, cancellationToken);
     public async Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid invoiceId, CancellationToken cancellationToken) => await db.Set<InvoiceDiscount>().AsNoTracking().Where(x => x.StudentInvoiceId == invoiceId).OrderBy(x => x.RequestedAt).ToListAsync(cancellationToken);
     public async Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid invoiceId, CancellationToken cancellationToken) => await db.Set<InvoiceInstallment>().AsNoTracking().Where(x => x.StudentInvoiceId == invoiceId).OrderBy(x => x.Sequence).ToListAsync(cancellationToken);
     public async Task<IReadOnlyList<StudentCharge>> GetStudentChargesAsync(Guid studentId, CancellationToken cancellationToken) => await db.Set<StudentCharge>().AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.CreatedAt).ToListAsync(cancellationToken);
-    public Task<StudentCharge?> GetStudentChargeAsync(Guid chargeId, CancellationToken cancellationToken) => db.Set<StudentCharge>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == chargeId, cancellationToken);
+    public Task<StudentCharge?> GetStudentChargeAsync(Guid chargeId, CancellationToken cancellationToken) => db.Set<StudentCharge>().SingleOrDefaultAsync(x => x.Id == chargeId, cancellationToken);
     public async Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken) => await db.CreditNotes.AsNoTracking().Where(x => x.StudentInvoiceId == studentInvoiceId).OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
     public async Task<IReadOnlyList<CreditNote>> GetAllCreditNotesAsync(CancellationToken cancellationToken) => await db.CreditNotes.AsNoTracking().OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
     public Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken cancellationToken) => db.CreditNotes.AsNoTracking().SingleOrDefaultAsync(x => x.Id == creditNoteId, cancellationToken);
