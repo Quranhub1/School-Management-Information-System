@@ -23,9 +23,11 @@ public sealed class FiscalPeriodClosingService(IFinanceRepository finance, IFisc
 
         var entries = await finance.GetPostedJournalEntriesAsync(period.StartDate, period.EndDate, null, cancellationToken);
         var lines = BuildClosingLines(entries, retained.Id);
-        var netIncome = lines.Where(x => x.AccountId == retained.Id).Sum(x => x.Credit - x.Debit);
 
-        if (lines.Count > 1 && netIncome != 0)
+        // A closing journal is required whenever there are income-statement
+        // balances. Even when net income is exactly zero, revenue and expense
+        // accounts still have to be cleared into the retained-earnings close.
+        if (lines.Count > 0)
         {
             var entry = new JournalEntry
             {
@@ -41,9 +43,11 @@ public sealed class FiscalPeriodClosingService(IFinanceRepository finance, IFisc
             };
             JournalEntryValidator.Validate(entry);
             await finance.AddJournalEntryAsync(entry, cancellationToken);
-            await finance.SaveChangesAsync(cancellationToken);
         }
 
+        // FinanceRepository and FiscalPeriodRepository share the scoped EF
+        // DbContext. Saving only here keeps the closing journal and the period
+        // status change in the same SaveChanges transaction.
         period.Close(performedBy);
         await periods.SaveChangesAsync(cancellationToken);
         return period;
