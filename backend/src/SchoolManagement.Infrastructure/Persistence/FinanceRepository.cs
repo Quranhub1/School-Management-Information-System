@@ -48,7 +48,7 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRe
         if (from.HasValue) query = query.Where(x => DateOnly.FromDateTime(x.EntryDate.UtcDateTime) >= from.Value);
         if (to.HasValue) query = query.Where(x => DateOnly.FromDateTime(x.EntryDate.UtcDateTime) <= to.Value);
         if (accountId.HasValue) query = query.Where(x => x.Lines.Any(l => l.AccountId == accountId.Value));
-        return await query.Include(x => x.Lines).OrderBy(x => x.EntryDate).ToListAsync(cancellationToken);
+        return await query.Include(x => x.Lines).ThenInclude(x => x.Account).OrderBy(x => x.EntryDate).ThenBy(x => x.EntryNumber).ToListAsync(cancellationToken);
     }
     public async Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default)
     {
