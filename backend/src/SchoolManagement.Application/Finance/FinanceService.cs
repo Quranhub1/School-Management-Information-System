@@ -152,8 +152,8 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
     private async Task AddPostedJournalEntryAsync(JournalEntry entry, CancellationToken cancellationToken)
     {
         if (await finance.JournalEntryNumberExistsAsync(entry.EntryNumber, cancellationToken)) throw new InvalidOperationException($"Journal entry number '{entry.EntryNumber}' already exists.");
-        JournalEntryValidator.Validate(entry);
         await fiscalPeriods.RequireOpenPeriodAsync(DateOnly.FromDateTime(entry.EntryDate.UtcDateTime), cancellationToken);
+        entry.Post("FinanceService");
         await finance.AddJournalEntryAsync(entry, cancellationToken);
     }
 
@@ -161,7 +161,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
 
     private async Task<JournalEntry> CreateItemizedInvoiceJournalAsync(StudentInvoice invoice, Guid receivableAccountId, Guid defaultRevenueAccountId, CancellationToken cancellationToken)
     {
-        var entry = new JournalEntry { EntryNumber = $"INV-{invoice.InvoiceNumber}", Description = $"Student invoice {invoice.InvoiceNumber}", Status = "Posted", PostedAt = DateTimeOffset.UtcNow, PostedBy = "FinanceService", SourceType = "StudentInvoice", SourceId = invoice.Id };
+        var entry = new JournalEntry { EntryNumber = $"INV-{invoice.InvoiceNumber}", Description = $"Student invoice {invoice.InvoiceNumber}", SourceType = "StudentInvoice", SourceId = invoice.Id };
         entry.Lines.Add(new JournalEntryLine { AccountId = receivableAccountId, Description = $"Receivable - {invoice.InvoiceNumber}", Debit = invoice.Amount });
         if (invoice.Lines.Count == 0) { entry.Lines.Add(new JournalEntryLine { AccountId = defaultRevenueAccountId, Description = "Student fees", Credit = invoice.Amount }); return entry; }
         foreach (var group in invoice.Lines.GroupBy(x => x.IncomeAccountId))
@@ -183,7 +183,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
 
     private static JournalEntry CreateJournalEntry(string entryNumber, string description, decimal amount, Guid debitAccountId, Guid creditAccountId, string sourceType, Guid sourceId)
     {
-        var entry = new JournalEntry { EntryNumber = entryNumber, Description = description, Status = "Posted", PostedAt = DateTimeOffset.UtcNow, PostedBy = "FinanceService", SourceType = sourceType, SourceId = sourceId, Lines = [new JournalEntryLine { AccountId = debitAccountId, Description = description, Debit = amount, Credit = 0 }, new JournalEntryLine { AccountId = creditAccountId, Description = description, Debit = 0, Credit = amount }] };
+        var entry = new JournalEntry { EntryNumber = entryNumber, Description = description, SourceType = sourceType, SourceId = sourceId, Lines = [new JournalEntryLine { AccountId = debitAccountId, Description = description, Debit = amount, Credit = 0 }, new JournalEntryLine { AccountId = creditAccountId, Description = description, Debit = 0, Credit = amount }] };
         JournalEntryValidator.Validate(entry);
         return entry;
     }
