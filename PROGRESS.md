@@ -1,7 +1,7 @@
 # School Management Information System — Project Progress
 
 **Last updated:** 2026-09-08  
-**Current focus:** Final verification of completed vertical slices and production-readiness audit  
+**Current focus:** Final production-readiness audit and native Windows desktop client  
 **Tracking branch:** `main`
 
 ## Latest closure work — 2026-09-08
@@ -17,7 +17,14 @@
 - [x] Transport service test for duplicate active student assignment
 - [x] Hostel/attendance closure merged to `main` in PR #98
 - [x] Transport closure merged to `main` in PR #99
-- [ ] Re-run full CI after the latest merged changes
+- [x] Full System CI green after finance fixture and posting fixes
+- [x] Frontend CI green on the latest validated commit
+- [x] Native Windows desktop shell foundation added as a .NET 8 WPF application
+- [x] Desktop shell uses WebView2 without browser tabs, address bar, status bar or developer tools
+- [x] Desktop navigation is restricted to the configured trusted HTTPS system origin
+- [x] Dedicated Windows desktop CI workflow added
+- [ ] Bundle the approved frontend build into the desktop installer/local application origin
+- [ ] Produce signed/installable Windows desktop package and verify on a clean Windows machine
 
 ## Finance
 - [x] Double-entry invoice/payment posting, balanced journals and duplicate-posting protection
@@ -48,7 +55,7 @@
 - [ ] Replace any remaining non-functional placeholders discovered by final repository audit
 
 ## Final production gate
-1. Run the full CI/test suite on the latest `main` after PRs #98 and #99.
-2. Add API/integration tests for authorized attendance manual and QR paths.
+1. Complete and validate the native Windows desktop packaging/local frontend embedding.
+2. Add API/integration tests for authorized attendance manual and QR attendance paths.
 3. Audit EF Core migration snapshots/designer artifacts and deployment configuration.
 4. Verify backup/restore, monitoring, secrets and Uganda-specific operational configuration before production sign-off.
