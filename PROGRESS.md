@@ -115,13 +115,27 @@
 - [x] Bank transactions and bank reconciliation workflow foundation
 - [x] Production hardening of bank reconciliation, including JSON statement imports and outstanding-item handling
 
+## Attendance — Current hardening
+- [x] Authorized attendance session opening
+- [x] Duplicate session prevention per timetable entry/date
+- [x] Authorized manual attendance recording
+- [x] Authorized rotating QR attendance tokens
+- [x] Duplicate student attendance prevention within a session
+- [x] Attendance status validation (Present/Absent/Late/Excused)
+- [x] Controlled session closing endpoint
+- [x] Attendance recording blocked after session closure
+- [ ] Verify student enrollment/registration against the timetable entry before marking attendance
+- [ ] Add automated service/API tests for session lifecycle and QR/manual paths
+- [ ] Complete frontend lecturer attendance workflow and end-to-end journey
+
 ## Other platform work
-The wider SMIS foundation, academic, admissions, student, attendance, staff/HR, library, timetable, communication, portals and operational areas remain under incremental verification and production hardening. In particular, remaining work must replace any UI placeholders with real, authorized workflows and close discovered vertical-slice gaps in attendance, teaching, hostel and transport.
+The wider SMIS foundation, academic, admissions, student, staff/HR, library, timetable, communication, portals and operational areas remain under incremental verification and production hardening. Remaining work must replace any UI placeholders with real, authorized workflows and close discovered vertical-slice gaps in attendance, teaching, hostel and transport.
 
 ## Definition of Done
 A workflow is covered only when business/domain logic, persistence, authorization, frontend UI where applicable, validation and automated tests are implemented and CI passes. Finance additionally requires balanced accounting effects, transaction integrity, source traceability and controlled corrections rather than editing posted ledger history.
 
 ## Immediate roadmap
-1. Close system-wide vertical-slice gaps: attendance, lecturer/teaching workflows, hostel and transport; remove remaining placeholders.
-2. Harden authorization and audit boundaries, then add major end-to-end user journeys across the completed modules.
-3. Audit EF Core migration snapshots/designer artifacts, deployment configuration, backup/restore, monitoring and Uganda-specific operational configuration.
+1. Finish attendance enrollment validation, automated tests and frontend lecturer journey.
+2. Close lecturer/teaching, hostel and transport vertical-slice gaps and remove remaining placeholders.
+3. Harden authorization/audit boundaries and add major end-to-end user journeys.
+4. Audit EF Core migration snapshots/designer artifacts, deployment configuration, backup/restore, monitoring and Uganda-specific operational configuration.
