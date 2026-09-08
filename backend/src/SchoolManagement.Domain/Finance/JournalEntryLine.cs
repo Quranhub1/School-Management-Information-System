@@ -9,6 +9,14 @@ public sealed class JournalEntryLine
     public decimal Debit { get; set; }
     public decimal Credit { get; set; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+
+    // Optional accounting dimensions. A null dimension means the posting is
+    // institution-wide rather than scoped to that organizational level.
+    public Guid? CampusId { get; init; }
+    public Guid? FacultyId { get; init; }
+    public Guid? DepartmentId { get; init; }
+    public Guid? ProgrammeId { get; init; }
+
     public JournalEntry? JournalEntry { get; init; }
     public Account? Account { get; init; }
 }
