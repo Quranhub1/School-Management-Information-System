@@ -37,6 +37,75 @@ public sealed class CreditNoteRefundServiceTests
     }
 
     [Fact]
+    public async Task CancelCreditNoteAsync_CreatesReversalAndStoresAuditTrail()
+    {
+        var invoice = new StudentInvoice { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-CANCEL", Amount = 100000m, PaidAmount = 100000m, Currency = "UGX", Status = "Paid" };
+        var finance = new InMemoryFinanceRepository(invoice);
+        var adjustments = new InMemoryAdjustmentsRepository();
+        var service = new CreditNoteRefundService(finance, adjustments, new FiscalPeriodService(new InMemoryFiscalPeriodRepository()));
+
+        var creditNote = await service.CreateCreditNoteAsync(invoice.Id, 25000m, "Fee overcharge", "manager");
+        var cancelled = await service.CancelCreditNoteAsync(creditNote.Id, "Correction approved", "auditor");
+
+        Assert.Equal("Cancelled", cancelled.Status);
+        Assert.Equal("auditor", cancelled.CancelledBy);
+        Assert.Equal("Correction approved", cancelled.CancellationReason);
+        Assert.NotNull(cancelled.CancelledAt);
+        Assert.Equal(2, finance.JournalEntries.Count);
+        var reversal = finance.JournalEntries.Single(x => x.ReversalOfJournalEntryId == finance.JournalEntries.Single(y => y.SourceType == "CreditNote").Id);
+        Assert.Equal("JournalReversal", reversal.SourceType);
+        Assert.Equal(finance.JournalEntries.Single(x => x.SourceType == "CreditNote").Lines.Single(x => x.Debit > 0).AccountId, reversal.Lines.Single(x => x.Credit > 0).AccountId);
+    }
+
+    [Fact]
+    public async Task CancelCreditNoteAsync_IsIdempotencyProtected()
+    {
+        var invoice = new StudentInvoice { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-CANCEL-2", Amount = 100000m, PaidAmount = 100000m, Currency = "UGX", Status = "Paid" };
+        var finance = new InMemoryFinanceRepository(invoice);
+        var adjustments = new InMemoryAdjustmentsRepository();
+        var service = new CreditNoteRefundService(finance, adjustments, new FiscalPeriodService(new InMemoryFiscalPeriodRepository()));
+
+        var creditNote = await service.CreateCreditNoteAsync(invoice.Id, 10000m, "Correction", "manager");
+        await service.CancelCreditNoteAsync(creditNote.Id, "Wrong amount", "auditor");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.CancelCreditNoteAsync(creditNote.Id, "Second cancellation", "auditor"));
+        Assert.Equal(2, finance.JournalEntries.Count);
+    }
+
+    [Fact]
+    public async Task CreateCreditNoteAsync_AllowsRecreditAfterCancellation()
+    {
+        var invoice = new StudentInvoice { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-CANCEL-3", Amount = 50000m, PaidAmount = 50000m, Currency = "UGX", Status = "Paid" };
+        var finance = new InMemoryFinanceRepository(invoice);
+        var adjustments = new InMemoryAdjustmentsRepository();
+        var service = new CreditNoteRefundService(finance, adjustments, new FiscalPeriodService(new InMemoryFiscalPeriodRepository()));
+
+        var first = await service.CreateCreditNoteAsync(invoice.Id, 50000m, "Original correction", "manager");
+        await service.CancelCreditNoteAsync(first.Id, "Correction withdrawn", "auditor");
+        var second = await service.CreateCreditNoteAsync(invoice.Id, 50000m, "Corrected credit", "manager");
+
+        Assert.Equal("Cancelled", first.Status);
+        Assert.Equal("Applied", second.Status);
+        Assert.Equal(2, adjustments.CreditNotes.Count);
+    }
+
+    [Fact]
+    public async Task CreateRefundAsync_RejectsCancelledCreditNote()
+    {
+        var studentId = Guid.NewGuid();
+        var invoice = new StudentInvoice { StudentId = studentId, InvoiceNumber = "INV-REFUND", Amount = 50000m, PaidAmount = 50000m, Currency = "UGX", Status = "Paid" };
+        var payment = new Payment { StudentId = studentId, ReceiptNumber = "RCT-CN-001", Amount = 50000m, Currency = "UGX", PaymentMethod = "Cash" };
+        var finance = new InMemoryFinanceRepository(invoice, payment);
+        var adjustments = new InMemoryAdjustmentsRepository();
+        var service = new CreditNoteRefundService(finance, adjustments, new FiscalPeriodService(new InMemoryFiscalPeriodRepository()));
+
+        var creditNote = await service.CreateCreditNoteAsync(invoice.Id, 25000m, "Refundable overcharge", "manager");
+        await service.CancelCreditNoteAsync(creditNote.Id, "Cancelled before refund", "auditor");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateRefundAsync(payment.Id, 10000m, "Cash", "Refund", null, "manager", creditNote.Id));
+    }
+
+    [Fact]
     public async Task CreateRefundAsync_PreventsRefundingMoreThanPayment()
     {
         var studentId = Guid.NewGuid();
@@ -71,6 +140,7 @@ public sealed class CreditNoteRefundServiceTests
     {
         public List<CreditNote> CreditNotes { get; } = [];
         public Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken cancellationToken) => Task.FromResult(CreditNotes.FirstOrDefault(x => x.Id == creditNoteId));
+        public Task<CreditNote?> GetCreditNoteForUpdateAsync(Guid creditNoteId, CancellationToken cancellationToken) => Task.FromResult(CreditNotes.FirstOrDefault(x => x.Id == creditNoteId));
         public Task<IReadOnlyList<CreditNote>> GetCreditNotesAsync(Guid studentInvoiceId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<CreditNote>>(CreditNotes.Where(x => x.StudentInvoiceId == studentInvoiceId).ToArray());
         public Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken) { CreditNotes.Add(creditNote); return Task.CompletedTask; }
     }
@@ -98,7 +168,7 @@ public sealed class CreditNoteRefundServiceTests
         public Task<Account?> GetActiveAccountByCodeAsync(string code, CancellationToken ct) => Task.FromResult<Account?>(new Account { Code = code, Name = code, AccountType = code == FinanceAccountCodes.StudentReceivables ? "Asset" : "Income", ChartOfAccountsId = Guid.NewGuid(), IsActive = true });
         public Task<Account?> GetActiveAccountByIdAsync(Guid id, CancellationToken ct) => Task.FromResult<Account?>(null);
         public Task<JournalEntry?> GetPostedJournalEntryAsync(Guid id, CancellationToken ct) => Task.FromResult<JournalEntry?>(JournalEntries.FirstOrDefault(x => x.Id == id));
-        public Task<bool> HasReversalAsync(Guid id, CancellationToken ct) => Task.FromResult(false);
+        public Task<bool> HasReversalAsync(Guid id, CancellationToken ct) => Task.FromResult(JournalEntries.Any(x => x.ReversalOfJournalEntryId == id));
         public Task<InvoiceDiscount?> GetInvoiceDiscountAsync(Guid id, CancellationToken ct) => Task.FromResult<InvoiceDiscount?>(null);
         public Task<IReadOnlyList<InvoiceDiscount>> GetInvoiceDiscountsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<InvoiceDiscount>>([]);
         public Task<IReadOnlyList<InvoiceInstallment>> GetInvoiceInstallmentsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<InvoiceInstallment>>([]);
@@ -116,7 +186,7 @@ public sealed class CreditNoteRefundServiceTests
         public Task AddInvoiceDiscountAsync(InvoiceDiscount x, CancellationToken ct) => Task.CompletedTask;
         public Task AddCreditNoteAsync(CreditNote x, CancellationToken ct) { creditNotes.Add(x); return Task.CompletedTask; }
         public Task AddJournalEntryAsync(JournalEntry x, CancellationToken ct) { JournalEntries.Add(x); return Task.CompletedTask; }
-        public Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken ct) => Task.FromResult<IReadOnlyList<JournalEntry>>(JournalEntries);
+        public Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken ct) => Task.FromResult<IReadOnlyList<JournalEntry>>(JournalEntries.Where(x => x.Status == "Posted").ToArray());
         public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>(payment is null ? [] : [payment]);
         public Task SaveChangesAsync(CancellationToken ct = default) => Task.CompletedTask;
     }
