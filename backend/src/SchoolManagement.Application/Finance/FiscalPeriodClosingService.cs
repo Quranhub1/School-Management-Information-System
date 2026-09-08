@@ -27,7 +27,18 @@ public sealed class FiscalPeriodClosingService(IFinanceRepository finance, IFisc
 
         if (lines.Count > 1 && netIncome != 0)
         {
-            var entry = new JournalEntry { EntryNumber = entryNumber, EntryDate = period.EndDate.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc), Description = $"Fiscal period closing - {period.Name}", Status = "Posted", PostedAt = DateTimeOffset.UtcNow, PostedBy = performedBy.Trim(), Lines = new List<JournalEntryLine>(lines) };
+            var entry = new JournalEntry
+            {
+                EntryNumber = entryNumber,
+                EntryDate = period.EndDate.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc),
+                Description = $"Fiscal period closing - {period.Name}",
+                Status = "Posted",
+                PostedAt = DateTimeOffset.UtcNow,
+                PostedBy = performedBy.Trim(),
+                SourceType = "FiscalPeriodClosing",
+                SourceId = period.Id,
+                Lines = new List<JournalEntryLine>(lines)
+            };
             JournalEntryValidator.Validate(entry);
             await finance.AddJournalEntryAsync(entry, cancellationToken);
             await finance.SaveChangesAsync(cancellationToken);
