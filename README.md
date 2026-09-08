@@ -28,6 +28,12 @@ The complete installation guide covers the full stack, including:
 - Release and deployment checklist
 - End-to-end acceptance testing
 
+## Privacy
+
+SMIS now includes a complete software-level [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md), covering institutional data-controller responsibilities, student and staff data, minors and sensitive records, access control, audit logs, financial data, documents and backups, third-party services, retention, data-subject rights, complaints, incident response and Ugandan data-protection references.
+
+The policy is also published inside the web application at `/privacy-policy.html` and is linked from both the sign-in screen and authenticated workspace. The deploying institution remains responsible for its own legal notices, privacy contact details, retention schedule and compliance obligations.
+
 ## Quick development setup
 
 ### Prerequisites
@@ -155,6 +161,7 @@ The installer is intended to be distributed through GitHub Releases and can then
 ## Documentation
 
 - [`INSTALLATION.md`](INSTALLATION.md) — complete installation, deployment, acceptance testing and release checklist
+- [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) — complete SMIS privacy policy and data-protection baseline
 - [`PROGRESS.md`](PROGRESS.md) — authoritative implementation and production-gate tracker
 - [`BACKEND_SETUP.md`](BACKEND_SETUP.md) — backend-focused setup notes
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system architecture
