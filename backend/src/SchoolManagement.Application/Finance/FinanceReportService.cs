@@ -13,7 +13,7 @@ public sealed record BalanceSheetReport(IReadOnlyList<BalanceSheetRow> Assets, I
 
 public sealed class FinanceReportService(IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
-    public async Task<IReadOnlyList<AccountLedgerRow>> GetGeneralLedgerAsync(DateOnly? from = null, DateOnly? to = null, Guid? accountId = null, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AccountLedgerRow>> GetGeneralLedgerAsync(DateOnly? from = null, DateOnly? to = null, Guid? accountId = null, CancellationToken cancellationToken = default, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
     {
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, accountId, cancellationToken);
         var rows = new List<AccountLedgerRow>();
@@ -32,29 +32,15 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         return rows;
     }
 
-    public async Task<IReadOnlyList<TrialBalanceRow>> GetTrialBalanceAsync(DateOnly? from = null, DateOnly? to = null, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TrialBalanceRow>> GetTrialBalanceAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
     {
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
-        var filtered = entries.Select(e => new JournalEntry
-        {
-            Id = e.Id,
-            EntryNumber = e.EntryNumber,
-            EntryDate = e.EntryDate,
-            Description = e.Description,
-            Status = e.Status,
-            PostedAt = e.PostedAt,
-            PostedBy = e.PostedBy,
-            CreatedAt = e.CreatedAt,
-            SourceType = e.SourceType,
-            SourceId = e.SourceId,
-            ReversalOfJournalEntryId = e.ReversalOfJournalEntryId,
-            Lines = e.Lines.Where(l => MatchesDimensions(l, campusId, facultyId, departmentId, programmeId)).ToList()
-        }).Where(e => e.Lines.Count > 0).ToList();
+        var filtered = entries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId)).Where(e => e.Lines.Count > 0).ToList();
         var totals = Aggregate(filtered);
         return totals.Values.OrderBy(x => x.Account.Code).Select(x => new TrialBalanceRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, x.Debit, x.Credit, x.Debit - x.Credit)).ToList();
     }
 
-    public async Task<IncomeStatementReport> GetIncomeStatementAsync(DateOnly? from = null, DateOnly? to = null, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null, CancellationToken cancellationToken = default)
+    public async Task<IncomeStatementReport> GetIncomeStatementAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
     {
         (from, to) = await ResolveIncomeStatementRangeAsync(from, to, cancellationToken);
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
@@ -66,7 +52,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         return new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
     }
 
-    public async Task<BalanceSheetReport> GetBalanceSheetAsync(DateOnly? asOf = null, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null, CancellationToken cancellationToken = default)
+    public async Task<BalanceSheetReport> GetBalanceSheetAsync(DateOnly? asOf = null, CancellationToken cancellationToken = default, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
     {
         var effectiveAsOf = asOf ?? DateOnly.FromDateTime(DateTime.UtcNow);
         var entries = await finance.GetPostedJournalEntriesAsync(null, effectiveAsOf, null, cancellationToken);
@@ -74,7 +60,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         var assets = totals.Where(x => IsAsset(x.AccountType)).ToList();
         var liabilities = totals.Where(x => IsLiability(x.AccountType)).ToList();
         var equity = totals.Where(x => IsEquity(x.AccountType)).ToList();
-        var netIncome = await GetIncomeStatementAsync(null, effectiveAsOf, campusId, facultyId, departmentId, programmeId, cancellationToken);
+        var netIncome = await GetIncomeStatementAsync(null, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId);
         var totalAssets = assets.Sum(x => x.Balance);
         var totalLiabilities = liabilities.Sum(x => x.Balance);
         var totalEquity = equity.Sum(x => x.Balance);
