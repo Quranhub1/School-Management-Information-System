@@ -3,7 +3,7 @@ using SchoolManagement.Domain.Finance;
 
 namespace SchoolManagement.Application.Finance;
 
-public sealed class StudentChargeService(IFinanceRepository finance)
+public sealed class StudentChargeService(IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
     public async Task<StudentCharge> CreateAsync(Guid studentId, string chargeType, string description, decimal amount, string currency, string? createdBy, CancellationToken cancellationToken = default)
     {
@@ -103,6 +103,7 @@ public sealed class StudentChargeService(IFinanceRepository finance)
     {
         if (await finance.JournalEntryNumberExistsAsync(entry.EntryNumber, cancellationToken)) throw new InvalidOperationException($"Journal entry number '{entry.EntryNumber}' already exists.");
         JournalEntryValidator.Validate(entry);
+        await fiscalPeriods.RequireOpenPeriodAsync(DateOnly.FromDateTime(entry.EntryDate.UtcDateTime), cancellationToken);
         await finance.AddJournalEntryAsync(entry, cancellationToken);
     }
 
