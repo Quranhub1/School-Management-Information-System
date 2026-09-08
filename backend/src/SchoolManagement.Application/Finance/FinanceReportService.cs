@@ -66,12 +66,15 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
     public async Task<BalanceSheetReport> GetBalanceSheetAsync(DateOnly? asOf = null, CancellationToken cancellationToken = default, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
     {
         var effectiveAsOf = asOf ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var containingPeriod = await fiscalPeriods.GetContainingAsync(effectiveAsOf, cancellationToken);
         var entries = await finance.GetPostedJournalEntriesAsync(null, effectiveAsOf, null, cancellationToken);
         var totals = Aggregate(entries.Select(e => FilterEntry(e, campusId, facultyId, departmentId, programmeId))).Values.Select(x => new BalanceSheetRow(x.Account.Id, x.Account.Code, x.Account.Name, x.Account.AccountType, IsCreditNormal(x.Account.AccountType) ? x.Credit - x.Debit : x.Debit - x.Credit)).Where(x => IsAsset(x.AccountType) || IsLiability(x.AccountType) || IsEquity(x.AccountType)).OrderBy(x => x.AccountCode).ToList();
         var assets = totals.Where(x => IsAsset(x.AccountType)).ToList();
         var liabilities = totals.Where(x => IsLiability(x.AccountType)).ToList();
         var equity = totals.Where(x => IsEquity(x.AccountType)).ToList();
-        var netIncome = await GetIncomeStatementAsync(null, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId);
+        var netIncome = containingPeriod is null
+            ? await GetIncomeStatementAsync(null, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId)
+            : await GetIncomeStatementAsync(containingPeriod.StartDate, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId);
         var totalAssets = assets.Sum(x => x.Balance);
         var totalLiabilities = liabilities.Sum(x => x.Balance);
         var totalEquity = equity.Sum(x => x.Balance);
