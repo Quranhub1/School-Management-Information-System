@@ -63,6 +63,7 @@ public sealed class OpeningBalanceServiceTests
     [Fact]
     public void BuildOpeningBalanceLines_preserves_liability_and_equity_credit_balances()
     {
+        var cash = new Account { Code = "1010", Name = "Cash", AccountType = "Asset" };
         var payable = new Account { Code = "2100", Name = "Payables", AccountType = "liability" };
         var capital = new Account { Code = "3000", Name = "Capital", AccountType = "EQUITY" };
         var campusId = Guid.NewGuid();
@@ -74,6 +75,7 @@ public sealed class OpeningBalanceServiceTests
                 EntryNumber = "J1",
                 Lines = new List<JournalEntryLine>
                 {
+                    new() { AccountId = cash.Id, Account = cash, Debit = 100_000m, CampusId = campusId },
                     new() { AccountId = payable.Id, Account = payable, Credit = 75_000m, CampusId = campusId },
                     new() { AccountId = capital.Id, Account = capital, Credit = 25_000m, CampusId = campusId }
                 }
@@ -83,6 +85,7 @@ public sealed class OpeningBalanceServiceTests
                 EntryNumber = "J2",
                 Lines = new List<JournalEntryLine>
                 {
+                    new() { AccountId = cash.Id, Account = cash, Credit = 15_000m, CampusId = campusId },
                     new() { AccountId = payable.Id, Account = payable, Debit = 15_000m, CampusId = campusId }
                 }
             }
@@ -90,7 +93,10 @@ public sealed class OpeningBalanceServiceTests
 
         var lines = FiscalYearCarryForwardService.BuildOpeningBalanceLines(entries);
 
-        Assert.Equal(2, lines.Count);
+        Assert.Equal(3, lines.Count);
+        var cashLine = Assert.Single(lines, x => x.AccountId == cash.Id);
+        Assert.Equal(85_000m, cashLine.Debit);
+        Assert.Equal(0m, cashLine.Credit);
         var payableLine = Assert.Single(lines, x => x.AccountId == payable.Id);
         Assert.Equal(0m, payableLine.Debit);
         Assert.Equal(60_000m, payableLine.Credit);
