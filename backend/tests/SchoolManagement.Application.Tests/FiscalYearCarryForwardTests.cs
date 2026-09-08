@@ -34,9 +34,18 @@ public sealed class FiscalYearCarryForwardTests
                 {
                     new() { AccountId = cash.Id, Account = cash, Credit = 25_000m, CampusId = campusId },
                     new() { AccountId = payable.Id, Account = payable, Debit = 10_000m, CampusId = campusId },
-                    // The closed-period result is represented by retained earnings before carry-forward.
-                    // This keeps the source ledger balanced while revenue remains excluded from opening balances.
-                    new() { AccountId = retainedEarnings.Id, Account = retainedEarnings, Credit = 15_000m, CampusId = campusId }
+                    // This reduces retained earnings by 15,000 while keeping the transaction balanced.
+                    new() { AccountId = retainedEarnings.Id, Account = retainedEarnings, Debit = 15_000m, CampusId = campusId }
+                }
+            },
+            new JournalEntry
+            {
+                EntryNumber = "J3",
+                Lines = new List<JournalEntryLine>
+                {
+                    // Closing the 100,000 revenue balance into retained earnings before carry-forward.
+                    new() { AccountId = revenue.Id, Account = revenue, Debit = 100_000m, CampusId = campusId },
+                    new() { AccountId = retainedEarnings.Id, Account = retainedEarnings, Credit = 100_000m, CampusId = campusId }
                 }
             }
         };
@@ -56,7 +65,7 @@ public sealed class FiscalYearCarryForwardTests
 
         var retainedEarningsLine = Assert.Single(lines, x => x.AccountId == retainedEarnings.Id);
         Assert.Equal(0m, retainedEarningsLine.Debit);
-        Assert.Equal(15_000m, retainedEarningsLine.Credit);
+        Assert.Equal(85_000m, retainedEarningsLine.Credit);
         Assert.Equal(campusId, retainedEarningsLine.CampusId);
 
         Assert.DoesNotContain(lines, x => x.AccountId == revenue.Id);
