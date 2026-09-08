@@ -56,6 +56,8 @@ public sealed class BankReconciliationService(IBankReconciliationRepository repo
         var line = await repository.GetLineAsync(lineId, cancellationToken) ?? throw new KeyNotFoundException("Bank statement line was not found.");
         var reconciliation = await repository.GetAsync(line.BankReconciliationId, cancellationToken) ?? throw new KeyNotFoundException("Bank reconciliation was not found.");
         if (string.Equals(reconciliation.Status, "Reconciled", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("A completed reconciliation cannot be changed.");
+        if (line.IsMatched || line.MatchedJournalEntryId.HasValue) throw new InvalidOperationException("This bank statement line is already matched.");
+        if (await repository.IsJournalEntryMatchedAsync(journalEntryId, cancellationToken)) throw new InvalidOperationException("This journal entry is already matched to a bank statement line.");
         var entry = await finance.GetPostedJournalEntryAsync(journalEntryId, cancellationToken) ?? throw new ArgumentException("The journal entry was not found or is not posted.");
         // Bank statement credits increase the bank asset (debit in the GL); statement debits decrease it (credit in the GL).
         var expected = line.TransactionType.Equals("Credit", StringComparison.OrdinalIgnoreCase) ? line.Amount : -line.Amount;
