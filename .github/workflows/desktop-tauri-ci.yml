@@ -3,6 +3,7 @@ name: Native Desktop Client CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
     paths:
       - 'frontend/**'
       - '.github/workflows/desktop-tauri-ci.yml'
@@ -10,6 +11,9 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/desktop-tauri-ci.yml'
+
+permissions:
+  contents: write
 
 jobs:
   windows:
@@ -21,6 +25,13 @@ jobs:
         target: [i686-pc-windows-msvc, x86_64-pc-windows-msvc]
     steps:
       - uses: actions/checkout@v4
+      - name: Validate approved installer assets
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'frontend/public/icon.png')) { throw 'Approved frontend/public/icon.png is missing.' }
+          if (-not (Test-Path 'frontend/src-tauri/installer/SMIS-Privacy-and-License.txt')) { throw 'Installer privacy/license file is missing.' }
+          if (-not (Test-Path 'frontend/src-tauri/icons/icon.png')) { throw 'Tauri icon.png is missing.' }
+          if (-not (Test-Path 'frontend/src-tauri/icons/icon.ico')) { throw 'Tauri icon.ico is missing.' }
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -35,6 +46,11 @@ jobs:
       - name: Build Windows installer
         working-directory: frontend
         run: npx @tauri-apps/cli@2.8.4 build --target ${{ matrix.target }} --bundles nsis
+      - name: Verify Windows installer exists
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem 'frontend/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe'
+          if ($files.Count -lt 1) { throw 'Tauri did not produce a Windows NSIS installer.' }
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
@@ -53,6 +69,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Validate approved installer assets
+        run: |
+          test -f frontend/public/icon.png
+          test -f frontend/src-tauri/installer/SMIS-Privacy-and-License.txt
+          test -f frontend/src-tauri/icons/icon.png
+          test -f frontend/src-tauri/icons/icon.ico
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -62,6 +84,46 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
-      - name: Build native client
+      - name: Build Ubuntu packages
         working-directory: frontend
-        run: npx @tauri-apps/cli@2.8.4 build --no-bundle
+        run: npx @tauri-apps/cli@2.8.4 build --bundles deb,appimage
+      - name: Upload Ubuntu packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: SMIS-Ubuntu-x64
+          path: |
+            frontend/src-tauri/target/release/bundle/deb/*.deb
+            frontend/src-tauri/target/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish tagged desktop release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, ubuntu]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows x86 installer
+        uses: actions/download-artifact@v4
+        with:
+          name: SMIS-Windows-Installer-i686-pc-windows-msvc
+          path: release/windows-x86
+      - name: Download Windows x64 installer
+        uses: actions/download-artifact@v4
+        with:
+          name: SMIS-Windows-Installer-x86_64-pc-windows-msvc
+          path: release/windows-x64
+      - name: Download Ubuntu packages
+        uses: actions/download-artifact@v4
+        with:
+          name: SMIS-Ubuntu-x64
+          path: release/ubuntu
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release/windows-x86/*.exe
+            release/windows-x64/*.exe
+            release/ubuntu/*.deb
+            release/ubuntu/*.AppImage
