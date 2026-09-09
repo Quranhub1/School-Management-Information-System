@@ -64,11 +64,16 @@ public sealed class AdmissionService(IAdmissionRepository repository, IStudentRe
         admission.Status = decision.Equals("Accepted", StringComparison.OrdinalIgnoreCase) ? "Accepted" : "Rejected";
         admission.DecidedAt = DateTimeOffset.UtcNow;
 
+        var applicant = await repository.GetApplicantAsync(admission.ApplicantId, cancellationToken)
+            ?? throw new KeyNotFoundException("Applicant was not found.");
+
+        // Keep the applicant lifecycle state synchronized with the admission decision.
+        // Admission and applicant are separate aggregates, so explicitly persist the
+        // applicant transition rather than relying on navigation-property tracking.
+        applicant.Status = admission.Status;
+
         if (admission.Status == "Accepted")
         {
-            var applicant = await repository.GetApplicantAsync(admission.ApplicantId, cancellationToken)
-                ?? throw new KeyNotFoundException("Applicant was not found.");
-
             var yearId = admission.AcademicYearId.ToString("N");
             var guid = Guid.NewGuid().ToString("N");
             var studentNumber = $"STU-{yearId[..Math.Min(8, yearId.Length)]}-{guid[..Math.Min(6, guid.Length)]}";

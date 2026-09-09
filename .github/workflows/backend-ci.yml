@@ -12,6 +12,9 @@ permissions:
 env:
   ConnectionStrings__SchoolManagement: Host=127.0.0.1;Port=5432;Database=school_management_ci;Username=school_management;Password=ci_validation
   Authentication__JwtKey: ci-only-jwt-signing-key-that-is-long-enough-for-hmac-sha256-validation
+  SEED_ADMIN_PASSWORD: ci-admin-password-for-tests-only
+  SMIS_ATTENDANCE_QR_SECRET: ci-attendance-qr-secret-for-tests-only
+  Security__AttendanceQrSecret: ci-attendance-qr-secret-for-tests-only
 
 jobs:
   build:
