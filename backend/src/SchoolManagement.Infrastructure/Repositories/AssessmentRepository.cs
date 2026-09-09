@@ -20,6 +20,9 @@ public sealed class AssessmentRepository(SchoolManagementDbContext db) : IAssess
             .OrderBy(x => x.RecordedAt)
             .ToListAsync(cancellationToken);
 
+    public Task<StudentAssessment?> GetStudentAssessmentByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        db.StudentAssessments.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
     public async Task<StudentAssessment> AddStudentAssessmentAsync(StudentAssessment assessment, CancellationToken cancellationToken = default)
     {
         db.StudentAssessments.Add(assessment);
