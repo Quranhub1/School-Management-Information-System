@@ -6,9 +6,9 @@
 
 ## Current status
 
-The core backend foundation, runtime/security hardening, automated verification, and desktop release pipeline are implemented. **SMIS v0.2.0 has now been successfully published on GitHub with verified Windows x64, Windows x86, and Ubuntu x64 build artifacts.**
+The core backend foundation, runtime/security hardening, automated verification, and desktop release pipeline are implemented. **SMIS v0.2.0 is published on GitHub with verified Windows x64, Windows x86, and Ubuntu x64 release assets.**
 
-The v0.2.0 release was produced by GitHub Actions run `34348912377`; all three platform build jobs and the release publication job completed successfully. The published release is non-draft and non-prerelease.
+The corrected v0.2.0 desktop release workflow run `34351052149` completed successfully for all three platform builds and the release publication job. The published release now contains the four expected installer/package assets.
 
 ## Completed / verified
 
@@ -43,9 +43,11 @@ The v0.2.0 release was produced by GitHub Actions run `34348912377`; all three p
 - [x] v0.2.0 desktop release published
 - [x] v0.2.0 Windows x64 installer published
 - [x] v0.2.0 Windows x86 installer published
-- [x] v0.2.0 Ubuntu x64 package artifact published
+- [x] v0.2.0 Ubuntu x64 `.deb` package published
+- [x] v0.2.0 Ubuntu x64 `.AppImage` published
 - [x] Approved `frontend/public/icon.png` validated during release builds
 - [x] Release publication job completed successfully
+- [x] Obsolete v0.2.0 tag-helper workflow removed from `main` and `release/v0.2.0`
 
 ## Remaining release acceptance
 
@@ -63,11 +65,20 @@ These are target-environment acceptance gates and cannot be marked complete from
 - [ ] Complete frontend/module integration checks beyond the automated smoke path
 - [ ] Complete final security/configuration review before production sign-off
 
+## Repository hardening
+
+- [x] Release workflow no longer depends on a GitHub-token-created tag triggering another workflow
+- [x] Release assets are flattened into a dedicated release directory before publication
+- [x] Desktop workflow validates the approved `icon.png` and generated Tauri icons
+- [x] Production secrets are excluded from the repository
+- [ ] `main` branch protection / required status checks still need repository-administration access to configure; current GitHub metadata reports `main` as unprotected
+
 ## Release status
 
 **Released:** `v0.2.0`  
 **Release URL:** `https://github.com/Quranhub1/School-Management-Information-System/releases/tag/v0.2.0`  
-**Release commit:** `23e78cb02a7a13490ed253e9e9a67042bf80938e`
+**Corrected release workflow:** `34351052149`  
+**Current main:** `5e05762d9de795b56d722f4be12d3dacf54b2c3a`
 
 ## Hardening notes
 
@@ -82,4 +93,4 @@ These are target-environment acceptance gates and cannot be marked complete from
 
 ## Definition of done
 
-The system is considered production-ready only after all remaining target-environment acceptance items above are checked, CI remains green, deployment configuration is validated, and critical workflows have been exercised successfully in the target environment.
+The system is considered production-ready only after all remaining target-environment acceptance items above are checked, CI remains green, deployment configuration is validated, critical workflows have been exercised successfully in the target environment, and `main` branch protection is configured where repository administration permits it.
