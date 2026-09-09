@@ -30,3 +30,11 @@ jobs:
             -f "sha=${TARGET}"
 
           echo "Created ${TAG} at ${TARGET}"
+
+      - name: Dispatch desktop release workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run desktop-tauri-ci.yml --ref v0.2.0
+          echo "Dispatched desktop release workflow for v0.2.0"
