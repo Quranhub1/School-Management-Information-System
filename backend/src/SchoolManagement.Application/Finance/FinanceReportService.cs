@@ -84,7 +84,14 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
     public async Task<IReadOnlyList<StudentReceivableRow>> GetStudentReceivablesAsync(CancellationToken cancellationToken = default)
     {
         var invoices = await finance.GetAllStudentInvoicesAsync(cancellationToken);
-        return invoices.GroupBy(x => x.StudentId).Select(g => new StudentReceivableRow(g.Key, g.Sum(x => x.Amount), g.Sum(x => x.PaidAmount), g.Sum(x => x.Amount - x.PaidAmount))).OrderByDescending(x => x.Outstanding).ToList();
+        return invoices.GroupBy(x => x.StudentId)
+            .Select(g => new StudentReceivableRow(
+                g.Key,
+                g.Sum(x => x.NetAmount),
+                g.Sum(x => x.PaidAmount),
+                g.Sum(x => x.OutstandingAmount)))
+            .OrderByDescending(x => x.Outstanding)
+            .ToList();
     }
 
     public static IReadOnlyList<IncomeStatementRow> BuildIncomeStatementRows(IEnumerable<JournalEntry> entries, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null) =>
