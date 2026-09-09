@@ -6,7 +6,9 @@
 
 ## Current status
 
-The core backend foundation and major runtime/security hardening have been implemented. Login rate limiting is now merged after passing all three CI pipelines.
+The core backend foundation and major runtime/security hardening have been implemented. Login rate limiting is merged after passing the existing CI pipelines.
+
+**Current-main CI verification:** the earlier fiscal carry-forward failure was recorded against obsolete commit `92e1bd1b34491211e333fd4b696a28081b2f5a9b`. Current `main` had advanced to `abaa3643e62744784d45c6ee3031395a9f3bb926`; a fresh CI run on the current revision is required before release sign-off.
 
 ## Completed
 
