@@ -26,8 +26,7 @@ public sealed class AssessmentsController(AssessmentService service) : Controlle
     [HttpGet("records/{id:guid}")]
     public async Task<ActionResult<StudentAssessment>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var assessments = await service.GetStudentAssessmentsAsync(Guid.Empty, cancellationToken);
-        var assessment = assessments.SingleOrDefault(x => x.Id == id);
+        var assessment = await service.GetStudentAssessmentByIdAsync(id, cancellationToken);
         return assessment is null ? NotFound() : Ok(assessment);
     }
 

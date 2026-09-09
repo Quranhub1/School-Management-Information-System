@@ -11,6 +11,9 @@ public sealed class AssessmentService(SchoolManagement.Application.Abstractions.
     public Task<IReadOnlyList<StudentAssessment>> GetStudentAssessmentsAsync(Guid courseRegistrationId, CancellationToken cancellationToken = default) =>
         assessments.GetStudentAssessmentsAsync(courseRegistrationId, cancellationToken);
 
+    public Task<StudentAssessment?> GetStudentAssessmentByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        assessments.GetStudentAssessmentByIdAsync(id, cancellationToken);
+
     public async Task<StudentAssessment> RecordAssessmentAsync(
         Guid studentId,
         Guid courseRegistrationId,
