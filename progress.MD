@@ -6,7 +6,7 @@
 
 ## Current status
 
-The core backend foundation and the latest admissions/finance/runtime hardening have been implemented and merged to `main`. The latest hardening change passed Foundation CI, Backend CI, and Full System CI before merge.
+The core backend foundation and major runtime/security hardening have been implemented. Login rate limiting is now merged after passing all three CI pipelines.
 
 ## Completed
 
@@ -21,7 +21,12 @@ The core backend foundation and the latest admissions/finance/runtime hardening 
 - [x] Duplicate Admission prevention during applicant admission
 - [x] Reuse of existing Student/StudentEnrollment records during admission
 - [x] Finance repository compatibility interfaces and explicit DI registrations
-- [x] Latest hardening PR merged into `main`
+- [x] Production database/JWT placeholder validation
+- [x] Production admin seed password enforcement
+- [x] JWT issuer and audience validation
+- [x] FinanceRead authorization policy registration
+- [x] Login endpoint rate limiting (10 requests/minute)
+- [x] Login rate-limiting compatibility verified by Full System CI
 - [x] Currency standardized as UGX in project requirements
 
 ## Remaining / verification work
@@ -37,7 +42,7 @@ The core backend foundation and the latest admissions/finance/runtime hardening 
 - [ ] Verify database migrations against a clean PostgreSQL instance
 - [ ] Verify production deployment configuration and systemd service health
 - [ ] Complete frontend/module integration checks where applicable
-- [ ] Final security/configuration review before production sign-off
+- [ ] Complete final security/configuration review before production sign-off
 
 ## Hardening notes
 
@@ -46,6 +51,8 @@ The core backend foundation and the latest admissions/finance/runtime hardening 
 - `SEED_ADMIN_PASSWORD` and the attendance QR secret must be supplied by the deployment environment.
 - Finance repository registrations resolve the concrete implementation instead of relying on unsafe interface casts.
 - Admission records are reused rather than duplicated when the accepted admission already exists.
+- JWT tokens are validated against configured issuer and audience values.
+- Login requests are rate-limited to reduce credential-stuffing and brute-force risk.
 
 ## Definition of done
 
