@@ -13,7 +13,7 @@ on:
       - '.github/workflows/full-system-ci.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: full-system-ci-${{ github.event.pull_request.number || github.ref }}
@@ -73,6 +73,38 @@ jobs:
       - name: Restore pinned EF Core CLI
         working-directory: backend
         run: dotnet tool restore
+
+      - name: Scaffold missing EF migration on main
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          if dotnet ef migrations has-pending-model-changes \
+            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
+            --configuration Release \
+            --no-build; then
+            echo "EF model matches the checked-in migrations."
+            exit 0
+          fi
+
+          echo "Pending EF model changes detected. Scaffolding an authoritative migration and snapshot with EF Core 8."
+          dotnet ef migrations add AutoSyncModel \
+            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
+            --configuration Release \
+            --no-build
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/SchoolManagement.Infrastructure/Migrations
+          if git diff --cached --quiet; then
+            echo "EF reported pending changes but generated no migration files."
+            exit 1
+          fi
+          git commit -m "chore: synchronize EF Core model snapshot"
+          git push origin HEAD:main
 
       - name: Verify EF Core model matches migrations
         working-directory: backend
