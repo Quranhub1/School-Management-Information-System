@@ -40,6 +40,20 @@ test.describe('SMIS full-system smoke tests', () => {
     expect(payload.roles).toEqual(expect.arrayContaining(['SystemAdministrator']));
   });
 
+  test('protected management APIs reject unauthenticated access', async ({ request }) => {
+    const checks = [
+      request.get(`${API_BASE_URL}/api/admissions`),
+      request.get(`${API_BASE_URL}/api/students`),
+      request.get(`${API_BASE_URL}/api/finance/invoices`),
+      request.get(`${API_BASE_URL}/api/attendance/sessions`),
+    ];
+
+    const responses = await Promise.all(checks);
+    for (const response of responses) {
+      expect([401, 403]).toContain(response.status());
+    }
+  });
+
   test('admissions management API rejects unauthenticated access', async ({ request }) => {
     const response = await request.get(`${API_BASE_URL}/api/admissions`);
     expect([401, 403]).toContain(response.status());
@@ -72,6 +86,18 @@ test.describe('SMIS full-system smoke tests', () => {
       },
     });
     expect(admit.status()).toBe(404);
+  });
+
+  test('authenticated administrator can reach student and finance management APIs', async ({ request }) => {
+    const token = await getAdminToken(request);
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const students = await request.get(`${API_BASE_URL}/api/students`, { headers });
+    expect(students.ok()).toBeTruthy();
+    expect(await students.json()).toEqual(expect.any(Array));
+
+    const invoices = await request.get(`${API_BASE_URL}/api/finance/invoices?studentId=00000000-0000-0000-0000-000000000000`, { headers });
+    expect(invoices.status()).toBe(400);
   });
 
   test('authenticated attendance API protects manual and QR recording paths', async ({ request }) => {
