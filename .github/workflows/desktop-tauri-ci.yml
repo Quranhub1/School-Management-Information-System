@@ -2,7 +2,7 @@ name: Native Desktop Client CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'v*']
     tags: ['v*']
     paths:
       - 'frontend/**'
@@ -105,7 +105,7 @@ jobs:
 
   release:
     name: Publish tagged desktop release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/v0.1.0'
     needs: [windows, ubuntu]
     runs-on: ubuntu-latest
     steps:
@@ -127,6 +127,8 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v0.1.0
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           files: |
             release/windows-x86/*.exe
