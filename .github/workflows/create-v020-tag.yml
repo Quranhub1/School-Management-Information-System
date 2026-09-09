@@ -1,0 +1,30 @@
+name: Create v0.2.0 Release Tag
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create v0.2.0 tag on verified release commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v0.2.0"
+          TARGET="a6212b97a0ed24ae64f8dde48101c55ea4579f06"
+
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" >/dev/null 2>&1; then
+            echo "${TAG} already exists; nothing to do."
+            exit 0
+          fi
+
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f "ref=refs/tags/${TAG}" \
+            -f "sha=${TARGET}"
+
+          echo "Created ${TAG} at ${TARGET}"
