@@ -21,6 +21,10 @@ public sealed class AuthController(AuthService auth, IConfiguration configuratio
 
         var key = configuration["Authentication:JwtKey"]
             ?? throw new InvalidOperationException("Authentication:JwtKey is not configured.");
+        var issuer = configuration["Authentication:JwtIssuer"]
+            ?? throw new InvalidOperationException("Authentication:JwtIssuer is not configured.");
+        var audience = configuration["Authentication:JwtAudience"]
+            ?? throw new InvalidOperationException("Authentication:JwtAudience is not configured.");
         var expires = DateTime.UtcNow.AddHours(8);
         var claims = new List<Claim>
         {
@@ -33,7 +37,12 @@ public sealed class AuthController(AuthService auth, IConfiguration configuratio
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
             SecurityAlgorithms.HmacSha256);
-        var token = new JwtSecurityToken(claims: claims, expires: expires, signingCredentials: credentials);
+        var token = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            expires: expires,
+            signingCredentials: credentials);
 
         return Ok(new
         {
