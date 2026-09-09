@@ -6,9 +6,9 @@
 
 ## Current status
 
-The core backend foundation and runtime/security hardening are implemented. Current-main CI has now passed the backend build and test pipeline plus the complete PostgreSQL/API/frontend end-to-end smoke pipeline on commit `33be663e8a9ba4c1b7784216810f7e0435e1ee0e`.
+The core backend foundation, runtime/security hardening, automated verification, and desktop release pipeline are implemented. **SMIS v0.2.0 has now been successfully published on GitHub with verified Windows x64, Windows x86, and Ubuntu x64 build artifacts.**
 
-The earlier fiscal carry-forward failure was against obsolete commit `92e1bd1b34491211e333fd4b696a28081b2f5a9b`; the current-main backend test suite passes.
+The v0.2.0 release was produced by GitHub Actions run `34348912377`; all three platform build jobs and the release publication job completed successfully. The published release is non-draft and non-prerelease.
 
 ## Completed / verified
 
@@ -40,8 +40,16 @@ The earlier fiscal carry-forward failure was against obsolete commit `92e1bd1b34
 - [x] Playwright browser installation and frontend preview
 - [x] End-to-end smoke tests
 - [x] No open GitHub issues at the time of release verification
+- [x] v0.2.0 desktop release published
+- [x] v0.2.0 Windows x64 installer published
+- [x] v0.2.0 Windows x86 installer published
+- [x] v0.2.0 Ubuntu x64 package artifact published
+- [x] Approved `frontend/public/icon.png` validated during release builds
+- [x] Release publication job completed successfully
 
 ## Remaining release acceptance
+
+These are target-environment acceptance gates and cannot be marked complete from CI/repository inspection alone:
 
 - [ ] Exercise every major business module against the deployed target environment, not only CI smoke coverage
 - [ ] Verify authentication, authorization policies, and admin access across all protected endpoints in the target deployment
@@ -55,6 +63,12 @@ The earlier fiscal carry-forward failure was against obsolete commit `92e1bd1b34
 - [ ] Complete frontend/module integration checks beyond the automated smoke path
 - [ ] Complete final security/configuration review before production sign-off
 
+## Release status
+
+**Released:** `v0.2.0`  
+**Release URL:** `https://github.com/Quranhub1/School-Management-Information-System/releases/tag/v0.2.0`  
+**Release commit:** `23e78cb02a7a13490ed253e9e9a67042bf80938e`
+
 ## Hardening notes
 
 - Production secrets must not be committed to the repository.
@@ -64,6 +78,7 @@ The earlier fiscal carry-forward failure was against obsolete commit `92e1bd1b34
 - Admission records are reused rather than duplicated when the accepted admission already exists.
 - JWT tokens are validated against configured issuer and audience values.
 - Login requests are rate-limited to reduce credential-stuffing and brute-force risk.
+- The production gate remains separate from automated CI: successful builds do not by themselves prove target-environment readiness.
 
 ## Definition of done
 
