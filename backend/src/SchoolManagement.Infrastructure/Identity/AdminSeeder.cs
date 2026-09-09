@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Administration;
 using SchoolManagement.Domain.Identity;
@@ -7,7 +7,7 @@ using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Identity;
 
-public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher hasher, IWebHostEnvironment environment)
+public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher hasher, IHostEnvironment environment)
 {
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
