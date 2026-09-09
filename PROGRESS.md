@@ -1,124 +1,94 @@
 # School Management Information System — Project Progress
 
 **Last updated:** 2026-09-09  
-**Current focus:** Final acceptance testing and release verification  
-**Tracking branch:** `main`
+**Tracking branch:** `main`  
+**Current release:** `v0.2.0`  
+**Currency:** UGX
 
-## Latest closure work — 2026-09-09
-- [x] Hostel persisted domain, repository, service and authorized API
-- [x] Hostel PostgreSQL migration with capacity/date/active-allocation constraints
-- [x] Hostel frontend workflow for houses, rooms, beds, allocations and occupancy reporting
-- [x] Hostel service tests for capacity and duplicate active allocation rules
-- [x] Lecturer teaching workspace connected directly to attendance context
-- [x] Frontend attendance session opening, manual marking, student history, QR token generation and controlled session closing
-- [x] Transport persisted domain, repository, service and authorized API
-- [x] Transport PostgreSQL migration with active-student assignment uniqueness
-- [x] Transport frontend workflow for vehicles, routes and student assignments
-- [x] Transport service test for duplicate active student assignment
-- [ ] Full System CI revalidation after adding the EF Core model/migration consistency gate
-- [x] Frontend CI green on the latest previously validated commit
-- [x] Native Tauri desktop CI green for Windows x86, Windows x64 and Ubuntu x64
-- [x] Windows x86/x64 NSIS installer `.exe` artifacts produced and uploaded by CI
-- [x] Ubuntu `.deb` and `.AppImage` artifacts produced and uploaded by CI
-- [x] Approved `frontend/public/icon.png` generated into the Tauri icon set and validated before native builds
-- [x] Installer privacy/license asset validated and wired into the Tauri bundle
-- [x] Native release workflow is tag-gated for `v*` releases and downloads the verified build artifacts
-- [x] Publish a tagged GitHub Release and verify its attached installer/package assets — `v0.1.0` published with Windows x64/x86 installers
-- [ ] Verify the installer visually on a Windows machine, including Explorer/installer icon rendering
-- [ ] Verify clean-machine installation and first-run server connection
+## Current status
 
-## Finance
-- [x] Double-entry invoice/payment posting, balanced journals and duplicate-posting protection
-- [x] General Ledger, Trial Balance, receivables, ageing and control-account reconciliation
-- [x] Journal reversal, credit notes, refunds, cancellations and audit metadata
-- [x] Fiscal periods, closing, opening balances and retained earnings handling
-- [x] Budgets, budget-vs-actual and bank reconciliation/import/outstanding reporting
-- [x] Campus/faculty/department/programme accounting dimensions
-- [x] Cash, bank and mobile-money position reporting and finance dashboard workspaces
-- [x] Database-level posted-journal and audit-log immutability boundaries
-- [x] Student receivables corrected to use net invoice amounts after discounts
-- [ ] Revalidate finance after EF Core model/migration consistency gate passes
+The core backend, persistence, security hardening, frontend, automated verification, and native desktop release pipeline are implemented. **SMIS v0.2.0 is published on GitHub with four verified desktop assets:** Windows x64, Windows x86, Ubuntu x64 `.deb`, and Ubuntu x64 `.AppImage`.
 
-## Attendance
-- [x] Authorized session opening and duplicate-session prevention
-- [x] Manual and rotating-QR attendance recording
-- [x] Status validation and duplicate-record prevention
-- [x] Controlled session closing and post-close write blocking
-- [x] Active course-registration validation
-- [x] Application-service tests for registration eligibility, closure, duplicates and valid marking
-- [x] Teaching-to-attendance context handoff
-- [x] Frontend lecturer attendance journey
-- [ ] Automated API/integration tests for authorized manual and QR attendance paths
+Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed.
 
-## Other platform work
-- [x] Hostel vertical slice closed
-- [x] Transport vertical slice closed
-- [x] Teaching-to-attendance vertical slice closed
-- [ ] Final authorization/audit boundary audit across remaining modules
-- [ ] Replace any remaining non-functional placeholders discovered by final repository audit
+## Completed / verified
 
-## Acceptance test — required golden path
+- [x] .NET 8 backend solution and modular domain structure
+- [x] EF Core persistence and PostgreSQL integration
+- [x] Academic, admissions, assessment, attendance, clinical, examinations, finance, identity, staff and student domains
+- [x] Hostel and transport vertical slices
+- [x] Teaching-to-attendance workflow
+- [x] Admission decision synchronization and duplicate-admission prevention
+- [x] Student/enrollment reuse during admission
+- [x] Finance repository compatibility and explicit DI registrations
+- [x] Production database/JWT placeholder validation
+- [x] Production admin seed password enforcement
+- [x] JWT issuer/audience validation
+- [x] FinanceRead authorization policy
+- [x] Login rate limiting
+- [x] Admission upload validation
+- [x] Assessment record lookup fix
+- [x] Attendance and examination authorization regression coverage
+- [x] UGX currency requirement
+- [x] Backend build and automated tests
+- [x] PostgreSQL migration/model consistency validation in CI
+- [x] Permanent PostgreSQL integration tests
+- [x] API startup/readiness verification
+- [x] Frontend production build
+- [x] Playwright/browser installation and E2E smoke tests
+- [x] Approved `frontend/public/icon.png` validation and Tauri icon generation
+- [x] Installer privacy/license asset validation
+- [x] Windows x86/x64 NSIS installers
+- [x] Ubuntu x64 `.deb` and `.AppImage` packages
+- [x] GitHub `v0.2.0` release publication and asset verification
+- [x] Obsolete release tag-helper workflow removed
+- [x] No open GitHub issues at release verification
 
-Test database only:
+## Remaining production acceptance gates
 
-- Student: **Kaigwa Akram**
-- Assessment/admission number: **U075/042**
-- Admission/reporting date: **2026-09-09**
-- Currency: **UGX**
+These require an actual target deployment or physical client/test environment and must not be marked complete from repository inspection alone:
 
-Required journey:
+- [ ] Execute the isolated golden-path acceptance test on a dedicated test database
+- [ ] Verify administrator and restricted-role authorization end-to-end
+- [ ] Smoke-test every enabled frontend module and major workflow
+- [ ] Verify admissions → acceptance → admission → student → enrollment → course registration
+- [ ] Verify finance posting, adjustments, balances, ledger/reporting and UGX presentation
+- [ ] Verify attendance manual/QR generation, validation, closing and production secret
+- [ ] Verify assessment/examination/result calculations and transcript/progression behavior
+- [ ] Verify clinical/workplace-learning persistence and workflows
+- [ ] Verify staff and student management workflows
+- [ ] Verify production deployment configuration, `/api/health`, systemd service and logs
+- [ ] Verify Nginx/HTTPS/LAN configuration where used
+- [ ] Verify PostgreSQL backup and restore on a separate test database/server
+- [ ] Verify clean-machine Windows installation and first-run server connection
+- [ ] Visually verify Windows installer, installed application and shortcuts use the approved SMIS icon
+- [ ] Complete final security/configuration review and production sign-off
+- [ ] Configure `main` branch protection / required status checks (requires repository administration access)
 
-```text
-admin login
-→ configure/verify institution + academic structure
-→ create application/admission
-→ accept decision
-→ admit student U075/042
-→ enroll student
-→ register courses
-→ generate UGX fees
-→ create installment schedule
-→ record installment payment 1
-→ verify allocation/outstanding balance
-→ record subsequent installment payment(s)
-→ verify ledger/reports
-→ record attendance
-→ enter assessment marks
-→ verify results/transcript/progression behavior
-→ inspect student 360/profile
-→ inspect audit/reporting
-```
+## Release
 
-Authorization journey:
+**Released:** `v0.2.0`  
+**Corrected release workflow:** `34351052149`  
+**Release target:** `9163ef416f8d44be66ab5e97408b1d2fcd3ed27f`  
+**Current main:** `5e05762d9de795b56d722f4be12d3dacf54b2c3a`
 
-```text
-admin123 (development/test only)
-→ login
-→ create second test user
-→ assign limited role
-→ login as limited user
-→ verify permitted screens/actions
-→ verify restricted actions return authorization failure
-→ return to admin
-→ deactivate/remove test user
-```
+Expected published assets:
 
-**Important:** `admin123` is a development/test credential only. Production administrators must use a unique strong password.
+1. `School.Management.Information.System_0.2.0_amd64.AppImage`
+2. `School.Management.Information.System_0.2.0_amd64.deb`
+3. `School.Management.Information.System_0.2.0_x64-setup.exe`
+4. `School.Management.Information.System_0.2.0_x86-setup.exe`
 
-## Current final production gate
-1. [ ] Fresh Full System CI passes with the EF Core model/migration consistency check.
-2. [ ] Fresh frontend CI passes on the final release commit.
-3. [x] Native Windows x86/x64 installers build successfully.
-4. [x] Ubuntu native packages build successfully.
-5. [x] Approved icon and installer assets are validated during native builds.
-6. [ ] Execute the isolated golden-path acceptance test with Kilo Code.
-7. [ ] Execute administrator and restricted-role authorization acceptance test.
-8. [ ] Smoke-test every enabled frontend screen and workflow.
-9. [ ] Complete final EF Core migration snapshot/designer audit.
-10. [ ] Verify backup/restore and clean-machine installation.
-11. [x] Publish and verify a tagged GitHub Release — `v0.1.0` published with Windows x64/x86 installer assets.
-12. [ ] Perform final production secrets and Uganda-specific operational configuration review.
+## Production rules
 
-**Evidence note:** Native CI run `34291579817` produced three uploaded artifact groups: Windows x86 NSIS, Windows x64 NSIS, and Ubuntu x64 (`.deb` + `.AppImage`). A tagged `v0.1.0` release has since been published with Windows x64/x86 installer assets. The live admission scenario has not been executed; no student record has been fabricated in the repository.
+- Production secrets must never be committed to Git.
+- `SEED_ADMIN_PASSWORD` and the attendance QR secret must be supplied by the deployment environment.
+- Production must use strong unique administrator credentials.
+- PostgreSQL must not be exposed directly to ordinary client machines.
+- Production migrations must be reviewed and backed up before application.
+- Finance amounts are institutional **UGX** unless the system is explicitly extended for multi-currency support.
+- CI success does not substitute for target-environment acceptance.
 
-**Release-verification note:** The current EF model contains finance entities including accounting dimensions, bank transactions, finance audit events, opening balances and adjustment cancellations, while the checked-in model snapshot is older and does not represent those entities. The final gate therefore requires an authoritative EF generation/validation run before release is declared complete. The snapshot is not being hand-fabricated.
+## Definition of done
+
+SMIS is ready for production sign-off only when the remaining target-environment acceptance gates above are completed, CI remains green, deployment health is verified, critical workflows are exercised successfully, backups/restores are validated, and repository administration has configured branch protection where permitted.
