@@ -60,17 +60,34 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
         if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId, cancellationToken)) return BadRequest(new { message = "The selected programme does not exist." });
         if (!await db.Intakes.AnyAsync(x => x.Id == request.IntakeId, cancellationToken)) return BadRequest(new { message = "The selected intake does not exist." });
         if (!await db.AcademicYears.AnyAsync(x => x.Id == request.AcademicYearId, cancellationToken)) return BadRequest(new { message = "The selected academic year does not exist." });
-        if (await db.Admissions.AnyAsync(x => x.ApplicantId == id && x.Status == "Admitted", cancellationToken)) return Conflict(new { message = "This applicant has already been admitted." });
-        if (await db.Students.AnyAsync(x => x.StudentNumber == request.StudentNumber.Trim(), cancellationToken)) return Conflict(new { message = "The student number is already in use." });
 
-        var admission = new Admission
-        {
-            ApplicantId = applicant.Id, ProgrammeId = request.ProgrammeId, IntakeId = request.IntakeId,
-            AcademicYearId = request.AcademicYearId, Status = "Admitted"
-        };
+        // An accepted application already has its admission record. Reuse that
+        // record instead of inserting another row that violates the unique
+        // Applicant/Programme/AcademicYear/Intake constraint.
+        var admission = await db.Admissions.SingleOrDefaultAsync(x =>
+            x.ApplicantId == id &&
+            x.ProgrammeId == request.ProgrammeId &&
+            x.IntakeId == request.IntakeId &&
+            x.AcademicYearId == request.AcademicYearId,
+            cancellationToken);
+
+        if (admission is null)
+            return Conflict(new { message = "No matching admission record exists for this accepted application." });
+
+        if (string.Equals(admission.Status, "Admitted", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "This applicant has already been admitted." });
+
+        if (!string.Equals(admission.Status, "Accepted", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "The matching admission is not accepted." });
+
+        var studentNumber = request.StudentNumber.Trim();
+        if (string.IsNullOrWhiteSpace(studentNumber)) return BadRequest(new { message = "Student number is required." });
+        if (await db.Students.AnyAsync(x => x.StudentNumber == studentNumber, cancellationToken)) return Conflict(new { message = "The student number is already in use." });
+
+        admission.Status = "Admitted";
         var student = new Student
         {
-            StudentNumber = request.StudentNumber.Trim(), FirstName = applicant.FirstName, LastName = applicant.LastName,
+            StudentNumber = studentNumber, FirstName = applicant.FirstName, LastName = applicant.LastName,
             OtherNames = applicant.OtherNames, DateOfBirth = applicant.DateOfBirth, Gender = applicant.Gender,
             NationalId = applicant.NationalId, PhoneNumber = applicant.PhoneNumber, Email = applicant.Email,
             AdmissionId = admission.Id, Status = "Active"
@@ -80,7 +97,7 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
             StudentId = student.Id, ProgrammeId = request.ProgrammeId, IntakeId = request.IntakeId,
             AdmissionDate = request.ReportingDate ?? DateOnly.FromDateTime(DateTime.UtcNow), Status = "Active", CurrentYear = 1
         };
-        db.Admissions.Add(admission); db.Students.Add(student); db.StudentEnrollments.Add(enrollment);
+        db.Students.Add(student); db.StudentEnrollments.Add(enrollment);
         applicant.Status = "Admitted";
         await db.SaveChangesAsync(cancellationToken);
         return Created($"/api/students/{student.Id}", new { student, admission, enrollment });
