@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application.Authentication;
 
@@ -13,6 +14,7 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class AuthController(AuthService auth, IConfiguration configuration) : ControllerBase
 {
     [AllowAnonymous]
+    [EnableRateLimiting("auth-login")]
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
     {
