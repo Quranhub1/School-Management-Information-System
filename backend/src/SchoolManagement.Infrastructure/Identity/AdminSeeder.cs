@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Administration;
 using SchoolManagement.Domain.Identity;
@@ -6,7 +7,7 @@ using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Identity;
 
-public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher hasher)
+public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher hasher, IWebHostEnvironment environment)
 {
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
@@ -65,8 +66,17 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
         var admin = await db.Users.SingleOrDefaultAsync(x => x.Username == "admin", cancellationToken);
         if (admin is null)
         {
-            var password = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD")
-                ?? GenerateRandomPassword();
+            var password = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD");
+            if (environment.IsProduction())
+            {
+                if (string.IsNullOrWhiteSpace(password) || password.Length < 12)
+                    throw new InvalidOperationException("SEED_ADMIN_PASSWORD must be configured with at least 12 characters before the production admin account can be seeded.");
+            }
+            else
+            {
+                password ??= GenerateRandomPassword();
+            }
+
             admin = new User
             {
                 Username = "admin",
