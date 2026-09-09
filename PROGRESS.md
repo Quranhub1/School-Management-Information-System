@@ -15,8 +15,8 @@
 - [x] Transport PostgreSQL migration with active-student assignment uniqueness
 - [x] Transport frontend workflow for vehicles, routes and student assignments
 - [x] Transport service test for duplicate active student assignment
-- [x] Full System CI green, including backend build, migrations, PostgreSQL integration tests, frontend build and Playwright E2E smoke tests
-- [x] Frontend CI green on the latest validated commit
+- [ ] Full System CI revalidation after adding the EF Core model/migration consistency gate
+- [x] Frontend CI green on the latest previously validated commit
 - [x] Native Tauri desktop CI green for Windows x86, Windows x64 and Ubuntu x64
 - [x] Windows x86/x64 NSIS installer `.exe` artifacts produced and uploaded by CI
 - [x] Ubuntu `.deb` and `.AppImage` artifacts produced and uploaded by CI
@@ -36,7 +36,8 @@
 - [x] Campus/faculty/department/programme accounting dimensions
 - [x] Cash, bank and mobile-money position reporting and finance dashboard workspaces
 - [x] Database-level posted-journal and audit-log immutability boundaries
-- [x] Fresh Full System CI verification of the current finance-hardening code
+- [x] Student receivables corrected to use net invoice amounts after discounts
+- [ ] Revalidate finance after EF Core model/migration consistency gate passes
 
 ## Attendance
 - [x] Authorized session opening and duplicate-session prevention
@@ -105,8 +106,8 @@ admin123 (development/test only)
 **Important:** `admin123` is a development/test credential only. Production administrators must use a unique strong password.
 
 ## Current final production gate
-1. [x] Fresh Full System CI passes.
-2. [x] Fresh frontend CI passes.
+1. [ ] Fresh Full System CI passes with the EF Core model/migration consistency check.
+2. [ ] Fresh frontend CI passes on the final release commit.
 3. [x] Native Windows x86/x64 installers build successfully.
 4. [x] Ubuntu native packages build successfully.
 5. [x] Approved icon and installer assets are validated during native builds.
@@ -119,3 +120,5 @@ admin123 (development/test only)
 12. [ ] Perform final production secrets and Uganda-specific operational configuration review.
 
 **Evidence note:** Native CI run `34291579817` produced three uploaded artifact groups: Windows x86 NSIS, Windows x64 NSIS, and Ubuntu x64 (`.deb` + `.AppImage`). A tagged `v0.1.0` release has since been published with Windows x64/x86 installer assets. The live admission scenario has not been executed; no student record has been fabricated in the repository.
+
+**Release-verification note:** The current EF model contains finance entities including accounting dimensions, bank transactions, finance audit events, opening balances and adjustment cancellations, while the checked-in model snapshot is older and does not represent those entities. The final gate therefore requires an authoritative EF generation/validation run before release is declared complete. The snapshot is not being hand-fabricated.
