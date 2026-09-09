@@ -122,14 +122,20 @@ jobs:
         with:
           name: SMIS-Ubuntu-x64
           path: release/ubuntu
+      - name: Collect release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release/assets
+          find release/windows-x86 -type f -name '*.exe' -exec cp {} release/assets/ \;
+          find release/windows-x64 -type f -name '*.exe' -exec cp {} release/assets/ \;
+          find release/ubuntu -type f \( -name '*.deb' -o -name '*.AppImage' \) -exec cp {} release/assets/ \;
+          test "$(find release/assets -type f | wc -l)" -ge 4
+          ls -lh release/assets
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.2.0
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
-          files: |
-            release/windows-x86/*.exe
-            release/windows-x64/*.exe
-            release/ubuntu/*.deb
-            release/ubuntu/*.AppImage
+          files: release/assets/*
