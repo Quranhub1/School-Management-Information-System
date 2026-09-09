@@ -74,6 +74,15 @@ jobs:
         working-directory: backend
         run: dotnet tool restore
 
+      - name: Verify EF Core model matches migrations
+        working-directory: backend
+        run: |
+          dotnet ef migrations has-pending-model-changes \
+            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
+            --configuration Release \
+            --no-build
+
       - name: Apply permanent database migrations
         working-directory: backend
         run: |
