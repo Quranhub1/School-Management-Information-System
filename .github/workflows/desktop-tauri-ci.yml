@@ -2,7 +2,7 @@ name: Native Desktop Client CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, release/v0.2.0]
     tags: ['v*']
   pull_request:
     paths:
@@ -103,7 +103,7 @@ jobs:
 
   release:
     name: Publish v0.2.0 desktop release
-    if: startsWith(github.ref, 'refs/tags/v') || contains(github.event.head_commit.message, 'release: publish v0.2.0')
+    if: github.ref == 'refs/heads/release/v0.2.0'
     needs: [windows, ubuntu]
     runs-on: ubuntu-latest
     steps:
