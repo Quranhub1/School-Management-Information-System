@@ -9,7 +9,7 @@
 
 The core backend, persistence, security hardening, frontend, automated verification, and native desktop release pipeline are implemented. **SMIS v0.2.0 is published on GitHub with four verified desktop assets:** Windows x64, Windows x86, Ubuntu x64 `.deb`, and Ubuntu x64 `.AppImage`.
 
-Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed.
+Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed. The later duplicate desktop-workflow cleanup on `main` also passed the full CI suite, including native desktop builds.
 
 ## Completed / verified
 
@@ -42,6 +42,8 @@ Corrected native release workflow run `34351052149` completed successfully for W
 - [x] Ubuntu x64 `.deb` and `.AppImage` packages
 - [x] GitHub `v0.2.0` release publication and asset verification
 - [x] Obsolete release tag-helper workflow removed
+- [x] Duplicate WPF desktop workflow removed; `desktop-ci.yml` remains the effective WPF CI workflow
+- [x] Full CI verification after workflow cleanup
 - [x] No open GitHub issues at release verification
 
 ## Remaining production acceptance gates
@@ -70,7 +72,7 @@ These require an actual target deployment or physical client/test environment an
 **Released:** `v0.2.0`  
 **Corrected release workflow:** `34351052149`  
 **Release target:** `9163ef416f8d44be66ab5e97408b1d2fcd3ed27f`  
-**Current main:** `5e05762d9de795b56d722f4be12d3dacf54b2c3a`
+**Current main:** `13057015f3d885eacf406202b04f9f4230be9c81`
 
 Expected published assets:
 
