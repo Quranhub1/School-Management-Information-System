@@ -49,4 +49,24 @@ public sealed class AuthorizationBoundaryTests
         Assert.NotNull(attribute);
         Assert.Equal(AdmissionsPolicies.Management, attribute!.Policy);
     }
+
+    [Fact]
+    public void AttendanceControllerRequiresAttendanceManagementPolicy()
+    {
+        var attribute = typeof(AttendanceController)
+            .GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.NotNull(attribute);
+        Assert.Equal(AuthorizationPolicies.AttendanceManagement, attribute!.Policy);
+    }
+
+    [Fact]
+    public void ExaminationResultsControllerRequiresExaminationManagementPolicy()
+    {
+        var attribute = typeof(ExaminationResultsController)
+            .GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.NotNull(attribute);
+        Assert.Equal(AuthorizationPolicies.ExaminationManagement, attribute!.Policy);
+    }
 }
