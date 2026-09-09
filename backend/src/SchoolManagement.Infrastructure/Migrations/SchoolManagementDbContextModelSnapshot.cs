@@ -465,6 +465,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("AcademicClassId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ClassFormId")
                         .HasColumnType("text");
 
@@ -607,6 +610,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<string>("SessionType")
                         .HasColumnType("text");
 
+                    b.Property<Guid>("StaffMemberId")
+                        .HasColumnType("uuid");
+
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time without time zone");
 
@@ -617,6 +623,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StaffMemberId");
 
                     b.ToTable("TimetableEntries");
                 });
@@ -654,6 +662,58 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GateLogs");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Access.GatePass", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ApprovedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AuthorizedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Destination")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("ExpectedReturnDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("IssuedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ParentGuardianContact")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PassType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ReturnedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UsedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GatePasses");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Administration.InstitutionSettings", b =>
@@ -1684,6 +1744,74 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Accounts");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.AccountingDimension", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DimensionType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DimensionType", "Code")
+                        .IsUnique();
+
+                    b.ToTable("AccountingDimensions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.AdjustmentCancellation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AdjustmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CancelledBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("ReversalJournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdjustmentId")
+                        .IsUnique();
+
+                    b.ToTable("AdjustmentCancellations");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Finance.BankReconciliation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1740,6 +1868,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid>("BankReconciliationId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -1754,6 +1885,10 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset>("TransactionDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -1762,11 +1897,60 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BankReconciliationId");
 
                     b.ToTable("BankStatementLines");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.BankTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BankStatementLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsCredit")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsReconciled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("TransactionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankStatementLineId")
+                        .IsUnique();
+
+                    b.HasIndex("BankAccountId", "TransactionDate");
+
+                    b.ToTable("BankTransactions");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.Bill", b =>
@@ -1981,6 +2165,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("AppliedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CancelledBy")
+                        .HasColumnType("text");
+
                     b.Property<string>("CreditNoteNumber")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -2012,6 +2205,143 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("CreditNotes");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.DailyCollection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("BankTotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("CardTotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("CashActual")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("CashExpected")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("CashierName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("CashierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("CollectionDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("MobileMoneyTotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TransactionCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DailyCollections");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.DailyCollectionPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("DailyCollectionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PaymentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReceiptNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DailyCollectionPayments");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.FeeItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("FeeStructureId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FeeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeeStructureId", "FeeType");
+
+                    b.ToTable("FeeItems");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Finance.FeeStructure", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2021,7 +2351,14 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid>("AcademicYearId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FeeType")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -2041,6 +2378,327 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("FeeStructures");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.FeeStructureItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("FeeStructureId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("IncomeAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsOptional")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeeStructureId");
+
+                    b.ToTable("FeeStructureItem");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.FinanceAuditEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Metadata")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PerformedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("SourceJournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId", "OccurredAt");
+
+                    b.ToTable("FinanceAuditEvents");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.FiscalPeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClosedBy")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("StartDate", "EndDate");
+
+                    b.ToTable("FiscalPeriods");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.InstalmentPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("InstalmentNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("InstalmentPlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReceiptNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("InstalmentPayments");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.InstalmentPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("NumberOfInstalments")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("InstalmentPlans");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.InvoiceDiscount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid?>("ApprovalJournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("Percentage")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RequestedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentInvoiceId");
+
+                    b.ToTable("InvoiceDiscount");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.InvoiceInstallment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Percentage")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentInvoiceId");
+
+                    b.ToTable("InvoiceInstallment");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.InvoiceNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("InvoiceNotes");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.JournalEntry", b =>
@@ -2069,6 +2727,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<string>("PostedBy")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ReversalOfJournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceType")
+                        .HasColumnType("text");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -2091,6 +2758,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CampusId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -2100,11 +2770,20 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<decimal>("Debit")
                         .HasColumnType("numeric");
 
+                    b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid?>("FacultyId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("JournalEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProgrammeId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -2116,7 +2795,29 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("JournalEntryLines");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Finance.Payment", b =>
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.JournalLineDimension", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountingDimensionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("JournalEntryLineId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountingDimensionId");
+
+                    b.HasIndex("JournalEntryLineId", "AccountingDimensionId")
+                        .IsUnique();
+
+                    b.ToTable("JournalLineDimensions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.MobileMoneyTransaction", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -2125,30 +2826,441 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
 
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalRef")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TransactionRef")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MobileMoneyTransactions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.OpeningBalance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Credit")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<decimal>("Debit")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("FiscalPeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceReference")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("FiscalPeriodId", "AccountId");
+
+                    b.ToTable("OpeningBalances");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.Payment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<DateTimeOffset>("PaidAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("ReceiptNumber")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Reference")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiptNumber")
+                        .IsUnique();
+
+                    b.HasIndex("StudentInvoiceId");
+
+                    b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.PaymentAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AllocatedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTimeOffset>("AllocatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("StudentInvoiceId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Payments");
+                    b.HasIndex("StudentInvoiceId");
+
+                    b.HasIndex("PaymentId", "StudentInvoiceId")
+                        .IsUnique();
+
+                    b.ToTable("PaymentAllocations");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.PaymentLedgerEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("EntryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EntryType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid?>("PaymentAllocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PaymentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentAllocationId");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("StudentInvoiceId");
+
+                    b.HasIndex("StudentId", "EntryDate");
+
+                    b.ToTable("PaymentLedgerEntries");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.Sponsorship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SponsorContact")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SponsorEmail")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("SponsorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SponsorName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SponsorPhone")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Sponsorships");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.StaffAdvance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("RecoveredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RecoveredFromPayrollId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StaffMemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StaffAdvances");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentCharge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ChargeType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VoidReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("VoidedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VoidedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("StudentCharge");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentFee", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<Guid?>("FeeItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FeeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("IssuedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentInvoiceId");
+
+                    b.HasIndex("StudentId", "StudentInvoiceId", "FeeType");
+
+                    b.ToTable("StudentFees");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentInvoice", b =>
@@ -2164,8 +3276,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<Guid?>("FeeStructureId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("FeeType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("InvoiceNumber")
                         .IsRequired()
@@ -2187,6 +3306,43 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("StudentInvoices");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentInvoiceLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("IncomeAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentInvoiceId");
+
+                    b.ToTable("StudentInvoiceLine");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.Vendor", b =>
@@ -2227,6 +3383,124 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Vendors");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.Hostel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Hostels");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.HostelAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BedId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BedId", "Status");
+
+                    b.HasIndex("StudentId", "Status");
+
+                    b.ToTable("HostelAllocations");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.HostelBed", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BedNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId", "BedNumber")
+                        .IsUnique();
+
+                    b.ToTable("HostelBeds");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.HostelRoom", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("HostelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("RoomNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HostelId", "RoomNumber")
+                        .IsUnique();
+
+                    b.ToTable("HostelRooms");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Identity.Role", b =>
@@ -2473,17 +3747,26 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("PaymentDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("StaffMemberId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("Year")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StaffMemberId");
 
                     b.ToTable("PayrollRecords");
                 });
@@ -2494,12 +3777,23 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly?>("DateJoined")
+                        .HasColumnType("date");
+
+                    b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmploymentStatus")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("EmploymentType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -2515,14 +3809,26 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<string>("NationalId")
                         .HasColumnType("text");
 
+                    b.Property<string>("OtherNames")
+                        .HasColumnType("text");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("text");
 
                     b.Property<string>("StaffNumber")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("StaffType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StaffNumber")
+                        .IsUnique();
 
                     b.ToTable("StaffMembers");
                 });
@@ -2801,6 +4107,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.TimetableEntry", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null)
+                        .WithMany()
+                        .HasForeignKey("StaffMemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Admissions.Admission", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Academic.AcademicYear", null)
@@ -2967,9 +4282,36 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.FeeStructureItem", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Finance.FeeStructure", null)
+                        .WithMany("Items")
+                        .HasForeignKey("FeeStructureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.InvoiceDiscount", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Finance.StudentInvoice", null)
+                        .WithMany("Discounts")
+                        .HasForeignKey("StudentInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.InvoiceInstallment", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Finance.StudentInvoice", null)
+                        .WithMany("Installments")
+                        .HasForeignKey("StudentInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Finance.JournalEntryLine", b =>
                 {
-                    b.HasOne("SchoolManagement.Domain.Finance.Account", null)
+                    b.HasOne("SchoolManagement.Domain.Finance.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2981,7 +4323,158 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Account");
+
                     b.Navigation("JournalEntry");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.JournalLineDimension", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Finance.AccountingDimension", null)
+                        .WithMany()
+                        .HasForeignKey("AccountingDimensionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Finance.JournalEntryLine", null)
+                        .WithMany()
+                        .HasForeignKey("JournalEntryLineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.OpeningBalance", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Finance.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Finance.FiscalPeriod", null)
+                        .WithMany()
+                        .HasForeignKey("FiscalPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.Payment", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Finance.StudentInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("StudentInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.PaymentAllocation", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Finance.Payment", null)
+                        .WithMany("Allocations")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Finance.StudentInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("StudentInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.PaymentLedgerEntry", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Finance.PaymentAllocation", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentAllocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SchoolManagement.Domain.Finance.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Finance.StudentInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("StudentInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentCharge", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany("FinanceCharges")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentFee", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Finance.StudentInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("StudentInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentInvoiceLine", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Finance.StudentInvoice", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("StudentInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.HostelAllocation", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Hostel.HostelBed", "Bed")
+                        .WithMany("Allocations")
+                        .HasForeignKey("BedId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Bed");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.HostelBed", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Hostel.HostelRoom", "Room")
+                        .WithMany("Beds")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.HostelRoom", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Hostel.Hostel", "Hostel")
+                        .WithMany("Rooms")
+                        .HasForeignKey("HostelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Hostel");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Identity.UserRole", b =>
@@ -3023,6 +4516,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Staff.PayrollRecord", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null)
+                        .WithMany()
+                        .HasForeignKey("StaffMemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Workflows.WorkflowHistory", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Workflows.WorkflowInstance", null)
@@ -3042,9 +4544,48 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Navigation("Lines");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.FeeStructure", b =>
+                {
+                    b.Navigation("Items");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Finance.JournalEntry", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.Payment", b =>
+                {
+                    b.Navigation("Allocations");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentInvoice", b =>
+                {
+                    b.Navigation("Discounts");
+
+                    b.Navigation("Installments");
+
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.Hostel", b =>
+                {
+                    b.Navigation("Rooms");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.HostelBed", b =>
+                {
+                    b.Navigation("Allocations");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.HostelRoom", b =>
+                {
+                    b.Navigation("Beds");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Students.Student", b =>
+                {
+                    b.Navigation("FinanceCharges");
                 });
 #pragma warning restore 612, 618
         }
