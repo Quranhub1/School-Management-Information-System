@@ -2,17 +2,18 @@ import { test, expect } from 'playwright/test';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:5080';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:4173';
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'admin123';
 
 async function signIn(page) {
   const inputs = page.locator('input');
   await inputs.nth(0).fill('admin');
-  await inputs.nth(1).fill('admin123');
+  await inputs.nth(1).fill(ADMIN_PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
 }
 
 async function getAdminToken(request) {
   const response = await request.post(`${API_BASE_URL}/api/auth/login`, {
-    data: { username: 'admin', password: 'admin123' },
+    data: { username: 'admin', password: ADMIN_PASSWORD },
   });
   expect(response.ok()).toBeTruthy();
   const payload = await response.json();
@@ -29,7 +30,7 @@ test.describe('SMIS full-system smoke tests', () => {
 
   test('API authentication works with the CI-seeded administrator', async ({ request }) => {
     const response = await request.post(`${API_BASE_URL}/api/auth/login`, {
-      data: { username: 'admin', password: 'admin123' },
+      data: { username: 'admin', password: ADMIN_PASSWORD },
     });
 
     expect(response.ok()).toBeTruthy();
