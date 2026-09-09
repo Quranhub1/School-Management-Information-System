@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Abstractions;
+using SchoolManagement.Application.Finance;
 using SchoolManagement.Domain.Finance;
 
 namespace SchoolManagement.Infrastructure.Persistence;
 
-public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRepository
+public sealed class FinanceRepository(SchoolManagementDbContext db) : SchoolManagement.Application.Finance.IFinanceRepository, IFinanceAdjustmentsRepository
 {
     // These aggregate roots are returned tracked because application workflows
     // intentionally mutate them before SaveChangesAsync (payments, discounts,

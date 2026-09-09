@@ -63,11 +63,21 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
         if (await db.Admissions.AnyAsync(x => x.ApplicantId == id && x.Status == "Admitted", cancellationToken)) return Conflict(new { message = "This applicant has already been admitted." });
         if (await db.Students.AnyAsync(x => x.StudentNumber == request.StudentNumber.Trim(), cancellationToken)) return Conflict(new { message = "The student number is already in use." });
 
-        var admission = new Admission
+        var admission = await db.Admissions.FirstOrDefaultAsync(x => x.ApplicantId == id && x.ProgrammeId == request.ProgrammeId && x.AcademicYearId == request.AcademicYearId && x.IntakeId == request.IntakeId, cancellationToken);
+        if (admission is null)
         {
-            ApplicantId = applicant.Id, ProgrammeId = request.ProgrammeId, IntakeId = request.IntakeId,
-            AcademicYearId = request.AcademicYearId, Status = "Admitted"
-        };
+            admission = new Admission
+            {
+                ApplicantId = applicant.Id, ProgrammeId = request.ProgrammeId, IntakeId = request.IntakeId,
+                AcademicYearId = request.AcademicYearId, Status = "Admitted"
+            };
+            db.Admissions.Add(admission);
+        }
+        else
+        {
+            admission.Status = "Admitted";
+            db.Admissions.Update(admission);
+        }
         var student = new Student
         {
             StudentNumber = request.StudentNumber.Trim(), FirstName = applicant.FirstName, LastName = applicant.LastName,
@@ -80,7 +90,7 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
             StudentId = student.Id, ProgrammeId = request.ProgrammeId, IntakeId = request.IntakeId,
             AdmissionDate = request.ReportingDate ?? DateOnly.FromDateTime(DateTime.UtcNow), Status = "Active", CurrentYear = 1
         };
-        db.Admissions.Add(admission); db.Students.Add(student); db.StudentEnrollments.Add(enrollment);
+        db.Students.Add(student); db.StudentEnrollments.Add(enrollment);
         applicant.Status = "Admitted";
         await db.SaveChangesAsync(cancellationToken);
         return Created($"/api/students/{student.Id}", new { student, admission, enrollment });

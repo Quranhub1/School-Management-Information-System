@@ -148,6 +148,8 @@ public sealed class AdmissionsWorkflowServiceTests
         public Task<Applicant?> GetApplicantAsync(Guid applicantId, CancellationToken cancellationToken = default) =>
             Task.FromResult<Applicant?>(_applicants.Contains(applicantId) ? new Applicant { Id = applicantId, ApplicationNumber = "APP-001", FirstName = "Test", LastName = "Applicant" } : null);
 
+        public Task UpdateApplicantAsync(Applicant applicant, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
         public Task<Admission?> GetAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default) =>
             Task.FromResult(_admissions.TryGetValue(admissionId, out var admission) ? admission : null);
 

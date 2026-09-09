@@ -69,6 +69,9 @@ public sealed class AdmissionService(IAdmissionRepository repository, IStudentRe
             var applicant = await repository.GetApplicantAsync(admission.ApplicantId, cancellationToken)
                 ?? throw new KeyNotFoundException("Applicant was not found.");
 
+            applicant.Status = "Accepted";
+            await repository.UpdateApplicantAsync(applicant, cancellationToken);
+
             var yearId = admission.AcademicYearId.ToString("N");
             var guid = Guid.NewGuid().ToString("N");
             var studentNumber = $"STU-{yearId[..Math.Min(8, yearId.Length)]}-{guid[..Math.Min(6, guid.Length)]}";

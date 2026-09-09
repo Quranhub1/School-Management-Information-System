@@ -10,6 +10,12 @@ public sealed class AdmissionRepository(SchoolManagementDbContext db) : IAdmissi
     public Task<Applicant?> GetApplicantAsync(Guid applicantId, CancellationToken cancellationToken = default) =>
         db.Applicants.AsNoTracking().FirstOrDefaultAsync(x => x.Id == applicantId, cancellationToken);
 
+    public async Task UpdateApplicantAsync(Applicant applicant, CancellationToken cancellationToken = default)
+    {
+        db.Applicants.Update(applicant);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
     public Task<Admission?> GetAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default) =>
         db.Admissions.FirstOrDefaultAsync(x => x.Id == admissionId, cancellationToken);
 
