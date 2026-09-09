@@ -40,6 +40,40 @@ test.describe('SMIS full-system smoke tests', () => {
     expect(payload.roles).toEqual(expect.arrayContaining(['SystemAdministrator']));
   });
 
+  test('admissions management API rejects unauthenticated access', async ({ request }) => {
+    const response = await request.get(`${API_BASE_URL}/api/admissions`);
+    expect([401, 403]).toContain(response.status());
+  });
+
+  test('authenticated administrator can read admissions and invalid admission operations fail safely', async ({ request }) => {
+    const token = await getAdminToken(request);
+    const headers = { Authorization: `Bearer ${token}` };
+    const unknownId = '00000000-0000-0000-0000-000000000011';
+    const zeroId = '00000000-0000-0000-0000-000000000000';
+
+    const list = await request.get(`${API_BASE_URL}/api/admissions`, { headers });
+    expect(list.ok()).toBeTruthy();
+    expect(await list.json()).toEqual(expect.any(Array));
+
+    const missing = await request.get(`${API_BASE_URL}/api/admissions/${unknownId}`, { headers });
+    expect(missing.status()).toBe(404);
+
+    const admit = await request.post(`${API_BASE_URL}/api/admissions/${unknownId}/admit`, {
+      headers,
+      data: {
+        programmeId: zeroId,
+        intakeId: zeroId,
+        academicYearId: zeroId,
+        studentNumber: 'CI-NONEXISTENT',
+        admissionNumber: null,
+        admissionType: null,
+        reportingDate: null,
+        decisionReference: 'CI-boundary-test',
+      },
+    });
+    expect(admit.status()).toBe(404);
+  });
+
   test('authenticated attendance API protects manual and QR recording paths', async ({ request }) => {
     const token = await getAdminToken(request);
     const headers = { Authorization: `Bearer ${token}` };
