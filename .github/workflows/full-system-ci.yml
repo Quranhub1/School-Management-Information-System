@@ -74,7 +74,7 @@ jobs:
         working-directory: backend
         run: dotnet tool restore
 
-      - name: Scaffold missing EF migration on main
+      - name: Synchronize EF Core model snapshot on main
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         working-directory: backend
         shell: bash
@@ -89,18 +89,27 @@ jobs:
             exit 0
           fi
 
-          echo "Pending EF model changes detected. Scaffolding an authoritative migration and snapshot with EF Core 8."
+          echo "Pending EF model changes detected. Generating a temporary authoritative migration to refresh the model snapshot only."
           dotnet ef migrations add AutoSyncModel \
             --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
             --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
             --configuration Release \
             --no-build
 
+          generated="$(find src/SchoolManagement.Infrastructure/Migrations -maxdepth 1 -type f -name '*_AutoSyncModel.cs' -o -name '*_AutoSyncModel.Designer.cs')"
+          if [ -z "$generated" ]; then
+            echo "EF reported pending changes but generated no temporary migration files."
+            exit 1
+          fi
+
+          rm -f src/SchoolManagement.Infrastructure/Migrations/*_AutoSyncModel.cs
+          rm -f src/SchoolManagement.Infrastructure/Migrations/*_AutoSyncModel.Designer.cs
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/SchoolManagement.Infrastructure/Migrations
+          git add src/SchoolManagement.Infrastructure/Migrations/SchoolManagementDbContextModelSnapshot.cs
           if git diff --cached --quiet; then
-            echo "EF reported pending changes but generated no migration files."
+            echo "EF generated no snapshot change."
             exit 1
           fi
           git commit -m "chore: synchronize EF Core model snapshot"
@@ -134,11 +143,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          nohup dotnet run \
-            --project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
-            --configuration Release \
-            --no-build \
-            > /tmp/smis-api.log 2>&1 &
+          nohup dotnet run --project src/SchoolManagement.Api/SchoolManagement.Api.csproj --configuration Release --no-build > /tmp/smis-api.log 2>&1 &
           echo $! > /tmp/smis-api.pid
 
       - name: Wait for API readiness
@@ -185,8 +190,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          nohup npm run preview -- --host 127.0.0.1 --port 4173 \
-            > /tmp/smis-frontend.log 2>&1 &
+          nohup npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/smis-frontend.log 2>&1 &
           echo $! > /tmp/smis-frontend.pid
 
       - name: Wait for frontend readiness
