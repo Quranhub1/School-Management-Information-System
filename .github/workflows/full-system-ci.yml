@@ -24,6 +24,8 @@ env:
   ASPNETCORE_URLS: http://127.0.0.1:5080
   ConnectionStrings__SchoolManagement: Host=127.0.0.1;Port=5432;Database=school_management_ci;Username=school_management;Password=ci_validation
   Authentication__JwtKey: ci-only-jwt-signing-key-that-is-long-enough-for-hmac-sha256-validation
+  Authentication__JwtIssuer: https://ci.school-management.local
+  Authentication__JwtAudience: school-management-api
   SEED_ADMIN_PASSWORD: admin123
   Security__AttendanceQrSecret: ci-only-attendance-qr-secret-for-e2e-validation-2026
   SMIS_ATTENDANCE_QR_SECRET: ci-only-attendance-qr-secret-for-e2e-validation-2026
