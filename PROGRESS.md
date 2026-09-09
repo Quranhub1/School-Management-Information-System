@@ -11,6 +11,8 @@ The core backend, persistence, security hardening, frontend, automated verificat
 
 Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed. The later duplicate desktop-workflow cleanup on `main` also passed the full CI suite, including native desktop builds.
 
+A dedicated executable target-environment acceptance runbook is now available at `docs/PRODUCTION_ACCEPTANCE.md`. It records the evidence required for golden-path, authorization, module, finance, attendance, assessment, clinical, staff/student, deployment, backup/restore, desktop, and security sign-off.
+
 ## Completed / verified
 
 - [x] .NET 8 backend solution and modular domain structure
@@ -45,6 +47,7 @@ Corrected native release workflow run `34351052149` completed successfully for W
 - [x] Duplicate WPF desktop workflow removed; `desktop-ci.yml` remains the effective WPF CI workflow
 - [x] Full CI verification after workflow cleanup
 - [x] No open GitHub issues at release verification
+- [x] Target-environment acceptance procedure documented as an executable runbook
 
 ## Remaining production acceptance gates
 
@@ -65,14 +68,14 @@ These require an actual target deployment or physical client/test environment an
 - [ ] Verify clean-machine Windows installation and first-run server connection
 - [ ] Visually verify Windows installer, installed application and shortcuts use the approved SMIS icon
 - [ ] Complete final security/configuration review and production sign-off
-- [ ] Configure `main` branch protection / required status checks (requires repository administration access)
+- [ ] Configure `main` branch protection / required status checks (requires repository administration access; current repository ruleset is disabled)
 
 ## Release
 
 **Released:** `v0.2.0`  
 **Corrected release workflow:** `34351052149`  
 **Release target:** `9163ef416f8d44be66ab5e97408b1d2fcd3ed27f`  
-**Current main:** `13057015f3d885eacf406202b04f9f4230be9c81`
+**Current main:** `22e6ff2dde40f64f4e5e9d1d4f39208be9cb03d8`
 
 Expected published assets:
 
