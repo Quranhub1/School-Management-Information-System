@@ -4,7 +4,13 @@ using SchoolManagement.Domain.Finance;
 
 namespace SchoolManagement.Infrastructure.Persistence;
 
-public sealed class FinanceRepository(SchoolManagementDbContext db) : IFinanceRepository
+// Implements both the canonical contracts and their feature-namespace
+// compatibility aliases so DI resolves the same concrete repository instance
+// without runtime interface-cast failures.
+public sealed class FinanceRepository(SchoolManagementDbContext db) :
+    IFinanceRepository,
+    SchoolManagement.Application.Finance.IFinanceRepository,
+    IFinanceAdjustmentsRepository
 {
     // These aggregate roots are returned tracked because application workflows
     // intentionally mutate them before SaveChangesAsync (payments, discounts,
