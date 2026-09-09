@@ -12,6 +12,7 @@
 - ✅ Ubuntu `.deb` and `.AppImage` artifacts were produced and uploaded.
 - ✅ Approved `frontend/public/icon.png` was used as the source for generated Tauri icons and validated before each native build.
 - ⚠️ The actual Kilo Code admission scenario has not yet been executed. It must use an isolated test database; no live student record is being claimed.
+- ✅ GitHub Release `v0.2.0` exists and contains the Windows x86/x64 installers plus Ubuntu `.deb` and `.AppImage` assets.
 
 ## CI
 - ✅ Latest Full System CI verified green.
@@ -66,7 +67,7 @@
 - ⏳ Final authorization/audit boundary audit across remaining modules.
 - ⏳ Final EF Core migration snapshot/designer audit.
 - ⏳ Backup/restore and clean-machine installation verification.
-- ⏳ Publish and verify a tagged GitHub Release.
+- ✅ Publish and verify a tagged GitHub Release — `v0.2.0` is published and its four native assets are uploaded.
 - ⏳ Visually verify the Windows installer icon on a Windows machine.
 - ⏳ Verify Ubuntu native package on a target Ubuntu machine if required for release.
 
@@ -130,7 +131,7 @@ admin123 (development/test only)
 8. [ ] Every enabled screen smoke-tested without unhandled exceptions.
 9. [ ] Final EF Core migration snapshot/designer audit completed.
 10. [ ] Backup/restore and clean-machine installation verified.
-11. [ ] Tagged GitHub Release published and its assets verified.
+11. [x] Tagged GitHub Release `v0.2.0` published and its native assets verified.
 12. [ ] Production secrets and Uganda-specific operational configuration reviewed.
 
-**Evidence note:** Native CI run `34291579817` completed successfully for all three build jobs and uploaded Windows x86, Windows x64 and Ubuntu x64 artifact groups. Its release-publishing job was correctly skipped because the run was on `main`, not a `v*` tag. The live admission scenario remains intentionally unexecuted until Kilo Code runs it against an isolated database.
+**Evidence note:** Native CI run `34291579817` completed successfully for all three build jobs and uploaded Windows x86, Windows x64 and Ubuntu x64 artifact groups. GitHub Release `v0.2.0` is now published with the four native assets: Windows x86 setup, Windows x64 setup, Ubuntu `.deb`, and Ubuntu `.AppImage`. The live admission scenario remains intentionally unexecuted until Kilo Code runs it against an isolated database.
