@@ -23,7 +23,7 @@
 - [x] Approved `frontend/public/icon.png` generated into the Tauri icon set and validated before native builds
 - [x] Installer privacy/license asset validated and wired into the Tauri bundle
 - [x] Native release workflow is tag-gated for `v*` releases and downloads the verified build artifacts
-- [ ] Publish a tagged GitHub Release and verify its attached installer/package assets
+- [x] Publish a tagged GitHub Release and verify its attached installer/package assets — `v0.1.0` published with Windows x64/x86 installers
 - [ ] Verify the installer visually on a Windows machine, including Explorer/installer icon rendering
 - [ ] Verify clean-machine installation and first-run server connection
 
@@ -115,7 +115,7 @@ admin123 (development/test only)
 8. [ ] Smoke-test every enabled frontend screen and workflow.
 9. [ ] Complete final EF Core migration snapshot/designer audit.
 10. [ ] Verify backup/restore and clean-machine installation.
-11. [ ] Publish and verify a tagged GitHub Release.
+11. [x] Publish and verify a tagged GitHub Release — `v0.1.0` published with Windows x64/x86 installer assets.
 12. [ ] Perform final production secrets and Uganda-specific operational configuration review.
 
-**Evidence note:** The native CI run produced three uploaded artifact groups: Windows x86 NSIS, Windows x64 NSIS, and Ubuntu x64 (`.deb` + `.AppImage`). The run did not publish a GitHub Release because it was a `main` push rather than a `v*` tag. The live admission scenario has not been executed; no student record has been fabricated in the repository.
+**Evidence note:** Native CI run `34291579817` produced three uploaded artifact groups: Windows x86 NSIS, Windows x64 NSIS, and Ubuntu x64 (`.deb` + `.AppImage`). A tagged `v0.1.0` release has since been published with Windows x64/x86 installer assets. The live admission scenario has not been executed; no student record has been fabricated in the repository.
