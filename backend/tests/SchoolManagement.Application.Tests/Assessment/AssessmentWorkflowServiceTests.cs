@@ -20,6 +20,7 @@ public sealed class AssessmentWorkflowServiceTests
     {
         public Task<IReadOnlyList<AssessmentPlan>> GetPlansAsync(Guid? courseId = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<AssessmentPlan>>([]);
         public Task<IReadOnlyList<StudentAssessment>> GetStudentAssessmentsAsync(Guid courseRegistrationId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentAssessment>>([]);
+        public Task<StudentAssessment?> GetStudentAssessmentByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<StudentAssessment?>(null);
         public Task<StudentAssessment> AddStudentAssessmentAsync(StudentAssessment assessment, CancellationToken cancellationToken = default) => Task.FromResult(assessment);
     }
 }
