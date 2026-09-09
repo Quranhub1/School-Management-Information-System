@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Admissions;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Students;
 using SchoolManagement.Infrastructure.Persistence;
