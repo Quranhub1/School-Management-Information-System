@@ -12,17 +12,17 @@ jobs:
   tag:
     runs-on: ubuntu-latest
     steps:
-      - name: Create v0.2.0 tag on verified release commit
+      - name: Recreate v0.2.0 tag on corrected release commit
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           TAG="v0.2.0"
-          TARGET="a6212b97a0ed24ae64f8dde48101c55ea4579f06"
+          TARGET="${GITHUB_SHA}"
 
           if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" >/dev/null 2>&1; then
-            echo "${TAG} already exists; nothing to do."
-            exit 0
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TAG}"
+            echo "Deleted stale ${TAG} tag."
           fi
 
           gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
