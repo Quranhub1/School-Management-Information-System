@@ -143,7 +143,7 @@ curl -X POST http://localhost:5000/api/auth/register \
   -d '{"username":"admin","password":"REPLACE_WITH_A_STRONG_PASSWORD","firstName":"System","lastName":"Administrator","roles":["SystemAdministrator"]}'
 ```
 
-For a test environment, the documented development seed may use `admin` / `admin123`. **Never expose or retain a default password in production. Change it immediately.**
+For a test/development environment, the seeder creates `admin` with the deterministic password `admin123` when `SEED_ADMIN_PASSWORD` is not supplied. You can override it by setting `SEED_ADMIN_PASSWORD` before startup. **Production does not use this fallback: `SEED_ADMIN_PASSWORD` is required and must be at least 12 characters. Never expose or retain the development password in production.**
 
 ## 9. Frontend installation
 
