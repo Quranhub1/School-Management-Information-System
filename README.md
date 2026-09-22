@@ -81,7 +81,7 @@ For the complete production procedure, follow [`INSTALLATION.md`](INSTALLATION.m
 
 The API uses JWT authentication and server-side authorization policies. A System Administrator account is required to configure the institution and exercise all administration workflows.
 
-Development/bootstrap environments may use the documented `admin` / `admin123` seed where that seed is enabled. **This is not a production credential. Change it immediately before production use and never commit production passwords.**
+Development/bootstrap environments use the deterministic `admin` / `admin123` seed when `SEED_ADMIN_PASSWORD` is not supplied. Setting `SEED_ADMIN_PASSWORD` overrides that development default. Production never falls back to the development password: `SEED_ADMIN_PASSWORD` is required and must be at least 12 characters. **The development credential is not a production credential and must never be retained in production.**
 
 The acceptance guide includes a controlled administrator test in which a second limited-role user is created and verified to ensure that authorization is enforced rather than merely hiding screens.
 
