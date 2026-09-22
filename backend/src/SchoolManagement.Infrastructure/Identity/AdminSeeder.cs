@@ -9,6 +9,8 @@ namespace SchoolManagement.Infrastructure.Identity;
 
 public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher hasher, IHostEnvironment environment)
 {
+    private const string DevelopmentAdminPassword = "admin123";
+
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         var roles = new[]
@@ -74,7 +76,7 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             }
             else
             {
-                password ??= GenerateRandomPassword();
+                password ??= DevelopmentAdminPassword;
             }
 
             admin = new User
@@ -103,12 +105,5 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
                 await db.SaveChangesAsync(cancellationToken);
             }
         }
-    }
-
-    private static string GenerateRandomPassword()
-    {
-        var bytes = new byte[16];
-        Random.Shared.NextBytes(bytes);
-        return Convert.ToBase64String(bytes)[..22];
     }
 }
