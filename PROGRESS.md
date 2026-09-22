@@ -1,6 +1,6 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-09-09  
+**Last updated:** 2026-09-23  
 **Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
@@ -36,6 +36,8 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] PostgreSQL migration/model consistency validation in CI
 - [x] Permanent PostgreSQL integration tests
 - [x] API startup/readiness verification
+- [x] Ubuntu target-environment verification of PostgreSQL migrations, API health and administrator JWT login
+- [x] Deterministic Development administrator bootstrap with secure Production password enforcement
 - [x] Frontend production build
 - [x] Playwright/browser installation and E2E smoke tests
 - [x] Approved `frontend/public/icon.png` validation and Tauri icon generation
