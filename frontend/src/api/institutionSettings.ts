@@ -62,3 +62,5 @@ export const getPublicInstitutionSettings = () => request<InstitutionSettings>('
 export const getInstitutionSettings = () => authedRequest<InstitutionSettings[]>('/api/administration/institution-settings')
 export const getActiveInstitutionSettings = () => authedRequest<InstitutionSettings>('/api/administration/institution-settings/active')
 export const createInstitutionSettings = (input: CreateInstitutionSettingsRequest) => authedRequest<InstitutionSettings>('/api/administration/institution-settings', { method: 'POST', body: JSON.stringify(input) })
+
+export async function uploadInstitutionLogo(file: File): Promise<InstitutionSettings> { const form = new FormData(); form.append('file', file); const token = getAccessToken(); const response = await fetch(`${API_BASE_URL}/api/administration/institution-settings/logo`, { method:'POST', headers: token ? { Authorization:`Bearer ${token}` } : {}, body:form }); if(!response.ok){ const body=await response.json().catch(()=>null) as {message?:string}|null; throw new Error(body?.message ?? `Request failed with status ${response.status}`); } return response.json() as Promise<InstitutionSettings> }
