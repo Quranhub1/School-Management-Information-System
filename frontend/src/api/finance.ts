@@ -127,6 +127,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const getInvoices = (studentId?: string) => request<Invoice[]>(`/api/finance/invoices${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`)
+export interface StudentFinanceProfile { id: string; studentNumber: string; name: string; phoneNumber?: string; email?: string; status: string }
+export const getStudentFinanceProfile = (studentIdOrNumber: string) => request<StudentFinanceProfile>(`/api/finance/students/profile?studentIdOrNumber=${encodeURIComponent(studentIdOrNumber)}`)
 export const createInvoice = (body: CreateInvoiceRequest) => request<Invoice>('/api/finance/invoices', { method: 'POST', body: JSON.stringify(body) })
 export const recordPayment = (invoiceId: string, body: RecordPaymentRequest) => request('/api/finance/invoices/' + invoiceId + '/payments', { method: 'POST', body: JSON.stringify(body) })
 
@@ -201,3 +203,30 @@ export async function getMobileMoneyTransactions(status?: string) { return reque
 export async function createBulkPayment(body: { payments: { studentId: string; amount: number; paymentMethod: string; reference?: string }[] }) { return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(body) }) }
 export async function issueCreditNote(invoiceId: string, body: { amount: number; reason: string }) { return request<any>('/api/finance/invoices/' + invoiceId + '/credit-notes', { method: 'POST', body: JSON.stringify(body) }) }
 export async function getCreditNotes(invoiceId?: string) { return request<any[]>(`/api/finance/credit-notes${invoiceId ? `?invoiceId=${encodeURIComponent(invoiceId)}` : ''}`) }
+
+export interface FeeStructureItemRequest {
+  code: string
+  name: string
+  amount: number
+  incomeAccountId?: string
+  sortOrder: number
+  isOptional: boolean
+}
+export interface FeeStructure {
+  id: string
+  programmeId: string
+  academicYearId: string
+  name: string
+  feeType: string
+  totalAmount: number
+  currency: string
+  isActive: boolean
+  createdAt: string
+  items: { id: string; code: string; name: string; amount: number; currency: string; incomeAccountId?: string; sortOrder: number; isOptional: boolean }[]
+}
+export const getFeeStructures = (academicYearId?: string) =>
+  request<FeeStructure[]>(`/api/finance/administration/fee-structures${academicYearId ? `?academicYearId=${encodeURIComponent(academicYearId)}` : ''}`)
+export const createFeeStructure = (body: { name: string; feeType: string; currency?: string; programmeId?: string; academicYearId?: string; items: FeeStructureItemRequest[] }) =>
+  request<FeeStructure>('/api/finance/administration/fee-structures', { method: 'POST', body: JSON.stringify(body) })
+export const applyFeeStructure = (feeStructureId: string, body: { studentIds?: string[]; allActiveStudents?: boolean }) =>
+  request<{ feeStructureId: string; applied: number; skipped: number; totalRequested: number }>(`/api/finance/administration/fee-structures/${feeStructureId}/apply`, { method: 'POST', body: JSON.stringify(body) })
