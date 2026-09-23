@@ -19,7 +19,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         if (fee.TotalAmount <= 0) throw new ArgumentException("Fee structure amount must be greater than zero.");
         var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
         var revenueAccount = await GetAccountAsync(FinanceAccountCodes.TuitionRevenue, cancellationToken);
-        var invoice = new StudentInvoice { StudentId = studentId, FeeStructureId = fee.Id, InvoiceNumber = normalizedInvoiceNumber, Amount = fee.TotalAmount, PaidAmount = 0, Currency = fee.Currency, Status = "Unpaid" };
+        var invoice = new StudentInvoice { StudentId = studentId, FeeStructureId = fee.Id, InvoiceNumber = normalizedInvoiceNumber, FeeType = fee.FeeType, Amount = fee.TotalAmount, PaidAmount = 0, Currency = fee.Currency, Status = "Unpaid" };
         foreach (var item in fee.Items.Where(x => !x.IsOptional).OrderBy(x => x.SortOrder)) invoice.Lines.Add(new StudentInvoiceLine { StudentInvoiceId = invoice.Id, Code = item.Code, Description = item.Name, Amount = item.Amount, Currency = item.Currency, IncomeAccountId = item.IncomeAccountId, SortOrder = item.SortOrder });
         var journalEntry = await CreateItemizedInvoiceJournalAsync(invoice, receivableAccount.Id, revenueAccount.Id, cancellationToken);
         await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
