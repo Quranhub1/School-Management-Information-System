@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getStudentPortalProfile, getStudentSummaries, getStudentTranscript, type StudentPortalProfile, type StudentSemesterResult } from '../api/studentPortal'
-import { downloadPdf } from '../api/pdf'
 import type { TranscriptEntry, AcademicResultSummary } from '../types/academic'
 
 function groupBySemester(summaries: AcademicResultSummary[], entries: TranscriptEntry[]): StudentSemesterResult[] {
@@ -116,7 +115,6 @@ export function StudentPortal() {
 
           {tab === 'documents' && (
             <div className="feature-grid">
-              <article className="feature-card"><strong>My Transcript</strong><span>Download the student's own official transcript when available.</span><button className="secondary-button" onClick={() => downloadPdf('/api/student-portal/me/transcript/pdf', `transcript-${profile?.studentNumber ?? 'student'}.pdf`)}>Download</button></article>
               <article className="feature-card"><strong>Student Documents</strong><span>Institution-issued documents will be exposed here according to the student's permissions.</span><button className="secondary-button" type="button" disabled>Document Vault — Coming Soon</button></article>
               <article className="feature-card"><strong>Certificates & Letters</strong><span>Eligible requests and released documents can be surfaced without exposing internal clearance data.</span><button className="secondary-button" type="button" disabled>Request Centre — Coming Soon</button></article>
             </div>
