@@ -11,10 +11,20 @@ namespace SchoolManagement.Infrastructure.Student360;
 
 public sealed class Student360Service(SchoolManagementDbContext db)
 {
-    public async Task<Student360ProfileDto> GetProfileAsync(Guid studentId, CancellationToken cancellationToken = default)
+    public async Task<Student360ProfileDto> GetProfileAsync(string studentIdOrNumber, CancellationToken cancellationToken = default)
     {
-        var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == studentId, cancellationToken)
-            ?? throw new KeyNotFoundException("Student not found.");
+        if (string.IsNullOrWhiteSpace(studentIdOrNumber))
+            throw new ArgumentException("Student ID or student number is required.", nameof(studentIdOrNumber));
+
+        var value = Uri.UnescapeDataString(studentIdOrNumber.Trim());
+        var student = Guid.TryParse(value, out var parsedId)
+            ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
+            : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
+
+        if (student is null)
+            throw new KeyNotFoundException("Student not found.");
+
+        var studentId = student.Id;
 
         var fullName = $"{student.FirstName} {student.LastName}".Trim();
 
