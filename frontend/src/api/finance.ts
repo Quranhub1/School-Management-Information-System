@@ -178,10 +178,6 @@ export async function getInvoiceFeeItems(invoiceId: string) { return request<any
 export interface OutstandingBalance { studentId: string; studentNumber: string; studentName: string; programmeName: string; amount: number; paidAmount: number; balance: number; currency: string; status: string }
 export async function getOutstandingBalances() { return request<OutstandingBalance[]>('/api/finance/reports/outstanding-balances') }
 
-export interface FeeStructure { id: string; name: string; category: string; feeType: string; amount: number; totalAmount: number; currency: string; programmeId?: string; academicYearId?: string; isActive: boolean }
-export async function createFeeStructure(body: Partial<FeeStructure>) { return request<FeeStructure>('/api/finance/administration/fee-structures', { method: 'POST', body: JSON.stringify(body) }) }
-export async function getFeeStructures(academicYearId?: string) { return request<FeeStructure[]>(`/api/finance/administration/fee-structures${academicYearId ? `?academicYearId=${encodeURIComponent(academicYearId)}` : ''}`) }
-
 export interface AccountsOverviewDashboard { totalRevenue: number; totalPayments: number; totalOutstanding: number; totalAdvances: number; totalBilled: number; totalPaid: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number; currency: string }
 export interface AccountsOverviewOutstanding { studentId: string; studentNumber: string; studentName: string; programmeName: string; balance: number; status: string; currency: string }
 export interface AccountsOverviewPayment { id: string; receiptNumber: string; studentName: string; invoiceNumber: string; amount: number; paymentMethod: string; paidAt: string }
