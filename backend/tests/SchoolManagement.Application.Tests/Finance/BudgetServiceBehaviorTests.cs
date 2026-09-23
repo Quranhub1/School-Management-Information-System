@@ -51,8 +51,8 @@ public sealed class BudgetServiceBehaviorTests
     {
         public FakeBudgetRepository(Budget budget) => Budget = budget;
         public Budget? Budget { get; }
-        public Task<IReadOnlyList<Budget>> GetAsync(Guid? academicYearId, bool activeOnly, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<Budget>>(new[] { budget });
-        public Task<Budget?> GetAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Budget?>(id == budget.Id ? budget : null);
+        public Task<IReadOnlyList<Budget>> GetAsync(Guid? academicYearId, bool activeOnly, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<Budget>>(new[] { Budget! });
+        public Task<Budget?> GetAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Budget?>(id == Budget!.Id ? Budget : null);
         public Task AddAsync(Budget budget, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
