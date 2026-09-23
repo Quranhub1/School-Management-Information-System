@@ -7,7 +7,8 @@ type ItemDraft = { code: string; name: string; amount: string; incomeAccountId: 
 
 export function FeeTypesManager() {
   const [structures, setStructures] = useState<FeeStructure[]>([])
-  const [years, setYears] = useState<AcademicYear[]>([])\n  const [accounts, setAccounts] = useState<FinanceAccountOption[]>([])
+  const [years, setYears] = useState<AcademicYear[]>([])
+  const [accounts, setAccounts] = useState<FinanceAccountOption[]>([])
   const [name, setName] = useState('')
   const [feeType, setFeeType] = useState('')
   const [academicYearId, setAcademicYearId] = useState('')
