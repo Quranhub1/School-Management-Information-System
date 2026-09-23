@@ -93,7 +93,7 @@ button, input, select { font: inherit; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
 .topbar h1, .hero h2, .panel h3 { margin: 0; }
 .topbar h1 { font-size: 1.25rem; color: #fff; }
-[data-theme="dark"] .topbar h1 { color: #e7e5e4; }
+[data-theme="dark"] .topbar h1 { color: #fff; }
 .topbar-actions { display: flex; align-items: center; gap: 10px; }
 .eyebrow { margin: 0 0 5px; color: #1e40af; font-size: .72rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 .status { padding: 7px 11px; border-radius: 999px; background: #dbeafe; color: #1e40af; font-size: .78rem; font-weight: 700; }
@@ -287,6 +287,24 @@ td strong { display: block; }
 
 :root { --brand-primary:#1e40af; --brand-accent:#f97316; }
 .sidebar-brand { display:flex; align-items:center; gap:10px; padding:14px; border-bottom:1px solid rgba(255,255,255,.2); color:#fff; }
+.sidebar-brand h1 { margin:2px 0 0; font-size:1rem; color:#fff; line-height:1.15; }
+.sidebar-brand p { margin:4px 0 0; font-size:.68rem; color:rgba(255,255,255,.75); line-height:1.35; }
+.sidebar-kicker { font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:800; color:rgba(255,255,255,.8); }
+.sidebar-logo,.topbar-logo { width:44px; height:44px; object-fit:contain; border-radius:8px; background:#fff; padding:3px; flex:none; }
+.topbar-brand { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+.topbar-brand small { color:rgba(255,255,255,.78); }
+.topbar .eyebrow { color:rgba(255,255,255,.78); }
+.topbar .secondary-button { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.3); color:#fff; }
+.topbar .secondary-button:hover { background:rgba(255,255,255,.2); }
+.admission-tabs { display:flex; gap:7px; flex-wrap:wrap; padding:14px 16px 0; border-bottom:1px solid #e7e5e4; }
+.admission-tabs button { border:0; background:transparent; color:#57534e; padding:10px 13px; font-weight:750; cursor:pointer; border-radius:9px 9px 0 0; }
+.admission-tabs button.active { background:var(--brand-primary); color:#fff; }
+.admission-section { padding:20px; }
+.applicant-card { display:flex; flex-direction:column; gap:4px; padding:14px 16px; margin:14px 0; border:1px solid #e7e5e4; border-radius:12px; background:var(--brand-primary-soft); }
+.panel-subtitle { margin:6px 0 0; color:#78716c; font-size:.85rem; line-height:1.4; }
+
+:root { --brand-primary:#1e40af; --brand-accent:#f97316; --brand-primary-soft:#1e40af18; --brand-accent-soft:#f9731618; }
+.sidebar-brand { display:flex; align-items:center; gap:10px; padding:14px; border-bottom:1px solid rgba(255,255,255,.22); color:#fff; }
 .sidebar-brand h1 { margin:2px 0 0; font-size:1rem; color:#fff; line-height:1.15; }
 .sidebar-brand p { margin:4px 0 0; font-size:.68rem; color:rgba(255,255,255,.75); line-height:1.35; }
 .sidebar-kicker { font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:800; color:rgba(255,255,255,.8); }

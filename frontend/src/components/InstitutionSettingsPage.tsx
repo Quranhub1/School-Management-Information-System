@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createInstitutionSettings, getActiveInstitutionSettings, type CreateInstitutionSettingsRequest, type InstitutionSettings } from '../api/institutionSettings'
+import { createInstitutionSettings, getActiveInstitutionSettings, uploadInstitutionLogo, type CreateInstitutionSettingsRequest, type InstitutionSettings } from '../api/institutionSettings'
 
 type SettingsTab = 'general' | 'branding' | 'gallery'
 
@@ -14,6 +14,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [tab, setTab] = useState<SettingsTab>('general')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   const [form, setForm] = useState<CreateInstitutionSettingsRequest>({
     institutionName: '',
@@ -61,6 +62,13 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
     } finally {
       setLoading(false)
     }
+  }
+
+  async function uploadLogo(file: File) {
+    setUploadingLogo(true); setError(''); setSuccess('')
+    try { const result = await uploadInstitutionLogo(file); setActive(result); setForm(prev => ({ ...prev, logoPath: result.logoPath ?? '' })); onSaved(result); setSuccess('Institution logo saved successfully.') }
+    catch (e) { setError(e instanceof Error ? e.message : 'Unable to upload logo.') }
+    finally { setUploadingLogo(false) }
   }
 
   async function submit(e: React.FormEvent) {
@@ -132,7 +140,8 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         {tab === 'branding' && (
           <div className="settings-grid">
             <div className="form-row">
-              <label>Logo Path/URL<input value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://... or /uploads/logo.png" /></label>
+              <label>Logo URL<input value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://..." /></label>
+              <label>Upload Logo<input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo || !active} onChange={e => { const file=e.target.files?.[0]; if(file) void uploadLogo(file) }} />{!active&&<small>Save institution details first.</small>}</label>
               <label>Primary Color<input type="color" value={form.primaryColor} onChange={e => updateField('primaryColor', e.target.value)} /></label>
             </div>
             <div className="form-row">
