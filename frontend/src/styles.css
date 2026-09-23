@@ -350,3 +350,23 @@ td strong { display: block; }
 .alumni-clearance-header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-top:20px}.alumni-clearance-header h4{margin:0}.alumni-clearance-header p{margin:5px 0 0;color:#64748b;font-size:.82rem}.clearance-complete,.clearance-pending{display:inline-flex;padding:7px 11px;border-radius:999px;font-size:.76rem;font-weight:800}.clearance-complete{background:#d1fae5;color:#047857}.clearance-pending{background:#fef3c7;color:#92400e}.clearance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.clearance-card{display:grid;gap:8px;padding:16px;border:1px solid #e5e7eb;border-radius:13px;background:#fafafa}.clearance-card span{font-size:.8rem;color:#64748b}.clearance-card strong{font-size:1rem}.clearance-card select{padding:8px;border:1px solid #d1d5db;border-radius:8px}.clearance-ok{color:#047857}.clearance-wait{color:#b45309}
 @media(max-width:900px){.alumni-feature-grid,.alumni-services-grid{grid-template-columns:1fr}.alumni-filters{grid-template-columns:1fr 1fr}.clearance-grid{grid-template-columns:1fr}}
 @media(max-width:640px){.alumni-filters,.alumni-detail-grid{grid-template-columns:1fr}.alumni-profile-header,.alumni-clearance-header{display:grid}.alumni-tabs{overflow-x:auto;flex-wrap:nowrap}.alumni-tabs button{white-space:nowrap}}
+
+.student-lifecycle-workspace{display:grid;gap:18px}
+.student-lifecycle-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:6px;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc}
+.student-lifecycle-tabs button{border:0;background:transparent;border-radius:10px;padding:10px 14px;font-weight:700;color:#475569;cursor:pointer}
+.student-lifecycle-tabs button.active{background:var(--brand-primary,#1e40af);color:#fff}
+.student-lifecycle-panel{padding:20px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;box-shadow:0 8px 24px rgba(15,23,42,.05)}
+.student-lifecycle-panel h3{margin:0 0 8px}
+.section-copy{color:#64748b;margin:0 0 16px}
+.feature-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 20px}
+.feature-grid.compact{grid-template-columns:repeat(2,minmax(0,1fr))}
+.feature-card{display:grid;gap:8px;padding:16px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
+.feature-card strong{color:#0f172a}
+.feature-card span{font-size:.86rem;line-height:1.45;color:#64748b}
+.feature-card.full-width{grid-column:1/-1}
+.lifecycle-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.lifecycle-form-grid label{display:grid;gap:7px;font-weight:700;color:#334155}
+.lifecycle-form-grid input,.lifecycle-form-grid select{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:9px;background:#fff}
+.info-banner{padding:14px;border-radius:10px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;line-height:1.45}
+@media(max-width:1000px){.feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.student-lifecycle-tabs{overflow-x:auto;flex-wrap:nowrap}.student-lifecycle-tabs button{white-space:nowrap}.feature-grid,.feature-grid.compact,.lifecycle-form-grid{grid-template-columns:1fr}.feature-card.full-width{grid-column:auto}}
