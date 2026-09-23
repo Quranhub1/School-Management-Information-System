@@ -45,26 +45,61 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
 
     private async Task<IReadOnlyList<StudentSearchResult>> SearchStudents(string term, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct)
     {
+        var normalized = term.Trim().ToLowerInvariant();
+        var hasYear = int.TryParse(normalized, out var year);
+
         var query = db.Students.AsNoTracking()
-            .Where(x => x.StudentNumber.ToLower().Contains(term)
-                     || x.FirstName.ToLower().Contains(term)
-                     || x.LastName.ToLower().Contains(term)
-                     || (x.OtherNames != null && x.OtherNames.ToLower().Contains(term))
-                     || (x.NationalId != null && x.NationalId.ToLower().Contains(term))
-                     || (x.Email != null && x.Email.ToLower().Contains(term))
-                     || (x.PhoneNumber != null && x.PhoneNumber.ToLower().Contains(term)));
+            .Where(x => x.StudentNumber.ToLower().Contains(normalized)
+                     || x.FirstName.ToLower().Contains(normalized)
+                     || x.LastName.ToLower().Contains(normalized)
+                     || (x.OtherNames != null && x.OtherNames.ToLower().Contains(normalized))
+                     || (x.NationalId != null && x.NationalId.ToLower().Contains(normalized))
+                     || (x.Email != null && x.Email.ToLower().Contains(normalized))
+                     || (x.PhoneNumber != null && x.PhoneNumber.ToLower().Contains(normalized))
+                     || db.StudentEnrollments.Any(e => e.StudentId == x.Id &&
+                         db.Programmes.Any(p => p.Id == e.ProgrammeId &&
+                             (p.Code.ToLower().Contains(normalized) || p.Name.ToLower().Contains(normalized))))
+                     || (hasYear && db.StudentAcademicStatuses.Any(s => s.StudentId == x.Id && s.YearOfStudy == year))
+                     || db.StudentAcademicStatuses.Any(s => s.StudentId == x.Id &&
+                         db.Semesters.Any(sem => sem.Id == s.SemesterId &&
+                             db.AcademicYears.Any(y => y.Id == sem.AcademicYearId &&
+                                 y.Name.ToLower().Contains(normalized)))));
 
         if (from.HasValue) query = query.Where(x => x.CreatedAt >= from.Value);
         if (to.HasValue) query = query.Where(x => x.CreatedAt <= to.Value);
 
         return await query
-            .Select(x => new { Student=x, CurrentStatus=db.StudentAcademicStatuses.AsNoTracking().Where(s=>s.StudentId==x.Id).OrderByDescending(s=>s.SemesterId).FirstOrDefault(), Enrollment=db.StudentEnrollments.AsNoTracking().Where(e=>e.StudentId==x.Id).OrderByDescending(e=>e.AdmissionDate).FirstOrDefault() })
-            .OrderByDescending(x => x.Student.StudentNumber.ToLower() == term)
-            .ThenByDescending(x => ($"{x.Student.FirstName} {x.Student.OtherNames} {x.Student.LastName}").Trim().ToLower() == term)
-            .ThenByDescending(x => x.Student.LastName.ToLower().StartsWith(term))
-            .ThenBy(x => x.Student.LastName).ThenBy(x => x.Student.FirstName)
-            .Select(x => new StudentSearchResult(x.Student.Id, x.Student.StudentNumber, $"{x.Student.FirstName} {x.Student.OtherNames} {x.Student.LastName}".Trim(), x.Student.Status, x.Enrollment == null ? null : x.Enrollment.ProgrammeId, x.CurrentStatus == null ? null : x.CurrentStatus.YearOfStudy, x.Enrollment == null ? null : db.Programmes.Where(p=>p.Id==x.Enrollment.ProgrammeId).Select(p=>p.Name).FirstOrDefault(), x.CurrentStatus == null ? null : x.CurrentStatus.YearOfStudy, x.CurrentStatus == null ? null : db.Semesters.Where(s=>s.Id==x.CurrentStatus.SemesterId).Select(s=>db.AcademicYears.Where(y=>y.Id==s.AcademicYearId).Select(y=>y.Name).FirstOrDefault()).FirstOrDefault()))
-            .Take(20).ToListAsync(ct);
+            .Select(x => new
+            {
+                Student = x,
+                CurrentStatus = db.StudentAcademicStatuses.AsNoTracking()
+                    .Where(s => s.StudentId == x.Id)
+                    .OrderByDescending(s => s.SemesterId)
+                    .FirstOrDefault(),
+                Enrollment = db.StudentEnrollments.AsNoTracking()
+                    .Where(e => e.StudentId == x.Id)
+                    .OrderByDescending(e => e.AdmissionDate)
+                    .FirstOrDefault()
+            })
+            .OrderByDescending(x => x.Student.StudentNumber.ToLower() == normalized)
+            .ThenByDescending(x => ($"{x.Student.FirstName} {x.Student.OtherNames} {x.Student.LastName}").Trim().ToLower() == normalized)
+            .ThenByDescending(x => x.Student.LastName.ToLower().StartsWith(normalized))
+            .ThenBy(x => x.Student.LastName)
+            .ThenBy(x => x.Student.FirstName)
+            .Select(x => new StudentSearchResult(
+                x.Student.Id,
+                x.Student.StudentNumber,
+                $"{x.Student.FirstName} {x.Student.OtherNames} {x.Student.LastName}".Trim(),
+                x.Student.Status,
+                x.Enrollment == null ? null : x.Enrollment.ProgrammeId,
+                x.Enrollment == null ? null : db.Programmes.Where(p => p.Id == x.Enrollment.ProgrammeId).Select(p => p.Name).FirstOrDefault(),
+                x.CurrentStatus == null ? null : x.CurrentStatus.YearOfStudy,
+                x.CurrentStatus == null ? null : db.Semesters
+                    .Where(s => s.Id == x.CurrentStatus.SemesterId)
+                    .Select(s => db.AcademicYears.Where(y => y.Id == s.AcademicYearId).Select(y => y.Name).FirstOrDefault())
+                    .FirstOrDefault()))
+            .Take(20)
+            .ToListAsync(ct);
     }
 
     private async Task<IReadOnlyList<StaffSearchResult>> SearchStaff(string term, CancellationToken ct)
