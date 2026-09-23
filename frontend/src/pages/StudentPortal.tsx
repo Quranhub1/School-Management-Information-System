@@ -78,9 +78,6 @@ export function StudentPortal() {
 
           {tab === 'results' && (
             <>
-              <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-                <button className="secondary-button" onClick={() => downloadPdf('/api/student-portal/me/transcript/pdf', `transcript-${profile?.studentNumber ?? 'student'}.pdf`)}>Download My Transcript (PDF)</button>
-              </div>
               <h3 style={{ margin: '22px 0 10px' }}>Results by Semester</h3>
               {semesters.length === 0 ? <p className="empty">No results found.</p> : (
                 <div className="table-wrap">
