@@ -57,8 +57,13 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
         if (from.HasValue) query = query.Where(x => x.CreatedAt >= from.Value);
         if (to.HasValue) query = query.Where(x => x.CreatedAt <= to.Value);
 
-        return await query.OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
-            .Select(x => new StudentSearchResult(x.Id, x.StudentNumber, $"{x.FirstName} {x.LastName}".Trim(), x.Status))
+        return await query
+            .Select(x => new { Student=x, CurrentStatus=db.StudentAcademicStatuses.AsNoTracking().Where(s=>s.StudentId==x.Id).OrderByDescending(s=>s.SemesterId).FirstOrDefault(), Enrollment=db.StudentEnrollments.AsNoTracking().Where(e=>e.StudentId==x.Id).OrderByDescending(e=>e.AdmissionDate).FirstOrDefault() })
+            .OrderByDescending(x => x.Student.StudentNumber.ToLower() == term)
+            .ThenByDescending(x => ($"{x.Student.FirstName} {x.Student.OtherNames} {x.Student.LastName}").Trim().ToLower() == term)
+            .ThenByDescending(x => x.Student.LastName.ToLower().StartsWith(term))
+            .ThenBy(x => x.Student.LastName).ThenBy(x => x.Student.FirstName)
+            .Select(x => new StudentSearchResult(x.Student.Id, x.Student.StudentNumber, $"{x.Student.FirstName} {x.Student.OtherNames} {x.Student.LastName}".Trim(), x.Student.Status, x.Enrollment == null ? null : x.Enrollment.ProgrammeId, x.CurrentStatus == null ? null : x.CurrentStatus.YearOfStudy, x.CurrentStatus == null ? null : db.Semesters.Where(s=>s.Id==x.CurrentStatus.SemesterId).Select(s=>db.AcademicYears.Where(y=>y.Id==s.AcademicYearId).Select(y=>y.Name).FirstOrDefault()).FirstOrDefault()))
             .Take(20).ToListAsync(ct);
     }
 
@@ -185,7 +190,7 @@ public sealed record GlobalSearchResponse
     public IReadOnlyList<AlumniSearchResult> Alumni { get; init; } = [];
 }
 
-public sealed record StudentSearchResult(Guid Id, string StudentNumber, string FullName, string Status);
+public sealed record StudentSearchResult(Guid Id, string StudentNumber, string FullName, string Status, Guid? ProgrammeId, int? YearOfStudy, string? AcademicYear);
 public sealed record StaffSearchResult(Guid Id, string StaffNumber, string FullName, string EmploymentType);
 public sealed record CourseSearchResult(Guid Id, string Code, string Name, int CreditUnits);
 public sealed record ProgrammeSearchResult(Guid Id, string Code, string Name, string Award);

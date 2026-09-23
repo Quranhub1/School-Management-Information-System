@@ -26,6 +26,7 @@ export function GlobalSearch() {
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [history, setHistory] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('smis.search.history') ?? '[]') as string[] } catch { return [] } })
 
   useEffect(() => {
     if (!query.trim() || query.trim().length < 2) {
@@ -38,7 +39,7 @@ export function GlobalSearch() {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
       try {
-        const data = await globalSearch(query.trim(), from || undefined, to || undefined)
+        const term=query.trim(); const data = await globalSearch(term, from || undefined, to || undefined); setHistory(current=>{const next=[term,...current.filter(x=>x.toLowerCase()!==term.toLowerCase())].slice(0,10); localStorage.setItem('smis.search.history',JSON.stringify(next)); return next})
         setResults(data)
         setOpen(true)
       } catch {
@@ -92,7 +93,7 @@ export function GlobalSearch() {
           placeholder="Search students, courses, staff, programmes..."
           value={query}
           onChange={e => setQuery(e.target.value)}
-          onFocus={() => { if (total > 0) setOpen(true) }}
+          onFocus={() => { if (total > 0) setOpen(true); else if (!query.trim() && history.length) setOpen(true) }}
           onKeyDown={handleKey}
           aria-label="Global search"
           aria-expanded={open}
@@ -131,6 +132,7 @@ export function GlobalSearch() {
           ))}
         </div>
       )}
+      {open && !loading && total === 0 && !query.trim() && history.length > 0 && <div className="search-dropdown search-history" role="listbox" aria-label="Recent searches"><div className="search-history-heading">Recent searches</div>{history.map(term=><button type="button" key={term} className="search-history-item" onClick={()=>setQuery(term)}>{term}</button>)}</div>}
       {open && !loading && total === 0 && query.trim().length >= 2 && (
         <div className="search-dropdown" role="listbox" aria-label="Search results">
           <div className="search-empty">No results for “{query.trim()}”</div>
