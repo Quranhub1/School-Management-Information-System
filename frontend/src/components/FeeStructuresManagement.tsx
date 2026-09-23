@@ -37,9 +37,9 @@ export function FeeStructuresManagement() {
         programmeId: programmeId.trim(),
         academicYearId: academicYearId.trim(),
         name: name.trim(),
-        totalAmount: Number(totalAmount),
         currency: 'UGX',
         feeType,
+        items: [{ code: feeType.toUpperCase().replace(/\s+/g, '-'), name: name.trim(), amount: Number(totalAmount), sortOrder: 0, isOptional: false }],
       })
       setName('')
       setProgrammeId('')
