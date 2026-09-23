@@ -38,7 +38,7 @@ export function StudentManagement({ canManage = false }: Props) {
         <label>Last name<input value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} required /></label>
         <label>Other names<input value={form.otherNames} onChange={e => setForm({...form, otherNames: e.target.value})} /></label>
         <label>Date of birth<input type="date" value={form.dateOfBirth} onChange={e => setForm({...form, dateOfBirth: e.target.value})} /></label>
-        <label>Gender<input value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} /></label>
+        <label>Gender<select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} required><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Not Sure">Not Sure</option></select></label>
         <label>Phone<input value={form.phoneNumber} onChange={e => setForm({...form, phoneNumber: e.target.value})} /></label>
         <label>Email<input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></label>
       </div>
