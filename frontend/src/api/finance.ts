@@ -230,3 +230,6 @@ export const createFeeStructure = (body: { name: string; feeType: string; curren
   request<FeeStructure>('/api/finance/administration/fee-structures', { method: 'POST', body: JSON.stringify(body) })
 export const applyFeeStructure = (feeStructureId: string, body: { studentIds?: string[]; allActiveStudents?: boolean }) =>
   request<{ feeStructureId: string; applied: number; skipped: number; totalRequested: number }>(`/api/finance/administration/fee-structures/${feeStructureId}/apply`, { method: 'POST', body: JSON.stringify(body) })
+
+export interface FinanceAccountOption { id: string; code: string; name: string; accountType: string }
+export const getFinanceAccounts = () => request<FinanceAccountOption[]>('/api/finance/administration/accounts')
