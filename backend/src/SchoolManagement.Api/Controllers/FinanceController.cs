@@ -18,15 +18,13 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (string.IsNullOrWhiteSpace(studentId)) return BadRequest(new { message = "studentId is required." });
 
         var value = studentId.Trim();
-        Guid resolvedStudentId;
-        if (!Guid.TryParse(value, out resolvedStudentId))
-        {
-            var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
-            if (student is null) return NotFound(new { message = "Student was not found." });
-            resolvedStudentId = student.Id;
-        }
+        var student = Guid.TryParse(value, out var parsedId)
+            ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
+            : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
 
-        return Ok(await finance.GetStudentInvoicesAsync(resolvedStudentId, cancellationToken));
+        if (student is null) return NotFound(new { message = "Student was not found." });
+
+        return Ok(await finance.GetStudentInvoicesAsync(student.Id, cancellationToken));
     }
     [HttpGet("students/profile")]
     public async Task<IActionResult> GetStudentProfile([FromQuery] string studentIdOrNumber, CancellationToken cancellationToken)
