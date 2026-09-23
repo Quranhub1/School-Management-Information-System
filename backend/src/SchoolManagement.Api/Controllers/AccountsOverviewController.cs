@@ -14,7 +14,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
     {
-        var totalBilled = await db.StudentInvoices.AsNoTracking().SumAsync(x => (decimal?)x.NetAmount, cancellationToken) ?? 0m;
+        var totalBilled = await db.StudentInvoices.AsNoTracking().SumAsync(x => (decimal?)(x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m), cancellationToken) ?? 0m;
         var totalPaid = await db.StudentInvoices.AsNoTracking().SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var todayPayments = await db.Payments.AsNoTracking()
@@ -142,7 +142,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
                 x.FeeType,
                 x.Amount,
                 x.PaidAmount,
-                balance = x.OutstandingAmount,
+                balance = x.Amount - x.DiscountAmount - x.PaidAmount,
                 x.Currency,
                 x.Status,
                 x.IssuedAt
