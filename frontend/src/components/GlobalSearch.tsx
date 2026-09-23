@@ -74,7 +74,7 @@ export function GlobalSearch() {
   }
 
   const items: { label: string; type: string; data: { id: string } }[] = []
-  for (const s of results.students) items.push({ label: `${s.fullName} (${s.studentNumber})`, type: 'Student', data: s })
+  for (const s of results.students) { const context=[s.fullName,s.studentNumber,s.programmeName||'Class —',s.yearOfStudy?`Year ${s.yearOfStudy}`:'',s.academicYear||''].filter(Boolean).join(' · '); items.push({ label: context, type: 'Student', data: s }) }
   for (const s of results.staff) items.push({ label: `${s.fullName} (${s.staffNumber})`, type: 'Staff', data: s })
   for (const c of results.courses) items.push({ label: `${c.code} — ${c.name}`, type: 'Course', data: c })
   for (const p of results.programmes) items.push({ label: `${p.code} — ${p.name}`, type: 'Programme', data: p })
@@ -90,7 +90,7 @@ export function GlobalSearch() {
         <input
           ref={inputRef}
           type="search"
-          placeholder="Search students, courses, staff, programmes..."
+          placeholder="Search registration number, name, class, year, staff, courses..."
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => { if (total > 0) setOpen(true); else if (!query.trim() && history.length) setOpen(true) }}

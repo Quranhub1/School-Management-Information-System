@@ -16,7 +16,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export interface StudentSearchResult { id: string; studentNumber: string; fullName: string; status: string }
+export interface StudentSearchResult { id: string; studentNumber: string; fullName: string; status: string; programmeName?: string | null; yearOfStudy?: number | null; academicYear?: string | null }
 export interface StaffSearchResult { id: string; staffNumber: string; fullName: string; employmentType: string }
 export interface CourseSearchResult { id: string; code: string; name: string; creditUnits: number }
 export interface ProgrammeSearchResult { id: string; code: string; name: string; award: string }

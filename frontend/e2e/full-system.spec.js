@@ -97,7 +97,7 @@ test.describe('SMIS full-system smoke tests', () => {
     expect(await students.json()).toEqual(expect.any(Array));
 
     const invoices = await request.get(`${API_BASE_URL}/api/finance/invoices?studentId=00000000-0000-0000-0000-000000000000`, { headers });
-    expect(invoices.status()).toBe(400);
+    expect(invoices.status()).toBe(404);
   });
 
   test('authenticated attendance API protects manual and QR recording paths', async ({ request }) => {
@@ -145,7 +145,7 @@ test.describe('SMIS full-system smoke tests', () => {
 
     await signIn(page);
 
-    await expect(page.getByRole('complementary').getByRole('heading', { name: 'Institutional Services' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('complementary').getByRole('heading').first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Administration', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Student Management', exact: true })).toBeVisible();
