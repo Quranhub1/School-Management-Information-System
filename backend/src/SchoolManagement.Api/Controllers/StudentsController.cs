@@ -3,13 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Students;
+using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/students")]
 [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
-public sealed class StudentsController(StudentService service) : ControllerBase
+public sealed class StudentsController(StudentService service, SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<object>>> GetAll(CancellationToken cancellationToken)
@@ -27,9 +29,15 @@ public sealed class StudentsController(StudentService service) : ControllerBase
 
     [HttpGet("{id:guid}/qrcode")]
     [AllowAnonymous]
-    public IActionResult GetQrCode(Guid id)
+    public async Task<IActionResult> GetQrCode(Guid id, CancellationToken cancellationToken)
     {
-        var qr = QrCodeHelper.GenerateSvg(id.ToString());
+        var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (student is null) return NotFound();
+
+        if (System.Text.Encoding.UTF8.GetByteCount(student.StudentNumber) > 19)
+            return BadRequest(new { message = "The student number is too long for the current QR encoder." });
+
+        var qr = QrCodeHelper.GenerateSvg(student.StudentNumber);
         return Content(qr, "image/svg+xml");
     }
 

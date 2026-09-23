@@ -52,17 +52,23 @@ public sealed class ReportsController(SchoolManagementDbContext db, ReportGenera
         results = await db.Results.AsNoTracking().LongCountAsync(cancellationToken)
     });
 
-    [HttpGet("student/{studentId:guid}/report-card")]
-    public async Task<IActionResult> GetStudentReportCard(Guid studentId, [FromQuery] Guid? academicYearId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
+    [HttpGet("student/{studentId}/report-card")]
+    public async Task<IActionResult> GetStudentReportCard(string studentId, [FromQuery] Guid? academicYearId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
     {
-        var report = await generator.GenerateStudentReportCardAsync(studentId, academicYearId, semesterId, cancellationToken);
+        var resolvedStudentId = await ResolveStudentIdAsync(studentId, cancellationToken);
+        if (!resolvedStudentId.HasValue) return NotFound();
+
+        var report = await generator.GenerateStudentReportCardAsync(resolvedStudentId.Value, academicYearId, semesterId, cancellationToken);
         return report is null ? NotFound() : Ok(report);
     }
 
-    [HttpGet("student/{studentId:guid}/report-card/pdf")]
-    public async Task<IActionResult> DownloadReportCardPdf(Guid studentId, [FromQuery] Guid? academicYearId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
+    [HttpGet("student/{studentId}/report-card/pdf")]
+    public async Task<IActionResult> DownloadReportCardPdf(string studentId, [FromQuery] Guid? academicYearId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
     {
-        var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == studentId, cancellationToken);
+        var resolvedStudentId = await ResolveStudentIdAsync(studentId, cancellationToken);
+        if (!resolvedStudentId.HasValue) return NotFound();
+
+        var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == resolvedStudentId.Value, cancellationToken);
         if (student is null) return NotFound();
 
         var profile = new SchoolManagement.Infrastructure.Reporting.StudentPortalProfile(student.Id, student.StudentNumber, $"{student.FirstName} {student.LastName}".Trim(), student.Status, student.FirstName, student.LastName, student.OtherNames, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.CreatedAt, student.AdmissionId);
@@ -90,4 +96,15 @@ public sealed class ReportsController(SchoolManagementDbContext db, ReportGenera
 
     [HttpGet("financial/statement")]
     public async Task<IActionResult> GetFinancialStatement([FromQuery] string? period, CancellationToken cancellationToken) => Ok(await generator.GenerateFinancialStatementAsync(period, cancellationToken));
+
+    private async Task<Guid?> ResolveStudentIdAsync(string value, CancellationToken cancellationToken)
+    {
+        if (Guid.TryParse(value, out var id)) return id;
+        var normalized = value.Trim();
+        if (normalized.Length == 0) return null;
+        return await db.Students.AsNoTracking()
+            .Where(x => x.StudentNumber == normalized)
+            .Select(x => (Guid?)x.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
 }

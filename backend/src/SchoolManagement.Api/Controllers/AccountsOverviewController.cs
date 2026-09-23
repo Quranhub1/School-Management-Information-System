@@ -29,7 +29,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
             todayCollection = todayPayments,
             invoiceCount = await db.StudentInvoices.LongCountAsync(cancellationToken),
             paymentCount = await db.Payments.LongCountAsync(cancellationToken),
-            outstandingCount = await db.StudentInvoices.LongCountAsync(x => x.OutstandingAmount > 0, cancellationToken)
+            outstandingCount = await db.StudentInvoices.LongCountAsync(x => x.Amount - x.DiscountAmount - x.PaidAmount > 0, cancellationToken)
         });
     }
 
@@ -41,14 +41,14 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
             join student in db.Students.AsNoTracking() on invoice.StudentId equals student.Id
             join fee in db.FeeStructures.AsNoTracking() on invoice.FeeStructureId equals fee.Id into fees
             from fee in fees.DefaultIfEmpty()
-            where invoice.OutstandingAmount > 0
+            where invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount > 0
             select new
             {
                 studentId = student.Id,
                 studentNumber = student.StudentNumber,
                 studentName = student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName,
                 programmeName = fee == null ? invoice.FeeType : fee.Name,
-                balance = invoice.OutstandingAmount,
+                balance = invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount,
                 invoice.Currency,
                 invoice.Status
             })

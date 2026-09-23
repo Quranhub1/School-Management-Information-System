@@ -2,16 +2,31 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
+using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
-public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals, SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("invoices")]
-    public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId, CancellationToken cancellationToken) => !studentId.HasValue || studentId.Value == Guid.Empty ? BadRequest(new { message = "studentId is required." }) : Ok(await finance.GetStudentInvoicesAsync(studentId.Value, cancellationToken));
+    public async Task<IActionResult> GetInvoices([FromQuery] string? studentId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(studentId)) return BadRequest(new { message = "studentId is required." });
+
+        var value = studentId.Trim();
+        Guid resolvedStudentId;
+        if (!Guid.TryParse(value, out resolvedStudentId))
+        {
+            var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
+            if (student is null) return NotFound(new { message = "Student was not found." });
+            resolvedStudentId = student.Id;
+        }
+
+        return Ok(await finance.GetStudentInvoicesAsync(resolvedStudentId, cancellationToken));
+    }
     [HttpGet("students/{studentId:guid}/ledger")]
     public async Task<IActionResult> GetStudentLedger(Guid studentId, CancellationToken cancellationToken) => Ok(await finance.GetStudentLedgerAsync(studentId, cancellationToken));
     [HttpGet("reports/receivables-ageing")]
