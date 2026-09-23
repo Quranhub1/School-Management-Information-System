@@ -66,7 +66,21 @@ export function StudentPortal() {
           <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
             <button className="secondary-button" onClick={() => downloadPdf('/api/student-portal/me/transcript/pdf', `transcript-${profile?.studentNumber ?? 'student'}.pdf`)}>Download Transcript (PDF)</button>
           </div>
-          <h3 style={{ margin: '22px 0 10px' }}>Results by Semester</h3>
+          <div className="student-results-boards">
+            <article className="student-board-card">
+              <span className="eyebrow">NATIONAL ASSESSMENT</span>
+              <h3>UHPAB Results</h3>
+              <p>Official UHPAB assessment results will appear here after they are released and verified by the institution.</p>
+              <button className="secondary-button" type="button" disabled>UHPAB Results Portal — Coming Soon</button>
+            </article>
+            <article className="student-board-card">
+              <span className="eyebrow">TVET ASSESSMENT</span>
+              <h3>UVTAB Results</h3>
+              <p>Official UVTAB assessment results and certification information will appear here after release and verification.</p>
+              <button className="secondary-button" type="button" disabled>UVTAB Results Portal — Coming Soon</button>
+            </article>
+          </div>
+                    <h3 style={{ margin: '22px 0 10px' }}>Results by Semester</h3>
           {semesters.length === 0 ? <p className="empty">No results found.</p> : (
             <div className="table-wrap">
               <table>
