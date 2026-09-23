@@ -3,7 +3,7 @@ import { getInvoices, getPayments, getStudentFinanceProfile, recordPayment, type
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 
 type Props = { initialSearch?: string }
-const money = (n: number) => formatCurrency(n, SYSTEM_CURRENCY)
+const money = (n: number) => formatCurrency(n)
 const statusFor = (balance: number, billed: number, paid: number) => {
   if (balance < 0) return { label: '+ Credit Balance', color: '#3B82F6', bg: '#EFF6FF', progress: 100 }
   if (balance === 0 && billed > 0) return { label: '✓ Fully Paid', color: '#10B981', bg: '#ECFDF5', progress: 100 }
