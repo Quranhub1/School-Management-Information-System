@@ -40,6 +40,17 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.FirstName, student.OtherNames, student.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
     }
 
+    [HttpGet("administration/accounts")]
+    public async Task<IActionResult> GetFinanceAccounts(CancellationToken cancellationToken)
+    {
+        var accounts = await db.Accounts.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.AccountType).ThenBy(x => x.Code)
+            .Select(x => new { x.Id, x.Code, x.Name, x.AccountType })
+            .ToListAsync(cancellationToken);
+        return Ok(accounts);
+    }
+
     [HttpGet("administration/fee-structures")]
     public async Task<IActionResult> GetFeeStructures([FromQuery] Guid? academicYearId, CancellationToken cancellationToken)
     {
