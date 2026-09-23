@@ -370,3 +370,10 @@ td strong { display: block; }
 .info-banner{padding:14px;border-radius:10px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;line-height:1.45}
 @media(max-width:1000px){.feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.student-lifecycle-tabs{overflow-x:auto;flex-wrap:nowrap}.student-lifecycle-tabs button{white-space:nowrap}.feature-grid,.feature-grid.compact,.lifecycle-form-grid{grid-template-columns:1fr}.feature-card.full-width{grid-column:auto}}
+
+.student-results-boards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+.student-board-card{padding:18px;border:1px solid #dbe4ee;border-radius:14px;background:#f8fafc}
+.student-board-card h3{margin:5px 0 8px}
+.student-board-card p{min-height:44px;color:#64748b;line-height:1.45}
+.student-board-card button:disabled{opacity:.7;cursor:not-allowed}
+@media(max-width:640px){.student-results-boards{grid-template-columns:1fr}}
