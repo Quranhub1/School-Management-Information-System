@@ -16,6 +16,7 @@ using SchoolManagement.Domain.Identity;
 using SchoolManagement.Domain.Library;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Students;
+using SchoolManagement.Domain.Transport;
 using SchoolManagement.Domain.Workflows;
 using SchoolManagement.Domain.Hostel;
 using SchoolManagement.Infrastructure.Attendance;
@@ -127,6 +128,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<FinanceAuditEvent> FinanceAuditEvents => Set<FinanceAuditEvent>();
     public DbSet<OpeningBalance> OpeningBalances => Set<OpeningBalance>();
     public DbSet<AdjustmentCancellation> AdjustmentCancellations => Set<AdjustmentCancellation>();
+    public DbSet<TransportVehicle> TransportVehicles => Set<TransportVehicle>();
+    public DbSet<TransportRoute> TransportRoutes => Set<TransportRoute>();
+    public DbSet<TransportAssignment> TransportAssignments => Set<TransportAssignment>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -145,6 +149,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.ApplyConfiguration(new SchoolManagement.Infrastructure.Workflows.WorkflowConfiguration());
         m.ApplyConfiguration(new AssessmentPlanConfiguration());
         m.ApplyConfiguration(new StudentAssessmentConfiguration());
+        m.Entity<TransportVehicle>(e => { e.HasKey(x => x.Id); e.Property(x => x.RegistrationNumber).HasMaxLength(40).IsRequired(); e.Property(x => x.VehicleType).HasMaxLength(80).IsRequired(); e.HasIndex(x => x.RegistrationNumber).IsUnique(); });
+        m.Entity<TransportRoute>(e => { e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(160).IsRequired(); e.Property(x => x.PickupPoint).HasMaxLength(200); e.Property(x => x.Destination).HasMaxLength(200); e.Property(x => x.Fee).HasPrecision(18, 2); });
+        m.Entity<TransportAssignment>(e => { e.HasKey(x => x.Id); e.Property(x => x.Status).HasMaxLength(20).IsRequired(); e.HasIndex(x => x.RouteId); e.HasIndex(x => x.VehicleId); e.HasIndex(x => x.StudentId).HasFilter(\"\\\"Status\\\" = 'Active'\").IsUnique(); e.HasOne(x => x.Route).WithMany(x => x.Assignments).HasForeignKey(x => x.RouteId).OnDelete(DeleteBehavior.Restrict); e.HasOne(x => x.Vehicle).WithMany(x => x.Assignments).HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); });
         m.Entity<Hostel>(e => { e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(160).IsRequired(); e.Property(x => x.Description).HasMaxLength(500); e.HasIndex(x => x.Name).IsUnique(); });
         m.Entity<HostelRoom>(e => { e.HasKey(x => x.Id); e.Property(x => x.RoomNumber).HasMaxLength(50).IsRequired(); e.HasIndex(x => new { x.HostelId, x.RoomNumber }).IsUnique(); e.HasOne(x => x.Hostel).WithMany(x => x.Rooms).HasForeignKey(x => x.HostelId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<HostelBed>(e => { e.HasKey(x => x.Id); e.Property(x => x.BedNumber).HasMaxLength(50).IsRequired(); e.HasIndex(x => new { x.RoomId, x.BedNumber }).IsUnique(); e.HasOne(x => x.Room).WithMany(x => x.Beds).HasForeignKey(x => x.RoomId).OnDelete(DeleteBehavior.Cascade); });
