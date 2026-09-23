@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 [Authorize(Policy = AuthorizationPolicies.Student360)]
 public sealed class Student360Controller(Student360Service service) : ControllerBase
 {
-    [HttpGet("{studentId:guid}")]
+    [HttpGet("{studentId}")]
     public async Task<ActionResult<Student360ProfileDto>> Get(Guid studentId, CancellationToken ct)
     {
         var profile = await service.GetProfileAsync(studentId, ct);
