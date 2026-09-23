@@ -28,6 +28,113 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
         return Ok(await finance.GetStudentInvoicesAsync(resolvedStudentId, cancellationToken));
     }
+    [HttpGet("students/profile")]
+    public async Task<IActionResult> GetStudentProfile([FromQuery] string studentIdOrNumber, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(studentIdOrNumber)) return BadRequest(new { message = "Student ID or number is required." });
+        var value = studentIdOrNumber.Trim();
+        var student = Guid.TryParse(value, out var id)
+            ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
+            : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
+        if (student is null) return NotFound(new { message = "Student was not found." });
+        return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.FirstName, student.OtherNames, student.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
+    }
+
+    [HttpGet("administration/fee-structures")]
+    public async Task<IActionResult> GetFeeStructures([FromQuery] Guid? academicYearId, CancellationToken cancellationToken)
+    {
+        var query = db.FeeStructures.AsNoTracking().Include(x => x.Items).AsQueryable();
+        if (academicYearId.HasValue) query = query.Where(x => x.AcademicYearId == academicYearId.Value);
+        return Ok(await query.OrderByDescending(x => x.CreatedAt).ToListAsync(cancellationToken));
+    }
+
+    [HttpPost("administration/fee-structures")]
+    public async Task<IActionResult> CreateFeeStructure(CreateFeeStructureRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.Name)) return BadRequest(new { message = "Fee name is required." });
+            if (string.IsNullOrWhiteSpace(request.FeeType)) return BadRequest(new { message = "Fee type is required." });
+            if (request.Items is null || request.Items.Count == 0) return BadRequest(new { message = "At least one fee item is required." });
+            if (request.Items.Any(x => x.Amount <= 0)) return BadRequest(new { message = "Every fee item must have a positive amount." });
+            if (request.Items.GroupBy(x => x.Code.Trim(), StringComparer.OrdinalIgnoreCase).Any(g => g.Count() > 1)) return BadRequest(new { message = "Fee item codes must be unique." });
+
+            var structure = new SchoolManagement.Domain.Finance.FeeStructure
+            {
+                ProgrammeId = request.ProgrammeId ?? Guid.Empty,
+                AcademicYearId = request.AcademicYearId ?? Guid.Empty,
+                Name = request.Name.Trim(),
+                FeeType = request.FeeType.Trim(),
+                Currency = (request.Currency ?? "UGX").Trim().ToUpperInvariant()
+            };
+
+            foreach (var item in request.Items.OrderBy(x => x.SortOrder))
+            {
+                structure.Items.Add(new SchoolManagement.Domain.Finance.FeeStructureItem
+                {
+                    FeeStructureId = structure.Id,
+                    Code = item.Code.Trim(),
+                    Name = item.Name.Trim(),
+                    Amount = decimal.Round(item.Amount, 2, MidpointRounding.AwayFromZero),
+                    Currency = structure.Currency,
+                    IncomeAccountId = item.IncomeAccountId,
+                    SortOrder = item.SortOrder,
+                    IsOptional = item.IsOptional
+                });
+            }
+            structure.RecalculateTotal();
+            if (structure.TotalAmount <= 0) return BadRequest(new { message = "Fee structure total must be greater than zero." });
+
+            db.FeeStructures.Add(structure);
+            await db.SaveChangesAsync(cancellationToken);
+            return Created($"/api/finance/administration/fee-structures/{structure.Id}", structure);
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPost("administration/fee-structures/{feeStructureId:guid}/apply")]
+    public async Task<IActionResult> ApplyFeeStructure(Guid feeStructureId, ApplyFeeStructureRequest request, CancellationToken cancellationToken)
+    {
+        var fee = await db.FeeStructures.Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == feeStructureId && x.IsActive, cancellationToken);
+        if (fee is null) return NotFound(new { message = "Active fee structure was not found." });
+
+        var studentIds = request.StudentIds?.Where(x => x != Guid.Empty).Distinct().ToArray();
+        if (request.AllActiveStudents)
+            studentIds = await db.Students.AsNoTracking().Where(x => x.Status == "Active").Select(x => x.Id).ToArrayAsync(cancellationToken);
+        if (studentIds is null || studentIds.Length == 0) return BadRequest(new { message = "Select at least one student or apply to all active students." });
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        var applied = 0;
+        var skipped = 0;
+        try
+        {
+            foreach (var studentId in studentIds)
+            {
+                var alreadyApplied = await db.StudentInvoices.AnyAsync(x => x.StudentId == studentId && x.FeeStructureId == fee.Id, cancellationToken);
+                if (alreadyApplied) { skipped++; continue; }
+
+                var studentNumber = await db.Students.AsNoTracking().Where(x => x.Id == studentId).Select(x => x.StudentNumber).SingleOrDefaultAsync(cancellationToken);
+                if (studentNumber is null) { skipped++; continue; }
+
+                var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{studentNumber}-{Guid.NewGuid():N}"[..Math.Min(50, $"INV-{DateTime.UtcNow:yyyyMMdd}-{studentNumber}-{Guid.NewGuid():N}".Length)];
+                await finance.CreateInvoiceAsync(studentId, fee.Id, invoiceNumber, cancellationToken);
+                applied++;
+            }
+            await transaction.CommitAsync(cancellationToken);
+            return Ok(new { feeStructureId, applied, skipped, totalRequested = studentIds.Length });
+        }
+        catch (ArgumentException ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return BadRequest(new { message = ex.Message, applied, skipped });
+        }
+        catch (InvalidOperationException ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return Conflict(new { message = ex.Message, applied, skipped });
+        }
+    }
+
     [HttpGet("students/{studentId:guid}/ledger")]
     public async Task<IActionResult> GetStudentLedger(Guid studentId, CancellationToken cancellationToken) => Ok(await finance.GetStudentLedgerAsync(studentId, cancellationToken));
     [HttpGet("reports/receivables-ageing")]
@@ -98,6 +205,9 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> StudentReceivables(CancellationToken cancellationToken) => Ok(await reports.GetStudentReceivablesAsync(cancellationToken));
 
     public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
+    public sealed record FeeStructureItemRequest(string Code, string Name, decimal Amount, Guid? IncomeAccountId = null, int SortOrder = 0, bool IsOptional = false);
+    public sealed record CreateFeeStructureRequest(string Name, string FeeType, string? Currency, Guid? ProgrammeId, Guid? AcademicYearId, IReadOnlyCollection<FeeStructureItemRequest> Items);
+    public sealed record ApplyFeeStructureRequest(IReadOnlyCollection<Guid>? StudentIds = null, bool AllActiveStudents = false);
     public sealed record CreateStudentChargeRequest(string ChargeType, string Description, decimal Amount, string Currency = "UGX");
     public sealed record VoidStudentChargeRequest(string Reason);
     public sealed record CreateCreditNoteRequest(decimal Amount, string Reason);
