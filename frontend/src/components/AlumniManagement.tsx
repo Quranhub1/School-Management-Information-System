@@ -13,6 +13,7 @@ type AlumniExtension = {
   licenseExpiry: string;
   examBody: 'UNMEB' | 'UAHEB' | 'Other';
   examYear: string;
+  boardPassRate: string;
   examResult: 'Pass' | 'Fail' | 'Pending' | '';
   postgraduateProgramme: string;
   postgraduateInstitution: string;
@@ -28,6 +29,7 @@ const emptyExtension: AlumniExtension = {
   licenseExpiry: '',
   examBody: 'UNMEB',
   examYear: '',
+  boardPassRate: '',
   examResult: '',
   postgraduateProgramme: '',
   postgraduateInstitution: '',
@@ -166,14 +168,15 @@ export function AlumniManagement() {
 
       {activeTab === 'licensure' && <div className="alumni-detail-grid">
         <div className="alumni-info-banner"><strong>Professional Council Registration & License Tracker</strong><span>Track regulatory registration and national board outcomes without mixing them into academic results.</span></div>
-        <label>Licensing body<select value={extension.council} onChange={e => saveExtension({ ...extension, council: e.target.value })}><option>UHPAB</option><option>NCHE</option></select></label>
+        <label>Regulatory / licensing body<select value={extension.council} onChange={e => saveExtension({ ...extension, council: e.target.value })}><option>UHPAB</option><option>NCHE</option></select></label>
         <label>Registration number<input value={extension.registrationNumber} onChange={e => saveExtension({ ...extension, registrationNumber: e.target.value })} /></label>
         <label>Registration status<select value={extension.licenseStatus} onChange={e => saveExtension({ ...extension, licenseStatus: e.target.value as LicenseStatus })}><option>Not Registered</option><option>Pending</option><option>Registered</option><option>Expired</option></select></label>
         <label>License expiry<input type="date" value={extension.licenseExpiry} onChange={e => saveExtension({ ...extension, licenseExpiry: e.target.value })} /></label>
         <div className="alumni-section-divider"><h4>National Licensure Examination / Board Result</h4></div>
         <label>Exam body<select value={extension.examBody} onChange={e => saveExtension({ ...extension, examBody: e.target.value as AlumniExtension['examBody'] })}><option>UNMEB</option><option>UAHEB</option><option>Other</option></select></label>
         <label>Exam year<input value={extension.examYear} onChange={e => saveExtension({ ...extension, examYear: e.target.value })} placeholder="2026" /></label>
-        <label>Final board result<select value={extension.examResult} onChange={e => saveExtension({ ...extension, examResult: e.target.value as AlumniExtension['examResult'] })}><option value="">Select result</option><option>Pass</option><option>Fail</option><option>Pending</option></select></label>
+        <label>Final board pass rate<input value={extension.boardPassRate} onChange={e => saveExtension({ ...extension, boardPassRate: e.target.value })} placeholder="e.g. 78%" /></label>
+        <label>Individual final board result<select value={extension.examResult} onChange={e => saveExtension({ ...extension, examResult: e.target.value as AlumniExtension['examResult'] })}><option value="">Select result</option><option>Pass</option><option>Fail</option><option>Pending</option></select></label>
       </div>}
 
       {activeTab === 'services' && <div className="alumni-services-grid">
