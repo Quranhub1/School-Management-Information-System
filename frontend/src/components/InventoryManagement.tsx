@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { WelfareInventory } from './WelfareInventory'
 
-type InventoryTab = 'assets' | 'stock' | 'laboratories' | 'suppliers' | 'issuances' | 'reports'
+type InventoryTab = 'assets' | 'stock' | 'welfare' | 'laboratories' | 'suppliers' | 'issuances' | 'reports'
 
 const LABORATORIES = [
   { id: 'skills-lab', name: 'Skills Laboratory', description: 'Hands-on practical training lab for skills demonstrations and assessments', items: 'Mannequins, models, tools, equipment' },
@@ -25,6 +26,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean }) {
       <div className="library-workspace-tabs" role="tablist" aria-label="Inventory sections">
         <button role="tab" aria-selected={tab === 'assets'} className={tab === 'assets' ? 'active' : ''} onClick={() => setTab('assets')}>Assets</button>
         <button role="tab" aria-selected={tab === 'stock'} className={tab === 'stock' ? 'active' : ''} onClick={() => setTab('stock')}>Stock</button>
+        <button role="tab" aria-selected={tab === 'welfare'} className={tab === 'welfare' ? 'active' : ''} onClick={() => setTab('welfare')}>Welfare</button>
         <button role="tab" aria-selected={tab === 'laboratories'} className={tab === 'laboratories' ? 'active' : ''} onClick={() => setTab('laboratories')}>Laboratories</button>
         <button role="tab" aria-selected={tab === 'suppliers'} className={tab === 'suppliers' ? 'active' : ''} onClick={() => setTab('suppliers')}>Suppliers</button>
         <button role="tab" aria-selected={tab === 'issuances'} className={tab === 'issuances' ? 'active' : ''} onClick={() => setTab('issuances')}>Issuances</button>
@@ -44,6 +46,8 @@ export function InventoryManagement({ canManage }: { canManage?: boolean }) {
           <p className="empty">Track consumables, reagents, stationery, and general supplies. Stock levels, reorder points, and expiry tracking coming soon.</p>
         </div>
       )}
+
+      {tab === 'welfare' && <WelfareInventory canManage={canManage} />}
 
       {tab === 'laboratories' && (
         <div className="laboratories-section">
