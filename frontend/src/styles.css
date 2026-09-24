@@ -473,3 +473,76 @@ td strong { display: block; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+
+/* 2026 SMIS premium interaction layer */
+@layer components {
+  .app-shell { background: var(--smis-surface-muted); }
+  .sidebar { background: linear-gradient(180deg, #0f172a 0%, #172554 100%); box-shadow: 8px 0 30px rgba(15,23,42,.08); }
+  .sidebar-brand { padding: 18px 16px; border-bottom-color: rgba(255,255,255,.12); }
+  .sidebar-nav { padding: 14px 10px; }
+  .sidebar-section-heading { margin: 6px 10px 9px; color: #94a3b8; }
+  .sidebar-item { min-height: 42px; border-radius: 11px; padding: 10px 12px; color: #cbd5e1; transition: background-color .18s ease, color .18s ease, transform .18s ease; }
+  .sidebar-item:hover { background: rgba(255,255,255,.08); color: #fff; transform: translateX(2px); }
+  .sidebar-item.active { background: rgba(59,130,246,.22); color: #fff; box-shadow: inset 3px 0 0 #60a5fa; }
+  .sidebar-footer { background: rgba(2,6,23,.28); border-top-color: rgba(255,255,255,.12); padding: 15px 12px; }
+  .main-content { background: var(--smis-surface-muted); }
+  .topbar { position: sticky; top: 0; z-index: 30; margin-bottom: 0; padding: 13px 24px; background: rgba(30,64,175,.96); border-bottom: 1px solid rgba(255,255,255,.12); box-shadow: 0 8px 24px rgba(15,23,42,.10); backdrop-filter: blur(14px); }
+  .content { padding: 26px; }
+  .panel, .summary-card, .library-main-card, .library-side-card, .library-catalogue, .library-add-card, .finance-search-card, .finance-student-banner, .finance-progress-card, .fee-builder, .alumni-directory-card, .alumni-summary-card, .alumni-profile-card, .welfare-card, .student-lifecycle-panel { border-color: rgba(148,163,184,.28); border-radius: 18px; box-shadow: 0 8px 28px rgba(15,23,42,.055); }
+  .panel:hover, .summary-card:hover { box-shadow: 0 12px 34px rgba(15,23,42,.075); }
+  .panel-heading { padding: 18px 20px; border-bottom-color: #eef2f7; }
+  th { background: #f8fafc; color: #64748b; font-weight: 700; }
+  tbody tr { transition: background-color .15s ease; }
+  tbody tr:hover { background: #f8fbff; }
+  input, select, textarea { transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease; }
+  input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); outline: none; }
+  .primary-button, .library-primary, .form-row button, .auth-form button { background: linear-gradient(135deg,#2563eb,#3b82f6); box-shadow: 0 7px 18px rgba(37,99,235,.18); transition: transform .16s ease, box-shadow .16s ease, filter .16s ease; }
+  .primary-button:hover, .library-primary:hover, .form-row button:hover, .auth-form button:hover { background: linear-gradient(135deg,#1d4ed8,#2563eb); transform: translateY(-1px); box-shadow: 0 10px 22px rgba(37,99,235,.22); }
+  .secondary-button { border-radius: 10px; transition: transform .16s ease, background-color .16s ease, border-color .16s ease; }
+  .secondary-button:hover { transform: translateY(-1px); }
+  .hero { position: relative; overflow: hidden; background: linear-gradient(135deg,#1e3a8a 0%,#2563eb 58%,#4f46e5 100%); }
+  .hero::after { content: ''; position:absolute; width:260px; height:260px; right:-90px; top:-120px; border-radius:999px; background:rgba(255,255,255,.10); filter:blur(2px); }
+  .global-search input[type=search], .search-input-row input[type=search] { min-height: 40px; border-radius: 11px; border-color: rgba(255,255,255,.28); box-shadow: 0 2px 8px rgba(15,23,42,.08); }
+  .search-dropdown { border-radius: 14px; box-shadow: 0 18px 45px rgba(15,23,42,.15); }
+  .role-navigation { gap: 8px; }
+  .module-chip { background: #eff6ff !important; color: #1d4ed8 !important; border: 1px solid #dbeafe; }
+  .auth-shell { background: radial-gradient(circle at 15% 10%,#dbeafe 0,#f8fafc 38%,#eef2ff 100%); }
+  .auth-card { border-color: rgba(148,163,184,.32); border-radius: 24px; box-shadow: 0 24px 70px rgba(15,23,42,.12); }
+  .auth-form input { min-height: 44px; border-radius: 12px; }
+  .status { border: 1px solid #bfdbfe; }
+  .smis-card { border-radius: 18px; }
+}
+
+@media (max-width: 900px) {
+  .topbar { padding: 12px 16px; }
+  .content { padding: 20px; }
+}
+@media (max-width: 640px) {
+  .app-shell { flex-direction: column; }
+  .sidebar { width: 100%; max-height: none; min-height: auto; }
+  .sidebar-nav { max-height: 34vh; overflow-x: hidden; overflow-y: auto; }
+  .sidebar-footer { display: none; }
+  .topbar { position: relative; flex-wrap: wrap; gap: 10px; }
+  .topbar-brand { min-width: calc(100% - 100px); }
+  .topbar-brand h1 { font-size: 1rem; }
+  .global-search { order: 3; width: 100%; }
+  .topbar .secondary-button { min-height: 40px; }
+  .content { padding: 16px 12px 28px; }
+  .summary-grid { grid-template-columns: 1fr; }
+  .panel-heading { padding: 16px; }
+  th, td { padding: 11px 13px; }
+}
+@media (max-width: 375px) {
+  .content { padding-inline: 10px; }
+  .sidebar-brand { padding: 14px 12px; }
+  .hero { padding: 20px 17px; border-radius: 18px; }
+  .auth-shell { padding: 14px; }
+  .auth-card { padding: 22px 17px; border-radius: 20px; }
+  .library-summary { grid-template-columns: 1fr; }
+  .summary-card { padding: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-item:hover, .primary-button:hover, .library-primary:hover, .form-row button:hover, .auth-form button:hover, .secondary-button:hover { transform: none; }
+}
