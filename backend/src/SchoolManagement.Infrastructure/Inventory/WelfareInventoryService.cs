@@ -59,7 +59,7 @@ public sealed class WelfareInventoryService(SchoolManagementDbContext db)
         var signed = type.Equals("Adjustment", StringComparison.OrdinalIgnoreCase) ? quantity : (type.Equals("Receipt", StringComparison.OrdinalIgnoreCase) ? quantity : -quantity);
         var balance = await GetBalanceBeforeAsync(commodityId, null, ct);
         if (balance + signed < 0) throw new InvalidOperationException($"Insufficient {commodity.Name} stock. Available balance is {balance:0.###} {commodity.Unit}.");
-        var item = new WelfareStockTransaction { CommodityId = commodityId, TransactionDate = date, TransactionType = char.ToUpper(type[0]) + type[1..].ToLowerInvariant(), Quantity = Math.Abs(quantity), Supplier = supplier?.Trim(), Reference = reference?.Trim(), BatchNumber = batchNumber?.Trim(), ExpiryDate = expiryDate, Notes = notes?.Trim(), RecordedBy = recordedBy };
+        var item = new WelfareStockTransaction { CommodityId = commodityId, TransactionDate = date, TransactionType = char.ToUpper(type[0]) + type[1..].ToLowerInvariant(), Quantity = type.Equals("Adjustment", StringComparison.OrdinalIgnoreCase) ? quantity : Math.Abs(quantity), Supplier = supplier?.Trim(), Reference = reference?.Trim(), BatchNumber = batchNumber?.Trim(), ExpiryDate = expiryDate, Notes = notes?.Trim(), RecordedBy = recordedBy };
         db.WelfareStockTransactions.Add(item); await db.SaveChangesAsync(ct);
         return new TransactionDto(item.Id, commodity.Name, item.TransactionDate, item.TransactionType, item.Quantity, item.Supplier, item.Reference, item.BatchNumber, item.ExpiryDate, item.Notes, item.RecordedBy);
     }
