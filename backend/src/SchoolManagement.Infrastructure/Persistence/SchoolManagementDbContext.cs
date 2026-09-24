@@ -13,6 +13,7 @@ using SchoolManagement.Domain.Documents;
 using SchoolManagement.Domain.Examinations;
 using SchoolManagement.Domain.Finance;
 using SchoolManagement.Domain.Identity;
+using SchoolManagement.Domain.Inventory;
 using SchoolManagement.Domain.Library;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Students;
@@ -131,6 +132,8 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<TransportVehicle> TransportVehicles => Set<TransportVehicle>();
     public DbSet<TransportRoute> TransportRoutes => Set<TransportRoute>();
     public DbSet<TransportAssignment> TransportAssignments => Set<TransportAssignment>();
+    public DbSet<WelfareCommodity> WelfareCommodities => Set<WelfareCommodity>();
+    public DbSet<WelfareStockTransaction> WelfareStockTransactions => Set<WelfareStockTransaction>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
@@ -149,6 +152,8 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.ApplyConfiguration(new SchoolManagement.Infrastructure.Workflows.WorkflowConfiguration());
         m.ApplyConfiguration(new AssessmentPlanConfiguration());
         m.ApplyConfiguration(new StudentAssessmentConfiguration());
+        m.Entity<WelfareCommodity>(e => { e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(200).IsRequired(); e.Property(x => x.Category).HasMaxLength(100).IsRequired(); e.Property(x => x.Unit).HasMaxLength(30).IsRequired(); e.Property(x => x.ReorderLevel).HasPrecision(18, 3); e.HasIndex(x => x.Name).IsUnique(); });
+        m.Entity<WelfareStockTransaction>(e => { e.HasKey(x => x.Id); e.Property(x => x.TransactionType).HasMaxLength(30).IsRequired(); e.Property(x => x.Quantity).HasPrecision(18, 3); e.Property(x => x.Supplier).HasMaxLength(200); e.Property(x => x.Reference).HasMaxLength(100); e.Property(x => x.BatchNumber).HasMaxLength(100); e.Property(x => x.Notes).HasMaxLength(1000); e.Property(x => x.RecordedBy).HasMaxLength(200).IsRequired(); e.HasIndex(x => new { x.CommodityId, x.TransactionDate }); e.HasOne<WelfareCommodity>().WithMany().HasForeignKey(x => x.CommodityId).OnDelete(DeleteBehavior.Restrict); });
         m.Entity<TransportVehicle>(e => { e.HasKey(x => x.Id); e.Property(x => x.RegistrationNumber).HasMaxLength(40).IsRequired(); e.Property(x => x.VehicleType).HasMaxLength(80).IsRequired(); e.HasIndex(x => x.RegistrationNumber).IsUnique(); });
         m.Entity<TransportRoute>(e => { e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(160).IsRequired(); e.Property(x => x.PickupPoint).HasMaxLength(200); e.Property(x => x.Destination).HasMaxLength(200); e.Property(x => x.Fee).HasPrecision(18, 2); });
         m.Entity<TransportAssignment>(e => { e.HasKey(x => x.Id); e.Property(x => x.Status).HasMaxLength(20).IsRequired(); e.HasIndex(x => x.RouteId); e.HasIndex(x => x.VehicleId); e.HasIndex(x => x.StudentId).HasFilter("\"Status\" = 'Active'").IsUnique(); e.HasOne(x => x.Route).WithMany(x => x.Assignments).HasForeignKey(x => x.RouteId).OnDelete(DeleteBehavior.Restrict); e.HasOne(x => x.Vehicle).WithMany(x => x.Assignments).HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); });
