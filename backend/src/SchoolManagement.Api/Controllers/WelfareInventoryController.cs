@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Authorization;
-using SchoolManagement.Application.Inventory;
+using SchoolManagement.Infrastructure.Inventory;
 
 namespace SchoolManagement.Api.Controllers;
 
