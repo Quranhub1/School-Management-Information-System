@@ -146,7 +146,7 @@ test.describe('SMIS full-system smoke tests', () => {
     await signIn(page);
 
     await expect(page.getByRole('complementary').getByRole('heading').first()).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
+    await expect(page.getByRole('complementary').getByRole('button', { name: 'Sign out' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Administration', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Students', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Finance & Accounting', exact: true })).toBeVisible();
