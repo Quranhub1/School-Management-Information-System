@@ -58,7 +58,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
     }
 
     [HttpGet("payments")]
-    public async Task<IActionResult> GetPayments([FromQuery] string? receiptNumber, [FromQuery] string? paymentMethod, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPayments([FromQuery] Guid? studentId, [FromQuery] string? receiptNumber, [FromQuery] string? paymentMethod, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
     {
         var query =
             from payment in db.Payments.AsNoTracking()
@@ -67,6 +67,8 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
             from invoice in invoices.DefaultIfEmpty()
             select new { payment, student, invoice };
 
+        if (studentId.HasValue)
+            query = query.Where(x => x.payment.StudentId == studentId.Value);
         if (!string.IsNullOrWhiteSpace(receiptNumber))
             query = query.Where(x => x.payment.ReceiptNumber.Contains(receiptNumber.Trim()));
         if (!string.IsNullOrWhiteSpace(paymentMethod))
@@ -94,13 +96,14 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
     }
 
     [HttpGet("payroll")]
-    public async Task<IActionResult> GetPayroll([FromQuery] int? month, [FromQuery] int? year, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPayroll([FromQuery] Guid? staffMemberId, [FromQuery] int? month, [FromQuery] int? year, CancellationToken cancellationToken)
     {
         var query =
             from payroll in db.PayrollRecords.AsNoTracking()
             join staff in db.StaffMembers.AsNoTracking() on payroll.StaffMemberId equals staff.Id
             select new { payroll, staff };
 
+        if (staffMemberId.HasValue) query = query.Where(x => x.payroll.StaffMemberId == staffMemberId.Value);
         if (month.HasValue) query = query.Where(x => x.payroll.Month == month.Value);
         if (year.HasValue) query = query.Where(x => x.payroll.Year == year.Value);
 
