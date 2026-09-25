@@ -32,10 +32,10 @@ export function AccountsOverviewWorkspace() {
   async function load() {
     setLoading(true); setError('')
     try {
-      if (tab === 'dashboard') setDashboard(await request<Dashboard>('/api/accounts-overview/dashboard'))
-      if (tab === 'outstanding') setOutstanding(await request<Outstanding[]>('/api/accounts-overview/outstanding'))
-      if (tab === 'payments') setPayments(await request<Payment[]>('/api/accounts-overview/payments'))
-      if (tab === 'payroll') setPayroll(await request<Payroll[]>('/api/accounts-overview/payroll'))
+      if (tab === 'dashboard') setDashboard(await request<Dashboard>('/api/finance/administration/accounts-overview/dashboard'))
+      if (tab === 'outstanding') setOutstanding(await request<Outstanding[]>('/api/finance/administration/accounts-overview/outstanding'))
+      if (tab === 'payments') setPayments(await request<Payment[]>('/api/finance/administration/accounts-overview/payments'))
+      if (tab === 'payroll') setPayroll(await request<Payroll[]>('/api/finance/administration/accounts-overview/payroll'))
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load accounts overview.') }
     finally { setLoading(false) }
   }
