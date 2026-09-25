@@ -1515,3 +1515,27 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   letter-spacing:.09em;
   text-transform:uppercase;
 }
+
+/* Global search bar controls */
+.search-input-row { width: 100%; }
+.search-input-row input[type="search"] { min-width: 0; }
+.search-submit-button,
+.search-filter-toggle {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid #d6d3d1;
+  border-radius: 8px;
+  background: white;
+  color: #1c1917;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.search-submit-button:hover,
+.search-filter-toggle:hover { background: #f5f5f4; }
+.search-submit-button:disabled { opacity: .5; cursor: not-allowed; }
+[data-theme="dark"] .search-submit-button,
+[data-theme="dark"] .search-filter-toggle { background: #1e293b; border-color: #334155; color: #e7e5e4; }
+[data-theme="dark"] .search-submit-button:hover,
+[data-theme="dark"] .search-filter-toggle:hover { background: #273449; }
