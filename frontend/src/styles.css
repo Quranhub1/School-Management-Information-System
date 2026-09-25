@@ -1302,3 +1302,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .finance-accounting-layout .finance-surface-heading + section { padding-bottom:1px; }
 @media (max-width:1100px) { .finance-kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .finance-overview-grid { grid-template-columns:1fr; } }
 @media (max-width:700px) { .finance-kpi-grid { grid-template-columns:1fr; } .finance-mini-stats { grid-template-columns:1fr; } .finance-surface { padding:14px; } .finance-bar-chart { gap:5px; } .finance-bar-item { grid-template-rows:auto 105px auto; } .finance-bar-track { height:105px; } }
+
+
+.accounting-report-grid { display:grid; gap:14px; }
+.accounting-report-grid .summary-grid { margin:0; }
+.accounting-reports-workspace .filter-toolbar label { display:grid; gap:5px; color:var(--smis-text-muted); font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+.accounting-reports-workspace .filter-toolbar input { min-height:36px; }
+@media (max-width:700px) { .accounting-reports-workspace .filter-toolbar { align-items:flex-start; } .accounting-reports-workspace .filter-toolbar label { width:100%; } }
