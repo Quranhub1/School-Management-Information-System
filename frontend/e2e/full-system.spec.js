@@ -147,16 +147,16 @@ test.describe('SMIS full-system smoke tests', () => {
 
     await expect(page.getByRole('complementary').getByRole('heading').first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole('complementary').getByRole('button', { name: 'Sign out' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Administration', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Students', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Finance & Accounting', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'ADMINISTRATION', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'STUDENTS', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'FINANCE & ACCOUNTING', exact: true })).toBeVisible();
   });
 
   test('administrator can open the attendance workspace', async ({ page }) => {
     await page.goto(FRONTEND_URL, { waitUntil: 'networkidle' });
     await signIn(page);
 
-    const attendanceNav = page.getByRole('button', { name: 'Attendance', exact: true });
+    const attendanceNav = page.getByRole('button', { name: 'ATTENDANCE', exact: true });
     await expect(attendanceNav).toBeVisible({ timeout: 15000 });
     await attendanceNav.click();
 
