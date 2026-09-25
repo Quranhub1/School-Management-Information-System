@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
+import { AlumniManagement } from './AlumniManagement'
 
-type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results'
+type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'alumni'
 
 const sections: { key: Section; label: string }[] = [
   { key: 'biodata', label: 'Bio-Data & Profiling' },
@@ -11,6 +12,7 @@ const sections: { key: Section; label: string }[] = [
   { key: 'status', label: 'Enrollment & Status' },
   { key: 'cards', label: 'ID Card Generator' },
   { key: 'national-results', label: 'National Results' },
+  { key: 'alumni', label: 'Alumni & Graduates' },
 ]
 
 const statuses = ['Active', 'On Clinical Attachment', 'Retake/Repeat Year', 'Discontinued', 'Deferred', 'Graduated']
@@ -94,6 +96,13 @@ export function AdmissionsStudentManagement({ canManage = false }: { canManage?:
             <article className="feature-card"><strong>Campus ID Cards</strong><span>Prepare campus identity cards with student details.</span><button className="secondary-button" type="button">Open Card Queue</button></article>
             <article className="feature-card"><strong>Barcode / QR</strong><span>Identity cards are designed for barcode and QR-code identification.</span></article>
             <article className="feature-card"><strong>Batch Printing</strong><span>Organize selected students into printable card batches.</span></article>
+          </div>
+        )}
+
+        {section === 'alumni' && (
+          <div>
+            <p className="section-copy">Maintain graduate and alumni records as part of the student lifecycle. Alumni are no longer a separate top-level application module.</p>
+            <AlumniManagement />
           </div>
         )}
 
