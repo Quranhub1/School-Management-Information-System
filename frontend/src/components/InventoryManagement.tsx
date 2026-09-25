@@ -22,8 +22,8 @@ const load=<T,>(x:string,d:T):T=>{try{return JSON.parse(localStorage.getItem(k(x
 const id=()=>crypto.randomUUID?.()||String(Date.now()+Math.random())
 const date=()=>new Date().toISOString().slice(0,10)
 
-export function InventoryManagement({canManage}:{canManage?:boolean}){
- const [tab,setTab]=useState<Tab>('assets')
+export function InventoryManagement({canManage,initialTab='assets'}:{canManage?:boolean;initialTab?:Tab}){
+ const [tab,setTab]=useState<Tab>(initialTab)
  const [assets,setAssets]=useState<Asset[]>(()=>load('assets',[])),[stock,setStock]=useState<Stock[]>(()=>load('stock',[]))
  const [suppliers,setSuppliers]=useState<Supplier[]>(()=>load('suppliers',[])),[issues,setIssues]=useState<Issue[]>(()=>load('issues',[]))
  const [equipment,setEquipment]=useState<Equipment[]>(()=>load('equipment',[])),[usage,setUsage]=useState<Usage[]>(()=>load('usage',[]))
@@ -31,7 +31,7 @@ export function InventoryManagement({canManage}:{canManage?:boolean}){
  useEffect(()=>localStorage.setItem(k('suppliers'),JSON.stringify(suppliers)),[suppliers]);useEffect(()=>localStorage.setItem(k('issues'),JSON.stringify(issues)),[issues])
  useEffect(()=>localStorage.setItem(k('equipment'),JSON.stringify(equipment)),[equipment]);useEffect(()=>localStorage.setItem(k('usage'),JSON.stringify(usage)),[usage])
  const tabs:[Tab,string][]=[['assets','Assets'],['stock','Stock'],['welfare','Welfare'],['laboratories','Laboratories'],['suppliers','Suppliers'],['issuances','Issuances'],['reports','Reports']]
- return <section className="panel" aria-label="Inventory management"><div className="panel-heading"><div><span className="eyebrow">INVENTORY</span><h3>Inventory Management</h3><p className="empty">Operational registers for assets, stock, welfare, laboratories, suppliers, issuances and reports.</p></div></div>
+ return <section className="panel" aria-label="Laboratories and welfare management"><div className="panel-heading"><div><span className="eyebrow">LABORATORIES & WELFARE</span><h3>Laboratories & Welfare</h3><p className="empty">Manage laboratory equipment, practical facilities, welfare commodities, daily receipts, usage and balances from one operational workspace.</p></div></div>
  <div className="library-workspace-tabs" role="tablist">{tabs.map(([x,l])=><button key={x} role="tab" aria-selected={tab===x} className={tab===x?'active':''} onClick={()=>setTab(x)}>{l}</button>)}</div>
  {tab==='assets'&&<Assets data={assets} setData={setAssets} canManage={canManage}/>}
  {tab==='stock'&&<Stocks data={stock} setData={setStock} canManage={canManage}/>}
