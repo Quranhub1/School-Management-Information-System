@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { getStudentAcademicSummaries, getStudentTranscript } from '../api/academicRecords'
+import { ExaminationResults } from './ExaminationResults'
 import { createProgramme, getProgrammes, setProgrammeActive, type Programme } from '../api/programmes'
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
 
@@ -8,7 +9,7 @@ interface AcademicManagementProps {
   canManage?: boolean
 }
 
-type AcademicView = 'records' | 'programmes'
+type AcademicView = 'records' | 'programmes' | 'examinations'
 
 export function AcademicManagement({ canManage }: AcademicManagementProps) {
   const [view, setView] = useState<AcademicView>('records')
@@ -110,11 +111,14 @@ export function AcademicManagement({ canManage }: AcademicManagementProps) {
       <div className="form-row" role="tablist" aria-label="Academic management views">
         <button type="button" aria-selected={view === 'records'} onClick={() => setView('records')}>Academic Records</button>
         <button type="button" aria-selected={view === 'programmes'} onClick={() => setView('programmes')}>Programmes</button>
+        <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
 
-      {view === 'records' ? (
+      {view === 'examinations' ? (
+        <div className="academic-examinations-workspace"><div className="panel-heading"><div><p className="eyebrow">ACADEMIC MANAGEMENT</p><h3>Examinations & Results</h3><p>Examination setup, marks, results processing and academic record approval are managed from the academic workspace.</p></div></div><ExaminationResults /></div>
+      ) : view === 'records' ? (
         <>
           <form className="student-form" onSubmit={loadRecords}>
             <label htmlFor="academic-student-id">Student ID</label>
