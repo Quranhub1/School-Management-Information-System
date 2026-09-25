@@ -1309,3 +1309,90 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .accounting-reports-workspace .filter-toolbar label { display:grid; gap:5px; color:var(--smis-text-muted); font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
 .accounting-reports-workspace .filter-toolbar input { min-height:36px; }
 @media (max-width:700px) { .accounting-reports-workspace .filter-toolbar { align-items:flex-start; } .accounting-reports-workspace .filter-toolbar label { width:100%; } }
+
+
+/* Refined sidebar navigation */
+.sidebar {
+  width: 276px;
+  background: var(--brand-primary, #1e293b);
+}
+
+.sidebar-nav {
+  padding: 16px 12px;
+  scrollbar-width: thin;
+}
+
+.sidebar-nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-section-heading {
+  margin: 4px 10px 10px;
+  color: rgba(255,255,255,.56);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 42px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: rgba(255,255,255,.78);
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .005em;
+  line-height: 1.25;
+  white-space: nowrap;
+  transition: background-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.sidebar-item svg {
+  flex: 0 0 auto;
+  opacity: .82;
+}
+
+.sidebar-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-item:hover {
+  background: rgba(255,255,255,.085);
+  color: #fff;
+}
+
+.sidebar-item:hover svg {
+  opacity: 1;
+}
+
+.sidebar-item.active {
+  background: rgba(255,255,255,.14);
+  color: #fff;
+  box-shadow: none;
+}
+
+.sidebar-item.active svg {
+  opacity: 1;
+}
+
+.sidebar-footer {
+  padding: 14px 12px;
+}
+
+@media (max-width: 920px) {
+  .sidebar { width: 232px; }
+  .sidebar-item { font-size: .8rem; }
+}
+
+@media (max-width: 640px) {
+  .sidebar { width: 100%; }
+  .sidebar-item { font-size: .84rem; }
+}
