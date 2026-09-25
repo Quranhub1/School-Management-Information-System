@@ -1211,3 +1211,36 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .inventory-form-grid { grid-template-columns:1fr; }
   .inventory-full { grid-column:auto; }
 }
+
+
+/* Institutional leadership and office directory */
+.office-directory { display: grid; gap: 24px; }
+.office-directory-intro { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:22px; border:1px solid var(--smis-border); border-radius:18px; background:var(--smis-surface); box-shadow:var(--smis-shadow-sm); }
+.office-directory-intro h3 { margin:4px 0 6px; font-size:1.35rem; color:var(--smis-text); }
+.office-directory-intro p { margin:0; max-width:820px; color:var(--smis-text-muted); line-height:1.55; }
+.office-count, .office-group-heading span { display:inline-flex; align-items:center; justify-content:center; min-width:34px; padding:5px 10px; border-radius:999px; background:var(--brand-primary-soft); color:var(--brand-primary); font-weight:800; font-size:.75rem; }
+.office-groups { display:grid; gap:22px; }
+.office-group { display:grid; gap:10px; }
+.office-group-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 4px; }
+.office-group-heading h4 { margin:0; color:var(--smis-text); font-size:.82rem; text-transform:uppercase; letter-spacing:.09em; }
+.office-card-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.office-card { display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; align-items:start; gap:4px 12px; text-align:left; width:100%; padding:17px; border:1px solid var(--smis-border); border-radius:16px; background:var(--smis-surface); color:var(--smis-text); cursor:pointer; box-shadow:var(--smis-shadow-sm); transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.office-card:hover { transform:translateY(-2px); border-color:var(--brand-primary); box-shadow:var(--smis-shadow-md); }
+.office-card:focus-visible { outline:3px solid color-mix(in srgb,var(--brand-primary) 25%,transparent); outline-offset:2px; }
+.office-card-icon { grid-row:1 / span 2; width:42px; height:42px; display:grid; place-items:center; border-radius:12px; background:var(--brand-primary-soft); color:var(--brand-primary); }
+.office-card-copy { display:grid; gap:4px; min-width:0; }
+.office-card-copy strong { font-size:.93rem; }
+.office-card-copy small { color:var(--smis-text-muted); line-height:1.45; }
+.office-card-link { grid-column:2; color:var(--brand-primary); font-size:.72rem; font-weight:800; margin-top:4px; }
+.office-detail { display:grid; gap:18px; }
+.office-back { width:max-content; display:inline-flex; align-items:center; gap:7px; }
+.office-detail-header { display:flex; align-items:center; gap:16px; padding:22px; border:1px solid var(--smis-border); border-radius:18px; background:var(--smis-surface); }
+.office-detail-icon { width:58px; height:58px; flex:0 0 58px; display:grid; place-items:center; border-radius:16px; background:var(--brand-primary-soft); color:var(--brand-primary); }
+.office-detail-header h3 { margin:3px 0 5px; font-size:1.5rem; color:var(--smis-text); }
+.office-detail-header p { margin:0; color:var(--smis-text-muted); line-height:1.55; }
+.office-detail-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr); gap:18px; }
+.office-detail-panel { margin:0; }
+.office-responsibilities { margin:0; padding-left:20px; display:grid; gap:10px; color:var(--smis-text-muted); line-height:1.5; }
+.office-responsibilities li::marker { color:var(--brand-primary); }
+@media (max-width:1100px) { .office-card-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:760px) { .office-directory-intro,.office-detail-header { align-items:flex-start; flex-direction:column; } .office-card-grid,.office-detail-grid { grid-template-columns:1fr; } }
