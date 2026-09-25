@@ -190,8 +190,7 @@ export async function getAccountsOverviewPayroll(month?: number, year?: number) 
 export interface FinanceDashboard { revenue: number; payments: number; outstanding: number; totalOutstanding: number; currency: string; totalBilled: number; totalPaid: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number }
 export async function getDashboard() { return request<FinanceDashboard>('/api/accounts-overview/dashboard') }
 export async function getPayments(studentId?: string) {
-  if (studentId) return request<any[]>(`/api/accounts-overview/payments`)
-  return request<any[]>('/api/accounts-overview/payments')
+  return request<any[]>(`/api/accounts-overview/payments${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`)
 }
 
 export interface MobileMoneyTransaction { id: string; studentId: string; studentInvoiceId?: string; amount: number; currency: string; provider: string; status: string; reference: string; transactionRef?: string; phoneNumber?: string; requestedAt: string; createdAt: string }
