@@ -172,7 +172,7 @@ test.describe('SMIS full-system smoke tests', () => {
     await page.goto(FRONTEND_URL, { waitUntil: 'networkidle' });
     await signIn(page);
 
-    await expect(page.getByRole('complementary').getByRole('heading', { name: 'Workspace', exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('complementary').getByRole('heading', { name: 'School Management', exact: true })).toBeVisible({ timeout: 15000 });
 
     const apiResponse = await page.evaluate(async (baseUrl) => {
       const token = sessionStorage.getItem('smis.accessToken');
