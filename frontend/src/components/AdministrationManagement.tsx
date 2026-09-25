@@ -191,11 +191,11 @@ export function AdministrationManagement() {
     )}
 
     {tab === 'offices' && (
-      selectedOffice ? (
+      selectedOffice ? (() => { const OfficeIcon = selectedOffice.icon; return (
         <div className="office-detail">
           <button type="button" className="secondary-button office-back" onClick={() => setSelectedOffice(null)}><ArrowLeft size={16} /> Back to offices</button>
           <div className="office-detail-header">
-            <div className="office-detail-icon"><selectedOffice.icon size={28} /></div>
+            <div className="office-detail-icon"><OfficeIcon size={28} /></div>
             <div><span className="eyebrow">{selectedOffice.group}</span><h3>{selectedOffice.title}</h3><p>{selectedOffice.description}</p></div>
           </div>
           <div className="office-detail-grid">
@@ -203,7 +203,7 @@ export function AdministrationManagement() {
             <section className="panel office-detail-panel"><div className="panel-heading"><div><h3>System workspace</h3><p>Most operational offices are connected directly to the screen they use.</p></div></div>{selectedOffice.workspace ? <button type="button" onClick={() => openWorkspace(selectedOffice.workspace)}>{selectedOffice.workspaceLabel}</button> : <p className="empty">No direct workspace has been assigned yet.</p>}</section>
           </div>
         </div>
-      ) : (
+      ) })() : (
         <div className="office-directory">
           <div className="office-directory-intro"><div><span className="eyebrow">INSTITUTIONAL LEADERSHIP</span><h3>Leadership & Offices</h3><p>Day-to-day school operations, governance and specialist offices. Operational support workers such as cooks, askaris and watchmen remain staff records rather than application-login roles.</p></div><span className="office-count">{OFFICES.length} offices</span></div>
           <div className="office-groups">{Array.from(new Set(OFFICES.map(o => o.group))).map(group => <section key={group} className="office-group"><div className="office-group-heading"><h4>{group}</h4><span>{OFFICES.filter(o => o.group === group).length}</span></div><div className="office-card-grid">{OFFICES.filter(o => o.group === group).map(office => { const Icon = office.icon; return <button type="button" className="office-card" key={office.key} onClick={() => setSelectedOffice(office)}><span className="office-card-icon"><Icon size={21} /></span><span className="office-card-copy"><strong>{office.title}</strong><small>{office.description}</small></span><span className="office-card-link">{office.workspace ? 'Workspace →' : 'View office →'}</span></button> })}</div></section>)}</div>
