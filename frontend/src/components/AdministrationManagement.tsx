@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ArrowLeft, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ClipboardCheck, GraduationCap, HeartPulse, Home, Landmark, Library, LockKeyhole, Megaphone, ShieldCheck, UserRound, UsersRound, WalletCards } from 'lucide-react'
 import { createUser, getUsers, setUserActive, type CreateUserRequest, type UserSummary } from '../api/administration'
 import { type InstitutionSettings } from '../api/institutionSettings'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
@@ -6,7 +7,29 @@ import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 const roles = ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'FinanceOfficer', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'TransportOfficer', 'Principal', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'AssistantPrincipal']
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['Registrar'] }
 
-type AdminTab = 'users' | 'settings'
+type AdminTab = 'users' | 'offices' | 'settings'
+
+type Office = { key: string; title: string; group: string; description: string; responsibilities: string[]; workspace?: string; workspaceLabel?: string; icon: typeof Building2 }
+
+const OFFICES: Office[] = [
+  { key: 'principal', title: 'Principal', group: 'Executive Leadership', description: 'Institution-wide executive oversight, approvals, performance and strategic direction.', responsibilities: ['Institution dashboard and performance metrics', 'Approve institutional decisions, reports and major workflows', 'Review academic, student, finance and operational summaries'], workspace: 'analytics', workspaceLabel: 'Open Institution Analytics', icon: Landmark },
+  { key: 'deputy-principal', title: 'Deputy Principal', group: 'Executive Leadership', description: 'Supports the Principal with day-to-day academic and operational coordination.', responsibilities: ['Monitor departmental performance', 'Coordinate delegated institutional actions', 'Review timetable, attendance and operational issues'], workspace: 'analytics', workspaceLabel: 'Open Dashboard', icon: BriefcaseBusiness },
+  { key: 'registrar', title: 'Registrar', group: 'Academic & Registry', description: 'Owns student records, admissions, registration, clearance and core registry processes.', responsibilities: ['Admissions and enrolment', 'Student records and registration', 'Clearance and official registry actions'], workspace: 'students', workspaceLabel: 'Open Student Management', icon: UsersRound },
+  { key: 'academic-registrar', title: 'Academic Registrar', group: 'Academic & Registry', description: 'Leads academic administration, examinations coordination and academic records.', responsibilities: ['Academic registration and progression', 'Examination coordination and results processing', 'Transcript and academic record workflows'], workspace: 'examinations', workspaceLabel: 'Open Examinations', icon: GraduationCap },
+  { key: 'dean-students', title: 'Dean of Students', group: 'Student Affairs', description: 'Coordinates student welfare, accommodation, discipline, activities and student support.', responsibilities: ['Student welfare and support', 'Accommodation and clearance oversight', 'Student activities and representation'], workspace: 'hostel', workspaceLabel: 'Open Hostel & Accommodation', icon: HeartPulse },
+  { key: 'bursar', title: 'Bursar / Accounts Office', group: 'Finance & Resources', description: 'Manages student billing, receipts, expenditure and financial controls.', responsibilities: ['Fees and billing', 'Receipts and student ledgers', 'Financial reporting and payment controls'], workspace: 'finance', workspaceLabel: 'Open Finance', icon: WalletCards },
+  { key: 'examinations', title: 'Examinations Officer', group: 'Academic & Registry', description: 'Administers examination schedules, marks, results and examination records.', responsibilities: ['Examination scheduling', 'Results consolidation and approval workflows', 'Progress reports and transcript preparation'], workspace: 'examinations', workspaceLabel: 'Open Examinations', icon: ClipboardCheck },
+  { key: 'head-department', title: 'Heads of Department', group: 'Academic Leadership', description: 'Manage departmental teaching, staff workload, courses and academic delivery.', responsibilities: ['Department course and programme oversight', 'Teaching allocation and workload', 'Review departmental academic performance'], workspace: 'academics', workspaceLabel: 'Open Academic Management', icon: BookOpen },
+  { key: 'health-clinical', title: 'Health / Clinical Services Lead', group: 'Clinical & Student Welfare', description: 'Coordinates institutional health services and clinical welfare processes.', responsibilities: ['Student sickbay and health-service coordination', 'Clinical welfare escalation', 'Health-related attendance and clearance coordination'], workspace: 'attendance', workspaceLabel: 'Open Attendance', icon: HeartPulse },
+  { key: 'librarian', title: 'Librarian', group: 'Academic Support', description: 'Manages the library, circulation, cataloguing and digital repository services.', responsibilities: ['Cataloguing and circulation', 'Book issue and return tracking', 'Koha and DSpace service coordination'], workspace: 'library', workspaceLabel: 'Open Library Management', icon: Library },
+  { key: 'hr', title: 'Human Resources', group: 'Administration', description: 'Maintains staff records, workforce administration, leave and personnel processes.', responsibilities: ['Staff records and employment administration', 'Leave and personnel actions', 'Workforce reporting and coordination'], workspace: 'staff', workspaceLabel: 'Open Staff Management', icon: UserRound },
+  { key: 'ict', title: 'ICT / System Administrator', group: 'Technology & Security', description: 'Controls system access, security, configuration, audit and technical operations.', responsibilities: ['User accounts and role assignment', 'Security and audit monitoring', 'Institution configuration and system support'], workspace: 'audit', workspaceLabel: 'Open Audit Log', icon: LockKeyhole },
+  { key: 'guild', title: 'Guild Cabinet & Council', group: 'Student Governance', description: 'The student representative structure connecting students with the Dean of Students and institutional administration.', responsibilities: ['Guild President and Vice President representation', 'Speaker, Deputy Speaker and GRC proceedings', 'General Secretary records and correspondence', 'Academic, finance, health, welfare, sports, information and religious affairs portfolios'], workspace: 'communication', workspaceLabel: 'Open Student Communications', icon: Megaphone },
+  { key: 'store', title: 'Stores / Procurement', group: 'Resources', description: 'Controls institutional stock, commodities, equipment and stores movements.', responsibilities: ['Inventory registers', 'Stock receipts, issues and balances', 'Equipment and commodity monitoring'], workspace: 'inventory', workspaceLabel: 'Open Inventory', icon: Building2 },
+  { key: 'hostel', title: 'Hostel / Residence Office', group: 'Student Affairs', description: 'Manages residences, rooms, beds and student accommodation allocations.', responsibilities: ['Hostel and room registers', 'Bed allocation and occupancy', 'Residence reports and movements'], workspace: 'hostel', workspaceLabel: 'Open Hostel Management', icon: Home },
+  { key: 'secretariat', title: 'Institutional Secretariat', group: 'Administration', description: 'Supports official correspondence, meetings, notices and institutional records.', responsibilities: ['Official correspondence', 'Meeting and document coordination', 'Institutional notices and communications'], workspace: 'communication', workspaceLabel: 'Open Communications', icon: CalendarDays },
+]
+
 
 const ROLE_COLORS: Record<string, string> = {
   SystemAdministrator: '#1e40af',
@@ -33,7 +56,14 @@ export function AdministrationManagement() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [tab, setTab] = useState<AdminTab>('users')
+  const [selectedOffice, setSelectedOffice] = useState<Office | null>(null)
   const [institution, setInstitution] = useState<InstitutionSettings | null>(null)
+
+  function openWorkspace(workspace?: string) {
+    if (!workspace) return
+    window.dispatchEvent(new CustomEvent('smis:navigate-module', { detail: workspace }))
+    setSelectedOffice(null)
+  }
 
   function handleInstitutionSaved(settings: InstitutionSettings) {
     setInstitution(settings)
@@ -78,6 +108,7 @@ export function AdministrationManagement() {
 
     <div className="library-workspace-tabs" role="tablist" aria-label="Administration sections">
       <button role="tab" aria-selected={tab === 'users'} className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>User Management</button>
+      <button role="tab" aria-selected={tab === 'offices'} className={tab === 'offices' ? 'active' : ''} onClick={() => { setTab('offices'); setSelectedOffice(null) }}>Leadership & Offices</button>
       <button role="tab" aria-selected={tab === 'settings'} className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Institution Settings</button>
     </div>
 
@@ -159,6 +190,26 @@ export function AdministrationManagement() {
       </>
     )}
 
+    {tab === 'offices' && (
+      selectedOffice ? (
+        <div className="office-detail">
+          <button type="button" className="secondary-button office-back" onClick={() => setSelectedOffice(null)}><ArrowLeft size={16} /> Back to offices</button>
+          <div className="office-detail-header">
+            <div className="office-detail-icon"><selectedOffice.icon size={28} /></div>
+            <div><span className="eyebrow">{selectedOffice.group}</span><h3>{selectedOffice.title}</h3><p>{selectedOffice.description}</p></div>
+          </div>
+          <div className="office-detail-grid">
+            <section className="panel office-detail-panel"><div className="panel-heading"><div><h3>Responsibilities</h3><p>Core responsibilities assigned to this office.</p></div></div><ul className="office-responsibilities">{selectedOffice.responsibilities.map(item => <li key={item}>{item}</li>)}</ul></section>
+            <section className="panel office-detail-panel"><div className="panel-heading"><div><h3>System workspace</h3><p>Most operational offices are connected directly to the screen they use.</p></div></div>{selectedOffice.workspace ? <button type="button" onClick={() => openWorkspace(selectedOffice.workspace)}>{selectedOffice.workspaceLabel}</button> : <p className="empty">No direct workspace has been assigned yet.</p>}</section>
+          </div>
+        </div>
+      ) : (
+        <div className="office-directory">
+          <div className="office-directory-intro"><div><span className="eyebrow">INSTITUTIONAL LEADERSHIP</span><h3>Leadership & Offices</h3><p>Day-to-day school operations, governance and specialist offices. Operational support workers such as cooks, askaris and watchmen remain staff records rather than application-login roles.</p></div><span className="office-count">{OFFICES.length} offices</span></div>
+          <div className="office-groups">{Array.from(new Set(OFFICES.map(o => o.group))).map(group => <section key={group} className="office-group"><div className="office-group-heading"><h4>{group}</h4><span>{OFFICES.filter(o => o.group === group).length}</span></div><div className="office-card-grid">{OFFICES.filter(o => o.group === group).map(office => { const Icon = office.icon; return <button type="button" className="office-card" key={office.key} onClick={() => setSelectedOffice(office)}><span className="office-card-icon"><Icon size={21} /></span><span className="office-card-copy"><strong>{office.title}</strong><small>{office.description}</small></span><span className="office-card-link">{office.workspace ? 'Workspace →' : 'View office →'}</span></button> })}</div></section>)}</div>
+        </div>
+      )
+    )}
     {tab === 'settings' && <InstitutionSettingsPage onSaved={handleInstitutionSaved} />}
   </section>
 }
