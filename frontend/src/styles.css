@@ -1462,3 +1462,56 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .guild-header .page-actions { width:100%; }
   .guild-header .page-actions button { flex:1; justify-content:center; }
 }
+
+
+/* Navigation selection: highlight the complete menu block */
+.sidebar-item {
+  display:flex;
+  align-items:center;
+  gap:11px;
+  min-height:42px;
+  width:100%;
+  box-sizing:border-box;
+  padding:10px 14px;
+  border:1px solid transparent;
+  border-radius:10px;
+  background:transparent;
+  color:#cbd5e1;
+  font-size:.82rem;
+  font-weight:650;
+  text-align:left;
+  cursor:pointer;
+  transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.sidebar-item:hover { background:rgba(255,255,255,.07); color:#fff; }
+.sidebar-item.active {
+  background:var(--brand-primary-soft,rgba(255,255,255,.14));
+  color:#fff;
+  border-color:rgba(255,255,255,.14);
+  box-shadow:none;
+}
+.sidebar-item.active svg { color:var(--brand-accent,#f97316); }
+
+/* Header section title */
+.topbar-context {
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-width:180px;
+}
+.topbar-context-divider { display:none; }
+.topbar-context-label {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  width:100%;
+}
+.topbar-context-label strong {
+  color:#fff;
+  font-size:.9rem;
+  font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
