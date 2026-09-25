@@ -176,7 +176,7 @@ export async function getStaffAdvances(staffMemberId?: string) { return request<
 export async function getInvoiceFeeItems(invoiceId: string) { return request<any[]>(`/api/finance/invoices/${invoiceId}/fee-items`) }
 
 export interface OutstandingBalance { studentId: string; studentNumber: string; studentName: string; programmeName: string; amount: number; paidAmount: number; balance: number; currency: string; status: string }
-export async function getOutstandingBalances() { return request<OutstandingBalance[]>('/api/finance/reports/outstanding-balances') }
+export async function getOutstandingBalances() { return request<OutstandingBalance[]>('/api/accounts-overview/outstanding') }
 
 export interface AccountsOverviewDashboard { totalRevenue: number; totalPayments: number; totalOutstanding: number; totalAdvances: number; totalBilled: number; totalPaid: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number; currency: string }
 export interface AccountsOverviewOutstanding { studentId: string; studentNumber: string; studentName: string; programmeName: string; balance: number; status: string; currency: string }
