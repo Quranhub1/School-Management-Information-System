@@ -1144,3 +1144,70 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   outline:3px solid color-mix(in srgb, var(--brand-primary,#2563eb) 25%, transparent);
   outline-offset:2px;
 }
+
+
+/* Legacy/common component compatibility, brought into the unified system */
+.card, .inventory-card {
+  background:var(--smis-surface);
+  border:1px solid var(--smis-border);
+  border-radius:var(--smis-radius-lg);
+  box-shadow:var(--smis-shadow-sm);
+}
+.card { padding:18px; }
+.btn, .primary-button {
+  min-height:38px;
+  border:1px solid var(--brand-primary,#2563eb);
+  border-radius:9px;
+  padding:8px 13px;
+  background:var(--brand-primary,#2563eb);
+  color:#fff;
+  font-weight:750;
+  cursor:pointer;
+}
+.btn-secondary {
+  background:var(--smis-surface);
+  border-color:var(--smis-border-strong);
+  color:var(--smis-text);
+}
+.inventory-data-card { overflow:hidden; }
+.inventory-data-card > .table-wrap { border:0; border-radius:0; }
+.inventory-data-card > .welfare-toolbar { border-bottom:1px solid var(--smis-border); }
+.inventory-summary-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr));
+  gap:12px;
+  margin-bottom:16px;
+}
+.inventory-metric {
+  padding:14px 15px;
+  border:1px solid var(--smis-border);
+  border-radius:12px;
+  background:var(--smis-surface);
+}
+.inventory-metric span { display:block; color:var(--smis-text-muted); font-size:.7rem; font-weight:700; }
+.inventory-metric strong { display:block; margin-top:5px; color:var(--smis-text); font-size:1.25rem; }
+.inventory-form-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  padding:18px;
+}
+.inventory-form-grid .panel-heading { grid-column:1/-1; padding:0 0 12px; min-height:0; }
+.inventory-form-grid label { display:grid; gap:6px; color:var(--smis-text); font-size:.75rem; font-weight:750; }
+.inventory-form-grid input, .inventory-form-grid select, .inventory-form-grid textarea {
+  width:100%;
+  min-height:39px;
+  border:1px solid var(--smis-border-strong);
+  border-radius:9px;
+  background:var(--smis-surface);
+  color:var(--smis-text);
+  padding:8px 10px;
+}
+.inventory-form-grid textarea { min-height:84px; resize:vertical; }
+.inventory-full { grid-column:1/-1; }
+.inventory-form-grid > .secondary-button { justify-self:start; }
+
+@media (max-width:700px) {
+  .inventory-form-grid { grid-template-columns:1fr; }
+  .inventory-full { grid-column:auto; }
+}
