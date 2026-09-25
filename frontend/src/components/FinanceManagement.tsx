@@ -173,6 +173,7 @@ export function FinanceManagement() {
       {tab === 'accounting' && (
         <section className="finance-accounting-layout">
           <div className="finance-surface"><div className="finance-surface-heading"><div><span className="eyebrow">ACCOUNTING</span><h3>Accounts & payroll control</h3><p>Receivables, payments, payroll and finance administration are grouped here for the bursar and accounts office.</p></div></div><AccountsOverviewWorkspace /></div>
+          <div className="finance-surface" style={{ marginTop: 18 }}><div className="finance-surface-heading"><div><span className="eyebrow">DOUBLE-ENTRY ACCOUNTING</span><h3>Core accounting reports</h3><p>Chart of accounts, general ledger, trial balance, income statement and balance sheet, all presented in UGX.</p></div></div><AccountingReportsWorkspace /></div>
         </section>
       )}
 
