@@ -40,6 +40,5 @@ public sealed class HostelAllocation
     public string Status { get; set; } = "Active";
     public string? Notes { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    [JsonIgnore]
     public HostelBed Bed { get; set; } = null!;
 }
