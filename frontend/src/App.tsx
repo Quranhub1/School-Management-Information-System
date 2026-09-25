@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
-import { Activity, Archive, BarChart3, Bell, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ClipboardCheck, ClipboardList, FileText, GraduationCap, HeartPulse, Home, Landmark, LayoutDashboard, Library, LogOut, MessageSquare, Package, ReceiptText, Settings, ShieldCheck, Stethoscope, Truck, UserRound, UsersRound, WalletCards, Warehouse } from 'lucide-react'
+import { Activity, Archive, BarChart3, BookOpen, BriefcaseBusiness, CalendarDays, ClipboardCheck, ClipboardList, FileText, GraduationCap, Home, LayoutDashboard, Library, LogOut, MessageSquare, Package, ReceiptText, Settings, ShieldCheck, Stethoscope, Truck, UserRound, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, login, logout } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageExaminations, canManageFinance, canManageStudents, canManageTimetable, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canManagePrinters, canManageDocuments, canViewAnalytics, canManageAttendance } from './auth/roleGuards'
