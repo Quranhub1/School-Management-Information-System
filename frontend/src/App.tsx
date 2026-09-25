@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
-import { BarChart3, BriefcaseBusiness, ClipboardCheck, GraduationCap, LayoutDashboard, Library, MessageSquare, Package, Settings, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
+import { BarChart3, BriefcaseBusiness, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, MessageSquare, Package, Settings, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, login, logout } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance } from './auth/roleGuards'
