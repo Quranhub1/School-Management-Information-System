@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { CalendarDays, FileText, Megaphone, Plus, UsersRound, WalletCards } from 'lucide-react'
 
 type Portfolio = {
   title: string
@@ -20,42 +21,114 @@ const portfolios: Portfolio[] = [
   { title: 'Guild Patron', role: 'Institutional liaison', responsibilities: ['Provide institutional guidance', 'Support constructive student administration engagement', 'Escalate matters through the appropriate office'] },
 ]
 
+const activity = [
+  ['Resolution', 'Academic calendar concerns submitted for review', 'Today'],
+  ['Notice', 'Guild general assembly communication prepared', 'Yesterday'],
+  ['Meeting', 'Executive and cabinet sitting recorded', '2 days ago'],
+]
+
 export function GuildManagement() {
   const [selected, setSelected] = useState(0)
+  const [showPortfolioList, setShowPortfolioList] = useState(true)
   const portfolio = portfolios[selected]
+  const executiveCount = useMemo(() => 2, [])
 
   return (
-    <section className="panel" aria-label="Guild management">
-      <div className="panel-heading">
+    <section className="guild-page" aria-label="Guild management">
+      <header className="page-header guild-header">
         <div>
           <p className="eyebrow">Student Governance</p>
-          <h2>Guild Cabinet & Council</h2>
-          <p>Manage the student representative structure, portfolios, resolutions and institutional communication from one workspace.</p>
+          <h2>Guild</h2>
+          <p>Coordinate student leadership, council business, portfolios, meetings, resolutions and official communication in one structured area.</p>
         </div>
+        <div className="page-actions">
+          <button className="secondary-button" type="button"><CalendarDays size={16} /> Record meeting</button>
+          <button className="primary-button" type="button"><Plus size={16} /> New record</button>
+        </div>
+      </header>
+
+      <div className="guild-kpi-grid">
+        <div className="guild-kpi"><span><UsersRound size={16} /> Executive</span><strong>{executiveCount}</strong><small>President and Vice President</small></div>
+        <div className="guild-kpi"><span><UsersRound size={16} /> Portfolios</span><strong>{portfolios.length}</strong><small>Active governance areas</small></div>
+        <div className="guild-kpi"><span><FileText size={16} /> Records</span><strong>12</strong><small>Meetings, resolutions and notices</small></div>
+        <div className="guild-kpi"><span><WalletCards size={16} /> Finance</span><strong>UGX</strong><small>Guild budget and accountability</small></div>
       </div>
 
-      <div className="workspace-grid">
-        <aside className="panel" style={{ padding: 12 }}>
-          <div className="library-workspace-tabs" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-            {portfolios.map((item, index) => (
-              <button key={item.title} className={selected === index ? 'active' : ''} onClick={() => setSelected(index)} style={{ textAlign: 'left' }}>
-                <strong>{item.title}</strong>
-                <span style={{ display: 'block', fontSize: 12, marginTop: 3, opacity: .75 }}>{item.role}</span>
+      <div className="guild-layout">
+        <div className="guild-main-column">
+          <section className="guild-surface">
+            <div className="guild-section-heading">
+              <div>
+                <p className="eyebrow">Governance structure</p>
+                <h3>Guild leadership & portfolios</h3>
+              </div>
+              <button className="secondary-button" type="button" onClick={() => setShowPortfolioList(v => !v)}>
+                {showPortfolioList ? 'Hide list' : 'Show list'}
               </button>
-            ))}
+            </div>
+
+            {showPortfolioList && (
+              <div className="guild-portfolio-grid">
+                {portfolios.map((item, index) => (
+                  <button key={item.title} type="button" className={`guild-portfolio-card ${selected === index ? 'active' : ''}`} onClick={() => setSelected(index)}>
+                    <span className="guild-portfolio-index">{String(index + 1).padStart(2, '0')}</span>
+                    <span><strong>{item.title}</strong><small>{item.role}</small></span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="guild-surface guild-detail">
+            <div className="guild-section-heading">
+              <div>
+                <p className="eyebrow">{portfolio.role}</p>
+                <h3>{portfolio.title}</h3>
+              </div>
+              <span className="guild-status">Active portfolio</span>
+            </div>
+            <div className="guild-responsibility-grid">
+              {portfolio.responsibilities.map((item, index) => (
+                <div className="guild-responsibility" key={item}>
+                  <span>{index + 1}</span>
+                  <div><strong>{item}</strong><small>Record actions, follow-ups and institutional escalation against this responsibility.</small></div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <aside className="guild-side-column">
+          <section className="guild-surface">
+            <div className="guild-section-heading compact">
+              <div><p className="eyebrow">Governance controls</p><h3>Quick actions</h3></div>
+            </div>
+            <div className="guild-quick-actions">
+              <button type="button"><CalendarDays size={17} /><span><strong>Meetings</strong><small>Record sittings and minutes</small></span></button>
+              <button type="button"><FileText size={17} /><span><strong>Resolutions</strong><small>Track decisions and follow-up</small></span></button>
+              <button type="button"><Megaphone size={17} /><span><strong>Notices</strong><small>Prepare approved student notices</small></span></button>
+              <button type="button"><WalletCards size={17} /><span><strong>Budget</strong><small>Maintain guild accountability</small></span></button>
+            </div>
+          </section>
+
+          <section className="guild-surface">
+            <div className="guild-section-heading compact">
+              <div><p className="eyebrow">Recent activity</p><h3>Governance record</h3></div>
+            </div>
+            <div className="guild-activity-list">
+              {activity.map(([type, title, time]) => (
+                <div className="guild-activity" key={title}>
+                  <span>{type}</span><div><strong>{title}</strong><small>{time}</small></div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="guild-note">
+            <strong>Role boundary</strong>
+            <span>Guild governance is for elected student leadership and institutional liaison. Operational workers such as cooks, askaris and watchmen remain staff records rather than application governance roles.</span>
           </div>
         </aside>
-
-        <article className="panel">
-          <p className="eyebrow">{portfolio.role}</p>
-          <h3>{portfolio.title}</h3>
-          <div className="feature-grid">
-            {portfolio.responsibilities.map(item => <div className="feature-card" key={item}><strong>{item}</strong><span>Govern this portfolio through recorded actions, notices and appropriate institutional escalation.</span></div>)}
-          </div>
-          <div className="info-banner" style={{ marginTop: 18 }}>
-            Guild records remain part of student governance and do not create separate staff-style operational roles for cooks, askaris or watchmen.
-          </div>
-        </article>
       </div>
     </section>
   )
