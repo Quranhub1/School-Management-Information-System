@@ -26,6 +26,7 @@ export function GlobalSearch() {
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [searchTrigger, setSearchTrigger] = useState(0)
   const [history, setHistory] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('smis.search.history') ?? '[]') as string[] } catch { return [] } })
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export function GlobalSearch() {
       }
     }, 250)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [query, from, to])
+  }, [query, from, to, searchTrigger])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -67,8 +68,16 @@ export function GlobalSearch() {
     setActiveIndex(i => (i + delta + max) % max)
   }
 
+  function handleSearch() {
+    if (query.trim().length >= 2) {
+      setOpen(false)
+      setSearchTrigger(value => value + 1)
+    }
+  }
+
   function handleKey(e: React.KeyboardEvent) {
-    if (e.key === 'ArrowDown') { e.preventDefault(); navigate(1) }
+    if (e.key === 'Enter') { e.preventDefault(); handleSearch() }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); navigate(1) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); navigate(-1) }
     else if (e.key === 'Escape') { setOpen(false); inputRef.current?.blur() }
   }
@@ -100,6 +109,7 @@ export function GlobalSearch() {
           aria-haspopup="listbox"
           role="combobox"
         />
+        <button type="button" className="search-submit-button" onClick={handleSearch} disabled={query.trim().length < 2} aria-label="Search">Search</button>
         <button type="button" className="search-filter-toggle" onClick={() => setShowFilters(f => !f)} aria-pressed={showFilters}>Filters</button>
       </div>
       {showFilters && (
