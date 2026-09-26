@@ -15,7 +15,26 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] string? studentId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(studentId)) return BadRequest(new { message = "studentId is required." });
+        if (string.IsNullOrWhiteSpace(studentId))
+        {
+            var invoices = await db.StudentInvoices.AsNoTracking()
+                .OrderByDescending(x => x.IssuedAt)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.StudentId,
+                    x.InvoiceNumber,
+                    x.FeeType,
+                    x.Amount,
+                    x.PaidAmount,
+                    balance = x.Amount - x.DiscountAmount - x.PaidAmount,
+                    x.Currency,
+                    x.Status,
+                    x.IssuedAt
+                })
+                .ToListAsync(cancellationToken);
+            return Ok(invoices);
+        }
 
         var value = studentId.Trim();
         var student = Guid.TryParse(value, out var parsedId)
@@ -25,6 +44,87 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (student is null) return NotFound(new { message = "Student was not found." });
 
         return Ok(await finance.GetStudentInvoicesAsync(student.Id, cancellationToken));
+    }
+
+    // Compatibility endpoints for older frontend builds. The canonical accounts-overview
+    // endpoints remain available, while these aliases prevent stale clients from receiving 404s.
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboardCompatibility(CancellationToken cancellationToken)
+    {
+        var totalBilled = await db.StudentInvoices.AsNoTracking()
+            .SumAsync(x => (decimal?)(x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m), cancellationToken) ?? 0m;
+        var totalPaid = await db.StudentInvoices.AsNoTracking()
+            .SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var todayPayments = await db.Payments.AsNoTracking()
+            .Where(p => p.PaidAt.UtcDateTime.Date == today.ToDateTime(TimeOnly.MinValue).Date)
+            .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
+
+        return Ok(new
+        {
+            totalBilled,
+            totalPaid,
+            totalOutstanding = Math.Max(0m, totalBilled - totalPaid),
+            todayCollection = todayPayments,
+            invoiceCount = await db.StudentInvoices.LongCountAsync(cancellationToken),
+            paymentCount = await db.Payments.LongCountAsync(cancellationToken),
+            outstandingCount = await db.StudentInvoices.LongCountAsync(x => x.Amount - x.DiscountAmount - x.PaidAmount > 0, cancellationToken),
+            currency = "UGX"
+        });
+    }
+
+    [HttpGet("payments")]
+    public async Task<IActionResult> GetPaymentsCompatibility([FromQuery] Guid? studentId, CancellationToken cancellationToken)
+    {
+        var query =
+            from payment in db.Payments.AsNoTracking()
+            join student in db.Students.AsNoTracking() on payment.StudentId equals student.Id
+            join invoice in db.StudentInvoices.AsNoTracking() on payment.StudentInvoiceId equals invoice.Id into invoices
+            from invoice in invoices.DefaultIfEmpty()
+            select new { payment, student, invoice };
+
+        if (studentId.HasValue) query = query.Where(x => x.payment.StudentId == studentId.Value);
+
+        return Ok(await query
+            .OrderByDescending(x => x.payment.PaidAt)
+            .Select(x => new
+            {
+                x.payment.Id,
+                x.payment.ReceiptNumber,
+                x.payment.Amount,
+                x.payment.PaymentMethod,
+                x.payment.Reference,
+                x.payment.PaidAt,
+                studentName = x.student.FirstName + " " + (x.student.OtherNames ?? "") + " " + x.student.LastName,
+                invoiceNumber = x.invoice == null ? null : x.invoice.InvoiceNumber
+            })
+            .ToListAsync(cancellationToken));
+    }
+
+    [HttpGet("reports/outstanding-balances")]
+    public async Task<IActionResult> GetOutstandingBalancesCompatibility(CancellationToken cancellationToken)
+    {
+        var data = await (
+            from invoice in db.StudentInvoices.AsNoTracking()
+            join student in db.Students.AsNoTracking() on invoice.StudentId equals student.Id
+            join fee in db.FeeStructures.AsNoTracking() on invoice.FeeStructureId equals fee.Id into fees
+            from fee in fees.DefaultIfEmpty()
+            where invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount > 0
+            select new
+            {
+                studentId = student.Id,
+                studentNumber = student.StudentNumber,
+                studentName = student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName,
+                programmeName = fee == null ? invoice.FeeType : fee.Name,
+                amount = invoice.Amount,
+                paidAmount = invoice.PaidAmount,
+                balance = invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount,
+                invoice.Currency,
+                invoice.Status
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(data);
     }
     [HttpGet("students/profile")]
     public async Task<IActionResult> GetStudentProfile([FromQuery] string studentIdOrNumber, CancellationToken cancellationToken)
