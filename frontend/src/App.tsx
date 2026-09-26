@@ -65,7 +65,6 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Access Control',module:'administration'},
     {label:'Users',module:'administration',subsection:'users',child:true},
     {label:'Roles',module:'administration',subsection:'roles',child:true},
-    {label:'Settings',module:'administration',subsection:'settings',child:true},
     {label:'Staff & HR',module:'staff'}
   ]},
   {label:'Academic',items:[
