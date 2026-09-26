@@ -21,6 +21,21 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
   const [form, setForm] = useState({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
 
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ module?: string; subsection?: string }>).detail
+      if (detail?.module !== 'staff' || !detail.subsection) return
+      const nextTab: Tab | undefined = detail.subsection === 'staff' ? 'staff'
+        : detail.subsection === 'payroll' ? 'payroll'
+        : detail.subsection === 'leave' ? 'leave'
+        : detail.subsection === 'recruitment' ? 'recruitment'
+        : undefined
+      if (nextTab) setTab(nextTab)
+    }
+    window.addEventListener('smis:navigate-subsection', handler)
+    return () => window.removeEventListener('smis:navigate-subsection', handler)
+  }, [])
+
   useEffect(() => { void loadStaff() }, [])
   useEffect(() => { if (tab === 'leave') void loadLeave() }, [tab])
   useEffect(() => { if (tab === 'payroll') void loadPayroll() }, [tab])
