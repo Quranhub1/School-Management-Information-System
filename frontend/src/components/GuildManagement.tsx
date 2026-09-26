@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, FileText, Megaphone, Plus, UsersRound, WalletCards } from 'lucide-react'
+import { CalendarDays, FileText, Megaphone, Plus, ShieldCheck, UsersRound, WalletCards } from 'lucide-react'
+import { GuildElectoralCommission } from './GuildElectoralCommission'
 
 type Portfolio = {
   title: string
@@ -27,7 +28,10 @@ const activity = [
   ['Meeting', 'Executive and cabinet sitting recorded', '2 days ago'],
 ]
 
+type GuildView = 'governance' | 'electoral'
+
 export function GuildManagement() {
+  const [view, setView] = useState<GuildView>('governance')
   const [selected, setSelected] = useState(0)
   const [showPortfolioList, setShowPortfolioList] = useState(true)
   const portfolio = portfolios[selected]
@@ -47,6 +51,19 @@ export function GuildManagement() {
         </div>
       </header>
 
+      <div className="guild-primary-tabs" role="tablist" aria-label="Guild workspaces">
+        <button type="button" className={view === 'governance' ? 'active' : ''} onClick={() => setView('governance')} role="tab" aria-selected={view === 'governance'}>
+          <UsersRound size={16} /> Guild Governance
+        </button>
+        <button type="button" className={view === 'electoral' ? 'active' : ''} onClick={() => setView('electoral')} role="tab" aria-selected={view === 'electoral'}>
+          <ShieldCheck size={16} /> Electoral Commission
+        </button>
+      </div>
+
+      {view === 'electoral' ? (
+        <GuildElectoralCommission />
+      ) : (
+        <>
       <div className="guild-kpi-grid">
         <div className="guild-kpi"><span><UsersRound size={16} /> Executive</span><strong>{executiveCount}</strong><small>President and Vice President</small></div>
         <div className="guild-kpi"><span><UsersRound size={16} /> Portfolios</span><strong>{portfolios.length}</strong><small>Active governance areas</small></div>
@@ -130,6 +147,8 @@ export function GuildManagement() {
           </div>
         </aside>
       </div>
+        </>
+      )}
     </section>
   )
 }
