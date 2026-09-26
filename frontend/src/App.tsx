@@ -114,6 +114,7 @@ function canSeeSidebarItem(item:SidebarItem){
   if(item.module==='system-administration') return a;
   return false;
 }
+const [rptTab,setRptTab]=useState<'cards'|'receipts'|'certificates'|'analytics'>('cards');
 const visibleSidebarGroups=sidebarGroups.map(group=>({
   ...group,
   items:group.items.filter(canSeeSidebarItem)
@@ -140,7 +141,9 @@ const visibleSidebarGroups=sidebarGroups.map(group=>({
             onClick={()=>navigate(item.module,item.subsection)}
             aria-current={isItemActive?'page':undefined}
           >
-            <Icon size={isParent?18:15} strokeWidth={isItemActive?2.2:1.8} aria-hidden="true"/>
+            {isParent
+  ? <Icon size={18} strokeWidth={isItemActive?2.2:1.8} aria-hidden="true"/>
+  : <span className="sidebar-child-marker" aria-hidden="true">└</span>}
             <span>{item.label}</span>
             {isParent&&item.module!=='dashboard'&&<span className="sidebar-item-chevron">›</span>}
           </button>
@@ -148,7 +151,7 @@ const visibleSidebarGroups=sidebarGroups.map(group=>({
       </div>}
     </section>
   })}
-</nav><div className="sidebar-footer"><div className="sidebar-account"><div className="sidebar-account-avatar">{(sessionUsername[0]||'U').toUpperCase()}</div><div className="sidebar-account-copy"><strong>{sessionUsername}</strong><span>{r[0]||'User'}</span></div><button type="button" className="sidebar-logout" onClick={signOut} aria-label="Sign out"><LogOut size={16}/></button></div><a href="/privacy-policy.html">Privacy Policy</a></div></aside><div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(modules.find(m=>m.key===activeModule)?.label||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
+</nav><div className="sidebar-footer"><div className="sidebar-account"><div className="sidebar-account-avatar">{(sessionUsername[0]||'U').toUpperCase()}</div><div className="sidebar-account-copy"><strong>{sessionUsername}</strong><span>{r[0]||'User'}</span></div><button type="button" className="sidebar-logout" onClick={signOut} aria-label="Sign out"><LogOut size={16}/></button></div><a href="/privacy-policy.html">Privacy Policy</a></div></aside><div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(moduleLabels[activeModule]||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 {activeModule==='administration'&&a&&<AdministrationManagement/>}
 {activeModule==='students'&&(st||ad||s360)&&<AdmissionsStudentManagement canManage={st||ad}/>}
 {activeModule==='academics'&&(ac||lecturer)&&<AcademicManagement canManage={ac}/>}
