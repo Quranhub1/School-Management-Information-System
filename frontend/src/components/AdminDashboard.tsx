@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ArrowUpRight, Banknote, CheckCircle2, GraduationCap, Search, ShieldCheck, UsersRound } from 'lucide-react'
 import { getSession } from '../api/auth'
 import { getUsers } from '../api/administration'
 import { getStudents } from '../api/students'
@@ -90,17 +91,33 @@ export function AdminDashboard() {
     { key: 'monitoring', label: 'Monitoring' },
   ]
 
+  const statCards = [
+    { label: 'Students', value: students.total, detail: `${students.active} active`, icon: GraduationCap, tone: 'blue' },
+    { label: 'Staff members', value: staff.total, detail: `${staff.active} active`, icon: UsersRound, tone: 'violet' },
+    { label: 'Revenue collected', value: `UGX ${finance.totalPaid.toLocaleString()}`, detail: `${finance.invoices} invoices`, icon: Banknote, tone: 'green' },
+    { label: 'Outstanding balance', value: `UGX ${finance.outstanding.toLocaleString()}`, detail: finance.outstanding > 0 ? 'Needs attention' : 'All clear', icon: ShieldCheck, tone: finance.outstanding > 0 ? 'amber' : 'green' },
+  ] as const
+
   return (
-    <section className="panel" aria-label="Administrator dashboard">
-      <div className="panel-heading">
+    <section className="dashboard-screen" aria-label="Administrator dashboard">
+      <div className="dashboard-welcome">
         <div>
-          <p className="eyebrow">Administrator</p>
-          <h2>Welcome, {session?.username ?? 'Admin'}</h2>
+          <p className="eyebrow">Administrator overview</p>
+          <h2>Welcome back, {session?.username ?? 'Admin'}</h2>
+          <p>Here is what is happening across your school today.</p>
         </div>
-        <span className="status">{new Date().toLocaleDateString('en-UG')}</span>
+        <div className="dashboard-date"><span>Today</span><strong>{new Date().toLocaleDateString('en-UG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</strong></div>
       </div>
 
-      <div className="library-workspace-tabs" role="tablist" aria-label="Admin sections" style={{ marginBottom: 18 }}>
+      <div className="dashboard-stat-grid">
+        {statCards.map(({ label, value, detail, icon: Icon, tone }) => <div className={`dashboard-stat-card ${tone}`} key={label}>
+          <div className="dashboard-stat-icon"><Icon size={20} aria-hidden="true" /></div>
+          <div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>
+          <ArrowUpRight className="dashboard-stat-arrow" size={18} aria-hidden="true" />
+        </div>)}
+      </div>
+
+      <div className="library-workspace-tabs dashboard-tabs" role="tablist" aria-label="Admin sections">
         {tabs.map(t => (
           <button key={t.key} role="tab" aria-selected={tab === t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)}>
             {t.label}
