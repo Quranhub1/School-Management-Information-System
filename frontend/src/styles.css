@@ -2258,3 +2258,4 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .guild-declaration-actions { flex-direction:column; }
   .guild-declaration-actions button { width:100%; justify-content:center; }
 }
+\n.auth-school-name { margin: 2px 0 4px; color: #1c1917; font-size: 1.08rem; font-weight: 800; line-height: 1.35; text-align: center; }\n
