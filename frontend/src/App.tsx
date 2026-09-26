@@ -69,7 +69,11 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Staff',module:'staff',subsection:'staff',child:true},
     {label:'Payroll',module:'staff',subsection:'payroll',child:true},
     {label:'Leave',module:'staff',subsection:'leave',child:true},
-    {label:'Recruitment',module:'staff',subsection:'recruitment',child:true}
+    {label:'Recruitment',module:'staff',subsection:'recruitment',child:true},
+    {label:'System Administration',module:'system-administration'},
+    {label:'Logs',module:'system-administration',subsection:'logs',child:true},
+    {label:'Backups',module:'system-administration',subsection:'backups',child:true},
+    {label:'Settings',module:'administration',subsection:'settings',child:true}
   ]},
   {label:'Academic',items:[
     {label:'Students',module:'students'},
@@ -91,12 +95,8 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Guild',module:'guild'},
     {label:'Communication',module:'communication'}
   ]},
-  {label:'Reports & Settings',items:[
-    {label:'Reports & Analytics',module:'reports'},
-    {label:'System Administration',module:'system-administration'},
-    {label:'Logs',module:'system-administration',subsection:'logs',child:true},
-    {label:'Backups',module:'system-administration',subsection:'backups',child:true},
-    {label:'Settings',module:'system-administration',subsection:'settings',child:true}
+  {label:'Reports',items:[
+    {label:'Reports & Analytics',module:'reports'}
   ]}
 ];
 function canSeeSidebarItem(item:SidebarItem){
