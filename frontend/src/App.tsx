@@ -65,7 +65,11 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Access Control',module:'administration'},
     {label:'Users',module:'administration',subsection:'users',child:true},
     {label:'Roles',module:'administration',subsection:'roles',child:true},
-    {label:'Staff & HR',module:'staff'}
+    {label:'Staff & HR',module:'staff'},
+    {label:'Staff',module:'staff',subsection:'staff',child:true},
+    {label:'Payroll',module:'staff',subsection:'payroll',child:true},
+    {label:'Leave',module:'staff',subsection:'leave',child:true},
+    {label:'Recruitment',module:'staff',subsection:'recruitment',child:true}
   ]},
   {label:'Academic',items:[
     {label:'Students',module:'students'},
