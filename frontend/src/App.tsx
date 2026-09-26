@@ -48,7 +48,7 @@ const [openSidebarGroups,setOpenSidebarGroups]=useState<Record<string,boolean>>(
   Administration:true,
   Academic:true,
   Operations:true,
-  'Reports & Settings':true
+  Reports:true
 });
 function navigate(module:ModuleKey, subsection?:string){
   setActiveModule(module);
@@ -73,7 +73,7 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'System Administration',module:'system-administration'},
     {label:'Logs',module:'system-administration',subsection:'logs',child:true},
     {label:'Backups',module:'system-administration',subsection:'backups',child:true},
-    {label:'Settings',module:'administration',subsection:'settings',child:true}
+    {label:'Settings',module:'administration',subsection:'settings'}
   ]},
   {label:'Academic',items:[
     {label:'Students',module:'students'},
