@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
-import { BarChart3, BriefcaseBusiness, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, MessageSquare, Package, Settings, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
+import { BarChart3, BriefcaseBusiness, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, login, logout } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance } from './auth/roleGuards'
@@ -21,7 +21,7 @@ function AuthenticatedWorkspace({ onLogout, institution }: { onLogout: () => voi
   health:Stethoscope,
   laboratories:Package,
   inventory:Package,
-  communication:MessageSquare,
+  communication:Megaphone,
   guild:UsersRound,
   reports:BarChart3,
   'system-administration':Settings
@@ -38,7 +38,7 @@ const moduleLabels:Record<ModuleKey,string>={
   health:'Health & Clinical',
   laboratories:'Hostel & Welfare',
   inventory:'Inventory & Property',
-  communication:'Communication',
+  communication:'Announcements',
   guild:'Guild',
   reports:'Reports & Analytics',
   'system-administration':'System Administration'
@@ -92,8 +92,9 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Attendance',module:'attendance'},
     {label:'Hostel & Welfare',module:'laboratories'},
     {label:'Inventory & Property',module:'inventory'},
+    {label:'Library',module:'library'},
     {label:'Guild',module:'guild'},
-    {label:'Communication',module:'communication'}
+    {label:'Announcements',module:'communication'}
   ]},
   {label:'Reports',items:[
     {label:'Reports & Analytics',module:'reports'}
