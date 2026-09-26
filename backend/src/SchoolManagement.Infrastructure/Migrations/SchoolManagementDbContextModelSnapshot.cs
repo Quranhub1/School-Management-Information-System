@@ -2951,6 +2951,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("ReceiptNumber")
                         .IsUnique();
 
+                    b.HasIndex("StudentId");
+
                     b.HasIndex("StudentInvoiceId");
 
                     b.ToTable("Payments");
@@ -4552,6 +4554,12 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("StudentInvoiceId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.PaymentAllocation", b =>
