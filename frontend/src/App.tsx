@@ -101,29 +101,42 @@ const visibleSidebarGroups=sidebarGroups.map(group=>({
   ...group,
   items:group.items.filter(canSeeSidebarItem)
 })).filter(group=>group.items.length>0);
-<nav className="sidebar-nav" aria-label="Primary navigation">
-  {visibleSidebarGroups.map(group=><section key={group.label} className="sidebar-nav-group">
-    <div className="sidebar-group-heading static"><span>{group.label}</span></div>
-    <div className="sidebar-group-items">
-      {group.items.map(item=>{
-        const Icon=iconByModule[item.module];
-        const isParent=!item.subsection;
-        const isModuleActive=activeModule===item.module;
-        const isItemActive=item.subsection ? isModuleActive&&activeSubsection===item.subsection : isModuleActive&&activeSubsection===null;
-        return <button
-          key={`${group.label}-${item.label}`}
-          type="button"
-          className={`sidebar-item ${isParent?'sidebar-parent-item':'sidebar-child-item'} ${isItemActive?'active':''}`}
-          onClick={()=>navigate(item.module,item.subsection)}
-          aria-current={isItemActive?'page':undefined}
-        >
-          <Icon size={18} strokeWidth={isItemActive?2.2:1.8} aria-hidden="true"/>
-          <span>{item.label}</span>
-        </button>
-      })}
+
+return <main className="app-shell">
+  <aside className="sidebar">
+    <div className="sidebar-brand">
+      {institution.logoPath&&<img src={institution.logoPath} alt="" className="sidebar-logo" />}
+      <div>
+        <span className="sidebar-kicker">SMIS</span>
+        <h1>{institution.institutionName}</h1>
+        {institution.motto&&<p>{institution.motto}</p>}
+      </div>
     </div>
-  </section>)}
-</nav></nav><div className="sidebar-footer"><div className="sidebar-account"><div className="sidebar-account-avatar">{(sessionUsername[0]||'U').toUpperCase()}</div><div className="sidebar-account-copy"><strong>{sessionUsername}</strong><span>{r[0]||'User'}</span></div><button type="button" className="sidebar-logout" onClick={signOut} aria-label="Sign out"><LogOut size={16}/></button></div><a href="/privacy-policy.html">Privacy Policy</a></div></aside><div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(moduleLabels[activeModule]||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
+    <nav className="sidebar-nav" aria-label="Primary navigation">
+      {visibleSidebarGroups.map(group=><section key={group.label} className="sidebar-nav-group">
+        <div className="sidebar-group-heading static"><span>{group.label}</span></div>
+        <div className="sidebar-group-items">
+          {group.items.map(item=>{
+            const Icon=iconByModule[item.module];
+            const isModuleActive=activeModule===item.module;
+            const isItemActive=item.subsection ? isModuleActive&&activeSubsection===item.subsection : isModuleActive&&activeSubsection===null;
+            return <button
+              key={`${group.label}-${item.label}`}
+              type="button"
+              className={`sidebar-item ${isItemActive?'active':''}`}
+              onClick={()=>navigate(item.module,item.subsection)}
+              aria-current={isItemActive?'page':undefined}
+            >
+              <Icon size={18} strokeWidth={isItemActive?2.2:1.8} aria-hidden="true"/>
+              <span>{item.label}</span>
+            </button>
+          })}
+        </div>
+      </section>)}
+    </nav>
+    <div className="sidebar-footer"><div className="sidebar-account"><div className="sidebar-account-avatar">{(sessionUsername[0]||'U').toUpperCase()}</div><div className="sidebar-account-copy"><strong>{sessionUsername}</strong><span>{r[0]||'User'}</span></div><button type="button" className="sidebar-logout" onClick={signOut} aria-label="Sign out"><LogOut size={16}/></button></div><a href="/privacy-policy.html">Privacy Policy</a></div>
+  </aside>
+  <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(moduleLabels[activeModule]||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 {activeModule==='administration'&&a&&<AdministrationManagement/>}
 {activeModule==='students'&&(st||ad||s360)&&<AdmissionsStudentManagement canManage={st||ad}/>}
 {activeModule==='academics'&&(ac||lecturer)&&<AcademicManagement canManage={ac}/>}
