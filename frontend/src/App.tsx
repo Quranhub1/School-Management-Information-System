@@ -44,6 +44,7 @@ const moduleLabels:Record<ModuleKey,string>={
   'system-administration':'System Administration'
 };
 const [activeSubsection,setActiveSubsection]=useState<string|null>(null);
+const [rptTab,setRptTab]=useState<'cards'|'receipts'|'certificates'|'analytics'>('cards');
 const [openSidebarGroups,setOpenSidebarGroups]=useState<Record<string,boolean>>({
   Administration:true,
   Academic:true,
