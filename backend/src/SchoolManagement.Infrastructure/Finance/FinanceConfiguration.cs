@@ -63,6 +63,10 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(x => x.Reference).HasMaxLength(120);
         builder.HasIndex(x => x.ReceiptNumber).IsUnique();
         builder.HasIndex(x => new { x.StudentInvoiceId, x.PaidAt });
+        builder.HasOne<SchoolManagement.Domain.Students.Student>()
+            .WithMany()
+            .HasForeignKey(x => x.StudentId)
+            .OnDelete(DeleteBehavior.Restrict);
         builder.HasMany(x => x.Allocations).WithOne().HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Cascade);
     }
 }
