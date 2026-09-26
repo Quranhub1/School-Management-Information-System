@@ -73,7 +73,7 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'System Administration',module:'system-administration'},
     {label:'Logs',module:'system-administration',subsection:'logs',child:true},
     {label:'Backups',module:'system-administration',subsection:'backups',child:true},
-    {label:'Settings',module:'administration',subsection:'settings'}
+    {label:'Settings',module:'system-administration',subsection:'settings',child:true}
   ]},
   {label:'Academic',items:[
     {label:'Students',module:'students'},
