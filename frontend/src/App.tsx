@@ -90,10 +90,12 @@ const sidebarGroups:SidebarGroup[]=[
   {label:'Operations',items:[
     {label:'Finance & Accounting',module:'finance'},
     {label:'Attendance',module:'attendance'},
-    {label:'Hostel & Welfare',module:'laboratories'},
-    {label:'Inventory & Property',module:'inventory'},
+    {label:'Inventory & Property',module:'inventory'}
+  ]},
+  {label:'Student Affairs',items:[
     {label:'Guild',module:'guild'},
-    {label:'Announcements',module:'communication'}
+    {label:'Announcements',module:'communication'},
+    {label:'Hostel & Welfare',module:'laboratories'}
   ]},
   {label:'Reports',items:[
     {label:'Reports & Analytics',module:'reports'}
