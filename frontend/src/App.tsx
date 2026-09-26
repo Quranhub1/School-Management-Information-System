@@ -44,114 +44,86 @@ const moduleLabels:Record<ModuleKey,string>={
   'system-administration':'System Administration'
 };
 const [activeSubsection,setActiveSubsection]=useState<string|null>(null);
-const [openSidebarGroups,setOpenSidebarGroups]=useState<Record<string,boolean>>({
-  Administration:true,
-  Academic:true,
-  Operations:true,
-  'Reports & Settings':true
-});
+const [openSidebarGroups,setOpenSidebarGroups]=useState<Record<string,boolean>>({});
 function navigate(module:ModuleKey, subsection?:string){
   setActiveModule(module);
   setActiveSubsection(subsection??null);
   if(subsection) window.dispatchEvent(new CustomEvent('smis:navigate-subsection',{detail:{module,subsection}}));
 }
 type SidebarItem={label:string;module:ModuleKey;subsection?:string};
-type SidebarGroup={label:string;items:SidebarItem[];alwaysOpen?:boolean};
+type SidebarGroup={label:string;items:SidebarItem[]};
 const sidebarGroups:SidebarGroup[]=[
-  {label:'Main',alwaysOpen:true,items:[
+  {label:'Main',items:[
     {label:'Dashboard',module:'dashboard'}
   ]},
-  {label:'Administration',items:[
-    {label:'Administration',module:'administration'},
-    {label:'Users',module:'administration',subsection:'users'},
-    {label:'Roles',module:'administration',subsection:'roles'},
-    {label:'Settings',module:'administration',subsection:'settings'},
-    {label:'Staff & HR',module:'staff'}
-  ]},
-  {label:'Academic',items:[
-    {label:'Students',module:'students'},
-    {label:'Registration',module:'students',subsection:'registration'},
-    {label:'Records',module:'students',subsection:'records'},
+  {label:'Academics',items:[
     {label:'Academic Management',module:'academics'},
+    {label:'Programmes',module:'academics',subsection:'programmes'},
     {label:'Classes',module:'academics',subsection:'classes'},
-    {label:'Courses',module:'academics',subsection:'courses'},
-    {label:'Health & Clinical',module:'health'},
-    {label:'Medical Records',module:'health',subsection:'medical-records'},
-    {label:'Clinic',module:'health',subsection:'clinic'},
-    {label:'Library',module:'library'}
+    {label:'Assessments',module:'academics',subsection:'assessments'}
   ]},
   {label:'Operations',items:[
     {label:'Finance & Accounting',module:'finance'},
     {label:'Attendance',module:'attendance'},
     {label:'Hostel & Welfare',module:'laboratories'},
     {label:'Inventory & Property',module:'inventory'},
-    {label:'Guild',module:'guild'},
-    {label:'Communication',module:'communication'}
+    {label:'Library',module:'library'},
+    {label:'Guild',module:'guild'}
   ]},
-  {label:'Reports & Settings',items:[
-    {label:'Reports & Analytics',module:'reports'},
+  {label:'Health & Wellness',items:[
+    {label:'Clinic',module:'health',subsection:'clinic'},
+    {label:'Medical Records',module:'health',subsection:'medical-records'}
+  ]},
+  {label:'Reports',items:[
+    {label:'Reports & Analytics',module:'reports'}
+  ]},
+  {label:'Administration',items:[
     {label:'System Administration',module:'system-administration'},
-    {label:'Logs',module:'system-administration',subsection:'logs'},
-    {label:'Backups',module:'system-administration',subsection:'backups'},
-    {label:'Settings',module:'system-administration',subsection:'settings'}
+    {label:'Settings',module:'administration',subsection:'settings'}
   ]}
 ];
 function canSeeSidebarItem(item:SidebarItem){
   if(item.module==='dashboard') return true;
   if(item.module==='administration') return a;
-  if(item.module==='students') return st || ad || s360;
   if(item.module==='academics') return ac || lecturer;
   if(item.module==='finance') return fi;
-  if(item.module==='staff') return sr;
   if(item.module==='attendance') return att;
   if(item.module==='library') return lr;
   if(item.module==='health') return att || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator');
   if(item.module==='laboratories') return inv;
   if(item.module==='inventory') return inv;
-  if(item.module==='communication') return cm;
   if(item.module==='guild') return st || r.includes('Guild') || r.includes('SystemAdministrator');
   if(item.module==='reports') return rp || analytics;
   if(item.module==='system-administration') return a;
   return false;
 }
-const [rptTab,setRptTab]=useState<'cards'|'receipts'|'certificates'|'analytics'>('cards');
 const visibleSidebarGroups=sidebarGroups.map(group=>({
   ...group,
   items:group.items.filter(canSeeSidebarItem)
 })).filter(group=>group.items.length>0);
- return <main className="app-shell"><aside className="sidebar"><div className="sidebar-brand">{institution.logoPath&&<img src={institution.logoPath} alt="" className="sidebar-logo" />}<div><span className="sidebar-kicker">{institution.abbreviation?.trim()||institution.institutionName}</span><h1>{institution.institutionName}</h1>{institution.motto&&<p>{institution.motto}</p>}</div></div><nav className="sidebar-nav" aria-label="Primary navigation">
-  {visibleSidebarGroups.map(group=>{
-    const open=group.alwaysOpen||openSidebarGroups[group.label];
-    const toggle=()=>{if(!group.alwaysOpen)setOpenSidebarGroups(current=>({...current,[group.label]:!open}))};
-    return <section key={group.label} className="sidebar-nav-group">
-      <button type="button" className={`sidebar-group-heading ${group.alwaysOpen?'static':''}`} onClick={toggle} aria-expanded={group.alwaysOpen?true:open}>
-        <span>{group.label}</span>
-        {!group.alwaysOpen&&<ChevronDown size={14} className={open?'open':''} aria-hidden="true" />}
-      </button>
-      {open&&<div className="sidebar-group-items">
-        {group.items.map((item,index)=>{
-          const Icon=iconByModule[item.module];
-          const isParent=!item.subsection;
-          const isModuleActive=activeModule===item.module;
-          const isItemActive=item.subsection ? isModuleActive&&activeSubsection===item.subsection : isModuleActive&&activeSubsection===null;
-          return <button
-            key={`${group.label}-${item.label}`}
-            type="button"
-            className={`sidebar-item ${isParent?'sidebar-parent-item':'sidebar-child-item'} ${isItemActive?'active':''}`}
-            onClick={()=>navigate(item.module,item.subsection)}
-            aria-current={isItemActive?'page':undefined}
-          >
-            {isParent
-  ? <Icon size={18} strokeWidth={isItemActive?2.2:1.8} aria-hidden="true"/>
-  : <span className="sidebar-child-marker" aria-hidden="true">└</span>}
-            <span>{item.label}</span>
-            {isParent&&item.module!=='dashboard'&&<span className="sidebar-item-chevron">›</span>}
-          </button>
-        })}
-      </div>}
-    </section>
-  })}
-</nav><div className="sidebar-footer"><div className="sidebar-account"><div className="sidebar-account-avatar">{(sessionUsername[0]||'U').toUpperCase()}</div><div className="sidebar-account-copy"><strong>{sessionUsername}</strong><span>{r[0]||'User'}</span></div><button type="button" className="sidebar-logout" onClick={signOut} aria-label="Sign out"><LogOut size={16}/></button></div><a href="/privacy-policy.html">Privacy Policy</a></div></aside><div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(moduleLabels[activeModule]||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
+<nav className="sidebar-nav" aria-label="Primary navigation">
+  {visibleSidebarGroups.map(group=><section key={group.label} className="sidebar-nav-group">
+    <div className="sidebar-group-heading static"><span>{group.label}</span></div>
+    <div className="sidebar-group-items">
+      {group.items.map(item=>{
+        const Icon=iconByModule[item.module];
+        const isParent=!item.subsection;
+        const isModuleActive=activeModule===item.module;
+        const isItemActive=item.subsection ? isModuleActive&&activeSubsection===item.subsection : isModuleActive&&activeSubsection===null;
+        return <button
+          key={`${group.label}-${item.label}`}
+          type="button"
+          className={`sidebar-item ${isParent?'sidebar-parent-item':'sidebar-child-item'} ${isItemActive?'active':''}`}
+          onClick={()=>navigate(item.module,item.subsection)}
+          aria-current={isItemActive?'page':undefined}
+        >
+          <Icon size={18} strokeWidth={isItemActive?2.2:1.8} aria-hidden="true"/>
+          <span>{item.label}</span>
+        </button>
+      })}
+    </div>
+  </section>)}
+</nav></nav><div className="sidebar-footer"><div className="sidebar-account"><div className="sidebar-account-avatar">{(sessionUsername[0]||'U').toUpperCase()}</div><div className="sidebar-account-copy"><strong>{sessionUsername}</strong><span>{r[0]||'User'}</span></div><button type="button" className="sidebar-logout" onClick={signOut} aria-label="Sign out"><LogOut size={16}/></button></div><a href="/privacy-policy.html">Privacy Policy</a></div></aside><div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(moduleLabels[activeModule]||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 {activeModule==='administration'&&a&&<AdministrationManagement/>}
 {activeModule==='students'&&(st||ad||s360)&&<AdmissionsStudentManagement canManage={st||ad}/>}
 {activeModule==='academics'&&(ac||lecturer)&&<AcademicManagement canManage={ac}/>}
