@@ -92,7 +92,6 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Attendance',module:'attendance'},
     {label:'Hostel & Welfare',module:'laboratories'},
     {label:'Inventory & Property',module:'inventory'},
-    {label:'Library',module:'library'},
     {label:'Guild',module:'guild'},
     {label:'Announcements',module:'communication'}
   ]},
