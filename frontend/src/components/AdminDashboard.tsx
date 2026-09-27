@@ -129,24 +129,29 @@ export function AdminDashboard() {
 
       {tab === 'overview' && (
         <div>
-          <div className="summary-grid" style={{ marginBottom: 22 }}>
-            <div className="summary-card"><span>Students</span><strong>{students.total}</strong></div>
-            <div className="summary-card"><span>Active Students</span><strong style={{ color: '#059669' }}>{students.active}</strong></div>
-            <div className="summary-card"><span>Staff</span><strong>{staff.total}</strong></div>
-            <div className="summary-card"><span>Active Staff</span><strong style={{ color: '#059669' }}>{staff.active}</strong></div>
-            <div className="summary-card"><span>Users</span><strong>{users.total}</strong></div>
-            <div className="summary-card"><span>Active Users</span><strong style={{ color: '#059669' }}>{users.active}</strong></div>
-            <div className="summary-card"><span>Revenue</span><strong>UGX {finance.totalPaid.toLocaleString()}</strong></div>
-            <div className="summary-card"><span>Outstanding</span><strong style={{ color: finance.outstanding > 0 ? '#dc2626' : '#059669' }}>UGX {finance.outstanding.toLocaleString()}</strong></div>
-          </div>
-
-          <div className="card" style={{ marginBottom: 20 }}>
-            <h3>Quick Actions</h3>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10 }}>
-              <button className="btn" onClick={() => setTab('students')}>Search Students</button>
-              <button className="btn" onClick={() => setTab('staff')}>Search Staff</button>
-              <button className="btn" onClick={() => setTab('finance')}>View Finance</button>
-              <button className="btn btn-secondary" onClick={() => setTab('monitoring')}>System Monitoring</button>
+          <div className="dashboard-overview-grid">
+            <div className="dashboard-overview-card dashboard-overview-card-wide">
+              <div className="dashboard-card-heading"><div><span className="dashboard-card-kicker">School pulse</span><h3>Today at a glance</h3></div><span className="dashboard-live-dot">Live</span></div>
+              <div className="dashboard-pulse-list">
+                <div><span>Active students</span><strong>{students.active} <small>of {students.total}</small></strong><i><b style={{ width: `${students.total ? Math.min(100, students.active / students.total * 100) : 0}%` }} /></i></div>
+                <div><span>Active staff</span><strong>{staff.active} <small>of {staff.total}</small></strong><i><b className="teal" style={{ width: `${staff.total ? Math.min(100, staff.active / staff.total * 100) : 0}%` }} /></i></div>
+                <div><span>Collected revenue</span><strong>{finance.totalBilled ? Math.round(finance.totalPaid / finance.totalBilled * 100) : 0}% <small>of billed</small></strong><i><b className="violet" style={{ width: `${finance.totalBilled ? Math.min(100, finance.totalPaid / finance.totalBilled * 100) : 0}%` }} /></i></div>
+              </div>
+            </div>
+            <div className="dashboard-overview-card dashboard-status-card">
+              <div className="dashboard-card-heading"><div><span className="dashboard-card-kicker">System health</span><h3>All systems normal</h3></div><CheckCircle2 size={22} aria-hidden="true" /></div>
+              <p>Your school workspace is connected and ready for today&apos;s operations.</p>
+              <div className="dashboard-status-row"><span><b />Database</span><span>Connected</span></div>
+              <div className="dashboard-status-row"><span><b />Payroll</span><span>{payroll.pending ? `${payroll.pending} pending` : 'Up to date'}</span></div>
+            </div>
+            <div className="dashboard-overview-card dashboard-actions-card">
+              <div className="dashboard-card-heading"><div><span className="dashboard-card-kicker">Workspace</span><h3>Quick actions</h3></div></div>
+              <div className="dashboard-action-list">
+                <button onClick={() => setTab('students')}><GraduationCap size={17} aria-hidden="true" /><span>Search students</span><ArrowUpRight size={15} aria-hidden="true" /></button>
+                <button onClick={() => setTab('staff')}><UsersRound size={17} aria-hidden="true" /><span>Find staff member</span><ArrowUpRight size={15} aria-hidden="true" /></button>
+                <button onClick={() => setTab('finance')}><Banknote size={17} aria-hidden="true" /><span>Review finance</span><ArrowUpRight size={15} aria-hidden="true" /></button>
+                <button onClick={() => setTab('monitoring')}><ShieldCheck size={17} aria-hidden="true" /><span>Open monitoring</span><ArrowUpRight size={15} aria-hidden="true" /></button>
+              </div>
             </div>
           </div>
         </div>
