@@ -338,6 +338,25 @@ td strong { display: block; }
 @media (max-width: 900px) { .dashboard-overview-grid { grid-template-columns: 1fr; }.dashboard-overview-card-wide { grid-row: auto; }.dashboard-actions-card { grid-column: auto; } }
 @media (max-width: 640px) { .dashboard-overview-card { padding: 18px; }.dashboard-tabs { overflow-x: auto; flex-wrap: nowrap; }.dashboard-tabs button { white-space: nowrap; } }
 
+/* Production dashboard finish */
+.dashboard-screen { gap: 24px; }
+.dashboard-welcome { min-height: 190px; padding: 34px 36px; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(135deg, #0b2545 0%, #123c5a 48%, #0f766e 100%); box-shadow: 0 20px 45px rgba(15, 61, 88, .2); }
+.dashboard-welcome::before { position: absolute; z-index: -1; top: -80px; left: 42%; width: 300px; height: 300px; border: 1px solid rgba(255,255,255,.08); border-radius: 50%; box-shadow: 0 0 0 26px rgba(255,255,255,.025), 0 0 0 52px rgba(255,255,255,.018); content: ''; }
+.dashboard-welcome h2 { font-weight: 780; letter-spacing: -.045em; }
+.dashboard-welcome p:not(.eyebrow) { max-width: 560px; }
+.dashboard-date { backdrop-filter: blur(12px); }
+.dashboard-stat-card { min-height: 136px; padding: 21px; border-color: #d8e3ed; background: linear-gradient(145deg, #fff 0%, #fbfdff 100%); }
+.dashboard-stat-card strong { font-size: clamp(1.15rem, 1.7vw, 1.48rem); }
+.dashboard-stat-icon { box-shadow: inset 0 0 0 1px rgba(15,23,42,.035); }
+.dashboard-tabs { position: sticky; top: 0; z-index: 3; backdrop-filter: blur(14px); background: rgba(255,255,255,.9); }
+.dashboard-overview-card { padding: 24px; background: linear-gradient(145deg, #fff 0%, #fbfdff 100%); }
+.dashboard-overview-card-wide { background: radial-gradient(circle at 100% 0%, rgba(37,99,235,.06), transparent 38%), linear-gradient(145deg, #fff 0%, #fbfdff 100%); }
+.dashboard-pulse-list { gap: 25px; }
+.dashboard-pulse-list i { height: 9px; background: #e8eef5; }
+.dashboard-action-list button { padding: 12px 10px; border: 1px solid transparent; }
+.dashboard-action-list button:hover { border-color: #d6e6f4; background: #f4f9fd; }
+@media (max-width: 640px) { .dashboard-welcome { min-height: 0; padding: 25px 21px; }.dashboard-stat-card { min-height: 118px; }.dashboard-tabs { position: static; } }
+
 .global-search { position: relative; width: 320px; max-width: 100%; }
 .global-search input[type="search"] { width: 100%; padding: 8px 12px; border: 1px solid #d6d3d1; border-radius: 8px; font-size: .9rem; background: white; color: #1c1917; }
 [data-theme="dark"] .global-search input[type="search"] { background: #1e293b; border-color: #334155; color: #e7e5e4; }
