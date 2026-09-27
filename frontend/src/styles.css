@@ -152,7 +152,8 @@ td strong { display: block; }
 .auth-orb-two { width: 230px; height: 230px; bottom: -90px; left: -70px; background: radial-gradient(circle at 65% 35%, rgba(249, 115, 22, .22), rgba(249, 115, 22, 0)); }
 .auth-logo-wrap { display: grid; place-items: center; min-height: 92px; margin-bottom: 16px; }
 .auth-logo { width: 88px; height: 88px; object-fit: contain; }
-.auth-card { width: min(100%, 470px); padding: 34px; border: 1px solid #e7e5e4; border-radius: 22px; background: white; box-shadow: 0 20px 55px rgba(28, 25, 23, .09); }
+.auth-card { width: min(100%, 470px); padding: 34px; border: 1px solid #e7e5e4; border-radius: 22px; background: white; box-shadow: 0 20px 55px rgba(28, 25, 23, .09); text-align: center; }
+.auth-card .eyebrow { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .auth-card h1 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.2rem); line-height: 1.1; color: #1c1917; }
 .auth-copy { color: #78716c; line-height: 1.55; }
 .auth-form { display: grid; gap: 9px; margin-top: 28px; text-align: left; }
