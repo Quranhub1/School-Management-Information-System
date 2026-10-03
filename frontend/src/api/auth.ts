@@ -1,53 +1,47 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { apiRequest } from '../lib/api'
 
-interface ErrorBoundaryProps {
-  children: ReactNode
+export interface AuthResponse {
+  accessToken: string
+  expiresAt: string
+  username: string
+  roles: string[]
 }
 
-interface ErrorBoundaryState {
-  hasError: boolean
-  message: string
+const TOKEN_KEY = 'smis.accessToken'
+const SESSION_KEY = 'smis.session'
+
+export async function login(username: string, password: string): Promise<AuthResponse> {
+  const session = await apiRequest<AuthResponse>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  })
+
+  sessionStorage.setItem(TOKEN_KEY, session.accessToken)
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    expiresAt: session.expiresAt,
+    username: session.username,
+    roles: session.roles,
+  }))
+
+  return session
 }
 
-export class AppErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = {
-    hasError: false,
-    message: '',
-  }
+export function getAccessToken(): string | null {
+  return sessionStorage.getItem(TOKEN_KEY)
+}
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return {
-      hasError: true,
-      message: error.message || 'Something went wrong while loading the application.',
-    }
-  }
+export function getSession(): Omit<AuthResponse, 'accessToken'> | null {
+  const raw = sessionStorage.getItem(SESSION_KEY)
+  if (!raw) return null
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('AppErrorBoundary caught an error', error, errorInfo)
-  }
-
-  handleReset = (): void => {
-    this.setState({ hasError: false, message: '' })
-    window.location.reload()
-  }
-
-  render(): ReactNode {
-    if (this.state.hasError) {
-      return (
-        <div className="screen-error">
-          <div className="error-boundary-card">
-            <div className="error-boundary-kicker">System error</div>
-            <h2>Something went wrong.</h2>
-            <p>{this.state.message}</p>
-            <button type="button" className="primary-button" onClick={this.handleReset}>
-              Reload app
-            </button>
-          </div>
-        </div>
-      )
-    }
-
-    return this.props.children
+  try {
+    return JSON.parse(raw) as Omit<AuthResponse, 'accessToken'>
+  } catch {
+    return null
   }
 }
 
+export function logout(): void {
+  sessionStorage.removeItem(TOKEN_KEY)
+  sessionStorage.removeItem(SESSION_KEY)
+}

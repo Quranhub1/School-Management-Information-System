@@ -1,51 +1,52 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+import { Component, type ErrorInfo, type ReactNode } from 'react'
 
-export interface ApiErrorPayload {
-  title?: string
-  detail?: string
-  message?: string
-  errors?: Record<string, string[] | string>
+interface ErrorBoundaryProps {
+  children: ReactNode
 }
 
-export function getApiBaseUrl(): string {
-  return API_BASE_URL
+interface ErrorBoundaryState {
+  hasError: boolean
+  message: string
 }
 
-export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = sessionStorage.getItem('smis.accessToken')
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init.headers ?? {}),
-    },
-  })
-
-  if (response.status === 401) {
-    throw new Error('Your session has expired. Please sign in again.')
+export class AppErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = {
+    hasError: false,
+    message: '',
   }
 
-  if (response.status === 403) {
-    throw new Error('Your role is not authorized to view this data.')
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return {
+      hasError: true,
+      message: error.message || 'Something went wrong while loading the application.',
+    }
   }
 
-  if (response.status === 404) {
-    throw new Error('The requested resource could not be found.')
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error('AppErrorBoundary caught an error', error, errorInfo)
   }
 
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null) as ApiErrorPayload | null
-    const detail = payload?.detail ?? payload?.message ?? payload?.title ?? `Request failed with status ${response.status}`
-    throw new Error(detail)
+  handleReset = (): void => {
+    this.setState({ hasError: false, message: '' })
+    window.location.reload()
   }
 
-  if (response.status === 204) {
-    return undefined as T
-  }
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <div className="screen-error">
+          <div className="error-boundary-card">
+            <div className="error-boundary-kicker">System error</div>
+            <h2>Something went wrong.</h2>
+            <p>{this.state.message}</p>
+            <button type="button" className="primary-button" onClick={this.handleReset}>
+              Reload app
+            </button>
+          </div>
+        </div>
+      )
+    }
 
-  return response.json() as Promise<T>
+    return this.props.children
+  }
 }
-
