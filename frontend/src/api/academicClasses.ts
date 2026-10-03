@@ -1,54 +1,47 @@
-import { getAccessToken } from './auth'
+import { apiRequest } from '../lib/api'
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+export interface AuthResponse {
+  accessToken: string
+  expiresAt: string
+  username: string
+  roles: string[]
+}
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getAccessToken()
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) },
+const TOKEN_KEY = 'smis.accessToken'
+const SESSION_KEY = 'smis.session'
+
+export async function login(username: string, password: string): Promise<AuthResponse> {
+  const session = await apiRequest<AuthResponse>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
   })
-  if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { message?: string } | null
-    throw new Error(body?.message ?? `Request failed with status ${response.status}`)
+
+  sessionStorage.setItem(TOKEN_KEY, session.accessToken)
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    expiresAt: session.expiresAt,
+    username: session.username,
+    roles: session.roles,
+  }))
+
+  return session
+}
+
+export function getAccessToken(): string | null {
+  return sessionStorage.getItem(TOKEN_KEY)
+}
+
+export function getSession(): Omit<AuthResponse, 'accessToken'> | null {
+  const raw = sessionStorage.getItem(SESSION_KEY)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as Omit<AuthResponse, 'accessToken'>
+  } catch {
+    return null
   }
-  return response.status === 204 ? undefined as T : response.json() as Promise<T>
 }
 
-export interface AcademicClass {
-  id: string
-  programmeId: string
-  academicPeriodId: string
-  code: string
-  name?: string | null
-  yearOfStudy: number
-  maxEnrolment?: number | null
-  status: number
-  createdAtUtc: string
+export function logout(): void {
+  sessionStorage.removeItem(TOKEN_KEY)
+  sessionStorage.removeItem(SESSION_KEY)
 }
 
-export interface CreateAcademicClassRequest {
-  programmeId: string
-  academicPeriodId: string
-  code: string
-  name?: string
-  yearOfStudy: number
-  maxEnrolment?: number
-}
-
-export const getClassesByProgramme = (programmeId: string) => {
-  if (!programmeId.trim()) throw new Error('Programme ID is required.')
-  return request<AcademicClass[]>(`/api/academic-classes/by-programme/${encodeURIComponent(programmeId)}`)
-}
-
-export const getClassesByPeriod = (periodId: string) => {
-  if (!periodId.trim()) throw new Error('Period ID is required.')
-  return request<AcademicClass[]>(`/api/academic-classes/by-period/${encodeURIComponent(periodId)}`)
-}
-
-export const createAcademicClass = (input: CreateAcademicClassRequest) => {
-  if (!input.code.trim()) throw new Error('Class code is required.')
-  if (!input.programmeId.trim() || !input.academicPeriodId.trim()) throw new Error('Programme and period IDs are required.')
-  return request<AcademicClass>('/api/academic-classes', { method: 'POST', body: JSON.stringify(input) })
-}
