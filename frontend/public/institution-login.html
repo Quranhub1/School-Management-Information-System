@@ -77,7 +77,23 @@ canvas#bgCanvas {
             pointer-events: none;
             z-index: 0;
         }
-    </style>
+    
+        /* Historical clock animation support */
+        @keyframes enterSlideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-enter {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: enterSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .delay-5 { animation-delay: 0.5s; }
+        .animate-spin-slow { animation: spin 12s linear infinite; }
+
+</style>
 </head>
 <body class="bg-gradient-to-br from-sky-50 via-indigo-50/50 to-blue-100 font-sans text-slate-800 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
 
@@ -147,6 +163,17 @@ canvas#bgCanvas {
             </button>
         </form>
 
+        <!-- Live Digital Clock -->
+        <div class="animate-enter delay-5 mt-6 text-center">
+            <div id="digitalClockContainer" class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-emerald-50/80 border border-emerald-200/80 backdrop-blur-md shadow-sm hover:scale-105 transition-transform duration-300">
+                <i class="fa-regular fa-clock text-emerald-600 animate-spin-slow text-xs"></i>
+                <span id="digitalClockTime" class="font-mono text-xs font-semibold tracking-wider text-emerald-950">12:00:00 PM</span>
+                <span class="text-emerald-300">|</span>
+                <span id="digitalClockDate" class="font-sans text-xs text-emerald-700 font-medium">Oct 4, 2026</span>
+            </div>
+        </div>
+
+
         <footer class="mt-8 text-center border-t border-slate-200/80 pt-6">
             <p class="text-xs text-slate-500 font-medium tracking-wide">
                 Designed by <span class="text-blue-600 font-bold transition-colors duration-200 hover:text-indigo-700 hover:underline cursor-pointer">JOES TECHNOLOGIES</span>
@@ -205,6 +232,20 @@ canvas#bgCanvas {
                     if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'SIGN IN'; }
                 }
             };
+
+
+            // DIGITAL CLOCK FUNCTION
+            function updateDigitalClock() {
+                const now = new Date();
+                const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+                const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+
+                document.getElementById('digitalClockTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+                document.getElementById('digitalClockDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+            }
+
+            setInterval(updateDigitalClock, 1000);
+            updateDigitalClock();
 
             async function loadInstitutionBranding() {
                 try {
