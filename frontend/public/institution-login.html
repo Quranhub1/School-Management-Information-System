@@ -6,6 +6,8 @@
     <title>Institution Login Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for the digital clock icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
             theme: {
@@ -67,8 +69,8 @@
             filter: brightness(0.97);
         }
 
-/* Background Canvas */
-canvas#bgCanvas {
+        /* Background Canvas */
+        canvas#bgCanvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -92,12 +94,12 @@ canvas#bgCanvas {
         }
         .delay-5 { animation-delay: 0.5s; }
         .animate-spin-slow { animation: spin 12s linear infinite; }
-
-</style>
+    </style>
 </head>
 <body class="bg-gradient-to-br from-sky-50 via-indigo-50/50 to-blue-100 font-sans text-slate-800 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
 
-
+    <!-- Uniform Stratified Canvas Background with Spinning Watermarks -->
+    <canvas id="bgCanvas" aria-hidden="true"></canvas>
 
     <!-- Main Login Card -->
     <main class="w-full max-w-md glass-card rounded-3xl overflow-hidden p-8 sm:p-10 relative z-10 hover-lift">
@@ -127,7 +129,7 @@ canvas#bgCanvas {
         <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5" novalidate>
             <div>
                 <label for="username" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 transition-colors duration-200 hover:text-slate-800">
-                    Username / Email
+                    Username
                 </label>
                 <div class="relative">
                     <input type="text" id="username" name="username" required placeholder="Enter your credentials"
@@ -173,15 +175,12 @@ canvas#bgCanvas {
             </div>
         </div>
 
-
         <footer class="mt-8 text-center border-t border-slate-200/80 pt-6">
             <p class="text-xs text-slate-500 font-medium tracking-wide">
                 Designed by <span class="text-blue-600 font-bold transition-colors duration-200 hover:text-indigo-700 hover:underline cursor-pointer">JOES TECHNOLOGIES</span>
             </p>
         </footer>
     </main>
-
-
 
     <script>
         (() => {
@@ -233,15 +232,16 @@ canvas#bgCanvas {
                 }
             };
 
-
             // DIGITAL CLOCK FUNCTION
             function updateDigitalClock() {
                 const now = new Date();
                 const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
                 const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
 
-                document.getElementById('digitalClockTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
-                document.getElementById('digitalClockDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+                const timeEl = document.getElementById('digitalClockTime');
+                const dateEl = document.getElementById('digitalClockDate');
+                if (timeEl) timeEl.textContent = now.toLocaleTimeString('en-US', timeOptions);
+                if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', dateOptions);
             }
 
             setInterval(updateDigitalClock, 1000);
@@ -298,34 +298,15 @@ canvas#bgCanvas {
                         submitButton.style.background = 'linear-gradient(90deg, ' + primary + ', ' + accent + ', ' + primary + ')';
                     }
 
-                    // Keep the watermark layer synchronized with active institution settings.
-                    const watermarkRoot = document.getElementById('institutionWatermarks');
-                    if (watermarkRoot) {
-                        watermarkRoot.style.setProperty('--login-primary', primary);
-                        watermarkRoot.style.setProperty('--login-accent', accent);
-                        watermarkRoot.querySelectorAll('.institution-watermark').forEach((watermark) => {
-                            const label = watermark.querySelector('.watermark-label');
-                            const watermarkLogo = watermark.querySelector('.watermark-logo');
-                            if (label) label.textContent = abbreviation || name;
-                            watermark.setAttribute('data-motto', motto);
-                            if (watermarkLogo && logoElement?.src) {
-                                watermarkLogo.src = logoElement.src;
-                                watermarkLogo.alt = name + ' Logo';
-                            }
-                        });
-                    }
-
                     if (abbreviation) {
                         document.title = abbreviation + ' — ' + name;
                     } else {
                         document.title = name;
                     }
                 } catch {
-                    // Keep the existing login design/default branding if public settings are unavailable.
+                    // Keep existing default branding if fetch fails
                 }
             }
-
-
 
             void loadInstitutionBranding();
             window.setInterval(loadInstitutionBranding, 30000);
@@ -334,7 +315,27 @@ canvas#bgCanvas {
             const usernameInput = document.getElementById('username');
             const rememberMe = document.getElementById('rememberMe');
             if (rememberedUsername && usernameInput) { usernameInput.value = rememberedUsername; if (rememberMe) rememberMe.checked = true; }
-        })();
-    </script>
-</body>
-</html>
+
+            // =========================================================================
+            // ADVANCED CANVAS WATERMARK ENGINE (16-Sector Stratified Grid & Spinning)
+            // =========================================================================
+            const canvas = document.getElementById('bgCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                let dpr = window.devicePixelRatio || 1;
+
+                const COLS = 4; // 4 columns across
+                const ROWS = 4; // 4 rows down = 16 balanced sectors
+                let watermarks = [];
+
+                function initWatermarks() {
+                    watermarks = [];
+                    const cellW = window.innerWidth / COLS;
+                    const cellH = window.innerHeight / ROWS;
+
+                    for (let r = 0; r < ROWS; r++) {
+                        for (let c = 0; c < COLS; c++) {
+                            const index = r * COLS + c;
+                            watermarks.push({
+                                type: index % 2 === 0 ? 'name' : 'motto',
+                                col: c,
