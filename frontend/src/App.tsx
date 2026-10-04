@@ -3,12 +3,28 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import { BarChart3, BriefcaseBusiness, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
-import { getSession, login, logout } from './api/auth'
+import { getSession, logout, saveAuthSession } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance } from './auth/roleGuards'
 import { AcademicManagement } from './components/AcademicManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import { getPublicInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'; import './components/PrintStyles.css'
 type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'system-administration'
 const DEFAULT_INSTITUTION: InstitutionSettings = { id: '', institutionName: 'Your Institution Name', abbreviation: '', motto: '', address: '', phone: '', email: '', website: '', postalAddress: '', country: '', institutionType: '', logoPath: null, primaryColor: null, accentColor: null, isActive: false, updatedAt: '' }
-function LoginScreen({ onLogin, institution }: { onLogin: () => void; institution: InstitutionSettings }) { const [username,setUsername]=useState(''); const [password,setPassword]=useState(''); const [loading,setLoading]=useState(false); const [error,setError]=useState(''); const brandName=institution.institutionName?.trim()||'School'; const logoSrc=institution.logoPath||'/icon.png'; async function submit(e:FormEvent){e.preventDefault();setLoading(true);setError('');try{await login(username.trim(),password);onLogin()}catch(e){setError(e instanceof Error?e.message:'Unable to sign in.')}finally{setLoading(false)}} return <main className="auth-shell"><div className="auth-orb auth-orb-one" aria-hidden="true" /><div className="auth-orb auth-orb-two" aria-hidden="true" /><section className="auth-card"><div className="auth-logo-wrap"><img src={logoSrc} alt={`${brandName} logo`} className="auth-logo" /></div><p className="eyebrow"><ShieldCheck size={15} aria-hidden="true" /> Secure access</p><div className="auth-school-name">{brandName}</div><h1>Sign in</h1><form onSubmit={submit} className="auth-form"><label htmlFor="username">Username</label><input id="username" value={username} onChange={e=>setUsername(e.target.value)} autoComplete="username" /><label htmlFor="password">Password</label><input id="password" type="password" value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password" />{error&&<div className="error" role="alert">{error}</div>}<button type="submit" disabled={loading}>{loading?'Signing in…':'Sign in'}</button></form></section></main> }
+function LoginScreen() {
+  const apiBaseUrl = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
+  const loginSrc = apiBaseUrl
+    ? `/institution-login.html?api=${encodeURIComponent(apiBaseUrl)}`
+    : '/institution-login.html'
+
+  return (
+    <main className="institution-login-host">
+      <iframe
+        className="institution-login-frame"
+        src={loginSrc}
+        title="Institutional Sign In"
+        allow="clipboard-read; clipboard-write"
+      />
+    </main>
+  )
+}
 function AuthenticatedWorkspace({ onLogout, institution }: { onLogout: () => void; institution: InstitutionSettings }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canManageFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),att=canManageAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('Registrar')||r.includes('AcademicRegistrar')||r.includes('Student'); const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const storedModule=localStorage.getItem(stateKey); const [activeModule,setActiveModule]=useState<ModuleKey>(()=>{const allowed=new Set<ModuleKey>(['dashboard','administration','students','academics','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','system-administration']); return storedModule&&allowed.has(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'}); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail)setActiveModule(detail)};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
   dashboard:LayoutDashboard,
   administration:BriefcaseBusiness,
@@ -183,4 +199,42 @@ return <main className="app-shell">
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement/>}
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
 {activeModule==='system-administration'&&a&&<AdministrationManagement/>}</motion.div></AnimatePresence></div></main> }
-function App(){const[authed,setAuthed]=useState(()=>Boolean(getSession()));const[institution,setInstitution]=useState<InstitutionSettings>(DEFAULT_INSTITUTION);const[loading,setLoading]=useState(true);useEffect(()=>{const root=document.documentElement;const primary=institution.primaryColor||'#1e40af';const accent=institution.accentColor||'#f97316';root.style.setProperty('--brand-primary',primary);root.style.setProperty('--brand-accent',accent);root.style.setProperty('--brand-primary-soft',primary+'18');root.style.setProperty('--brand-accent-soft',accent+'18');document.title=institution.institutionName?.trim()||'School Management Information System'},[institution]);useEffect(()=>{void getPublicInstitutionSettings().then(setInstitution).catch(()=>setInstitution(DEFAULT_INSTITUTION)).finally(()=>setLoading(false))},[]);if(loading)return <main className="auth-shell"><section className="auth-card"><p className="eyebrow">Management Information System</p><h1>Loading…</h1></section></main>;return authed?<AuthenticatedWorkspace onLogout={()=>setAuthed(false)} institution={institution}/>:<LoginScreen onLogin={()=>setAuthed(true)} institution={institution}/>} export default App
+function App(){
+  const[authed,setAuthed]=useState(()=>Boolean(getSession()))
+  const[institution,setInstitution]=useState<InstitutionSettings>(DEFAULT_INSTITUTION)
+
+  useEffect(()=>{
+    const handleLoginMessage=(event:MessageEvent)=>{
+      if(event.origin!==window.location.origin) return
+      if(event.data?.type!=='smis-login' || !event.data.session) return
+      const session=event.data.session as Parameters<typeof saveAuthSession>[0]
+      if(typeof session.accessToken!=='string' || typeof session.username!=='string' || !Array.isArray(session.roles)) return
+      saveAuthSession(session)
+      setAuthed(true)
+    }
+    window.addEventListener('message',handleLoginMessage)
+    return()=>window.removeEventListener('message',handleLoginMessage)
+  },[])
+
+  useEffect(()=>{
+    const root=document.documentElement
+    const primary=institution.primaryColor||'#1e40af'
+    const accent=institution.accentColor||'#f97316'
+    root.style.setProperty('--brand-primary',primary)
+    root.style.setProperty('--brand-accent',accent)
+    root.style.setProperty('--brand-primary-soft',primary+'18')
+    root.style.setProperty('--brand-accent-soft',accent+'18')
+    document.title=institution.institutionName?.trim()||'School Management Information System'
+  },[institution])
+
+  useEffect(()=>{
+    void getPublicInstitutionSettings()
+      .then(setInstitution)
+      .catch(()=>setInstitution(DEFAULT_INSTITUTION))
+  },[])
+
+  return authed
+    ? <AuthenticatedWorkspace onLogout={()=>setAuthed(false)} institution={institution}/>
+    : <LoginScreen/>
+}
+export default App
