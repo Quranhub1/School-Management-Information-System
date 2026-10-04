@@ -15,15 +15,10 @@ public partial class EnsurePayrollPaymentMethodColumn : Migration
             ALTER TABLE "PayrollRecords"
             ADD COLUMN IF NOT EXISTS "PaymentMethod" text;
             """);
-
-        migrationBuilder.Sql("""
-            ALTER TABLE "PayrollRecords"
-            ADD COLUMN IF NOT EXISTS "Reference" text;
-            """);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        // Intentionally non-destructive: do not remove live payroll columns during rollback.
+        // Intentionally non-destructive: do not remove a live payroll column during rollback.
     }
 }
