@@ -5,78 +5,227 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Institution Login Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
-                    },
+                    }
                 }
             }
         }
     </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.84);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 25px 50px -12px rgba(30, 41, 59, 0.12);
+        }
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hover-lift:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 30px 60px -15px rgba(37, 99, 235, 0.18);
+        }
+        .icon-hover {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .icon-hover:hover {
+            transform: scale(1.15) rotate(4deg);
+        }
+        .btn-scale {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-scale:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.4);
+        }
+        .btn-scale:active {
+            transform: translateY(0) scale(0.97);
+        }
+        canvas#bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 font-sans text-slate-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gradient-to-br from-sky-50 via-indigo-50/50 to-blue-100 font-sans text-slate-800 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
 
-    <div class="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden p-8">
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="w-full max-w-md glass-card rounded-3xl overflow-hidden p-8 sm:p-10 relative z-10 hover-lift">
         
-        <!-- Header with Official Logo -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 p-2 mb-4 border border-slate-700 shadow-inner">
-                <img src="https://www.kshs.ac.ug/images/kampala%20logo.png" alt="Institution Logo" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/80x80/1e293b/ffffff?text=KSHS';">
+        <!-- Header with Centered Logo -->
+        <div class="text-center mb-8 flex flex-col items-center justify-center">
+            <div class="flex items-center justify-center w-24 h-24 rounded-2xl bg-white p-3 mb-4 border border-slate-200/80 shadow-md icon-hover cursor-pointer">
+                <img src="https://www.kshs.ac.ug/images/kampala%20logo.png" alt="Institution Logo" class="w-full h-full object-contain filter drop-shadow" onerror="this.onerror=null; this.src='https://placehold.co/80x80/f1f5f9/1e293b?text=KSHS';">
             </div>
-            <h1 class="text-2xl font-bold tracking-tight text-white">Institution Portal</h1>
-            <p class="text-sm text-slate-400 mt-1">Sign in to access your institutional dashboard</p>
+            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent transition-all duration-300 hover:scale-105 cursor-default">INSTITUTION NAME</h1>
+            <p class="text-xs uppercase tracking-widest text-blue-600 font-bold mt-1.5 transition-colors duration-300 hover:text-indigo-600 cursor-default">ENTER MOTTO</p>
         </div>
 
-        <!-- Notification Message Box -->
-        <div id="messageBox" class="hidden mb-6 p-4 rounded-xl text-sm border transition-all duration-300"></div>
+        <div id="messageBox" class="hidden mb-6 p-4 rounded-2xl text-sm border transition-all duration-300 transform scale-95 opacity-0"></div>
 
         <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Portal ID / Email</label>
-                <input type="text" id="username" required placeholder="Enter institutional ID or email"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 transition-colors hover:text-slate-800 cursor-default">USERNAME</label>
+                <div class="relative">
+                    <input type="text" id="username" required placeholder="Enter your credentials"
+                        class="w-full bg-white/90 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 transition-all duration-300 shadow-sm hover:border-slate-300 hover:scale-[1.01]">
+                </div>
             </div>
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Password</label>
-                <input type="password" id="password" required placeholder="••••••••••••"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 transition-colors hover:text-slate-800 cursor-default">Password</label>
+                <div class="relative">
+                    <input type="password" id="password" required placeholder="••••••••••••"
+                        class="w-full bg-white/90 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 transition-all duration-300 shadow-sm hover:border-slate-300 hover:scale-[1.01]">
+                </div>
             </div>
 
-            <div class="flex items-center justify-between text-sm">
-                <label class="flex items-center text-slate-400 cursor-pointer">
-                    <input type="checkbox" class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-blue-500 mr-2">
+            <div class="flex items-center justify-between text-sm pt-1">
+                <label class="flex items-center text-slate-600 cursor-pointer hover:text-slate-900 transition-colors select-none">
+                    <input type="checkbox" class="rounded bg-white border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 mr-2 transition-transform hover:scale-125">
                     Remember me
                 </label>
-                <a href="#" onclick="showMsg('Password reset instructions sent to registered admin.', 'info')" class="text-blue-400 hover:underline">Forgot password?</a>
+                <a href="#" onclick="showMsg('Password reset instructions sent to registered admin.', 'info')" class="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-all transform hover:scale-105 inline-block">Forgot password?</a>
             </div>
 
             <button type="submit" 
-                class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all transform active:scale-[0.98]">
-                Access Portal
+                class="w-full py-4 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white font-bold tracking-wide rounded-xl shadow-lg shadow-blue-600/25 btn-scale uppercase text-sm">
+                SIGN IN
             </button>
         </form>
 
-        <div class="mt-8 text-center border-t border-slate-700/60 pt-6">
-            <p class="text-xs text-slate-500">Secure Institutional Network • Authorized Access Only</p>
+        <div class="mt-8 text-center border-t border-slate-200/80 pt-6">
+            <p class="text-xs text-slate-500 font-medium tracking-wide">Designed by <span class="text-blue-600 font-bold transition-colors hover:text-indigo-600 cursor-pointer inline-block transform hover:scale-110">JOES TECHNOLOGIES</span></p>
         </div>
     </div>
 
     <script>
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Ripple bubbles array
+        const bubbles = [];
+        const bubbleCount = 14;
+
+        for (let i = 0; i < bubbleCount; i++) {
+            bubbles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 50 + 20,
+                maxRadius: Math.random() * 100 + 70,
+                growthSpeed: Math.random() * 0.2 + 0.08,
+                opacity: Math.random() * 0.25 + 0.05,
+                vx: (Math.random() - 0.5) * 0.15,
+                vy: (Math.random() - 0.5) * 0.15
+            });
+        }
+
+        // Watermark texts array moving in different directions
+        const watermarks = [];
+        const watermarkTexts = ["INSTITUTION NAME", "KAMPALA SCHOOL OF HEALTH SCIENCES", "EXCELLENCE & INTEGRITY", "PORTAL LOGIN"];
+        const watermarkCount = 6;
+
+        for (let i = 0; i < watermarkCount; i++) {
+            watermarks.push({
+                text: watermarkTexts[i % watermarkTexts.length],
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.4, // Horizontal speed & direction
+                vy: (Math.random() - 0.5) * 0.4, // Vertical speed & direction
+                fontSize: Math.floor(Math.random() * 18) + 24, // 24px to 42px
+                angle: (Math.random() - 0.5) * 0.6, // Slight rotation tilt
+                opacity: Math.random() * 0.08 + 0.04 // Subtle watermark opacity
+            });
+        }
+
+        function animateBackground() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw moving watermark texts
+            ctx.save();
+            watermarks.forEach(w => {
+                w.x += w.vx;
+                w.y += w.vy;
+
+                // Wrap around edges smoothly
+                if (w.x < -300) w.x = canvas.width + 200;
+                if (w.x > canvas.width + 300) w.x = -200;
+                if (w.y < -100) w.y = canvas.height + 100;
+                if (w.y > canvas.height + 100) w.y = -100;
+
+                ctx.save();
+                ctx.translate(w.x, w.y);
+                ctx.rotate(w.angle);
+                ctx.font = `bold ${w.fontSize}px Inter, sans-serif`;
+                ctx.fillStyle = `rgba(30, 41, 59, ${w.opacity})`;
+                ctx.textAlign = 'center';
+                ctx.fillText(w.text, 0, 0);
+                ctx.restore();
+            });
+            ctx.restore();
+
+            // 2. Draw slow-motion ripple bubbles
+            bubbles.forEach(b => {
+                b.x += b.vx;
+                b.y += b.vy;
+                b.radius += b.growthSpeed;
+
+                if (b.x < -150) b.x = canvas.width + 150;
+                if (b.x > canvas.width + 150) b.x = -150;
+                if (b.y < -150) b.y = canvas.height + 150;
+                if (b.y > canvas.height + 150) b.y = -150;
+
+                if (b.radius > b.maxRadius) {
+                    b.radius = Math.random() * 20 + 10;
+                }
+
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(37, 99, 235, ${Math.max(0, b.opacity * (1 - b.radius / b.maxRadius))})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius * 0.3, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(147, 197, 253, ${Math.max(0, (b.opacity * 0.3) * (1 - b.radius / b.maxRadius))})`;
+                ctx.fill();
+            });
+
+            requestAnimationFrame(animateBackground);
+        }
+
+        animateBackground();
+
         function showMsg(text, type = 'error') {
             const box = document.getElementById('messageBox');
             box.textContent = text;
-            box.className = `mb-6 p-4 rounded-xl text-sm border block ${
+            box.className = `mb-6 p-4 rounded-2xl text-sm border block transition-all duration-300 transform scale-100 opacity-100 ${
                 type === 'error' 
-                    ? 'bg-red-900/30 border-red-500/50 text-red-200' 
-                    : 'bg-blue-900/30 border-blue-500/50 text-blue-200'
+                    ? 'bg-red-50 border-red-200 text-red-700 shadow-lg shadow-red-100' 
+                    : 'bg-blue-50 border-blue-200 text-blue-700 shadow-lg shadow-blue-100'
             }`;
             setTimeout(() => {
-                box.className = 'hidden mb-6 p-4 rounded-xl text-sm border';
+                box.className = 'hidden mb-6 p-4 rounded-2xl text-sm border transform scale-95 opacity-0';
             }, 4000);
         }
 
