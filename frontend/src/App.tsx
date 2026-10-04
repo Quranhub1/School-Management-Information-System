@@ -74,20 +74,6 @@ const userInitials = useMemo(() => {
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }, [sessionUsername]);
 
-useEffect(() => {
-  if (!activeModule) return;
-  visibleSidebarGroups.forEach(group => {
-    const containsActiveItem = group.items?.some(item => {
-      if (item.module !== activeModule) return false;
-      if (activeSubsection) return item.subsection === activeSubsection;
-      return true;
-    });
-    if (containsActiveItem && !group.alwaysOpen && !openSidebarGroups[group.label]) {
-      setOpenSidebarGroups(current => ({ ...current, [group.label]: true }));
-    }
-  });
-}, [activeModule, activeSubsection, visibleSidebarGroups]);
-
 function navigate(module:ModuleKey, subsection?:string){
   setActiveModule(module);
   setActiveSubsection(subsection??null);
@@ -161,6 +147,20 @@ const visibleSidebarGroups=sidebarGroups.map(group=>({
   ...group,
   items:group.items.filter(canSeeSidebarItem)
 })).filter(group=>group.items.length>0);
+
+useEffect(() => {
+  if (!activeModule) return;
+  visibleSidebarGroups.forEach(group => {
+    const containsActiveItem = group.items?.some(item => {
+      if (item.module !== activeModule) return false;
+      if (activeSubsection) return item.subsection === activeSubsection;
+      return true;
+    });
+    if (containsActiveItem && !group.alwaysOpen && !openSidebarGroups[group.label]) {
+      setOpenSidebarGroups(current => ({ ...current, [group.label]: true }));
+    }
+  });
+}, [activeModule, activeSubsection, visibleSidebarGroups]);
 
 return <main className="app-shell">
   <aside className="flex flex-col w-72 h-screen bg-gradient-to-b from-slate-50 to-white border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)] font-sans text-slate-700 select-none">
