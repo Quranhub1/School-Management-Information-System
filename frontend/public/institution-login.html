@@ -1708,230 +1708,54 @@ DOM Element References
             roleBadgeIcon.innerHTML = '<i class="fa-solid ' + recognized.iconClass + '"></i>';
             modal.classList.remove('hidden');
             setTimeout(() => { modal.classList.remove('opacity-0'); modalCard.classList.remove('scale-90'); modalCard.classList.add('scale-100'); }, 10);
+        function showCustomImageLogo(src) {
+            const imgEl = document.getElementById('customLogoImg');
+            if (!imgEl) return;
+            imgEl.src = src;
+            imgEl.classList.remove('hidden');
         }
-function closeDashboardModal() {
 
-            const modal = document.getElementById('welcomeDashboardModal');
-
-            const modalCard = document.getElementById('welcomeModalCard');
-
-            modal.classList.add('opacity-0');
-
-            modalCard.classList.remove('scale-100');
-
-            modalCard.classList.add('scale-90');
-
-            setTimeout(() => {
-
-                modal.classList.add('hidden');
-
-            }, 300);
-
-        }
-
-
-
-        customizerToggleBtn.addEventListener('click', () => {
-
-            customizerDrawer.classList.remove('translate-x-full');
-
-        });
-
-
-
-        closeCustomizerBtn.addEventListener('click', () => {
-
-            customizerDrawer.classList.add('translate-x-full');
-
-        });
-
-
-
-        customSchoolNameInput.addEventListener('input', (e) => {
-
-            const name = e.target.value.trim() || 'Institution Name';
-
-            institutionNameDisplay.textContent = name;
-
-            footerSchoolName.textContent = name;
-
-        });
-
-
-
-        customMottoInput.addEventListener('input', (e) => {
-
-            institutionMottoDisplay.textContent = e.target.value.trim();
-
-        });
-
-
-
-        function applyPresetSchool(name, motto, icon) {
-
-            customSchoolNameInput.value = name;
-
-            customMottoInput.value = motto;
-
-            institutionNameDisplay.textContent = name;
-
-            institutionMottoDisplay.textContent = motto;
-
-            footerSchoolName.textContent = name;
-
-            setLogoIcon();
-
-            showToast(`Updated institution to ${name}`, 'success');
-
-        }
-
-
-
-        function switchLogoTab(tab) {
-
-            const tabs = ['preset', 'url', 'upload'];
-
-            tabs.forEach(t => {
-
-                const tabBtn = document.getElementById(`logoTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
-
-                const panel = document.getElementById(`logoPanel${t.charAt(0).toUpperCase() + t.slice(1)}`);
-
-                if (t === tab) {
-
-                    tabBtn.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg bg-white text-slate-900 shadow-sm transition-all';
-
-                    panel.classList.remove('hidden');
-
-                } else {
-
-                    tabBtn.className = 'flex-1 py-1.5 text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-all';
-
-                    panel.classList.add('hidden');
-
-                }
-
-            });
-
-        }
-
-
-
-        function showCustomImageLogo(src) {
-
-            const svgEl = document.getElementById('schoolLogoSvg');
-
-            const imgEl = document.getElementById('customLogoImg');
-
-
-
-            imgEl.src = src;
-
-            imgEl.classList.remove('hidden');
-
-            svgEl.classList.add('hidden');
-
-        }
-
-
-
-        function applyLogoFromUrl() {
-
-            const urlInput = document.getElementById('customLogoUrlInput');
-
-            const url = urlInput.value.trim();
-
-            if (!url) {
-
-                showToast('Please enter a valid image URL', 'error');
-
-                return;
-
-            }
-
-            showCustomImageLogo(url);
-
-            showToast('Loaded logo from URL', 'success');
-
-        }
-
-
-
-        function handleLogoFileUpload(event) {
-
-            const file = event.target.files[0];
-
-            if (!file) return;
-
-
-
-            if (!file.type.startsWith('image/')) {
-
-                showToast('Please select a valid image file', 'error');
-
-                return;
-
-            }
-
-
-
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-
-                showCustomImageLogo(e.target.result);
-
-                showToast('Logo image uploaded successfully', 'success');
-
-            };
-
-            reader.readAsDataURL(file);
-
-        }
-
-
-
-        function handleLogoError() {
-
-            showToast('Failed to load custom logo image', 'error');
-
-            const svgEl = document.getElementById('schoolLogoSvg');
-
-            const imgEl = document.getElementById('customLogoImg');
-
-            imgEl.classList.add('hidden');
-
-            svgEl.classList.remove('hidden');
-
-        }
-
-
-
-        function setLogoIcon() {
-
-            const svgEl = document.getElementById('schoolLogoSvg');
-
-            const imgEl = document.getElementById('customLogoImg');
-
-
-
-            imgEl.classList.add('hidden');
-
-            svgEl.classList.remove('hidden');
-
-
-
-            if (logoSvgs[type]) {
-
-                svgEl.innerHTML = logoSvgs[type];
-
-            }
-
-        }
-
-
-
-        function setThemePalette(primaryHex, secondaryHex, notify = true) {
+        function applyLogoFromUrl() {
+            const urlInput = document.getElementById('customLogoUrlInput');
+            const url = urlInput.value.trim();
+            if (!url) {
+                showToast('Please enter a valid image URL', 'error');
+                return;
+            }
+            showCustomImageLogo(url);
+            showToast('Loaded logo from URL', 'success');
+        }
+
+        function handleLogoFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showToast('Please select a valid image file', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                showCustomImageLogo(e.target.result);
+                showToast('Logo image uploaded successfully', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleLogoError() {
+            const imgEl = document.getElementById('customLogoImg');
+            if (imgEl) imgEl.classList.add('hidden');
+            showToast('Failed to load the institution logo from the configured URL', 'error');
+        }
+
+        function setLogoIcon() {
+            const logoUrl = apiUrl(defaultBranding.logoPath);
+            if (logoUrl) {
+                showCustomImageLogo(logoUrl);
+                document.getElementById('customLogoUrlInput').value = logoUrl;
+            }
+        }
+
+        function setThemePalette(primaryHex, secondaryHex, notify = true) {
 
             document.documentElement.style.setProperty('--brand-primary', primaryHex);
 
