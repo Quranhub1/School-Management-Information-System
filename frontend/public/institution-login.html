@@ -234,64 +234,104 @@
 
     <script>
         // --- 1. CONFIGURATION & PERSISTENT STATE ---
+        // --- SYSTEM INSTITUTION CONFIGURATION ---
+        // The login page is a consumer of the same institution configuration
+        // maintained by SMIS Administration > Institution Settings. It must not
+        // maintain a second branding configuration in browser localStorage.
+        const API_BASE_URL = (new URLSearchParams(window.location.search).get('api') || '').replace(/\\/$/, '');
+
         const DEFAULT_CONFIG = {
-            name: "KAMPALA SCHOOL OF HEALTH SCIENCES",
-            motto: "Excellence & Integrity",
-            logo: "https://www.kshs.ac.ug/images/kampala%20logo.png"
+            name: "Your Institution Name",
+            motto: "",
+            logo: "",
+            primaryColor: "#1e40af",
+            accentColor: "#f97316"
         };
 
-        const config = {
-            name: localStorage.getItem('inst_name') || DEFAULT_CONFIG.name,
-            motto: localStorage.getItem('inst_motto') || DEFAULT_CONFIG.motto,
-            logo: localStorage.getItem('inst_logo') || DEFAULT_CONFIG.logo
-        };
+        const config = { ...DEFAULT_CONFIG };
+
+        function apiUrl(path) {
+            if (!path) return '';
+            if (/^https?:\\/\\//i.test(path)) return path;
+            return API_BASE_URL + (path.startsWith('/') ? path : '/' + path);
+        }
+
+        function resolveLogo(path) {
+            if (!path) return '';
+            return apiUrl(path);
+        }
 
         function applyBranding() {
-            document.getElementById('displayName').textContent = config.name;
-            document.getElementById('displayMotto').textContent = config.motto;
-            document.getElementById('displayLogo').src = config.logo;
+            document.getElementById('displayName').textContent = config.name || DEFAULT_CONFIG.name;
+            document.getElementById('displayMotto').textContent = config.motto || '';
+            const logo = document.getElementById('displayLogo');
+            logo.src = resolveLogo(config.logo) || 'https://placehold.co/80x80/f1f5f9/1e293b?text=LOGO';
+            logo.onerror = function () {
+                this.onerror = null;
+                this.src = 'https://placehold.co/80x80/f1f5f9/1e293b?text=LOGO';
+            };
 
-            document.getElementById('settingInstName').value = config.name;
-            document.getElementById('settingMotto').value = config.motto;
-            document.getElementById('settingLogo').value = config.logo;
+            document.getElementById('settingInstName').value = config.name || '';
+            document.getElementById('settingMotto').value = config.motto || '';
+            document.getElementById('settingLogo').value = config.logo || '';
+        }
+
+        async function loadSystemConfiguration() {
+            try {
+                const response = await fetch(apiUrl('/api/public/institution-settings/active'), {
+                    headers: { Accept: 'application/json' }
+                });
+                if (!response.ok) throw new Error('Institution settings unavailable.');
+                const settings = await response.json();
+
+                config.name = settings.institutionName || DEFAULT_CONFIG.name;
+                config.motto = settings.motto || DEFAULT_CONFIG.motto;
+                config.logo = settings.logoPath || DEFAULT_CONFIG.logo;
+                config.primaryColor = settings.primaryColor || DEFAULT_CONFIG.primaryColor;
+                config.accentColor = settings.accentColor || DEFAULT_CONFIG.accentColor;
+
+                applyBranding();
+                document.documentElement.style.setProperty('--smis-primary', config.primaryColor);
+                document.documentElement.style.setProperty('--smis-accent', config.accentColor);
+            } catch (error) {
+                console.warn('Unable to load active institution configuration.', error);
+                applyBranding();
+            }
         }
 
         function onSettingsChange() {
+            // This modal is a live preview of the system configuration. Persistent
+            // changes belong to the authenticated Administration > Institution Settings
+            // screen, preventing an unauthenticated login page from becoming a
+            // configuration-write endpoint.
             config.name = document.getElementById('settingInstName').value.trim() || DEFAULT_CONFIG.name;
-            config.motto = document.getElementById('settingMotto').value.trim() || DEFAULT_CONFIG.motto;
-            config.logo = document.getElementById('settingLogo').value.trim() || DEFAULT_CONFIG.logo;
-
-            localStorage.setItem('inst_name', config.name);
-            localStorage.setItem('inst_motto', config.motto);
-            localStorage.setItem('inst_logo', config.logo);
+            config.motto = document.getElementById('settingMotto').value.trim();
+            config.logo = document.getElementById('settingLogo').value.trim();
 
             document.getElementById('displayName').textContent = config.name;
             document.getElementById('displayMotto').textContent = config.motto;
-            document.getElementById('displayLogo').src = config.logo;
+            document.getElementById('displayLogo').src = resolveLogo(config.logo) || 'https://placehold.co/80x80/f1f5f9/1e293b?text=LOGO';
         }
 
         function resetToDefaults() {
-            config.name = DEFAULT_CONFIG.name;
-            config.motto = DEFAULT_CONFIG.motto;
-            config.logo = DEFAULT_CONFIG.logo;
-
-            localStorage.removeItem('inst_name');
-            localStorage.removeItem('inst_motto');
-            localStorage.removeItem('inst_logo');
-
-            applyBranding();
+            // Restore the configuration currently stored by SMIS, rather than a
+            // browser-local copy or a second source of truth.
+            void loadSystemConfiguration();
         }
 
         function toggleSettingsModal(show) {
             const modal = document.getElementById('settingsModal');
             if (show) {
+                void loadSystemConfiguration();
                 modal.classList.remove('hidden');
             } else {
                 modal.classList.add('hidden');
+                // Discard preview-only edits and return to the server configuration.
+                void loadSystemConfiguration();
             }
         }
 
-        applyBranding();
+        void loadSystemConfiguration();
 
         // --- 2. UNIFORM STRATIFIED GRID CANVAS WATERMARKS ---
         const canvas = document.getElementById('bgCanvas');
@@ -448,10 +488,11 @@
             }, 4500);
         }
 
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value;
+            const remember = document.getElementById('rememberMe').checked;
 
             if (!user || !pass) {
                 showMsg('Please fill in all required fields.', 'error');
@@ -461,15 +502,43 @@
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.textContent = 'AUTHENTICATING...';
-
             showMsg('Authenticating credentials...', 'info');
 
-            setTimeout(() => {
+            try {
+                const response = await fetch(apiUrl('/api/auth/login'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json'
+                    },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+
+                const payload = await response.json().catch(() => null);
+                if (!response.ok) {
+                    throw new Error(payload?.message || 'Invalid username or password.');
+                }
+
+                if (!payload || typeof payload.accessToken !== 'string' || typeof payload.username !== 'string' || !Array.isArray(payload.roles)) {
+                    throw new Error('The authentication service returned an invalid session.');
+                }
+
+                if (remember) localStorage.setItem('smis.rememberedUsername', user);
+                else localStorage.removeItem('smis.rememberedUsername');
+
+                showMsg('Authentication successful. Loading workspace...', 'info');
+                window.parent.postMessage({ type: 'smis-login', session: payload }, window.location.origin);
+            } catch (error) {
+                showMsg(error instanceof Error ? error.message : 'Unable to sign in.', 'error');
                 btn.disabled = false;
                 btn.textContent = 'SIGN IN';
-                showMsg(`Welcome back! Logged into ${config.name}.`, 'info');
-                document.getElementById('loginForm').reset();
-            }, 1200);
+            }
+        }
+
+        const rememberedUsername = localStorage.getItem('smis.rememberedUsername');
+        if (rememberedUsername) {
+            document.getElementById('username').value = rememberedUsername;
+            document.getElementById('rememberMe').checked = true;
         }
     </script>
 </body>
