@@ -288,9 +288,15 @@ function App(){
   },[institution])
 
   useEffect(()=>{
-    void getPublicInstitutionSettings()
-      .then(setInstitution)
-      .catch(()=>setInstitution(DEFAULT_INSTITUTION))
+    const refreshInstitution = () => {
+      void getPublicInstitutionSettings()
+        .then(setInstitution)
+        .catch(() => undefined)
+    }
+
+    refreshInstitution()
+    window.addEventListener('smis:institution-settings-updated', refreshInstitution)
+    return () => window.removeEventListener('smis:institution-settings-updated', refreshInstitution)
   },[])
 
   return authed
