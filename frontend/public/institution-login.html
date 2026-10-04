@@ -18,36 +18,64 @@
         }
     </script>
     <style>
+        /* Glassmorphism Surface */
         .glass-card {
-            background: rgba(255, 255, 255, 0.84);
+            background: rgba(255, 255, 255, 0.88);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.95);
-            box-shadow: 0 25px 50px -12px rgba(30, 41, 59, 0.12);
+            box-shadow: 0 20px 40px -15px rgba(30, 41, 59, 0.1);
         }
+
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 35px 60px -15px rgba(15, 23, 42, 0.25);
+        }
+
+        /* Purposeful Card Lift */
         .hover-lift {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .hover-lift:hover {
-            transform: translateY(-6px) scale(1.01);
-            box-shadow: 0 30px 60px -15px rgba(37, 99, 235, 0.18);
+            transform: translateY(-4px);
+            box-shadow: 0 30px 60px -12px rgba(30, 41, 59, 0.16);
         }
-        .icon-hover {
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+        /* Logo Interactive Float */
+        .logo-interactive {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
         }
-        .icon-hover:hover {
-            transform: scale(1.15) rotate(4deg);
+        .logo-interactive:hover {
+            transform: scale(1.06) rotate(2deg);
+            box-shadow: 0 12px 24px -6px rgba(37, 99, 235, 0.25);
         }
-        .btn-scale {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* Tactile Action Button */
+        .btn-primary {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s ease;
         }
-        .btn-scale:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.4);
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -6px rgba(37, 99, 235, 0.4);
+            filter: brightness(1.04);
         }
-        .btn-scale:active {
-            transform: translateY(0) scale(0.97);
+        .btn-primary:active {
+            transform: translateY(0);
+            filter: brightness(0.97);
         }
+
+        /* Settings Gear Rotation Effect */
+        .settings-btn:hover svg {
+            transform: rotate(60deg);
+        }
+        .settings-btn svg {
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Background Canvas */
         canvas#bgCanvas {
             position: fixed;
             top: 0;
@@ -61,139 +89,299 @@
 </head>
 <body class="bg-gradient-to-br from-sky-50 via-indigo-50/50 to-blue-100 font-sans text-slate-800 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
 
-    <canvas id="bgCanvas"></canvas>
+    <!-- Fullscreen Dynamic Spinning & Drifting Canvas Background -->
+    <canvas id="bgCanvas" aria-hidden="true"></canvas>
 
-    <div class="w-full max-w-md glass-card rounded-3xl overflow-hidden p-8 sm:p-10 relative z-10 hover-lift">
+    <!-- Settings Gear Button (Top-Right) -->
+    <button type="button" onclick="toggleSettingsModal(true)" 
+            aria-label="Open Branding Settings"
+            class="settings-btn fixed top-5 right-5 z-30 p-3 bg-white/80 hover:bg-white text-slate-600 hover:text-blue-600 rounded-2xl border border-slate-200 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 backdrop-blur-md">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+    </button>
+
+    <!-- Main Login Card -->
+    <main class="w-full max-w-md glass-card rounded-3xl overflow-hidden p-8 sm:p-10 relative z-10 hover-lift">
         
-        <!-- Header with Centered Logo -->
-        <div class="text-center mb-8 flex flex-col items-center justify-center">
-            <div class="flex items-center justify-center w-24 h-24 rounded-2xl bg-white p-3 mb-4 border border-slate-200/80 shadow-md icon-hover cursor-pointer">
-                <img src="https://www.kshs.ac.ug/images/kampala%20logo.png" alt="Institution Logo" class="w-full h-full object-contain filter drop-shadow" onerror="this.onerror=null; this.src='https://placehold.co/80x80/f1f5f9/1e293b?text=KSHS';">
+        <!-- Header with Centered Interactive Logo -->
+        <header class="text-center mb-8 flex flex-col items-center justify-center">
+            <div class="logo-interactive flex items-center justify-center w-24 h-24 rounded-2xl bg-white p-3 mb-4 border border-slate-200/90 shadow-md cursor-pointer">
+                <img id="displayLogo" 
+                     src="https://www.kshs.ac.ug/images/kampala%20logo.png" 
+                     alt="Institution Logo" 
+                     class="w-full h-full object-contain filter drop-shadow" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/80x80/f1f5f9/1e293b?text=LOGO';">
             </div>
-            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent transition-all duration-300 hover:scale-105 cursor-default">INSTITUTION NAME</h1>
-            <p class="text-xs uppercase tracking-widest text-blue-600 font-bold mt-1.5 transition-colors duration-300 hover:text-indigo-600 cursor-default">ENTER MOTTO</p>
-        </div>
+            <h1 id="displayName" class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-900 bg-clip-text text-transparent text-center leading-tight">
+                INSTITUTION NAME
+            </h1>
+            <p id="displayMotto" class="text-xs uppercase tracking-widest text-blue-600 font-bold mt-1.5 text-center transition-colors duration-200 hover:text-blue-700 cursor-default">
+                ENTER MOTTO
+            </p>
+        </header>
 
-        <div id="messageBox" class="hidden mb-6 p-4 rounded-2xl text-sm border transition-all duration-300 transform scale-95 opacity-0"></div>
+        <!-- Dynamic Message Box -->
+        <div id="messageBox" role="alert" aria-live="polite" class="hidden mb-6 p-4 rounded-2xl text-sm border transition-all duration-300"></div>
 
-        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+        <!-- Login Form -->
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5" novalidate>
             <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 transition-colors hover:text-slate-800 cursor-default">USERNAME</label>
+                <label for="username" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 transition-colors duration-200 hover:text-slate-800">
+                    Username 
+                </label>
                 <div class="relative">
-                    <input type="text" id="username" required placeholder="Enter your credentials"
-                        class="w-full bg-white/90 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 transition-all duration-300 shadow-sm hover:border-slate-300 hover:scale-[1.01]">
+                    <input type="text" id="username" name="username" required placeholder="Enter your credentials"
+                        class="w-full bg-white/90 hover:bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 transition-colors duration-200 shadow-sm">
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 transition-colors hover:text-slate-800 cursor-default">Password</label>
+                <label for="password" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 transition-colors duration-200 hover:text-slate-800">
+                    Password
+                </label>
                 <div class="relative">
-                    <input type="password" id="password" required placeholder="••••••••••••"
-                        class="w-full bg-white/90 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 transition-all duration-300 shadow-sm hover:border-slate-300 hover:scale-[1.01]">
+                    <input type="password" id="password" name="password" required placeholder="••••••••••••"
+                        class="w-full bg-white/90 hover:bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-3.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 transition-colors duration-200 shadow-sm">
                 </div>
             </div>
 
             <div class="flex items-center justify-between text-sm pt-1">
-                <label class="flex items-center text-slate-600 cursor-pointer hover:text-slate-900 transition-colors select-none">
-                    <input type="checkbox" class="rounded bg-white border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 mr-2 transition-transform hover:scale-125">
+                <label for="rememberMe" class="group flex items-center text-slate-600 cursor-pointer select-none transition-colors duration-150 hover:text-slate-900">
+                    <input type="checkbox" id="rememberMe" name="rememberMe" 
+                           class="rounded bg-white border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 mr-2 transition-colors group-hover:border-blue-400 cursor-pointer">
                     Remember me
                 </label>
-                <a href="#" onclick="showMsg('Password reset instructions sent to registered admin.', 'info')" class="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-all transform hover:scale-105 inline-block">Forgot password?</a>
+                <button type="button" onclick="showMsg('Password reset link sent to your registered email.', 'info')" 
+                        class="text-blue-600 hover:text-blue-800 font-semibold hover:underline text-sm focus:outline-none transition-colors duration-150 transform active:scale-95">
+                    Forgot password?
+                </button>
             </div>
 
-            <button type="submit" 
-                class="w-full py-4 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white font-bold tracking-wide rounded-xl shadow-lg shadow-blue-600/25 btn-scale uppercase text-sm">
+            <button type="submit" id="submitBtn"
+                class="btn-primary w-full py-4 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white font-bold tracking-wide rounded-xl shadow-lg shadow-blue-600/25 uppercase text-sm focus:outline-none focus:ring-4 focus:ring-blue-600/25">
                 SIGN IN
             </button>
         </form>
 
-        <div class="mt-8 text-center border-t border-slate-200/80 pt-6">
-            <p class="text-xs text-slate-500 font-medium tracking-wide">Designed by <span class="text-blue-600 font-bold transition-colors hover:text-indigo-600 cursor-pointer inline-block transform hover:scale-110">JOES TECHNOLOGIES</span></p>
+        <footer class="mt-8 text-center border-t border-slate-200/80 pt-6">
+            <p class="text-xs text-slate-500 font-medium tracking-wide">
+                Designed by <span class="text-blue-600 font-bold transition-colors duration-200 hover:text-indigo-700 hover:underline cursor-pointer">JOES TECHNOLOGIES</span>
+            </p>
+        </footer>
+    </main>
+
+    <!-- Settings Modal Dialog -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300">
+        <div class="w-full max-w-md glass-modal rounded-3xl p-6 sm:p-8 relative">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+                <div class="flex items-center space-x-2">
+                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">Portal Customizer</h2>
+                </div>
+                <button type="button" onclick="toggleSettingsModal(false)" 
+                        class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-all duration-150 transform hover:scale-110 active:scale-90">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-4 my-6">
+                <div>
+                    <label for="settingInstName" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        Institution Name
+                    </label>
+                    <input type="text" id="settingInstName" oninput="onSettingsChange()" placeholder="e.g. Kampala School of Health Sciences"
+                           class="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors duration-150">
+                </div>
+
+                <div>
+                    <label for="settingMotto" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        Institution Motto
+                    </label>
+                    <input type="text" id="settingMotto" oninput="onSettingsChange()" placeholder="e.g. Excellence & Integrity"
+                           class="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors duration-150">
+                </div>
+
+                <div>
+                    <label for="settingLogo" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        Logo Image URL
+                    </label>
+                    <input type="url" id="settingLogo" oninput="onSettingsChange()" placeholder="https://..."
+                           class="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors duration-150">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
+                <button type="button" onclick="resetToDefaults()" 
+                        class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150">
+                    RESET DEFAULT
+                </button>
+                <button type="button" onclick="toggleSettingsModal(false)" 
+                        class="btn-primary px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md">
+                    SAVE & CLOSE
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
+        // --- 1. CONFIGURATION & PERSISTENT STATE ---
+        const DEFAULT_CONFIG = {
+            name: "KAMPALA SCHOOL OF HEALTH SCIENCES",
+            motto: "EXCELLENCE & INTEGRITY",
+            logo: "https://www.kshs.ac.ug/images/kampala%20logo.png"
+        };
+
+        const config = {
+            name: localStorage.getItem('inst_name') || DEFAULT_CONFIG.name,
+            motto: localStorage.getItem('inst_motto') || DEFAULT_CONFIG.motto,
+            logo: localStorage.getItem('inst_logo') || DEFAULT_CONFIG.logo
+        };
+
+        function applyBranding() {
+            document.getElementById('displayName').textContent = config.name;
+            document.getElementById('displayMotto').textContent = config.motto;
+            document.getElementById('displayLogo').src = config.logo;
+
+            document.getElementById('settingInstName').value = config.name;
+            document.getElementById('settingMotto').value = config.motto;
+            document.getElementById('settingLogo').value = config.logo;
+        }
+
+        function onSettingsChange() {
+            config.name = document.getElementById('settingInstName').value.trim() || DEFAULT_CONFIG.name;
+            config.motto = document.getElementById('settingMotto').value.trim() || DEFAULT_CONFIG.motto;
+            config.logo = document.getElementById('settingLogo').value.trim() || DEFAULT_CONFIG.logo;
+
+            localStorage.setItem('inst_name', config.name);
+            localStorage.setItem('inst_motto', config.motto);
+            localStorage.setItem('inst_logo', config.logo);
+
+            document.getElementById('displayName').textContent = config.name;
+            document.getElementById('displayMotto').textContent = config.motto;
+            document.getElementById('displayLogo').src = config.logo;
+        }
+
+        function resetToDefaults() {
+            config.name = DEFAULT_CONFIG.name;
+            config.motto = DEFAULT_CONFIG.motto;
+            config.logo = DEFAULT_CONFIG.logo;
+
+            localStorage.removeItem('inst_name');
+            localStorage.removeItem('inst_motto');
+            localStorage.removeItem('inst_logo');
+
+            applyBranding();
+        }
+
+        function toggleSettingsModal(show) {
+            const modal = document.getElementById('settingsModal');
+            if (show) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        applyBranding();
+
+        // --- 2. MULTI-ANGLE SPINNING CANVAS WATERMARKS ---
         const canvas = document.getElementById('bgCanvas');
         const ctx = canvas.getContext('2d');
+        let dpr = window.devicePixelRatio || 1;
 
         function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            dpr = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            ctx.scale(dpr, dpr);
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Ripple bubbles array
-        const bubbles = [];
-        const bubbleCount = 14;
+        // 14 watermarks spanning across the whole background with individual spinning velocities & angles
+        const watermarkCount = 14;
+        const watermarks = Array.from({ length: watermarkCount }, (_, i) => ({
+            type: i % 2 === 0 ? 'name' : 'motto',
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            vx: (Math.random() - 0.5) * 0.35,
+            vy: (Math.random() - 0.5) * 0.35,
+            angle: Math.random() * Math.PI * 2, // Full 360-degree randomized start angle
+            spinSpeed: (Math.random() - 0.5) * 0.003 + (Math.random() > 0.5 ? 0.001 : -0.001), // Continuous slow rotational spin
+            fontSize: i % 2 === 0 ? Math.floor(Math.random() * 8) + 24 : Math.floor(Math.random() * 6) + 20,
+            opacity: Math.random() * 0.035 + 0.03
+        }));
 
-        for (let i = 0; i < bubbleCount; i++) {
-            bubbles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                radius: Math.random() * 50 + 20,
-                maxRadius: Math.random() * 100 + 70,
-                growthSpeed: Math.random() * 0.2 + 0.08,
-                opacity: Math.random() * 0.25 + 0.05,
-                vx: (Math.random() - 0.5) * 0.15,
-                vy: (Math.random() - 0.5) * 0.15
-            });
-        }
-
-        // Watermark texts array moving in different directions
-        const watermarks = [];
-        const watermarkTexts = ["INSTITUTION NAME", "KAMPALA SCHOOL OF HEALTH SCIENCES", "EXCELLENCE & INTEGRITY", "PORTAL LOGIN"];
-        const watermarkCount = 6;
-
-        for (let i = 0; i < watermarkCount; i++) {
-            watermarks.push({
-                text: watermarkTexts[i % watermarkTexts.length],
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                vx: (Math.random() - 0.5) * 0.4, // Horizontal speed & direction
-                vy: (Math.random() - 0.5) * 0.4, // Vertical speed & direction
-                fontSize: Math.floor(Math.random() * 18) + 24, // 24px to 42px
-                angle: (Math.random() - 0.5) * 0.6, // Slight rotation tilt
-                opacity: Math.random() * 0.08 + 0.04 // Subtle watermark opacity
-            });
-        }
+        // Ripple bubbles for soft organic depth
+        const bubbleCount = 8;
+        const bubbles = Array.from({ length: bubbleCount }, () => ({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            radius: Math.random() * 40 + 20,
+            maxRadius: Math.random() * 90 + 60,
+            growthSpeed: Math.random() * 0.12 + 0.05,
+            opacity: Math.random() * 0.18 + 0.04,
+            vx: (Math.random() - 0.5) * 0.18,
+            vy: (Math.random() - 0.5) * 0.18
+        }));
 
         function animateBackground() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-            // 1. Draw moving watermark texts
-            ctx.save();
+            // 1. Draw spinning and drifting watermarks across all angles
             watermarks.forEach(w => {
                 w.x += w.vx;
                 w.y += w.vy;
+                w.angle += w.spinSpeed; // Dynamic continuous rotation
 
-                // Wrap around edges smoothly
-                if (w.x < -300) w.x = canvas.width + 200;
-                if (w.x > canvas.width + 300) w.x = -200;
-                if (w.y < -100) w.y = canvas.height + 100;
-                if (w.y > canvas.height + 100) w.y = -100;
+                // Extended bounds to ensure smooth wrapping around all screen edges
+                const wrapMargin = 450;
+                if (w.x < -wrapMargin) w.x = window.innerWidth + wrapMargin;
+                if (w.x > window.innerWidth + wrapMargin) w.x = -wrapMargin;
+                if (w.y < -wrapMargin) w.y = window.innerHeight + wrapMargin;
+                if (w.y > window.innerHeight + wrapMargin) w.y = -wrapMargin;
 
                 ctx.save();
                 ctx.translate(w.x, w.y);
                 ctx.rotate(w.angle);
-                ctx.font = `bold ${w.fontSize}px Inter, sans-serif`;
-                ctx.fillStyle = `rgba(30, 41, 59, ${w.opacity})`;
+
+                const isName = w.type === 'name';
+                const text = (isName ? config.name : config.motto).toUpperCase();
+
+                if (isName) {
+                    ctx.font = `800 ${w.fontSize}px Inter, sans-serif`;
+                    ctx.fillStyle = `rgba(30, 41, 59, ${w.opacity})`;
+                } else {
+                    ctx.font = `600 italic ${w.fontSize}px Inter, sans-serif`;
+                    ctx.fillStyle = `rgba(37, 99, 235, ${w.opacity * 1.2})`;
+                }
+
                 ctx.textAlign = 'center';
-                ctx.fillText(w.text, 0, 0);
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, 0, 0);
                 ctx.restore();
             });
-            ctx.restore();
 
-            // 2. Draw slow-motion ripple bubbles
+            // 2. Draw subtle ripple bubbles
             bubbles.forEach(b => {
                 b.x += b.vx;
                 b.y += b.vy;
                 b.radius += b.growthSpeed;
 
-                if (b.x < -150) b.x = canvas.width + 150;
-                if (b.x > canvas.width + 150) b.x = -150;
-                if (b.y < -150) b.y = canvas.height + 150;
-                if (b.y > canvas.height + 150) b.y = -150;
+                if (b.x < -150) b.x = window.innerWidth + 150;
+                if (b.x > window.innerWidth + 150) b.x = -150;
+                if (b.y < -150) b.y = window.innerHeight + 150;
+                if (b.y > window.innerHeight + 150) b.y = -150;
 
                 if (b.radius > b.maxRadius) {
                     b.radius = Math.random() * 20 + 10;
@@ -202,12 +390,12 @@
                 ctx.beginPath();
                 ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
                 ctx.strokeStyle = `rgba(37, 99, 235, ${Math.max(0, b.opacity * (1 - b.radius / b.maxRadius))})`;
-                ctx.lineWidth = 1.5;
+                ctx.lineWidth = 1.2;
                 ctx.stroke();
 
                 ctx.beginPath();
                 ctx.arc(b.x, b.y, b.radius * 0.3, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(147, 197, 253, ${Math.max(0, (b.opacity * 0.3) * (1 - b.radius / b.maxRadius))})`;
+                ctx.fillStyle = `rgba(147, 197, 253, ${Math.max(0, (b.opacity * 0.25) * (1 - b.radius / b.maxRadius))})`;
                 ctx.fill();
             });
 
@@ -216,34 +404,44 @@
 
         animateBackground();
 
+        // --- 3. FORM SUBMISSION HANDLING ---
+        let msgTimeout;
         function showMsg(text, type = 'error') {
             const box = document.getElementById('messageBox');
+            clearTimeout(msgTimeout);
             box.textContent = text;
-            box.className = `mb-6 p-4 rounded-2xl text-sm border block transition-all duration-300 transform scale-100 opacity-100 ${
+            box.className = `mb-6 p-4 rounded-2xl text-sm border block transition-all duration-300 ${
                 type === 'error' 
-                    ? 'bg-red-50 border-red-200 text-red-700 shadow-lg shadow-red-100' 
-                    : 'bg-blue-50 border-blue-200 text-blue-700 shadow-lg shadow-blue-100'
+                    ? 'bg-red-50 border-red-200 text-red-700 shadow-sm' 
+                    : 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
             }`;
-            setTimeout(() => {
-                box.className = 'hidden mb-6 p-4 rounded-2xl text-sm border transform scale-95 opacity-0';
-            }, 4000);
+            msgTimeout = setTimeout(() => {
+                box.className = 'hidden mb-6 p-4 rounded-2xl text-sm border';
+            }, 4500);
         }
 
         function handleLogin(event) {
             event.preventDefault();
             const user = document.getElementById('username').value.trim();
-            const pass = document.getElementById('password').value.trim();
+            const pass = document.getElementById('password').value; // Whitespace preserved
 
             if (!user || !pass) {
                 showMsg('Please fill in all required fields.', 'error');
                 return;
             }
 
-            showMsg('Authentication successful. Loading workspace...', 'info');
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'AUTHENTICATING...';
+
+            showMsg('Authenticating credentials...', 'info');
+
             setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = 'SIGN IN';
+                showMsg(`Welcome back! Logged into ${config.name}.`, 'info');
                 document.getElementById('loginForm').reset();
-                showMsg('Logged in successfully to institution dashboard.', 'info');
-            }, 1500);
+            }, 1200);
         }
     </script>
 </body>
