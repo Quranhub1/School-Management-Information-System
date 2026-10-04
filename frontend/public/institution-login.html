@@ -1203,7 +1203,7 @@
 
 
 
-        //         const API_BASE_URL = (new URLSearchParams(window.location.search).get('api') || '').replace(/\/$/, '');
+        const API_BASE_URL = (new URLSearchParams(window.location.search).get('api') || '').replace(/\/$/, '');
         let defaultBranding = {
             institutionName: 'Kampala School of Health Sciences',
             motto: 'Excellence in Health & Medical Education • KSHS',
@@ -1242,7 +1242,7 @@
                     document.getElementById('customLogoUrlInput').value = logoUrl;
                     showCustomImageLogo(logoUrl);
                 } else {
-                    setLogoIcon('academic');
+                    setLogoIcon();
                 }
             } catch (error) {
                 console.warn('Unable to load institution branding:', error);
@@ -1885,7 +1885,7 @@ function closeDashboardModal() {
 
             footerSchoolName.textContent = name;
 
-            setLogoIcon(icon);
+            setLogoIcon();
 
             showToast(`Updated institution to ${name}`, 'success');
 
@@ -2088,7 +2088,7 @@ function closeDashboardModal() {
             const logoUrl = apiUrl(defaultBranding.logoPath);
             document.getElementById('customLogoUrlInput').value = logoUrl;
             document.getElementById('customLogoFileInput').value = '';
-            if (logoUrl) showCustomImageLogo(logoUrl); else setLogoIcon('academic');
+            if (logoUrl) showCustomImageLogo(logoUrl); else setLogoIcon();
             setThemePalette(defaultBranding.primaryColor, defaultBranding.accentColor);
         }
 document.getElementById('forgotPasswordBtn').addEventListener('click', (e) => {
