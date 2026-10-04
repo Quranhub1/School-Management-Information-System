@@ -1,9 +1,12 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
+[DbContext(typeof(SchoolManagement.Infrastructure.Persistence.SchoolManagementDbContext))]
+[Migration("20261004220000_EnsurePayrollPaymentMethodColumn")]
 public partial class EnsurePayrollPaymentMethodColumn : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
