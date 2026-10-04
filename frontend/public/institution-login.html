@@ -207,6 +207,66 @@
                 }
             };
 
+            async function loadInstitutionBranding() {
+                try {
+                    const response = await fetch(apiBase + '/api/public/institution-settings/active', {
+                        headers: { Accept: 'application/json' },
+                        cache: 'no-store'
+                    });
+                    if (!response.ok) return;
+                    const settings = await response.json();
+                    const name = typeof settings?.institutionName === 'string' && settings.institutionName.trim()
+                        ? settings.institutionName.trim()
+                        : 'INSTITUTION NAME';
+                    const motto = typeof settings?.motto === 'string' && settings.motto.trim()
+                        ? settings.motto.trim()
+                        : 'Excellence & Integrity';
+                    const abbreviation = typeof settings?.abbreviation === 'string' && settings.abbreviation.trim()
+                        ? settings.abbreviation.trim()
+                        : '';
+
+                    const nameElement = document.getElementById('displayName');
+                    const mottoElement = document.getElementById('displayMotto');
+                    const logoElement = document.getElementById('displayLogo');
+                    if (nameElement) nameElement.textContent = name;
+                    if (mottoElement) mottoElement.textContent = motto;
+
+                    if (logoElement && typeof settings?.logoPath === 'string' && settings.logoPath.trim()) {
+                        const logoUrl = new URL(settings.logoPath.trim(), apiBase);
+                        if (settings.updatedAt) logoUrl.searchParams.set('v', settings.updatedAt);
+                        logoElement.src = logoUrl.toString();
+                        logoElement.alt = name + ' Logo';
+                    }
+
+                    const primary = typeof settings?.primaryColor === 'string' && settings.primaryColor.trim()
+                        ? settings.primaryColor.trim()
+                        : '#2563eb';
+                    const accent = typeof settings?.accentColor === 'string' && settings.accentColor.trim()
+                        ? settings.accentColor.trim()
+                        : '#4f46e5';
+
+                    document.documentElement.style.setProperty('--login-primary', primary);
+                    document.documentElement.style.setProperty('--login-accent', accent);
+                    document.body.style.background = 'linear-gradient(135deg, color-mix(in srgb, ' + primary + ' 8%, white), color-mix(in srgb, ' + accent + ' 10%, #eef2ff), color-mix(in srgb, ' + primary + ' 16%, #dbeafe))';
+
+                    const submitButton = document.getElementById('submitBtn');
+                    if (submitButton) {
+                        submitButton.style.background = 'linear-gradient(90deg, ' + primary + ', ' + accent + ', ' + primary + ')';
+                    }
+
+                    if (abbreviation) {
+                        document.title = abbreviation + ' — ' + name;
+                    } else {
+                        document.title = name;
+                    }
+                } catch {
+                    // Keep the existing login design/default branding if public settings are unavailable.
+                }
+            }
+
+            void loadInstitutionBranding();
+            window.setInterval(loadInstitutionBranding, 30000);
+
             const rememberedUsername = localStorage.getItem('smis.rememberedUsername');
             const usernameInput = document.getElementById('username');
             const rememberMe = document.getElementById('rememberMe');
