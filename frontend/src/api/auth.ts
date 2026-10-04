@@ -9,6 +9,15 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.
 const TOKEN_KEY = 'smis.accessToken'
 const SESSION_KEY = 'smis.session'
 
+export function saveAuthSession(session: AuthResponse): void {
+  sessionStorage.setItem(TOKEN_KEY, session.accessToken)
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    expiresAt: session.expiresAt,
+    username: session.username,
+    roles: session.roles,
+  }))
+}
+
 export async function login(username: string, password: string): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: 'POST',
@@ -22,12 +31,7 @@ export async function login(username: string, password: string): Promise<AuthRes
   }
 
   const session = await response.json() as AuthResponse
-  sessionStorage.setItem(TOKEN_KEY, session.accessToken)
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-    expiresAt: session.expiresAt,
-    username: session.username,
-    roles: session.roles,
-  }))
+  saveAuthSession(session)
   return session
 }
 
