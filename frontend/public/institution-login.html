@@ -169,9 +169,9 @@
         <div class="animate-enter delay-5 mt-6 text-center">
             <div id="digitalClockContainer" class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-emerald-50/80 border border-emerald-200/80 backdrop-blur-md shadow-sm hover:scale-105 transition-transform duration-300">
                 <i class="fa-regular fa-clock text-emerald-600 animate-spin-slow text-xs"></i>
-                <span id="digitalClockTime" class="font-mono text-xs font-semibold tracking-wider text-emerald-950">12:00:00 PM</span>
+                <span id="digitalClockTime" class="font-mono text-xs font-semibold tracking-wider text-emerald-950">--:--:-- --</span>
                 <span class="text-emerald-300">|</span>
-                <span id="digitalClockDate" class="font-sans text-xs text-emerald-700 font-medium">Oct 4, 2026</span>
+                <span id="digitalClockDate" class="font-sans text-xs text-emerald-700 font-medium">--- --, ----</span>
             </div>
         </div>
 
@@ -232,7 +232,7 @@
                 }
             };
 
-            // DIGITAL CLOCK FUNCTION
+            // REAL-TIME DIGITAL CLOCK FUNCTION
             function updateDigitalClock() {
                 const now = new Date();
                 const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
@@ -244,8 +244,9 @@
                 if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', dateOptions);
             }
 
-            setInterval(updateDigitalClock, 1000);
+            // Immediately run and interval tick every 1000ms
             updateDigitalClock();
+            setInterval(updateDigitalClock, 1000);
 
             async function loadInstitutionBranding() {
                 try {
@@ -339,3 +340,130 @@
                             watermarks.push({
                                 type: index % 2 === 0 ? 'name' : 'motto',
                                 col: c,
+                                row: r,
+                                homeX: (c + 0.5) * cellW,
+                                homeY: (r + 0.5) * cellH,
+                                radiusX: cellW * 0.22,
+                                radiusY: cellH * 0.22,
+                                speedX: Math.random() * 0.0007 + 0.0005,
+                                speedY: Math.random() * 0.0007 + 0.0005,
+                                phaseX: Math.random() * Math.PI * 2,
+                                phaseY: Math.random() * Math.PI * 2,
+                                angle: Math.random() * Math.PI * 2, // 360-degree randomized start angle
+                                spinSpeed: (Math.random() - 0.5) * 0.0024 + (Math.random() > 0.5 ? 0.0008 : -0.0008), // Smooth spin
+                                fontSize: index % 2 === 0 ? Math.floor(Math.random() * 6) + 22 : Math.floor(Math.random() * 5) + 18,
+                                opacity: Math.random() * 0.025 + 0.035
+                            });
+                        }
+                    }
+                }
+
+                function resizeCanvas() {
+                    dpr = window.devicePixelRatio || 1;
+                    canvas.width = window.innerWidth * dpr;
+                    canvas.height = window.innerHeight * dpr;
+                    canvas.style.width = window.innerWidth + 'px';
+                    canvas.style.height = window.innerHeight + 'px';
+                    ctx.scale(dpr, dpr);
+
+                    // Re-anchor home positions on resize
+                    const cellW = window.innerWidth / COLS;
+                    const cellH = window.innerHeight / ROWS;
+                    watermarks.forEach(w => {
+                        w.homeX = (w.col + 0.5) * cellW;
+                        w.homeY = (w.row + 0.5) * cellH;
+                        w.radiusX = cellW * 0.22;
+                        w.radiusY = cellH * 0.22;
+                    });
+                }
+
+                initWatermarks();
+                window.addEventListener('resize', resizeCanvas);
+                resizeCanvas();
+
+                // Subtle organic ambient bubbles
+                const bubbleCount = 8;
+                const bubbles = Array.from({ length: bubbleCount }, () => ({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                    radius: Math.random() * 40 + 20,
+                    maxRadius: Math.random() * 90 + 60,
+                    growthSpeed: Math.random() * 0.12 + 0.05,
+                    opacity: Math.random() * 0.18 + 0.04,
+                    vx: (Math.random() - 0.5) * 0.18,
+                    vy: (Math.random() - 0.5) * 0.18
+                }));
+
+                function animateBackground(timestamp) {
+                    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                    const time = timestamp || performance.now();
+
+                    // Read active name & motto from DOM dynamically
+                    const displayNameEl = document.getElementById('displayName');
+                    const displayMottoEl = document.getElementById('displayMotto');
+                    const currentName = (displayNameEl?.textContent || 'INSTITUTION NAME').trim();
+                    const currentMotto = (displayMottoEl?.textContent || 'Excellence & Integrity').trim();
+
+                    // 1. Draw perfectly distributed, spinning watermarks in all 16 sectors
+                    watermarks.forEach(w => {
+                        const currentX = w.homeX + Math.sin(time * w.speedX + w.phaseX) * w.radiusX;
+                        const currentY = w.homeY + Math.cos(time * w.speedY + w.phaseY) * w.radiusY;
+                        w.angle += w.spinSpeed;
+
+                        ctx.save();
+                        ctx.translate(currentX, currentY);
+                        ctx.rotate(w.angle);
+
+                        const isName = w.type === 'name';
+                        const text = isName ? currentName.toUpperCase() : currentMotto;
+
+                        if (isName) {
+                            ctx.font = `800 ${w.fontSize}px Inter, sans-serif`;
+                            ctx.fillStyle = `rgba(30, 41, 59, ${w.opacity})`;
+                        } else {
+                            ctx.font = `600 italic ${w.fontSize}px Inter, sans-serif`;
+                            ctx.fillStyle = `rgba(37, 99, 235, ${w.opacity * 1.25})`;
+                        }
+
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(text, 0, 0);
+                        ctx.restore();
+                    });
+
+                    // 2. Draw subtle background ripple circles
+                    bubbles.forEach(b => {
+                        b.x += b.vx;
+                        b.y += b.vy;
+                        b.radius += b.growthSpeed;
+
+                        if (b.x < -150) b.x = window.innerWidth + 150;
+                        if (b.x > window.innerWidth + 150) b.x = -150;
+                        if (b.y < -150) b.y = window.innerHeight + 150;
+                        if (b.y > window.innerHeight + 150) b.y = -150;
+
+                        if (b.radius > b.maxRadius) {
+                            b.radius = Math.random() * 20 + 10;
+                        }
+
+                        ctx.beginPath();
+                        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(37, 99, 235, ${Math.max(0, b.opacity * (1 - b.radius / b.maxRadius))})`;
+                        ctx.lineWidth = 1.2;
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.arc(b.x, b.y, b.radius * 0.3, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(147, 197, 253, ${Math.max(0, (b.opacity * 0.25) * (1 - b.radius / b.maxRadius))})`;
+                        ctx.fill();
+                    });
+
+                    requestAnimationFrame(animateBackground);
+                }
+
+                requestAnimationFrame(animateBackground);
+            }
+        })();
+    </script>
+</body>
+</html>
