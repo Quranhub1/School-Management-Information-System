@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+
+<html lang="en" class="h-full">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Academic Portal | Institutional Sign In</title>
+
+    <!-- Tailwind CSS CDN -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome Icons -->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts: Plus Jakarta Sans, Playfair Display & JetBrains Mono -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+
+
+    <script>
+
+        tailwind.config = {
+
+            darkMode: 'class',
+
+            theme: {
+
+                extend: {
+
+                    fontFamily: {
+
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+
+                        serif: ['"Playfair Display"', 'serif'],
+
+                        mono: ['"JetBrains Mono"', 'monospace'],
+
+                    },
+
+                    colors: {
+
+                        brand: {
+
+                            50: '#ecfdf5',
+
+                            100: '#d1fae5',
+
+                            500: '#10b981',
+
+                            600: '#059669',
+
+                            700: '#047857',
+
+                            900: '#064e3b',
+
+                        }
+
+                    },
+
+                    animation: {
+
+                        'pulse-slow': 'pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+
+                        'float': 'float 6s ease-in-out infinite',
+
+                        'float-reverse': 'floatReverse 7s ease-in-out infinite',
+
+                        'gradient-shift': 'gradientShift 8s ease infinite',
+
+                        'shimmer': 'shimmer 2.5s infinite linear',
+
+                        'spin-slow': 'spin 12s linear infinite',
+
+                        'bounce-subtle': 'bounceSubtle 2s infinite',
+
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+
+                    },
+
+                    keyframes: {
+
+                        float: {
+
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+
+                            '50%': { transform: 'translateY(-12px) rotate(2deg)' },
+
+                        },
+
+                        floatReverse: {
+
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+
+                            '50%': { transform: 'translateY(12px) rotate(-2deg)' },
+
+                        },
+
+                        gradientShift: {
+
+                            '0%, 100%': { 'background-position': '0% 50%' },
+
+                            '50%': { 'background-position': '100% 50%' },
+
+                        },
+
+                        shimmer: {
+
+                            '0%': { transform: 'translateX(-100%)' },
+
+                            '100%': { transform: 'translateX(200%)' },
+
+                        },
+
+                        bounceSubtle: {
+
+                            '0%, 100%': { transform: 'translateY(0)' },
+
+                            '50%': { transform: 'translateY(-4px)' },
+
+                        },
+
+                        pulseGlow: {
+
+                            '0%, 100%': { opacity: '0.4', filter: 'blur(12px)' },
+
+                            '50%': { opacity: '0.8', filter: 'blur(20px)' },
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    </script>
+
+
+
+    <style>
+
+        :root {
+
+            --brand-primary: #059669;
+
+            --brand-secondary: #064e3b;
+
+            --brand-gradient: linear-gradient(135deg, #059669 0%, #064e3b 100%);
+
+            --accent-glow: rgba(5, 150, 105, 0.35);
+
+        }
+
+
+
+        /* 3D Container Perspective */
+
+        .perspective-1000 {
+
+            perspective: 1000px;
+
+        }
+
+
+
+        /* Tiltable Card */
+
+        .tilt-card {
+
+            transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+
+            transform-style: preserve-3d;
+
+        }
+
+
+
+        /* Glassmorphism Cards with Emerald Tint */
+
+        .glass-panel {
+
+            background: rgba(255, 255, 255, 0.88);
+
+            backdrop-filter: blur(24px);
+
+            -webkit-backdrop-filter: blur(24px);
+
+            border: 1px solid rgba(226, 232, 240, 0.8);
+
+            box-shadow: 0 20px 50px -15px rgba(5, 150, 105, 0.12), 0 0 30px rgba(5, 150, 105, 0.08);
+
+        }
+
+
+
+        /* Animated Emerald Button Gradients */
+
+        .btn-gradient {
+
+            background: var(--brand-gradient);
+
+            background-size: 200% 200%;
+
+            animation: gradientShift 6s ease infinite;
+
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+            position: relative;
+
+            overflow: hidden;
+
+        }
+
+
+
+        /* Shimmer Overlay */
+
+        .shimmer-line::before {
+
+            content: '';
+
+            position: absolute;
+
+            top: 0; left: -100%; width: 60%; height: 100%;
+
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+
+            transform: skewX(-20deg);
+
+        }
+
+        .shimmer-line:hover::before {
+
+            animation: shimmer 1.2s ease-in-out;
+
+        }
+
+
+
+        /* Water Ripple Effect */
+
+        .ripple {
+
+            position: absolute;
+
+            border-radius: 50%;
+
+            transform: scale(0);
+
+            animation: ripple-animation 0.6s linear;
+
+            background-color: rgba(255, 255, 255, 0.4);
+
+            pointer-events: none;
+
+        }
+
+        @keyframes ripple-animation {
+
+            to {
+
+                transform: scale(4);
+
+                opacity: 0;
+
+            }
+
+        }
+
+
+
+        /* Staggered Load Entrance Animations */
+
+        .animate-enter {
+
+            opacity: 0;
+
+            transform: translateY(20px);
+
+            animation: enterSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+        }
+
+        @keyframes enterSlideUp {
+
+            to {
+
+                opacity: 1;
+
+                transform: translateY(0);
+
+            }
+
+        }
+
+
+
+        .delay-1 { animation-delay: 0.1s; }
+
+        .delay-2 { animation-delay: 0.2s; }
+
+        .delay-3 { animation-delay: 0.3s; }
+
+        .delay-4 { animation-delay: 0.4s; }
+
+        .delay-5 { animation-delay: 0.5s; }
+
+
+
+        /* Custom Scrollbar */
+
+        ::-webkit-scrollbar {
+
+            width: 6px;
+
+        }
+
+        ::-webkit-scrollbar-track {
+
+            background: transparent;
+
+        }
+
+        ::-webkit-scrollbar-thumb {
+
+            background: rgba(16, 185, 129, 0.4);
+
+            border-radius: 9999px;
+
+        }
+
+
+
+        /* Modal Bounce Transition */
+
+        .elastic-modal {
+
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+
+        }
+
+    </style>
+
+</head>
+
+
+
+<body class="h-full font-sans antialiased bg-slate-50 text-slate-800 selection:bg-emerald-500 selection:text-white transition-colors duration-500 relative overflow-x-hidden">
+
+
+
+    <!-- Dynamic Animated Emerald Background Orbs -->
+
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+
+        <div id="orb1" class="absolute -top-40 -left-40 w-[34rem] h-[34rem] bg-emerald-500/20 rounded-full blur-3xl animate-pulse-glow"></div>
+
+        <div id="orb2" class="absolute top-1/3 -right-40 w-[40rem] h-[40rem] bg-teal-500/20 rounded-full blur-3xl animate-float"></div>
+
+        <div id="orb3" class="absolute -bottom-40 left-1/4 w-[38rem] h-[38rem] bg-emerald-400/20 rounded-full blur-3xl animate-float-reverse"></div>
+
+        <div id="orb4" class="absolute top-2/3 left-10 w-[26rem] h-[26rem] bg-emerald-600/15 rounded-full blur-2xl animate-pulse-slow"></div>
+
+
+
+        <!-- Interactive Motile Emerald Bubble Canvas -->
+
+        <canvas id="bgCanvas" class="absolute inset-0 w-full h-full opacity-80 transition-opacity duration-700"></canvas>
+
+    </div>
+
+
+
+    <!-- Top Header Navigation -->
+
+    <header class="relative z-20 w-full px-6 py-4 flex items-center justify-end">
+
+        <div class="flex items-center space-x-3">
+
+            <!-- Customizer Toggle Button -->
+
+            <button id="customizerToggleBtn" title="Customize Institution Branding" class="group flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white text-emerald-800 border border-emerald-200/80 backdrop-blur-md transition-all text-xs font-semibold shadow-sm hover:scale-105 active:scale-95">
+
+                <i class="fa-solid fa-sliders text-emerald-600 group-hover:rotate-45 transition-transform duration-300"></i>
+
+                <span class="hidden sm:inline">Portal Settings</span>
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <main class="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center p-4 sm:p-6 md:p-8 perspective-1000">
+
+        <div class="w-full max-w-md">
+
+
+
+            <!-- Main Glass Card Container with 3D Tilt -->
+
+            <div id="loginCard" class="tilt-card glass-panel rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden">
+
+
+
+                <!-- Emerald Accent Shimmer Bar -->
+
+                <div id="brandAccentBar" class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-300 bg-[length:200%_auto] animate-gradient-shift"></div>
+
+
+
+                <!-- Centered Logo & Institution Header Section -->
+
+                <div class="text-center mb-8 pt-2">
+
+
+
+                    <!-- Logo Badge Wrapper with Floating Effect -->
+
+                    <div class="relative inline-block mb-4 animate-enter delay-1">
+
+                        <div id="logoGlow" class="absolute -inset-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 opacity-30 blur-lg animate-pulse-glow"></div>
+
+
+
+                        <div id="logoContainer" class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-white border-2 border-emerald-200 p-2 flex items-center justify-center shadow-xl mx-auto transition-transform duration-500 hover:scale-105 hover:rotate-1">
+
+                            <!-- SVG Crest / KSHS Shield Logo -->
+
+                            <svg id="schoolLogoSvg" class="w-full h-full drop-shadow-md" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+
+                                <!-- Shield Outline & Green Background -->
+
+                                <path d="M 15,15 Q 100,38 185,15 Q 198,98 176,148 Q 100,210 100,210 Q 100,210 24,148 Q 2,98 15,15 Z" fill="#0b8a42" stroke="#111827" stroke-width="7" stroke-linejoin="round"/>
+
+                                <path d="M 22,23 Q 100,43 178,23 Q 189,98 169,143 Q 100,200 100,200 Q 100,200 31,143 Q 11,98 22,23 Z" fill="none" stroke="#044d23" stroke-width="3"/>
+
+
+
+                                <!-- Caduceus Wings -->
+
+                                <g fill="#ffffff">
+
+                                    <path d="M 100,42 C 78,18 30,28 20,44 C 42,50 72,48 96,54 C 100,54 100,54 100,54 C 100,54 100,54 104,54 C 128,48 158,50 180,44 C 170,28 122,18 100,42 Z"/>
+
+                                    <path d="M 100,52 C 82,34 42,42 32,54 C 50,58 76,57 96,61 C 104,57 130,58 148,54 C 138,42 98,34 100,52 Z" opacity="0.9"/>
+
+                                </g>
+
+
+
+                                <!-- Stethoscope (Left Side) -->
+
+                                <g stroke="#111827" fill="none" stroke-linecap="round">
+
+                                    <path d="M 78,56 C 58,70 48,90 42,118 C 38,136 50,148 60,132 C 68,118 78,82 78,56 Z" stroke-width="7"/>
+
+                                    <path d="M 78,56 C 58,70 48,90 42,118 C 38,136 50,148 60,132 C 68,118 78,82 78,56 Z" stroke="#ffffff" stroke-width="2"/>
+
+                                    <circle cx="41" cy="138" r="9" fill="#111827" stroke="#ffffff" stroke-width="2.5"/>
+
+                                </g>
+
+
+
+                                <!-- Syringe (Right Side) -->
+
+                                <g transform="rotate(-38 135 95)">
+
+                                    <rect x="127" y="52" width="16" height="54" rx="2" fill="#ffffff" stroke="#111827" stroke-width="4"/>
+
+                                    <rect x="131" y="68" width="8" height="28" fill="#111827"/>
+
+                                    <!-- Plunger -->
+
+                                    <rect x="131" y="42" width="8" height="10" fill="#111827"/>
+
+                                    <line x1="123" y1="42" x2="147" y2="42" stroke="#111827" stroke-width="4" stroke-linecap="round"/>
+
+                                    <!-- Needle -->
+
+                                    <line x1="135" y1="106" x2="135" y2="136" stroke="#111827" stroke-width="4" stroke-linecap="round"/>
+
+                                </g>
+
+
+
+                                <!-- Caduceus Center Staff & Snakes -->
+
+                                <g fill="#ffffff">
+
+                                    <circle cx="100" cy="24" r="8" fill="#ffffff" stroke="#111827" stroke-width="2"/>
+
+                                    <rect x="97" y="30" width="6" height="160" rx="3" fill="#ffffff" stroke="#111827" stroke-width="1.5"/>
+
+
+
+                                    <!-- Snake 1 -->
+
+                                    <path d="M 100,55 C 120,68 120,88 100,100 C 80,112 80,132 100,145 C 115,155 110,165 100,172" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+
+                                    <path d="M 100,55 C 120,68 120,88 100,100 C 80,112 80,132 100,145 C 115,155 110,165 100,172" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round"/>
+
+
+
+                                    <!-- Snake 2 -->
+
+                                    <path d="M 100,55 C 80,68 80,88 100,100 C 120,112 120,132 100,145 C 85,155 90,165 100,172" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+
+                                    <path d="M 100,55 C 80,68 80,88 100,100 C 120,112 120,132 100,145 C 85,155 90,165 100,172" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round"/>
+
+                                </g>
+
+
+
+                                <!-- KS | HS Text -->
+
+                                <text x="60" y="184" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle" letter-spacing="-1">KS</text>
+
+                                <text x="140" y="184" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle" letter-spacing="-1">HS</text>
+
+                            </svg>
+
+
+
+                            <!-- Custom Image Logo (URL / Local File Upload) -->
+
+                            <img id="customLogoImg" class="hidden w-full h-full object-contain rounded-xl drop-shadow-md" alt="Institution Logo" onerror="handleLogoError()">
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- Reflecting Institution Name -->
+
+                    <h1 id="institutionNameDisplay" class="animate-enter delay-2 font-serif text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 leading-tight">
+
+                        Kampala School of Health Sciences
+
+                    </h1>
+
+
+
+                    <!-- Motto / Subhead -->
+
+                    <p id="institutionMottoDisplay" class="animate-enter delay-2 text-xs sm:text-sm font-medium text-emerald-700/80 mt-2 tracking-wide">
+
+                        Excellence in Health & Medical Education • KSHS
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- Sign In Form -->
+
+                <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-5" novalidate>
+
+
+
+                    <!-- Username / Account Identifier Field -->
+
+                    <div class="animate-enter delay-3">
+
+                        <label for="usernameInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+
+                            Username / ID <span class="text-rose-500">*</span>
+
+                        </label>
+
+                        <div class="relative rounded-xl shadow-sm group">
+
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-600 transition-colors">
+
+                                <i id="usernameIcon" class="fa-solid fa-user-gear text-sm transition-transform duration-200 group-focus-within:scale-110"></i>
+
+                            </div>
+
+                            <input&#x20;
+
+                                type="text"&#x20;
+
+                                id="usernameInput"&#x20;
+
+                                required
+
+                                autocomplete="username"
+
+                                placeholder="Enter your ID or username"
+
+                                class="w-full pl-10 pr-10 py-3 bg-white/80 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 shadow-inner"
+
+                            />
+
+                            <button type="button" id="clearUsernameBtn" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
+
+                                <i class="fa-solid fa-circle-xmark text-xs"></i>
+
+                            </button>
+
+                        </div>
+
+                        <p id="usernameError" class="hidden text-xs text-rose-500 mt-1 font-medium flex items-center animate-bounce-subtle">
+
+                            <i class="fa-solid fa-circle-exclamation mr-1"></i> Please enter your valid username or account ID.
+
+                        </p>
+
+                    </div>
+
+
+
+                    <!-- Password Field -->
+
+                    <div class="animate-enter delay-4">
+
+                        <div class="flex items-center justify-between mb-1.5">
+
+                            <label for="passwordInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+
+                                Password <span class="text-rose-500">*</span>
+
+                            </label>
+
+                            <a href="#" id="forgotPasswordBtn" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 transition-colors hover:underline">
+
+                                Forgot password?
+
+                            </a>
+
+                        </div>
+
+                        <div class="relative rounded-xl shadow-sm group">
+
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-600 transition-colors">
+
+                                <i class="fa-solid fa-lock text-sm transition-transform duration-200 group-focus-within:scale-110"></i>
+
+                            </div>
+
+                            <input&#x20;
+
+                                type="password"&#x20;
+
+                                id="passwordInput"&#x20;
+
+                                required
+
+                                autocomplete="current-password"
+
+                                placeholder="••••••••••••"
+
+                                class="w-full pl-10 pr-11 py-3 bg-white/80 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 shadow-inner"
+
+                            />
+
+                            <!-- Password Visibility Toggle Button -->
+
+                            <button&#x20;
+
+                                type="button"&#x20;
+
+                                id="togglePasswordBtn"&#x20;
+
+                                aria-label="Toggle password visibility"
+
+                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+
+                            >
+
+                                <i id="eyeIcon" class="fa-solid fa-eye text-sm transition-transform duration-200 hover:scale-110"></i>
+
+                            </button>
+
+                        </div>
+
+
+
+                        <!-- Caps Lock Detection -->
+
+                        <div id="capsLockWarning" class="hidden mt-1 text-xs text-amber-600 font-medium flex items-center animate-pulse">
+
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Caps Lock is ON
+
+                        </div>
+
+
+
+                        <p id="passwordError" class="hidden text-xs text-rose-500 mt-1 font-medium flex items-center animate-bounce-subtle">
+
+                            <i class="fa-solid fa-circle-exclamation mr-1"></i> Password is required.
+
+                        </p>
+
+                    </div>
+
+
+
+                    <!-- Remember Me Option -->
+
+                    <div class="animate-enter delay-4 flex items-center justify-between text-xs pt-1">
+
+                        <label class="flex items-center space-x-2 cursor-pointer select-none group">
+
+                            <input type="checkbox" id="rememberMeCheckbox" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 accent-emerald-600 transition-transform duration-200 group-hover:scale-110">
+
+                            <span class="text-slate-600 font-medium group-hover:text-slate-900 transition-colors">Keep me signed in</span>
+
+                        </label>
+
+                    </div>
+
+
+
+                    <!-- Main Sign In Button with Emerald Ripple FX -->
+
+                    <div class="animate-enter delay-5 pt-3">
+
+                        <button&#x20;
+
+                            type="submit"&#x20;
+
+                            id="signInSubmitBtn"
+
+                            class="btn-gradient shimmer-line w-full py-3.5 px-6 rounded-xl font-bold text-white text-sm shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40 active:scale-[0.98] transition-all duration-300 flex items-center justify-center space-x-2 group relative overflow-hidden"
+
+                        >
+
+                            <span id="btnText" class="relative z-10">Sign In</span>
+
+                            <i id="btnIcon" class="fa-solid fa-arrow-right text-xs group-hover:translate-x-1.5 transition-transform duration-200 relative z-10"></i>
+
+
+
+                            <!-- Loading Spinner -->
+
+                            <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-white relative z-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+
+                            </svg>
+
+                        </button>
+
+                    </div>
+
+
+
+                </form>
+
+
+
+                <!-- Live Digital Clock -->
+
+                <div class="animate-enter delay-5 mt-6 text-center">
+
+                    <div id="digitalClockContainer" class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-emerald-50/80 border border-emerald-200/80 backdrop-blur-md shadow-sm hover:scale-105 transition-transform duration-300">
+
+                        <i class="fa-regular fa-clock text-emerald-600 animate-spin-slow text-xs"></i>
+
+                        <span id="digitalClockTime" class="font-mono text-xs font-semibold tracking-wider text-emerald-950">12:00:00 PM</span>
+
+                        <span class="text-emerald-300">|</span>
+
+                        <span id="digitalClockDate" class="font-sans text-xs text-emerald-700 font-medium">Oct 4, 2026</span>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Help note -->
+
+                <div class="animate-enter delay-5 mt-5 text-center text-xs text-slate-500 border-t border-slate-200/80 pt-5">
+
+                    Need technical assistance? <a href="#" onclick="showToast('Helpdesk Line: +1 (800) 555-0199', 'info'); return false;" class="text-emerald-800 font-semibold underline hover:text-emerald-600 transition-colors">Contact IT Helpdesk</a>
+
+                </div>
+
+
+
+            </div>
+
+
+
+            <!-- Footer Notice -->
+
+            <div class="mt-6 text-center text-xs text-slate-500">
+
+                <p>&copy; 2026 <span id="footerSchoolName">Kampala School of Health Sciences</span>. All rights reserved.</p>
+
+            </div>
+
+
+
+        </div>
+
+    </main>
+
+
+
+    <!-- SUCCESSFUL AUTHENTICATION MODAL -->
+
+    <div id="welcomeDashboardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
+
+        <div class="elastic-modal glass-panel w-full max-w-lg rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden transform scale-90" id="welcomeModalCard">
+
+            <div id="roleBadgeIcon" class="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4 text-2xl animate-bounce-subtle">
+
+                <i class="fa-solid fa-circle-check"></i>
+
+            </div>
+
+            <h2 class="text-2xl font-bold text-slate-900 mb-1">Authenticated!</h2>
+
+            <p id="welcomeUserGreeting" class="text-sm text-slate-600 mb-6">Credential recognized by system security</p>
+
+
+
+            <div class="bg-slate-100/90 rounded-2xl p-4 text-left mb-6 space-y-2.5 text-xs border border-slate-200 shadow-inner">
+
+                <div class="flex justify-between items-center text-slate-600">
+
+                    <span>Institution:</span>
+
+                    <span id="welcomeModalSchool" class="font-semibold text-slate-900">St. Jude International Academy</span>
+
+                </div>
+
+                <div class="flex justify-between items-center text-slate-600">
+
+                    <span>System Recognized Role:</span>
+
+                    <span id="welcomeModalRole" class="font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 uppercase tracking-wider text-[11px]">
+
+                        Student
+
+                    </span>
+
+                </div>
+
+                <div class="flex justify-between items-center text-slate-600">
+
+                    <span>Target Destination:</span>
+
+                    <span id="welcomeModalDestination" class="font-semibold text-slate-900">Student Academic Portal</span>
+
+                </div>
+
+                <div class="flex justify-between items-center text-slate-600">
+
+                    <span>Session Status:</span>
+
+                    <span class="font-semibold text-emerald-600 flex items-center"><i class="fa-solid fa-shield-halved mr-1 text-[10px]"></i> SSL Encrypted Connection</span>
+
+                </div>
+
+            </div>
+
+
+
+            <button type="button" onclick="closeDashboardModal()" class="btn-gradient w-full py-3.5 rounded-xl text-white font-semibold text-sm shadow-lg transition-transform active:scale-95">
+
+                Return to Login Page
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- FORGOT PASSWORD MODAL -->
+
+    <div id="forgotPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
+
+        <div class="elastic-modal glass-panel w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl relative transform scale-90">
+            <button onclick="closeForgotModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg p-2 transition-transform hover:rotate-90">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+            <div class="text-center mb-6">
+
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center mx-auto mb-3 text-xl animate-float">
+
+                    <i class="fa-solid fa-key"></i>
+
+                </div>
+
+                <h3 class="text-xl font-bold text-slate-900">Password Recovery</h3>
+
+                <p class="text-xs text-slate-500 mt-1">Enter your registered email address to receive password reset link.</p>
+
+            </div>
+
+
+
+            <form onsubmit="handleForgotSubmit(event)" class="space-y-4">
+
+                <div>
+
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Registered Email</label>
+
+                    <input type="email" id="recoveryEmail" required placeholder="user@institution.edu" class="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+
+                </div>
+
+                <button type="submit" class="btn-gradient w-full py-3 rounded-xl text-white font-bold text-sm shadow-lg transition-transform active:scale-95">
+
+                    Send Reset Link
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- INSTITUTION STUDIO CUSTOMIZER DRAWER -->
+
+    <div id="customizerDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-xs sm:max-w-sm bg-white/95 backdrop-blur-2xl border-l border-slate-200 p-6 shadow-2xl transform translate-x-full transition-transform duration-300 ease-out overflow-y-auto">
+
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-200">
+
+            <div class="flex items-center space-x-2">
+
+                <i class="fa-solid fa-sliders text-emerald-600 animate-spin-slow"></i>
+
+                <h3 class="font-bold text-slate-900 text-base">Portal Customizer</h3>
+
+            </div>
+
+            <button id="closeCustomizerBtn" class="text-slate-400 hover:text-slate-700 text-lg transition-transform hover:rotate-90">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+
+        <div class="space-y-6 text-xs">
+
+
+
+            <!-- School Name Customizer -->
+
+            <div>
+
+                <label class="block font-bold uppercase tracking-wider text-slate-700 mb-2">School / Institution Name</label>
+
+                <input type="text" id="customSchoolNameInput" value="Kampala School of Health Sciences" class="w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-900 font-medium focus:outline-none focus:border-emerald-500">
+
+            </div>
+
+
+
+            <!-- Motto Customizer -->
+
+            <div>
+
+                <label class="block font-bold uppercase tracking-wider text-slate-700 mb-2">Motto / Subhead</label>
+
+                <input type="text" id="customMottoInput" value="Excellence in Health & Medical Education • KSHS" class="w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-900 font-medium focus:outline-none focus:border-emerald-500">
+
+            </div>
+
+
+
+            <!-- Color Palette / Theme Customizer -->
+
+            <div>
+
+                <label class="block font-bold uppercase tracking-wider text-slate-700 mb-2">Theme Color Palette</label>
+
+                <div class="grid grid-cols-5 gap-2 mb-3">
+
+                    <button type="button" onclick="setThemePalette('#059669', '#064e3b')" title="Emerald" class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-white shadow hover:scale-110 transition-transform active:scale-95 ring-2 ring-emerald-500/20 mx-auto"></button>
+
+                    <button type="button" onclick="setThemePalette('#2563eb', '#1e3a8a')" title="Sapphire" class="w-8 h-8 rounded-full bg-blue-600 border-2 border-white shadow hover:scale-110 transition-transform active:scale-95 ring-2 ring-blue-500/20 mx-auto"></button>
+
+                    <button type="button" onclick="setThemePalette('#7c3aed', '#4c1d95')" title="Amethyst" class="w-8 h-8 rounded-full bg-purple-600 border-2 border-white shadow hover:scale-110 transition-transform active:scale-95 ring-2 ring-purple-500/20 mx-auto"></button>
+
+                    <button type="button" onclick="setThemePalette('#e11d48', '#881337')" title="Ruby" class="w-8 h-8 rounded-full bg-rose-600 border-2 border-white shadow hover:scale-110 transition-transform active:scale-95 ring-2 ring-rose-500/20 mx-auto"></button>
+
+                    <button type="button" onclick="setThemePalette('#d97706', '#78350f')" title="Amber" class="w-8 h-8 rounded-full bg-amber-600 border-2 border-white shadow hover:scale-110 transition-transform active:scale-95 ring-2 ring-amber-500/20 mx-auto"></button>
+
+                </div>
+
+                <div class="flex items-center space-x-2.5 bg-slate-100 p-2 rounded-xl border border-slate-200">
+
+                    <input type="color" id="customPrimaryColorPicker" value="#059669" onchange="handleCustomColorChange(event)" class="w-7 h-7 rounded-lg border border-slate-300 cursor-pointer p-0 bg-transparent">
+
+                    <span class="text-slate-700 font-medium text-xs">Custom Color Picker</span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Pre-made School Name Presets -->
+
+            <div>
+
+                <label class="block font-bold uppercase tracking-wider text-slate-700 mb-2">Preset Institutions</label>
+
+                <div class="space-y-1.5">
+
+                    <button type="button" onclick="applyPresetSchool('Oakridge Global Academy', 'Veritas et Scientia • Est. 1952', 'academic')" class="w-full text-left px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-all hover:translate-x-1">
+
+                        <span>Oakridge Global Academy</span>
+
+                    </button>
+
+                    <button type="button" onclick="applyPresetSchool('Apex Institute of Technology', 'Innovate • Construct • Inspire', 'shield')" class="w-full text-left px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-all hover:translate-x-1">
+
+                        <span>Apex Tech Institute</span>
+
+                    </button>
+
+                    <button type="button" onclick="applyPresetSchool('Royal College of Surgeons', 'Salus Aegroti Suprema Lex', 'university')" class="w-full text-left px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-all hover:translate-x-1">
+
+                        <span>Royal Medical College</span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Crest Logo & Custom Image Upload/URL Selector -->
+
+            <div>
+
+                <label class="block font-bold uppercase tracking-wider text-slate-700 mb-2">School Logo Source</label>
+
+
+
+                <!-- Logo Source Switcher Tabs -->
+
+                <div class="flex bg-slate-100 p-1 rounded-xl mb-3 border border-slate-200">
+
+                    <button type="button" id="logoTabPreset" onclick="switchLogoTab('preset')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg bg-white text-slate-900 shadow-sm transition-all">Preset Icon</button>
+
+                    <button type="button" id="logoTabUrl" onclick="switchLogoTab('url')" class="flex-1 py-1.5 text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-all">Image URL</button>
+
+                    <button type="button" id="logoTabUpload" onclick="switchLogoTab('upload')" class="flex-1 py-1.5 text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-all">Upload File</button>
+
+                </div>
+
+
+
+                <!-- Tab 1: Preset Crest Icons -->
+
+                <div id="logoPanelPreset" class="space-y-2">
+
+                    <div class="grid grid-cols-4 gap-2">
+
+                        <button type="button" onclick="setLogoIcon('academic')" title="Academic Cap" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
+
+                            <i class="fa-solid fa-graduation-cap text-lg"></i>
+
+                        </button>
+
+                        <button type="button" onclick="setLogoIcon('university')" title="University Pillars" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
+
+                            <i class="fa-solid fa-building-columns text-lg"></i>
+
+                        </button>
+
+                        <button type="button" onclick="setLogoIcon('shield')" title="Heraldic Shield" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
+
+                            <i class="fa-solid fa-shield-halved text-lg"></i>
+
+                        </button>
+
+                        <button type="button" onclick="setLogoIcon('book')" title="Open Book" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
+
+                            <i class="fa-solid fa-book-open text-lg"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Tab 2: Load Image from URL -->
+
+                <div id="logoPanelUrl" class="hidden space-y-2">
+
+                    <div class="flex space-x-2">
+
+                        <input type="url" id="customLogoUrlInput" placeholder="https://example.com/logo.png" class="flex-1 px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-emerald-500">
+
+                        <button type="button" onclick="applyLogoFromUrl()" class="px-3.5 py-2 btn-gradient text-white rounded-lg font-bold text-xs shadow transition-all active:scale-95">Apply</button>
+
+                    </div>
+
+                    <p class="text-[10px] text-slate-500">Paste direct image link (PNG, JPG, SVG, WebP).</p>
+
+                </div>
+
+
+
+                <!-- Tab 3: Upload Local File -->
+
+                <div id="logoPanelUpload" class="hidden space-y-2">
+
+                    <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl cursor-pointer bg-slate-50 hover:bg-emerald-50/50 transition-all">
+
+                        <div class="flex flex-col items-center justify-center pt-2 pb-2">
+
+                            <i class="fa-solid fa-cloud-arrow-up text-xl text-slate-400 mb-1"></i>
+
+                            <p class="text-xs text-slate-600 font-medium"><span class="font-semibold text-emerald-600">Click to upload logo</span></p>
+
+                            <p class="text-[10px] text-slate-400">PNG, JPG, WEBP or SVG</p>
+
+                        </div>
+
+                        <input type="file" id="customLogoFileInput" accept="image/*" class="hidden" onchange="handleLogoFileUpload(event)">
+
+                    </label>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="pt-4 border-t border-slate-200 text-center">
+
+                <button type="button" onclick="resetCustomizer()" class="text-slate-500 hover:text-rose-500 text-xs font-semibold transition-colors">
+
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset All Settings
+
+                </button>
+
+            </div>
+
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Toast Notification Container -->
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+
+
+    <script>
+
+        // SVG Paths for dynamic crest logos
+
+        const logoSvgs = {
+
+            academic: `<path d="M 15,15 Q 100,38 185,15 Q 198,98 176,148 Q 100,210 100,210 Q 100,210 24,148 Q 2,98 15,15 Z" fill="#0b8a42" stroke="#111827" stroke-width="7" stroke-linejoin="round"/><circle cx="100" cy="24" r="8" fill="#ffffff"/><rect x="97" y="30" width="6" height="160" rx="3" fill="#ffffff"/><text x="60" y="184" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle">KS</text><text x="140" y="184" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle">HS</text>`,
+
+            university: `<path d="M12 2L1 7h22L12 2zm-9 7v10h2V9H3zm5 0v10h2V9H8zm5 0v10h2V9h-2zm5 0v10h2V9h-2zM1 21h22v2H1v-2z" fill="#0b8a42"/>`,
+
+            shield: `<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" fill="#0b8a42"/>`,
+
+            book: `<path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.35-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" fill="#0b8a42"/>`
+
+        };
+
+
+
+        //         const API_BASE_URL = (new URLSearchParams(window.location.search).get('api') || '').replace(/\/$/, '');
+        let defaultBranding = {
+            institutionName: 'Kampala School of Health Sciences',
+            motto: 'Excellence in Health & Medical Education • KSHS',
+            primaryColor: '#059669',
+            accentColor: '#064e3b',
+            logoPath: ''
+        };
+
+        function apiUrl(path) {
+            if (!path) return '';
+            if (/^https?:\/\//i.test(path)) return path;
+            if (!API_BASE_URL) return path.startsWith('/') ? path : '/' + path;
+            return API_BASE_URL + (path.startsWith('/') ? path : '/' + path);
+        }
+
+        async function loadInstitutionBranding() {
+            try {
+                const response = await fetch(API_BASE_URL + '/api/public/institution-settings/active', { headers: { Accept: 'application/json' } });
+                if (!response.ok) return;
+                const settings = await response.json();
+                defaultBranding = {
+                    institutionName: settings.institutionName && settings.institutionName.trim() ? settings.institutionName.trim() : defaultBranding.institutionName,
+                    motto: settings.motto && settings.motto.trim() ? settings.motto.trim() : '',
+                    primaryColor: settings.primaryColor || defaultBranding.primaryColor,
+                    accentColor: settings.accentColor || defaultBranding.accentColor,
+                    logoPath: settings.logoPath || ''
+                };
+                institutionNameDisplay.textContent = defaultBranding.institutionName;
+                institutionMottoDisplay.textContent = defaultBranding.motto;
+                customSchoolNameInput.value = defaultBranding.institutionName;
+                customMottoInput.value = defaultBranding.motto;
+                footerSchoolName.textContent = defaultBranding.institutionName;
+                setThemePalette(defaultBranding.primaryColor, defaultBranding.accentColor, false);
+                const logoUrl = apiUrl(defaultBranding.logoPath);
+                if (logoUrl) {
+                    document.getElementById('customLogoUrlInput').value = logoUrl;
+                    showCustomImageLogo(logoUrl);
+                } else {
+                    setLogoIcon('academic');
+                }
+            } catch (error) {
+                console.warn('Unable to load institution branding:', error);
+            }
+        }
+DOM Element References
+
+        const customizerToggleBtn = document.getElementById('customizerToggleBtn');
+
+        const customizerDrawer = document.getElementById('customizerDrawer');
+
+        const closeCustomizerBtn = document.getElementById('closeCustomizerBtn');
+
+        const loginCard = document.getElementById('loginCard');
+
+
+
+        const usernameInput = document.getElementById('usernameInput');
+
+        const passwordInput = document.getElementById('passwordInput');
+
+        const clearUsernameBtn = document.getElementById('clearUsernameBtn');
+
+        const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        const capsLockWarning = document.getElementById('capsLockWarning');
+
+        const usernameError = document.getElementById('usernameError');
+
+        const passwordError = document.getElementById('passwordError');
+
+
+
+        const institutionNameDisplay = document.getElementById('institutionNameDisplay');
+
+        const institutionMottoDisplay = document.getElementById('institutionMottoDisplay');
+
+        const customSchoolNameInput = document.getElementById('customSchoolNameInput');
+
+        const customMottoInput = document.getElementById('customMottoInput');
+
+        const footerSchoolName = document.getElementById('footerSchoolName');
+
+
+
+        // 3D CARD TILT EFFECT
+
+        document.addEventListener('mousemove', (e) => {
+
+            if (window.innerWidth < 768) return;
+
+
+
+            const rect = loginCard.getBoundingClientRect();
+
+            const cardX = rect.left + rect.width / 2;
+
+            const cardY = rect.top + rect.height / 2;
+
+
+
+            const mouseX = e.clientX - cardX;
+
+            const mouseY = e.clientY - cardY;
+
+
+
+            const rotateX = (-mouseY / (rect.height / 2)) * 5;
+
+            const rotateY = (mouseX / (rect.width / 2)) * 5;
+
+
+
+            loginCard.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+        });
+
+
+
+        document.addEventListener('mouseleave', () => {
+
+            loginCard.style.transform = `rotateX(0deg) rotateY(0deg)`;
+
+        });
+
+
+
+        // WATER RIPPLE EFFECT ON BUTTON CLICKS
+
+        document.querySelectorAll('button, .btn-gradient').forEach(btn => {
+
+            btn.addEventListener('click', function(e) {
+
+                const rect = this.getBoundingClientRect();
+
+                const circle = document.createElement('span');
+
+                const diameter = Math.max(rect.width, rect.height);
+
+                const radius = diameter / 2;
+
+
+
+                circle.style.width = circle.style.height = `${diameter}px`;
+
+                circle.style.left = `${e.clientX - rect.left - radius}px`;
+
+                circle.style.top = `${e.clientY - rect.top - radius}px`;
+
+                circle.classList.add('ripple');
+
+
+
+                const existingRipple = this.querySelector('.ripple');
+
+                if (existingRipple) {
+
+                    existingRipple.remove();
+
+                }
+
+
+
+                this.appendChild(circle);
+
+            });
+
+        });
+
+
+
+        // DIGITAL CLOCK FUNCTION
+
+        function updateDigitalClock() {
+
+            const now = new Date();
+
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+
+            const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+
+
+
+            document.getElementById('digitalClockTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+
+            document.getElementById('digitalClockDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+
+        }
+
+        setInterval(updateDigitalClock, 1000);
+
+        updateDigitalClock();
+
+
+
+        // MOTILE LARGE BUBBLE CANVAS SYSTEM (EMERALD TINT)
+
+        const canvas = document.getElementById('bgCanvas');
+
+        const ctx = canvas.getContext('2d');
+
+        let bubbles = [];
+
+        let mousePos = { x: null, y: null, radius: 180 };
+
+
+
+        window.addEventListener('mousemove', (e) => {
+
+            mousePos.x = e.clientX;
+
+            mousePos.y = e.clientY;
+
+        });
+
+
+
+        function resizeCanvas() {
+
+            canvas.width = window.innerWidth;
+
+            canvas.height = window.innerHeight;
+
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        resizeCanvas();
+
+
+
+        class MotileBubble {
+
+            constructor() {
+
+                this.reset();
+
+            }
+
+            reset() {
+
+                this.x = Math.random() * canvas.width;
+
+                this.y = Math.random() * canvas.height;
+
+                this.baseRadius = Math.random() * 42 + 18;
+
+                this.radius = this.baseRadius;
+
+                this.speedX = (Math.random() - 0.5) * 1.2;
+
+                this.speedY = -Math.abs((Math.random() * 0.8) + 0.3);
+
+                this.wobbleAngle = Math.random() * Math.PI * 2;
+
+                this.wobbleSpeed = Math.random() * 0.03 + 0.01;
+
+                this.pulseAngle = Math.random() * Math.PI * 2;
+
+                this.pulseSpeed = Math.random() * 0.02 + 0.008;
+
+                this.opacity = Math.random() * 0.4 + 0.2;
+
+            }
+
+            update() {
+
+                this.wobbleAngle += this.wobbleSpeed;
+
+                this.pulseAngle += this.pulseSpeed;
+
+
+
+                this.x += this.speedX + Math.sin(this.wobbleAngle) * 0.6;
+
+                this.y += this.speedY;
+
+
+
+                this.radius = this.baseRadius + Math.sin(this.pulseAngle) * 4;
+
+
+
+                if (mousePos.x !== null) {
+
+                    let dx = mousePos.x - this.x;
+
+                    let dy = mousePos.y - this.y;
+
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < mousePos.radius) {
+
+                        const angle = Math.atan2(dy, dx);
+
+                        const force = (mousePos.radius - distance) / mousePos.radius;
+
+                        this.x -= Math.cos(angle) * force * 3;
+
+                        this.y -= Math.sin(angle) * force * 3;
+
+                    }
+
+                }
+
+
+
+                if (this.y + this.radius < 0) {
+
+                    this.y = canvas.height + this.radius + 10;
+
+                    this.x = Math.random() * canvas.width;
+
+                }
+
+                if (this.x - this.radius > canvas.width) this.x = -this.radius;
+
+                if (this.x + this.radius < 0) this.x = canvas.width + this.radius;
+
+            }
+
+            draw() {
+
+                ctx.save();
+
+
+
+                const grad = ctx.createRadialGradient(
+
+                    this.x - this.radius * 0.3,&#x20;
+
+                    this.y - this.radius * 0.3,&#x20;
+
+                    this.radius * 0.1,&#x20;
+
+                    this.x,&#x20;
+
+                    this.y,&#x20;
+
+                    this.radius
+
+                );
+
+
+
+                // Tinted with Emerald / Mint light gradients
+
+                grad.addColorStop(0, `rgba(255, 255, 255, ${this.opacity * 0.85})`);
+
+                grad.addColorStop(0.4, `rgba(167, 243, 208, ${this.opacity * 0.45})`);
+
+                grad.addColorStop(0.8, `rgba(110, 231, 183, ${this.opacity * 0.25})`);
+
+                grad.addColorStop(1, `rgba(5, 150, 105, ${this.opacity * 0.1})`);
+
+
+
+                ctx.fillStyle = grad;
+
+                ctx.beginPath();
+
+                ctx.arc(this.x, this.y, Math.max(0, this.radius), 0, Math.PI * 2);
+
+                ctx.fill();
+
+
+
+                ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity * 0.7})`;
+
+                ctx.lineWidth = 1.5;
+
+                ctx.stroke();
+
+
+
+                const highlightGrad = ctx.createRadialGradient(
+
+                    this.x - this.radius * 0.4,
+
+                    this.y - this.radius * 0.4,
+
+                    1,
+
+                    this.x - this.radius * 0.4,
+
+                    this.y - this.radius * 0.4,
+
+                    this.radius * 0.35
+
+                );
+
+                highlightGrad.addColorStop(0, `rgba(255, 255, 255, ${this.opacity * 0.95})`);
+
+                highlightGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+
+
+                ctx.fillStyle = highlightGrad;
+
+                ctx.beginPath();
+
+                ctx.arc(this.x - this.radius * 0.4, this.y - this.radius * 0.4, this.radius * 0.35, 0, Math.PI * 2);
+
+                ctx.fill();
+
+
+
+                ctx.restore();
+
+            }
+
+        }
+
+
+
+        const bubbleCount = Math.min(Math.floor(window.innerWidth / 40), 28);
+
+        for (let i = 0; i < bubbleCount; i++) {
+
+            bubbles.push(new MotileBubble());
+
+        }
+
+
+
+        function animateBubbles() {
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            bubbles.forEach(b => {
+
+                b.update();
+
+                b.draw();
+
+            });
+
+            requestAnimationFrame(animateBubbles);
+
+        }
+
+        animateBubbles();
+
+
+
+        usernameInput.addEventListener('input', () => {
+
+            clearUsernameBtn.classList.toggle('hidden', !usernameInput.value);
+
+            usernameError.classList.add('hidden');
+
+        });
+
+
+
+        clearUsernameBtn.addEventListener('click', () => {
+
+            usernameInput.value = '';
+
+            clearUsernameBtn.classList.add('hidden');
+
+            usernameInput.focus();
+
+        });
+
+
+
+        togglePasswordBtn.addEventListener('click', () => {
+
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+
+            eyeIcon.className = isPassword ? 'fa-solid fa-eye-slash text-sm' : 'fa-solid fa-eye text-sm';
+
+        });
+
+
+
+        passwordInput.addEventListener('keyup', (e) => {
+
+            if (e.getModifierState('CapsLock')) {
+
+                capsLockWarning.classList.remove('hidden');
+
+            } else {
+
+                capsLockWarning.classList.add('hidden');
+
+            }
+
+            passwordError.classList.add('hidden');
+
+        });
+
+
+
+        function autoDetectUserRole(username) {
+
+            const val = username.toLowerCase().trim();
+
+            if (val.includes('admin') || val.startsWith('adm') || val.startsWith('sys')) {
+
+                return {
+
+                    role: 'Administrator',
+
+                    portal: 'System Administration Dashboard',
+
+                    badgeClass: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
+
+                    iconClass: 'fa-user-shield text-emerald-600'
+
+                };
+
+            } else if (val.includes('faculty') || val.includes('prof') || val.includes('teacher') || val.startsWith('fac')) {
+
+                return {
+
+                    role: 'Faculty Member',
+
+                    portal: 'Educator & Grading Console',
+
+                    badgeClass: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
+
+                    iconClass: 'fa-chalkboard-user text-emerald-600'
+
+                };
+
+            } else {
+
+                return {
+
+                    role: 'Student',
+
+                    portal: 'Student Academic Portal',
+
+                    badgeClass: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
+
+                    iconClass: 'fa-user-graduate text-emerald-600'
+
+                };
+
+            }
+
+        }
+
+
+
+                async function handleLoginSubmit(event) {
+            event.preventDefault();
+            let isValid = true;
+            if (!usernameInput.value.trim()) { usernameError.classList.remove('hidden'); isValid = false; } else usernameError.classList.add('hidden');
+            if (!passwordInput.value) { passwordError.classList.remove('hidden'); isValid = false; } else passwordError.classList.add('hidden');
+            if (!isValid) return;
+
+            const submitBtn = document.getElementById('signInSubmitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const btnSpinner = document.getElementById('btnSpinner');
+            submitBtn.disabled = true;
+            btnText.textContent = 'Verifying...';
+            btnIcon.classList.add('hidden');
+            btnSpinner.classList.remove('hidden');
+
+            try {
+                const response = await fetch(API_BASE_URL + '/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    body: JSON.stringify({ username: usernameInput.value.trim(), password: passwordInput.value })
+                });
+                const payload = await response.json().catch(() => null);
+                if (!response.ok) throw new Error(payload && payload.message ? payload.message : 'Login failed with status ' + response.status);
+                btnText.textContent = 'Sign In';
+                btnIcon.classList.remove('hidden');
+                btnSpinner.classList.add('hidden');
+                showWelcomeModal(payload);
+                setTimeout(() => window.parent.postMessage({ type: 'smis-login', session: payload }, window.location.origin), 900);
+            } catch (error) {
+                showToast(error instanceof Error ? error.message : 'Unable to sign in.', 'error');
+                submitBtn.disabled = false;
+                btnText.textContent = 'Sign In';
+                btnIcon.classList.remove('hidden');
+                btnSpinner.classList.add('hidden');
+            }
+        }
+        function showWelcomeModal(authResponse) {
+            const modal = document.getElementById('welcomeDashboardModal');
+            const modalCard = document.getElementById('welcomeModalCard');
+            const modalSchool = document.getElementById('welcomeModalSchool');
+            const modalRole = document.getElementById('welcomeModalRole');
+            const modalDestination = document.getElementById('welcomeModalDestination');
+            const modalGreeting = document.getElementById('welcomeUserGreeting');
+            const roleBadgeIcon = document.getElementById('roleBadgeIcon');
+            const roles = Array.isArray(authResponse && authResponse.roles) ? authResponse.roles : [];
+            const recognized = autoDetectUserRole(usernameInput.value);
+            const primaryRole = roles[0] || recognized.role;
+            let destination = recognized.portal;
+            if (roles.includes('SystemAdministrator') || roles.includes('Administrator')) destination = 'System Administration Dashboard';
+            else if (roles.includes('Registrar') || roles.includes('AcademicRegistrar')) destination = 'Academic Administration Dashboard';
+            else if (roles.includes('FinanceOfficer') || roles.includes('Accountant')) destination = 'Finance & Accounting Dashboard';
+            modalSchool.textContent = institutionNameDisplay.textContent;
+            modalRole.textContent = primaryRole;
+            modalRole.className = 'font-bold px-3 py-1 rounded-full uppercase tracking-wider text-[11px] border ' + recognized.badgeClass;
+            modalDestination.textContent = destination;
+            modalGreeting.textContent = 'Welcome back, User ID: ' + usernameInput.value;
+            roleBadgeIcon.innerHTML = '<i class="fa-solid ' + recognized.iconClass + '"></i>';
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); modalCard.classList.remove('scale-90'); modalCard.classList.add('scale-100'); }, 10);
+        }
+function closeDashboardModal() {
+
+            const modal = document.getElementById('welcomeDashboardModal');
+
+            const modalCard = document.getElementById('welcomeModalCard');
+
+            modal.classList.add('opacity-0');
+
+            modalCard.classList.remove('scale-100');
+
+            modalCard.classList.add('scale-90');
+
+            setTimeout(() => {
+
+                modal.classList.add('hidden');
+
+            }, 300);
+
+        }
+
+
+
+        customizerToggleBtn.addEventListener('click', () => {
+
+            customizerDrawer.classList.remove('translate-x-full');
+
+        });
+
+
+
+        closeCustomizerBtn.addEventListener('click', () => {
+
+            customizerDrawer.classList.add('translate-x-full');
+
+        });
+
+
+
+        customSchoolNameInput.addEventListener('input', (e) => {
+
+            const name = e.target.value.trim() || 'Institution Name';
+
+            institutionNameDisplay.textContent = name;
+
+            footerSchoolName.textContent = name;
+
+        });
+
+
+
+        customMottoInput.addEventListener('input', (e) => {
+
+            institutionMottoDisplay.textContent = e.target.value.trim();
+
+        });
+
+
+
+        function applyPresetSchool(name, motto, icon) {
+
+            customSchoolNameInput.value = name;
+
+            customMottoInput.value = motto;
+
+            institutionNameDisplay.textContent = name;
+
+            institutionMottoDisplay.textContent = motto;
+
+            footerSchoolName.textContent = name;
+
+            setLogoIcon(icon);
+
+            showToast(`Updated institution to ${name}`, 'success');
+
+        }
+
+
+
+        function switchLogoTab(tab) {
+
+            const tabs = ['preset', 'url', 'upload'];
+
+            tabs.forEach(t => {
+
+                const tabBtn = document.getElementById(`logoTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+
+                const panel = document.getElementById(`logoPanel${t.charAt(0).toUpperCase() + t.slice(1)}`);
+
+                if (t === tab) {
+
+                    tabBtn.className = 'flex-1 py-1.5 text-[11px] font-bold rounded-lg bg-white text-slate-900 shadow-sm transition-all';
+
+                    panel.classList.remove('hidden');
+
+                } else {
+
+                    tabBtn.className = 'flex-1 py-1.5 text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-all';
+
+                    panel.classList.add('hidden');
+
+                }
+
+            });
+
+        }
+
+
+
+        function showCustomImageLogo(src) {
+
+            const svgEl = document.getElementById('schoolLogoSvg');
+
+            const imgEl = document.getElementById('customLogoImg');
+
+
+
+            imgEl.src = src;
+
+            imgEl.classList.remove('hidden');
+
+            svgEl.classList.add('hidden');
+
+        }
+
+
+
+        function applyLogoFromUrl() {
+
+            const urlInput = document.getElementById('customLogoUrlInput');
+
+            const url = urlInput.value.trim();
+
+            if (!url) {
+
+                showToast('Please enter a valid image URL', 'error');
+
+                return;
+
+            }
+
+            showCustomImageLogo(url);
+
+            showToast('Loaded logo from URL', 'success');
+
+        }
+
+
+
+        function handleLogoFileUpload(event) {
+
+            const file = event.target.files[0];
+
+            if (!file) return;
+
+
+
+            if (!file.type.startsWith('image/')) {
+
+                showToast('Please select a valid image file', 'error');
+
+                return;
+
+            }
+
+
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+
+                showCustomImageLogo(e.target.result);
+
+                showToast('Logo image uploaded successfully', 'success');
+
+            };
+
+            reader.readAsDataURL(file);
+
+        }
+
+
+
+        function handleLogoError() {
+
+            showToast('Failed to load custom logo image', 'error');
+
+            const svgEl = document.getElementById('schoolLogoSvg');
+
+            const imgEl = document.getElementById('customLogoImg');
+
+            imgEl.classList.add('hidden');
+
+            svgEl.classList.remove('hidden');
+
+        }
+
+
+
+        function setLogoIcon(type) {
+
+            const svgEl = document.getElementById('schoolLogoSvg');
+
+            const imgEl = document.getElementById('customLogoImg');
+
+
+
+            imgEl.classList.add('hidden');
+
+            svgEl.classList.remove('hidden');
+
+
+
+            if (logoSvgs[type]) {
+
+                svgEl.innerHTML = logoSvgs[type];
+
+            }
+
+        }
+
+
+
+        function setThemePalette(primaryHex, secondaryHex, notify = true) {
+
+            document.documentElement.style.setProperty('--brand-primary', primaryHex);
+
+            document.documentElement.style.setProperty('--brand-secondary', secondaryHex);
+
+            document.documentElement.style.setProperty('--brand-gradient', `linear-gradient(135deg, ${primaryHex} 0%, ${secondaryHex} 100%)`);
+
+            document.documentElement.style.setProperty('--accent-glow', `${primaryHex}59`);
+
+
+
+            const orb1 = document.getElementById('orb1');
+
+            const orb3 = document.getElementById('orb3');
+
+            if (orb1) orb1.style.backgroundColor = `${primaryHex}33`;
+
+            if (orb3) orb3.style.backgroundColor = `${primaryHex}33`;
+
+
+
+            document.getElementById('customPrimaryColorPicker').value = primaryHex;
+
+            if (notify) showToast('Updated theme color scheme', 'success');
+
+        }
+
+
+
+        function handleCustomColorChange(event) {
+
+            const hex = event.target.value;
+
+            // Darken slightly for gradient secondary color
+
+            setThemePalette(hex, hex);
+
+        }
+
+
+
+                function resetCustomizer() {
+            customSchoolNameInput.value = defaultBranding.institutionName;
+            customMottoInput.value = defaultBranding.motto;
+            institutionNameDisplay.textContent = defaultBranding.institutionName;
+            institutionMottoDisplay.textContent = defaultBranding.motto;
+            footerSchoolName.textContent = defaultBranding.institutionName;
+            const logoUrl = apiUrl(defaultBranding.logoPath);
+            document.getElementById('customLogoUrlInput').value = logoUrl;
+            document.getElementById('customLogoFileInput').value = '';
+            if (logoUrl) showCustomImageLogo(logoUrl); else setLogoIcon('academic');
+            setThemePalette(defaultBranding.primaryColor, defaultBranding.accentColor);
+        }
+document.getElementById('forgotPasswordBtn').addEventListener('click', (e) => {
+
+            e.preventDefault();
+
+            const modal = document.getElementById('forgotPasswordModal');
+
+            const card = modal.querySelector('.elastic-modal');
+
+            modal.classList.remove('hidden');
+
+            setTimeout(() => {
+
+                modal.classList.remove('opacity-0');
+
+                card.classList.remove('scale-90');
+
+                card.classList.add('scale-100');
+
+            }, 10);
+
+        });
+
+
+
+        function closeForgotModal() {
+
+            const modal = document.getElementById('forgotPasswordModal');
+
+            const card = modal.querySelector('.elastic-modal');
+
+            modal.classList.add('opacity-0');
+
+            card.classList.remove('scale-100');
+
+            card.classList.add('scale-90');
+
+            setTimeout(() => modal.classList.add('hidden'), 300);
+
+        }
+
+
+
+        function handleForgotSubmit(e) {
+
+            e.preventDefault();
+
+            const email = document.getElementById('recoveryEmail').value;
+
+            closeForgotModal();
+
+            showToast(`Password reset link sent to ${email}`, 'success');
+
+        }
+
+
+
+        function showToast(message, type = 'info') {
+
+            const container = document.getElementById('toastContainer');
+
+            const toast = document.createElement('div');
+
+
+
+            let bgClass = 'bg-emerald-950 text-white border-emerald-800';
+
+            let iconClass = 'fa-solid fa-circle-info text-emerald-400';
+
+
+
+            if (type === 'success') {
+
+                bgClass = 'bg-slate-900 text-white border-emerald-500/80';
+
+                iconClass = 'fa-solid fa-circle-check text-emerald-400';
+
+            } else if (type === 'error') {
+
+                bgClass = 'bg-slate-900 text-white border-rose-500/80';
+
+                iconClass = 'fa-solid fa-circle-xmark text-rose-400';
+
+            }
+
+
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-lg ${bgClass} text-xs font-medium flex items-center space-x-2.5 transform translate-y-4 opacity-0 transition-all duration-300`;
+
+            toast.innerHTML = `<i class="${iconClass} text-sm"></i><span>${message}</span>`;
+
+
+
+            container.appendChild(toast);
+
+
+
+            setTimeout(() => {
+
+                toast.classList.remove('translate-y-4', 'opacity-0');
+
+            }, 10);
+
+
+
+            setTimeout(() => {
+
+                toast.classList.add('opacity-0', 'translate-y-4');
+
+                setTimeout(() => toast.remove(), 300);
+
+            }, 3500);
+
+        }
+
+            void loadInstitutionBranding();
+</script>
+
+</body>
+
+</html>
