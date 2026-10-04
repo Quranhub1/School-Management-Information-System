@@ -1,6 +1,6 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-09-23  
+**Last updated:** 2026-10-04  
 **Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
@@ -12,6 +12,16 @@ The core backend, persistence, security hardening, frontend, automated verificat
 Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed. The later duplicate desktop-workflow cleanup on `main` also passed the full CI suite, including native desktop builds.
 
 A dedicated executable target-environment acceptance runbook is now available at `docs/PRODUCTION_ACCEPTANCE.md`. It records the evidence required for golden-path, authorization, module, finance, attendance, assessment, clinical, staff/student, deployment, backup/restore, desktop, and security sign-off.
+
+## Current work — October 2026
+
+- [x] Replaced the institution login page with the approved glassmorphism login design in `frontend/public/institution-login.html`
+- [x] Refactored the institution login HTML for clarity while preserving the approved visual design and controls
+- [ ] Wire the approved login controls to the existing SMIS authentication API without altering the approved login design
+- [ ] Load institution name, motto, logo, primary/accent colours and related branding from the active institution settings used by SMIS
+- [ ] Verify successful login transfers the authenticated session into the existing SMIS application shell
+- [ ] Verify login failure, loading state, Remember Me and password recovery behaviour against the real backend
+- [ ] Complete Windows target-machine setup and validate the same backend/frontend workflow used for the production-style environment
 
 ## Completed / verified
 
@@ -77,7 +87,7 @@ These require an actual target deployment or physical client/test environment an
 **Released:** `v0.2.0`  
 **Corrected release workflow:** `34351052149`  
 **Release target:** `9163ef416f8d44be66ab5e97408b1d2fcd3ed27f`  
-**Current main:** `22e6ff2dde40f64f4e5e9d1d4f39208be9cb03d8`
+**Current main:** `16b998c`
 
 Expected published assets:
 
