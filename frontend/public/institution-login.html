@@ -68,6 +68,72 @@
         }
 
 /* Background Canvas */
+        /* Institution-linked watermark system */
+        .institution-watermarks {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+            user-select: none;
+        }
+        .institution-watermark {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            white-space: nowrap;
+            color: var(--login-primary, #2563eb);
+            opacity: 0.055;
+            font-weight: 900;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            transform: rotate(-28deg);
+        }
+        .institution-watermark img {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+            filter: grayscale(1);
+            opacity: 0.8;
+        }
+        .institution-watermark span {
+            font-size: clamp(1.6rem, 4vw, 3.2rem);
+        }
+        .institution-watermark.small span {
+            font-size: clamp(1rem, 2vw, 1.65rem);
+            letter-spacing: 0.12em;
+        }
+        .institution-watermark.small img {
+            width: 34px;
+            height: 34px;
+        }
+        .watermark-center {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) rotate(-28deg);
+            opacity: 0.035;
+        }
+        .watermark-top-left { left: -7%; top: 8%; }
+        .watermark-top-right { right: -9%; top: 22%; }
+        .watermark-bottom-left { left: -8%; bottom: 14%; }
+        .watermark-bottom-right { right: -8%; bottom: 4%; }
+        .watermark-edge-left { left: -11%; top: 48%; }
+        .watermark-edge-right { right: -12%; top: 62%; }
+        .institution-watermark::after {
+            content: attr(data-motto);
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.58em;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            opacity: 0.8;
+            text-transform: none;
+        }
+
         canvas#bgCanvas {
             position: fixed;
             top: 0;
@@ -83,6 +149,17 @@
 
     <!-- Uniform Stratified Canvas Background -->
     <canvas id="bgCanvas" aria-hidden="true"></canvas>
+
+    <!-- Institution-linked watermark layer -->
+    <div id="institutionWatermarks" class="institution-watermarks" aria-hidden="true">
+        <div class="institution-watermark watermark-top-left" data-motto=""><img class="watermark-logo" alt=""><span class="watermark-label">INSTITUTION</span></div>
+        <div class="institution-watermark watermark-top-right" data-motto=""><img class="watermark-logo" alt=""><span class="watermark-label">INSTITUTION</span></div>
+        <div class="institution-watermark watermark-center" data-motto=""><img class="watermark-logo" alt=""><span class="watermark-label">INSTITUTION</span></div>
+        <div class="institution-watermark watermark-bottom-left small" data-motto=""><img class="watermark-logo" alt=""><span class="watermark-label">INSTITUTION</span></div>
+        <div class="institution-watermark watermark-bottom-right small" data-motto=""><img class="watermark-logo" alt=""><span class="watermark-label">INSTITUTION</span></div>
+        <div class="institution-watermark watermark-edge-left small" data-motto=""><img class="watermark-logo" alt=""><span class="watermark-label">INSTITUTION</span></div>
+        <div class="institution-watermark watermark-edge-right small" data-motto=""><img class="watermark-logo" alt=""><span class="watermark-label">INSTITUTION</span></div>
+    </div>
 
     <!-- Main Login Card -->
     <main class="w-full max-w-md glass-card rounded-3xl overflow-hidden p-8 sm:p-10 relative z-10 hover-lift">
@@ -252,6 +329,23 @@
                     const submitButton = document.getElementById('submitBtn');
                     if (submitButton) {
                         submitButton.style.background = 'linear-gradient(90deg, ' + primary + ', ' + accent + ', ' + primary + ')';
+                    }
+
+                    // Keep the watermark layer synchronized with active institution settings.
+                    const watermarkRoot = document.getElementById('institutionWatermarks');
+                    if (watermarkRoot) {
+                        watermarkRoot.style.setProperty('--login-primary', primary);
+                        watermarkRoot.style.setProperty('--login-accent', accent);
+                        watermarkRoot.querySelectorAll('.institution-watermark').forEach((watermark) => {
+                            const label = watermark.querySelector('.watermark-label');
+                            const watermarkLogo = watermark.querySelector('.watermark-logo');
+                            if (label) label.textContent = abbreviation || name;
+                            watermark.setAttribute('data-motto', motto);
+                            if (watermarkLogo && logoElement?.src) {
+                                watermarkLogo.src = logoElement.src;
+                                watermarkLogo.alt = name + ' Logo';
+                            }
+                        });
                     }
 
                     if (abbreviation) {
