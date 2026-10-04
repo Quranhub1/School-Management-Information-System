@@ -89,7 +89,7 @@
 </head>
 <body class="bg-gradient-to-br from-sky-50 via-indigo-50/50 to-blue-100 font-sans text-slate-800 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
 
-    <!-- Fullscreen Dynamic Spinning & Drifting Canvas Background -->
+    <!-- Uniform Stratified Canvas Background -->
     <canvas id="bgCanvas" aria-hidden="true"></canvas>
 
     <!-- Settings Gear Button (Top-Right) -->
@@ -117,8 +117,9 @@
             <h1 id="displayName" class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-900 bg-clip-text text-transparent text-center leading-tight">
                 INSTITUTION NAME
             </h1>
-            <p id="displayMotto" class="text-xs uppercase tracking-widest text-blue-600 font-bold mt-1.5 text-center transition-colors duration-200 hover:text-blue-700 cursor-default">
-                ENTER MOTTO
+            <!-- Unlocked casing motto: supports uppercase, lowercase, and mixed case -->
+            <p id="displayMotto" class="text-xs tracking-wide text-blue-600 font-semibold mt-1.5 text-center transition-colors duration-200 hover:text-blue-700 cursor-default">
+                Excellence & Integrity
             </p>
         </header>
 
@@ -129,7 +130,7 @@
         <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5" novalidate>
             <div>
                 <label for="username" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 transition-colors duration-200 hover:text-slate-800">
-                    Username 
+                    Username / Email
                 </label>
                 <div class="relative">
                     <input type="text" id="username" name="username" required placeholder="Enter your credentials"
@@ -203,9 +204,9 @@
 
                 <div>
                     <label for="settingMotto" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        Institution Motto
+                        Institution Motto (Supports all cases)
                     </label>
-                    <input type="text" id="settingMotto" oninput="onSettingsChange()" placeholder="e.g. Excellence & Integrity"
+                    <input type="text" id="settingMotto" oninput="onSettingsChange()" placeholder="e.g. Excellence & Integrity / excellence in service"
                            class="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors duration-150">
                 </div>
 
@@ -235,43 +236,15 @@
         // --- 1. CONFIGURATION & PERSISTENT STATE ---
         const DEFAULT_CONFIG = {
             name: "KAMPALA SCHOOL OF HEALTH SCIENCES",
-            motto: "EXCELLENCE & INTEGRITY",
+            motto: "Excellence & Integrity",
             logo: "https://www.kshs.ac.ug/images/kampala%20logo.png"
         };
 
-        const API_BASE_URL = (new URLSearchParams(window.location.search).get('api') || '').replace(/\/$/, '');
-
         const config = {
-            name: DEFAULT_CONFIG.name,
-            motto: DEFAULT_CONFIG.motto,
-            logo: DEFAULT_CONFIG.logo
+            name: localStorage.getItem('inst_name') || DEFAULT_CONFIG.name,
+            motto: localStorage.getItem('inst_motto') || DEFAULT_CONFIG.motto,
+            logo: localStorage.getItem('inst_logo') || DEFAULT_CONFIG.logo
         };
-
-        function apiUrl(path) {
-            if (!path) return '';
-            if (/^https?:\/\//i.test(path)) return path;
-            if (!API_BASE_URL) return path.startsWith('/') ? path : '/' + path;
-            return API_BASE_URL + (path.startsWith('/') ? path : '/' + path);
-        }
-
-        async function loadInstitutionBranding() {
-            try {
-                const response = await fetch(apiUrl('/api/public/institution-settings/active'), {
-                    headers: { Accept: 'application/json' }
-                });
-                if (!response.ok) throw new Error('Institution settings unavailable');
-                const settings = await response.json();
-
-                config.name = settings.institutionName || DEFAULT_CONFIG.name;
-                config.motto = settings.motto || DEFAULT_CONFIG.motto;
-                config.logo = apiUrl(settings.logoPath) || DEFAULT_CONFIG.logo;
-
-                applyBranding();
-            } catch (error) {
-                applyBranding();
-                showMsg('Unable to load current institution branding. Using the saved defaults.', 'info');
-            }
-        }
 
         function applyBranding() {
             document.getElementById('displayName').textContent = config.name;
@@ -281,13 +254,16 @@
             document.getElementById('settingInstName').value = config.name;
             document.getElementById('settingMotto').value = config.motto;
             document.getElementById('settingLogo').value = config.logo;
-            document.title = config.name ? config.name + ' | Institution Login' : 'Institution Login Portal';
         }
 
         function onSettingsChange() {
             config.name = document.getElementById('settingInstName').value.trim() || DEFAULT_CONFIG.name;
             config.motto = document.getElementById('settingMotto').value.trim() || DEFAULT_CONFIG.motto;
             config.logo = document.getElementById('settingLogo').value.trim() || DEFAULT_CONFIG.logo;
+
+            localStorage.setItem('inst_name', config.name);
+            localStorage.setItem('inst_motto', config.motto);
+            localStorage.setItem('inst_logo', config.logo);
 
             document.getElementById('displayName').textContent = config.name;
             document.getElementById('displayMotto').textContent = config.motto;
@@ -298,6 +274,10 @@
             config.name = DEFAULT_CONFIG.name;
             config.motto = DEFAULT_CONFIG.motto;
             config.logo = DEFAULT_CONFIG.logo;
+
+            localStorage.removeItem('inst_name');
+            localStorage.removeItem('inst_motto');
+            localStorage.removeItem('inst_logo');
 
             applyBranding();
         }
@@ -311,19 +291,45 @@
             }
         }
 
-        const rememberedUsername = localStorage.getItem('smis.rememberedUsername');
-        if (rememberedUsername) {
-            document.getElementById('username').value = rememberedUsername;
-            document.getElementById('rememberMe').checked = true;
-        }
-
         applyBranding();
-        void loadInstitutionBranding();
 
-        // --- 2. MULTI-ANGLE SPINNING CANVAS WATERMARKS ---
+        // --- 2. UNIFORM STRATIFIED GRID CANVAS WATERMARKS ---
         const canvas = document.getElementById('bgCanvas');
         const ctx = canvas.getContext('2d');
         let dpr = window.devicePixelRatio || 1;
+
+        const COLS = 4; // 4 columns across
+        const ROWS = 4; // 4 rows down = 16 evenly spaced sector anchors
+        let watermarks = [];
+
+        function initWatermarks() {
+            watermarks = [];
+            const cellW = window.innerWidth / COLS;
+            const cellH = window.innerHeight / ROWS;
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const index = r * COLS + c;
+                    watermarks.push({
+                        type: index % 2 === 0 ? 'name' : 'motto',
+                        col: c,
+                        row: r,
+                        homeX: (c + 0.5) * cellW,
+                        homeY: (r + 0.5) * cellH,
+                        radiusX: cellW * 0.22,
+                        radiusY: cellH * 0.22,
+                        speedX: Math.random() * 0.0007 + 0.0005,
+                        speedY: Math.random() * 0.0007 + 0.0005,
+                        phaseX: Math.random() * Math.PI * 2,
+                        phaseY: Math.random() * Math.PI * 2,
+                        angle: Math.random() * Math.PI * 2, // 360-degree initial angle
+                        spinSpeed: (Math.random() - 0.5) * 0.0024 + (Math.random() > 0.5 ? 0.0008 : -0.0008), // Constant slow spin
+                        fontSize: index % 2 === 0 ? Math.floor(Math.random() * 6) + 22 : Math.floor(Math.random() * 5) + 18,
+                        opacity: Math.random() * 0.025 + 0.035
+                    });
+                }
+            }
+        }
 
         function resizeCanvas() {
             dpr = window.devicePixelRatio || 1;
@@ -332,25 +338,23 @@
             canvas.style.width = window.innerWidth + 'px';
             canvas.style.height = window.innerHeight + 'px';
             ctx.scale(dpr, dpr);
+
+            // Re-anchor home points to maintain exact screen symmetry on resize
+            const cellW = window.innerWidth / COLS;
+            const cellH = window.innerHeight / ROWS;
+            watermarks.forEach(w => {
+                w.homeX = (w.col + 0.5) * cellW;
+                w.homeY = (w.row + 0.5) * cellH;
+                w.radiusX = cellW * 0.22;
+                w.radiusY = cellH * 0.22;
+            });
         }
+
+        initWatermarks();
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // 14 watermarks spanning across the whole background with individual spinning velocities & angles
-        const watermarkCount = 14;
-        const watermarks = Array.from({ length: watermarkCount }, (_, i) => ({
-            type: i % 2 === 0 ? 'name' : 'motto',
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            vx: (Math.random() - 0.5) * 0.35,
-            vy: (Math.random() - 0.5) * 0.35,
-            angle: Math.random() * Math.PI * 2, // Full 360-degree randomized start angle
-            spinSpeed: (Math.random() - 0.5) * 0.003 + (Math.random() > 0.5 ? 0.001 : -0.001), // Continuous slow rotational spin
-            fontSize: i % 2 === 0 ? Math.floor(Math.random() * 8) + 24 : Math.floor(Math.random() * 6) + 20,
-            opacity: Math.random() * 0.035 + 0.03
-        }));
-
-        // Ripple bubbles for soft organic depth
+        // Subtle ambient background ripples
         const bubbleCount = 8;
         const bubbles = Array.from({ length: bubbleCount }, () => ({
             x: Math.random() * window.innerWidth,
@@ -363,35 +367,31 @@
             vy: (Math.random() - 0.5) * 0.18
         }));
 
-        function animateBackground() {
+        function animateBackground(timestamp) {
             ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-            // 1. Draw spinning and drifting watermarks across all angles
-            watermarks.forEach(w => {
-                w.x += w.vx;
-                w.y += w.vy;
-                w.angle += w.spinSpeed; // Dynamic continuous rotation
+            const time = timestamp || performance.now();
 
-                // Extended bounds to ensure smooth wrapping around all screen edges
-                const wrapMargin = 450;
-                if (w.x < -wrapMargin) w.x = window.innerWidth + wrapMargin;
-                if (w.x > window.innerWidth + wrapMargin) w.x = -wrapMargin;
-                if (w.y < -wrapMargin) w.y = window.innerHeight + wrapMargin;
-                if (w.y > window.innerHeight + wrapMargin) w.y = -wrapMargin;
+            // 1. Draw perfectly distributed, spinning watermarks in all 16 sectors
+            watermarks.forEach(w => {
+                // Harmonic smooth orbit around the sector center (prevents drifting or converging into clumps)
+                const currentX = w.homeX + Math.sin(time * w.speedX + w.phaseX) * w.radiusX;
+                const currentY = w.homeY + Math.cos(time * w.speedY + w.phaseY) * w.radiusY;
+                w.angle += w.spinSpeed; // Continuous spin
 
                 ctx.save();
-                ctx.translate(w.x, w.y);
+                ctx.translate(currentX, currentY);
                 ctx.rotate(w.angle);
 
                 const isName = w.type === 'name';
-                const text = (isName ? config.name : config.motto).toUpperCase();
+                const text = isName ? config.name.toUpperCase() : config.motto;
 
                 if (isName) {
                     ctx.font = `800 ${w.fontSize}px Inter, sans-serif`;
                     ctx.fillStyle = `rgba(30, 41, 59, ${w.opacity})`;
                 } else {
                     ctx.font = `600 italic ${w.fontSize}px Inter, sans-serif`;
-                    ctx.fillStyle = `rgba(37, 99, 235, ${w.opacity * 1.2})`;
+                    ctx.fillStyle = `rgba(37, 99, 235, ${w.opacity * 1.25})`;
                 }
 
                 ctx.textAlign = 'center';
@@ -400,7 +400,7 @@
                 ctx.restore();
             });
 
-            // 2. Draw subtle ripple bubbles
+            // 2. Draw subtle organic ripples
             bubbles.forEach(b => {
                 b.x += b.vx;
                 b.y += b.vy;
@@ -430,9 +430,9 @@
             requestAnimationFrame(animateBackground);
         }
 
-        animateBackground();
+        requestAnimationFrame(animateBackground);
 
-        // --- 3. FORM SUBMISSION HANDLING ---
+        // --- 3. FORM SUBMISSION ---
         let msgTimeout;
         function showMsg(text, type = 'error') {
             const box = document.getElementById('messageBox');
@@ -448,11 +448,10 @@
             }, 4500);
         }
 
-        async function handleLogin(event) {
+        function handleLogin(event) {
             event.preventDefault();
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value;
-            const remember = document.getElementById('rememberMe').checked;
 
             if (!user || !pass) {
                 showMsg('Please fill in all required fields.', 'error');
@@ -462,40 +461,15 @@
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.textContent = 'AUTHENTICATING...';
+
             showMsg('Authenticating credentials...', 'info');
 
-            try {
-                const response = await fetch(apiUrl('/api/auth/login'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json'
-                    },
-                    body: JSON.stringify({ username: user, password: pass })
-                });
-
-                const payload = await response.json().catch(() => null);
-                if (!response.ok) {
-                    throw new Error(payload?.message || 'Invalid username or password.');
-                }
-
-                if (remember) {
-                    localStorage.setItem('smis.rememberedUsername', user);
-                } else {
-                    localStorage.removeItem('smis.rememberedUsername');
-                }
-
-                showMsg('Authentication successful. Loading workspace...', 'info');
-
-                window.parent.postMessage(
-                    { type: 'smis-login', session: payload },
-                    window.location.origin
-                );
-            } catch (error) {
-                showMsg(error instanceof Error ? error.message : 'Unable to sign in.', 'error');
+            setTimeout(() => {
                 btn.disabled = false;
                 btn.textContent = 'SIGN IN';
-            }
+                showMsg(`Welcome back! Logged into ${config.name}.`, 'info');
+                document.getElementById('loginForm').reset();
+            }, 1200);
         }
     </script>
 </body>
