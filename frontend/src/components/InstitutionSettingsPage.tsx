@@ -100,7 +100,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
 
   async function uploadLogo(file: File) {
     setUploadingLogo(true); setError(''); setSuccess('')
-    try { const result = await uploadInstitutionLogo(file); setActive(result); setForm(prev => ({ ...prev, logoPath: result.logoPath ?? '' })); onSaved(result); setSuccess('Institution logo saved successfully.') }
+    try { const result = await uploadInstitutionLogo(file); setActive(result); setForm(prev => ({ ...prev, logoPath: result.logoPath ?? '' })); onSaved(result); window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result })); setSuccess('Institution logo saved successfully.') }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to upload logo.') }
     finally { setUploadingLogo(false) }
   }
@@ -114,6 +114,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
       const result = await createInstitutionSettings(form)
       setActive(result)
       onSaved(result)
+      window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result }))
       setSuccess('Institution settings saved successfully.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save settings.')
