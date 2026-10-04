@@ -442,99 +442,7 @@
 
                             <!-- SVG Crest / KSHS Shield Logo -->
 
-                            <svg id="schoolLogoSvg" class="w-full h-full drop-shadow-md" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
-
-                                <!-- Shield Outline & Green Background -->
-
-                                <path d="M 15,15 Q 100,38 185,15 Q 198,98 176,148 Q 100,210 100,210 Q 100,210 24,148 Q 2,98 15,15 Z" fill="#0b8a42" stroke="#111827" stroke-width="7" stroke-linejoin="round"/>
-
-                                <path d="M 22,23 Q 100,43 178,23 Q 189,98 169,143 Q 100,200 100,200 Q 100,200 31,143 Q 11,98 22,23 Z" fill="none" stroke="#044d23" stroke-width="3"/>
-
-
-
-                                <!-- Caduceus Wings -->
-
-                                <g fill="#ffffff">
-
-                                    <path d="M 100,42 C 78,18 30,28 20,44 C 42,50 72,48 96,54 C 100,54 100,54 100,54 C 100,54 100,54 104,54 C 128,48 158,50 180,44 C 170,28 122,18 100,42 Z"/>
-
-                                    <path d="M 100,52 C 82,34 42,42 32,54 C 50,58 76,57 96,61 C 104,57 130,58 148,54 C 138,42 98,34 100,52 Z" opacity="0.9"/>
-
-                                </g>
-
-
-
-                                <!-- Stethoscope (Left Side) -->
-
-                                <g stroke="#111827" fill="none" stroke-linecap="round">
-
-                                    <path d="M 78,56 C 58,70 48,90 42,118 C 38,136 50,148 60,132 C 68,118 78,82 78,56 Z" stroke-width="7"/>
-
-                                    <path d="M 78,56 C 58,70 48,90 42,118 C 38,136 50,148 60,132 C 68,118 78,82 78,56 Z" stroke="#ffffff" stroke-width="2"/>
-
-                                    <circle cx="41" cy="138" r="9" fill="#111827" stroke="#ffffff" stroke-width="2.5"/>
-
-                                </g>
-
-
-
-                                <!-- Syringe (Right Side) -->
-
-                                <g transform="rotate(-38 135 95)">
-
-                                    <rect x="127" y="52" width="16" height="54" rx="2" fill="#ffffff" stroke="#111827" stroke-width="4"/>
-
-                                    <rect x="131" y="68" width="8" height="28" fill="#111827"/>
-
-                                    <!-- Plunger -->
-
-                                    <rect x="131" y="42" width="8" height="10" fill="#111827"/>
-
-                                    <line x1="123" y1="42" x2="147" y2="42" stroke="#111827" stroke-width="4" stroke-linecap="round"/>
-
-                                    <!-- Needle -->
-
-                                    <line x1="135" y1="106" x2="135" y2="136" stroke="#111827" stroke-width="4" stroke-linecap="round"/>
-
-                                </g>
-
-
-
-                                <!-- Caduceus Center Staff & Snakes -->
-
-                                <g fill="#ffffff">
-
-                                    <circle cx="100" cy="24" r="8" fill="#ffffff" stroke="#111827" stroke-width="2"/>
-
-                                    <rect x="97" y="30" width="6" height="160" rx="3" fill="#ffffff" stroke="#111827" stroke-width="1.5"/>
-
-
-
-                                    <!-- Snake 1 -->
-
-                                    <path d="M 100,55 C 120,68 120,88 100,100 C 80,112 80,132 100,145 C 115,155 110,165 100,172" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
-
-                                    <path d="M 100,55 C 120,68 120,88 100,100 C 80,112 80,132 100,145 C 115,155 110,165 100,172" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round"/>
-
-
-
-                                    <!-- Snake 2 -->
-
-                                    <path d="M 100,55 C 80,68 80,88 100,100 C 120,112 120,132 100,145 C 85,155 90,165 100,172" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
-
-                                    <path d="M 100,55 C 80,68 80,88 100,100 C 120,112 120,132 100,145 C 85,155 90,165 100,172" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round"/>
-
-                                </g>
-
-
-
-                                <!-- KS | HS Text -->
-
-                                <text x="60" y="184" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle" letter-spacing="-1">KS</text>
-
-                                <text x="140" y="184" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle" letter-spacing="-1">HS</text>
-
-                            </svg>
+                            <img id="customLogoImg" class="hidden w-full h-full object-contain rounded-xl drop-shadow-md" alt="Institution Logo" onerror="handleLogoError()">
 
 
 
@@ -1087,25 +995,25 @@
 
                     <div class="grid grid-cols-4 gap-2">
 
-                        <button type="button" onclick="setLogoIcon('academic')" title="Academic Cap" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
+                        <button type="button" onclick="setLogoIcon()" title="Academic Cap" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
 
                             <i class="fa-solid fa-graduation-cap text-lg"></i>
 
                         </button>
 
-                        <button type="button" onclick="setLogoIcon('university')" title="University Pillars" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
+                        <button type="button" onclick="setLogoIcon()" title="University Pillars" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
 
                             <i class="fa-solid fa-building-columns text-lg"></i>
 
                         </button>
 
-                        <button type="button" onclick="setLogoIcon('shield')" title="Heraldic Shield" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
+                        <button type="button" onclick="setLogoIcon()" title="Heraldic Shield" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
 
                             <i class="fa-solid fa-shield-halved text-lg"></i>
 
                         </button>
 
-                        <button type="button" onclick="setLogoIcon('book')" title="Open Book" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
+                        <button type="button" onclick="setLogoIcon()" title="Open Book" class="p-3 bg-slate-100 hover:bg-emerald-50 border border-slate-200 rounded-xl text-center text-emerald-600 transition-transform hover:scale-105 active:scale-95">
 
                             <i class="fa-solid fa-book-open text-lg"></i>
 
@@ -1188,20 +1096,6 @@
     <script>
 
         // SVG Paths for dynamic crest logos
-
-        const logoSvgs = {
-
-            academic: `<path d="M 15,15 Q 100,38 185,15 Q 198,98 176,148 Q 100,210 100,210 Q 100,210 24,148 Q 2,98 15,15 Z" fill="#0b8a42" stroke="#111827" stroke-width="7" stroke-linejoin="round"/><circle cx="100" cy="24" r="8" fill="#ffffff"/><rect x="97" y="30" width="6" height="160" rx="3" fill="#ffffff"/><text x="60" y="184" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle">KS</text><text x="140" y="184" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle">HS</text>`,
-
-            university: `<path d="M12 2L1 7h22L12 2zm-9 7v10h2V9H3zm5 0v10h2V9H8zm5 0v10h2V9h-2zm5 0v10h2V9h-2zM1 21h22v2H1v-2z" fill="#0b8a42"/>`,
-
-            shield: `<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" fill="#0b8a42"/>`,
-
-            book: `<path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.35-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" fill="#0b8a42"/>`
-
-        };
-
-
 
         const API_BASE_URL = (new URLSearchParams(window.location.search).get('api') || '').replace(/\/$/, '');
         let defaultBranding = {
@@ -2013,7 +1907,7 @@ function closeDashboardModal() {
 
 
 
-        function setLogoIcon(type) {
+        function setLogoIcon() {
 
             const svgEl = document.getElementById('schoolLogoSvg');
 
