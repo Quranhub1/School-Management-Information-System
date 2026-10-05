@@ -286,7 +286,7 @@ function App(){
 
 function AppContent(){
   const[authed,setAuthed]=useState(()=>Boolean(getSession()))
-  const { institution, setInstitution } = useInstitutionSettings()
+  const { institution, setInstitution, loaded: institutionLoaded } = useInstitutionSettings()
 
   useEffect(()=>{
     const handleLoginMessage=(event:MessageEvent)=>{
@@ -318,6 +318,8 @@ function AppContent(){
     root.style.setProperty('--brand-institution-short', JSON.stringify(institutionShortName(institution)))
     document.title=institution.institutionName?.trim()||'School Management Information System'
   },[institution])
+
+  if (!institutionLoaded) return <div className="institution-login-host" aria-label="Loading institution settings" />
 
   return authed
     ? <AuthenticatedWorkspace onLogout={()=>setAuthed(false)} institution={institution} onInstitutionSaved={setInstitution}/>
