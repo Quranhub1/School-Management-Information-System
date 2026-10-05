@@ -295,21 +295,9 @@
                 applyInstitutionBranding(event.data.settings);
             });
 
-            async function loadInstitutionBranding() {
-                try {
-                    const response = await fetch(apiBase + '/api/public/institution-settings/active', {
-                        headers: { Accept: 'application/json' },
-                        cache: 'no-store'
-                    });
-                    if (response.ok) applyInstitutionBranding(await response.json());
-                } catch {
-                    // The parent application supplies the authoritative settings.
-                }
-            }
-
-            void loadInstitutionBranding();
-            window.setInterval(loadInstitutionBranding, 30000);
-
+            // Institution branding is supplied by the parent React application only.
+            // Do not fetch or poll here: a second request could overwrite the PostgreSQL-backed
+            // settings with a stale/default response after logout.
             const rememberedUsername = localStorage.getItem('smis.rememberedUsername');
             const usernameInput = document.getElementById('username');
             const rememberMe = document.getElementById('rememberMe');
