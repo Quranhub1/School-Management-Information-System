@@ -107,15 +107,9 @@
         <!-- Header with Centered Interactive Logo -->
         <header class="text-center mb-8 flex flex-col items-center justify-center">
             <div class="logo-interactive flex items-center justify-center w-24 h-24 rounded-2xl bg-white p-3 mb-4 border border-slate-200/90 shadow-md cursor-pointer">
-                <img id="displayLogo" 
-                     src="https://www.kshs.ac.ug/images/kampala%20logo.png" 
-                     alt="Institution Logo" 
-                     class="w-full h-full object-contain filter drop-shadow" 
-                     onerror="this.onerror=null; this.src='https://placehold.co/80x80/f1f5f9/1e293b?text=LOGO';">
+                <img id="displayLogo" src="" alt="" class="w-full h-full object-contain filter drop-shadow hidden">
             </div>
-            <h1 id="displayName" class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-900 bg-clip-text text-transparent text-center leading-tight">
-                INSTITUTION NAME
-            </h1>
+            <h1 id="displayName" class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-900 bg-clip-text text-transparent text-center leading-tight"></h1>
             <!-- Unlocked casing motto: supports uppercase, lowercase, and mixed case -->
             <p id="displayMotto" class="text-xs tracking-wide text-blue-600 font-semibold mt-1.5 text-center transition-colors duration-200 hover:text-blue-700 cursor-default">
             </p>
@@ -248,9 +242,8 @@
             setInterval(updateDigitalClock, 1000);
 
             function applyInstitutionBranding(settings) {
-                const name = typeof settings?.institutionName === 'string' && settings.institutionName.trim()
-                    ? settings.institutionName.trim()
-                    : 'INSTITUTION NAME';
+                if (!settings || typeof settings !== 'object' || !settings.id || settings.isActive !== true || typeof settings.institutionName !== 'string' || !settings.institutionName.trim()) return;
+                const name = settings.institutionName.trim();
                 const motto = typeof settings?.motto === 'string' && settings.motto.trim()
                     ? settings.motto.trim()
                     : '';
@@ -264,19 +257,19 @@
                 if (mottoElement) mottoElement.textContent = motto;
 
                 if (logoElement && typeof settings?.logoPath === 'string' && settings.logoPath.trim()) {
-                    const logoPath = settings.logoPath.trim();
-                    const logoUrl = new URL(logoPath, window.location.origin);
+                    const logoUrl = new URL(settings.logoPath.trim(), window.location.origin);
                     if (settings.updatedAt) logoUrl.searchParams.set('v', settings.updatedAt);
                     logoElement.src = logoUrl.toString();
                     logoElement.alt = name + ' Logo';
+                    logoElement.classList.remove('hidden');
+                } else if (logoElement) {
+                    logoElement.removeAttribute('src');
+                    logoElement.alt = '';
+                    logoElement.classList.add('hidden');
                 }
 
-                const primary = typeof settings?.primaryColor === 'string' && settings.primaryColor.trim()
-                    ? settings.primaryColor.trim()
-                    : '#2563eb';
-                const accent = typeof settings?.accentColor === 'string' && settings.accentColor.trim()
-                    ? settings.accentColor.trim()
-                    : '#4f46e5';
+                const primary = typeof settings?.primaryColor === 'string' && settings.primaryColor.trim() ? settings.primaryColor.trim() : '';
+                const accent = typeof settings?.accentColor === 'string' && settings.accentColor.trim() ? settings.accentColor.trim() : '';
 
                 document.documentElement.style.setProperty('--login-primary', primary);
                 document.documentElement.style.setProperty('--login-accent', accent);
@@ -289,15 +282,17 @@
                 else document.title = name;
             }
 
+            window.parent.postMessage({ type: 'smis-institution-branding-ready' }, parentOrigin);
+
             window.addEventListener('message', (event) => {
                 if (event.origin !== parentOrigin || event.source !== window.parent) return;
                 if (event.data?.type !== 'smis-institution-branding') return;
                 applyInstitutionBranding(event.data.settings);
             });
 
-            // Institution branding is supplied by the parent React application only.
-            // Do not fetch or poll here: a second request could overwrite the PostgreSQL-backed
-            // settings with a stale/default response after logout.
+            // Institution branding is supplied only by the parent React application.
+            // The parent reads the PostgreSQL-backed active institution settings and sends them
+            // after this iframe announces readiness. No branding fallback is used here.
             const rememberedUsername = localStorage.getItem('smis.rememberedUsername');
             const usernameInput = document.getElementById('username');
             const rememberMe = document.getElementById('rememberMe');
@@ -387,7 +382,7 @@
                     // Read active name & motto from DOM dynamically
                     const displayNameEl = document.getElementById('displayName');
                     const displayMottoEl = document.getElementById('displayMotto');
-                    const currentName = (displayNameEl?.textContent || 'INSTITUTION NAME').trim();
+                    const currentName = (displayNameEl?.textContent || '').trim();
                     const currentMotto = (displayMottoEl?.textContent || '').trim();
 
                     // 1. Draw perfectly distributed, spinning watermarks in all 16 sectors
