@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ClipboardCheck, GraduationCap, HeartPulse, Landmark, Library, LockKeyhole, Megaphone, ShieldCheck, UserRound, UsersRound, WalletCards } from 'lucide-react'
 import { createUser, getUsers, setUserActive, type CreateUserRequest, type UserSummary } from '../api/administration'
 import { type InstitutionSettings } from '../api/institutionSettings'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 
 const roles = ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'FinanceOfficer', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'Principal', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'AssistantPrincipal']
@@ -54,6 +55,7 @@ interface AdministrationManagementProps {
 }
 
 export function AdministrationManagement({ onInstitutionSaved }: AdministrationManagementProps) {
+  const { institution } = useInstitutionSettings()
   const [users, setUsers] = useState<UserSummary[]>([])
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(true)
@@ -121,6 +123,23 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
 
     {tab === 'users' && (
       <>
+        <div className="panel" style={{ marginBottom: 18, borderLeft: '4px solid var(--brand-primary, #1e40af)' }}>
+          <div className="panel-heading">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <img
+                src={institution.logoPath || '/api/public/institution-settings/logo'}
+                alt=""
+                style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10 }}
+                onError={e => { e.currentTarget.style.display = 'none' }}
+              />
+              <div>
+                <p className="eyebrow">ACCESS CONTROL · INSTITUTION</p>
+                <h3 style={{ margin: 0 }}>{institution.institutionName || 'Institution'}</h3>
+                {institution.motto && <p style={{ margin: '4px 0 0', color: 'var(--text-muted, #64748b)' }}>{institution.motto}</p>}
+              </div>
+            </div>
+          </div>
+        </div>
         <form className="student-form" onSubmit={submit}>
           <h3>Create institutional account</h3>
           <div className="form-grid">
