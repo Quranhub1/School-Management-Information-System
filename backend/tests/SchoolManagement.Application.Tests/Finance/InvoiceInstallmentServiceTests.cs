@@ -36,7 +36,7 @@ public sealed class InvoiceInstallmentServiceTests
         await Assert.ThrowsAsync<ArgumentException>(() => service.CreateScheduleAsync(invoice.Id, [new(1, new DateOnly(2026, 10, 1), null, 60000m), new(2, new DateOnly(2026, 11, 1), null, 30000m)], CancellationToken.None));
     }
 
-    private static StudentInvoice CreateInvoice(decimal amount) => new() { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-TEST", Amount = amount, PaidAmount = 0, Currency = "UGX", Status = "Unpaid" };
+    private static StudentInvoice CreateInvoice(decimal amount) => new() { StudentId = Guid.NewGuid(), InvoiceNumber = "INV-TEST", Amount = amount, PaidAmount = 0, Currency = "UGX", Status = "Unpaid", IssuedAt = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero) };
 
     private sealed class InMemoryFinanceRepository(StudentInvoice invoice) : SchoolManagement.Application.Abstractions.IFinanceRepository
     {
