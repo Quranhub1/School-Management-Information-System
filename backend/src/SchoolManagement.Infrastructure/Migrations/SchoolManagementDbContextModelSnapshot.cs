@@ -758,6 +758,13 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<byte[]>("LogoData")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("LogoContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("Motto")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
