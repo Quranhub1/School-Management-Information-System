@@ -102,7 +102,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
 
   async function uploadLogo(file: File) {
     setUploadingLogo(true); setError(''); setSuccess('')
-    try { const result = await uploadInstitutionLogo(file); setActive(result); setForm(prev => ({ ...prev, logoPath: result.logoPath ?? '' })); setInstitution(result); onSaved(result); window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result })); setSuccess('Institution logo saved successfully.') }
+    try { const result = await uploadInstitutionLogo(file); setActive(result); setForm(prev => ({ ...prev, logoPath: result.logoPath ?? '' })); setInstitution(result); onSaved(result); window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result })); if (typeof BroadcastChannel !== 'undefined') { const channel = new BroadcastChannel('smis-institution-settings'); channel.postMessage(result); channel.close() }; setSuccess('Institution logo saved successfully.') }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to upload logo.') }
     finally { setUploadingLogo(false) }
   }
@@ -133,7 +133,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
       setForm(prev => ({ ...prev, logoPath: finalResult.logoPath ?? '' }))
       setInstitution(finalResult)
       onSaved(finalResult)
-      window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: finalResult }))
+      window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: finalResult })); if (typeof BroadcastChannel !== 'undefined') { const channel = new BroadcastChannel('smis-institution-settings'); channel.postMessage(finalResult); channel.close() }
       setSuccess(isRemoteLogo ? 'Institution settings and logo saved successfully. The logo is now stored locally.' : 'Institution settings saved successfully.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save settings.')
