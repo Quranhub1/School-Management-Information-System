@@ -302,7 +302,7 @@ function AppContent(){
     }
     window.addEventListener('message',handleLoginMessage)
     return()=>window.removeEventListener('message',handleLoginMessage)
-  },[])
+  },[institution])
 
   useEffect(()=>{
     const iframe = document.querySelector<HTMLIFrameElement>('.institution-login-frame')
