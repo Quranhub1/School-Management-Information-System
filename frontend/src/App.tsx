@@ -15,9 +15,7 @@ function institutionLogoUrl(settings: InstitutionSettings): string {
   return ''
 }
 function institutionShortName(settings: InstitutionSettings): string {
-  if (settings.abbreviation?.trim()) return settings.abbreviation.trim()
-  const words = settings.institutionName?.trim().split(/\s+/).filter(Boolean) ?? []
-  return words.length > 1 ? words.map(word => word[0]).join('').slice(0, 6).toUpperCase() : (words[0] ?? '').slice(0, 6).toUpperCase()
+  return settings.abbreviation?.trim() ?? ''
 }
 function LoginScreen({ institution }: { institution: InstitutionSettings }) {
   const apiBaseUrl = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
@@ -189,13 +187,13 @@ return <main className="app-shell">
       {institution && (
         <div className="relative flex-shrink-0">
           <div className="absolute inset-0 bg-indigo-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-          <img src={institutionLogoUrl(institution)} alt={(institution?.institutionName || "Institution") + " Logo"} className="relative w-11 h-11 rounded-xl object-cover shadow-sm ring-1 ring-slate-900/10 group-hover:scale-105 group-hover:-rotate-3 transition-all duration-300" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          <img src={institutionLogoUrl(institution)} alt={institution.institutionName + " Logo"} className="relative w-11 h-11 rounded-xl object-cover shadow-sm ring-1 ring-slate-900/10 group-hover:scale-105 group-hover:-rotate-3 transition-all duration-300" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         </div>
       )}
       <div className="flex flex-col min-w-0 overflow-hidden">
         <span className="text-[10px] font-extrabold tracking-widest text-indigo-600 uppercase mb-0.5 group-hover:text-indigo-500 transition-colors truncate">{institutionShortName(institution)}</span>
-        <h1 className="text-sm font-bold text-slate-900 truncate leading-tight group-hover:text-indigo-950 transition-colors">{institution?.institutionName || "Institution"}</h1>
-        {institution?.motto && <p className="text-xs font-medium text-slate-500 truncate mt-0.5">{institution.motto}</p>}
+        <h1 className="text-sm font-bold text-slate-900 truncate leading-tight group-hover:text-indigo-950 transition-colors">{institution.institutionName}</h1>
+        {institution.motto && <p className="text-xs font-medium text-slate-500 truncate mt-0.5">{institution.motto}</p>}
       </div>
     </div>
 
