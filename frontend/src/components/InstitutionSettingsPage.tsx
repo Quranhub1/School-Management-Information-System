@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { addGalleryUrl, createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSettings, getGallery, uploadGalleryImage, uploadInstitutionLogo, type CreateInstitutionSettingsRequest, type GalleryItem, type InstitutionSettings } from '../api/institutionSettings'
 
 type SettingsTab = 'general' | 'branding' | 'gallery'
@@ -8,6 +9,7 @@ interface InstitutionSettingsPageProps {
 }
 
 export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProps) {
+  const { setInstitution } = useInstitutionSettings()
   const [active, setActive] = useState<InstitutionSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -100,7 +102,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
 
   async function uploadLogo(file: File) {
     setUploadingLogo(true); setError(''); setSuccess('')
-    try { const result = await uploadInstitutionLogo(file); setActive(result); setForm(prev => ({ ...prev, logoPath: result.logoPath ?? '' })); onSaved(result); window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result })); setSuccess('Institution logo saved successfully.') }
+    try { const result = await uploadInstitutionLogo(file); setActive(result); setForm(prev => ({ ...prev, logoPath: result.logoPath ?? '' })); setInstitution(result); onSaved(result); window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result })); setSuccess('Institution logo saved successfully.') }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to upload logo.') }
     finally { setUploadingLogo(false) }
   }
@@ -113,6 +115,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
     try {
       const result = await createInstitutionSettings(form)
       setActive(result)
+      setInstitution(result)
       onSaved(result)
       window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result }))
       setSuccess('Institution settings saved successfully.')
