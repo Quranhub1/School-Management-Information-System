@@ -754,16 +754,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("LogoPath")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                    b.Property<string>("LogoContentType")
+                        .HasColumnType("text");
 
                     b.Property<byte[]>("LogoData")
                         .HasColumnType("bytea");
 
-                    b.Property<string>("LogoContentType")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<string>("LogoPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Motto")
                         .HasMaxLength(500)
