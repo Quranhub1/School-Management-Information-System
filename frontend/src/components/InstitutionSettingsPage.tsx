@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
-import { addGalleryUrl, createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSettings, getGallery, uploadGalleryImage, uploadInstitutionLogo, type CreateInstitutionSettingsRequest, type GalleryItem, type InstitutionSettings } from '../api/institutionSettings'
+import { addGalleryUrl, createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSettings, getGallery, uploadGalleryImage, uploadInstitutionLogo, uploadInstitutionLogoFromUrl, type CreateInstitutionSettingsRequest, type GalleryItem, type InstitutionSettings } from '../api/institutionSettings'
 
 type SettingsTab = 'general' | 'branding' | 'gallery'
 
@@ -113,12 +113,28 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
     setError('')
     setSuccess('')
     try {
-      const result = await createInstitutionSettings(form)
-      setActive(result)
-      setInstitution(result)
-      onSaved(result)
-      window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result }))
-      setSuccess('Institution settings saved successfully.')
+      const remoteLogoUrl = form.logoPath?.trim() ?? ''
+      const isRemoteLogo = /^https?:\\/\\//i.test(remoteLogoUrl)
+
+      // Save the institution details first. If a remote logo URL was entered,
+      // the server downloads it into App_Data/Branding and returns a local
+      // application URL, so the system never depends on the external host.
+      const result = await createInstitutionSettings({
+        ...form,
+        logoPath: isRemoteLogo ? (active?.logoPath ?? '') : remoteLogoUrl,
+      })
+
+      let finalResult = result
+      if (isRemoteLogo) {
+        finalResult = await uploadInstitutionLogoFromUrl(remoteLogoUrl)
+      }
+
+      setActive(finalResult)
+      setForm(prev => ({ ...prev, logoPath: finalResult.logoPath ?? '' }))
+      setInstitution(finalResult)
+      onSaved(finalResult)
+      window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: finalResult }))
+      setSuccess(isRemoteLogo ? 'Institution settings and logo saved successfully. The logo is now stored locally.' : 'Institution settings saved successfully.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save settings.')
     } finally {
