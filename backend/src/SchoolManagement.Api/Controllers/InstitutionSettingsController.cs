@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 [Authorize(Policy = AuthorizationPolicies.Administration)]
 public sealed record LogoUrlRequest(string? Url);
 
-public sealed class InstitutionSettingsController(InstitutionSettingsService service, IWebHostEnvironment environment, IHttpClientFactory httpClientFactory) : ControllerBase
+public sealed class InstitutionSettingsController(InstitutionSettingsService service, IHttpClientFactory httpClientFactory) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct) => Ok(await service.GetAllAsync(ct));
@@ -64,17 +64,6 @@ public sealed class InstitutionSettingsController(InstitutionSettingsService ser
         };
         if (!isImage) return BadRequest(new { message = "The downloaded file is not a valid PNG, JPEG or WebP image." });
 
-        var root = Path.Combine(environment.ContentRootPath, "App_Data", "Branding");
-        Directory.CreateDirectory(root);
-        var target = Path.Combine(root, "institution-logo" + extension);
-        var temp = Path.Combine(root, "institution-logo.download" + extension);
-        await System.IO.File.WriteAllBytesAsync(temp, bytes, ct);
-
-        foreach (var old in Directory.EnumerateFiles(root, "institution-logo.*"))
-            if (!string.Equals(old, temp, StringComparison.OrdinalIgnoreCase))
-                System.IO.File.Delete(old);
-        System.IO.File.Move(temp, target, true);
-
         var update = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(
             active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone,
             active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType,
@@ -92,12 +81,9 @@ public sealed class InstitutionSettingsController(InstitutionSettingsService ser
         if (!allowed.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase)) return BadRequest(new { message = "Logo must be PNG, JPEG or WebP." });
         var active = await service.GetActiveAsync(ct);
         if (active is null) return BadRequest(new { message = "Save institution details before uploading the logo." });
-        var root = Path.Combine(environment.ContentRootPath, "App_Data", "Branding");
-        Directory.CreateDirectory(root);
-        foreach (var old in Directory.EnumerateFiles(root, "institution-logo.*")) System.IO.File.Delete(old);
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (extension != ".png" && extension != ".jpg" && extension != ".jpeg" && extension != ".webp") extension = ".png";
-        await using (var stream = System.IO.File.Create(Path.Combine(root, "institution-logo" + extension))) await file.CopyToAsync(stream, ct);
+        await using var memory = new MemoryStream();
+        await file.CopyToAsync(memory, ct);
+        var logoBytes = memory.ToArray();
         var request = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone, active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType, "/api/public/institution-settings/logo", active.PrimaryColor, active.AccentColor, logoBytes, file.ContentType);
         return Ok(await service.CreateAsync(request, ct));
     }
