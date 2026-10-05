@@ -70,6 +70,13 @@ export const getInstitutionSettings = () => authedRequest<InstitutionSettings[]>
 export const getActiveInstitutionSettings = () => authedRequest<InstitutionSettings>('/api/administration/institution-settings/active')
 export const createInstitutionSettings = (input: CreateInstitutionSettingsRequest) => authedRequest<InstitutionSettings>('/api/administration/institution-settings', { method: 'POST', body: JSON.stringify(input) })
 
+export async function uploadInstitutionLogoFromUrl(url: string): Promise<InstitutionSettings> {
+  return authedRequest<InstitutionSettings>('/api/administration/institution-settings/logo/from-url', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  })
+}
+
 export async function uploadInstitutionLogo(file: File): Promise<InstitutionSettings> {
   const form = new FormData()
   form.append('file', file)
