@@ -273,7 +273,7 @@
                     if (mottoElement) mottoElement.textContent = motto;
 
                     if (logoElement && typeof settings?.logoPath === 'string' && settings.logoPath.trim()) {
-                        const logoUrl = new URL(settings.logoPath.trim(), apiBase);
+                        const logoUrl = new URL(settings.logoPath.trim(), apiBase || window.location.origin);
                         if (settings.updatedAt) logoUrl.searchParams.set('v', settings.updatedAt);
                         logoElement.src = logoUrl.toString();
                         logoElement.alt = name + ' Logo';
