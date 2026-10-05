@@ -54,6 +54,14 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
         return item is null ? null : ToDto(item);
     }
 
+    public async Task<(byte[] Data, string ContentType)?> GetActiveLogoAsync(CancellationToken ct = default)
+    {
+        var item = await repository.GetActiveAsync(ct);
+        if (item?.LogoData is null || item.LogoData.Length == 0) return null;
+        var contentType = string.IsNullOrWhiteSpace(item.LogoContentType) ? "image/png" : item.LogoContentType.Trim();
+        return (item.LogoData, contentType);
+    }
+
     public async Task<InstitutionSettingsDto> CreateAsync(CreateInstitutionSettingsRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.InstitutionName))
