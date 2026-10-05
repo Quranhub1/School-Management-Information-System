@@ -1,9 +1,12 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
+[DbContext(typeof(SchoolManagement.Infrastructure.Persistence.SchoolManagementDbContext))]
+[Migration("20261005180000_PersistInstitutionLogo")]
 public partial class PersistInstitutionLogo : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
