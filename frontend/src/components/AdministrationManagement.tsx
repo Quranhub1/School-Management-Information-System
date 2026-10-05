@@ -67,6 +67,7 @@ interface AdministrationManagementProps {\n  onInstitutionSaved?: (settings: Ins
 
   function handleInstitutionSaved(settings: InstitutionSettings) {
     setInstitution(settings)
+    onInstitutionSaved?.(settings)
   }
 
   async function load() {
