@@ -80,9 +80,17 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
             existing.PostalAddress = request.PostalAddress?.Trim();
             existing.Country = request.Country?.Trim();
             existing.InstitutionType = request.InstitutionType?.Trim();
-            existing.LogoPath = request.LogoPath?.Trim();
-            existing.LogoData = request.LogoData;
-            existing.LogoContentType = request.LogoContentType?.Trim();
+
+            existing.LogoPath = string.IsNullOrWhiteSpace(request.LogoPath)
+                ? existing.LogoPath
+                : request.LogoPath.Trim();
+
+            if (request.LogoData is not null && request.LogoData.Length > 0)
+            {
+                existing.LogoData = request.LogoData;
+                existing.LogoContentType = request.LogoContentType?.Trim();
+            }
+
             existing.PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#1e40af" : request.PrimaryColor.Trim();
             existing.AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#f97316" : request.AccentColor.Trim();
             existing.IsActive = true;
