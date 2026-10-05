@@ -124,12 +124,16 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
         <div className="panel" style={{ marginBottom: 18, borderLeft: '4px solid var(--brand-primary, #1e40af)' }}>
           <div className="panel-heading">
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              {institution.logoPath?.trim() ? (
               <img
-                src={institution.logoPath || '/api/public/institution-settings/logo'}
+                src={institution.logoPath}
                 alt=""
                 style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10 }}
                 onError={e => { e.currentTarget.style.display = 'none' }}
               />
+            ) : (
+              <div style={{ width: 44, height: 44, borderRadius: 10, background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 10, fontWeight: 700 }}>NONE</div>
+            )}
               <div>
                 <p className="eyebrow">ACCESS CONTROL · INSTITUTION</p>
                 <h3 style={{ margin: 0 }}>{institution.institutionName || 'Institution'}</h3>

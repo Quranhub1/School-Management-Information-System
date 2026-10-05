@@ -11,14 +11,10 @@ type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'fi
 const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
 function institutionLogoUrl(settings: InstitutionSettings): string {
   const path = settings.logoPath?.trim()
-
-  if (path) {
-    return path.startsWith('http')
-      ? path
-      : `${API_BASE_URL}${path.startsWith('/') ? path : '/' + path}`
-  }
-
-  return `${API_BASE_URL}/api/public/institution-settings/logo`
+  if (!path) return ''
+  return path.startsWith('http')
+    ? path
+    : `${API_BASE_URL}${path.startsWith('/') ? path : '/' + path}`
 }
 function institutionShortName(settings: InstitutionSettings): string {
   return settings.abbreviation?.trim() ?? ''
@@ -185,12 +181,12 @@ useEffect(() => {
 
 return <main className="app-shell">
   <div className="institution-watermark" aria-hidden="true">
-    <img src={institutionLogoUrl(institution)} alt="" />
+    {institutionLogoUrl(institution) && <img src={institutionLogoUrl(institution)} alt="" />}
     <span>{institution.institutionName}</span>
   </div>
   <aside className="flex flex-col w-72 h-screen bg-gradient-to-b from-slate-50 to-white border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)] font-sans text-slate-700 select-none">
     <div className="flex items-center gap-3.5 px-6 py-6 border-b border-slate-100 group cursor-pointer">
-      {institution && (
+      {institution && institutionLogoUrl(institution) && (
         <div className="relative flex-shrink-0">
           <div className="absolute inset-0 bg-indigo-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
           <img src={institutionLogoUrl(institution)} alt={institution.institutionName + " Logo"} className="relative w-11 h-11 rounded-xl object-cover shadow-sm ring-1 ring-slate-900/10 group-hover:scale-105 group-hover:-rotate-3 transition-all duration-300" onError={(e) => { e.currentTarget.style.display = "none"; }} />
