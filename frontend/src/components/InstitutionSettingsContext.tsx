@@ -40,11 +40,13 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
   const refreshInstitution = async () => {
     try {
       const settings = await getPublicInstitutionSettings()
-      if (!isValidInstitution(settings)) return
+      if (!isValidInstitution(settings)) return false
       setInstitution(settings)
       setLoaded(true)
+      return true
     } catch {
       // Do not mark the application as loaded until PostgreSQL-backed settings are available.
+      return false
     }
   }
 
@@ -53,8 +55,8 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
 
     const loadUntilReady = async () => {
       while (!cancelled) {
-        await refreshInstitution()
-        if (cancelled || loaded) return
+        const ready = await refreshInstitution()
+        if (cancelled || ready) return
         await new Promise(resolve => window.setTimeout(resolve, 2000))
       }
     }
