@@ -63,7 +63,6 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   const [error, setError] = useState('')
   const [tab, setTab] = useState<AdminTab>('users')
   const [selectedOffice, setSelectedOffice] = useState<Office | null>(null)
-  const [institution, setInstitution] = useState<InstitutionSettings | null>(null)
 
   function openWorkspace(workspace?: string) {
     if (!workspace) return
@@ -72,7 +71,6 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   }
 
   function handleInstitutionSaved(settings: InstitutionSettings) {
-    setInstitution(settings)
     onInstitutionSaved?.(settings)
   }
 
