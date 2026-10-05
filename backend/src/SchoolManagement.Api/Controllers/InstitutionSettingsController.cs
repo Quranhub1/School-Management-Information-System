@@ -10,8 +10,12 @@ namespace SchoolManagement.Api.Controllers;
 [Authorize(Policy = AuthorizationPolicies.Administration)]
 public sealed record LogoUrlRequest(string? Url);
 
-public sealed class InstitutionSettingsController(InstitutionSettingsService service, IHttpClientFactory httpClientFactory) : ControllerBase
+public sealed class InstitutionSettingsController(IWebHostEnvironment environment, InstitutionSettingsService service, IHttpClientFactory httpClientFactory) : ControllerBase
 {
+    private const long MaxLogoSize = 5_000_000;
+    private static readonly string[] AllowedLogoTypes = ["image/png", "image/jpeg", "image/webp"];
+
+    private string LogoStorageRoot() => Path.Combine(environment.ContentRootPath, "App_Data", "Branding");
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct) => Ok(await service.GetAllAsync(ct));
 
@@ -66,27 +70,38 @@ public sealed class InstitutionSettingsController(InstitutionSettingsService ser
         };
         if (!isImage) return BadRequest(new { message = "The downloaded file is not a valid PNG, JPEG or WebP image." });
 
+        var logoPath = await SaveLogoAsync(bytes, extension, contentType, ct);
+
         var update = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(
             active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone,
             active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType,
-            "/api/public/institution-settings/logo", active.PrimaryColor, active.AccentColor, bytes, contentType);
+            logoPath, active.PrimaryColor, active.AccentColor);
         return Ok(await service.CreateAsync(update, ct));
     }
 
     [HttpPost("logo")]
-    [RequestSizeLimit(5_000_000)]
+    [RequestSizeLimit(MaxLogoSize)]
     public async Task<IActionResult> UploadLogo(IFormFile file, CancellationToken ct)
     {
         if (file is null || file.Length == 0) return BadRequest(new { message = "A logo image is required." });
-        if (file.Length > 5_000_000) return BadRequest(new { message = "Logo exceeds the 5 MB limit." });
-        var allowed = new[] { "image/png", "image/jpeg", "image/webp" };
-        if (!allowed.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase)) return BadRequest(new { message = "Logo must be PNG, JPEG or WebP." });
+        if (file.Length > MaxLogoSize) return BadRequest(new { message = "Logo exceeds the 5 MB limit." });
+        if (!AllowedLogoTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase)) return BadRequest(new { message = "Logo must be PNG, JPEG or WebP." });
         var active = await service.GetActiveAsync(ct);
         if (active is null) return BadRequest(new { message = "Save institution details before uploading the logo." });
+
         await using var memory = new MemoryStream();
         await file.CopyToAsync(memory, ct);
         var logoBytes = memory.ToArray();
-        var request = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone, active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType, "/api/public/institution-settings/logo", active.PrimaryColor, active.AccentColor, logoBytes, file.ContentType);
+        var extension = file.ContentType.ToLowerInvariant() switch
+        {
+            "image/png" => ".png",
+            "image/jpeg" => ".jpg",
+            "image/webp" => ".webp",
+            _ => Path.GetExtension(file.FileName).ToLowerInvariant()
+        };
+        if (extension == ".jpeg") extension = ".jpg";
+        var logoPath = await SaveLogoAsync(logoBytes, extension, file.ContentType, ct);
+        var request = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone, active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType, logoPath, active.PrimaryColor, active.AccentColor);
         return Ok(await service.CreateAsync(request, ct));
     }
 
@@ -102,5 +117,14 @@ public sealed class InstitutionSettingsController(InstitutionSettingsService ser
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    private async Task<string> SaveLogoAsync(byte[] bytes, string extension, string contentType, CancellationToken ct)
+    {
+        var root = LogoStorageRoot();
+        Directory.CreateDirectory(root);
+        var destination = Path.Combine(root, $"logo{extension}");
+        await System.IO.File.WriteAllBytesAsync(destination, bytes, ct);
+        return "/api/public/institution-settings/logo";
     }
 }

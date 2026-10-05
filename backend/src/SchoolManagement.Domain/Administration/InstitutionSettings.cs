@@ -14,8 +14,6 @@ public sealed class InstitutionSettings
     public string? Country { get; set; }
     public string? InstitutionType { get; set; }
     public string? LogoPath { get; set; }
-    public byte[]? LogoData { get; set; }
-    public string? LogoContentType { get; set; }
     public string? PrimaryColor { get; set; }
     public string? AccentColor { get; set; }
     public bool IsActive { get; set; } = true;
