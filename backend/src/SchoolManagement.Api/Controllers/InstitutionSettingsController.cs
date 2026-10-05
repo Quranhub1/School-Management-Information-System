@@ -8,7 +8,9 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/administration/institution-settings")]
 [Authorize(Policy = AuthorizationPolicies.Administration)]
-public sealed record LogoUrlRequest(string? Url);\n\npublic sealed class InstitutionSettingsController(InstitutionSettingsService service, IWebHostEnvironment environment, IHttpClientFactory httpClientFactory) : ControllerBase
+public sealed record LogoUrlRequest(string? Url);
+
+public sealed class InstitutionSettingsController(InstitutionSettingsService service, IWebHostEnvironment environment, IHttpClientFactory httpClientFactory) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct) => Ok(await service.GetAllAsync(ct));
