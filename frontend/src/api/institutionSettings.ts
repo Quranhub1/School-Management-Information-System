@@ -7,11 +7,27 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (url.pathname === '/api/public/institution-settings/active') {
     url.searchParams.set('_live', String(Date.now()))
   }
-  const response = await fetch(url.toString(), {
-    cache: 'no-store',
-    ...init,
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-  })
+  const headers = new Headers(init?.headers)
+  if (!headers.has('Accept')) headers.set('Accept', 'application/json')
+
+  // Let the browser set the multipart boundary for FormData uploads.
+  const isFormData = init?.body instanceof FormData
+  if (!isFormData && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
+
+  let response: Response
+  try {
+    response = await fetch(url.toString(), {
+      cache: 'no-store',
+      ...init,
+      headers,
+      credentials: 'same-origin',
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error('Unable to reach the API at ' + url.toString() + ': ' + message)
+  }
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null
     throw new Error(body?.message ?? `Request failed with status ${response.status}`)
@@ -85,17 +101,10 @@ export async function uploadInstitutionLogoFromUrl(url: string): Promise<Institu
 export async function uploadInstitutionLogo(file: File): Promise<InstitutionSettings> {
   const form = new FormData()
   form.append('file', file)
-  const token = getAccessToken()
-  const response = await fetch(`${API_BASE_URL}/api/administration/institution-settings/logo`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: form,
-  })
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { message?: string } | null
-    throw new Error(body?.message ?? `Request failed with status ${response.status}`)
-  }
-  return response.json() as Promise<InstitutionSettings>
+  return authedRequest<InstitutionSettings>(
+    '/api/administration/institution-settings/logo',
+    { method: 'POST', body: form },
+  )
 }
 
 export const getGallery = () => request<GalleryItem[]>('/api/public/institution-gallery')
