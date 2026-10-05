@@ -11,7 +11,7 @@ public sealed class InstitutionSettingsRepository(SchoolManagementDbContext db) 
         await db.InstitutionSettings.AsNoTracking().OrderByDescending(x => x.UpdatedAt).ToListAsync(cancellationToken);
 
     public Task<InstitutionSettings?> GetActiveAsync(CancellationToken cancellationToken = default) =>
-        db.InstitutionSettings.AsNoTracking().SingleOrDefaultAsync(x => x.IsActive, cancellationToken);
+        db.InstitutionSettings.SingleOrDefaultAsync(x => x.IsActive, cancellationToken);
 
     public Task<InstitutionSettings?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.InstitutionSettings.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
