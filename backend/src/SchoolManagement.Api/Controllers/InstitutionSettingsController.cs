@@ -5,11 +5,6 @@ using SchoolManagement.Application.Authorization;
 
 namespace SchoolManagement.Api.Controllers;
 
-[ApiController]
-[Route("api/administration/institution-settings")]
-[Authorize(Policy = AuthorizationPolicies.Administration)]
-public sealed record LogoUrlRequest(string? Url);
-
 public sealed class InstitutionSettingsController(InstitutionSettingsService service, IHttpClientFactory httpClientFactory) : ControllerBase
 {
     [HttpGet]
@@ -103,4 +98,6 @@ public sealed class InstitutionSettingsController(InstitutionSettingsService ser
             return BadRequest(new { message = ex.Message });
         }
     }
+    
+    public sealed record LogoUrlRequest(string? Url);
 }
