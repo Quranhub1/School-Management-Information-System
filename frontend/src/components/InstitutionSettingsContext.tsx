@@ -23,7 +23,7 @@ const DEFAULT_INSTITUTION: InstitutionSettings = {
 interface InstitutionSettingsContextValue {
   institution: InstitutionSettings
   setInstitution: (settings: InstitutionSettings) => void
-  refreshInstitution: () => Promise<void>
+  refreshInstitution: () => Promise<boolean>
   loaded: boolean
 }
 
