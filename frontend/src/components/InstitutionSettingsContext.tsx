@@ -33,22 +33,6 @@ function isValidInstitution(settings: InstitutionSettings | null | undefined): s
   return Boolean(settings?.id && settings.isActive && settings.institutionName?.trim())
 }
 
-function shouldAcceptInstitution(current: InstitutionSettings, incoming: InstitutionSettings) {
-  if (!current.id) return true
-  if (current.id !== incoming.id) return false
-
-  const currentUpdatedAt = Date.parse(current.updatedAt)
-  const incomingUpdatedAt = Date.parse(incoming.updatedAt)
-
-  // Never let an older/stale 30-second refresh overwrite settings already loaded
-  // from the latest save or another tab.
-  if (Number.isFinite(currentUpdatedAt) && Number.isFinite(incomingUpdatedAt)) {
-    return incomingUpdatedAt >= currentUpdatedAt
-  }
-
-  return true
-}
-
 export function InstitutionSettingsProvider({ children }: { children: ReactNode }) {
   const [institution, setInstitution] = useState<InstitutionSettings>(DEFAULT_INSTITUTION)
   const [loaded, setLoaded] = useState(false)
@@ -57,7 +41,7 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
     try {
       const settings = await getPublicInstitutionSettings()
       if (!isValidInstitution(settings)) return false
-      setInstitution(current => shouldAcceptInstitution(current, settings) ? settings : current)
+      setInstitution(settings)
       setLoaded(true)
       return true
     } catch {
@@ -94,12 +78,22 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
     }
     channel?.addEventListener('message', handleBroadcast)
 
-    const refreshTimer = window.setInterval(() => { void refreshInstitution() }, 30000)
+    // The institution feed is deliberately live: it is refreshed frequently and on focus/visibility.
+    const refreshTimer = window.setInterval(() => { void refreshInstitution() }, 5000)
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') void refreshInstitution()
+    }
+    const handleFocus = () => { void refreshInstitution() }
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleFocus)
 
     return () => {
       cancelled = true
       window.clearInterval(refreshTimer)
       window.removeEventListener('smis:institution-settings-updated', handleSettingsUpdated)
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleFocus)
       channel?.removeEventListener('message', handleBroadcast)
       channel?.close()
     }
