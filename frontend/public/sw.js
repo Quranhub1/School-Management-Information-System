@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smis-v3';
+const CACHE_NAME = 'smis-v4';
 const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/icon.png'];
 
 self.addEventListener('install', (event) => {
@@ -22,7 +22,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  if (url.pathname.startsWith('/api/')) return;
+  // API responses and the login document must always come from the live server.\n  if (url.pathname.startsWith('/api/') || url.pathname === '/institution-login.html') {\n    event.respondWith(fetch(new Request(request, { cache: 'no-store' })));\n    return;\n  }
 
   event.respondWith(
     caches.match(request).then((cached) => {
