@@ -78,7 +78,7 @@ public sealed class InstitutionSettingsController(InstitutionSettingsService ser
         var update = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(
             active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone,
             active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType,
-            "/api/public/institution-settings/logo", active.PrimaryColor, active.AccentColor);
+            "/api/public/institution-settings/logo", active.PrimaryColor, active.AccentColor, bytes, contentType);
         return Ok(await service.CreateAsync(update, ct));
     }
 
@@ -98,7 +98,7 @@ public sealed class InstitutionSettingsController(InstitutionSettingsService ser
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (extension != ".png" && extension != ".jpg" && extension != ".jpeg" && extension != ".webp") extension = ".png";
         await using (var stream = System.IO.File.Create(Path.Combine(root, "institution-logo" + extension))) await file.CopyToAsync(stream, ct);
-        var request = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone, active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType, "/api/public/institution-settings/logo", active.PrimaryColor, active.AccentColor);
+        var request = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone, active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType, "/api/public/institution-settings/logo", active.PrimaryColor, active.AccentColor, logoBytes, file.ContentType);
         return Ok(await service.CreateAsync(request, ct));
     }
 
