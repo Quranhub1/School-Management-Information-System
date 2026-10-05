@@ -147,5 +147,9 @@ public sealed class InstitutionSettingsController(InstitutionSettingsService ser
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch
+        {
+            return StatusCode(500, new { message = "Unable to save institution settings. Please try again." });
+        }
     }
 }
