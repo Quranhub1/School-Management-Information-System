@@ -6,7 +6,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/public/institution-settings")]
-public sealed class PublicInstitutionSettingsController(InstitutionSettingsService service, IWebHostEnvironment environment) : ControllerBase
+public sealed class PublicInstitutionSettingsController(InstitutionSettingsService service) : ControllerBase
 {
     [AllowAnonymous]
     [HttpGet("active")]
@@ -22,13 +22,11 @@ public sealed class PublicInstitutionSettingsController(InstitutionSettingsServi
     [HttpGet("logo")]
     public async Task<IActionResult> Logo(CancellationToken ct)
     {
-        var active = await service.GetActiveAsync(ct);
-        if (active is null || string.IsNullOrWhiteSpace(active.LogoPath)) return NotFound();
-        if (active.LogoData is null || active.LogoData.Length == 0) return NotFound();
-        var contentType = string.IsNullOrWhiteSpace(active.LogoContentType) ? "image/png" : active.LogoContentType;
+        var logo = await service.GetActiveLogoAsync(ct);
+        if (logo is null) return NotFound();
         Response.Headers.CacheControl = "no-store, no-cache, must-revalidate";
         Response.Headers.Pragma = "no-cache";
-        return File(active.LogoData, contentType);
+        return File(logo.Value.Data, logo.Value.ContentType);
     }
 
 }
