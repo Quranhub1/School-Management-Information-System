@@ -24,13 +24,11 @@ public sealed class PublicInstitutionSettingsController(InstitutionSettingsServi
     {
         var active = await service.GetActiveAsync(ct);
         if (active is null || string.IsNullOrWhiteSpace(active.LogoPath)) return NotFound();
-        var root = Path.Combine(environment.ContentRootPath, "App_Data", "Branding");
-        var file = Directory.Exists(root) ? Directory.EnumerateFiles(root, "institution-logo.*").FirstOrDefault() : null;
-        if (file is null) return NotFound();
-        var contentType = Path.GetExtension(file).ToLowerInvariant() switch { ".jpg" or ".jpeg" => "image/jpeg", ".webp" => "image/webp", _ => "image/png" };
+        if (active.LogoData is null || active.LogoData.Length == 0) return NotFound();
+        var contentType = string.IsNullOrWhiteSpace(active.LogoContentType) ? "image/png" : active.LogoContentType;
         Response.Headers.CacheControl = "no-store, no-cache, must-revalidate";
         Response.Headers.Pragma = "no-cache";
-        return PhysicalFile(file, contentType);
+        return File(active.LogoData, contentType);
     }
 
 }
