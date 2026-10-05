@@ -6,7 +6,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/public/institution-settings")]
-public sealed class PublicInstitutionSettingsController(IWebHostEnvironment environment, InstitutionSettingsService service) : ControllerBase
+public sealed class PublicInstitutionSettingsController(InstitutionSettingsService service) : ControllerBase
 {
     [AllowAnonymous]
     [HttpGet("active")]

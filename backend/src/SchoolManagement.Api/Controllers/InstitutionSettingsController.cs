@@ -10,12 +10,10 @@ namespace SchoolManagement.Api.Controllers;
 [Authorize(Policy = AuthorizationPolicies.Administration)]
 public sealed record LogoUrlRequest(string? Url);
 
-public sealed class InstitutionSettingsController(IWebHostEnvironment environment, InstitutionSettingsService service, IHttpClientFactory httpClientFactory) : ControllerBase
+public sealed class InstitutionSettingsController(InstitutionSettingsService service, IHttpClientFactory httpClientFactory) : ControllerBase
 {
     private const long MaxLogoSize = 5_000_000;
     private static readonly string[] AllowedLogoTypes = ["image/png", "image/jpeg", "image/webp"];
-
-    private string LogoStorageRoot() => Path.Combine(environment.ContentRootPath, "App_Data", "Branding");
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct) => Ok(await service.GetAllAsync(ct));
 
@@ -70,12 +68,10 @@ public sealed class InstitutionSettingsController(IWebHostEnvironment environmen
         };
         if (!isImage) return BadRequest(new { message = "The downloaded file is not a valid PNG, JPEG or WebP image." });
 
-        var logoPath = await SaveLogoAsync(bytes, extension, contentType, ct);
-
         var update = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(
             active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone,
             active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType,
-            logoPath, active.PrimaryColor, active.AccentColor);
+            "/api/public/institution-settings/logo", active.PrimaryColor, active.AccentColor, bytes, contentType);
         return Ok(await service.CreateAsync(update, ct));
     }
 
@@ -92,16 +88,7 @@ public sealed class InstitutionSettingsController(IWebHostEnvironment environmen
         await using var memory = new MemoryStream();
         await file.CopyToAsync(memory, ct);
         var logoBytes = memory.ToArray();
-        var extension = file.ContentType.ToLowerInvariant() switch
-        {
-            "image/png" => ".png",
-            "image/jpeg" => ".jpg",
-            "image/webp" => ".webp",
-            _ => Path.GetExtension(file.FileName).ToLowerInvariant()
-        };
-        if (extension == ".jpeg") extension = ".jpg";
-        var logoPath = await SaveLogoAsync(logoBytes, extension, file.ContentType, ct);
-        var request = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone, active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType, logoPath, active.PrimaryColor, active.AccentColor);
+        var request = new SchoolManagement.Application.Administration.CreateInstitutionSettingsRequest(active.InstitutionName, active.Abbreviation, active.Motto, active.Address, active.Phone, active.Email, active.Website, active.PostalAddress, active.Country, active.InstitutionType, "/api/public/institution-settings/logo", active.PrimaryColor, active.AccentColor, logoBytes, file.ContentType);
         return Ok(await service.CreateAsync(request, ct));
     }
 
@@ -117,14 +104,5 @@ public sealed class InstitutionSettingsController(IWebHostEnvironment environmen
         {
             return BadRequest(new { message = ex.Message });
         }
-    }
-
-    private async Task<string> SaveLogoAsync(byte[] bytes, string extension, string contentType, CancellationToken ct)
-    {
-        var root = LogoStorageRoot();
-        Directory.CreateDirectory(root);
-        var destination = Path.Combine(root, $"logo{extension}");
-        await System.IO.File.WriteAllBytesAsync(destination, bytes, ct);
-        return "/api/public/institution-settings/logo";
     }
 }

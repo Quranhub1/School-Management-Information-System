@@ -35,7 +35,9 @@ public sealed record CreateInstitutionSettingsRequest(
     string? InstitutionType,
     string? LogoPath,
     string? PrimaryColor,
-    string? AccentColor
+    string? AccentColor,
+    byte[]? LogoData = null,
+    string? LogoContentType = null
 );
 
 public sealed class InstitutionSettingsService(IInstitutionSettingsRepository repository)
@@ -55,19 +57,9 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
     public async Task<(byte[] Data, string ContentType)?> GetActiveLogoAsync(CancellationToken ct = default)
     {
         var item = await repository.GetActiveAsync(ct);
-        if (item?.LogoPath is null) return null;
-        var extension = Path.GetExtension(item.LogoPath).ToLowerInvariant();
-        var contentType = extension switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".webp" => "image/webp",
-            _ => "application/octet-stream"
-        };
-        var root = Path.Combine(Environment.CurrentDirectory, "App_Data", "Branding");
-        var file = Path.Combine(root, $"logo{extension}");
-        if (!System.IO.File.Exists(file)) return null;
-        return (await System.IO.File.ReadAllBytesAsync(file, ct), contentType);
+        if (item?.LogoData is null || item.LogoData.Length == 0) return null;
+        var contentType = string.IsNullOrWhiteSpace(item.LogoContentType) ? "image/png" : item.LogoContentType.Trim();
+        return (item.LogoData, contentType);
     }
 
     public async Task<InstitutionSettingsDto> CreateAsync(CreateInstitutionSettingsRequest request, CancellationToken ct = default)
@@ -93,6 +85,12 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
                 ? existing.LogoPath
                 : request.LogoPath.Trim();
 
+            if (request.LogoData is not null && request.LogoData.Length > 0)
+            {
+                existing.LogoData = request.LogoData;
+                existing.LogoContentType = request.LogoContentType?.Trim();
+            }
+
             existing.PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#1e40af" : request.PrimaryColor.Trim();
             existing.AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#f97316" : request.AccentColor.Trim();
             existing.IsActive = true;
@@ -114,6 +112,8 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
             Country = request.Country?.Trim(),
             InstitutionType = request.InstitutionType?.Trim(),
             LogoPath = request.LogoPath?.Trim(),
+            LogoData = request.LogoData,
+            LogoContentType = request.LogoContentType?.Trim(),
             PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#1e40af" : request.PrimaryColor.Trim(),
             AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#f97316" : request.AccentColor.Trim(),
             IsActive = true,
