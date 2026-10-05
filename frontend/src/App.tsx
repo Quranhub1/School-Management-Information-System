@@ -5,9 +5,9 @@ import { BarChart3, BriefcaseBusiness, ChevronDown, ClipboardCheck, GraduationCa
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance } from './auth/roleGuards'
-import { AcademicManagement } from './components/AcademicManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import { getPublicInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'; import './components/PrintStyles.css'
+import { AcademicManagement } from './components/AcademicManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import type { InstitutionSettings } from './api/institutionSettings'
+import { InstitutionSettingsProvider, useInstitutionSettings } from './components/InstitutionSettingsContext'; import './components/PrintStyles.css'
 type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'system-administration'
-const DEFAULT_INSTITUTION: InstitutionSettings = { id: '', institutionName: '', abbreviation: '', motto: '', address: '', phone: '', email: '', website: '', postalAddress: '', country: '', institutionType: '', logoPath: null, primaryColor: null, accentColor: null, isActive: false, updatedAt: '' }
 const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
 function institutionLogoUrl(settings: InstitutionSettings): string {
   const path = settings.logoPath?.trim()
@@ -16,7 +16,7 @@ function institutionLogoUrl(settings: InstitutionSettings): string {
 }
 function institutionShortName(settings: InstitutionSettings): string {
   if (settings.abbreviation?.trim()) return settings.abbreviation.trim()
-  const words = settings.institutionName?.trim().split(/\\s+/).filter(Boolean) ?? []
+  const words = settings.institutionName?.trim().split(/\s+/).filter(Boolean) ?? []
   return words.length > 1 ? words.map(word => word[0]).join('').slice(0, 6).toUpperCase() : (words[0] ?? '').slice(0, 6).toUpperCase()
 }
 function LoginScreen({ institution }: { institution: InstitutionSettings }) {
@@ -281,8 +281,12 @@ return <main className="app-shell">
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
 {activeModule==='system-administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} </motion.div></AnimatePresence></div></main> }
 function App(){
+  return <InstitutionSettingsProvider><AppContent/></InstitutionSettingsProvider>
+}
+
+function AppContent(){
   const[authed,setAuthed]=useState(()=>Boolean(getSession()))
-  const[institution,setInstitution]=useState<InstitutionSettings>(DEFAULT_INSTITUTION)
+  const { institution, setInstitution } = useInstitutionSettings()
 
   useEffect(()=>{
     const handleLoginMessage=(event:MessageEvent)=>{
@@ -314,18 +318,6 @@ function App(){
     root.style.setProperty('--brand-institution-short', JSON.stringify(institutionShortName(institution)))
     document.title=institution.institutionName?.trim()||'School Management Information System'
   },[institution])
-
-  useEffect(()=>{
-    const refreshInstitution = () => {
-      void getPublicInstitutionSettings()
-        .then(setInstitution)
-        .catch(() => undefined)
-    }
-
-    refreshInstitution()
-    window.addEventListener('smis:institution-settings-updated', refreshInstitution)
-    return () => window.removeEventListener('smis:institution-settings-updated', refreshInstitution)
-  },[])
 
   return authed
     ? <AuthenticatedWorkspace onLogout={()=>setAuthed(false)} institution={institution} onInstitutionSaved={setInstitution}/>
