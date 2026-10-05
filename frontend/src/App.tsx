@@ -12,7 +12,7 @@ const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) 
 function institutionLogoUrl(settings: InstitutionSettings): string {
   const path = settings.logoPath?.trim()
   if (path) return path.startsWith('http') ? path : `${API_BASE_URL}${path.startsWith('/') ? path : '/' + path}`
-  return `${API_BASE_URL}/api/public/institution-settings/logo`
+  return ''
 }
 function institutionShortName(settings: InstitutionSettings): string {
   if (settings.abbreviation?.trim()) return settings.abbreviation.trim()
@@ -291,6 +291,11 @@ function AppContent(){
   useEffect(()=>{
     const handleLoginMessage=(event:MessageEvent)=>{
       if(event.origin!==window.location.origin) return
+      if(event.data?.type==='smis-institution-branding-ready') {
+        const iframe = document.querySelector<HTMLIFrameElement>('.institution-login-frame')
+        iframe?.contentWindow?.postMessage({ type: 'smis-institution-branding', settings: institution }, window.location.origin)
+        return
+      }
       if(event.data?.type!=='smis-login' || !event.data.session) return
       const session=event.data.session as Parameters<typeof saveAuthSession>[0]
       if(typeof session.accessToken!=='string' || typeof session.username!=='string' || !Array.isArray(session.roles)) return
@@ -308,15 +313,15 @@ function AppContent(){
       window.location.origin,
     )
     const root=document.documentElement
-    const primary=institution.primaryColor||'#1e40af'
-    const accent=institution.accentColor||'#f97316'
-    root.style.setProperty('--brand-primary',primary)
-    root.style.setProperty('--brand-accent',accent)
-    root.style.setProperty('--brand-primary-soft',primary+'18')
-    root.style.setProperty('--brand-accent-soft',accent+'18')
+    const primary=institution.primaryColor||''
+    const accent=institution.accentColor||''
+    if(primary) root.style.setProperty('--brand-primary',primary)
+    if(accent) root.style.setProperty('--brand-accent',accent)
+    if(primary) root.style.setProperty('--brand-primary-soft',primary+'18')
+    if(accent) root.style.setProperty('--brand-accent-soft',accent+'18')
     root.style.setProperty('--brand-institution-name', JSON.stringify(institution.institutionName || ''))
     root.style.setProperty('--brand-institution-short', JSON.stringify(institutionShortName(institution)))
-    document.title=institution.institutionName?.trim()||'School Management Information System'
+    document.title=institution.institutionName.trim()
   },[institution])
 
   if (!institutionLoaded) return <div className="institution-login-host" aria-label="Loading institution settings" />
