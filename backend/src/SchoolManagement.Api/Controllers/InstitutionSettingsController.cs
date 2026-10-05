@@ -48,6 +48,8 @@ public sealed class InstitutionSettingsController(InstitutionSettingsService ser
             _ => Path.GetExtension(uri.AbsolutePath).ToLowerInvariant()
         };
         if (extension == ".jpeg") extension = ".jpg";
+        if (string.IsNullOrWhiteSpace(contentType))
+            contentType = extension switch { ".jpg" => "image/jpeg", ".webp" => "image/webp", _ => "image/png" };
         if (extension is not ".png" and not ".jpg" and not ".webp")
             return BadRequest(new { message = "The URL must point to a PNG, JPEG or WebP image." });
 
