@@ -3,7 +3,12 @@ import { getAccessToken } from './auth'
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const url = new URL(`${API_BASE_URL}${path}`, window.location.origin)
+  if (url.pathname === '/api/public/institution-settings/active') {
+    url.searchParams.set('_live', String(Date.now()))
+  }
+  const response = await fetch(url.toString(), {
+    cache: 'no-store',
     ...init,
     headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
   })
