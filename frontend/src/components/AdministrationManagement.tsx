@@ -49,7 +49,7 @@ const ROLE_COLORS: Record<string, string> = {
   AssistantPrincipal: '#0369a1',
 }
 
-export function AdministrationManagement() {
+interface AdministrationManagementProps {\n  onInstitutionSaved?: (settings: InstitutionSettings) => void\n}\n\nexport function AdministrationManagement({ onInstitutionSaved }: AdministrationManagementProps) {
   const [users, setUsers] = useState<UserSummary[]>([])
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(true)
