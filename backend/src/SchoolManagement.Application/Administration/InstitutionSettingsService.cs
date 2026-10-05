@@ -71,8 +71,8 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
             existing.Country = request.Country?.Trim();
             existing.InstitutionType = request.InstitutionType?.Trim();
             existing.LogoPath = request.LogoPath?.Trim();
-            existing.PrimaryColor = request.PrimaryColor?.Trim();
-            existing.AccentColor = request.AccentColor?.Trim();
+            existing.PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#1e40af" : request.PrimaryColor.Trim();
+            existing.AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#f97316" : request.AccentColor.Trim();
             existing.IsActive = true;
             existing.UpdatedAt = DateTimeOffset.UtcNow;
             await repository.SaveChangesAsync(ct);
@@ -92,8 +92,8 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
             Country = request.Country?.Trim(),
             InstitutionType = request.InstitutionType?.Trim(),
             LogoPath = request.LogoPath?.Trim(),
-            PrimaryColor = request.PrimaryColor?.Trim(),
-            AccentColor = request.AccentColor?.Trim(),
+            PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#1e40af" : request.PrimaryColor.Trim(),
+            AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#f97316" : request.AccentColor.Trim(),
             IsActive = true,
             UpdatedAt = DateTimeOffset.UtcNow
         };
