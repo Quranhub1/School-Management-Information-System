@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { getPublicInstitutionSettings, type InstitutionSettings } from '../api/institutionSettings'
 
+const STORAGE_KEY = 'smis:institution-settings'
+
 const DEFAULT_INSTITUTION: InstitutionSettings = {
   id: '',
   institutionName: '',
@@ -33,9 +35,38 @@ function isValidInstitution(settings: InstitutionSettings | null | undefined): s
   return Boolean(settings?.id && settings.isActive && settings.institutionName?.trim())
 }
 
+// Load from localStorage with fallback to default
+function loadFromStorage(): InstitutionSettings {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored) as InstitutionSettings
+      if (isValidInstitution(parsed)) return parsed
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return DEFAULT_INSTITUTION
+}
+
+// Save to localStorage
+function saveToStorage(settings: InstitutionSettings): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export function InstitutionSettingsProvider({ children }: { children: ReactNode }) {
-  const [institution, setInstitution] = useState<InstitutionSettings>(DEFAULT_INSTITUTION)
+  const [institution, setInstitutionState] = useState<InstitutionSettings>(() => loadFromStorage())
   const [loaded, setLoaded] = useState(false)
+
+  // Wrapper that also saves to localStorage
+  const setInstitution = (settings: InstitutionSettings) => {
+    setInstitutionState(settings)
+    saveToStorage(settings)
+  }
 
   const refreshInstitution = async () => {
     try {

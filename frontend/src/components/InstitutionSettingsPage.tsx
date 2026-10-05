@@ -24,6 +24,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
   const [uploadingGallery, setUploadingGallery] = useState(false)
   const [galleryLoading, setGalleryLoading] = useState(false)
   const [galleryPreview, setGalleryPreview] = useState<GalleryItem | null>(null)
+  const [logoRefreshKey, setLogoRefreshKey] = useState(0)
 
   const [form, setForm] = useState<CreateInstitutionSettingsRequest>({
     institutionName: '',
@@ -102,9 +103,29 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
 
   async function uploadLogo(file: File) {
     setUploadingLogo(true); setError(''); setSuccess('')
-    try { const result = await uploadInstitutionLogo(file); setActive(result); setForm(prev => ({ ...prev, logoPath: result.logoPath ?? '' })); setInstitution(result); onSaved(result); window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result })); if (typeof BroadcastChannel !== 'undefined') { const channel = new BroadcastChannel('smis-institution-settings'); channel.postMessage(result); channel.close() }; setSuccess('Institution logo saved successfully.') }
+    try {
+      const result = await uploadInstitutionLogo(file)
+      setActive(result)
+      setForm(prev => ({ ...prev, logoPath: result.logoPath ?? '' }))
+      setInstitution(result)
+      onSaved(result)
+      setLogoRefreshKey(k => k + 1)
+      window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: result }))
+      if (typeof BroadcastChannel !== 'undefined') {
+        const channel = new BroadcastChannel('smis-institution-settings')
+        channel.postMessage(result)
+        channel.close()
+      }
+      setSuccess('Logo uploaded successfully!')
+    }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to upload logo.') }
     finally { setUploadingLogo(false) }
+  }
+
+  function getLogoPreviewUrl(path: string): string {
+    if (!path) return ''
+    const url = path.startsWith('http') ? path : `${(import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''}${path.startsWith('/') ? path : '/' + path}`
+    return `${url}?v=${logoRefreshKey}&t=${Date.now()}`
   }
 
   async function submit(e: React.FormEvent) {
@@ -116,9 +137,6 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
       const remoteLogoUrl = form.logoPath?.trim() ?? ''
       const isRemoteLogo = /^https?:\/\//i.test(remoteLogoUrl)
 
-      // Save the institution details first. If a remote logo URL was entered,
-      // the server downloads it into App_Data/Branding and returns a local
-      // application URL, so the system never depends on the external host.
       const result = await createInstitutionSettings({
         ...form,
         logoPath: isRemoteLogo ? (active?.logoPath ?? '') : remoteLogoUrl,
@@ -133,7 +151,13 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
       setForm(prev => ({ ...prev, logoPath: finalResult.logoPath ?? '' }))
       setInstitution(finalResult)
       onSaved(finalResult)
-      window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: finalResult })); if (typeof BroadcastChannel !== 'undefined') { const channel = new BroadcastChannel('smis-institution-settings'); channel.postMessage(finalResult); channel.close() }
+      setLogoRefreshKey(k => k + 1)
+      window.dispatchEvent(new CustomEvent('smis:institution-settings-updated', { detail: finalResult }))
+      if (typeof BroadcastChannel !== 'undefined') {
+        const channel = new BroadcastChannel('smis-institution-settings')
+        channel.postMessage(finalResult)
+        channel.close()
+      }
       setSuccess(isRemoteLogo ? 'Institution settings and logo saved successfully. The logo is now stored locally.' : 'Institution settings saved successfully.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save settings.')
@@ -175,7 +199,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
               <label>Abbreviation<input value={form.abbreviation} onChange={e => updateField('abbreviation', e.target.value)} maxLength={50} /></label>
             </div>
             <div className="form-row">
-              <label>Institution Type<select value={form.institutionType} onChange={e => updateField('institutionType', e.target.value)}><option value="">Select type</option><option>University</option><option>College</option><option>Health Training Institution</option><option>Vocational Institute</option><option>Polytechnic</option><option>School</option></select></label>
+              <label>Institution Type<select value={form.institutionType} onChange={e => updateField('institutionType', e.target.value)}><option value="">Select type</option><option>University</option><option>College</option><option>School</option><option>Training Center</option></select></label>
               <label>Country<input value={form.country} onChange={e => updateField('country', e.target.value)} /></label>
             </div>
             <div className="form-row">
@@ -195,16 +219,16 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
           <div className="settings-grid">
             <div className="form-row">
               <label>Logo URL<input value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://..." /></label>
-              <label>Upload Logo<input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo || !active} onChange={e => { const file=e.target.files?.[0]; if(file) void uploadLogo(file) }} />{!active&&<small>Save institution details first.</small>}</label>
+              <label>Upload Logo<input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo || !active} onChange={e => { const file=e.target.files?.[0]; if(file) void uploadLogo(file) }} /></label>
               <label>Primary Color<input type="color" value={form.primaryColor} onChange={e => updateField('primaryColor', e.target.value)} /></label>
             </div>
             <div className="form-row">
               <label>Accent Color<input type="color" value={form.accentColor} onChange={e => updateField('accentColor', e.target.value)} /></label>
             </div>
             {form.logoPath && (
-              <div className="logo-preview">
+              <div className="logo-preview" key={logoRefreshKey}>
                 <p><strong>Logo Preview:</strong></p>
-                <img src={form.logoPath} alt="Institution logo" style={{ maxHeight: 120, maxWidth: 200, objectFit: 'contain', border: '1px solid #e7e5e4', borderRadius: 8, padding: 8 }} onError={e => (e.target as HTMLImageElement).style.display = 'none'} />
+                <img src={getLogoPreviewUrl(form.logoPath)} alt="Institution logo" style={{ maxHeight: 120, maxWidth: 200, objectFit: 'contain', border: '1px solid #e7e5e4', borderRadius: 8, padding: 8 }} onError={(e) => { e.currentTarget.style.display = 'none' }} />
               </div>
             )}
           </div>
