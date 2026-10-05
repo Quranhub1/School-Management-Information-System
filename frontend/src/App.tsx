@@ -8,7 +8,7 @@ import { canManageAcademics, canManageAdministration, canManageAdmissions, canMa
 import { AcademicManagement } from './components/AcademicManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import { getPublicInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'; import './components/PrintStyles.css'
 type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'system-administration'
 const DEFAULT_INSTITUTION: InstitutionSettings = { id: '', institutionName: 'Your Institution Name', abbreviation: '', motto: '', address: '', phone: '', email: '', website: '', postalAddress: '', country: '', institutionType: '', logoPath: null, primaryColor: null, accentColor: null, isActive: false, updatedAt: '' }
-function LoginScreen() {
+function LoginScreen({ institution }: { institution: InstitutionSettings }) {
   const apiBaseUrl = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
   const loginSrc = apiBaseUrl
     ? `/institution-login.html?api=${encodeURIComponent(apiBaseUrl)}`
@@ -312,6 +312,6 @@ function App(){
 
   return authed
     ? <AuthenticatedWorkspace onLogout={()=>setAuthed(false)} institution={institution}/>
-    : <LoginScreen/>
+    : <LoginScreen institution={institution}/>
 }
 export default App
