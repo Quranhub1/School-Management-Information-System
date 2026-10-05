@@ -114,7 +114,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
     setSuccess('')
     try {
       const remoteLogoUrl = form.logoPath?.trim() ?? ''
-      const isRemoteLogo = /^https?:\\/\\//i.test(remoteLogoUrl)
+      const isRemoteLogo = /^https?:\/\//i.test(remoteLogoUrl)
 
       // Save the institution details first. If a remote logo URL was entered,
       // the server downloads it into App_Data/Branding and returns a local
