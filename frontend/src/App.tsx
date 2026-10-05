@@ -21,6 +21,12 @@ function LoginScreen() {
         src={loginSrc}
         title="Institutional Sign In"
         allow="clipboard-read; clipboard-write"
+        onLoad={(event) => {
+          event.currentTarget.contentWindow?.postMessage(
+            { type: 'smis-institution-branding', settings: institution },
+            window.location.origin,
+          )
+        }}
       />
     </main>
   )
@@ -277,6 +283,11 @@ function App(){
   },[])
 
   useEffect(()=>{
+    const iframe = document.querySelector<HTMLIFrameElement>('.institution-login-frame')
+    iframe?.contentWindow?.postMessage(
+      { type: 'smis-institution-branding', settings: institution },
+      window.location.origin,
+    )
     const root=document.documentElement
     const primary=institution.primaryColor||'#1e40af'
     const accent=institution.accentColor||'#f97316'
