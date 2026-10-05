@@ -7,7 +7,18 @@ import { getSession, logout, saveAuthSession } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance } from './auth/roleGuards'
 import { AcademicManagement } from './components/AcademicManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import { getPublicInstitutionSettings, type InstitutionSettings } from './api/institutionSettings'; import './components/PrintStyles.css'
 type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'system-administration'
-const DEFAULT_INSTITUTION: InstitutionSettings = { id: '', institutionName: 'Your Institution Name', abbreviation: '', motto: '', address: '', phone: '', email: '', website: '', postalAddress: '', country: '', institutionType: '', logoPath: null, primaryColor: null, accentColor: null, isActive: false, updatedAt: '' }
+const DEFAULT_INSTITUTION: InstitutionSettings = { id: '', institutionName: '', abbreviation: '', motto: '', address: '', phone: '', email: '', website: '', postalAddress: '', country: '', institutionType: '', logoPath: null, primaryColor: null, accentColor: null, isActive: false, updatedAt: '' }
+const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
+function institutionLogoUrl(settings: InstitutionSettings): string {
+  const path = settings.logoPath?.trim()
+  if (path) return path.startsWith('http') ? path : `${API_BASE_URL}${path.startsWith('/') ? path : '/' + path}`
+  return `${API_BASE_URL}/api/public/institution-settings/logo`
+}
+function institutionShortName(settings: InstitutionSettings): string {
+  if (settings.abbreviation?.trim()) return settings.abbreviation.trim()
+  const words = settings.institutionName?.trim().split(/\\s+/).filter(Boolean) ?? []
+  return words.length > 1 ? words.map(word => word[0]).join('').slice(0, 6).toUpperCase() : (words[0] ?? '').slice(0, 6).toUpperCase()
+}
 function LoginScreen({ institution }: { institution: InstitutionSettings }) {
   const apiBaseUrl = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
   const loginSrc = apiBaseUrl
@@ -169,17 +180,21 @@ useEffect(() => {
 }, [activeModule, activeSubsection, visibleSidebarGroups]);
 
 return <main className="app-shell">
+  <div className="institution-watermark" aria-hidden="true">
+    <img src={institutionLogoUrl(institution)} alt="" />
+    <span>{institution.institutionName}</span>
+  </div>
   <aside className="flex flex-col w-72 h-screen bg-gradient-to-b from-slate-50 to-white border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)] font-sans text-slate-700 select-none">
     <div className="flex items-center gap-3.5 px-6 py-6 border-b border-slate-100 group cursor-pointer">
-      {institution?.logoPath && (
+      {institution && (
         <div className="relative flex-shrink-0">
           <div className="absolute inset-0 bg-indigo-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-          <img src={institution.logoPath} alt={(institution?.institutionName || "Institution") + " Logo"} className="relative w-11 h-11 rounded-xl object-cover shadow-sm ring-1 ring-slate-900/10 group-hover:scale-105 group-hover:-rotate-3 transition-all duration-300" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          <img src={institutionLogoUrl(institution)} alt={(institution?.institutionName || "Institution") + " Logo"} className="relative w-11 h-11 rounded-xl object-cover shadow-sm ring-1 ring-slate-900/10 group-hover:scale-105 group-hover:-rotate-3 transition-all duration-300" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         </div>
       )}
       <div className="flex flex-col min-w-0 overflow-hidden">
-        <span className="text-[10px] font-extrabold tracking-widest text-indigo-600 uppercase mb-0.5 group-hover:text-indigo-500 transition-colors truncate">{institution?.abbreviation || "SMIS"}</span>
-        <h1 className="text-sm font-bold text-slate-900 truncate leading-tight group-hover:text-indigo-950 transition-colors">{institution?.institutionName || "Institution Portal"}</h1>
+        <span className="text-[10px] font-extrabold tracking-widest text-indigo-600 uppercase mb-0.5 group-hover:text-indigo-500 transition-colors truncate">{institutionShortName(institution)}</span>
+        <h1 className="text-sm font-bold text-slate-900 truncate leading-tight group-hover:text-indigo-950 transition-colors">{institution?.institutionName || "Institution"}</h1>
         {institution?.motto && <p className="text-xs font-medium text-slate-500 truncate mt-0.5">{institution.motto}</p>}
       </div>
     </div>
@@ -295,6 +310,8 @@ function App(){
     root.style.setProperty('--brand-accent',accent)
     root.style.setProperty('--brand-primary-soft',primary+'18')
     root.style.setProperty('--brand-accent-soft',accent+'18')
+    root.style.setProperty('--brand-institution-name', JSON.stringify(institution.institutionName || ''))
+    root.style.setProperty('--brand-institution-short', JSON.stringify(institutionShortName(institution)))
     document.title=institution.institutionName?.trim()||'School Management Information System'
   },[institution])
 
@@ -311,7 +328,7 @@ function App(){
   },[])
 
   return authed
-    ? <AuthenticatedWorkspace onLogout={()=>setAuthed(false)} institution={institution}/>
+    ? <AuthenticatedWorkspace onLogout={()=>setAuthed(false)} institution={institution} onInstitutionSaved={setInstitution}/>
     : <LoginScreen institution={institution}/>
 }
 export default App
