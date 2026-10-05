@@ -29,6 +29,10 @@ interface InstitutionSettingsContextValue {
 
 const InstitutionSettingsContext = createContext<InstitutionSettingsContextValue | null>(null)
 
+function isValidInstitution(settings: InstitutionSettings | null | undefined): settings is InstitutionSettings {
+  return Boolean(settings?.id && settings.isActive && settings.institutionName?.trim())
+}
+
 export function InstitutionSettingsProvider({ children }: { children: ReactNode }) {
   const [institution, setInstitution] = useState<InstitutionSettings>(DEFAULT_INSTITUTION)
   const [loaded, setLoaded] = useState(false)
@@ -36,19 +40,30 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
   const refreshInstitution = async () => {
     try {
       const settings = await getPublicInstitutionSettings()
-      if (settings?.id && settings.institutionName?.trim()) setInstitution(settings)
+      if (!isValidInstitution(settings)) return
+      setInstitution(settings)
       setLoaded(true)
     } catch {
-      // Keep the last known settings. The database/API remains the source of truth.
-      setLoaded(true)
+      // Do not mark the application as loaded until PostgreSQL-backed settings are available.
     }
   }
 
   useEffect(() => {
-    void refreshInstitution()
+    let cancelled = false
+
+    const loadUntilReady = async () => {
+      while (!cancelled) {
+        await refreshInstitution()
+        if (cancelled || loaded) return
+        await new Promise(resolve => window.setTimeout(resolve, 2000))
+      }
+    }
+
+    void loadUntilReady()
+
     const handleSettingsUpdated = (event: Event) => {
       const detail = (event as CustomEvent<InstitutionSettings>).detail
-      if (detail?.id && detail.institutionName?.trim()) setInstitution(detail)
+      if (isValidInstitution(detail)) setInstitution(detail)
       else void refreshInstitution()
     }
     window.addEventListener('smis:institution-settings-updated', handleSettingsUpdated)
@@ -56,11 +71,16 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
     const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('smis-institution-settings') : null
     const handleBroadcast = (event: MessageEvent<InstitutionSettings>) => {
       const detail = event.data
-      if (detail?.id && detail.institutionName?.trim()) setInstitution(detail)
+      if (isValidInstitution(detail)) setInstitution(detail)
       else void refreshInstitution()
     }
     channel?.addEventListener('message', handleBroadcast)
+
+    const refreshTimer = window.setInterval(() => { void refreshInstitution() }, 30000)
+
     return () => {
+      cancelled = true
+      window.clearInterval(refreshTimer)
       window.removeEventListener('smis:institution-settings-updated', handleSettingsUpdated)
       channel?.removeEventListener('message', handleBroadcast)
       channel?.close()
