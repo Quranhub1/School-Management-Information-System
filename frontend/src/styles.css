@@ -2417,3 +2417,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   min-height: 100vh;
   border: 0;
 }
+
+
+.institution-watermark{position:fixed;z-index:0;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;pointer-events:none;user-select:none;opacity:.045;transform:rotate(-18deg);overflow:hidden}
+.institution-watermark img{width:min(30vw,260px);height:min(30vw,260px);object-fit:contain;filter:grayscale(1)}
+.institution-watermark span{max-width:80vw;text-align:center;font-size:clamp(1.4rem,4vw,3.4rem);font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-primary,#1e40af)}
+.app-shell>aside,.app-shell>.main-content{position:relative;z-index:1}
+@media print{.institution-watermark{display:none}}
