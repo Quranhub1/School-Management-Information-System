@@ -35,7 +35,9 @@ public sealed record CreateInstitutionSettingsRequest(
     string? InstitutionType,
     string? LogoPath,
     string? PrimaryColor,
-    string? AccentColor
+    string? AccentColor,
+    byte[]? LogoData = null,
+    string? LogoContentType = null
 );
 
 public sealed class InstitutionSettingsService(IInstitutionSettingsRepository repository)
@@ -71,6 +73,8 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
             existing.Country = request.Country?.Trim();
             existing.InstitutionType = request.InstitutionType?.Trim();
             existing.LogoPath = request.LogoPath?.Trim();
+            existing.LogoData = request.LogoData;
+            existing.LogoContentType = request.LogoContentType?.Trim();
             existing.PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#1e40af" : request.PrimaryColor.Trim();
             existing.AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#f97316" : request.AccentColor.Trim();
             existing.IsActive = true;
@@ -92,6 +96,8 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
             Country = request.Country?.Trim(),
             InstitutionType = request.InstitutionType?.Trim(),
             LogoPath = request.LogoPath?.Trim(),
+            LogoData = request.LogoData,
+            LogoContentType = request.LogoContentType?.Trim(),
             PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#1e40af" : request.PrimaryColor.Trim(),
             AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#f97316" : request.AccentColor.Trim(),
             IsActive = true,
