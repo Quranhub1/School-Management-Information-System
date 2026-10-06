@@ -42,10 +42,10 @@ export function canManageAdmissions(roles: string[]) {
   return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'AdmissionsOfficer'])
 }
 export function canReadStaff(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'HR Manager', 'Lecturer'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'ResidentDirector', 'Lecturer'])
 }
 export function canManageStaff(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'HR Manager', 'Registrar'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'ResidentDirector', 'Registrar'])
 }
 export function canReadLibrary(roles: string[]) {
   return hasAnyRole(roles, ['System Administrator', 'Librarian', 'Registrar', 'Academic Registrar', 'Lecturer'])
