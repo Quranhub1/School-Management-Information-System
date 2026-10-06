@@ -33,6 +33,7 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             InstitutionalRoles.ResidentDirector,
             InstitutionalRoles.HeadOfDepartment,
             InstitutionalRoles.AssistantPrincipal,
+            InstitutionalRoles.Receptionist,
             InstitutionalRoles.Librarian,
             InstitutionalRoles.HrManager,
             InstitutionalRoles.Parent
