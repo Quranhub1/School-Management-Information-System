@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/students")]
-[Authorize(Policy = AuthorizationPolicies.StudentManagement)]
+[Authorize(Policy = AuthorizationPolicies.StudentRead)]
 public sealed class StudentsController(StudentService service, SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet]
@@ -42,6 +42,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     }
 
     [HttpPost]
+    [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> Create(CreateStudentRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.StudentNumber) ||
@@ -56,6 +57,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> Update(Guid id, UpdateStudentRequest request, CancellationToken cancellationToken)
     {
         if (id != request.Id)
@@ -73,6 +75,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var deleted = await service.DeleteAsync(id, cancellationToken);

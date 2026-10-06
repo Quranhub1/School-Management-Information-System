@@ -12,7 +12,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/admissions")]
-[Authorize(Policy = AdmissionsPolicies.Management)]
+[Authorize(Policy = AdmissionsPolicies.Read)]
 public sealed class AdmissionsController(AdmissionsWorkflowService workflow, SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet]
@@ -20,14 +20,19 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken) { var admission = await workflow.GetByIdAsync(id, cancellationToken); return admission is null ? NotFound() : Ok(admission); }
     [HttpPost]
+    [Authorize(Policy = AdmissionsPolicies.Management)]
     public async Task<IActionResult> Create(CreateAdmissionRequest request, CancellationToken cancellationToken) { try { var admission = await workflow.CreateAsync(request, cancellationToken); return Created($"/api/admissions/{admission.Id}", admission); } catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); } }
+    [Authorize(Policy = AdmissionsPolicies.Management)]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateAdmissionRequest request, CancellationToken cancellationToken) { if (id != request.Id) return BadRequest(new { message = "Route ID and body ID must match." }); var updated = await workflow.UpdateAsync(id, request, cancellationToken); return updated is null ? NotFound() : Ok(updated); }
+    [Authorize(Policy = AdmissionsPolicies.Management)]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken) => await workflow.DeleteAsync(id, cancellationToken) ? NoContent() : NotFound();
+    [Authorize(Policy = AdmissionsPolicies.Management)]
     [HttpPost("{id:guid}/decision")]
     public async Task<IActionResult> Decide(Guid id, DecideAdmissionRequest request, CancellationToken cancellationToken) { try { return Ok(await workflow.DecideAsync(id, request, cancellationToken)); } catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } }
 
+    [Authorize(Policy = AdmissionsPolicies.Management)]
     [HttpPost("{id:guid}/admit")]
     public async Task<IActionResult> Admit(Guid id, AdmitApplicantRequest request, CancellationToken cancellationToken)
     {

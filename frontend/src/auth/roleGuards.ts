@@ -3,6 +3,7 @@ import {
   ADMINISTRATION_ROLES,
   ACADEMIC_MANAGEMENT_ROLES,
   FINANCE_MANAGEMENT_ROLES,
+  FINANCE_OPERATIONS_ROLES,
   EXAMINATION_MANAGEMENT_ROLES,
   STUDENT_MANAGEMENT_ROLES,
   INVENTORY_MANAGEMENT_ROLES,
@@ -22,6 +23,12 @@ export function canManageAcademics(roles: string[]) {
 export function canManageFinance(roles: string[]) {
   return hasAnyRole(roles, FINANCE_MANAGEMENT_ROLES)
 }
+export function canAccessFinance(roles: string[]) {
+  return hasAnyRole(roles, FINANCE_OPERATIONS_ROLES)
+}
+export function isAssistantAccountant(roles: string[]) {
+  return roles.includes('AssistantAccountant')
+}
 export function canManageExaminations(roles: string[]) {
   return hasAnyRole(roles, EXAMINATION_MANAGEMENT_ROLES)
 }
@@ -32,13 +39,13 @@ export function canManageTimetable(roles: string[]) {
   return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'Lecturer'])
 }
 export function canManageAdmissions(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'AdmissionsOfficer'])
 }
 export function canReadStaff(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'HR Manager', 'Lecturer'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'ResidentDirector', 'Lecturer'])
 }
 export function canManageStaff(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'HR Manager', 'Registrar'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'ResidentDirector', 'Registrar'])
 }
 export function canReadLibrary(roles: string[]) {
   return hasAnyRole(roles, ['System Administrator', 'Librarian', 'Registrar', 'Academic Registrar', 'Lecturer'])
@@ -62,7 +69,7 @@ export function canManageHostel(roles: string[]) {
   return hasAnyRole(roles, HOSTEL_MANAGEMENT_ROLES)
 }
 export function canManagePrinters(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Principal', 'ResidentDirector', 'Secretary', 'StoreOfficer'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'Principal', 'Director', 'ResidentDirector', 'Secretary', 'StoreOfficer'])
 }
 export function canManageDocuments(roles: string[]) {
   return hasAnyRole(roles, STUDENT_MANAGEMENT_ROLES)

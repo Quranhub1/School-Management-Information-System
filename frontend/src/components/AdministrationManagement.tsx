@@ -5,7 +5,7 @@ import { type InstitutionSettings } from '../api/institutionSettings'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 
-const roles = ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'FinanceOfficer', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'Principal', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'AssistantPrincipal']
+const roles = ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'AdmissionsOfficer', 'Accountant', 'AssistantAccountant', 'FinanceOfficer', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'Principal', 'Director', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'Receptionist', 'AssistantPrincipal']
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['Registrar'] }
 
 type AdminTab = 'users' | 'offices' | 'settings'
@@ -13,6 +13,7 @@ type AdminTab = 'users' | 'offices' | 'settings'
 type Office = { key: string; title: string; group: string; description: string; responsibilities: string[]; workspace?: string; workspaceLabel?: string; icon: typeof Building2 }
 
 const OFFICES: Office[] = [
+  { key: 'director', title: 'Director', group: 'Executive Leadership', description: 'Institution-wide executive authority, strategic direction, approvals and performance oversight.', responsibilities: ['Institution-wide performance and strategic oversight', 'Review and approve major academic, financial and operational matters', 'Review institutional risks, KPIs and executive reports', 'Delegate defined functions when the Director is absent'], workspace: 'reports', workspaceLabel: 'Open Executive Reports', icon: Landmark },
   { key: 'principal', title: 'Principal', group: 'Executive Leadership', description: 'Institution-wide executive oversight, approvals, performance and strategic direction.', responsibilities: ['Institution dashboard and performance metrics', 'Approve institutional decisions, reports and major workflows', 'Review academic, student, finance and operational summaries'], workspace: 'reports', workspaceLabel: 'Open Institution Analytics', icon: Landmark },
   { key: 'deputy-principal', title: 'Deputy Principal', group: 'Executive Leadership', description: 'Supports the Principal with day-to-day academic and operational coordination.', responsibilities: ['Monitor departmental performance', 'Coordinate delegated institutional actions', 'Review timetable, attendance and operational issues'], workspace: 'reports', workspaceLabel: 'Open Dashboard', icon: BriefcaseBusiness },
   { key: 'registrar', title: 'Registrar', group: 'Academic & Registry', description: 'Owns student records, admissions, registration, clearance and core registry processes.', responsibilities: ['Admissions and enrolment', 'Student records and registration', 'Clearance and official registry actions'], workspace: 'students', workspaceLabel: 'Open Student Management', icon: UsersRound },
@@ -37,6 +38,7 @@ const ROLE_COLORS: Record<string, string> = {
   SystemAdministrator: '#1e40af',
   Registrar: '#059669',
   AcademicRegistrar: '#7c3aed',
+  AdmissionsOfficer: '#2563eb',
   FinanceOfficer: '#f97316',
   Lecturer: '#2563eb',
   ExaminationsOfficer: '#dc2626',
@@ -44,9 +46,11 @@ const ROLE_COLORS: Record<string, string> = {
   StoreOfficer: '#92400e',
   HostelWarden: '#0891b2',
   Principal: '#b91c1c',
+  Director: '#7f1d1d',
   Secretary: '#0f766e',
   ResidentDirector: '#c2410c',
   HeadOfDepartment: '#6d28d9',
+  Receptionist: '#0e7490',
   AssistantPrincipal: '#0369a1',
 }
 

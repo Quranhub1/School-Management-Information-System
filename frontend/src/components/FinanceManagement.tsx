@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { getSession } from '../api/auth'
 import { getDashboard, getOutstandingBalances, getPayments, type FinanceDashboard, type OutstandingBalance } from '../api/finance'
 import { formatCurrency } from '../lib/currency'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
@@ -6,8 +7,9 @@ import { AccountingReportsWorkspace } from './AccountingReportsWorkspace'
 import { CashBankPositionReport } from './CashBankPositionReport'
 import { FeeTypesManager } from './FeeTypesManager'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
+import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
 
-type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'reports'
+type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
 
 type Payment = {
   id?: string
@@ -31,6 +33,7 @@ const statusFor = (balance: number, billed = 0, paid = 0) => {
 const money = (value: number) => formatCurrency(Number(value) || 0)
 
 export function FinanceManagement() {
+  const isAssistantAccountant = getSession()?.roles?.includes('AssistantAccountant') ?? false
   const [tab, setTab] = useState<FinanceTab>('overview')
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null)
   const [outstanding, setOutstanding] = useState<OutstandingBalance[]>([])
@@ -103,8 +106,8 @@ export function FinanceManagement() {
           ['overview', 'Overview'],
           ['student-accounts', 'Student Accounts'],
           ['collections', 'Collections'],
-          ['fees', 'Fee Structures'],
-          ['accounting', 'Accounting'],
+          ...(isAssistantAccountant ? [] : [['fees', 'Fee Structures'], ['accounting', 'Accounting']] as [FinanceTab, string][]),
+          ['allowances', 'Staff Allowances'],
           ['reports', 'Reports'],
         ] as [FinanceTab, string][]).map(([key, label]) => (
           <button key={key} role="tab" aria-selected={tab === key} className={tab === key ? 'active' : ''} onClick={() => setTab(key)}>{label}</button>
@@ -176,6 +179,8 @@ export function FinanceManagement() {
           <div className="finance-surface" style={{ marginTop: 18 }}><div className="finance-surface-heading"><div><span className="eyebrow">DOUBLE-ENTRY ACCOUNTING</span><h3>Core accounting reports</h3><p>Chart of accounts, general ledger, trial balance, income statement and balance sheet, all presented in UGX.</p></div></div><AccountingReportsWorkspace /></div>
         </section>
       )}
+
+      {tab === 'allowances' && <StaffAllowancesWorkspace />}
 
       {tab === 'reports' && (
         <section className="finance-surface">
