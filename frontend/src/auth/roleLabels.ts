@@ -9,4 +9,9 @@ export const ROLE_LABELS: Record<string, string> = {
   Lecturer: 'Lecturer',
   ExaminationsOfficer: 'Examinations Officer',
   Student: 'Student',
+  Secretary: 'Secretary',
+  ResidentDirector: 'Resident Director / Human Resource Manager',
+  HeadOfDepartment: 'Head of Department',
+  Receptionist: 'Receptionist',
+  Principal: 'Principal',
 }
