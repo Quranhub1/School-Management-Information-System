@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/finance/staff-allowances")]
-[Authorize(Policy = "FinanceOperations")]
+[Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
 public sealed class StaffAllowancesController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet]
