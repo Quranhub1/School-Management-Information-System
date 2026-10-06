@@ -5,6 +5,7 @@ import { formatCurrency } from '../lib/currency'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
 import { AccountingReportsWorkspace } from './AccountingReportsWorkspace'
 import { CashBankPositionReport } from './CashBankPositionReport'
+import { FinanceControlCenter } from './FinanceControlCenter'
 import { FeeTypesManager } from './FeeTypesManager'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
 import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
@@ -118,6 +119,7 @@ export function FinanceManagement() {
 
       {tab === 'overview' && (
         <>
+          <FinanceControlCenter onNavigate={nextTab => setTab(nextTab)} />
           <div className="finance-kpi-grid">
             <article className="finance-kpi finance-kpi-blue"><span>Total billed</span><strong>{dashboard ? money(dashboard.totalBilled) : '—'}</strong><small>Current student billing</small></article>
             <article className="finance-kpi finance-kpi-green"><span>Total collected</span><strong>{dashboard ? money(dashboard.totalPaid) : '—'}</strong><small>Posted student payments</small></article>
