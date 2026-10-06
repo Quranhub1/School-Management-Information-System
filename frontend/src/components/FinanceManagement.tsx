@@ -5,9 +5,9 @@ import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
 import { AccountingReportsWorkspace } from './AccountingReportsWorkspace'
 import { CashBankPositionReport } from './CashBankPositionReport'
 import { FeeTypesManager } from './FeeTypesManager'
-import { StudentFinanceDashboard } from './StudentFinanceDashboard'
+import { StudentFinanceDashboard } from './StudentFinanceDashboard'\nimport { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
 
-type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'reports'
+type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
 
 type Payment = {
   id?: string
@@ -177,7 +177,7 @@ export function FinanceManagement() {
         </section>
       )}
 
-      {tab === 'reports' && (
+      {tab === 'allowances' && <StaffAllowancesWorkspace />}\n\n      {tab === 'reports' && (
         <section className="finance-surface">
           <div className="finance-surface-heading"><div><span className="eyebrow">FINANCIAL REPORTING</span><h3>Financial reports</h3><p>Period-based finance reporting with UGX presentation and reconciliation visibility.</p></div></div>
           <CashBankPositionReport />
