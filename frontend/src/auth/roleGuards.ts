@@ -23,6 +23,12 @@ export function canManageAcademics(roles: string[]) {
 export function canManageFinance(roles: string[]) {
   return hasAnyRole(roles, FINANCE_MANAGEMENT_ROLES)
 }
+export function canAccessFinance(roles: string[]) {
+  return hasAnyRole(roles, FINANCE_OPERATIONS_ROLES)
+}
+export function isAssistantAccountant(roles: string[]) {
+  return roles.includes('AssistantAccountant')
+}
 export function canManageExaminations(roles: string[]) {
   return hasAnyRole(roles, EXAMINATION_MANAGEMENT_ROLES)
 }
