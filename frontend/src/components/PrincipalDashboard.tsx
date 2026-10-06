@@ -7,6 +7,29 @@ import {
   type StaffPerformance,
   type DepartmentalSummary,
 } from '../api/principal'
+import { 
+  Panel,
+  PanelHeader,
+  PanelContent,
+  Tabs,
+  Tab,
+  TabList,
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardTitle,
+  Table,
+  TableHead,
+  TableCell,
+  TableRow,
+  TableBody,
+  Badge,
+  Form,
+  FormField,
+  FormLabel,
+  FormControl
+} from '@/components/ui'
 
 type MainTab = 'overview' | 'academics' | 'staff' | 'departments'
 
@@ -37,379 +60,527 @@ export function PrincipalDashboard() {
     }
   }
 
+  function getStatusColor(status: string): string {
+    if (status === 'Active' || status === 'Paid' || status === 'Accepted' || status === 'Passed') return 'text-success'
+    if (status === 'Pending' || status === 'UnderReview' || status === 'Submitted') return 'text-warning'
+    return 'text-destructive'
+  }
+
   useEffect(() => {
     void loadAll()
   }, [])
 
-  function getStatusColor(status: string): string {
-    if (status === 'Active' || status === 'Paid' || status === 'Accepted' || status === 'Passed') return '#059669'
-    if (status === 'Pending' || status === 'UnderReview' || status === 'Submitted') return '#d97706'
-    return '#dc2626'
-  }
-
   return (
-    <section className="panel" aria-label="Principal dashboard">
-      <div className="panel-heading">
+    <Panel>
+      <PanelHeader>
         <div>
           <span className="eyebrow">PRINCIPAL</span>
           <h2>Institutional Dashboard</h2>
         </div>
-        <button className="secondary-button" onClick={() => void loadAll()}>Refresh</button>
-      </div>
+        <Button variant="secondary" onClick={() => void loadAll()}>
+          Refresh
+        </Button>
+      </PanelHeader>
 
-      {error && <div className="error" role="alert">{error}</div>}
+      {error && <div className="alert alert-destructive mt-4" role="alert">{error}</div>}
 
-      <div className="library-workspace-tabs" role="tablist" aria-label="Principal sections" style={{ marginBottom: 18 }}>
-        <button role="tab" aria-selected={mainTab === 'overview'} className={mainTab === 'overview' ? 'active' : ''} onClick={() => setMainTab('overview')}>Overview</button>
-        <button role="tab" aria-selected={mainTab === 'academics'} className={mainTab === 'academics' ? 'active' : ''} onClick={() => setMainTab('academics')}>Academics</button>
-        <button role="tab" aria-selected={mainTab === 'staff'} className={mainTab === 'staff' ? 'active' : ''} onClick={() => setMainTab('staff')}>Staff Performance</button>
-        <button role="tab" aria-selected={mainTab === 'departments'} className={mainTab === 'departments' ? 'active' : ''} onClick={() => setMainTab('departments')}>Departments</button>
-      </div>
+      <Tabs className="mt-4">
+        <TabList>
+          <Tab 
+            isSelected={mainTab === 'overview'} 
+            onClick={() => setMainTab('overview')}>
+            Overview
+          </Tab>
+          <Tab 
+            isSelected={mainTab === 'academics'} 
+            onClick={() => setMainTab('academics')}>
+            Academics
+          </Tab>
+          <Tab 
+            isSelected={mainTab === 'staff'} 
+            onClick={() => setMainTab('staff')}>
+            Staff Performance
+          </Tab>
+          <Tab 
+            isSelected={mainTab === 'departments'} 
+            onClick={() => setMainTab('departments')}>
+            Departments
+          </Tab>
+        </TabList>
+      </Tabs>
 
       {loading ? (
-        <p className="empty">Loading principal dashboard…</p>
+        <PanelContent className="mt-4">
+          <div className="flex items-center justify-center py-8">
+            <p className="text-muted-foreground">Loading principal dashboard…</p>
+          </div>
+        </PanelContent>
       ) : dashboard ? (
-        <>
+        <PanelContent className="mt-4">
           {mainTab === 'overview' && (
             <>
-              <div className="summary-grid" style={{ marginBottom: 22 }}>
-                <div className="summary-card">
-                  <span>Total Students</span>
-                  <strong>{dashboard.totalStudents}</strong>
+              <div className="grid gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Total Students</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                      <div className="text-2xl font-bold">{dashboard.totalStudents}</div>
+                      <p className="text-muted-foreground">Enrolled Students</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Active Students</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center text-success">
+                      <div className="text-2xl font-bold">{dashboard.activeStudents}</div>
+                      <p className="text-muted-foreground">Currently Attending</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Total Staff</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                      <div className="text-2xl font-bold">{dashboard.totalStaff}</div>
+                      <p className="text-muted-foreground">Employed Staff</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Programmes</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                      <div className="text-2xl font-bold">{dashboard.totalProgrammes}</div>
+                      <p className="text-muted-foreground">Academic Programs</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Courses</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                      <div className="text-2xl font-bold">{dashboard.totalCourses}</div>
+                      <p className="text-muted-foreground">Course Offerings</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Outstanding Invoices</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center text-destructive">
+                      <div className="text-2xl font-bold">{dashboard.outstandingInvoices}</div>
+                      <p className="text-muted-foreground">Unpaid Invoices</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Total Invoiced</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                      <div className="text-2xl font-bold">UGX {dashboard.totalInvoiced.toLocaleString()}</div>
+                      <p className="text-muted-foreground">Total Billed</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Total Collected</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center text-success">
+                      <div className="text-2xl font-bold">UGX {dashboard.totalPaid.toLocaleString()}</div>
+                      <p className="text-muted-foreground">Total Received</p>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div className="summary-card">
-                  <span>Active Students</span>
-                  <strong style={{ color: '#059669' }}>{dashboard.activeStudents}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Total Staff</span>
-                  <strong>{dashboard.totalStaff}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Programmes</span>
-                  <strong>{dashboard.totalProgrammes}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Courses</span>
-                  <strong>{dashboard.totalCourses}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Outstanding Invoices</span>
-                  <strong style={{ color: '#dc2626' }}>{dashboard.outstandingInvoices}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Total Invoiced</span>
-                  <strong>UGX {dashboard.totalInvoiced.toLocaleString()}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Total Collected</span>
-                  <strong style={{ color: '#059669' }}>UGX {dashboard.totalPaid.toLocaleString()}</strong>
-                </div>
-              </div>
 
-              <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
-                <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
-                  <div>
-                    <span className="eyebrow">ADMISSIONS</span>
-                    <h3>Admissions Overview</h3>
-                  </div>
-                </div>
-                <div className="summary-grid" style={{ marginBottom: 22 }}>
-                  <div className="summary-card">
-                    <span>Pending</span>
-                    <strong style={{ color: '#d97706' }}>{dashboard.pendingAdmissions}</strong>
-                  </div>
-                  <div className="summary-card">
-                    <span>Accepted</span>
-                    <strong style={{ color: '#059669' }}>{dashboard.acceptedAdmissions}</strong>
-                  </div>
-                  <div className="summary-card">
-                    <span>Rejected</span>
-                    <strong style={{ color: '#dc2626' }}>{dashboard.rejectedAdmissions}</strong>
-                  </div>
-                </div>
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Admissions Overview</h3>
+                    <div className="grid gap-4 mb-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Pending</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center text-warning">
+                          <div className="text-2xl font-bold">{dashboard.pendingAdmissions}</div>
+                          <p className="text-muted-foreground">Awaiting Decision</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Accepted</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center text-success">
+                          <div className="text-2xl font-bold">{dashboard.acceptedAdmissions}</div>
+                          <p className="text-muted-foreground">Offer Accepted</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Rejected</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center text-destructive">
+                          <div className="text-2xl font-bold">{dashboard.rejectedAdmissions}</div>
+                          <p className="text-muted-foreground">Application Denied</p>
+                        </CardContent>
+                      </Card>
+                    </div>
 
-                <h4 style={{ marginBottom: 10 }}>Recent Admissions</h4>
-                <div className="table-wrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Status</th>
-                        <th>Programme</th>
-                        <th>Academic Year</th>
-                        <th>Created</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dashboard.recentAdmissions.length === 0 ? (
-                        <tr><td colSpan={4} className="empty">No recent admissions</td></tr>
-                      ) : (
-                        dashboard.recentAdmissions.map(admission => (
-                          <tr key={admission.id}>
-                            <td>
-                              <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(admission.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
-                                {admission.status}
-                              </span>
-                            </td>
-                            <td>{admission.programmeId}</td>
-                            <td>{admission.academicYearId}</td>
-                            <td>{new Date(admission.createdAt).toLocaleDateString('en-UG')}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
-                <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
-                  <div>
-                    <span className="eyebrow">FINANCE</span>
-                    <h3>Outstanding Balances</h3>
+                    <h4 className="text-sm font-medium text-foreground mb-2">Recent Admissions</h4>
+                    <div className="overflow-x-auto">
+                      <Table className="w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Programme</TableHead>
+                            <TableHead>Academic Year</TableHead>
+                            <TableHead>Created</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {dashboard.recentAdmissions.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="py-4 text-center text-muted-foreground">
+                                No recent admissions
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            dashboard.recentAdmissions.map(admission => (
+                              <TableRow key={admission.id}>
+                                <TableCell>
+                                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(admission.status)}`}>
+                                    {admission.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell>{admission.programmeId}</TableCell>
+                                <TableCell>{admission.academicYearId}</TableCell>
+                                <TableCell>{new Date(admission.createdAt).toLocaleDateString('en-UG')}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
-                <div className="table-wrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Student</th>
-                        <th>Programme</th>
-                        <th>Balance</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dashboard.outstandingBalances.length === 0 ? (
-                        <tr><td colSpan={3} className="empty">No outstanding balances</td></tr>
-                      ) : (
-                        dashboard.outstandingBalances.map((item, idx) => (
-                          <tr key={idx}>
-                            <td><strong>{item.studentNumber}</strong> {item.studentName}</td>
-                            <td>{item.programmeName}</td>
-                            <td style={{ color: '#dc2626', fontWeight: 700 }}>{item.currency} {item.balance.toLocaleString()}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
 
-              <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
-                <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
-                  <div>
-                    <span className="eyebrow">FINANCE</span>
-                    <h3>Recent Payments</h3>
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Outstanding Balances</h3>
+                    <div className="overflow-x-auto">
+                      <Table className="w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Student</TableHead>
+                            <TableHead>Programme</TableHead>
+                            <TableHead>Balance</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {dashboard.outstandingBalances.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={3} className="py-4 text-center text-muted-foreground">
+                                No outstanding balances
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            dashboard.outstandingBalances.map((item, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell>
+                                  <strong>{item.studentNumber}</strong> {item.studentName}
+                                </TableCell>
+                                <TableCell>{item.programmeName}</TableCell>
+                                <TableCell className="text-destructive font-semibold">
+                                  {item.currency} {item.balance.toLocaleString()}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
-                <div className="table-wrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Receipt No.</th>
-                        <th>Student</th>
-                        <th>Amount</th>
-                        <th>Method</th>
-                        <th>Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dashboard.recentPayments.length === 0 ? (
-                        <tr><td colSpan={5} className="empty">No recent payments</td></tr>
-                      ) : (
-                        dashboard.recentPayments.map(payment => (
-                          <tr key={payment.id}>
-                            <td><strong>{payment.receiptNumber}</strong></td>
-                            <td>{payment.studentName}</td>
-                            <td style={{ color: '#059669', fontWeight: 700 }}>UGX {payment.amount.toLocaleString()}</td>
-                            <td>{payment.paymentMethod}</td>
-                            <td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Recent Payments</h3>
+                    <div className="overflow-x-auto">
+                      <Table className="w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Receipt No.</TableHead>
+                            <TableHead>Student</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Method</TableHead>
+                            <TableHead>Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {dashboard.recentPayments.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} className="py-4 text-center text-muted-foreground">
+                                No recent payments
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            dashboard.recentPayments.map(payment => (
+                              <TableRow key={payment.id}>
+                                <TableCell><strong>{payment.receiptNumber}</strong></TableCell>
+                                <TableCell>{payment.studentName}</TableCell>
+                                <TableCell className="text-success font-semibold">
+                                  UGX {payment.amount.toLocaleString()}
+                                </TableCell>
+                                <TableCell>{payment.paymentMethod}</TableCell>
+                                <TableCell>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
                 </div>
               </div>
             </>
           )}
 
           {mainTab === 'academics' && (
-            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
-              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
-                <div>
-                  <span className="eyebrow">ACADEMICS</span>
-                  <h3>Academic Overview</h3>
-                </div>
-              </div>
-              <div className="summary-grid" style={{ marginBottom: 22 }}>
-                <div className="summary-card">
-                  <span>Total Results</span>
-                  <strong>{dashboard.totalResults}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Passed</span>
-                  <strong style={{ color: '#059669' }}>{dashboard.passedResults}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Failed</span>
-                  <strong style={{ color: '#dc2626' }}>{dashboard.failedResults}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Pass Rate</span>
-                  <strong>{dashboard.totalResults > 0 ? Math.round((dashboard.passedResults / dashboard.totalResults) * 100) : 0}%</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Attendance Sessions</span>
-                  <strong>{dashboard.attendanceSessions}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Attendance Records</span>
-                  <strong>{dashboard.attendanceRecords}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Absent</span>
-                  <strong style={{ color: '#dc2626' }}>{dashboard.absentRecords}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Attendance Rate</span>
-                  <strong>{dashboard.attendanceRecords > 0 ? Math.round(((dashboard.attendanceRecords - dashboard.absentRecords) / dashboard.attendanceRecords) * 100) : 0}%</strong>
-                </div>
-              </div>
+            <PanelContent className="mt-4">
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Academic Overview</h3>
+                  <div className="grid gap-6 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Total Results</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                          <div className="text-2xl font-bold">{dashboard.totalResults}</div>
+                          <p className="text-muted-foreground">Assessments Recorded</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Passed</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center text-success">
+                          <div className="text-2xl font-bold">{dashboard.passedResults}</div>
+                          <p className="text-muted-foreground">Successful Outcomes</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Failed</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center text-destructive">
+                          <div className="text-2xl font-bold">{dashboard.failedResults}</div>
+                          <p className="text-muted-foreground">Needs Improvement</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Pass Rate</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                          <div className="text-2xl font-bold">{dashboard.totalResults > 0 ? Math.round((dashboard.passedResults / dashboard.totalResults) * 100) : 0}%</div>
+                          <p className="text-muted-foreground">Success Rate</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Attendance Sessions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                          <div className="text-2xl font-bold">{dashboard.attendanceSessions}</div>
+                          <p className="text-muted-foreground">Session Count</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Attendance Records</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                          <div className="text-2xl font-bold">{dashboard.attendanceRecords}</div>
+                          <p className="text-muted-foreground">Total Records</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Absent</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center text-destructive">
+                          <div className="text-2xl font-bold">{dashboard.absentRecords}</div>
+                          <p className="text-muted-foreground">Days Missed</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Attendance Rate</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                          <div className="text-2xl font-bold">{dashboard.attendanceRecords > 0 ? Math.round(((dashboard.attendanceRecords - dashboard.absentRecords) / dashboard.attendanceRecords) * 100) : 0}%</div>
+                          <p className="text-muted-foreground">Attendance Percentage</p>
+                        </CardContent>
+                      </Card>
+                    </div>
 
-              <h4 style={{ marginBottom: 10 }}>Recent Results</h4>
-              <div className="table-wrap">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Student</th>
-                      <th>Score</th>
-                      <th>Grade</th>
-                      <th>Result</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dashboard.recentResults.length === 0 ? (
-                      <tr><td colSpan={4} className="empty">No results found</td></tr>
-                    ) : (
-                      dashboard.recentResults.map(r => (
-                        <tr key={r.id}>
-                          <td><strong>{r.studentName}</strong></td>
-                          <td>{r.score}</td>
-                          <td><strong>{r.grade}</strong></td>
-                          <td>
-                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: r.passed ? '#059669' : '#dc2626', color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
-                              {r.passed ? 'Pass' : 'Fail'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                    <h4 className="text-sm font-medium text-foreground mb-2">Recent Results</h4>
+                    <div className="overflow-x-auto">
+                      <Table className="w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Student</TableHead>
+                            <TableHead>Score</TableHead>
+                            <TableHead>Grade</TableHead>
+                            <TableHead>Result</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {dashboard.recentResults.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="py-4 text-center text-muted-foreground">
+                                No results found
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            dashboard.recentResults.map(r => (
+                              <TableRow key={r.id}>
+                                <TableCell><strong>{r.studentName}</strong></TableCell>
+                                <TableCell>{r.score}</TableCell>
+                                <TableCell><strong>{r.grade}</strong></TableCell>
+                                <TableCell>
+                                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${r.passed ? 'text-success' : 'text-destructive'}`}>
+                                    {r.passed ? 'Pass' : 'Fail'}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
+              </PanelContent>
+            )}
 
           {mainTab === 'staff' && (
-            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
-              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
-                <div>
-                  <span className="eyebrow">STAFF</span>
-                  <h3>Staff Performance Overview</h3>
+            <PanelContent className="mt-4">
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Staff Performance Overview</h3>
+                  <div className="grid gap-4 mb-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Pending Payroll</CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-center text-warning">
+                        <div className="text-2xl font-bold">{dashboard.pendingPayroll}</div>
+                        <p className="text-muted-foreground">Awaiting Processing</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Paid Payroll</CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-center text-success">
+                        <div className="text-2xl font-bold">{dashboard.paidPayroll}</div>
+                        <p className="text-muted-foreground">Successfully Processed</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <Table className="w-full">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Staff No.</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Department</TableHead>
+                          <TableHead>Position</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Classes</TableHead>
+                          <TableHead>Students</TableHead>
+                          <TableHead>Results</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {staffPerformance.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={8} className="py-4 text-center text-muted-foreground">
+                              No staff data found
+                            </TableRow>
+                          ) : (
+                            staffPerformance.map(s => (
+                              <TableRow key={s.id}>
+                                <TableCell><strong>{s.staffNumber}</strong></TableCell>
+                                <TableCell>{s.firstName} {s.lastName}</TableCell>
+                                <TableCell>{s.department || '—'}</TableCell>
+                                <TableCell>{s.position || '—'}</TableCell>
+                                <TableCell>
+                                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(s.status)}`}>
+                                    {s.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell>{s.classCount}</TableCell>
+                                <TableCell>{s.studentCount}</TableCell>
+                                <TableCell>{s.resultCount}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
-              </div>
-              <div className="summary-grid" style={{ marginBottom: 22 }}>
-                <div className="summary-card">
-                  <span>Pending Payroll</span>
-                  <strong style={{ color: '#d97706' }}>{dashboard.pendingPayroll}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Paid Payroll</span>
-                  <strong style={{ color: '#059669' }}>{dashboard.paidPayroll}</strong>
-                </div>
-              </div>
-              <div className="table-wrap">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Staff No.</th>
-                      <th>Name</th>
-                      <th>Department</th>
-                      <th>Position</th>
-                      <th>Status</th>
-                      <th>Classes</th>
-                      <th>Students</th>
-                      <th>Results</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {staffPerformance.length === 0 ? (
-                      <tr><td colSpan={8} className="empty">No staff data found</td></tr>
-                    ) : (
-                      staffPerformance.map(s => (
-                        <tr key={s.id}>
-                          <td><strong>{s.staffNumber}</strong></td>
-                          <td>{s.firstName} {s.lastName}</td>
-                          <td>{s.department || '—'}</td>
-                          <td>{s.position || '—'}</td>
-                          <td>
-                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(s.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
-                              {s.status}
-                            </span>
-                          </td>
-                          <td>{s.classCount}</td>
-                          <td>{s.studentCount}</td>
-                          <td>{s.resultCount}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+              </PanelContent>
+            )}
 
           {mainTab === 'departments' && (
-            <div className="panel" style={{ padding: 22, marginBottom: 22 }}>
-              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
-                <div>
-                  <span className="eyebrow">DEPARTMENTS</span>
-                  <h3>Departmental Summary</h3>
+            <PanelContent className="mt-4">
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Departmental Summary</h3>
+                  <div className="overflow-x-auto">
+                    <Table className="w-full">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Department</TableHead>
+                          <TableHead>Programmes</TableHead>
+                          <TableHead>Staff</TableHead>
+                          <TableHead>Students</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {departments.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="py-4 text-center text-muted-foreground">
+                              No departments found
+                            </TableRow>
+                          ) : (
+                            departments.map(d => (
+                              <TableRow key={d.id}>
+                                <TableCell><strong>{d.name}</strong></TableCell>
+                                <TableCell>{d.programmeCount}</TableCell>
+                                <TableCell>{d.staffCount}</TableCell>
+                                <TableCell>{d.studentCount}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
-              </div>
-              <div className="table-wrap">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Department</th>
-                      <th>Programmes</th>
-                      <th>Staff</th>
-                      <th>Students</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {departments.length === 0 ? (
-                      <tr><td colSpan={4} className="empty">No departments found</td></tr>
-                    ) : (
-                      departments.map(d => (
-                        <tr key={d.id}>
-                          <td><strong>{d.name}</strong></td>
-                          <td>{d.programmeCount}</td>
-                          <td>{d.staffCount}</td>
-                          <td>{d.studentCount}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              </PanelContent>
+            )}
+          </>
+        ) : (
+          <PanelContent className="mt-4">
+            <div className="flex items-center justify-center py-8">
+              <p className="text-muted-foreground">No data available.</p>
             </div>
-          )}
-        </>
-      ) : (
-        <p className="empty">No data available.</p>
-      )}
-    </section>
+          </PanelContent>
+        )}
+      </Panel>
+    )
   )
 }

@@ -298,29 +298,26 @@ export function AdminDashboard() {
           {studentResults.length > 0 && (
             <div className="mt-6">
               <Table className="mt-4">
-              <Table className="mt-4">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Student Number</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {studentResults.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell>{s.studentNumber}</TableCell>
-                      <TableCell>{s.name}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={s.status === 'Active' ? 'secondary' : 'destructive'}> 
-                          {s.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
                 </TableBody>
-              </Table>
+                {studentResults.map(s => (
+                  <TableRow key={s.id}>
+                    <TableCell>{s.studentNumber}</TableCell>
+                    <TableCell>{s.name}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={s.status === 'Active' ? 'secondary' : 'destructive'}>
+                        {s.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
           </div>
         )}
@@ -350,6 +347,9 @@ export function AdminDashboard() {
               </Button>
             </FormField>
           </Form>
+
+          {staffResults.length > 0 && (
+            <div className="mt-6">
               <Table className="mt-4">
                 <TableHeader>
                   <TableRow>
@@ -358,23 +358,15 @@ export function AdminDashboard() {
                     <TableHead>Department</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {staffResults.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell>{s.staffNumber}</TableCell>
-                      <TableCell>{s.name}</TableCell>
-                      <TableCell>{s.department}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={s.status === 'Active' ? 'secondary' : 'destructive'}> 
-                          {s.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
                 </TableBody>
-              </Table>
+                {staffResults.map(s => (
+                  <TableRow key={s.id}>
+                    <TableCell>{s.staffNumber}</TableCell>
+                    <TableCell>{s.name}</TableCell>
+                    <TableCell>{s.department}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={s.status === 'Active' ? 'secondary' : 'destructive'}>
                         {s.status}
                       </Badge>
                     </TableCell>

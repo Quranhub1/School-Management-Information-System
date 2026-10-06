@@ -10,6 +10,34 @@ import {
   type Invoice,
   type OutstandingBalance,
 } from '../api/finance'
+import { 
+  Panel,
+  PanelHeader,
+  PanelContent,
+  Tabs,
+  Tab,
+  TabList,
+  Button,
+  Input,
+  Select,
+  Card,
+  CardHeader,
+  CardTitle,
+  Table,
+  TableHead,
+  TableCell,
+  TableRow,
+  TableBody,
+  Badge,
+  Form,
+  FormField,
+  FormLabel,
+  FormControl,
+  Alert,
+  EmptyState,
+  EmptyStateTitle,
+  EmptyStateDescription
+} from '@/components/ui'
 
 type PaymentMethod = 'Cash' | 'Mobile Money' | 'Bank' | 'Card'
 
@@ -152,235 +180,353 @@ export function FinanceDashboard() {
   const recentPayments = payments.slice(0, 10)
 
   return (
-    <section className="panel" aria-label="Finance dashboard">
-      <div className="panel-heading">
+    <Panel>
+      <PanelHeader>
         <div>
           <span className="eyebrow">FINANCE</span>
           <h2>Finance Dashboard</h2>
         </div>
-        <button className="secondary-button" onClick={() => void loadAll()}>Refresh</button>
-      </div>
+        <Button variant="secondary" onClick={() => void loadAll()}>
+          Refresh
+        </Button>
+      </PanelHeader>
 
-      {error && <div className="error" role="alert">{error}</div>}
+      {error && <div className="alert alert-destructive mt-4" role="alert">{error}</div>}
 
       {loading ? (
-        <p className="empty">Loading dashboard…</p>
+        <PanelContent className="mt-4">
+          <div className="flex items-center justify-center py-8">
+            <p className="text-muted-foreground">Loading dashboard…</p>
+          </div>
+        </PanelContent>
       ) : dashboard && (
         <>
-          <div className="summary-grid">
-            <div className="summary-card">
-              <span>Total Billed</span>
-              <strong>UGX {dashboard.totalBilled.toLocaleString()}</strong>
-            </div>
-            <div className="summary-card">
-              <span>Total Paid</span>
-              <strong style={{ color: '#059669' }}>UGX {dashboard.totalPaid.toLocaleString()}</strong>
-            </div>
-            <div className="summary-card">
-              <span>Outstanding Balance</span>
-              <strong style={{ color: dashboard.totalOutstanding > 0 ? '#dc2626' : '#059669' }}>
-                UGX {dashboard.totalOutstanding.toLocaleString()}
-              </strong>
-            </div>
-            <div className="summary-card">
-              <span>Today's Collection</span>
-              <strong>UGX {dashboard.todayCollection.toLocaleString()}</strong>
-            </div>
-            <div className="summary-card">
-              <span>Invoice Count</span>
-              <strong>{dashboard.invoiceCount}</strong>
-            </div>
-            <div className="summary-card">
-              <span>Payment Count</span>
-              <strong>{dashboard.paymentCount}</strong>
-            </div>
-            <div className="summary-card">
-              <span>Outstanding Invoices Count</span>
-              <strong>{dashboard.outstandingCount}</strong>
-            </div>
-          </div>
-
-          <div className="panel" style={{ marginTop: 24 }}>
-            <div className="panel-heading">
-              <h3>Quick Pay</h3>
-            </div>
-            <form onSubmit={handleQuickPaySearch}>
-              <div className="form-row">
-                <input
-                  aria-label="Student ID or code"
-                  placeholder="Enter student ID or code"
-                  value={quickPaySearch}
-                  onChange={e => setQuickPaySearch(e.target.value)}
-                />
-                <button type="submit" disabled={quickPayLoading}>
-                  {quickPayLoading ? 'Searching…' : 'Search'}
-                </button>
+          <PanelContent className="mt-4">
+            <div className="grid gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Total Billed</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <div className="text-2xl font-bold">UGX {dashboard.totalBilled.toLocaleString()}</div>
+                    <p className="text-muted-foreground">Total Charges</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Total Paid</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center text-success">
+                    <div className="text-2xl font-bold">UGX {dashboard.totalPaid.toLocaleString()}</div>
+                    <p className="text-muted-foreground">Total Received</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Outstanding Balance</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center {dashboard.totalOutstanding > 0 ? 'text-destructive' : 'text-success'}">
+                    <div className="text-2xl font-bold">UGX {dashboard.totalOutstanding.toLocaleString()}</div>
+                    <p className="text-muted-foreground">Balance Due</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Today's Collection</CardTitle>
+                  </CardHeader
+                  <CardContent className="text-center">
+                    <div className="text-2xl font-bold">UGX {dashboard.todayCollection.toLocaleString()}</div>
+                    <p className="text-muted-foreground">Daily Revenue</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Invoice Count</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <div className="text-2xl font-bold>{dashboard.invoiceCount}</div>
+                    <p className="text-muted-foreground">Documents Issued</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payment Count</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <div className="text-2xl font-bold>{dashboard.paymentCount}</div>
+                    <p className="text-muted-foreground">Transactions Processed</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Outstanding Invoices Count</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <div className="text-2xl font-bold>{dashboard.outstandingCount}</div>
+                    <p className="text-muted-foreground">Unpaid Documents</p>
+                  </CardContent>
+                </Card>
               </div>
-            </form>
-
-            {quickPayResult && (
-              <div className="summary-grid" style={{ marginTop: 16 }}>
-                <div className="summary-card">
-                  <span>Student</span>
-                  <strong>{quickPayResult.studentName}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Current Balance</span>
-                  <strong style={{ color: quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0) > 0 ? '#dc2626' : '#059669' }}>
-                    UGX {quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0).toLocaleString()}
-                  </strong>
-                </div>
-                <div className="summary-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <button type="button" onClick={openPaymentModal} disabled={quickPayResult.invoices.length === 0}>
-                    Pay Now
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="panel" style={{ marginTop: 24 }}>
-            <div className="panel-heading">
-              <h3>Outstanding Balances</h3>
-              <button className="secondary-button" onClick={exportOutstandingCSV}>Export to CSV</button>
             </div>
-            <div className="table-wrap">
-              {outstandingBalances.length === 0 ? (
-                <p className="empty">No outstanding balances.</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Student Number</th>
-                      <th>Name</th>
-                      <th>Programme</th>
-                      <th>Balance</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {outstandingBalances.map((item, index) => (
-                      <tr key={`${item.studentId}-${index}`}>
-                        <td>{item.studentNumber}</td>
-                        <td>{item.studentName}</td>
-                        <td>{item.programmeName}</td>
-                        <td style={{ color: '#dc2626', fontWeight: 700 }}>
-                          {item.currency} {item.balance.toLocaleString()}
-                        </td>
-                        <td>{item.status}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          </PanelContent>
+
+          <PanelContent className="mt-4">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Quick Pay</h3>
+              <Form className="space-y-4" onSubmit={handleQuickPaySearch}>
+                <FormField>
+                  <FormLabel htmlFor="quick-pay-search">Student ID or code</FormLabel>
+                  <FormControl>
+                    <Input 
+                      id="quick-pay-search"
+                      placeholder="Enter student ID or code"
+                      value={quickPaySearch}
+                      onChange={e => setQuickPaySearch(e.target.value)}
+                    />
+                  </FormControl>
+                </FormField>
+                <FormField>
+                  <Button 
+                    type="submit" 
+                    variant="default"
+                    disabled={quickPayLoading}>
+                    {quickPayLoading ? 'Searching…' : 'Search'}
+                  </Button>
+                </FormField>
+              </Form>
+
+              {quickPayResult && (
+                <div className="mt-6">
+                  <div className="grid gap-4 mb-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Student</CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-center">
+                        <div className="text-xl font-bold">{quickPayResult.studentName}</div>
+                        <p className="text-muted-foreground">Selected Student</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Current Balance</CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-center {quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0) > 0 ? 'text-destructive' : 'text-success'}">
+                        <div className="text-2xl font-bold">
+                          UGX {quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0).toLocaleString()}
+                        </div>
+                        <p className="text-muted-foreground">Amount Due</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Action</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex justify-center">
+                        <Button 
+                          variant="default"
+                          onClick={openPaymentModal}
+                          disabled={quickPayResult.invoices.length === 0}>
+                            Pay Now
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
+          </PanelContent>
 
-          <div className="panel" style={{ marginTop: 24 }}>
-            <div className="panel-heading">
-              <h3>Recent Payments</h3>
+          <PanelContent className="mt-4">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Outstanding Balances</h3>
+              <div className="flex items-center justify-between mb-3">
+                <Button variant="secondary" onClick={exportOutstandingCSV}>
+                  Export to CSV
+                </Button>
+              </div>
+              <div className="overflow-x-auto">
+                <Table className="w-full">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student Number</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Programme</TableHead>
+                      <TableHead>Balance</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {outstandingBalances.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="py-4 text-center text-muted-foreground">
+                          No outstanding balances.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      outstandingBalances.map((item, index) => (
+                        <TableRow key={`${item.studentId}-${index}`}>
+                          <TableCell>{item.studentNumber}</TableCell>
+                          <TableCell>{item.studentName}</TableCell>
+                          <TableCell>{item.programmeName}</TableCell>
+                          <TableCell className="text-destructive font-semibold">
+                            {item.currency} {item.balance.toLocaleString()}
+                          </TableCell>
+                          <TableCell>{item.status}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-            <div className="table-wrap">
-              {recentPayments.length === 0 ? (
-                <p className="empty">No payments recorded.</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Receipt</th>
-                      <th>Amount</th>
-                      <th>Method</th>
-                      <th>Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentPayments.map(payment => (
-                      <tr key={payment.id}>
-                        <td>{payment.receiptNumber}</td>
-                        <td style={{ color: '#059669' }}>UGX {payment.amount.toLocaleString()}</td>
-                        <td>{payment.paymentMethod}</td>
-                        <td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
+          </PanelContent>
 
-          <div className="panel" style={{ marginTop: 24 }}>
-            <div className="panel-heading">
-              <h3>Payment by Method</h3>
+          <PanelContent className="mt-4">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Recent Payments</h3>
+              <div className="overflow-x-auto">
+                <Table className="w-full">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Receipt</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentPayments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-4 text-center text-muted-foreground">
+                          No payments recorded.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      recentPayments.map(payment => (
+                        <TableRow key={payment.id}>
+                          <TableCell>{payment.receiptNumber}</TableCell>
+                          <TableCell className="text-success font-semibold">
+                            UGX {payment.amount.toLocaleString()}
+                          </TableCell>
+                          <TableCell>{payment.paymentMethod}</TableCell>
+                          <TableCell>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-            <div className="summary-grid">
-              {(Object.keys(paymentMethodTotals) as PaymentMethod[]).map(method => (
-                <div className="summary-card" key={method}>
-                  <span>{method}</span>
-                  <strong>UGX {(paymentMethodTotals[method] || 0).toLocaleString()}</strong>
-                </div>
-              ))}
+          </PanelContent>
+
+          <PanelContent className="mt-4">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Payment by Method</h3>
+              <div className="grid gap-4">
+                {(Object.keys(paymentMethodTotals) as PaymentMethod[]).map(method => (
+                  <Card key={method} className="text-center">
+                    <CardHeader>
+                      <CardTitle>{method}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="{method === 'Cash' ? 'text-primary' : method === 'Bank' ? 'text-secondary' : method === 'Mobile Money' ? 'text-warning' : 'text-destructive'}">
+                      <div className="text-2xl font-bold">UGX {(paymentMethodTotals[method] || 0).toLocaleString()}</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
+          </PanelContent>
         </>
-      )}
 
-      {paymentModal && quickPayResult && (
-        <div className="modal-backdrop">
-          <form className="auth-card" onSubmit={submitPayment}>
-            <p className="eyebrow">Payment</p>
-            <h3>Record Payment - {quickPayResult.studentName}</h3>
-            {quickPayResult.invoices.length > 1 && (
-              <label>
-                Invoice
-                <select
-                  aria-label="Select invoice"
-                  value={paymentModal.invoiceId}
-                  onChange={e => setPaymentModal(prev => prev ? { ...prev, invoiceId: e.target.value } : null)}
-                >
-                  {quickPayResult.invoices.map(inv => (
-                    <option key={inv.id} value={inv.id}>
-                      {inv.invoiceNumber} (Balance: {inv.currency} {inv.balance.toLocaleString()})
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <input
-              aria-label="Payment amount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              placeholder="Amount"
-              value={paymentModal.amount}
-              onChange={e => setPaymentModal(prev => prev ? { ...prev, amount: e.target.value } : null)}
-              required
-            />
-            <input
-              aria-label="Receipt number"
-              placeholder="Receipt number"
-              value={paymentModal.receiptNumber}
-              onChange={e => setPaymentModal(prev => prev ? { ...prev, receiptNumber: e.target.value } : null)}
-              required
-            />
-            <select
-              aria-label="Payment method"
-              value={paymentModal.paymentMethod}
-              onChange={e => setPaymentModal(prev => prev ? { ...prev, paymentMethod: e.target.value as PaymentMethod } : null)}
-            >
-              <option>Cash</option>
-              <option>Bank</option>
-              <option>Mobile Money</option>
-              <option>Card</option>
-            </select>
-            <div className="topbar-actions">
-              <button type="button" className="secondary-button" onClick={() => setPaymentModal(null)}>Cancel</button>
-              <button type="submit" disabled={paying}>
-                {paying ? 'Processing…' : 'Record Payment'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-    </section>
+        {paymentModal && quickPayResult && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <Form className="w-full max-w-md space-y-4 p-4 bg-white rounded-xl shadow-lg" onSubmit={submitPayment}>
+              <div className="flex justify-between items-start">
+                <p className="eyebrow self-start">Payment</p>
+                <Button variant="outline" size="sm" onClick={() => setPaymentModal(null)}>
+                  ×
+                </Button>
+              </div>
+              <h3 className="text-xl font-bold text-foreground">Record Payment - {quickPayResult.studentName}</h3>
+              
+              {quickPayResult.invoices.length > 1 && (
+                <FormField>
+                  <FormLabel htmlFor="invoice-select">Invoice</FormLabel>
+                  <FormControl>
+                    <Select 
+                      id="invoice-select"
+                      value={paymentModal.invoiceId}
+                      onChange={e => setPaymentModal(prev => prev ? { ...prev, invoiceId: e.target.value } : null)}
+                    >
+                      {quickPayResult.invoices.map(inv => (
+                        <option key={inv.id} value={inv.id}>
+                          {inv.invoiceNumber} (Balance: {inv.currency} {inv.balance.toLocaleString()})
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </FormField>
+              )}
+
+              <FormField>
+                <FormLabel htmlFor="payment-amount">Payment amount</FormLabel>
+                <FormControl>
+                  <Input
+                    id="payment-amount"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="Amount"
+                    value={paymentModal.amount}
+                    onChange={e => setPaymentModal(prev => prev ? { ...prev, amount: e.target.value } : null)}
+                    required
+                  />
+                </FormControl>
+              </FormField>
+
+              <FormField>
+                <FormLabel htmlFor="receipt-number">Receipt number</FormLabel>
+                <FormControl>
+                  <Input
+                    id="receipt-number"
+                    placeholder="Receipt number"
+                    value={paymentModal.receiptNumber}
+                    onChange={e => setPaymentModal(prev => prev ? { ...prev, receiptNumber: e.target.value } : null)}
+                    required
+                  />
+                </FormControl>
+              </FormField>
+
+              <FormField>
+                <FormLabel htmlFor="payment-method">Payment method</FormLabel>
+                <FormControl>
+                  <Select
+                    id="payment-method"
+                    value={paymentModal.paymentMethod}
+                    onChange={e => setPaymentModal(prev => prev ? { ...prev, paymentMethod: e.target.value as PaymentMethod } : null)}
+                  >
+                    <option>Cash</option>
+                    <option>Bank</option>
+                    <option>Mobile Money</option>
+                    <option>Card</option>
+                  </Select>
+                </FormControl>
+              </FormField>
+
+              <div className="flex justify-end space-x-3">
+                <Button variant="outline" onClick={() => setPaymentModal(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="default" disabled={paying}>
+                  {paying ? 'Processing…' : 'Record Payment'}
+                </Button>
+              </div>
+            </Form>
+          </div>
+        )}
+      </>
+    )
   )
 }
