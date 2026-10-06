@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'\nimport { getSession } from '../api/auth'
+import { useEffect, useMemo, useState } from 'react'
+import { getSession } from '../api/auth'
 import { getDashboard, getOutstandingBalances, getPayments, type FinanceDashboard, type OutstandingBalance } from '../api/finance'
 import { formatCurrency } from '../lib/currency'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
 import { AccountingReportsWorkspace } from './AccountingReportsWorkspace'
 import { CashBankPositionReport } from './CashBankPositionReport'
 import { FeeTypesManager } from './FeeTypesManager'
-import { StudentFinanceDashboard } from './StudentFinanceDashboard'\nimport { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
+import { StudentFinanceDashboard } from './StudentFinanceDashboard'
+import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
 
 type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
 
@@ -177,7 +179,9 @@ export function FinanceManagement() {
         </section>
       )}
 
-      {tab === 'allowances' && <StaffAllowancesWorkspace />}\n\n      {tab === 'reports' && (
+      {tab === 'allowances' && <StaffAllowancesWorkspace />}
+
+      {tab === 'reports' && (
         <section className="finance-surface">
           <div className="finance-surface-heading"><div><span className="eyebrow">FINANCIAL REPORTING</span><h3>Financial reports</h3><p>Period-based finance reporting with UGX presentation and reconciliation visibility.</p></div></div>
           <CashBankPositionReport />
