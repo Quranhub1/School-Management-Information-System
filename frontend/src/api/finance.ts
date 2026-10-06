@@ -233,43 +233,15 @@ export interface FinanceAccountOption { id: string; code: string; name: string; 
 export const getFinanceAccounts = () => request<FinanceAccountOption[]>('/api/finance/administration/accounts')
 
 
-export interface ReceivablesAgeingRow {
-  studentId: string
-  studentNumber: string
-  studentName: string
-  current: number
-  days1To30: number
-  days31To60: number
-  days61To90: number
-  over90: number
-  totalOutstanding: number
-  currency: string
-}
-export interface ReceivablesReconciliation {
-  asOf: string
-  currency: string
-  ledgerReceivables: number
-  studentReceivables: number
-  difference: number
-  isBalanced: boolean
-}
-export interface BudgetVsActualRow {
-  accountId: string
-  accountCode: string
-  accountName: string
-  accountType: string
-  budget: number
-  actual: number
-  variance: number
-  utilizationPercentage: number
-}
+export interface ReceivablesAgeingBucket { bucket: string; invoiceCount: number; outstandingAmount: number; currency: string }
+export interface ReceivablesAgeingReport { asOf: string; buckets: ReceivablesAgeingBucket[]; totalOutstanding: number; currency: string }
+export interface ReceivablesReconciliationReport { asOf: string; invoiceSubledgerBalance: number; controlAccountBalance: number; difference: number; isReconciled: boolean; currency: string; controlAccountCode: string; notes: string }
+export interface BudgetVsActualRow { accountId: string; accountCode: string; accountName: string; accountType: string; budget: number; actual: number; variance: number; utilizationPercentage: number }
 export const getBudgetVsActual = (budgetId: string, params?: { from?: string; to?: string }) => {
   const query = new URLSearchParams()
   if (params?.from) query.set('from', params.from)
   if (params?.to) query.set('to', params.to)
   return request<BudgetVsActualRow[]>(`/api/finance/administration/budgets/${budgetId}/vs-actual${query.toString() ? `?${query}` : ''}`)
 }
-export const getFinanceReceivablesAgeing = (asOf?: string, currency = 'UGX') =>
-  request<ReceivablesAgeingRow[]>(`/api/finance/reports/receivables-ageing?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
-export const getFinanceReceivablesReconciliation = (asOf?: string, currency = 'UGX') =>
-  request<ReceivablesReconciliation>(`/api/finance/reports/receivables-reconciliation?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
+export const getFinanceReceivablesAgeing = (asOf?: string, currency = 'UGX') => request<ReceivablesAgeingReport>(`/api/finance/reports/receivables-ageing?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
+export const getFinanceReceivablesReconciliation = (asOf?: string, currency = 'UGX') => request<ReceivablesReconciliationReport>(`/api/finance/reports/receivables-reconciliation?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
