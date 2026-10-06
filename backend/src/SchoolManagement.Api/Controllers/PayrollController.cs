@@ -36,15 +36,15 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
 
         var staff = await db.StaffMembers.AsNoTracking().Where(x => x.IsActive).ToListAsync(cancellationToken);
         var basicSalary = configuration.GetValue<decimal>("PayrollDefaults:BasicSalary", 50000m);
-        var teachingAllowance = configuration.GetValue<decimal>("PayrollDefaults:TeachingAllowances", 15000m);
-        var nonTeachingAllowance = configuration.GetValue<decimal>("PayrollDefaults:NonTeachingAllowances", 8000m);
         var deductions = configuration.GetValue<decimal>("PayrollDefaults:Deductions", 5000m);
+        var periodStart = new DateOnly(request.Year, request.Month, 1);
+        var periodEnd = periodStart.AddMonths(1).AddDays(-1);
 
         foreach (var s in staff)
         {
             var existing = await db.PayrollRecords.AnyAsync(x => x.StaffMemberId == s.Id && x.Month == request.Month && x.Year == request.Year, cancellationToken);
             if (existing) continue;
-            var allowances = s.StaffType == SchoolManagement.Domain.Staff.StaffType.Teaching ? teachingAllowance : nonTeachingAllowance;
+            var allowances = await db.StaffAllowances.AsNoTracking()\n                .Where(a => a.StaffMemberId == s.Id\n                    && (a.Status == "Authorized" || a.Status == "Recorded")\n                    && a.EffectiveFrom <= periodEnd\n                    && (!a.EffectiveTo.HasValue || a.EffectiveTo.Value >= periodStart))\n                .SumAsync(a => (decimal?)a.Amount, cancellationToken) ?? 0m;
             db.PayrollRecords.Add(new Domain.Staff.PayrollRecord
             {
                 StaffMemberId = s.Id,
