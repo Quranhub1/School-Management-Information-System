@@ -166,10 +166,9 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("OfferingCode")
-                        .IsRequired()
-                        .HasColumnType("text");
+                     b.Property<string>("LastName")
+                         .IsRequired()
+                         .HasColumnType("text");
 
                     b.Property<Guid>("ProgrammeId")
                         .HasColumnType("uuid");
