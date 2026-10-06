@@ -7,6 +7,7 @@ public static class AuthorizationPolicies
     public const string StudentManagement = "StudentManagement";
     public const string FinanceManagement = "FinanceManagement";
     public const string FinanceRead = "FinanceRead";
+    public const string FinanceOperations = "FinanceOperations";
     public const string ExaminationManagement = "ExaminationManagement";
     public const string AttendanceManagement = "AttendanceManagement";
     public const string HostelManagement = "HostelManagement";
