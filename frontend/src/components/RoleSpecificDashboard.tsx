@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAdmissions, type Admission } from '../api/admissions'
 import { getStudents, type Student } from '../api/students'
-import { getResidentDirectorDashboard, getResidentDirectorStaff, type ResidentDirectorDashboard, type StaffOverview } from '../api/residentDirector'
 
 type Role = 'Secretary' | 'Receptionist' | 'HeadOfDepartment'
 
@@ -10,8 +9,6 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
   const [error, setError] = useState('')
   const [admissions, setAdmissions] = useState<Admission[]>([])
   const [students, setStudents] = useState<Student[]>([])
-  const [rd, setRd] = useState<ResidentDirectorDashboard | null>(null)
-  const [staff, setStaff] = useState<StaffOverview[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -25,8 +22,7 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
           const [a, s] = await Promise.all([getAdmissions(), getStudents()])
           if (!cancelled) { setAdmissions(a); setStudents(s) }
         } else {
-          const [d, st] = await Promise.all([getResidentDirectorDashboard(), getResidentDirectorStaff()])
-          if (!cancelled) { setRd(d); setStaff(st) }
+          if (!cancelled) { setAdmissions([]); setStudents([]) }
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load dashboard data.')
@@ -112,7 +108,6 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
 
       {role === 'Receptionist' ? null : role === 'HeadOfDepartment' ? null : null}
 
-      {rd && role === 'Receptionist' ? null : null}
     </>}
   </section>
 }
