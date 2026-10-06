@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { getSession } from '../api/auth'
 import { listStaff, type StaffMember } from '../api/staff'
 import { authorizeStaffAllowance, listStaffAllowances, recordStaffAllowance, type StaffAllowance } from '../api/staffAllowances'
@@ -38,7 +38,7 @@ export function StaffAllowancesWorkspace() {
 
   useEffect(() => { void load() }, [])
 
-  async function authorize(event: React.FormEvent) {
+  async function authorize(event: FormEvent) {
     event.preventDefault()
     setSaving(true); setError(''); setMessage('')
     try {
