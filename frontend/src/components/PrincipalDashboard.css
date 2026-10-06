@@ -1,0 +1,108 @@
+.principal-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-metric-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-metric-card {
+  background: var(--background-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.dashboard-metric-card.warning {
+  border-left: 4px solid var(--color-warning);
+}
+
+.dashboard-metric-card.critical {
+  border-left: 4px solid var(--color-error);
+}
+
+.dashboard-metric-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--foreground-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dashboard-metric-value {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.dashboard-loading,
+.dashboard-error {
+  text-align: center;
+  padding: 3rem;
+  color: var(--foreground-muted);
+}
+
+.dashboard-error {
+  color: var(--color-error);
+}
+
+.dashboard-alerts-section {
+  background: var(--background-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.dashboard-alerts-section h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alert-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background: var(--background);
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.alert-item.warning {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+}
+
+.alert-item.critical {
+  background: var(--background-error);
+  color: var(--foreground-error);
+}
+
+.recent-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.activity-item {
+  padding: 0.25rem 0.5rem;
+  background: var(--background-muted);
+  border-radius: 0.125rem;
+  font-size: 0.875rem;
+  color: var(--foreground-muted);
+}

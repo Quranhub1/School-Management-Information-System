@@ -1,0 +1,88 @@
+.reports-analytics-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.reports-section {
+  background: var(--background-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.reports-section h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.reports-section p {
+  margin-bottom: 1rem;
+  color: var(--foreground-muted);
+}
+
+.report-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.report-options button {
+  padding: 0.5rem 0.75rem;
+  background: var(--background-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.report-options button.active {
+  background: var(--background);
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.report-options button:hover:not(.active) {
+  background: var(--background);
+  border-color: var(--foreground-muted);
+}
+
+.recent-reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.report-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--background);
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+}
+
+.report-title {
+  font-weight: 500;
+}
+
+.report-date {
+  color: var(--foreground-muted);
+  font-size: 0.875rem;
+}
+
+.reports-error {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--background-error);
+  color: var(--foreground);
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+}

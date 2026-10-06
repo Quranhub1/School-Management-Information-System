@@ -8,7 +8,8 @@ import { canManageAcademics, canManageAdministration, canManageAdmissions, canMa
 import { AcademicManagement } from './components/AcademicManagement'; import { HostelManagement } from './components/HostelManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import type { InstitutionSettings } from './api/institutionSettings'
 import { InstitutionSettingsProvider, useInstitutionSettings } from './components/InstitutionSettingsContext'; import './components/PrintStyles.css'
 import { WardenWorkspace } from './components/WardenWorkspace';
-type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'system-administration'
+import { PrincipalWorkspace } from './components/PrincipalWorkspace';
+type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'system-administration' | 'principal'
 const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
 function institutionLogoUrl(settings: InstitutionSettings): string {
   const path = settings.logoPath?.trim()
@@ -47,7 +48,7 @@ function LoginScreen({ institution }: { institution: InstitutionSettings }) {
     </main>
   )
 }
-function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canManageFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),att=canManageAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('Registrar')||r.includes('AcademicRegistrar')||r.includes('Student'); const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const storedModule=localStorage.getItem(stateKey); const [activeModule,setActiveModule]=useState<ModuleKey>(()=>{const allowed=new Set<ModuleKey>(['dashboard','administration','students','academics','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','system-administration']); return storedModule&&allowed.has(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'}); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail)setActiveModule(detail)};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
+function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canManageFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),att=canManageAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('Registrar')||r.includes('AcademicRegistrar')||r.includes('Student'); const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const storedModule=localStorage.getItem(stateKey); const [activeModule,setActiveModule]=useState<ModuleKey>(()=>{const allowed=new Set<ModuleKey>(['dashboard','administration','students','academics','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','system-administration','principal']); return storedModule&&allowed.has(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'}); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail)setActiveModule(detail)};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
   dashboard:LayoutDashboard,
   administration:BriefcaseBusiness,
   students:UsersRound,
@@ -62,7 +63,8 @@ function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: {
   communication:Megaphone,
   guild:UsersRound,
   reports:BarChart3,
-  'system-administration':Settings
+   'system-administration':Settings
+   principal:UsersRound
 };
 const moduleLabels:Record<ModuleKey,string>={
   dashboard:'Dashboard',
@@ -78,8 +80,9 @@ const moduleLabels:Record<ModuleKey,string>={
   inventory:'Inventory & Property',
   communication:'Announcements',
   guild:'Guild',
-  reports:'Reports & Analytics',
-  'system-administration':'System Administration'
+   reports:'Reports & Analytics',
+   'system-administration':'System Administration'
+   principal:'Principal'
 };
 const [activeSubsection,setActiveSubsection]=useState<string|null>(null);
 const [rptTab,setRptTab]=useState<'cards'|'receipts'|'certificates'|'analytics'>('cards');
@@ -106,8 +109,11 @@ type SidebarGroup={label:string;items:SidebarItem[];alwaysOpen?:boolean};
 const sidebarGroups:SidebarGroup[]=[
   {label:'Main',alwaysOpen:true,items:[
     {label:'Dashboard',module:'dashboard'}
-  ]},
-  {label:'Administration',items:[
+   ]},
+   {label:'Principal',items:[
+     {label:'Dashboard',module:'principal'}
+   ]},
+   {label:'Administration',items:[
     {label:'Access Control',module:'administration'},
     {label:'Users',module:'administration',subsection:'users',child:true},
     {label:'Roles',module:'administration',subsection:'roles',child:true},
@@ -162,8 +168,9 @@ function canSeeSidebarItem(item:SidebarItem){
   if(item.module==='communication') return cm;
   if(item.module==='guild') return st || r.includes('Guild') || r.includes('SystemAdministrator');
   if(item.module==='reports') return rp || analytics;
-  if(item.module==='system-administration') return a;
-  return false;
+   if(item.module==='system-administration') return a;
+   if(item.module==='principal') return r.includes('Principal');
+   return false;
 }
 const visibleSidebarGroups=sidebarGroups.map(group=>({
   ...group,
@@ -280,12 +287,13 @@ return <main className="app-shell">
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&(att||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
 {activeModule==='laboratories'&&(
-  r.includes('HostelWarden') 
-    ? <WardenWorkspace canManage={true}/>
-    : (inv||r.includes('ResidentDirector')||r.includes('SystemAdministrator'))
-      ? <HostelManagement canManage={inv||r.includes('ResidentDirector')||r.includes('SystemAdministrator')}/>
-      : null
-)}
+   r.includes('HostelWarden') 
+     ? <WardenWorkspace canManage={true}/>
+     : (inv||r.includes('ResidentDirector')||r.includes('SystemAdministrator'))
+       ? <HostelManagement canManage={inv||r.includes('ResidentDirector')||r.includes('SystemAdministrator')}/>
+       : null
+ )}
+{activeModule==='principal'&&<PrincipalWorkspace canManage={r.includes('Principal')}/>}
 {activeModule==='inventory'&&inv&&<InventoryManagement canManage={inv}/>}
 {activeModule==='communication'&&cm&&<Announcements canManage={cm}/>}
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement/>}

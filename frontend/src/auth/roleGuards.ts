@@ -11,6 +11,13 @@ import {
   REPORTS_ROLES,
   COMMUNICATION_ROLES,
   ATTENDANCE_ROLES,
+  STAFF_READ_ROLES,
+  STAFF_MANAGE_ROLES,
+  LIBRARY_READ_ROLES,
+  LIBRARY_MANAGE_ROLES,
+  TIMETABLE_ROLES,
+  ADMISSIONS_ROLES,
+  DASHBOARD_ROLES,
 } from './roles'
 
 export function canManageAdministration(roles: string[]) {
@@ -71,5 +78,43 @@ export function canManageReporting(roles: string[]) {
   return hasAnyRole(roles, REPORTS_ROLES)
 }
 export function canViewAnalytics(roles: string[]) {
+  return hasAnyRole(roles, REPORTS_ROLES)
+}
+
+// Principal oversight functions
+export function canViewInstitutionalOverview(roles: string[]) {
+  return hasAnyRole(roles, DASHBOARD_ROLES)
+}
+export function canViewStudentOversight(roles: string[]) {
+  return hasAnyRole(roles, [...STAFF_READ_ROLES, ...REPORTS_ROLES])
+}
+export function canViewStaffOversight(roles: string[]) {
+  return hasAnyRole(roles, [...STAFF_READ_ROLES, ...REPORTS_ROLES])
+}
+export function canViewAcademicOversight(roles: string[]) {
+  return hasAnyRole(roles, [...ACADEMIC_MANAGEMENT_ROLES, ...REPORTS_ROLES])
+}
+export function canViewAdmissionsOversight(roles: string[]) {
+  return hasAnyRole(roles, [...ADMISSIONS_ROLES, ...REPORTS_ROLES])
+}
+export function canViewFinanceOversight(roles: string[]) {
+  return hasAnyRole(roles, [...FINANCE_MANAGEMENT_ROLES, ...REPORTS_ROLES])
+}
+export function canViewApprovalCentre(roles: string[]) {
+  return hasAnyRole(roles, [...STAFF_MANAGE_ROLES, ...FINANCE_MANAGEMENT_ROLES])
+}
+export function canViewDisciplineWelfareOversight(roles: string[]) {
+  return hasAnyRole(roles, [...STAFF_READ_ROLES, ...REPORTS_ROLES])
+}
+export function canViewHostelFacilitiesOversight(roles: string[]) {
+  return hasAnyRole(roles, [...HOSTEL_MANAGEMENT_ROLES, ...REPORTS_ROLES])
+}
+export function canViewLibraryOversight(roles: string[]) {
+  return hasAnyRole(roles, [...LIBRARY_READ_ROLES, ...REPORTS_ROLES])
+}
+export function canManageInstitutionalCommunication(roles: string[]) {
+  return hasAnyRole(roles, [...COMMUNICATION_ROLES, ...STAFF_MANAGE_ROLES])
+}
+export function canViewPrincipalReports(roles: string[]) {
   return hasAnyRole(roles, REPORTS_ROLES)
 }

@@ -1,0 +1,226 @@
+.approval-centre-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.approval-centre-tabs button {
+  padding: 0.5rem 0.75rem;
+  background: var(--background-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.approval-centre-tabs button.active {
+  background: var(--background);
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.approval-centre-tabs button:hover:not(.active) {
+  background: var(--background);
+  border-color: var(--foreground-muted);
+}
+
+.approval-centre-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--foreground-muted);
+}
+
+.approval-centre-content {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.approval-card {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.approval-card-header {
+  background: var(--background-muted);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem;
+}
+
+.approval-card-header h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+  color: var(--foreground);
+}
+
+.approval-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.approval-meta span {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.approval-type-finance {
+  background: var(--background-info);
+  color: var(--foreground-info);
+}
+
+.approval-type-procurement {
+  background: var(--background-success);
+  color: var(--foreground-success);
+}
+
+.approval-type-admissions {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+}
+
+.approval-type-leave {
+  background: var(--background-muted);
+  color: var(--foreground-muted);
+}
+
+.approval-type-maintenance {
+  background: var(--background-error);
+  color: var(--foreground);
+}
+
+.approval-type-other {
+  background: var(--background-muted);
+  color: var(--foreground-muted);
+}
+
+.approval-urgency-low {
+  background: var(--background-success);
+  color: var(--foreground-success);
+}
+
+.approval-urgency-medium {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+}
+
+.approval-urgency-high,
+.approval-urgency-urgent {
+  background: var(--background-error);
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.approval-status-pending {
+  background: var(--background-muted);
+  color: var(--foreground-muted);
+}
+
+.approval-status-approved {
+  background: var(--background-success);
+  color: var(--foreground-success);
+}
+
+.approval-status-rejected {
+  background: var(--background-error);
+  color: var(--foreground);
+}
+
+.approval-status-returned {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+}
+
+.approval-card-body {
+  padding: 1rem;
+}
+
+.approval-card-body p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.approval-card-body p strong {
+  display: inline-block;
+  width: 120px;
+}
+
+.approval-card-actions {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.approval-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.approval-button.approve {
+  background: var(--background-success);
+  color: var(--foreground-success);
+}
+
+.approval-button.approve:hover {
+  background: var(--background-success-dark);
+  color: var(--foreground);
+}
+
+.approval-button.reject {
+  background: var(--background-error);
+  color: var(--foreground);
+}
+
+.approval-button.reject:hover {
+  background: var(--background-error-dark);
+  color: var(--foreground);
+}
+
+.approval-button.return {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+}
+
+.approval-button.return:hover {
+  background: var(--background-warning-dark);
+  color: var(--foreground);
+}
+
+.approval-button.view {
+  background: var(--background-muted);
+  color: var(--foreground-muted);
+  border: 1px solid var(--border);
+}
+
+.approval-button.view:hover {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.approval-centre-loading,
+.approval-centre-error {
+  text-align: center;
+  padding: 3rem;
+  color: var(--foreground-muted);
+}
+
+.approval-centre-error {
+  color: var(--color-error);
+}
