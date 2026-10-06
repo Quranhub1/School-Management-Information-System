@@ -1,0 +1,31 @@
+.transaction-type-received {
+  background: var(--background-success);
+  color: var(--foreground-success);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.transaction-type-issued {
+  background: var(--background-error);
+  color: var(--foreground);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.transaction-type-transferred {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.transaction-type-adjusted {
+  background: var(--background-muted);
+  color: var(--foreground-muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}

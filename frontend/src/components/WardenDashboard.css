@@ -1,0 +1,47 @@
+.warden-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.warden-metric-card {
+  background: var(--background-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.warden-metric-card.warning {
+  border-left: 4px solid var(--color-warning);
+}
+
+.warden-metric-card.critical {
+  border-left: 4px solid var(--color-error);
+}
+
+.warden-metric-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--foreground-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.warden-metric-value {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.dashboard-loading,
+.dashboard-error {
+  text-align: center;
+  padding: 3rem;
+  color: var(--foreground-muted);
+}
+
+.dashboard-error {
+  color: var(--color-error);
+}

@@ -1,0 +1,43 @@
+.stock-status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.stock-status.normal {
+  background: var(--background-success);
+  color: var(--foreground-success);
+}
+
+.stock-status.low {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+}
+
+.action-button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  background: var(--background-muted);
+  border-color: var(--foreground-muted);
+}
+
+.action-button.destructive {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.action-button.destructive:hover {
+  background: var(--background-error);
+  color: var(--foreground);
+  border-color: var(--color-error);
+}

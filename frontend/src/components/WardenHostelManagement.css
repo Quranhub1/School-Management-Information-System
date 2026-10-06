@@ -1,0 +1,222 @@
+.warden-hostel-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.warden-hostel-section {
+  background: var(--background-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.warden-hostel-section h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.indiscipline-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.summary-item {
+  text-align: center;
+  padding: 0.75rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+}
+
+.summary-item span {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--foreground-muted);
+  margin-bottom: 0.25rem;
+}
+
+.summary-item strong {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.maintenance-status-pending {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.maintenance-status-in-progress {
+  background: var(--background-info);
+  color: var(--foreground-info);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.maintenance-status-completed {
+  background: var(--background-success);
+  color: var(--foreground-success);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.maintenance-status-cancelled {
+  background: var(--background-muted);
+  color: var(--foreground-muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.priority-low {
+  background: var(--background-success);
+  color: var(--foreground-success);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.priority-medium {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.priority-high {
+  background: var(--background-error);
+  color: var(--foreground);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.priority-urgent {
+  background: var(--background-error);
+  color: var(--foreground);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.inspection-status-pass {
+  background: var(--background-success);
+  color: var(--foreground-success);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.inspection-status-fail {
+  background: var(--background-error);
+  color: var(--foreground);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.inspection-status-needs-improvement {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.indiscipline-status-reported {
+  background: var(--background-info);
+  color: var(--foreground-info);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.indiscipline-status-under-investigation {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.indiscipline-status-evidence-statements {
+  background: var(--background-info);
+  color: var(--foreground-info);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.indiscipline-status-warden-decision {
+  background: var(--background-muted);
+  color: var(--foreground-muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.indiscipline-status-action-recommendation {
+  background: var(--background-info);
+  color: var(--foreground-info);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.indiscipline-status-referral-if-required {
+  background: var(--background-warning);
+  color: var(--foreground-warning);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.indiscipline-status-resolved {
+  background: var(--background-success);
+  color: var(--foreground-success);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.action-button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 0.5rem;
+}
+
+.action-button:hover {
+  background: var(--background-muted);
+  border-color: var(--foreground-muted);
+}
+
+.action-button.destructive {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.action-button.destructive:hover {
+  background: var(--background-error);
+  color: var(--foreground);
+  border-color: var(--color-error);
+}

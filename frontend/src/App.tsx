@@ -7,6 +7,7 @@ import { getSession, logout, saveAuthSession } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance } from './auth/roleGuards'
 import { AcademicManagement } from './components/AcademicManagement'; import { HostelManagement } from './components/HostelManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import type { InstitutionSettings } from './api/institutionSettings'
 import { InstitutionSettingsProvider, useInstitutionSettings } from './components/InstitutionSettingsContext'; import './components/PrintStyles.css'
+import { WardenWorkspace } from './components/WardenWorkspace';
 type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'system-administration'
 const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
 function institutionLogoUrl(settings: InstitutionSettings): string {
@@ -278,7 +279,13 @@ return <main className="app-shell">
 {activeModule==='attendance'&&att&&<AttendanceManagement/>}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&(att||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
-{activeModule==='laboratories'&&(inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator'))&&<HostelManagement canManage={inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator')}/>}
+{activeModule==='laboratories'&&(
+  r.includes('HostelWarden') 
+    ? <WardenWorkspace canManage={true}/>
+    : (inv||r.includes('ResidentDirector')||r.includes('SystemAdministrator'))
+      ? <HostelManagement canManage={inv||r.includes('ResidentDirector')||r.includes('SystemAdministrator')}/>
+      : null
+)}
 {activeModule==='inventory'&&inv&&<InventoryManagement canManage={inv}/>}
 {activeModule==='communication'&&cm&&<Announcements canManage={cm}/>}
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement/>}

@@ -16,6 +16,7 @@ using SchoolManagement.Application.Staff;
 using SchoolManagement.Application.Calendar;
 using SchoolManagement.Application.Access;
 using SchoolManagement.Application.Audit;
+using SchoolManagement.Application.Inventory; // Add this line
 using SchoolManagement.Application.Library;
 using SchoolManagement.Application.Progression;
 using SchoolManagement.Application.StudentRecords;
@@ -31,6 +32,10 @@ public static class DependencyInjection
         services.AddScoped<StudentService>(); services.AddScoped<ProgrammeService>(); services.AddScoped<AcademicRecordService>(); services.AddScoped<AcademicCalendarService>(); services.AddScoped<CurriculumManagementService>(); services.AddScoped<CourseRegistrationService>(); services.AddScoped<AssessmentService>(); services.AddScoped<TranscriptStatusService>(); services.AddScoped<ProgressionAssessment>(); services.AddScoped<StudentPromotionService>(); services.AddScoped<AttendanceService>(); services.AddScoped<AttendanceWorkflowService>(); services.AddScoped<AdmissionService>(); services.AddScoped<AdmissionsWorkflowService>();
         services.AddScoped<FinanceService>(); services.AddScoped<FinanceWorkflowService>(); services.AddScoped<InvoiceDiscountService>(); services.AddScoped<InvoiceInstallmentService>(); services.AddScoped<StudentChargeService>(); services.AddScoped<CreditNoteRefundService>(); services.AddScoped<FinanceReportService>(); services.AddScoped<CashBankPositionReportService>(); services.AddScoped<ReceivablesReportService>(); services.AddScoped<JournalReversalService>(); services.AddScoped<FiscalPeriodService>(); services.AddScoped<OpeningBalanceService>(); services.AddScoped<FiscalYearCarryForwardService>(); services.AddScoped<BudgetService>(); services.AddScoped<FiscalPeriodClosingService>(); services.AddScoped<BankReconciliationService>(); services.AddScoped<BankReconciliationImportService>();
         services.AddScoped<FeeService>(); services.AddScoped<FeeWorkflowService>(); services.AddScoped<LibraryService>(); services.AddScoped<LibraryWorkflowService>(); services.AddScoped<InstitutionSettingsService>(); services.AddScoped<ProgressionWorkflowService>(); services.AddScoped<ISemesterProgressionService, SemesterProgressionService>(); services.AddScoped<AuthService>(); services.AddScoped<AdministrationService>(); services.AddScoped<ModuleAccessService>(); services.AddScoped<BulkImportService>(); services.AddScoped<CertificateService>(); services.AddScoped<PayrollService>(); services.AddScoped<AlumniService>(); services.AddScoped<LeaveRequestService>(); services.AddScoped<CalendarEventService>(); services.AddScoped<GateLogService>(); services.AddScoped<AuditLogService>(); services.AddScoped<AssessmentWorkflowService>(); services.AddScoped<HrWorkflowService>(); services.AddScoped<StudentRecordsWorkflowService>(); services.AddScoped<TimetableWorkflowService>();
+        // Inventory Services
+        services.AddScoped<StockItemService>();
+        services.AddScoped<StockTransactionService>();
+        services.AddScoped<SupplierService>();
         return services;
     }
 }

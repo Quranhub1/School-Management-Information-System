@@ -1,0 +1,102 @@
+.warden-workspace {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.warden-workspace-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.warden-workspace-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  color: var(--foreground);
+}
+
+.warden-workspace-header p {
+  margin: 0;
+  color: var(--foreground-muted);
+  font-size: 1.125rem;
+}
+
+.warden-workspace-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.warden-workspace-main-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.warden-workspace-main-nav button {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.75rem 1rem;
+  background: var(--background-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--foreground);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.warden-workspace-main-nav button.active {
+  background: var(--background);
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.warden-workspace-main-nav button:hover:not(.active) {
+  background: var(--background);
+  border-color: var(--foreground-muted);
+}
+
+.warden-workspace-sub-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 1rem;
+}
+
+.warden-workspace-sub-nav button {
+  padding: 0.5rem 0.75rem;
+  background: var(--background-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.warden-workspace-sub-nav button.active {
+  background: var(--background);
+  border-color: var(--foreground);
+  color: var(--foreground);
+}
+
+.warden-workspace-sub-nav button:hover:not(.active) {
+  background: var(--background);
+  border-color: var(--foreground-muted);
+}
+
+.warden-workspace-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
