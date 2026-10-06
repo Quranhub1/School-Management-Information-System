@@ -5,7 +5,7 @@ import { type InstitutionSettings } from '../api/institutionSettings'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 
-const roles = ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'FinanceOfficer', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'Principal', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'AssistantPrincipal']
+const roles = ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'Accountant', 'AssistantAccountant', 'FinanceOfficer', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'Principal', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'AssistantPrincipal']
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['Registrar'] }
 
 type AdminTab = 'users' | 'offices' | 'settings'
