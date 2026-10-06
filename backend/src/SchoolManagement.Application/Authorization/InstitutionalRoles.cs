@@ -16,6 +16,7 @@ public static class InstitutionalRoles
     public const string HostelWarden = "HostelWarden";
     public const string TransportOfficer = "TransportOfficer";
     public const string Principal = "Principal";
+    public const string Director = "Director";
     public const string Secretary = "Secretary";
     public const string ResidentDirector = "ResidentDirector";
     public const string HeadOfDepartment = "HeadOfDepartment";
