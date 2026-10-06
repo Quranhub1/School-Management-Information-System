@@ -33,6 +33,7 @@ const statusFor = (balance: number, billed = 0, paid = 0) => {
 const money = (value: number) => formatCurrency(Number(value) || 0)
 
 export function FinanceManagement() {
+  const isAssistantAccountant = getSession()?.roles?.includes('AssistantAccountant') ?? false
   const [tab, setTab] = useState<FinanceTab>('overview')
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null)
   const [outstanding, setOutstanding] = useState<OutstandingBalance[]>([])
@@ -105,8 +106,8 @@ export function FinanceManagement() {
           ['overview', 'Overview'],
           ['student-accounts', 'Student Accounts'],
           ['collections', 'Collections'],
-          ['fees', 'Fee Structures'],
-          ['accounting', 'Accounting'],
+          ...(isAssistantAccountant ? [] : [['fees', 'Fee Structures'], ['accounting', 'Accounting']] as [FinanceTab, string][]),
+          ['allowances', 'Staff Allowances'],
           ['reports', 'Reports'],
         ] as [FinanceTab, string][]).map(([key, label]) => (
           <button key={key} role="tab" aria-selected={tab === key} className={tab === key ? 'active' : ''} onClick={() => setTab(key)}>{label}</button>
