@@ -9,7 +9,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/finance")]
-[Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
+[Authorize(Policy = AuthorizationPolicies.FinanceRead)]
 public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals, SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("invoices")]
