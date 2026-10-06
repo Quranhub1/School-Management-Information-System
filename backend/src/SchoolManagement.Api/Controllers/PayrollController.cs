@@ -44,7 +44,12 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
         {
             var existing = await db.PayrollRecords.AnyAsync(x => x.StaffMemberId == s.Id && x.Month == request.Month && x.Year == request.Year, cancellationToken);
             if (existing) continue;
-            var allowances = await db.StaffAllowances.AsNoTracking()\n                .Where(a => a.StaffMemberId == s.Id\n                    && (a.Status == "Authorized" || a.Status == "Recorded")\n                    && a.EffectiveFrom <= periodEnd\n                    && (!a.EffectiveTo.HasValue || a.EffectiveTo.Value >= periodStart))\n                .SumAsync(a => (decimal?)a.Amount, cancellationToken) ?? 0m;
+            var allowances = await db.StaffAllowances.AsNoTracking()
+                .Where(a => a.StaffMemberId == s.Id
+                    && (a.Status == "Authorized" || a.Status == "Recorded")
+                    && a.EffectiveFrom <= periodEnd
+                    && (!a.EffectiveTo.HasValue || a.EffectiveTo.Value >= periodStart))
+                .SumAsync(a => (decimal?)a.Amount, cancellationToken) ?? 0m;
             db.PayrollRecords.Add(new Domain.Staff.PayrollRecord
             {
                 StaffMemberId = s.Id,
