@@ -114,6 +114,28 @@ function getUserById(userId) {
   return users.find(u => u.id === userId);
 }
 
+// PUBLIC INSTITUTION SETTINGS (lets the web client boot against the mock)
+app.get('/api/public/institution-settings/active', (req, res) => {
+  res.json({
+    id: 'inst-1',
+    institutionName: 'Kampala School of Health Sciences',
+    abbreviation: 'KSHS',
+    motto: 'Health is Life',
+    address: 'Plot 24, Bombo Road, Kampala',
+    phone: '+256 700 000 000',
+    email: 'info@kshs.ac.ug',
+    website: 'https://kshs.ac.ug',
+    postalAddress: 'P.O. Box 7000, Kampala',
+    country: 'Uganda',
+    institutionType: 'Health Sciences',
+    logoPath: null,
+    primaryColor: '#1e40af',
+    accentColor: '#f97316',
+    isActive: true,
+    updatedAt: new Date().toISOString(),
+  });
+});
+
 // AUTH
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body;

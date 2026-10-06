@@ -188,8 +188,8 @@ return <main className="app-shell">
     <img src={institutionLogoUrl(institution)} alt="" />
     <span>{institution.institutionName}</span>
   </div>
-  <aside className="flex flex-col w-72 h-screen bg-gradient-to-b from-slate-50 to-white border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)] font-sans text-slate-700 select-none">
-    <div className="flex items-center gap-3.5 px-6 py-6 border-b border-slate-100 group cursor-pointer">
+  <aside className="flex flex-col w-72 h-screen bg-white/65 backdrop-blur-2xl border-r border-white/60 shadow-[4px_0_30px_rgba(30,41,59,0.06)] font-sans text-slate-700 select-none">
+    <div className="flex items-center gap-3.5 px-6 py-6 border-b border-white/60 group cursor-pointer">
       {institution && (
         <div className="relative flex-shrink-0">
           <div className="absolute inset-0 bg-indigo-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
@@ -197,8 +197,8 @@ return <main className="app-shell">
         </div>
       )}
       <div className="flex flex-col min-w-0 overflow-hidden">
-        <span className="text-[10px] font-extrabold tracking-widest text-indigo-600 uppercase mb-0.5 group-hover:text-indigo-500 transition-colors truncate">{institutionShortName(institution)}</span>
-        <h1 className="text-sm font-bold text-slate-900 truncate leading-tight group-hover:text-indigo-950 transition-colors">{institution.institutionName}</h1>
+        <span className="text-[10px] font-extrabold tracking-widest text-blue-600 uppercase mb-0.5 group-hover:text-blue-500 transition-colors truncate">{institutionShortName(institution)}</span>
+        <h1 className="text-sm font-bold text-slate-900 truncate leading-tight group-hover:text-blue-950 transition-colors">{institution.institutionName}</h1>
         {institution.motto && <p className="text-xs font-medium text-slate-500 truncate mt-0.5">{institution.motto}</p>}
       </div>
     </div>
@@ -218,7 +218,7 @@ return <main className="app-shell">
                 <span>{group.label}</span>
               </div>
             ) : (
-              <button type="button" className="flex items-center justify-between w-full px-2 py-1.5 text-xs font-bold tracking-wider uppercase transition-all duration-300 rounded-md group text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" onClick={toggle} aria-expanded={open} aria-controls={groupId}>
+              <button type="button" className="flex items-center justify-between w-full px-2 py-1.5 text-xs font-bold tracking-wider uppercase transition-all duration-300 rounded-md group text-slate-500 hover:text-indigo-600 hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" onClick={toggle} aria-expanded={open} aria-controls={groupId}>
                 <span className="transition-transform duration-300 origin-left group-hover:scale-105">{group.label}</span>
                 <ChevronDown size={14} className={"transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)] text-slate-400 group-hover:text-indigo-500 " + (open ? "rotate-180" : "rotate-0")} aria-hidden="true" />
               </button>
@@ -236,12 +236,12 @@ return <main className="app-shell">
                         "group relative flex items-center w-full text-sm font-medium transition-all duration-300 ease-out active:scale-[0.98] text-left",
                         item.child ? "py-2 pr-3 pl-9 rounded-r-xl border-l-2" : "py-2.5 px-3 gap-3 rounded-xl",
                         isItemActive
-                          ? (item.child ? "border-indigo-500 bg-gradient-to-r from-indigo-50/80 to-transparent text-indigo-700 font-semibold" : "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold shadow-md shadow-indigo-200/50")
-                          : (item.child ? "border-slate-200 text-slate-500 hover:border-indigo-300 hover:bg-indigo-50/30 hover:text-indigo-700 hover:translate-x-1" : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 hover:translate-x-1")
+                          ? (item.child ? "border-blue-500 bg-blue-50/70 text-blue-700 font-semibold" : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg shadow-blue-500/25")
+                          : (item.child ? "border-slate-200/70 text-slate-500 hover:border-blue-300 hover:bg-white/70 hover:text-blue-700 hover:translate-x-1" : "text-slate-600 hover:bg-white/70 hover:text-slate-900 hover:translate-x-1")
                       ].join(" ")}
                     >
                       {!item.child && !isItemActive && <span className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-indigo-400 rounded-r-full opacity-0 scale-y-0 group-hover:opacity-100 group-hover:scale-y-100 transition-all duration-300 origin-center"></span>}
-                      {!item.child && <Icon size={18} strokeWidth={isItemActive ? 2.5 : 2} className={"transition-all duration-300 flex-shrink-0 " + (isItemActive ? "text-white" : "text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 group-hover:-rotate-3")} aria-hidden="true" />}
+                      {!item.child && <Icon size={18} strokeWidth={isItemActive ? 2.5 : 2} className={"transition-all duration-300 flex-shrink-0 " + (isItemActive ? "text-white" : "text-slate-400 group-hover:text-blue-500 group-hover:scale-110 group-hover:-rotate-3")} aria-hidden="true" />}
                       <span className="relative z-10 truncate">{item.label}</span>
                     </button>
                   );
@@ -253,9 +253,9 @@ return <main className="app-shell">
       })}
     </nav>
 
-    <div className="p-4 mt-auto border-t border-slate-200 bg-slate-50/50">
-      <div className="group flex items-center p-2 transition-all duration-300 rounded-xl hover:bg-white hover:shadow-[0_4px_20px_rgba(0,0,0,0.03)] ring-1 ring-transparent hover:ring-slate-200 cursor-pointer">
-        <div className="relative flex items-center justify-center flex-shrink-0 w-9 h-9 font-bold text-xs text-indigo-700 bg-indigo-100 rounded-full shadow-inner group-hover:bg-indigo-500 group-hover:text-white transition-colors duration-300">
+    <div className="p-4 mt-auto border-t border-white/60 bg-white/40 backdrop-blur-xl">
+      <div className="group flex items-center p-2 transition-all duration-300 rounded-xl hover:bg-white/80 hover:shadow-[0_4px_20px_rgba(30,41,59,0.06)] ring-1 ring-transparent hover:ring-white/80 cursor-pointer">
+        <div className="relative flex items-center justify-center flex-shrink-0 w-9 h-9 font-bold text-xs text-blue-700 bg-blue-100 rounded-full shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
           {userInitials}
           <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full transition-transform duration-300 group-hover:scale-110"></div>
         </div>
