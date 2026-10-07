@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, type StaffMember, type LeaveRequest } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
-import { HRManagerControlCenter } from './HRManagerControlCenter'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
@@ -66,8 +65,6 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
-
-      {tab === 'staff' && <HRManagerControlCenter onNavigate={setTab} />}
 
       {tab === 'staff' && (
         <>
