@@ -15,10 +15,9 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) :
     // These aggregate roots are returned tracked because application workflows
     // intentionally mutate them before SaveChangesAsync (payments, discounts,
     // charges, installments and invoice balances).
-        public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => db.StudentInvoices.SingleOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
-        public async Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) => await db.StudentInvoices.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
-        public async Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) => await db.StudentInvoices.AsNoTracking().OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
-        public Task<bool> StudentInvoiceExistsAsync(Guid invoiceId, CancellationToken cancellationToken) => db.StudentInvoices.AnyAsync(x => x.Id == invoiceId, cancellationToken);
+    public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => db.StudentInvoices.SingleOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
+    public async Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) => await db.StudentInvoices.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) => await db.StudentInvoices.AsNoTracking().OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
     public Task<FeeStructure?> GetActiveFeeStructureAsync(Guid feeStructureId, CancellationToken cancellationToken) => db.FeeStructures.AsNoTracking().SingleOrDefaultAsync(x => x.Id == feeStructureId && x.IsActive, cancellationToken);
     public Task<bool> StudentExistsAsync(Guid studentId, CancellationToken cancellationToken) => db.Students.AnyAsync(x => x.Id == studentId, cancellationToken);
     public Task<bool> InvoiceNumberExistsAsync(string invoiceNumber, CancellationToken cancellationToken) => db.StudentInvoices.AnyAsync(x => x.InvoiceNumber == invoiceNumber, cancellationToken);
@@ -40,6 +39,23 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) :
     public async Task<IReadOnlyList<CreditNote>> GetAllCreditNotesAsync(CancellationToken cancellationToken) => await db.CreditNotes.AsNoTracking().OrderByDescending(x => x.IssuedAt).ToListAsync(cancellationToken);
     public Task<CreditNote?> GetCreditNoteAsync(Guid creditNoteId, CancellationToken cancellationToken) => db.CreditNotes.AsNoTracking().SingleOrDefaultAsync(x => x.Id == creditNoteId, cancellationToken);
     public Task<CreditNote?> GetCreditNoteForUpdateAsync(Guid creditNoteId, CancellationToken cancellationToken) => db.CreditNotes.SingleOrDefaultAsync(x => x.Id == creditNoteId, cancellationToken);
+    public Task<bool> StudentInvoiceExistsAsync(Guid invoiceId, CancellationToken cancellationToken) => db.StudentInvoices.AnyAsync(x => x.Id == invoiceId, cancellationToken);
+    public Task AddMobileMoneyTransactionAsync(MobileMoneyTransaction transaction, CancellationToken cancellationToken) => db.MobileMoneyTransactions.AddAsync(transaction, cancellationToken);
+    public Task<MobileMoneyTransaction?> GetMobileMoneyTransactionAsync(Guid id, CancellationToken cancellationToken) => db.MobileMoneyTransactions.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+    public async Task<IReadOnlyList<MobileMoneyTransaction>> GetMobileMoneyTransactionsAsync(string? status, CancellationToken cancellationToken)
+    {
+        var query = db.MobileMoneyTransactions.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(status)) query = query.Where(x => x.Status == status);
+        return await query.OrderByDescending(x => x.RequestedAt).ToListAsync(cancellationToken);
+    }
+    public Task AddSchoolPayTransactionAsync(SchoolPayTransaction transaction, CancellationToken cancellationToken) => db.SchoolPayTransactions.AddAsync(transaction, cancellationToken);
+    public Task<SchoolPayTransaction?> GetSchoolPayTransactionAsync(Guid id, CancellationToken cancellationToken) => db.SchoolPayTransactions.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+    public async Task<IReadOnlyList<SchoolPayTransaction>> GetSchoolPayTransactionsAsync(string? status, CancellationToken cancellationToken)
+    {
+        var query = db.SchoolPayTransactions.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(status)) query = query.Where(x => x.Status == status);
+        return await query.OrderByDescending(x => x.RequestedAt).ToListAsync(cancellationToken);
+    }
     public async Task AddInvoiceInstallmentAsync(InvoiceInstallment installment, CancellationToken cancellationToken) => await db.Set<InvoiceInstallment>().AddAsync(installment, cancellationToken);
     public async Task AddStudentChargeAsync(StudentCharge charge, CancellationToken cancellationToken) => await db.Set<StudentCharge>().AddAsync(charge, cancellationToken);
     public async Task AddInvoiceAsync(StudentInvoice invoice, CancellationToken cancellationToken) => await db.StudentInvoices.AddAsync(invoice, cancellationToken);
@@ -59,21 +75,21 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) :
     }
     public async Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default)
         {
-            var query = db.Payments.AsNoTracking().AsQueryable();
+        var query = db.Payments.AsNoTracking().AsQueryable();
             if (!string.IsNullOrWhiteSpace(receiptNumber)) query = query.Where(x => x.ReceiptNumber == receiptNumber);
             if (!string.IsNullOrWhiteSpace(paymentMethod)) query = query.Where(x => x.PaymentMethod == paymentMethod);
             if (from.HasValue) query = query.Where(x => DateOnly.FromDateTime(x.PaidAt.UtcDateTime) >= from.Value);
             if (to.HasValue) query = query.Where(x => DateOnly.FromDateTime(x.PaidAt.UtcDateTime) <= to.Value);
             return await query.OrderByDescending(x => x.PaidAt).ToListAsync(cancellationToken);
         }
-        public Task AddMobileMoneyTransactionAsync(MobileMoneyTransaction transaction, CancellationToken cancellationToken) => db.MobileMoneyTransactions.AddAsync(transaction, cancellationToken);
-        public Task<MobileMoneyTransaction?> GetMobileMoneyTransactionAsync(Guid id, CancellationToken cancellationToken) => db.MobileMoneyTransactions.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+    public Task AddMobileMoneyTransactionAsync(MobileMoneyTransaction transaction, CancellationToken cancellationToken) => db.MobileMoneyTransactions.AddAsync(transaction, cancellationToken);
+    public Task<MobileMoneyTransaction?> GetMobileMoneyTransactionAsync(Guid id, CancellationToken cancellationToken) => db.MobileMoneyTransactions.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
          public async Task<IReadOnlyList<MobileMoneyTransaction>> GetMobileMoneyTransactionsAsync(string? status, CancellationToken cancellationToken)
          {
              var query = db.MobileMoneyTransactions.AsNoTracking().AsQueryable();
              if (!string.IsNullOrWhiteSpace(status)) query = query.Where(x => x.Status == status);
              return await query.OrderByDescending(x => x.RequestedAt).ToListAsync(cancellationToken);
-         }
+    }
          public Task AddSchoolPayTransactionAsync(SchoolPayTransaction transaction, CancellationToken cancellationToken) => db.SchoolPayTransactions.AddAsync(transaction, cancellationToken);
          public Task<SchoolPayTransaction?> GetSchoolPayTransactionAsync(Guid id, CancellationToken cancellationToken) => db.SchoolPayTransactions.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
          public async Task<IReadOnlyList<SchoolPayTransaction>> GetSchoolPayTransactionsAsync(string? status, CancellationToken cancellationToken)
@@ -81,7 +97,6 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) :
              var query = db.SchoolPayTransactions.AsNoTracking().AsQueryable();
              if (!string.IsNullOrWhiteSpace(status)) query = query.Where(x => x.Status == status);
              return await query.OrderByDescending(x => x.RequestedAt).ToListAsync(cancellationToken);
-         }
+    }
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
 }
