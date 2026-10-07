@@ -24,7 +24,7 @@ export default function MobileMoneyPayments() {
   const [submitted, setSubmitted] = useState<MobileMoneyTransaction | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [externalRef, setExternalRef] = useState('');
-  const [showSchoolPayMsg, setShowSchoolPayMsg] = useState('');
+  const [showPaymentProviderMsg, setShowPayment ProviderMsg] = useState('');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
@@ -382,27 +382,27 @@ export default function MobileMoneyPayments() {
 
       <div className="panel" style={{ marginBottom: '24px' }}>
         <div className="panel-heading">
-          <h3>SchoolPay Integration (Placeholder)</h3>
+          <h3>Payment Provider Integration (Placeholder)</h3>
         </div>
         <div style={{ padding: '20px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}>
-          <p style={{ marginTop: 0, fontWeight: 600, color: '#92400e' }}>This section is a placeholder for SchoolPay API integration.</p>
+          <p style={{ marginTop: 0, fontWeight: 600, color: '#92400e' }}>This section is a placeholder for Payment Provider API integration.</p>
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
             <button
               className="secondary-button"
-              onClick={() => setShowSchoolPayMsg('SchoolPay integration is not configured. Contact your system administrator to set up SchoolPay API credentials.')}
+              onClick={() => setShowPayment ProviderMsg('Payment Provider integration is not configured. Contact your system administrator to set up Payment Provider API credentials.')}
             >
-              Configure SchoolPay
+              Configure Payment Provider
             </button>
             <button
               className="secondary-button"
-              onClick={() => setShowSchoolPayMsg('SchoolPay sync is not available. This feature will be enabled when SchoolPay is configured.')}
+              onClick={() => setShowPayment ProviderMsg('Payment Provider sync is not available. This feature will be enabled when Payment Provider is configured.')}
             >
-              Sync with SchoolPay
+              Sync with Payment Provider
             </button>
           </div>
-          {showSchoolPayMsg && (
+          {showPaymentProviderMsg && (
             <div style={{ marginTop: '16px', padding: '12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '6px', color: '#92400e' }}>
-              {showSchoolPayMsg}
+              {showPaymentProviderMsg}
             </div>
           )}
         </div>
