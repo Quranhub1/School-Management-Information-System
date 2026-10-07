@@ -16,9 +16,10 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
     {
         var totalBilled = await db.StudentInvoices.AsNoTracking().SumAsync(x => (decimal?)(x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m), cancellationToken) ?? 0m;
         var totalPaid = await db.StudentInvoices.AsNoTracking().SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var todayUtc = DateTimeOffset.UtcNow.Date;
+        var tomorrowUtc = todayUtc.AddDays(1);
         var todayPayments = await db.Payments.AsNoTracking()
-            .Where(p => p.PaidAt.UtcDateTime.Date == today.ToDateTime(TimeOnly.MinValue).Date)
+            .Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
             .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
 
         return Ok(new
