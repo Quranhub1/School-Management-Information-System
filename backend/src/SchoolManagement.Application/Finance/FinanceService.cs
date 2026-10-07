@@ -142,7 +142,6 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
           {
               if (remaining <= 0) break;
               var allocation = Math.Min(remaining, installment.OutstandingAmount);
-              if (allocation <= 0) continue;
               installment.PaidAmount += allocation;
               installment.Status = installment.PaidAmount >= installment.Amount ? "Paid" : installment.PaidAmount > 0 ? "PartiallyPaid" : "Pending";
               remaining -= allocation;
@@ -166,7 +165,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         if (invoice.Lines.Count == 0) { entry.Lines.Add(new JournalEntryLine { AccountId = defaultRevenueAccountId, Description = "Student fees", Credit = invoice.Amount }); return entry; }
         foreach (var group in invoice.Lines.GroupBy(x => x.IncomeAccountId))
         {
-            var accountId = group.Key.HasValue ? (await finance.GetActiveAccountByIdAsync(group.Key.Value, cancellationToken))?.Id ?? throw new InvalidOperationException($"Income account '{group.Key.Value}' is not configured or inactive.") : defaultRevenueAccountId;
+            var accountId = group.Key.HasValue ? (await finance.GetActiveAccountByIdAsync(group.Key.Value, cancellationToken))?.Id ?? throw new InvalidOperationException($"Income account {group.Key.Value} is not configured or inactive.") : defaultRevenueAccountId;
             entry.Lines.Add(new JournalEntryLine { AccountId = accountId, Description = $"Income - {invoice.InvoiceNumber}", Credit = group.Sum(x => x.Amount) });
         }
         return entry;
@@ -180,7 +179,6 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         if (method.Contains("bank") || method.Contains("transfer") || method.Contains("card") || method.Contains("cheque") || method.Contains("check")) return FinanceAccountCodes.Bank;
         throw new ArgumentException("Unsupported payment method. Use Cash, Bank/Transfer/Card/Cheque, or Mobile Money.");
     }
-
     public async Task<MobileMoneyTransaction> CreateMobileMoneyTransactionAsync(CreateMobileMoneyTransactionRequest request, CancellationToken cancellationToken)
     {
         if (request.Amount <= 0) throw new ArgumentException("Transaction amount must be greater than zero.");
@@ -191,7 +189,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         if (!await finance.StudentExistsAsync(request.StudentId, cancellationToken)) throw new ArgumentException("Student was not found.");
 
         // Generate a unique transaction reference
-        string transactionRef = $"TX{DateTime.UtcNow:yyyyMMdd}${Guid.NewGuid():N.Substring(0, 8)}";
+        string transactionRef = "$TX{DateTime.UtcNow:yyyyMMdd}${Guid.NewGuid():N.Substring(0, 8)}";
 
         var transaction = new MobileMoneyTransaction
         {
@@ -212,7 +210,13 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         await finance.SaveChangesAsync(cancellationToken);
         return transaction;
     }
-
+    private JournalEntry CreateJournalEntry(string entryNumber, string description, decimal amount, Guid debitAccountId, Guid creditAccountId, string sourceType, Guid sourceId)
+    {
+        var entry = new JournalEntry { EntryNumber = entryNumber, Description = description, SourceType = sourceType, SourceId = sourceId };
+        entry.Lines.Add(new JournalEntryLine { AccountId = debitAccountId, Description = description, Debit = amount });
+        entry.Lines.Add(new JournalEntryLine { AccountId = creditAccountId, Description = description, Credit = amount });
+        return entry;
+    }
     public async Task<MobileMoneyTransaction> ConfirmMobileMoneyTransactionAsync(Guid transactionId, string? externalRef, CancellationToken cancellationToken)
     {
         var transaction = await finance.GetMobileMoneyTransactionAsync(transactionId, cancellationToken) 
@@ -243,7 +247,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
                 throw new ArgumentException($"Transaction amount exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
 
             // Record the payment using the standard payment flow
-            var payment = await finance.RecordPaymentAsync(
+            var payment = await this.RecordPaymentAsync(
                 invoice.Id, 
                 transaction.TransactionRef, 
                 transaction.Amount, 
@@ -327,7 +331,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
                 throw new ArgumentException($"Transaction amount exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
 
             // Record the payment using the standard payment flow
-            var payment = await finance.RecordPaymentAsync(
+            var payment = await this.RecordPaymentAsync(
                 invoice.Id, 
                 transaction.TransactionRef, 
                 transaction.Amount, 

@@ -103,10 +103,23 @@ public sealed record MobileMoneyTransactionDto(
     string? ExternalRef,
     string? ErrorMessage,
     DateTimeOffset RequestedAt,
-    DateTimeOffset? CompletedAt,
-    string? Reference)
+    DateTimeOffset? CompletedAt)
 {
-    public static MobileMoneyTransactionDto FromDomain(MobileMoneyTransaction txn) => new(txn.Id, txn.StudentId, txn.StudentInvoiceId, txn.TransactionRef, txn.Provider, txn.PhoneNumber, txn.Amount, txn.Currency, txn.Status, txn.ExternalRef, txn.ErrorMessage, txn.RequestedAt, txn.CompletedAt, txn.Reference);
+    public static MobileMoneyTransactionDto FromDomain(MobileMoneyTransaction txn) => new(
+        txn.Id,
+        txn.StudentId,
+        txn.StudentInvoiceId,
+        txn.TransactionRef,
+        txn.Provider,
+        txn.PhoneNumber,
+        txn.Amount,
+        txn.Currency,
+        txn.Status,
+        txn.ExternalRef,
+        txn.ErrorMessage,
+        txn.RequestedAt,
+        txn.CompletedAt,
+    );
 }
 
 public sealed record SchoolPayTransactionDto(
@@ -122,8 +135,7 @@ public sealed record SchoolPayTransactionDto(
      string? ExternalRef,
      string? ErrorMessage,
      DateTimeOffset RequestedAt,
-     DateTimeOffset? CompletedAt,
-    string? Reference)
+     DateTimeOffset? CompletedAt)
  {
      public static SchoolPayTransactionDto FromDomain(SchoolPayTransaction txn) => new(
          txn.Id,
@@ -138,9 +150,7 @@ public sealed record SchoolPayTransactionDto(
          txn.ExternalRef,
          txn.ErrorMessage,
          txn.RequestedAt,
-         txn.CompletedAt,
-         txn.Reference
-     );
+         txn.CompletedAt);
  }
 
 public sealed record DailyCollectionDto(
@@ -331,8 +341,3 @@ public sealed record StaffAdvanceDto(
         a.RecoveredFromPayrollId,
         a.Notes);
 }
-
-public sealed record CreateMobileMoneyTransactionRequest(Guid StudentId, Guid? StudentInvoiceId, decimal Amount, string Provider, string PhoneNumber, string? Reference = null, string Currency = "UGX");
-public sealed record ConfirmMobileMoneyTransactionRequest(string Reference);
-public sealed record CreateSchoolPayTransactionRequest(Guid StudentId, Guid? StudentInvoiceId, decimal Amount, string Provider, string PhoneNumber, string? Reference = null, string Currency = "UGX");
-public sealed record ConfirmSchoolPayTransactionRequest(string Reference);

@@ -400,8 +400,3 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public sealed record RecordUnallocatedPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string Currency = "UGX", string? Reference = null);
     public sealed record AllocatePaymentRequest(IReadOnlyCollection<PaymentAllocationRequest> Allocations);
     public sealed record ReverseJournalEntryRequest(string Reason);
-      public sealed record CreateMobileMoneyTransactionRequest(Guid StudentId, Guid? StudentInvoiceId, decimal Amount, string Provider, string PhoneNumber, string? Reference = null, string Currency = "UGX");
-      public sealed record ConfirmMobileMoneyTransactionRequest(string Reference);
-      public sealed record CreateSchoolPayTransactionRequest(Guid StudentId, Guid? StudentInvoiceId, decimal Amount, string Provider, string PhoneNumber, string? Reference = null, string Currency = "UGX");
-      public sealed record ConfirmSchoolPayTransactionRequest(string Reference);
-}

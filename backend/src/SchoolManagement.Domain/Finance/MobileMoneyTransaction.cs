@@ -10,9 +10,10 @@ public sealed class MobileMoneyTransaction
     public required string PhoneNumber { get; init; }
     public decimal Amount { get; init; }
     public string Currency { get; init; } = "UGX";
-    public string Status { get; init; } = "Pending";
-    public string? ExternalRef { get; init; }
+    public string Status { get; set; } = "Pending";
+    public string? ExternalRef { get; set; }
     public string? ErrorMessage { get; init; }
+    public string? Reference { get; set; }
     public DateTimeOffset RequestedAt { get; init; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset? CompletedAt { get; init; }
+    public DateTimeOffset? CompletedAt { get; set; }
 }
