@@ -1,0 +1,4 @@
+/* Table content typography — keeps navigation/sidebar typography unchanged. */
+table tbody td {
+  font-family: "Times New Roman", Times, serif;
+}
