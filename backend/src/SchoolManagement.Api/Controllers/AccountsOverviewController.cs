@@ -75,9 +75,15 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
         if (!string.IsNullOrWhiteSpace(paymentMethod))
             query = query.Where(x => x.payment.PaymentMethod == paymentMethod.Trim());
         if (from.HasValue)
-            query = query.Where(x => x.payment.PaidAt >= from.Value.ToDateTime(TimeOnly.MinValue));
+        {
+            var fromUtc = new DateTimeOffset(from.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+            query = query.Where(x => x.payment.PaidAt >= fromUtc);
+        }
         if (to.HasValue)
-            query = query.Where(x => x.payment.PaidAt <= to.Value.ToDateTime(TimeOnly.MaxValue));
+        {
+            var toUtcExclusive = new DateTimeOffset(to.Value.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+            query = query.Where(x => x.payment.PaidAt < toUtcExclusive);
+        }
 
         var payments = await query.OrderByDescending(x => x.payment.PaidAt)
             .Select(x => new
