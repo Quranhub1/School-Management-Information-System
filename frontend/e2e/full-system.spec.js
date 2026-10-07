@@ -5,10 +5,11 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:4173';
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'admin123';
 
 async function signIn(page) {
-  const inputs = page.locator('input');
-  await inputs.nth(0).fill('admin');
-  await inputs.nth(1).fill(ADMIN_PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  const loginFrame = page.frameLocator('iframe[title="Institutional Sign In"]');
+  await expect(loginFrame.locator('#username')).toBeVisible({ timeout: 15000 });
+  await loginFrame.locator('#username').fill('admin');
+  await loginFrame.locator('#password').fill(ADMIN_PASSWORD);
+  await loginFrame.getByRole('button', { name: /sign in/i }).click();
 }
 
 async function getAdminToken(request) {
@@ -141,7 +142,7 @@ test.describe('SMIS full-system smoke tests', () => {
 
   test('frontend loads and administrator can sign in', async ({ page }) => {
     await page.goto(FRONTEND_URL, { waitUntil: 'networkidle' });
-    await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
+    await expect(page.locator('iframe[title="Institutional Sign In"]')).toBeVisible({ timeout: 15000 });
 
     await signIn(page);
 
