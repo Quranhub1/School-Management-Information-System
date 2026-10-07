@@ -138,24 +138,41 @@ public sealed class InstalmentPaymentConfiguration : IEntityTypeConfiguration<In
     }
 }
 
-public sealed class MobileMoneyTransactionConfiguration : IEntityTypeConfiguration<MobileMoneyTransaction>
-{
-    public void Configure(EntityTypeBuilder<MobileMoneyTransaction> builder)
+    public sealed class MobileMoneyTransactionConfiguration : IEntityTypeConfiguration<MobileMoneyTransaction>
     {
-        builder.HasKey(x => x.Id);
-        builder.HasIndex(x => x.TransactionRef).IsUnique();
-        builder.Property(x => x.TransactionRef).HasMaxLength(50).IsRequired();
-        builder.Property(x => x.Provider).HasMaxLength(30).IsRequired();
-        builder.Property(x => x.PhoneNumber).HasMaxLength(20).IsRequired();
-        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
-        builder.Property(x => x.Amount).HasPrecision(18, 2);
-        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
-        builder.Property(x => x.ErrorMessage).HasMaxLength(500);
-        builder.HasIndex(x => new { x.StudentId, x.Status });
+        public void Configure(EntityTypeBuilder<MobileMoneyTransaction> builder)
+        {
+            builder.HasKey(x => x.Id);
+            builder.HasIndex(x => x.TransactionRef).IsUnique();
+            builder.Property(x => x.TransactionRef).HasMaxLength(50).IsRequired();
+            builder.Property(x => x.Provider).HasMaxLength(30).IsRequired();
+            builder.Property(x => x.PhoneNumber).HasMaxLength(20).IsRequired();
+            builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            builder.Property(x => x.Amount).HasPrecision(18, 2);
+            builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+            builder.Property(x => x.ErrorMessage).HasMaxLength(500);
+            builder.HasIndex(x => new { x.StudentId, x.Status });
+        }
     }
-}
 
-public sealed class DailyCollectionConfiguration : IEntityTypeConfiguration<DailyCollection>
+    public sealed class SchoolPayTransactionConfiguration : IEntityTypeConfiguration<SchoolPayTransaction>
+    {
+        public void Configure(EntityTypeBuilder<SchoolPayTransaction> builder)
+        {
+            builder.HasKey(x => x.Id);
+            builder.HasIndex(x => x.TransactionRef).IsUnique();
+            builder.Property(x => x.TransactionRef).HasMaxLength(50).IsRequired();
+            builder.Property(x => x.Provider).HasMaxLength(30).IsRequired();
+            builder.Property(x => x.PhoneNumber).HasMaxLength(20).IsRequired();
+            builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
+            builder.Property(x => x.Amount).HasPrecision(18, 2);
+            builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+            builder.Property(x => x.ErrorMessage).HasMaxLength(500);
+            builder.HasIndex(x => new { x.StudentId, x.Status });
+        }
+    }
+
+    public sealed class DailyCollectionConfiguration : IEntityTypeConfiguration<DailyCollection>
 {
     public void Configure(EntityTypeBuilder<DailyCollection> builder)
     {

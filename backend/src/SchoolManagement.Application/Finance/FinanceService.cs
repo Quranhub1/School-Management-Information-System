@@ -146,8 +146,93 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
             installment.PaidAmount += allocation;
             installment.Status = installment.PaidAmount >= installment.Amount ? "Paid" : installment.PaidAmount > 0 ? "PartiallyPaid" : "Pending";
             remaining -= allocation;
-        }
-    }
+     }
+ }
+
+     public async Task<SchoolPayTransaction> CreateSchoolPayTransactionAsync(CreateSchoolPayTransactionRequest request, CancellationToken cancellationToken)
+     {
+         if (request.Amount <= 0) throw new ArgumentException("Transaction amount must be greater than zero.");
+         if (string.IsNullOrWhiteSpace(request.Provider)) throw new ArgumentException("Provider is required.");
+         if (string.IsNullOrWhiteSpace(request.PhoneNumber)) throw new ArgumentException("Phone number is required.");
+         if (request.StudentInvoiceId.HasValue && !await finance.StudentInvoiceExistsAsync(request.StudentInvoiceId.Value, cancellationToken))
+             throw new ArgumentException("Student invoice was not found.");
+         if (!await finance.StudentExistsAsync(request.StudentId, cancellationToken)) throw new ArgumentException("Student was not found.");
+
+         // Generate a unique transaction reference
+         string transactionRef = $"TX{DateTime.UtcNow:yyyyMMdd}${Guid.NewGuid():N.Substring(0, 8)}";
+
+         var transaction = new SchoolPayTransaction
+         {
+             StudentId = request.StudentId,
+             StudentInvoiceId = request.StudentInvoiceId,
+             Amount = request.Amount,
+             Currency = request.Currency,
+             Provider = request.Provider,
+             PhoneNumber = request.PhoneNumber,
+             Reference = request.Reference,
+             TransactionRef = transactionRef,
+             Status = "Pending"
+         };
+
+         // For now, we'll just save the transaction. In a real implementation, 
+         // this would integrate with the actual SchoolPay provider's API
+         await finance.AddSchoolPayTransactionAsync(transaction, cancellationToken);
+         await finance.SaveChangesAsync(cancellationToken);
+         return transaction;
+     }
+
+     public async Task<SchoolPayTransaction> ConfirmSchoolPayTransactionAsync(Guid transactionId, string? externalRef, CancellationToken cancellationToken)
+     {
+         var transaction = await finance.GetSchoolPayTransactionAsync(transactionId, cancellationToken) 
+                           ?? throw new ArgumentException("SchoolPay transaction was not found.");
+
+         if (transaction.Status != "Pending") 
+             throw new InvalidOperationException("Only pending transactions can be confirmed.");
+
+         // In a real implementation, we would verify the externalRef with the SchoolPay provider
+         // For now, we'll just mark it as completed if an external reference is provided
+         if (string.IsNullOrWhiteSpace(externalRef))
+             throw new ArgumentException("External reference is required to confirm the transaction.");
+
+         transaction.ExternalRef = externalRef;
+         transaction.Status = "Completed";
+         transaction.CompletedAt = DateTimeOffset.UtcNow;
+
+         // If this transaction is associated with an invoice, record a payment
+         if (transaction.StudentInvoiceId.HasValue)
+         {
+             var invoice = await finance.GetInvoiceAsync(transaction.StudentInvoiceId.Value, cancellationToken) 
+                           ?? throw new ArgumentException("Associated invoice was not found.");
+
+             var outstanding = invoice.OutstandingAmount;
+             if (outstanding <= 0) 
+                 throw new InvalidOperationException("Invoice is already fully paid.");
+             if (transaction.Amount > outstanding) 
+                 throw new ArgumentException($"Transaction amount exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
+
+             // Record the payment using the standard payment flow
+             var payment = await finance.RecordPaymentAsync(
+                 invoice.Id, 
+                 transaction.TransactionRef, 
+                 transaction.Amount, 
+                 $"SchoolPay ({transaction.Provider})", 
+                 transaction.ExternalRef, 
+                 cancellationToken
+             );
+
+             // Update transaction with payment reference
+             transaction.Reference = payment.ReceiptNumber;
+         }
+
+         await finance.SaveChangesAsync(cancellationToken);
+         return transaction;
+     }
+
+     public async Task<IReadOnlyList<SchoolPayTransaction>> GetSchoolPayTransactionsAsync(string? status, CancellationToken cancellationToken)
+     {
+         return await finance.GetSchoolPayTransactionsAsync(status, cancellationToken);
+     }
+
 
     private async Task AddPostedJournalEntryAsync(JournalEntry entry, CancellationToken cancellationToken)
     {
@@ -181,10 +266,91 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         throw new ArgumentException("Unsupported payment method. Use Cash, Bank/Transfer/Card/Cheque, or Mobile Money.");
     }
 
-    private static JournalEntry CreateJournalEntry(string entryNumber, string description, decimal amount, Guid debitAccountId, Guid creditAccountId, string sourceType, Guid sourceId)
+    public async Task<MobileMoneyTransaction> CreateMobileMoneyTransactionAsync(CreateMobileMoneyTransactionRequest request, CancellationToken cancellationToken)
     {
-        var entry = new JournalEntry { EntryNumber = entryNumber, Description = description, SourceType = sourceType, SourceId = sourceId, Lines = [new JournalEntryLine { AccountId = debitAccountId, Description = description, Debit = amount, Credit = 0 }, new JournalEntryLine { AccountId = creditAccountId, Description = description, Debit = 0, Credit = amount }] };
-        JournalEntryValidator.Validate(entry);
-        return entry;
+        if (request.Amount <= 0) throw new ArgumentException("Transaction amount must be greater than zero.");
+        if (string.IsNullOrWhiteSpace(request.Provider)) throw new ArgumentException("Provider is required.");
+        if (string.IsNullOrWhiteSpace(request.PhoneNumber)) throw new ArgumentException("Phone number is required.");
+        if (request.StudentInvoiceId.HasValue && !await finance.StudentInvoiceExistsAsync(request.StudentInvoiceId.Value, cancellationToken))
+            throw new ArgumentException("Student invoice was not found.");
+        if (!await finance.StudentExistsAsync(request.StudentId, cancellationToken)) throw new ArgumentException("Student was not found.");
+
+        // Generate a unique transaction reference
+        string transactionRef = $"TX{DateTime.UtcNow:yyyyMMdd}${Guid.NewGuid():N.Substring(0, 8)}";
+
+        var transaction = new MobileMoneyTransaction
+        {
+            StudentId = request.StudentId,
+            StudentInvoiceId = request.StudentInvoiceId,
+            Amount = request.Amount,
+            Currency = request.Currency,
+            Provider = request.Provider,
+            PhoneNumber = request.PhoneNumber,
+            Reference = request.Reference,
+            TransactionRef = transactionRef,
+            Status = "Pending"
+        };
+
+        // For now, we'll just save the transaction. In a real implementation, 
+        // this would integrate with the actual mobile money provider's API
+        await finance.AddMobileMoneyTransactionAsync(transaction, cancellationToken);
+        await finance.SaveChangesAsync(cancellationToken);
+        return transaction;
     }
+
+    public async Task<MobileMoneyTransaction> ConfirmMobileMoneyTransactionAsync(Guid transactionId, string? externalRef, CancellationToken cancellationToken)
+    {
+        var transaction = await finance.GetMobileMoneyTransactionAsync(transactionId, cancellationToken) 
+                          ?? throw new ArgumentException("Mobile money transaction was not found.");
+
+        if (transaction.Status != "Pending") 
+            throw new InvalidOperationException("Only pending transactions can be confirmed.");
+
+        // In a real implementation, we would verify the externalRef with the mobile money provider
+        // For now, we'll just mark it as completed if an external reference is provided
+        if (string.IsNullOrWhiteSpace(externalRef))
+            throw new ArgumentException("External reference is required to confirm the transaction.");
+
+        transaction.ExternalRef = externalRef;
+        transaction.Status = "Completed";
+        transaction.CompletedAt = DateTimeOffset.UtcNow;
+
+        // If this transaction is associated with an invoice, record a payment
+        if (transaction.StudentInvoiceId.HasValue)
+        {
+            var invoice = await finance.GetInvoiceAsync(transaction.StudentInvoiceId.Value, cancellationToken) 
+                          ?? throw new ArgumentException("Associated invoice was not found.");
+
+            var outstanding = invoice.OutstandingAmount;
+            if (outstanding <= 0) 
+                throw new InvalidOperationException("Invoice is already fully paid.");
+            if (transaction.Amount > outstanding) 
+                throw new ArgumentException($"Transaction amount exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
+
+            // Record the payment using the standard payment flow
+            var payment = await finance.RecordPaymentAsync(
+                invoice.Id, 
+                transaction.TransactionRef, 
+                transaction.Amount, 
+                $"Mobile Money ({transaction.Provider})", 
+                transaction.ExternalRef, 
+                cancellationToken
+            );
+
+            // Update transaction with payment reference
+            transaction.Reference = payment.ReceiptNumber;
+        }
+
+        await finance.SaveChangesAsync(cancellationToken);
+        return transaction;
+    }
+
+    public async Task<IReadOnlyList<MobileMoneyTransaction>> GetMobileMoneyTransactionsAsync(string? status, CancellationToken cancellationToken)
+    {
+        return await finance.GetMobileMoneyTransactionsAsync(status, cancellationToken);
+    }
+
+    private async Task<Account> GetAccountAsync(string code, CancellationToken cancellationToken) => await finance.GetActiveAccountByCodeAsync(code, cancellationToken) ?? throw new InvalidOperationException($"Required finance account '{code}' is not configured.");
+
+    private async Task<JournalEntry> CreateItemizedInvoiceJournalAsync(StudentInvoice invoice, Guid receivableAccountId, Guid defaultRevenueAccountId, CancellationToken cancellationToken)
 }
