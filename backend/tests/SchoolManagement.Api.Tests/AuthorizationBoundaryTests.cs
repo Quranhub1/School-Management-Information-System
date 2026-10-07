@@ -27,7 +27,7 @@ public sealed class AuthorizationBoundaryTests
         var attribute = method!.GetCustomAttribute<AuthorizeAttribute>();
 
         Assert.NotNull(attribute);
-        Assert.Equal(AdmissionsPolicies.Read, attribute!.Policy);
+        Assert.Equal(AdmissionsPolicies.Management, attribute!.Policy);
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public sealed class AuthorizationBoundaryTests
             .GetCustomAttribute<AuthorizeAttribute>();
 
         Assert.NotNull(attribute);
-        Assert.Equal(AdmissionsPolicies.Management, attribute!.Policy);
+        Assert.Equal(AdmissionsPolicies.Read, attribute!.Policy);
     }
 
     [Fact]
