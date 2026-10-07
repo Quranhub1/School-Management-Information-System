@@ -2432,7 +2432,7 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("FeeStructureId", "SortOrder");
 
-                    b.ToTable("FeeStructureItems");
+                    b.ToTable("FeeStructureItem");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.FinanceAuditEvent", b =>
