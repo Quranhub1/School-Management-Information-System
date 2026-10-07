@@ -349,7 +349,4 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         return await finance.GetSchoolPayTransactionsAsync(status, cancellationToken);
     }
 
-    private async Task<Account> GetAccountAsync(string code, CancellationToken cancellationToken) => await finance.GetActiveAccountByCodeAsync(code, cancellationToken) ?? throw new InvalidOperationException($"Required finance account '{code}' is not configured.");
-
-    private async Task<JournalEntry> CreateItemizedInvoiceJournalAsync(StudentInvoice invoice, Guid receivableAccountId, Guid defaultRevenueAccountId, CancellationToken cancellationToken)
 }

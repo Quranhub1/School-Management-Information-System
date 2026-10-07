@@ -46,4 +46,4 @@ public interface IFinanceRepository
      Task<SchoolPayTransaction?> GetSchoolPayTransactionAsync(Guid id, CancellationToken cancellationToken);
      Task<IReadOnlyList<SchoolPayTransaction>> GetSchoolPayTransactionsAsync(string? status, CancellationToken cancellationToken);
      Task SaveChangesAsync(CancellationToken cancellationToken = default);
- }
+}

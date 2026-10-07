@@ -117,12 +117,12 @@ public sealed record MobileMoneyTransactionDto(
         txn.Status,
         txn.ExternalRef,
         txn.ErrorMessage,
-         txn.RequestedAt,
-         txn.CompletedAt);
-     }
- }
+        txn.RequestedAt,
+        txn.CompletedAt,
+    );
+}
 
- public sealed record SchoolPayTransactionDto(
+public sealed record SchoolPayTransactionDto(
      Guid Id,
      Guid StudentId,
      Guid? StudentInvoiceId,
@@ -153,7 +153,7 @@ public sealed record MobileMoneyTransactionDto(
          txn.CompletedAt);
  }
 
- public sealed record DailyCollectionDto(
+public sealed record DailyCollectionDto(
     Guid Id,
     DateOnly CollectionDate,
     string CashierName,

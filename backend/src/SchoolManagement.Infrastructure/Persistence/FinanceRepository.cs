@@ -82,5 +82,6 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) :
              if (!string.IsNullOrWhiteSpace(status)) query = query.Where(x => x.Status == status);
              return await query.OrderByDescending(x => x.RequestedAt).ToListAsync(cancellationToken);
          }
-     public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
- }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
+}
