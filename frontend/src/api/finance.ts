@@ -198,11 +198,6 @@ export async function createMobileMoneyTransaction(body: Partial<MobileMoneyTran
 export async function confirmMobileMoneyTransaction(transactionId: string, ref?: string) { return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ ref }) }) }
 export async function getMobileMoneyTransactions(status?: string) { return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
 
-export interface SchoolPayTransaction { id: string; studentId: string; studentInvoiceId?: string; amount: number; currency: string; provider: string; status: string; reference: string; transactionRef?: string; phoneNumber?: string; requestedAt: string; createdAt: string }
-export async function createSchoolPayTransaction(body: Partial<SchoolPayTransaction>) { return request<SchoolPayTransaction>('/api/finance/schoolpay', { method: 'POST', body: JSON.stringify(body) }) }
-export async function confirmSchoolPayTransaction(transactionId: string, ref?: string) { return request<SchoolPayTransaction>(`/api/finance/schoolpay/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ ref }) }) }
-export async function getSchoolPayTransactions(status?: string) { return request<SchoolPayTransaction[]>(`/api/finance/schoolpay${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
-
 export async function createBulkPayment(body: { payments: { studentId: string; amount: number; paymentMethod: string; reference?: string }[] }) { return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(body) }) }
 export async function issueCreditNote(invoiceId: string, body: { amount: number; reason: string }) { return request<any>('/api/finance/invoices/' + invoiceId + '/credit-notes', { method: 'POST', body: JSON.stringify(body) }) }
 export async function getCreditNotes(invoiceId?: string) { return request<any[]>(`/api/finance/credit-notes${invoiceId ? `?invoiceId=${encodeURIComponent(invoiceId)}` : ''}`) }

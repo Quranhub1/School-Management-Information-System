@@ -42,8 +42,5 @@ public interface IFinanceRepository
     Task AddMobileMoneyTransactionAsync(MobileMoneyTransaction transaction, CancellationToken cancellationToken);
     Task<MobileMoneyTransaction?> GetMobileMoneyTransactionAsync(Guid id, CancellationToken cancellationToken);
     Task<IReadOnlyList<MobileMoneyTransaction>> GetMobileMoneyTransactionsAsync(string? status, CancellationToken cancellationToken);
-    Task AddSchoolPayTransactionAsync(SchoolPayTransaction transaction, CancellationToken cancellationToken);
-    Task<SchoolPayTransaction?> GetSchoolPayTransactionAsync(Guid id, CancellationToken cancellationToken);
-    Task<IReadOnlyList<SchoolPayTransaction>> GetSchoolPayTransactionsAsync(string? status, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -122,37 +122,6 @@ public sealed record MobileMoneyTransactionDto(
     }
 }
 
-public sealed record SchoolPayTransactionDto(
-    Guid Id,
-    Guid StudentId,
-    Guid? StudentInvoiceId,
-    string TransactionRef,
-    string Provider,
-    string PhoneNumber,
-    decimal Amount,
-    string Currency,
-    string Status,
-    string? ExternalRef,
-    string? ErrorMessage,
-    DateTimeOffset RequestedAt,
-    DateTimeOffset? CompletedAt)
-{
-    public static SchoolPayTransactionDto FromDomain(SchoolPayTransaction txn) => new(
-        txn.Id,
-        txn.StudentId,
-        txn.StudentInvoiceId,
-        txn.TransactionRef,
-        txn.Provider,
-        txn.PhoneNumber,
-        txn.Amount,
-        txn.Currency,
-        txn.Status,
-        txn.ExternalRef,
-        txn.ErrorMessage,
-        txn.RequestedAt,
-        txn.CompletedAt);
-}
-
 public sealed record DailyCollectionDto(
     Guid Id,
     DateOnly CollectionDate,
