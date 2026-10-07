@@ -1360,7 +1360,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (max-width:760px) { .office-directory-intro,.office-detail-header { align-items:flex-start; flex-direction:column; } .office-card-grid,.office-detail-grid { grid-template-columns:1fr; } }
 
 
-/* Finance workspace: SchoolPay-inspired collection visibility without copying payment-channel logic */
+/* Finance workspace: Payment Provider-inspired collection visibility without copying payment-channel logic */
 .finance-workspace { display:grid; gap:18px; }
 .finance-workspace-header { margin-bottom:0; }
 .finance-tab-strip { display:flex; gap:5px; padding:5px; overflow-x:auto; border:1px solid var(--smis-glass-border); border-radius:999px; background:var(--smis-glass-bg); backdrop-filter:blur(14px) saturate(150%); -webkit-backdrop-filter:blur(14px) saturate(150%); box-shadow:var(--smis-shadow-sm); }
