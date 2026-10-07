@@ -2393,15 +2393,18 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
 
                     b.Property<string>("Currency")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
 
                     b.Property<Guid>("FeeStructureId")
                         .HasColumnType("uuid");
@@ -2414,16 +2417,22 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FeeStructureId");
+                    b.HasIndex("IncomeAccountId");
 
-                    b.ToTable("FeeStructureItem");
+                    b.HasIndex("FeeStructureId", "Code")
+                        .IsUnique();
+
+                    b.HasIndex("FeeStructureId", "SortOrder");
+
+                    b.ToTable("FeeStructureItems");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.FinanceAuditEvent", b =>
@@ -3817,15 +3826,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("LeaveRequests");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Staff.StaffAllowance", b =>
-                {
-                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null)
-                        .WithMany()
-                        .HasForeignKey("StaffMemberId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("SchoolManagement.Domain.Staff.PayrollRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3880,21 +3880,21 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
                     b.Property<string>("AllowanceType")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("AuthorizedBy")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<DateTimeOffset?>("AuthorizedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AuthorizedBy")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Currency")
                         .IsRequired()
@@ -3916,24 +3916,24 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<DateTimeOffset?>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("RecordedBy")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<DateTimeOffset?>("RecordedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Reference")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid>("StaffMemberId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
-
-                    b.Property<Guid>("StaffMemberId")
-                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -4560,6 +4560,11 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasForeignKey("FeeStructureId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Finance.Account", null)
+                        .WithMany()
+                        .HasForeignKey("IncomeAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.InvoiceDiscount", b =>
@@ -4797,6 +4802,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Staff.PayrollRecord", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null)
+                        .WithMany()
+                        .HasForeignKey("StaffMemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Staff.StaffAllowance", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null)
                         .WithMany()
