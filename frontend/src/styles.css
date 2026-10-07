@@ -431,7 +431,7 @@ td strong { display: block; }
 
 
 @layer base {
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: auto; }
   body {
     margin: 0;
     color: var(--smis-text);
