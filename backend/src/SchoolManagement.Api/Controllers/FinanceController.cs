@@ -348,12 +348,29 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         } 
     }
 
-      [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
-      [HttpGet("mobile-money")]
-      public async Task<IActionResult> GetMobileMoneyTransactions([FromQuery] string? status, CancellationToken cancellationToken) { 
-          var transactions = await finance.GetMobileMoneyTransactionsAsync(status, cancellationToken); 
-          return Ok(transactions); 
-      }
+       [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
+       [HttpGet("mobile-money")]
+       public async Task<IActionResult> GetMobileMoneyTransactions([FromQuery] string? status, CancellationToken cancellationToken) { 
+           var transactions = await finance.GetMobileMoneyTransactionsAsync(status, cancellationToken); 
+           return Ok(transactions); 
+       }
+
+       // SchoolPay Transactions
+       [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
+       [HttpPost("schoolpay")]
+       public async Task<IActionResult> CreateSchoolPayTransaction(CreateSchoolPayTransactionRequest request, CancellationToken cancellationToken) { 
+           try { 
+               var transaction = await finance.CreateSchoolPayTransactionAsync(request, cancellationToken); 
+               return Created($"/api/finance/schoolpay/{transaction.Id}", transaction); 
+           } 
+           catch (ArgumentException ex) { 
+               return BadRequest(new { message = ex.Message }); 
+           } 
+           catch (InvalidOperationException ex) { 
+               return Conflict(new { message = ex.Message }); 
+           } 
+       }
+
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("journal-entries/{journalEntryId:guid}/reverse")]
     public async Task<IActionResult> ReverseJournalEntry(Guid journalEntryId, ReverseJournalEntryRequest request, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a reversal." }); return Ok(await reversals.ReverseAsync(journalEntryId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
@@ -385,4 +402,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public sealed record ReverseJournalEntryRequest(string Reason);
       public sealed record CreateMobileMoneyTransactionRequest(Guid StudentId, Guid? StudentInvoiceId, decimal Amount, string Provider, string PhoneNumber, string? Reference = null, string Currency = "UGX");
       public sealed record ConfirmMobileMoneyTransactionRequest(string Reference);
+      public sealed record CreateSchoolPayTransactionRequest(Guid StudentId, Guid? StudentInvoiceId, decimal Amount, string Provider, string PhoneNumber, string? Reference = null, string Currency = "UGX");
+      public sealed record ConfirmSchoolPayTransactionRequest(string Reference);
 }

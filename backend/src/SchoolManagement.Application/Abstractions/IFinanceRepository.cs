@@ -38,9 +38,12 @@ public interface IFinanceRepository
     Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken);
     Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken cancellationToken);
     Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
-    Task<bool> StudentInvoiceExistsAsync(Guid invoiceId, CancellationToken cancellationToken);
-    Task AddMobileMoneyTransactionAsync(MobileMoneyTransaction transaction, CancellationToken cancellationToken);
-    Task<MobileMoneyTransaction?> GetMobileMoneyTransactionAsync(Guid id, CancellationToken cancellationToken);
-    Task<IReadOnlyList<MobileMoneyTransaction>> GetMobileMoneyTransactionsAsync(string? status, CancellationToken cancellationToken);
-    Task SaveChangesAsync(CancellationToken cancellationToken = default);
-}
+     Task<bool> StudentInvoiceExistsAsync(Guid invoiceId, CancellationToken cancellationToken);
+     Task AddMobileMoneyTransactionAsync(MobileMoneyTransaction transaction, CancellationToken cancellationToken);
+     Task<MobileMoneyTransaction?> GetMobileMoneyTransactionAsync(Guid id, CancellationToken cancellationToken);
+     Task<IReadOnlyList<MobileMoneyTransaction>> GetMobileMoneyTransactionsAsync(string? status, CancellationToken cancellationToken);
+     Task AddSchoolPayTransactionAsync(SchoolPayTransaction transaction, CancellationToken cancellationToken);
+     Task<SchoolPayTransaction?> GetSchoolPayTransactionAsync(Guid id, CancellationToken cancellationToken);
+     Task<IReadOnlyList<SchoolPayTransaction>> GetSchoolPayTransactionsAsync(string? status, CancellationToken cancellationToken);
+     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+ }

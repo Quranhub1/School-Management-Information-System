@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, getMobileMoneyTransactions, type MobileMoneyTransaction } from '../api/finance';
+import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, getMobileMoneyTransactions, type MobileMoneyTransaction, createSchoolPayTransaction, confirmSchoolPayTransaction, getSchoolPayTransactions, type SchoolPayTransaction } from '../api/finance';
 
 interface StudentSearchResult {
   studentId: string;
@@ -26,8 +26,22 @@ export default function MobileMoneyPayments() {
   const [externalRef, setExternalRef] = useState('');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
    
+  // SchoolPay state
+  const [schoolPayStudentCode, setSchoolPayStudentCode] = useState('');
+  const [schoolPayStudentName, setSchoolPayStudentName] = useState('');
+  const [schoolPayPhoneNumber, setSchoolPayPhoneNumber] = useState('');
+  const [schoolPayProvider, setSchoolPayProvider] = useState<'MTN' | 'Airtel'>('MTN');
+  const [schoolPayAmount, setSchoolPayAmount] = useState('');
+  const [schoolPaySelectedInvoice, setSchoolPaySelectedInvoice] = useState('');
+  const [schoolPayTransactions, setSchoolPayTransactions] = useState<SchoolPayTransaction[]>([]);
+  const [schoolPayLoading, setSchoolPayLoading] = useState(false);
+  const [schoolPaySubmitted, setSchoolPaySubmitted] = useState<SchoolPayTransaction | null>(null);
+  const [schoolPayShowConfirm, setSchoolPayShowConfirm] = useState(false);
+  const [schoolPayExternalRef, setSchoolPayExternalRef] = useState('');
+   
   useEffect(() => {
     loadTransactions();
+    loadSchoolPayTransactions();
   }, []);
 
   const loadTransactions = async () => {
@@ -39,6 +53,18 @@ export default function MobileMoneyPayments() {
       setTransactions([...pending, ...last20]);
     } catch (e) {
       setTransactions([]);
+    }
+  };
+
+  const loadSchoolPayTransactions = async () => {
+    try {
+      const pending = await getSchoolPayTransactions('Pending');
+      const completed = await getSchoolPayTransactions('Completed');
+      const sorted = [...completed].sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+      const last20 = sorted.slice(0, 20);
+      setSchoolPayTransactions([...pending, ...last20]);
+    } catch (e) {
+      setSchoolPayTransactions([]);
     }
   };
 
@@ -108,7 +134,7 @@ export default function MobileMoneyPayments() {
     }
   };
 
-  const handleCancel = async (id: string) => {
+   const handleCancel = async (id: string) => {
     try {
       await fetch(`/api/finance/mobile-money/${id}`, { method: 'DELETE' });
       await loadTransactions();
@@ -122,10 +148,95 @@ export default function MobileMoneyPayments() {
     }
   };
 
+  const handleSchoolPayStudentSearch = async (code: string) => {
+    setSchoolPayStudentCode(code);
+    if (!code.trim()) {
+      setSchoolPayStudentName('');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/finance/students/search?code=${encodeURIComponent(code)}`);
+      if (res.ok) {
+        const data: StudentFinanceProfile = await res.json();
+        setSchoolPayStudentName(data.studentName);
+      } else {
+        setSchoolPayStudentName('');
+      }
+    } catch {
+      setSchoolPayStudentName('');
+    }
+  };
+
+  const loadSchoolPayInvoices = async (studentId: string) => {
+    try {
+      const res = await fetch(`/api/finance/students/${studentId}/invoices`);
+      if (res.ok) {
+        const data: Invoice[] = await res.json();
+        setSchoolPayInvoices(data);
+      } else {
+        setSchoolPayInvoices([]);
+      }
+    } catch {
+      setSchoolPayInvoices([]);
+    }
+  };
+
+  const handleSchoolPayRequestPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!schoolPayStudentCode || !schoolPayPhoneNumber || !schoolPayAmount || parseFloat(schoolPayAmount) <= 0) return;
+    setSchoolPayLoading(true);
+    try {
+      const tx = await createSchoolPayTransaction({
+        studentId: schoolPayStudentCode,
+        studentInvoiceId: schoolPaySelectedInvoice || undefined,
+        provider: schoolPayProvider,
+        phoneNumber: schoolPayPhoneNumber,
+        amount: parseFloat(schoolPayAmount),
+      });
+      setSchoolPaySubmitted(tx);
+      setSchoolPayShowConfirm(false);
+      setSchoolPayExternalRef('');
+      await loadSchoolPayTransactions();
+    } catch (err) {
+      alert('Failed to initiate payment. Please try again.');
+    } finally {
+      setSchoolPayLoading(false);
+    }
+  };
+
+  const handleSchoolPayConfirm = async (id: string, ref: string) => {
+    try {
+      await confirmSchoolPayTransaction(id, ref);
+      await loadSchoolPayTransactions();
+      setSchoolPaySubmitted(null);
+      setSchoolPayShowConfirm(false);
+      setSchoolPayExternalRef('');
+    } catch (err) {
+      alert('Failed to confirm transaction.');
+    }
+  };
+
+  const handleSchoolPayCancel = async (id: string) => {
+    try {
+      await fetch(`/api/finance/schoolpay/${id}`, { method: 'DELETE' });
+      await loadSchoolPayTransactions();
+      if (schoolPaySubmitted && schoolPaySubmitted.id === id) {
+        setSchoolPaySubmitted(null);
+        setSchoolPayShowConfirm(false);
+        setSchoolPayExternalRef('');
+      }
+    } catch {
+      alert('Failed to cancel transaction.');
+    }
+  };
+
   const formatAmount = (val: number) => new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX' }).format(val);
 
   const pendingTransactions = transactions.filter((t) => t.status === 'Pending');
   const completedTransactions = transactions.filter((t) => t.status === 'Completed');
+
+  const schoolPayPendingTransactions = schoolPayTransactions.filter((t) => t.status === 'Pending');
+  const schoolPayCompletedTransactions = schoolPayTransactions.filter((t) => t.status === 'Completed');
 
   return (
     <div className="panel">
@@ -377,7 +488,248 @@ export default function MobileMoneyPayments() {
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+       </div>
+     </div>
+
+     <div className="panel" style={{ marginBottom: '24px' }}>
+       <div className="panel-heading">
+         <h3>School Payment Integration</h3>
+       </div>
+       <div style={{ padding: '20px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}>
+         <p>School payment integration is configured. You can use the form below to make school payments.</p>
+       </div>
+     </div>
+
+     <div className="panel" style={{ marginBottom: '24px' }}>
+       <div className="panel-heading">
+         <h3>New School Payment</h3>
+       </div>
+       <form onSubmit={handleSchoolPayRequestPayment}>
+         <div className="form-row">
+           <div style={{ flex: 1 }}>
+             <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Student ID / Code</label>
+             <input
+               type="text"
+               value={schoolPayStudentCode}
+               onChange={(e) => handleSchoolPayStudentSearch(e.target.value)}
+               placeholder="Enter student code"
+               required
+               style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
+             />
+           </div>
+           <div style={{ flex: 2, marginLeft: '16px' }}>
+             <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Student Name</label>
+             <input
+               type="text"
+               value={schoolPayStudentName}
+               readOnly
+               placeholder="Student name will appear here"
+               style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px', background: '#f9fafb' }}
+             />
+           </div>
+         </div>
+
+         <div className="form-row">
+           <div style={{ flex: 1, marginLeft: '16px' }}>
+             <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Phone Number</label>
+             <input
+               type="tel"
+               value={schoolPayPhoneNumber}
+               onChange={(e) => setSchoolPayPhoneNumber(e.target.value)}
+               placeholder="2567XXXXXXXX"
+               required
+               pattern="^256[0-9]{9}$"
+               style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
+             />
+           </div>
+           <div style={{ flex: 1, marginLeft: '16px' }}>
+             <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Provider</label>
+             <select
+               value={schoolPayProvider}
+               onChange={(e) => setSchoolPayProvider(e.target.value as 'MTN' | 'Airtel')}
+               style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
+             >
+               <option value="MTN">MTN School Payment</option>
+               <option value="Airtel">Airtel School Payment</option>
+             </select>
+           </div>
+           <div style={{ flex: 1, marginLeft: '16px' }}>
+             <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Amount (UGX)</label>
+             <input
+               type="number"
+               value={schoolPayAmount}
+               onChange={(e) => setSchoolPayAmount(e.target.value)}
+               placeholder="0"
+               min="0"
+               step="1"
+               required
+               style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
+             />
+           </div>
+         </div>
+
+         <div className="form-row">
+           <div style={{ flex: 1 }}>
+             <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Select Invoice (Optional)</label>
+             <select
+               value={schoolPaySelectedInvoice}
+               onChange={(e) => setSchoolPaySelectedInvoice(e.target.value)}
+               style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
+             >
+               <option value="">No invoice selected</option>
+               {schoolPayInvoices.map((inv) => (
+                 <option key={inv.id} value={inv.id}>
+                   {inv.description} - {formatAmount(inv.amount)}
+                 </option>
+               ))}
+             </select>
+           </div>
+         </div>
+
+         <div style={{ marginTop: '16px' }}>
+           <button type="submit" className="secondary-button" disabled={schoolPayLoading || !schoolPayStudentCode || !schoolPayAmount}>
+             {schoolPayLoading ? 'Processing...' : 'Request Payment'}
+           </button>
+         </div>
+       </form>
+     </div>
+
+     {schoolPaySubmitted && (
+       <div className="panel" style={{ marginBottom: '24px', padding: '20px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+         <h3 style={{ marginTop: 0, color: '#166534' }}>Transaction Initiated</h3>
+         <p><strong>Reference:</strong> {schoolPaySubmitted.transactionRef}</p>
+         <p><strong>Student:</strong> {schoolPaySubmitted.studentId}</p>
+         <p><strong>Amount:</strong> {formatAmount(schoolPaySubmitted.amount)}</p>
+         <p><strong>Provider:</strong> {schoolPaySubmitted.provider} School Payment</p>
+         <p><strong>Phone:</strong> {schoolPaySubmitted.phoneNumber}</p>
+         <p style={{ fontWeight: 600, color: '#166534' }}>Waiting for confirmation...</p>
+
+         {!schoolPayShowConfirm ? (
+           <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+             <button className="secondary-button" onClick={() => setSchoolPayShowConfirm(true)}>
+               Confirm Received
+             </button>
+             <button className="secondary-button" onClick={() => handleSchoolPayCancel(schoolPaySubmitted.id)}>
+               Cancel
+             </button>
+           </div>
+         ) : (
+           <div style={{ marginTop: '16px' }}>
+             <div className="form-row">
+               <input
+                 type="text"
+                 placeholder="Enter External Transaction Reference"
+                 value={schoolPayExternalRef}
+                 onChange={(e) => setSchoolPayExternalRef(e.target.value)}
+                 style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
+               />
+               <button
+                 className="secondary-button"
+                 onClick={() => handleSchoolPayConfirm(schoolPaySubmitted.id, schoolPayExternalRef)}
+                 disabled={!schoolPayExternalRef.trim()}
+               >
+                 Submit Confirmation
+               </button>
+             </div>
+           </div>
+         )}
+       </div>
+     )}
+
+     <div className="panel" style={{ marginBottom: '24px' }}>
+       <div className="panel-heading">
+         <h3>Pending Transactions</h3>
+       </div>
+       <div className="table-wrap">
+         <table className="table">
+           <thead>
+             <tr>
+               <th>Transaction Ref</th>
+               <th>Student ID</th>
+               <th>Provider</th>
+               <th>Amount</th>
+               <th>Status</th>
+               <th>Actions</th>
+             </tr>
+           </thead>
+           <tbody>
+             {schoolPayPendingTransactions.length === 0 ? (
+               <tr>
+                 <td colSpan={6} className="empty">
+                   No pending transactions
+                 </td>
+               </tr>
+             ) : (
+               schoolPayPendingTransactions.map((tx) => (
+                 <tr key={tx.id}>
+                   <td>{tx.transactionRef}</td>
+                   <td>{tx.studentId}</td>
+                   <td>{tx.provider} School Payment</td>
+                   <td>{formatAmount(tx.amount)}</td>
+                   <td>
+                     <span style={{ padding: '4px 8px', borderRadius: '4px', background: '#fef3c7', color: '#92400e' }}>
+                       {tx.status}
+                     </span>
+                   </td>
+                   <td>
+                     <button className="secondary-button" onClick={() => { setSchoolPaySubmitted(tx); setSchoolPayShowConfirm(true); }}>
+                       Confirm
+                     </button>
+                     <button className="secondary-button" onClick={() => handleSchoolPayCancel(tx.id)} style={{ marginLeft: '8px' }}>
+                       Cancel
+                     </button>
+                   </td>
+                 </tr>
+               ))
+             )}
+           </tbody>
+         </table>
+       </div>
+     </div>
+
+     <div className="panel" style={{ marginBottom: '24px' }}>
+       <div className="panel-heading">
+         <h3>Completed Transactions (Last 20)</h3>
+       </div>
+       <div className="table-wrap">
+         <table className="table">
+           <thead>
+             <tr>
+               <th>Transaction Ref</th>
+               <th>Student ID</th>
+               <th>Provider</th>
+               <th>Amount</th>
+               <th>Status</th>
+               <th>Date</th>
+             </tr>
+           </thead>
+           <tbody>
+             {schoolPayCompletedTransactions.length === 0 ? (
+               <tr>
+                 <td colSpan={6} className="empty">
+                   No completed transactions
+                 </td>
+               </tr>
+             ) : (
+               schoolPayCompletedTransactions.map((tx) => (
+                 <tr key={tx.id}>
+                   <td>{tx.transactionRef}</td>
+                   <td>{tx.studentId}</td>
+                   <td>{tx.provider} School Payment</td>
+                   <td>{formatAmount(tx.amount)}</td>
+                   <td>
+                     <span style={{ padding: '4px 8px', borderRadius: '4px', background: '#d1fae5', color: '#065f46' }}>
+                       {tx.status}
+                     </span>
+                   </td>
+                   <td>{new Date(tx.requestedAt).toLocaleDateString('en-UG')}</td>
+                 </tr>
+               ))
+             )}
+           </tbody>
+         </table>
+       </div>
+     </div>
+   </div>
   );
-}
+ }
