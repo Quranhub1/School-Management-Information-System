@@ -31,6 +31,7 @@ public sealed class FeeStructureItemConfiguration : IEntityTypeConfiguration<Fee
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         builder.HasIndex(x => new { x.FeeStructureId, x.Code }).IsUnique();
         builder.HasIndex(x => new { x.FeeStructureId, x.SortOrder });
+        builder.ToTable("FeeStructureItem");
         builder.HasOne<Account>().WithMany().HasForeignKey(x => x.IncomeAccountId).OnDelete(DeleteBehavior.Restrict);
     }
 }
