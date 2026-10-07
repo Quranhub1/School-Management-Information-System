@@ -29,6 +29,9 @@ public partial class RepairFeeStructureItemSchema : Migration
             CREATE INDEX IF NOT EXISTS "IX_FeeStructureItem_FeeStructureId_SortOrder"
                 ON "FeeStructureItem" ("FeeStructureId", "SortOrder");
 
+            CREATE INDEX IF NOT EXISTS "IX_FeeStructureItem_IncomeAccountId"
+                ON "FeeStructureItem" ("IncomeAccountId");
+
             DO $$
             BEGIN
                 IF NOT EXISTS (
