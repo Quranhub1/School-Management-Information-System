@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Domain.Administration;
 using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Admissions;
