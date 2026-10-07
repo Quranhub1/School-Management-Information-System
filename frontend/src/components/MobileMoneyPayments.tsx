@@ -24,7 +24,7 @@ export default function MobileMoneyPayments() {
   const [submitted, setSubmitted] = useState<MobileMoneyTransaction | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [externalRef, setExternalRef] = useState('');
-  const [showPaymentProviderMsg, setShowPayment ProviderMsg] = useState('');
+  const [showPaymentProviderMsg, setShowPaymentProviderMsg] = useState('');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
@@ -389,13 +389,13 @@ export default function MobileMoneyPayments() {
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
             <button
               className="secondary-button"
-              onClick={() => setShowPayment ProviderMsg('Payment Provider integration is not configured. Contact your system administrator to set up Payment Provider API credentials.')}
+              onClick={() => setShowPaymentProviderMsg('Payment Provider integration is not configured. Contact your system administrator to set up Payment Provider API credentials.')}
             >
               Configure Payment Provider
             </button>
             <button
               className="secondary-button"
-              onClick={() => setShowPayment ProviderMsg('Payment Provider sync is not available. This feature will be enabled when Payment Provider is configured.')}
+              onClick={() => setShowPaymentProviderMsg('Payment Provider sync is not available. This feature will be enabled when Payment Provider is configured.')}
             >
               Sync with Payment Provider
             </button>
