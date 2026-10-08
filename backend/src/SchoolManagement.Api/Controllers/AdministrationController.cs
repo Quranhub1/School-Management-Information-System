@@ -21,6 +21,30 @@ public sealed class AdministrationController(AdministrationService service) : Co
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
+    [HttpPut("users/{id:guid}")]
+    public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
+    {
+        var currentUserId = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+        if (Guid.TryParse(currentUserId, out var current) && current == id)
+            return BadRequest(new { message = "You cannot change your own roles from this screen." });
+        try
+        {
+            var user = await service.UpdateUserAsync(id, request, cancellationToken);
+            return user is null ? NotFound() : Ok(user);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPatch("users/{id:guid}/password")]
+    public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await service.ResetPasswordAsync(id, request.NewPassword, cancellationToken) ? NoContent() : NotFound();
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
     [HttpPatch("users/{id:guid}/active")]
     public async Task<IActionResult> SetActive(Guid id, [FromBody] SetActiveRequest request, CancellationToken cancellationToken)
     {
@@ -43,6 +67,6 @@ public sealed class AdministrationController(AdministrationService service) : Co
         return StatusCode(StatusCodes.Status501NotImplemented, new { message = "Database restore is not yet implemented. Use pg_restore for production restores." });
     }
 
-    public sealed record SetActiveRequest(bool Active);
+    public sealed record SetActiveRequest(bool Active);\n    public sealed record ResetPasswordRequest(string NewPassword);
     public sealed record RestoreRequest(string BackupData);
 }
