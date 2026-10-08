@@ -70,6 +70,8 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<UpdateUserRequest>({ firstName: '', lastName: '', email: '', roles: [] })
   const [actionBusy, setActionBusy] = useState(false)
+  const [passwordResetUserId, setPasswordResetUserId] = useState<string | null>(null)
+  const [passwordResetValue, setPasswordResetValue] = useState('')
 
   function openWorkspace(workspace?: string) {
     if (!workspace) return
@@ -132,17 +134,19 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
     finally { setActionBusy(false) }
   }
 
-  async function resetPassword(user: UserSummary) {
-    const newPassword = window.prompt(`Enter a new temporary password for ${user.username} (at least 8 characters):`)
-    if (newPassword === null) return
-    if (newPassword.length < 8) {
+  async function resetPassword(event: React.FormEvent) {
+    event.preventDefault()
+    if (!passwordResetUserId) return
+    if (passwordResetValue.length < 8) {
       setError('Password must contain at least 8 characters.')
       return
     }
     setActionBusy(true)
     setError('')
     try {
-      await resetUserPassword(user.id, newPassword)
+      await resetUserPassword(passwordResetUserId, passwordResetValue)
+      setPasswordResetUserId(null)
+      setPasswordResetValue('')
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to reset password.') }
     finally { setActionBusy(false) }
   }
@@ -223,6 +227,13 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
             <button type="submit" disabled={actionBusy || editForm.roles.length === 0}>{actionBusy ? 'Saving…' : 'Save changes'}</button>
           </form>
         )}
+        {passwordResetUserId && (
+          <form className="student-form" onSubmit={resetPassword} aria-label="Reset user password">
+            <div className="panel-heading"><div><p className="eyebrow">CREDENTIALS</p><h3>Reset password for {users.find(user => user.id === passwordResetUserId)?.username ?? 'user'}</h3></div><button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(null); setPasswordResetValue('') }}>Cancel</button></div>
+            <label>New temporary password<input type="password" autoComplete="new-password" minLength={8} value={passwordResetValue} onChange={e => setPasswordResetValue(e.target.value)} required /></label>
+            <button type="submit" disabled={actionBusy || passwordResetValue.length < 8}>{actionBusy ? 'Resetting…' : 'Reset password'}</button>
+          </form>
+        )}
         <div className="table-wrap">
           <table>
             <thead>
@@ -276,7 +287,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                   <td>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 250 }}>
                       <button type="button" className="secondary-button" onClick={() => beginEdit(user)} disabled={actionBusy}>Edit</button>
-                      <button type="button" className="secondary-button" onClick={() => void resetPassword(user)} disabled={actionBusy}>Reset password</button>
+                      <button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(user.id); setPasswordResetValue(''); setError('') }} disabled={actionBusy}>Reset password</button>
                       <button type="button" className="secondary-button" onClick={() => void toggle(user)} disabled={actionBusy}>{user.isActive ? 'Deactivate' : 'Activate'}</button>
                       {user.isActive && <button type="button" className="secondary-button" onClick={() => void removeAccess(user)} disabled={actionBusy}>Remove access</button>}
                     </div>
