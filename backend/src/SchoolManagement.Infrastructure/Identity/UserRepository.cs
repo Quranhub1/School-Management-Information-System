@@ -51,8 +51,10 @@ public sealed class UserRepository(SchoolManagementDbContext db) : IUserReposito
         user.Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
 
         var currentAssignments = await db.UserRoles.Where(ur => ur.UserId == userId).ToListAsync(cancellationToken);
-        db.UserRoles.RemoveRange(currentAssignments);
-        foreach (var role in roleEntities)
+        var desiredRoleIds = roleEntities.Select(role => role.Id).ToHashSet();
+        db.UserRoles.RemoveRange(currentAssignments.Where(assignment => !desiredRoleIds.Contains(assignment.RoleId)));
+        var currentRoleIds = currentAssignments.Select(assignment => assignment.RoleId).ToHashSet();
+        foreach (var role in roleEntities.Where(role => !currentRoleIds.Contains(role.Id)))
             db.UserRoles.Add(new UserRole { UserId = userId, RoleId = role.Id });
 
         await db.SaveChangesAsync(cancellationToken);
