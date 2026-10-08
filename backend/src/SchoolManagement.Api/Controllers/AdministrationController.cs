@@ -67,6 +67,7 @@ public sealed class AdministrationController(AdministrationService service) : Co
         return StatusCode(StatusCodes.Status501NotImplemented, new { message = "Database restore is not yet implemented. Use pg_restore for production restores." });
     }
 
-    public sealed record SetActiveRequest(bool Active);\n    public sealed record ResetPasswordRequest(string NewPassword);
+    public sealed record SetActiveRequest(bool Active);
+    public sealed record ResetPasswordRequest(string NewPassword);
     public sealed record RestoreRequest(string BackupData);
 }
