@@ -218,7 +218,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
             <fieldset style={{ border: '1px solid var(--border, #dbe2ea)', borderRadius: 10, padding: 12, margin: '12px 0' }}>
               <legend>Assigned roles (choose at least one)</legend>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 8 }}>
-                {roles.map(role => <label key={role} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {[...new Set([...roles, ...editForm.roles])].map(role => <label key={role} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input type="checkbox" checked={editForm.roles.includes(role)} onChange={e => setEditForm({ ...editForm, roles: e.target.checked ? [...editForm.roles, role] : editForm.roles.filter(item => item !== role) })} />
                   {role}
                 </label>)}
