@@ -12,6 +12,8 @@ public sealed class AdministrationService(IUserRepository users)
 {
     public Task<IReadOnlyList<UserSummary>> GetUsersAsync(CancellationToken cancellationToken = default) => users.GetUsersAsync(cancellationToken);
 
+    public Task<UserSummary?> GetUserAsync(Guid id, CancellationToken cancellationToken = default) => users.GetUserAsync(id, cancellationToken);
+
     public async Task<UserSummary> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName))
