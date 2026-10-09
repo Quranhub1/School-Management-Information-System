@@ -25,10 +25,21 @@ public sealed class AdministrationController(AdministrationService service) : Co
     public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
     {
         var currentUserId = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
-        if (Guid.TryParse(currentUserId, out var current) && current == id)
-            return BadRequest(new { message = "You cannot change your own roles from this screen." });
+        var isSelf = Guid.TryParse(currentUserId, out var current) && current == id;
         try
         {
+            if (isSelf)
+            {
+                var existingUser = await service.GetUserAsync(id, cancellationToken);
+                if (existingUser is null) return NotFound();
+                var requestedRoles = (request.Roles ?? Array.Empty<string>())
+                    .Where(role => !string.IsNullOrWhiteSpace(role))
+                    .Select(role => role.Trim())
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                if (!requestedRoles.SetEquals(existingUser.Roles))
+                    return BadRequest(new { message = "You cannot change your own roles from this screen." });
+            }
+
             var user = await service.UpdateUserAsync(id, request, cancellationToken);
             return user is null ? NotFound() : Ok(user);
         }
