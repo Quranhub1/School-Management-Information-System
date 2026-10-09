@@ -18,6 +18,8 @@ public static class InstitutionalRoles
     public const string Principal = "Principal";
     public const string Director = "Director";
     public const string Secretary = "Secretary";
+    public const string AdminSecretary = "Admin Secretary";
+    public const string RecordsPerson = "Records Person";
     public const string ResidentDirector = "ResidentDirector";
     public const string HeadOfDepartment = "HeadOfDepartment";
     public const string AssistantPrincipal = "AssistantPrincipal";
