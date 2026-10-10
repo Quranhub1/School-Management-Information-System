@@ -39,3 +39,26 @@ export function saveInventoryRegister(sectionId: string, data: Pick<InventoryReg
     body: JSON.stringify(data),
   })
 }
+
+
+export type InventoryStockAlert = {
+  sectionId: string
+  sectionName: string
+  rowId: string
+  itemName: string
+  quantity: number
+  reorderLevel: number
+  status: 'Low stock' | 'Out of stock'
+}
+
+export async function getInventoryStockAlerts(): Promise<InventoryStockAlert[]> {
+  const token = getAccessToken()
+  const response = await fetch(`${API_BASE_URL}/api/inventory/stock-alerts`, {
+    headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  })
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(body || `Inventory alerts request failed (${response.status})`)
+  }
+  return response.json() as Promise<InventoryStockAlert[]>
+}
