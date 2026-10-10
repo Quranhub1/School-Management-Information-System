@@ -16,12 +16,10 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
         var roles = new[]
         {
             InstitutionalRoles.SystemAdministrator,
-            InstitutionalRoles.Registrar,
             InstitutionalRoles.AcademicRegistrar,
             InstitutionalRoles.AdmissionsOfficer,
             InstitutionalRoles.Accountant,
             InstitutionalRoles.AssistantAccountant,
-            InstitutionalRoles.FinanceOfficer,
             InstitutionalRoles.Lecturer,
             InstitutionalRoles.ExaminationsOfficer,
             InstitutionalRoles.Student,
