@@ -29,3 +29,10 @@ public sealed record AddStudentGuardianRequest(
     string? PhoneNumber,
     string? Email,
     bool IsPrimary = false);
+
+public sealed record UpdateStudentGuardianRequest(
+    string FullName,
+    string? Relationship,
+    string? PhoneNumber,
+    string? Email,
+    bool IsPrimary = false);
