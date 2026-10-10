@@ -9,7 +9,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/academic-records")]
-[Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
+[Authorize(Policy = AuthorizationPolicies.AcademicRead)]
 public sealed class AcademicRecordsController(AcademicRecordService service, ProgressionAssessment progression) : ControllerBase
 {
     [HttpGet("students/{studentId:guid}/transcript")]
