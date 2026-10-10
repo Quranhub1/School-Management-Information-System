@@ -4,6 +4,9 @@ import {
   ACADEMIC_MANAGEMENT_ROLES,
   FINANCE_MANAGEMENT_ROLES,
   FINANCE_OPERATIONS_ROLES,
+  FINANCE_READ_ROLES,
+  STAFF_READ_ROLES,
+  STAFF_MANAGE_ROLES,
   EXAMINATION_MANAGEMENT_ROLES,
   STUDENT_MANAGEMENT_ROLES,
   INVENTORY_MANAGEMENT_ROLES,
@@ -24,7 +27,10 @@ export function canManageFinance(roles: string[]) {
   return hasAnyRole(roles, FINANCE_MANAGEMENT_ROLES)
 }
 export function canAccessFinance(roles: string[]) {
-  return hasAnyRole(roles, FINANCE_OPERATIONS_ROLES)
+  return hasAnyRole(roles, [...FINANCE_OPERATIONS_ROLES, ...FINANCE_READ_ROLES])
+}
+export function canReadOnlyFinance(roles: string[]) {
+  return hasAnyRole(roles, FINANCE_READ_ROLES) && !hasAnyRole(roles, FINANCE_OPERATIONS_ROLES)
 }
 export function isAssistantAccountant(roles: string[]) {
   return roles.includes('AssistantAccountant')
@@ -36,16 +42,16 @@ export function canManageStudents(roles: string[]) {
   return hasAnyRole(roles, STUDENT_MANAGEMENT_ROLES)
 }
 export function canManageTimetable(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'Lecturer'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'System Administrator', 'Registrar', 'AcademicRegistrar', 'Academic Registrar', 'Lecturer', 'HeadOfDepartment', 'AssistantPrincipal', 'HR Manager'])
 }
 export function canManageAdmissions(roles: string[]) {
   return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'AdmissionsOfficer'])
 }
 export function canReadStaff(roles: string[]) {
-  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'ResidentDirector', 'Lecturer'])
+  return hasAnyRole(roles, STAFF_READ_ROLES)
 }
 export function canManageStaff(roles: string[]) {
-  return hasAnyRole(roles, ['SystemAdministrator', 'ResidentDirector', 'Registrar'])
+  return hasAnyRole(roles, STAFF_MANAGE_ROLES)
 }
 export function canReadLibrary(roles: string[]) {
   return hasAnyRole(roles, ['System Administrator', 'Librarian', 'Registrar', 'Academic Registrar', 'Lecturer'])
