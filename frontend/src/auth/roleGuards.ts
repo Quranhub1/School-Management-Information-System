@@ -16,6 +16,8 @@ import {
   COMMUNICATION_ROLES,
   ATTENDANCE_ROLES,
   ATTENDANCE_READ_ROLES,
+  LIBRARY_READ_ROLES,
+  LIBRARY_MANAGE_ROLES,
 } from './roles'
 
 export function canManageAdministration(roles: string[]) {
@@ -55,16 +57,19 @@ export function canManageStaff(roles: string[]) {
   return hasAnyRole(roles, STAFF_MANAGE_ROLES)
 }
 export function canReadLibrary(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'Librarian', 'Registrar', 'Academic Registrar', 'Lecturer'])
+  return hasAnyRole(roles, LIBRARY_READ_ROLES)
 }
 export function canManageCommunication(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar'])
+  return hasAnyRole(roles, COMMUNICATION_ROLES)
 }
 export function canManageLibrary(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'Librarian'])
+  return hasAnyRole(roles, LIBRARY_MANAGE_ROLES)
 }
 export function canManageAttendance(roles: string[]) {
-  return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'Lecturer'])
+  return hasAnyRole(roles, ATTENDANCE_ROLES)
+}
+export function canReadAttendance(roles: string[]) {
+  return hasAnyRole(roles, [...ATTENDANCE_ROLES, ...ATTENDANCE_READ_ROLES])
 }
 export function canManageTransport(roles: string[]) {
   return hasAnyRole(roles, TRANSPORT_MANAGEMENT_ROLES)
