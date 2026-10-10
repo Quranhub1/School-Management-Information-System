@@ -19,8 +19,8 @@ describe('role guards — administration', () => {
   })
 
   it('denies administration to other roles', () => {
-    expect(canManageAdministration(['Registrar'])).toBe(false)
-    expect(canManageAdministration(['FinanceOfficer'])).toBe(false)
+    expect(canManageAdministration(['AcademicRegistrar'])).toBe(false)
+    expect(canManageAdministration(['Accountant'])).toBe(false)
     expect(canManageAdministration([])).toBe(false)
   })
 })
@@ -28,7 +28,7 @@ describe('role guards — administration', () => {
 describe('role guards — academics', () => {
   it('grants academic management to authorized roles', () => {
     expect(canManageAcademics(['SystemAdministrator'])).toBe(true)
-    expect(canManageAcademics(['Registrar'])).toBe(true)
+    expect(canManageAcademics(['AssistantRegistrar'])).toBe(true)
     expect(canManageAcademics(['AcademicRegistrar'])).toBe(true)
   })
 
@@ -41,19 +41,19 @@ describe('role guards — academics', () => {
 describe('role guards — finance', () => {
   it('grants finance management to authorized roles', () => {
     expect(canManageFinance(['SystemAdministrator'])).toBe(true)
-    expect(canManageFinance(['FinanceOfficer'])).toBe(true)
+    expect(canManageFinance(['Accountant'])).toBe(true)
   })
 
   it('denies finance management to non-finance roles', () => {
     expect(canManageFinance(['Lecturer'])).toBe(false)
-    expect(canManageFinance(['Registrar'])).toBe(false)
+    expect(canManageFinance(['AcademicRegistrar'])).toBe(false)
   })
 })
 
 describe('role guards — library', () => {
-  it('grants read access to librarians and registrars', () => {
+  it('grants read access to librarians and academic registrars', () => {
     expect(canReadLibrary(['Librarian'])).toBe(true)
-    expect(canReadLibrary(['Registrar'])).toBe(true)
+    expect(canReadLibrary(['AcademicRegistrar'])).toBe(true)
   })
 
   it('grants manage access only to librarian and admin', () => {
