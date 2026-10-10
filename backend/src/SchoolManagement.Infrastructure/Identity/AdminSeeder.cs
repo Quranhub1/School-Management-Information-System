@@ -58,7 +58,7 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
         // Retire obsolete roles without discarding store access: former Store Officer
         // accounts inherit Records Officer access; transport assignments are removed.
         var recordsRole = await db.Roles.SingleOrDefaultAsync(x => x.Name == InstitutionalRoles.RecordsOfficer, cancellationToken);
-        foreach (var obsoleteName in new[] { "StoreOfficer", "TransportOfficer" })
+        foreach (var obsoleteName in new[] { "StoreOfficer", "TransportOfficer", "HostelWarden" })
         {
             var obsoleteRole = await db.Roles.SingleOrDefaultAsync(x => x.Name == obsoleteName, cancellationToken);
             if (obsoleteRole is null) continue;
@@ -66,13 +66,19 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             var assignments = await db.UserRoles.Where(x => x.RoleId == obsoleteRole.Id).ToListAsync(cancellationToken);
             foreach (var assignment in assignments)
             {
-                if (obsoleteName == "StoreOfficer" && recordsRole is not null)
+                var targetRole = obsoleteName switch
+                {
+                    "StoreOfficer" => recordsRole,
+                    "HostelWarden" => await db.Roles.SingleOrDefaultAsync(x => x.Name == InstitutionalRoles.SchoolWarden, cancellationToken),
+                    _ => null
+                };
+                if (targetRole is not null)
                 {
                     var alreadyAssigned = await db.UserRoles.AnyAsync(
-                        x => x.UserId == assignment.UserId && x.RoleId == recordsRole.Id,
+                        x => x.UserId == assignment.UserId && x.RoleId == targetRole.Id,
                         cancellationToken);
                     if (!alreadyAssigned)
-                        db.UserRoles.Add(new UserRole { UserId = assignment.UserId, RoleId = recordsRole.Id });
+                        db.UserRoles.Add(new UserRole { UserId = assignment.UserId, RoleId = targetRole.Id });
                 }
                 db.UserRoles.Remove(assignment);
             }
