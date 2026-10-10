@@ -101,8 +101,8 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
 
       {role === 'Secretary' && <div className="panel" style={{ marginTop: 22, padding: 20 }}>
         <h3>Recent Admissions</h3>
-        <div className="table-wrap" style={{ marginTop: 12 }}><table className="table"><thead><tr><th>Status</th><th>Programme</th><th>Created</th></tr></thead><tbody>
-          {admissions.slice(0, 10).map(a => <tr key={a.id}><td>{a.status}</td><td>{a.programmeId}</td><td>{a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-UG') : '—'}</td></tr>)}
+        <div className="table-wrap" style={{ marginTop: 12 }}><table className="table"><thead><tr><th>Status</th><th>Programme</th><th>Decision date</th></tr></thead><tbody>
+          {admissions.slice(0, 10).map(a => <tr key={a.id}><td>{a.status}</td><td>{a.programmeId}</td><td>{a.decidedAt ? new Date(a.decidedAt).toLocaleDateString('en-UG') : '—'}</td></tr>)}
         </tbody></table></div>
       </div>}
 
