@@ -46,6 +46,105 @@ function LoginScreen({ institution }: { institution: InstitutionSettings }) {
     </main>
   )
 }
+function GlobalTableLayoutEditor() {
+  useEffect(() => {
+    const decorate = () => {
+      document.querySelectorAll<HTMLTableElement>('table:not([data-fixed-layout="true"])').forEach(table => {
+        table.querySelectorAll<HTMLTableCellElement>('thead th').forEach((cell, index) => {
+          if (cell.querySelector(':scope > .smis-column-resize-handle')) return;
+          cell.classList.add('smis-resizable-column');
+          const handle = document.createElement('span');
+          handle.className = 'smis-column-resize-handle';
+          handle.title = 'Drag to resize this column';
+          handle.setAttribute('aria-label', 'Resize column');
+          handle.setAttribute('role', 'separator');
+          handle.setAttribute('tabindex', '0');
+          handle.addEventListener('keydown', event => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+            event.preventDefault();
+            const delta = event.key === 'ArrowRight' ? 12 : -12;
+            const width = Math.max(56, cell.getBoundingClientRect().width + delta);
+            table.querySelectorAll('tr').forEach(row => {
+              const target = row.children.item(index) as HTMLElement | null;
+              if (target) { target.style.width = width + 'px'; target.style.minWidth = width + 'px'; }
+            });
+          });
+          cell.appendChild(handle);
+        });
+        table.querySelectorAll<HTMLTableRowElement>('thead tr, tbody tr').forEach(row => {
+          if (row.querySelector(':scope > .smis-row-resize-handle')) return;
+          row.classList.add('smis-resizable-row');
+          const handle = document.createElement('span');
+          handle.className = 'smis-row-resize-handle';
+          handle.title = 'Drag to resize this row';
+          handle.setAttribute('aria-label', 'Resize row');
+          handle.setAttribute('role', 'separator');
+          handle.setAttribute('tabindex', '0');
+          handle.addEventListener('keydown', event => {
+            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+            event.preventDefault();
+            const delta = event.key === 'ArrowDown' ? 8 : -8;
+            row.style.height = Math.max(24, row.getBoundingClientRect().height + delta) + 'px';
+          });
+          row.appendChild(handle);
+        });
+      });
+    };
+    decorate();
+    const observer = new MutationObserver(decorate);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    let drag: { kind: 'column' | 'row'; start: number; size: number; table: HTMLTableElement; index: number; row?: HTMLTableRowElement } | null = null;
+    const down = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      const columnHandle = target.closest<HTMLElement>('.smis-column-resize-handle');
+      const rowHandle = target.closest<HTMLElement>('.smis-row-resize-handle');
+      if (!columnHandle && !rowHandle) return;
+      const table = target.closest('table') as HTMLTableElement | null;
+      if (!table) return;
+      event.preventDefault();
+      if (columnHandle) {
+        const cell = columnHandle.parentElement as HTMLTableCellElement;
+        const index = Array.from(cell.parentElement?.children ?? []).indexOf(cell);
+        drag = { kind: 'column', start: event.clientX, size: cell.getBoundingClientRect().width, table, index };
+      } else if (rowHandle) {
+        const row = rowHandle.parentElement as HTMLTableRowElement;
+        drag = { kind: 'row', start: event.clientY, size: row.getBoundingClientRect().height, table, index: -1, row };
+      }
+      if (drag) document.body.classList.add('smis-table-resizing');
+    };
+    const move = (event: PointerEvent) => {
+      if (!drag) return;
+      if (drag.kind === 'column') {
+        const width = Math.max(56, Math.min(900, drag.size + event.clientX - drag.start));
+        drag.table.querySelectorAll('tr').forEach(row => {
+          const cell = row.children.item(drag!.index) as HTMLElement | null;
+          if (cell) { cell.style.width = width + 'px'; cell.style.minWidth = width + 'px'; }
+        });
+      } else if (drag.row) {
+        drag.row.style.height = Math.max(24, Math.min(400, drag.size + event.clientY - drag.start)) + 'px';
+      }
+    };
+    const up = () => { drag = null; document.body.classList.remove('smis-table-resizing'); };
+    document.addEventListener('pointerdown', down);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      document.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      document.body.classList.remove('smis-table-resizing');
+    };
+  }, []);
+  return null;
+}
+
 function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canAccessFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),attManage=canManageAttendance(r)||r.includes('SystemAdministrator'),att=canReadAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('Registrar')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Student'); const studentRead=r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('Director')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment'); const admissionRead=ad||r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer'); const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const storedModule=localStorage.getItem(stateKey); const [activeModule,setActiveModule]=useState<ModuleKey>(()=>{const allowed=new Set<ModuleKey>(['dashboard','administration','students','academics','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','timetable','system-administration']); return storedModule&&allowed.has(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'}); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail)setActiveModule(detail)};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
   dashboard:LayoutDashboard,
   administration:BriefcaseBusiness,
@@ -194,6 +293,7 @@ useEffect(() => {
 }, [activeModule, activeSubsection, visibleSidebarGroups]);
 
 return <main className="app-shell">
+  <GlobalTableLayoutEditor />
   <div className="institution-watermark" aria-hidden="true">
     <img src={institutionLogoUrl(institution)} alt="" />
     <span>{institution.institutionName}</span>
