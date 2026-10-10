@@ -8,7 +8,6 @@ import {
   STUDENT_MANAGEMENT_ROLES,
   INVENTORY_MANAGEMENT_ROLES,
   HOSTEL_MANAGEMENT_ROLES,
-  TRANSPORT_MANAGEMENT_ROLES,
   REPORTS_ROLES,
   COMMUNICATION_ROLES,
   ATTENDANCE_ROLES,
@@ -59,9 +58,6 @@ export function canManageLibrary(roles: string[]) {
 export function canManageAttendance(roles: string[]) {
   return hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'Lecturer'])
 }
-export function canManageTransport(roles: string[]) {
-  return hasAnyRole(roles, TRANSPORT_MANAGEMENT_ROLES)
-}
 export function canManageInventory(roles: string[]) {
   return hasAnyRole(roles, INVENTORY_MANAGEMENT_ROLES)
 }
@@ -69,7 +65,7 @@ export function canManageHostel(roles: string[]) {
   return hasAnyRole(roles, HOSTEL_MANAGEMENT_ROLES)
 }
 export function canManagePrinters(roles: string[]) {
-  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'Principal', 'Director', 'ResidentDirector', 'Secretary', 'StoreOfficer'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'Principal', 'Director', 'ResidentDirector', 'Secretary', 'Records Officer'])
 }
 export function canManageDocuments(roles: string[]) {
   return hasAnyRole(roles, STUDENT_MANAGEMENT_ROLES)
