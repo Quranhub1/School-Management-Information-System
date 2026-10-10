@@ -53,6 +53,8 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             }
         }
 
+        await db.SaveChangesAsync(cancellationToken);
+
         // Retire obsolete roles without discarding store access: former Store Officer
         // accounts inherit Records Officer access; transport assignments are removed.
         var recordsRole = await db.Roles.SingleOrDefaultAsync(x => x.Name == InstitutionalRoles.RecordsOfficer, cancellationToken);
