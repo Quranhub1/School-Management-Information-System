@@ -60,6 +60,7 @@ export function ResidentDirectorHRDashboard({ onNavigate }: { onNavigate: (modul
           <div className="summary-card"><span>Large-balance alerts</span><strong>{dashboard.outstandingBalances.length}</strong></div>
         </div>
       </div>
-    </div>}
+    </div>
+    </>}
   </section>
 }
