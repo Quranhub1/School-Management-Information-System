@@ -52,6 +52,12 @@ The table is a content standard, not a claim that all listed dashboards have alr
 6. Each shortcut must navigate to a module the user is allowed to open, and its write actions must match the user's actual permissions.
 7. Handle loading, request failure, empty data, stale data and partial endpoint failure explicitly.
 
+## Inventory low-stock warning workflow
+
+The System Administrator configures a non-negative reorder threshold per named item in the Administrator dashboard's **Stock Thresholds** tab. The threshold is stored with the database-backed inventory row, not only in browser state. An empty threshold means the system warns only when quantity reaches zero. Any item at zero is always flagged, even if no threshold has been configured.
+
+The backend exposes a role-protected stock-alert endpoint. In-app warnings are surfaced to the Records Officer and School Warden (with compatibility for the legacy Hostel Warden role). The alert identifies the item, register, current quantity, threshold and whether it is low or out of stock. These warnings are generated from saved register quantities when the dashboard loads; they are not yet push notifications, email/SMS notifications, or a background polling service. Automated authorization and end-to-end verification remains required.
+
 ## Shared table/register layout
 
 All data tables and register-style sheets should provide consistent layout behavior:
