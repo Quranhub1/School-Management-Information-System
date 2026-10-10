@@ -1,6 +1,7 @@
 export const ROLE_LABELS: Record<string, string> = {
   SystemAdministrator: 'System Administrator',
   AcademicRegistrar: 'Academic Registrar',
+  AssistantRegistrar: 'Assistant Registrar',
   AdminSecretary: 'Admin Secretary',
   'Records Officer': 'Records Officer',
   AdmissionsOfficer: 'Admissions Officer',
