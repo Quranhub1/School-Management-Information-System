@@ -279,7 +279,7 @@ return <main className="app-shell">
 {activeModule==='administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} 
 {activeModule==='students'&&(st||ad||s360||studentRead)&&<AdmissionsStudentManagement canManage={st||ad}/>} 
 {activeModule==='academics'&&(ac||lecturer)&&<AcademicManagement canManage={ac}/>}
-{activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)}/ >}
+{activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
 {activeModule==='staff'&&sr&&<StaffManagement canManage={sm}/>}
 {activeModule==='attendance'&&att&&<AttendanceManagement/>}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
