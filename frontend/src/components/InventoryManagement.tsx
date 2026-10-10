@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { WelfareInventory } from './WelfareInventory'
 
-type Tab = 'assets'|'stock'|'welfare'|'laboratories'|'suppliers'|'issuances'|'reports'
+type Tab = 'assets'|'stock'|'welfare'|'laboratories'|'departments'|'suppliers'|'issuances'|'reports'
 type Asset = {id:string;name:string;category:string;serial:string;location:string;condition:string;assigned:string;notes:string}
 type Stock = {id:string;name:string;category:string;unit:string;quantity:number;reorder:number;expiry:string;location:string}
 type Supplier = {id:string;name:string;contact:string;phone:string;email:string;category:string;status:string}
@@ -10,12 +10,12 @@ type Equipment = {id:string;name:string;category:string;assetTag:string;serial:s
 type Usage = {id:string;equipmentId:string;date:string;user:string;purpose:string;hours:number;before:string;after:string;notes:string}
 
 const LABS=[
- {id:'skills',name:'Skills Laboratory',description:'Hands-on practical training and assessment laboratory',items:'Mannequins, models, tools and training equipment'},
- {id:'pharmacy',name:'Pharmacy Laboratory',description:'Dispensing and compounding practice laboratory',items:'Pill counters, mixers, dispensing units and references'},
- {id:'computer',name:'Computer Laboratory',description:'ICT and digital learning workstation laboratory',items:'Desktops, printers, projectors and networking equipment'},
- {id:'science',name:'Science Laboratory',description:'General science practicals and experiments',items:'Microscopes, slides, reagents and Bunsen burners'},
- {id:'biomedical',name:'Biomedical Laboratory',description:'Biomedical engineering and health-science practical laboratory',items:'Patient monitors, ECG machines, centrifuges, microscopes, autoclaves and infusion pumps'},
- {id:'workshop',name:'Technical Workshop',description:'Engineering and trades practical workshop',items:'Lathes, grinders, welding stations and hand tools'}
+ {id:'ict-skills',name:'ICT Skills Lab',description:'ICT skills training and digital learning equipment',items:'Computers, monitors, keyboards, networking devices and projectors'},
+ {id:'dcm',name:'DCM Lab',description:'DCM practical training equipment and supplies',items:'Department-specific equipment, tools and consumables'},
+ {id:'pharmacy',name:'Pharmacy Lab',description:'Dispensing and compounding practice laboratory',items:'Pill counters, balances, mixers, dispensing units and references'},
+ {id:'clt',name:'CLT Lab',description:'CLT practical training equipment and supplies',items:'Department-specific equipment, tools and consumables'},
+ {id:'food-science',name:'Food Science Lab',description:'Food science practical and testing equipment',items:'Food preparation tools, testing equipment and consumables'},
+ {id:'biomedical',name:'Biomedical Engineering Lab',description:'Biomedical engineering practical laboratory',items:'Patient monitors, ECG machines, centrifuges, microscopes, autoclaves and infusion pumps'}
 ]
 const k=(x:string)=>`smis.inventory.${x}`
 const load=<T,>(x:string,d:T):T=>{try{return JSON.parse(localStorage.getItem(k(x))||'null')??d}catch{return d}}
@@ -30,13 +30,14 @@ export function InventoryManagement({canManage,initialTab='assets'}:{canManage?:
  useEffect(()=>localStorage.setItem(k('assets'),JSON.stringify(assets)),[assets]);useEffect(()=>localStorage.setItem(k('stock'),JSON.stringify(stock)),[stock])
  useEffect(()=>localStorage.setItem(k('suppliers'),JSON.stringify(suppliers)),[suppliers]);useEffect(()=>localStorage.setItem(k('issues'),JSON.stringify(issues)),[issues])
  useEffect(()=>localStorage.setItem(k('equipment'),JSON.stringify(equipment)),[equipment]);useEffect(()=>localStorage.setItem(k('usage'),JSON.stringify(usage)),[usage])
- const tabs:[Tab,string][]=[['assets','Assets'],['stock','Stock'],['welfare','Welfare'],['laboratories','Laboratories'],['suppliers','Suppliers'],['issuances','Issuances'],['reports','Reports']]
+ const tabs:[Tab,string][]=[['assets','Assets'],['stock','Stock'],['welfare','Welfare'],['laboratories','Laboratories'],['departments','Other Inventories'],['suppliers','Suppliers'],['issuances','Issuances'],['reports','Reports']]
  return <section className="panel" aria-label="Laboratories and welfare management"><div className="panel-heading"><div><span className="eyebrow">LABORATORIES & WELFARE</span><h3>Laboratories & Welfare</h3><p className="empty">Manage laboratory equipment, practical facilities, welfare commodities, daily receipts, usage and balances from one operational workspace.</p></div></div>
  <div className="library-workspace-tabs" role="tablist">{tabs.map(([x,l])=><button key={x} role="tab" aria-selected={tab===x} className={tab===x?'active':''} onClick={()=>setTab(x)}>{l}</button>)}</div>
  {tab==='assets'&&<Assets data={assets} setData={setAssets} canManage={canManage}/>}
  {tab==='stock'&&<Stocks data={stock} setData={setStock} canManage={canManage}/>}
  {tab==='welfare'&&<WelfareInventory canManage={canManage}/>}
  {tab==='laboratories'&&<Labs data={equipment} setData={setEquipment} logs={usage} setLogs={setUsage} canManage={canManage}/>}
+ {tab==='departments'&&<DepartmentInventories canManage={canManage}/>}
  {tab==='suppliers'&&<Suppliers data={suppliers} setData={setSuppliers} canManage={canManage}/>}
  {tab==='issuances'&&<Issuances data={issues} setData={setIssues} stock={stock} canManage={canManage}/>}
  {tab==='reports'&&<Reports assets={assets} stock={stock} suppliers={suppliers} issues={issues} equipment={equipment} usage={usage}/>}
@@ -152,6 +153,42 @@ function Inspection({equipment,setData,data}:{equipment:Equipment;setData:(x:Equ
 function Suppliers({data,setData,canManage}:{data:Supplier[];setData:(x:Supplier[])=>void;canManage?:boolean}){const blank:Supplier={id:'',name:'',contact:'',phone:'',email:'',category:'General',status:'Active'};const[f,setF]=useState(blank);const save=(e:FormEvent)=>{e.preventDefault();if(!f.name)return;setData(f.id?data.map(x=>x.id===f.id?f:x):[...data,{...f,id:id()}]);setF(blank)};return <Workspace><Form title={f.id?'Edit supplier':'Register supplier'} submit={save} manage={canManage}><Field l="Supplier name"><input required value={f.name} onChange={e=>setF({...f,name:e.target.value})}/></Field><Field l="Contact person"><input value={f.contact} onChange={e=>setF({...f,contact:e.target.value})}/></Field><Field l="Phone"><input value={f.phone} onChange={e=>setF({...f,phone:e.target.value})}/></Field><Field l="Email"><input type="email" value={f.email} onChange={e=>setF({...f,email:e.target.value})}/></Field><Field l="Category"><input value={f.category} onChange={e=>setF({...f,category:e.target.value})}/></Field><Field l="Status"><select value={f.status} onChange={e=>setF({...f,status:e.target.value})}><option>Active</option><option>Inactive</option><option>Suspended</option></select></Field></Form><Data title="Supplier directory"><Table head={['Supplier','Contact','Phone','Category','Status','Actions']}>{data.map(x=><tr key={x.id}><td><b>{x.name}</b><small>{x.email}</small></td><td>{x.contact}</td><td>{x.phone}</td><td>{x.category}</td><td>{x.status}</td><td><Action onClick={()=>setF(x)}>Edit</Action><Action onClick={()=>setData(data.filter(y=>y.id!==x.id))}>Delete</Action></td></tr>)}</Table></Data></Workspace>}
 
 function Issuances({data,setData,stock,canManage}:{data:Issue[];setData:(x:Issue[])=>void;stock:Stock[];canManage?:boolean}){const blank:Issue={id:'',item:stock[0]?.name||'',quantity:1,unit:stock[0]?.unit||'units',issuedTo:'',department:'',date:date(),returnDate:'',returned:false};const[f,setF]=useState(blank);const save=(e:FormEvent)=>{e.preventDefault();if(!f.item||!f.issuedTo)return;setData([...data,{...f,id:id()}]);setF({...blank,item:stock[0]?.name||'',unit:stock[0]?.unit||'units',date:date()})};return <Workspace summary={<><Metric l="Issuances" v={data.length}/><Metric l="Outstanding" v={data.filter(x=>!x.returned).length}/><Metric l="Returned" v={data.filter(x=>x.returned).length}/></>}><Form title="Record issuance" submit={save} manage={canManage}><Field l="Item"><select value={f.item} onChange={e=>{const x=stock.find(s=>s.name===e.target.value);setF({...f,item:e.target.value,unit:x?.unit||'units'})}}><option value="">Select item</option>{stock.map(x=><option key={x.id}>{x.name}</option>)}</select></Field><Field l="Quantity"><input type="number" min=".001" value={f.quantity} onChange={e=>setF({...f,quantity:Number(e.target.value)})}/></Field><Field l="Issued to"><input required value={f.issuedTo} onChange={e=>setF({...f,issuedTo:e.target.value})}/></Field><Field l="Department"><input value={f.department} onChange={e=>setF({...f,department:e.target.value})}/></Field><Field l="Issue date"><input type="date" value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></Field><Field l="Expected return"><input type="date" value={f.returnDate} onChange={e=>setF({...f,returnDate:e.target.value})}/></Field></Form><Data title="Issuance register"><Table head={['Item','Qty','Issued to','Date','Return','Action']}>{data.map(x=><tr key={x.id}><td>{x.item}</td><td>{x.quantity} {x.unit}</td><td>{x.issuedTo}<small>{x.department}</small></td><td>{x.date}</td><td>{x.returned?'Returned':x.returnDate||'No date'}</td><td><Action onClick={()=>setData(data.map(y=>y.id===x.id?{...y,returned:!y.returned}:y))}>{x.returned?'Mark outstanding':'Mark returned'}</Action></td></tr>)}</Table></Data></Workspace>}
+
+
+type DepartmentInventoryRow={id:string;section:string;item:string;quantity:number;size:string;notes:string}
+const OTHER_INVENTORY_SECTIONS=[
+ 'Admin Block','Furniture','Sports Department','Guild Department','Kitchen','Sickbay','Infrastructure Details'
+]
+function DepartmentInventories({canManage}:{canManage?:boolean}){
+ const [section,setSection]=useState(OTHER_INVENTORY_SECTIONS[0])
+ const [sections,setSections]=useState<string[]>(()=>load('other-sections',OTHER_INVENTORY_SECTIONS))
+ const [rows,setRows]=useState<DepartmentInventoryRow[]>(()=>load('other-rows',[]))
+ const [newSection,setNewSection]=useState('')
+ const blank=():DepartmentInventoryRow=>({id:'',section,item:'',quantity:0,size:'',notes:''})
+ const [form,setForm]=useState<DepartmentInventoryRow>(blank())
+ useEffect(()=>localStorage.setItem(k('other-sections'),JSON.stringify(sections)),[sections])
+ useEffect(()=>localStorage.setItem(k('other-rows'),JSON.stringify(rows)),[rows])
+ const sectionRows=rows.filter(x=>x.section===section)
+ function save(e:FormEvent){e.preventDefault();if(!canManage||!form.item.trim()||!Number.isFinite(form.quantity)||form.quantity<0)return;setRows(form.id?rows.map(x=>x.id===form.id?{...form,section}:x):[...rows,{...form,id:id(),section}]);setForm(blank())}
+ function addSection(e:FormEvent){e.preventDefault();const name=newSection.trim();if(!canManage||!name||sections.some(x=>x.toLowerCase()===name.toLowerCase()))return;setSections([...sections,name]);setSection(name);setNewSection('')}
+ return <div className="inventory-workspace">
+  <div className="panel-heading"><div><span className="eyebrow">OTHER INVENTORIES</span><h4>Department and facility inventory</h4><p className="empty">Maintain a separate editable register for each school department or facility. Item, quantity and size are recorded in a simple table; notes can capture condition, location or infrastructure details.</p></div></div>
+  <div className="inventory-card">
+   <label>Inventory section<select value={section} onChange={e=>{setSection(e.target.value);setForm(blank())}}>{sections.map(x=><option key={x} value={x}>{x}</option>)}</select></label>
+   {canManage&&<form className="inventory-form-grid" onSubmit={addSection}><Field l="Add a custom inventory section"><input value={newSection} onChange={e=>setNewSection(e.target.value)} placeholder="Enter a new department or facility"/></Field><Action type="submit">Add section</Action></form>}
+  </div>
+  <div className="inventory-card-grid">
+   <Form title={form.id?'Edit inventory item':'Add inventory item'} submit={save} manage={canManage}>
+    <Field l="Item"><input required value={form.item} onChange={e=>setForm({...form,item:e.target.value})} placeholder="Item or infrastructure asset"/></Field>
+    <Field l="Quantity"><input required type="number" min="0" step="any" value={form.quantity} onChange={e=>setForm({...form,quantity:Number(e.target.value)})}/></Field>
+    <Field l="Size"><input value={form.size} onChange={e=>setForm({...form,size:e.target.value})} placeholder="e.g. medium, 2m × 1m, 20L"/></Field>
+    <Field l="Notes / details" full><textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="Condition, location, model, maintenance needs, etc."/></Field>
+    {form.id&&<Action onClick={()=>setForm(blank())}>Cancel edit</Action>}
+   </Form>
+   <Data title={section+' register'}><Table head={['Item','Qty','Size','Notes / details','Actions']}>{sectionRows.map(x=><tr key={x.id}><td><b>{x.item}</b></td><td>{x.quantity}</td><td>{x.size||'—'}</td><td>{x.notes||'—'}</td><td>{canManage&&<><Action onClick={()=>setForm(x)}>Edit</Action><Action onClick={()=>setRows(rows.filter(y=>y.id!==x.id))}>Delete</Action></>}</td></tr>)}</Table>{sectionRows.length===0&&<p className="empty">No items recorded in this section yet. {canManage?'Use the form to add the first item.':''}</p>}</Data>
+  </div>
+ </div>
+}
 
 function Reports({assets,stock,suppliers,issues,equipment,usage}:{assets:Asset[];stock:Stock[];suppliers:Supplier[];issues:Issue[];equipment:Equipment[];usage:Usage[]}){return <Workspace><div className="inventory-summary-grid"><Metric l="Assets" v={assets.length}/><Metric l="Stock items" v={stock.length}/><Metric l="Suppliers" v={suppliers.length}/><Metric l="Outstanding issues" v={issues.filter(x=>!x.returned).length}/><Metric l="Lab equipment" v={equipment.length}/><Metric l="Equipment hours" v={usage.reduce((a,x)=>a+x.hours,0)}/></div><Data title="Laboratory utilization"><Table head={['Laboratory','Equipment','Usage records','Hours']}>{LABS.map(l=><tr key={l.id}><td><b>{l.name}</b></td><td>{equipment.filter(x=>x.location===l.name).length}</td><td>{usage.filter(x=>equipment.find(e=>e.id===x.equipmentId)?.location===l.name).length}</td><td>{usage.filter(x=>equipment.find(e=>e.id===x.equipmentId)?.location===l.name).reduce((a,x)=>a+x.hours,0)}</td></tr>)}</Table></Data><Data title="Stock alerts"><Table head={['Item','On hand','Reorder','Status']}>{stock.filter(x=>x.quantity<=x.reorder).map(x=><tr key={x.id}><td>{x.name}</td><td>{x.quantity} {x.unit}</td><td>{x.reorder}</td><td><span className="stock-badge empty-stock">Low stock</span></td></tr>)}</Table></Data></Workspace>}
 
