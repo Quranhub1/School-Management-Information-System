@@ -5,8 +5,8 @@ import { type InstitutionSettings } from '../api/institutionSettings'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 
-const roles = ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'AdmissionsOfficer', 'Accountant', 'AssistantAccountant', 'FinanceOfficer', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'Principal', 'Director', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'Receptionist', 'AssistantPrincipal']
-const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['Registrar'] }
+const roles = ['SystemAdministrator', 'AcademicRegistrar', 'AdmissionsOfficer', 'Accountant', 'AssistantAccountant', 'Lecturer', 'ExaminationsOfficer', 'Student', 'StoreOfficer', 'HostelWarden', 'TransportOfficer', 'Principal', 'Director', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'Receptionist', 'AssistantPrincipal', 'Admin Secretary', 'Records Officer', 'Librarian', 'HR Manager']
+const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['AcademicRegistrar'] }
 
 type AdminTab = 'users' | 'offices' | 'settings'
 
@@ -36,10 +36,8 @@ const OFFICES: Office[] = [
 
 const ROLE_COLORS: Record<string, string> = {
   SystemAdministrator: '#1e40af',
-  Registrar: '#059669',
   AcademicRegistrar: '#7c3aed',
   AdmissionsOfficer: '#2563eb',
-  FinanceOfficer: '#f97316',
   Lecturer: '#2563eb',
   ExaminationsOfficer: '#dc2626',
   Student: '#78716c',
