@@ -18,7 +18,7 @@ public static class ModuleAccess
             [InstitutionalModules.Finance] = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.Principal, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Secretary],
             [InstitutionalModules.Staff] = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Principal, InstitutionalRoles.ResidentDirector, InstitutionalRoles.AssistantPrincipal],
             [InstitutionalModules.Reports] = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Principal, InstitutionalRoles.ResidentDirector, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.Secretary],
-            [InstitutionalModules.Users] = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Principal],
-            [InstitutionalModules.Settings] = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Principal]
+            [InstitutionalModules.Users] = [InstitutionalRoles.SystemAdministrator],
+            [InstitutionalModules.Settings] = [InstitutionalRoles.SystemAdministrator]
         };
 }
