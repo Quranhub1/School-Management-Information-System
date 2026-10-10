@@ -8,6 +8,91 @@ import { listPayroll } from '../api/payroll'
 import { InventoryStockSettings } from './InventoryStockSettings'
 
 type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring' | 'stock-settings'
+type ChartSegment = { label: string; value: number; color: string; displayValue?: string }
+
+const chartColors = {
+  teal: '#0d9488',
+  blue: '#3b82f6',
+  amber: '#f59e0b',
+  purple: '#8b5cf6',
+  red: '#ef4444',
+  gray: '#cbd5e1',
+  green: '#16a34a',
+}
+
+const numberFormat = new Intl.NumberFormat('en-UG')
+const moneyFormat = (value: number) => `UGX ${numberFormat.format(Math.round(value || 0))}`
+
+function DonutChart({
+  title,
+  description,
+  segments,
+  centerValue,
+  centerCaption,
+}: {
+  title: string
+  description: string
+  segments: ChartSegment[]
+  centerValue: string
+  centerCaption: string
+}) {
+  const radius = 39
+  const circumference = 2 * Math.PI * radius
+  const safeSegments = segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) }))
+  const total = safeSegments.reduce((sum, segment) => sum + segment.value, 0)
+  let offset = 0
+
+  return (
+    <article className="admin-chart-card">
+      <div className="admin-chart-heading">
+        <div>
+          <h3>{title}</h3>
+          <p>{description}</p>
+        </div>
+      </div>
+      <div className="admin-chart-body">
+        <div className="admin-donut-wrap" role="img" aria-label={`${title}: ${safeSegments.map(s => `${s.label} ${s.value}`).join(', ')}`}>
+          <svg className="admin-donut" viewBox="0 0 100 100" aria-hidden="true">
+            <circle className="admin-donut-track" cx="50" cy="50" r={radius} />
+            {total > 0 ? safeSegments.filter(segment => segment.value > 0).map(segment => {
+              const length = (segment.value / total) * circumference
+              const dashOffset = offset
+              offset += length
+              return (
+                <circle
+                  key={segment.label}
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  fill="none"
+                  stroke={segment.color}
+                  strokeWidth="12"
+                  strokeDasharray={`${length} ${circumference - length}`}
+                  strokeDashoffset={-dashOffset}
+                  transform="rotate(-90 50 50)"
+                  strokeLinecap="butt"
+                />
+              )
+            }) : null}
+          </svg>
+          <div className="admin-donut-center">
+            <strong>{centerValue}</strong>
+            <span>{centerCaption}</span>
+          </div>
+        </div>
+        <ul className="admin-chart-legend">
+          {safeSegments.map(segment => (
+            <li key={segment.label}>
+              <span className="admin-legend-label"><i style={{ background: segment.color }} />{segment.label}</span>
+              <strong>{segment.displayValue ?? numberFormat.format(segment.value)}</strong>
+            </li>
+          ))}
+          {total === 0 && <li className="admin-chart-empty">No records to display</li>}
+        </ul>
+      </div>
+    </article>
+  )
+}
 
 export function AdminDashboard() {
   const session = getSession()
@@ -19,7 +104,7 @@ export function AdminDashboard() {
   const [students, setStudents] = useState<{ total: number; active: number }>({ total: 0, active: 0 })
   const [staff, setStaff] = useState<{ total: number; active: number }>({ total: 0, active: 0 })
   const [finance, setFinance] = useState<{ totalBilled: number; totalPaid: number; outstanding: number; invoices: number }>({ totalBilled: 0, totalPaid: 0, outstanding: 0, invoices: 0 })
-  const [payroll, setPayroll] = useState<{ totalPaid: number; pending: number }>({ totalPaid: 0, pending: 0 })
+  const [payroll, setPayroll] = useState<{ totalPaid: number; paid: number; pending: number; other: number }>({ totalPaid: 0, paid: 0, pending: 0, other: 0 })
 
   const [studentSearch, setStudentSearch] = useState('')
   const [studentResults, setStudentResults] = useState<{ id: string; studentNumber: string; name: string; status: string }[]>([])
@@ -27,7 +112,8 @@ export function AdminDashboard() {
   const [staffResults, setStaffResults] = useState<{ id: string; staffNumber: string; name: string; department: string; status: string }[]>([])
 
   async function loadMetrics() {
-    setLoading(true); setError('')
+    setLoading(true)
+    setError('')
     try {
       const [usersRes, studentsRes, staffRes, invoicesRes, payrollRes] = await Promise.all([
         getUsers(),
@@ -43,21 +129,24 @@ export function AdminDashboard() {
       })
       setStudents({ total: studentsRes.length, active: studentsRes.filter(s => s.status === 'Active').length })
       setStaff({ total: staffRes.length, active: staffRes.filter(s => s.isActive).length })
-      const totalBilled = invoicesRes.reduce((sum, inv) => sum + inv.amount, 0)
-      const totalPaid = invoicesRes.reduce((sum, inv) => sum + inv.paidAmount, 0)
-      setFinance({
-        totalBilled,
-        totalPaid,
-        outstanding: totalBilled - totalPaid,
-        invoices: invoicesRes.length,
-      })
+      const totalBilled = invoicesRes.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0)
+      const totalPaid = invoicesRes.reduce((sum, inv) => sum + (Number(inv.paidAmount) || 0), 0)
+      const outstanding = invoicesRes.reduce((sum, inv) => sum + (Number.isFinite(Number(inv.balance)) ? Math.max(0, Number(inv.balance)) : Math.max(0, (Number(inv.amount) || 0) - (Number(inv.paidAmount) || 0))), 0)
+      setFinance({ totalBilled, totalPaid, outstanding, invoices: invoicesRes.length })
       const payrollRecords = payrollRes as { status?: string; netPay?: number }[]
+      const paidRecords = payrollRecords.filter(p => (p.status || '').toLowerCase() === 'paid')
+      const pendingRecords = payrollRecords.filter(p => (p.status || '').toLowerCase() === 'pending')
       setPayroll({
-        totalPaid: payrollRecords.filter(p => p.status === 'Paid').reduce((sum, p) => sum + (p.netPay || 0), 0),
-        pending: payrollRecords.filter(p => p.status === 'Pending').length,
+        totalPaid: paidRecords.reduce((sum, p) => sum + (Number(p.netPay) || 0), 0),
+        paid: paidRecords.length,
+        pending: pendingRecords.length,
+        other: payrollRecords.length - paidRecords.length - pendingRecords.length,
       })
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load dashboard data.') }
-    finally { setLoading(false) }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load dashboard data.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { void loadMetrics() }, [])
@@ -92,17 +181,45 @@ export function AdminDashboard() {
     { key: 'stock-settings', label: 'Stock Thresholds' },
   ]
 
+  const studentSegments: ChartSegment[] = [
+    { label: 'Active', value: students.active, color: chartColors.teal },
+    { label: 'Inactive / other', value: Math.max(0, students.total - students.active), color: chartColors.gray },
+  ]
+  const staffSegments: ChartSegment[] = [
+    { label: 'Active', value: staff.active, color: chartColors.green },
+    { label: 'Inactive', value: Math.max(0, staff.total - staff.active), color: chartColors.gray },
+  ]
+  const userSegments: ChartSegment[] = [
+    { label: 'Active', value: users.active, color: chartColors.blue },
+    { label: 'Inactive', value: Math.max(0, users.total - users.active), color: chartColors.gray },
+  ]
+  const feeSegments: ChartSegment[] = [
+    { label: 'Collected', value: Math.max(0, finance.totalPaid), color: chartColors.teal, displayValue: moneyFormat(finance.totalPaid) },
+    { label: 'Outstanding', value: Math.max(0, finance.outstanding), color: chartColors.amber, displayValue: moneyFormat(finance.outstanding) },
+  ]
+  const payrollSegments: ChartSegment[] = [
+    { label: 'Paid', value: payroll.paid, color: chartColors.green },
+    { label: 'Pending', value: payroll.pending, color: chartColors.amber },
+    { label: 'Other statuses', value: payroll.other, color: chartColors.purple },
+  ]
+
   return (
-    <section className="panel" aria-label="Administrator dashboard">
-      <div className="panel-heading">
+    <section className="panel admin-dashboard" aria-label="Administrator dashboard">
+      <div className="panel-heading admin-dashboard-heading">
         <div>
-          <p className="eyebrow">Administrator</p>
+          <p className="eyebrow">SYSTEM ADMINISTRATION</p>
           <h2>Welcome, {session?.username ?? 'Admin'}</h2>
+          <p className="admin-dashboard-subtitle">A live overview of school operations and key records.</p>
         </div>
-        <span className="status">{new Date().toLocaleDateString('en-UG')}</span>
+        <div className="admin-dashboard-heading-actions">
+          <span className="admin-dashboard-date">{new Date().toLocaleDateString('en-UG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          <button className="admin-refresh-button" type="button" onClick={() => void loadMetrics()} disabled={loading}>
+            <span aria-hidden="true">↻</span> {loading ? 'Refreshing…' : 'Refresh data'}
+          </button>
+        </div>
       </div>
 
-      <div className="library-workspace-tabs" role="tablist" aria-label="Admin sections" style={{ marginBottom: 18 }}>
+      <div className="library-workspace-tabs admin-dashboard-tabs" role="tablist" aria-label="Admin sections">
         {tabs.map(t => (
           <button key={t.key} role="tab" aria-selected={tab === t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)}>
             {t.label}
@@ -110,42 +227,61 @@ export function AdminDashboard() {
         ))}
       </div>
 
-      {error && <div className="error" role="alert">{error}</div>}
+      {error && <div className="error admin-dashboard-error" role="alert"><strong>Dashboard data could not be loaded.</strong><span>{error}</span><button type="button" onClick={() => void loadMetrics()}>Try again</button></div>}
 
       {tab === 'overview' && (
-        <div>
-          <div className="summary-grid" style={{ marginBottom: 22 }}>
-            <div className="summary-card"><span>Students</span><strong>{students.total}</strong></div>
-            <div className="summary-card"><span>Active Students</span><strong style={{ color: '#059669' }}>{students.active}</strong></div>
-            <div className="summary-card"><span>Staff</span><strong>{staff.total}</strong></div>
-            <div className="summary-card"><span>Active Staff</span><strong style={{ color: '#059669' }}>{staff.active}</strong></div>
-            <div className="summary-card"><span>Users</span><strong>{users.total}</strong></div>
-            <div className="summary-card"><span>Active Users</span><strong style={{ color: '#059669' }}>{users.active}</strong></div>
-            <div className="summary-card"><span>Revenue</span><strong>UGX {finance.totalPaid.toLocaleString()}</strong></div>
-            <div className="summary-card"><span>Outstanding</span><strong style={{ color: finance.outstanding > 0 ? '#dc2626' : '#059669' }}>UGX {finance.outstanding.toLocaleString()}</strong></div>
+        <div className="admin-dashboard-content">
+          {loading && <p className="admin-dashboard-loading" role="status">Updating school metrics…</p>}
+          <div className="admin-kpi-grid">
+            <div className="admin-kpi-card"><span className="admin-kpi-icon teal">ST</span><div><span>Students</span><strong>{numberFormat.format(students.total)}</strong><small>{numberFormat.format(students.active)} active</small></div></div>
+            <div className="admin-kpi-card"><span className="admin-kpi-icon green">SF</span><div><span>Staff members</span><strong>{numberFormat.format(staff.total)}</strong><small>{numberFormat.format(staff.active)} active</small></div></div>
+            <div className="admin-kpi-card"><span className="admin-kpi-icon blue">US</span><div><span>System users</span><strong>{numberFormat.format(users.total)}</strong><small>{numberFormat.format(users.active)} active accounts</small></div></div>
+            <div className="admin-kpi-card"><span className="admin-kpi-icon amber">UGX</span><div><span>Fees collected</span><strong>{moneyFormat(finance.totalPaid)}</strong><small>{numberFormat.format(finance.invoices)} invoices</small></div></div>
           </div>
 
-          <div className="card" style={{ marginBottom: 20 }}>
-            <h3>Quick Actions</h3>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10 }}>
-              <button className="btn" onClick={() => setTab('students')}>Search Students</button>
-              <button className="btn" onClick={() => setTab('staff')}>Search Staff</button>
-              <button className="btn" onClick={() => setTab('finance')}>View Finance</button>
-              <button className="btn btn-secondary" onClick={() => setTab('monitoring')}>System Monitoring</button>
+          <div className="admin-section-title">
+            <div><h3>School at a glance</h3><p>Colour-coded breakdowns of the latest records returned by SMIS.</p></div>
+            <span className="admin-data-note"><i /> Based on loaded records</span>
+          </div>
+          <div className="admin-charts-grid">
+            <DonutChart title="Student status" description="Active compared with other statuses" segments={studentSegments} centerValue={numberFormat.format(students.total)} centerCaption="students" />
+            <DonutChart title="Staff status" description="Current active staff records" segments={staffSegments} centerValue={numberFormat.format(staff.total)} centerCaption="staff" />
+            <DonutChart title="User accounts" description="Active and inactive accounts" segments={userSegments} centerValue={numberFormat.format(users.total)} centerCaption="accounts" />
+            <DonutChart title="Fee collection" description="Collected fees compared with outstanding" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
+            <DonutChart title="Payroll records" description="Paid, pending, and other statuses" segments={payrollSegments} centerValue={numberFormat.format(payroll.paid + payroll.pending + payroll.other)} centerCaption="records" />
+          </div>
+
+          <div className="admin-dashboard-bottom-grid">
+            <div className="admin-dashboard-action-card">
+              <div><h3>Quick actions</h3><p>Jump directly to common administrative tasks.</p></div>
+              <div className="admin-quick-actions">
+                <button type="button" onClick={() => setTab('students')}>Search students <span>→</span></button>
+                <button type="button" onClick={() => setTab('staff')}>Search staff <span>→</span></button>
+                <button type="button" onClick={() => setTab('finance')}>Review finance <span>→</span></button>
+                <button type="button" onClick={() => setTab('monitoring')}>System monitoring <span>→</span></button>
+              </div>
+            </div>
+            <div className="admin-dashboard-action-card admin-attention-card">
+              <div><h3>Needs attention</h3><p>Items that may need a follow-up.</p></div>
+              <div className="admin-attention-list">
+                <div><span className="admin-attention-dot amber" /><span>Outstanding fees</span><strong>{moneyFormat(finance.outstanding)}</strong></div>
+                <div><span className="admin-attention-dot purple" /><span>Pending payroll</span><strong>{numberFormat.format(payroll.pending)}</strong></div>
+                <div><span className="admin-attention-dot gray" /><span>Inactive user accounts</span><strong>{numberFormat.format(Math.max(0, users.total - users.active))}</strong></div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {tab === 'users' && (
-        <div className="table-wrap">
+        <div className="table-wrap admin-tab-content">
           <h3>All Users</h3>
-          {loading ? <p className="empty">Loading users…</p> : <p className="empty">{users.total} total users, {users.active} active, {users.admins} administrators</p>}
+          {loading ? <p className="empty">Loading users…</p> : <p className="empty">{users.total} total users, {users.active} active, {users.admins} system administrators</p>}
         </div>
       )}
 
       {tab === 'students' && (
-        <div>
+        <div className="admin-tab-content">
           <form className="student-form" onSubmit={searchStudent} style={{ marginBottom: 22 }}>
             <h3>Student Search</h3>
             <div className="form-row">
@@ -163,11 +299,12 @@ export function AdminDashboard() {
               </table>
             </div>
           )}
+          {!studentResults.length && <p className="admin-search-hint">Search by student number, first name, or last name.</p>}
         </div>
       )}
 
       {tab === 'staff' && (
-        <div>
+        <div className="admin-tab-content">
           <form className="student-form" onSubmit={searchStaff} style={{ marginBottom: 22 }}>
             <h3>Staff Search</h3>
             <div className="form-row">
@@ -185,32 +322,33 @@ export function AdminDashboard() {
               </table>
             </div>
           )}
+          {!staffResults.length && <p className="admin-search-hint">Search by staff number, first name, or last name.</p>}
         </div>
       )}
 
       {tab === 'finance' && (
-        <div>
-          <div className="summary-grid" style={{ marginBottom: 22 }}>
-            <div className="summary-card"><span>Total Billed</span><strong>UGX {finance.totalBilled.toLocaleString()}</strong></div>
-            <div className="summary-card"><span>Total Paid</span><strong style={{ color: '#059669' }}>UGX {finance.totalPaid.toLocaleString()}</strong></div>
-            <div className="summary-card"><span>Outstanding</span><strong style={{ color: finance.outstanding > 0 ? '#dc2626' : '#059669' }}>UGX {finance.outstanding.toLocaleString()}</strong></div>
-            <div className="summary-card"><span>Invoices</span><strong>{finance.invoices}</strong></div>
+        <div className="admin-tab-content">
+          <div className="admin-kpi-grid admin-finance-kpis">
+            <div className="admin-kpi-card"><span className="admin-kpi-icon blue">BL</span><div><span>Total billed</span><strong>{moneyFormat(finance.totalBilled)}</strong></div></div>
+            <div className="admin-kpi-card"><span className="admin-kpi-icon teal">PD</span><div><span>Total paid</span><strong>{moneyFormat(finance.totalPaid)}</strong></div></div>
+            <div className="admin-kpi-card"><span className="admin-kpi-icon amber">OS</span><div><span>Outstanding</span><strong>{moneyFormat(finance.outstanding)}</strong></div></div>
+            <div className="admin-kpi-card"><span className="admin-kpi-icon purple">IN</span><div><span>Invoices</span><strong>{numberFormat.format(finance.invoices)}</strong></div></div>
           </div>
-          <p className="empty">Use the Finance module for detailed invoices, payments, and receipts.</p>
+          <DonutChart title="Fee collection overview" description="Based on invoice totals loaded from the finance API" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
+          <p className="admin-dashboard-footnote">For payment-level detail, receipts, and reconciliation, use the Finance module.</p>
         </div>
       )}
 
       {tab === 'stock-settings' && <InventoryStockSettings />}
 
       {tab === 'monitoring' && (
-        <div>
-          <div className="summary-grid" style={{ marginBottom: 22 }}>
-            <div className="summary-card"><span>System Status</span><strong style={{ color: '#059669' }}>Operational</strong></div>
-            <div className="summary-card"><span>Database</span><strong style={{ color: '#059669' }}>Connected</strong></div>
-            <div className="summary-card"><span>Payroll Paid</span><strong>UGX {payroll.totalPaid.toLocaleString()}</strong></div>
-            <div className="summary-card"><span>Payroll Pending</span><strong style={{ color: payroll.pending > 0 ? '#d97706' : '#059669' }}>{payroll.pending}</strong></div>
+        <div className="admin-tab-content">
+          <div className="admin-kpi-grid admin-monitoring-kpis">
+            <div className="admin-kpi-card"><span className="admin-kpi-icon green">PR</span><div><span>Payroll paid</span><strong>{moneyFormat(payroll.totalPaid)}</strong><small>{numberFormat.format(payroll.paid)} paid records</small></div></div>
+            <div className="admin-kpi-card"><span className="admin-kpi-icon amber">PN</span><div><span>Payroll pending</span><strong>{numberFormat.format(payroll.pending)}</strong><small>Records awaiting payment</small></div></div>
           </div>
-          <p className="empty">System monitoring and audit logs are available in the respective modules.</p>
+          <div className="admin-monitoring-notice"><strong>Health checks are not connected to this dashboard yet.</strong><span>Service and database availability are intentionally not labelled as operational until backed by a real health-check endpoint.</span></div>
+          <p className="admin-dashboard-footnote">Audit logs, backups, and detailed service checks remain in their existing administration modules.</p>
         </div>
       )}
     </section>
