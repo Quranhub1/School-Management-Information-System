@@ -610,7 +610,6 @@ This means:
 ### Pages
 - `AcademicPeriodsPage.tsx`
 - `AcademicYearsPage.tsx`
-- `ParentPortal.tsx`
 - `StreamsPage.tsx`
 - `StudentPortal.tsx`
 
@@ -852,7 +851,6 @@ Additional placeholder UI in App.tsx:
 - `transport` - "Transport module is available."
 - `attendance` - "Attendance module is available."
 - `student-portal` - Actual `StudentPortal` component
-- `parent-portal` - "Parent portal is available."
 - `teaching` - "Teaching module is available."
 
 ### Inventory Management Placeholders
@@ -984,7 +982,6 @@ Many finance endpoints exist but some features are still in roadmap (per `PROGRE
 | `Gate` (App.tsx) | Backend has `GateLogController` but App.tsx shows placeholder (actual component exists) |
 | `Audit` (App.tsx) | Backend has `AuditLogController` but App.tsx shows placeholder (actual component exists) |
 | `Payroll` (App.tsx) | Backend has `PayrollController` but App.tsx shows placeholder (actual component exists) |
-| `ParentPortal` | Backend has `StudentPortalController` but no dedicated parent portal |
 | `Teaching` (App.tsx) | No dedicated teaching workspace backend support |
 
 ---

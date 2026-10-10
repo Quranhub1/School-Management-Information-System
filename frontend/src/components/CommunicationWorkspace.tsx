@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Notices } from './Notices';
 import { InternalMessaging } from './InternalMessaging';
-import { ParentStudentNotifications } from './ParentStudentNotifications';
+import { StudentNotifications } from './StudentNotifications';
 
 type CommunicationTab = 'notices' | 'messaging' | 'notifications';
 
@@ -18,14 +18,14 @@ export function CommunicationWorkspace({ canManage }: { canManage?: boolean }) {
           Internal Messaging
         </button>
         <button role="tab" aria-selected={tab === 'notifications'} className={tab === 'notifications' ? 'active' : ''} onClick={() => setTab('notifications')}>
-          Parent / Student Notifications
+          Student Notifications
         </button>
       </div>
 
       <div id="communication-workspace-title">
         {tab === 'notices' && <Notices canManage={canManage} />}
         {tab === 'messaging' && <InternalMessaging />}
-        {tab === 'notifications' && <ParentStudentNotifications />}
+        {tab === 'notifications' && <StudentNotifications />}
       </div>
     </section>
   );

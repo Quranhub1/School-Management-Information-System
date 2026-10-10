@@ -22,7 +22,6 @@ export function RoleNavigation({ roles }: RoleNavigationProps) {
     hasAnyRole(roles, COMMUNICATION_ROLES) ? 'Communication' : null,
     roles.includes('Lecturer') ? 'Teaching' : null,
     roles.includes('Student') ? 'Student Portal' : null,
-    roles.includes('Parent') ? 'Parent Portal' : null,
     hasAnyRole(roles, ['System Administrator']) ? 'Payroll' : null,
     hasAnyRole(roles, STUDENT_MANAGEMENT_ROLES) ? 'Alumni' : null,
     hasAnyRole(roles, ACADEMIC_MANAGEMENT_ROLES) ? 'Calendar' : null,
