@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Application Form Template</title>
+<style>
+:root{--ink:#202b36;--muted:#5c6874;--line:#9aa5af;--accent:#174b66}
+*{box-sizing:border-box}body{margin:0;background:#edf1f4;color:var(--ink);font:14px/1.4 Arial,Helvetica,sans-serif}
+.toolbar{max-width:900px;margin:18px auto 10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+button,.upload-label{border:0;border-radius:6px;background:var(--accent);color:white;padding:10px 14px;font-weight:700;cursor:pointer}.secondary{background:#53616d}.page{width:min(210mm,calc(100% - 24px));min-height:297mm;margin:0 auto 24px;padding:13mm 14mm;background:white;box-shadow:0 4px 22px #182a3a20}
+header{display:grid;grid-template-columns:78px 1fr 130px;gap:12px;align-items:center;border-bottom:2px solid #344653;padding-bottom:12px}
+.badge-box{width:76px;height:76px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);overflow:hidden;font-size:10px}.badge-box img{width:100%;height:100%;object-fit:contain}
+h1{font-size:19px;letter-spacing:.4px;margin:0 0 5px;text-align:center;text-transform:uppercase}header p{margin:2px 0;text-align:center;font-size:10px;color:#46535e}.contact{font-size:9px;text-align:right;color:#46535e;overflow-wrap:anywhere}
+h2{text-align:center;text-decoration:underline;font-size:16px;margin:13px 0 15px}
+.photo-and-name{display:grid;grid-template-columns:1fr 34mm;gap:12px;align-items:start}.photo-box{height:40mm;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:11px;overflow:hidden}.photo-box img{width:100%;height:100%;object-fit:cover}
+.section-title{text-align:center;font-weight:700;text-decoration:underline;margin:13px 0 8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 14px}.field{display:flex;flex-direction:column;gap:3px;min-width:0}.field.full{grid-column:1/-1}.field label,.inline-label{font-size:11px;color:#374653}.field input,.field select,.field textarea{font:13px Arial;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:5px 3px;min-width:0;width:100%;color:#111}.field textarea{border:1px solid var(--line);min-height:35px;resize:vertical}
+.inline-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin:8px 0}.choice{display:inline-flex;gap:5px;align-items:center;font-size:12px}.choice input{accent-color:var(--accent)}.inline-row input[type=text]{border:0;border-bottom:1px solid var(--line);padding:4px;min-width:90px}
+.note{font-size:11px;color:#4c5964;margin:9px 0}.declaration{margin-top:18px;border-top:1px solid var(--line);padding-top:9px;font-size:11px}
+[contenteditable=true]{outline:1px dashed #c7d0d7;outline-offset:2px}
+@media(max-width:620px){.page{padding:18px 14px}header{grid-template-columns:58px 1fr}.badge-box{width:56px;height:56px}.contact{grid-column:1/-1;text-align:center}h1{font-size:15px}.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.toolbar{padding:0 12px}}
+@page{size:A4;margin:0}
+@media print{body{background:white;font-size:12px}.toolbar,.no-print{display:none!important}.page{width:210mm;min-height:297mm;margin:0;padding:11mm 13mm;box-shadow:none}header{grid-template-columns:72px 1fr 120px}h1{font-size:17px}.field input,.field select,.field textarea{color:#000}input,select,textarea{print-color-adjust:exact} [contenteditable=true]{outline:none}}
+</style>
+</head>
+<body>
+<div class="toolbar">
+<label class="upload-label" for="badgeUpload">Change school badge</label><input class="no-print" id="badgeUpload" type="file" accept="image/*" hidden>
+<button class="secondary" type="button" id="photoButton">Add passport photo</button><input class="no-print" id="photoUpload" type="file" accept="image/*" hidden>
+<button type="button" onclick="window.print()">Print / Save as PDF</button>
+<button class="secondary" type="button" onclick="resetForm()">Clear form</button>
+</div>
+<main class="page" id="applicationForm">
+<header>
+<div class="badge-box" id="badgeBox">School<br>badge</div>
+<div>
+<h1 contenteditable="true" aria-label="Institution name">Kampala School of Health Sciences</h1>
+<p contenteditable="true">Motto: __________________________________________</p>
+<p contenteditable="true">Address: ________________________________________</p>
+</div>
+<div class="contact" contenteditable="true">P.O. Box: __________________<br>Tel: _______________________<br>Email: _____________________<br>Website: ___________________</div>
+</header>
+<h2 contenteditable="true">APPLICATION FORM</h2>
+<div class="photo-and-name">
+<div class="field"><label for="fullName">FULL NAMES</label><input id="fullName" name="fullName" autocomplete="name"></div>
+<div class="photo-box" id="photoBox">Passport<br>photograph</div>
+</div>
+<div class="section-title">ADMISSION INFORMATION</div>
+<div class="grid">
+<div class="field"><label for="academicYear">Academic year</label><input id="academicYear" name="academicYear" placeholder="e.g. 2027"></div>
+<div class="field"><label for="intake">Intake</label><input id="intake" name="intake" placeholder="e.g. January / August"></div>
+<div class="field full"><label for="course">Course applied for</label><input id="course" name="course"></div>
+</div>
+<div class="inline-row"><span class="inline-label">Entry status:</span><label class="choice"><input type="checkbox" name="entryStatus" value="Direct"> Direct</label><label class="choice"><input type="checkbox" name="entryStatus" value="Mature"> Mature</label></div>
+<div class="inline-row"><span class="inline-label">Programme applied for:</span><label class="choice"><input type="checkbox" name="programme" value="Day"> Day</label><label class="choice"><input type="checkbox" name="programme" value="Evening"> Evening</label><label class="choice"><input type="checkbox" name="programme" value="Weekend"> Weekend</label></div>
+<div class="section-title">PERSONAL DATA</div>
+<div class="grid">
+<div class="field"><label for="firstName">First name</label><input id="firstName" name="firstName"></div>
+<div class="field"><label for="otherNames">Other names</label><input id="otherNames" name="otherNames"></div>
+<div class="field"><label for="dob">Date of birth</label><input id="dob" name="dob" type="date"></div>
+<div class="field"><label for="phone">Telephone number</label><input id="phone" name="phone" type="tel"></div>
+<div class="field"><label for="village">Home village</label><input id="village" name="village"></div>
+<div class="field"><label for="subcounty">Sub-county</label><input id="subcounty" name="subcounty"></div>
+<div class="field"><label for="county">County</label><input id="county" name="county"></div>
+<div class="field"><label for="district">District</label><input id="district" name="district"></div>
+<div class="field"><label for="email">Email</label><input id="email" name="email" type="email"></div>
+<div class="field"><label for="nationality">Nationality</label><input id="nationality" name="nationality"></div>
+<div class="field"><label for="religion">Religion (optional)</label><input id="religion" name="religion"></div>
+<div class="field"><label for="residence">Country of residence</label><input id="residence" name="residence"></div>
+</div>
+<div class="section-title">HEALTH STATUS</div>
+<div class="inline-row"><span class="inline-label">Do you have serious health conditions / diseases?</span><label class="choice"><input type="radio" name="seriousHealth" value="Yes"> Yes</label><label class="choice"><input type="radio" name="seriousHealth" value="No"> No</label></div>
+<div class="field"><label for="healthDetails">If yes, explain the condition</label><textarea id="healthDetails" name="healthDetails"></textarea></div>
+<div class="inline-row"><span class="inline-label">Are you on regular medication?</span><label class="choice"><input type="radio" name="regularMedication" value="Yes"> Yes</label><label class="choice"><input type="radio" name="regularMedication" value="No"> No</label></div>
+<div class="field"><label for="medicationDetails">If yes, what medication?</label><input id="medicationDetails" name="medicationDetails"></div>
+<div class="field" style="margin-top:9px"><label for="specialMedication">Do you require any special medication while at the institute?</label><textarea id="specialMedication" name="specialMedication"></textarea></div>
+<p class="note"><strong>Note:</strong> It is the responsibility of the student to cover such specialized medical costs and not the Institute.</p>
+<div class="declaration">
+<p><strong>Applicant declaration:</strong> I declare that the information provided in this application is true and complete to the best of my knowledge.</p>
+<div class="grid"><div class="field"><label for="signature">Applicant signature</label><input id="signature" name="signature"></div><div class="field"><label for="applicationDate">Date</label><input id="applicationDate" name="applicationDate" type="date"></div></div>
+</div>
+<p class="note no-print">Independent fillable template only. Entries are not submitted to or saved in the School Management System. Use Print / Save as PDF to keep a completed copy. Avoid leaving sensitive health information on a shared computer.</p>
+</main>
+<script>
+const badgeUpload=document.getElementById('badgeUpload');
+const photoUpload=document.getElementById('photoUpload');
+badgeUpload.addEventListener('change',()=>showImage(badgeUpload.files[0],'badgeBox','School badge'));
+document.getElementById('photoButton').addEventListener('click',()=>photoUpload.click());
+photoUpload.addEventListener('change',()=>showImage(photoUpload.files[0],'photoBox','Passport photograph'));
+function showImage(file,targetId,fallback){if(!file)return;const reader=new FileReader();reader.onload=()=>{const target=document.getElementById(targetId);target.replaceChildren();const img=document.createElement('img');img.src=reader.result;img.alt=fallback;target.appendChild(img)};reader.readAsDataURL(file)}
+function resetForm(){if(!confirm('Clear all entered application details and selected images?'))return;document.querySelectorAll('#applicationForm input').forEach(el=>{if(el.type==='checkbox'||el.type==='radio')el.checked=false;else el.value=''});document.querySelectorAll('#applicationForm textarea').forEach(el=>el.value='');document.getElementById('badgeBox').textContent='School badge';document.getElementById('photoBox').textContent='Passport photograph';document.getElementById('badgeUpload').value='';document.getElementById('photoUpload').value=''}
+</script>
+</body>
+</html>
