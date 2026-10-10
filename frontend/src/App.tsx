@@ -156,7 +156,7 @@ function canSeeSidebarItem(item:SidebarItem){
   if(item.module==='attendance') return att;
   if(item.module==='library') return lr;
   if(item.module==='health') return att || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator');
-  if(item.module==='laboratories') return inv || r.includes('HostelWarden') || r.includes('SystemAdministrator');
+  if(item.module==='laboratories') return inv || r.includes('SchoolWarden') || r.includes('SystemAdministrator');
   if(item.module==='inventory') return inv;
   if(item.module==='communication') return cm;
   if(item.module==='guild') return st || r.includes('Guild') || r.includes('SystemAdministrator');
@@ -278,7 +278,7 @@ return <main className="app-shell">
 {activeModule==='attendance'&&att&&<AttendanceManagement/>}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&(att||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
-{activeModule==='laboratories'&&(inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator'))&&<HostelManagement canManage={inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator')}/>}
+{activeModule==='laboratories'&&(inv||r.includes('SchoolWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator'))&&<HostelManagement canManage={inv||r.includes('SchoolWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator')}/>}
 {activeModule==='inventory'&&inv&&<InventoryManagement canManage={inv}/>}
 {activeModule==='communication'&&cm&&<Announcements canManage={cm}/>}
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement/>}
