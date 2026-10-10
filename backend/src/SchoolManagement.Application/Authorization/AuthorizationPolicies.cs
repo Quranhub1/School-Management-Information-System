@@ -42,7 +42,7 @@ public static class AuthorizationPolicies
         public static readonly string[] CommunicationManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Registrar, InstitutionalRoles.AcademicRegistrar];
         public static readonly string[] CommunicationRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Registrar, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.FinanceOfficer, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Lecturer, InstitutionalRoles.Student, InstitutionalRoles.StoreOfficer, InstitutionalRoles.HostelWarden, InstitutionalRoles.TransportOfficer, InstitutionalRoles.Principal, InstitutionalRoles.Secretary, InstitutionalRoles.ResidentDirector, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.AssistantPrincipal];
         public static readonly string[] StudentPortal = [InstitutionalRoles.Student];
-        public static readonly string[] ParentPortal = [InstitutionalRoles.Parent];
+        public static readonly string[] ParentPortal = [];
         public static readonly string[] Student360 = [InstitutionalRoles.Student, InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Registrar, InstitutionalRoles.AcademicRegistrar];
     }
 }
