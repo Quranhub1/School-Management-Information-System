@@ -29,7 +29,7 @@ export function ResidentDirectorHRDashboard({ onNavigate }: { onNavigate: (modul
       </div>
       <div className="panel" style={{marginTop:22,padding:20}}>
         <h3>Institution-wide read access</h3>
-        <p style={{color:'#64748b',marginTop:6}}>The Resident Director can inspect admissions and student records, academic/attendance information exposed by the authorized modules, finance visibility and institutional reports. Student, admission, finance and system edits remain denied unless a specific HR or delegated executive permission authorizes them.</p>
+        <p style={{color:'#64748b',marginTop:6}}>The HR Manager can use authorized operational modules across the institution, including staff, student records, admissions, academics, attendance, inventory and reports. Accounts & Finance is strictly read-only, and System Administration remains restricted to the System Administrator.</p>
         <div className="summary-grid" style={{marginTop:16}}>
           <div className="summary-card"><span>Student records loaded</span><strong>{students.length}</strong></div>
           <div className="summary-card"><span>Staff records loaded</span><strong>{staff.length}</strong></div>
