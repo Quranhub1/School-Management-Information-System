@@ -11,9 +11,7 @@ public static class InstitutionalRoles
     public const string Lecturer = "Lecturer";
     public const string ExaminationsOfficer = "ExaminationsOfficer";
     public const string Student = "Student";
-    public const string StoreOfficer = "StoreOfficer";
-    public const string HostelWarden = "HostelWarden";
-    public const string TransportOfficer = "TransportOfficer";
+    public const string SchoolWarden = "SchoolWarden";
     public const string Principal = "Principal";
     public const string Director = "Director";
     public const string Secretary = "Secretary";
