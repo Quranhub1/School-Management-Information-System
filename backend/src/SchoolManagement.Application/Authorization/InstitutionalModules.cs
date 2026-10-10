@@ -7,6 +7,7 @@ public static class InstitutionalModules
     public const string Students = "Students";
     public const string Academic = "Academic";
     public const string Curriculum = "Curriculum";
+    public const string Timetable = "Timetable";
     public const string Attendance = "Attendance";
     public const string Assessment = "Assessment";
     public const string Examinations = "Examinations";
