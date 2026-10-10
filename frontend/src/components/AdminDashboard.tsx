@@ -5,8 +5,9 @@ import { getStudents } from '../api/students'
 import { listStaff } from '../api/staff'
 import { getInvoices } from '../api/finance'
 import { listPayroll } from '../api/payroll'
+import { InventoryStockSettings } from './InventoryStockSettings'
 
-type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring'
+type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring' | 'stock-settings'
 
 export function AdminDashboard() {
   const session = getSession()
@@ -88,6 +89,7 @@ export function AdminDashboard() {
     { key: 'staff', label: 'Staff' },
     { key: 'finance', label: 'Finance' },
     { key: 'monitoring', label: 'Monitoring' },
+    { key: 'stock-settings', label: 'Stock Thresholds' },
   ]
 
   return (
@@ -197,6 +199,8 @@ export function AdminDashboard() {
           <p className="empty">Use the Finance module for detailed invoices, payments, and receipts.</p>
         </div>
       )}
+
+      {tab === 'stock-settings' && <InventoryStockSettings />}
 
       {tab === 'monitoring' && (
         <div>
