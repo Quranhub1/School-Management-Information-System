@@ -21,6 +21,7 @@ export interface StudentGuardian {
   studentId: string
   fullName: string
   relationship?: string | null
+  address?: string | null
   phoneNumber?: string | null
   email?: string | null
   isPrimary: boolean
@@ -29,6 +30,7 @@ export interface StudentGuardian {
 export interface GuardianInput {
   fullName: string
   relationship?: string
+  address?: string
   phoneNumber?: string
   email?: string
   isPrimary: boolean
