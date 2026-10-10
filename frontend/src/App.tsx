@@ -167,7 +167,7 @@ function canSeeSidebarItem(item:SidebarItem){
   if(item.module==='communication') return cm || r.includes('HR Manager');
   if(item.module==='guild') return st || r.includes('Guild') || r.includes('SystemAdministrator') || r.includes('HR Manager');
   if(item.module==='reports') return rp || analytics;
-  if(item.module==='system-administration') return r.includes('SystemAdministrator');
+  if(item.module==='system-administration') return r.includes('SystemAdministrator') || (!item.child && (r.includes('Principal') || r.includes('AssistantPrincipal')));
   return false;
 }
 const visibleSidebarGroups=sidebarGroups.map(group=>({
