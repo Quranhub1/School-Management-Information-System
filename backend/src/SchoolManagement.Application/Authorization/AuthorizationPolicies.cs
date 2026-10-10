@@ -11,6 +11,7 @@ public static class AuthorizationPolicies
     public const string FinanceOperations = "FinanceOperations";
     public const string ExaminationManagement = "ExaminationManagement";
     public const string AttendanceManagement = "AttendanceManagement";
+    public const string AttendanceRead = "AttendanceRead";
     public const string HostelManagement = "HostelManagement";
     public const string TransportManagement = "TransportManagement";
     public const string InventoryManagement = "InventoryManagement";
@@ -33,8 +34,9 @@ public static class AuthorizationPolicies
         public static readonly string[] FinanceOperations = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, ];
         public static readonly string[] FinanceRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Secretary, InstitutionalRoles.HrManager];
         public static readonly string[] ExaminationManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.ExaminationsOfficer];
-        public static readonly string[] AttendanceManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Lecturer, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HrManager];
-        public static readonly string[] HostelManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.HostelWarden, InstitutionalRoles.ResidentDirector];
+        public static readonly string[] AttendanceManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Lecturer, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.HrManager];
+        public static readonly string[] AttendanceRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.Lecturer, InstitutionalRoles.Principal, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.HrManager];
+        public static readonly string[] HostelManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.HostelWarden, InstitutionalRoles.ResidentDirector, InstitutionalRoles.HrManager];
         public static readonly string[] TransportManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.TransportOfficer, InstitutionalRoles.ResidentDirector];
         public static readonly string[] InventoryManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.StoreOfficer, InstitutionalRoles.RecordsOfficer, InstitutionalRoles.HrManager];
         public static readonly string[] AdmissionsManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AdmissionsOfficer, InstitutionalRoles.HrManager];
