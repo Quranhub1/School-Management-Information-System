@@ -283,7 +283,7 @@ return <main className="app-shell">
 {activeModule==='administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} 
 {activeModule==='students'&&(st||ad||s360||studentRead||admissionRead)&&<AdmissionsStudentManagement canManage={st||ad} readOnly={!st&&!ad} accessProfile={r.includes('Receptionist')?'receptionist':r.includes('Records Officer')?'records':r.includes('HeadOfDepartment')?'department':'general'} />} 
 {activeModule==='academics'&&(ac||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/> 
-{activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}}
+{activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}
 {activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
 {activeModule==='staff'&&sr&&<StaffManagement canManage={sm}/>}
 {activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} />}
