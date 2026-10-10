@@ -4,7 +4,7 @@ A comprehensive, modular and LAN-first School Management Information System (SMI
 
 ## Project status
 
-**Active development — final production-readiness and deployment verification.** The repository contains the core academic, admissions, student, assessment, attendance, finance, staff, hostel, transport, library, clinical/workplace-learning, reporting and administration capabilities. The authoritative implementation tracker is [`PROGRESS.md`](PROGRESS.md).
+**Active development — final production-readiness and deployment verification.** The repository contains the core academic, admissions, student, assessment, attendance, finance, staff, hostel, transport, library, clinical/workplace-learning, reporting and administration capabilities. The authoritative implementation tracker is [`PROGRESS.md`](PROGRESS.md). The role-specific dashboard and chart requirements are documented in [`docs/ROLE_DASHBOARDS.md`](docs/ROLE_DASHBOARDS.md).
 
 ## Complete installation
 
