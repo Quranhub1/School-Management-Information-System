@@ -148,25 +148,25 @@ const sidebarGroups:SidebarGroup[]=[
 ];
 function canSeeSidebarItem(item:SidebarItem){
   if(item.module==='dashboard') return true;
-  if(item.module==='administration') return a;
+  if(item.module==='administration') return a && !isAdminSecretary;
   if(item.module==='students') return st || ad || s360 || studentRead;
-  if(item.module==='academics') return ac || lecturer || r.includes('HeadOfDepartment');
-  if(item.module==='finance') return fi;
-  if(item.module==='staff') return sr || r.includes('HeadOfDepartment');
-  if(item.module==='attendance') return att;
-  if(item.module==='library') return lr;
-  if(item.module==='health') return att || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator');
-  if(item.module==='laboratories') return inv || r.includes('HostelWarden') || r.includes('SystemAdministrator');
-  if(item.module==='inventory') return inv;
-  if(item.module==='communication') return cm;
-  if(item.module==='guild') return st || r.includes('Guild') || r.includes('SystemAdministrator');
-  if(item.module==='reports') return rp || analytics;
-  if(item.module==='system-administration') return a;
+  if(item.module==='academics') return ac || lecturer || r.includes('HeadOfDepartment') || isAdminSecretary;
+  if(item.module==='finance') return fi && !isAdminSecretary;
+  if(item.module==='staff') return sr || r.includes('HeadOfDepartment') || isAdminSecretary;
+  if(item.module==='attendance') return att || isAdminSecretary;
+  if(item.module==='library') return lr || isAdminSecretary;
+  if(item.module==='health') return att || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator') || isAdminSecretary;
+  if(item.module==='laboratories') return inv || r.includes('HostelWarden') || r.includes('SystemAdministrator') || isAdminSecretary;
+  if(item.module==='inventory') return inv || isAdminSecretary;
+  if(item.module==='communication') return cm || isAdminSecretary;
+  if(item.module==='guild') return st || r.includes('Guild') || r.includes('SystemAdministrator') || isAdminSecretary;
+  if(item.module==='reports') return rp || analytics || isAdminSecretary;
+  if(item.module==='system-administration') return a && !isAdminSecretary;
   return false;
 }
 const visibleSidebarGroups=sidebarGroups.map(group=>({
   ...group,
-  items:group.items.filter(canSeeSidebarItem)
+  items:group.items.filter(item => !(isAdminSecretary && (item.module === 'finance' || item.label === 'Payroll' || item.module === 'administration' || item.module === 'system-administration')) && canSeeSidebarItem(item))
 })).filter(group=>group.items.length>0);
 
 useEffect(() => {
@@ -272,17 +272,17 @@ return <main className="app-shell">
   <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(moduleLabels[activeModule]||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:isAdminSecretary?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 {activeModule==='administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} 
 {activeModule==='students'&&(st||ad||s360||studentRead)&&<AdmissionsStudentManagement canManage={st||ad}/>} 
-{activeModule==='academics'&&(ac||lecturer)&&<AcademicManagement canManage={ac}/>}
+{activeModule==='academics'&&(ac||lecturer||isAdminSecretary)&&<AcademicManagement canManage={ac&&!isAdminSecretary}/>}
 {activeModule==='finance'&&fi&&<FinanceManagement/>}
-{activeModule==='staff'&&sr&&<StaffManagement canManage={sm}/>}
-{activeModule==='attendance'&&att&&<AttendanceManagement/>}
-{activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
-{activeModule==='health'&&(att||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
-{activeModule==='laboratories'&&(inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator'))&&<HostelManagement canManage={inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator')}/>}
-{activeModule==='inventory'&&inv&&<InventoryManagement canManage={inv}/>}
-{activeModule==='communication'&&cm&&<Announcements canManage={cm}/>}
-{activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement/>}
-{activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
+{activeModule==='staff'&&(sr||isAdminSecretary)&&<StaffManagement canManage={sm&&!isAdminSecretary}/>}
+{activeModule==='attendance'&&(att||isAdminSecretary)&&<AttendanceManagement/>}
+{activeModule==='library'&&(lr||isAdminSecretary)&&<LibraryManagementWorkspace canManage={lm&&!isAdminSecretary}/>}
+{activeModule==='health'&&(att||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator')||isAdminSecretary)&&<HealthRecordsManagement/>}
+{activeModule==='laboratories'&&(inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator')||isAdminSecretary)&&<HostelManagement canManage={!isAdminSecretary&&(inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator'))}/>}
+{activeModule==='inventory'&&(inv||isAdminSecretary)&&<InventoryManagement canManage={inv&&!isAdminSecretary}/>}
+{activeModule==='communication'&&(cm||isAdminSecretary)&&<Announcements canManage={cm&&!isAdminSecretary}/>}
+{activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator')||isAdminSecretary)&&<GuildManagement/>}
+{activeModule==='reports'&&(rp||analytics||isAdminSecretary)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&(rp||isAdminSecretary)&&<ReportCards canManage={rp&&!isAdminSecretary}/>}{rptTab==='receipts'&&(rp||isAdminSecretary)&&<Receipts canManage={rp&&!isAdminSecretary}/>}{rptTab==='certificates'&&(rp||isAdminSecretary)&&<CertificateManagement canManage={rp&&!isAdminSecretary}/>}{rptTab==='analytics'&&(analytics||isAdminSecretary)&&<AnalyticsDashboard/>}</div>}
 {activeModule==='system-administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} </motion.div></AnimatePresence></div></main> }
 function App(){
   return <InstitutionSettingsProvider><AppContent/></InstitutionSettingsProvider>
