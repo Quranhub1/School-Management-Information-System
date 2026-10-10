@@ -7,7 +7,7 @@ const ALLOWANCE_TYPES = ['Transport', 'Housing', 'Medical', 'Responsibility', 'A
 
 export function StaffAllowancesWorkspace() {
   const roles = getSession()?.roles ?? []
-  const isAccountant = roles.includes('Accountant') || roles.includes('SystemAdministrator') || roles.includes('FinanceOfficer')
+  const isAccountant = roles.includes('Accountant') || roles.includes('SystemAdministrator')
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [allowances, setAllowances] = useState<StaffAllowance[]>([])
   const [loading, setLoading] = useState(true)
