@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 export function StudentNotifications() {
   return (
     <section className="panel" aria-label="Student notifications">
