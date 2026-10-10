@@ -32,7 +32,6 @@ public static class AuthorizationPolicies
         public static readonly string[] ExaminationManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.ExaminationsOfficer];
         public static readonly string[] AttendanceManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Lecturer, InstitutionalRoles.AcademicRegistrar];
         public static readonly string[] HostelManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.HostelWarden, InstitutionalRoles.ResidentDirector];
-        public static readonly string[] TransportManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.TransportOfficer, InstitutionalRoles.ResidentDirector];
         public static readonly string[] InventoryManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.RecordsOfficer];
         public static readonly string[] AdmissionsManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AdmissionsOfficer];
         public static readonly string[] AdmissionsRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AdmissionsOfficer, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Secretary, InstitutionalRoles.HeadOfDepartment];
