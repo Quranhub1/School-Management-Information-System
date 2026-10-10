@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { getAdmissions, type Admission } from '../api/admissions'
 import { getStudents, type Student } from '../api/students'
 
-type Role = 'Secretary' | 'Receptionist' | 'HeadOfDepartment'
+type Role = 'AdminSecretary' | 'Secretary' | 'Receptionist' | 'HeadOfDepartment'
 
-export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavigate: (module: 'students' | 'academics' | 'staff' | 'attendance' | 'reports' | 'laboratories' | 'inventory') => void }) {
+export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavigate: (module: 'students' | 'academics' | 'staff' | 'attendance' | 'reports' | 'laboratories') => void }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [admissions, setAdmissions] = useState<Admission[]>([])
@@ -15,7 +15,7 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
     async function load() {
       setLoading(true); setError('')
       try {
-        if (role === 'Secretary') {
+        if (role === 'AdminSecretary' || role === 'Secretary') {
           const [a, s] = await Promise.all([getAdmissions(), getStudents()])
           if (!cancelled) { setAdmissions(a); setStudents(s) }
         } else if (role === 'HeadOfDepartment') {
@@ -34,8 +34,10 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
     return () => { cancelled = true }
   }, [role])
 
-  const title = role === 'Secretary' ? 'Secretary Dashboard' : role === 'Receptionist' ? 'Receptionist Dashboard' : 'Head of Department Dashboard'
-  const subtitle = role === 'Secretary'
+  const title = role === 'AdminSecretary' ? 'Admin Secretary Dashboard' : role === 'Secretary' ? 'Secretary Dashboard' : role === 'Receptionist' ? 'Receptionist Dashboard' : 'Head of Department Dashboard'
+  const subtitle = role === 'AdminSecretary'
+    ? 'Secretariat workspace for admissions visibility, student record lookup and administrative follow-up. Records are read-only.'
+    : role === 'Secretary'
     ? 'Office administration, correspondence, admissions visibility and institutional records.'
     : role === 'Receptionist'
       ? 'Front desk, visitor coordination, appointments, enquiries and controlled institutional lookup.'
@@ -49,16 +51,20 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
 
     {error && <div className="error" role="alert">{error}</div>}
     {loading ? <p className="empty">Loading authorized workspace data…</p> : <>
-      {role === 'Secretary' && <>
+      {(role === 'AdminSecretary' || role === 'Secretary') && <>
         <div className="summary-grid">
-          <div className="summary-card"><span>Total students visible</span><strong>{students.length}</strong></div>
+          <div className="summary-card"><span>Student records visible</span><strong>{students.length}</strong></div>
           <div className="summary-card"><span>Admissions visible</span><strong>{admissions.length}</strong></div>
-          <div className="summary-card"><span>Pending admissions</span><strong>{admissions.filter(x => x.status === 'Pending').length}</strong></div>
-          <div className="summary-card"><span>Accepted admissions</span><strong>{admissions.filter(x => x.status === 'Accepted').length}</strong></div>
+          <div className="summary-card"><span>Pending admissions</span><strong>{admissions.filter(x => x.status.toLowerCase() === 'pending').length}</strong></div>
+          <div className="summary-card"><span>Accepted admissions</span><strong>{admissions.filter(x => x.status.toLowerCase() === 'accepted').length}</strong></div>
         </div>
+        {role === 'AdminSecretary' && <div className="panel" style={{ marginTop: 18, padding: 18 }}>
+          <h3>Access boundaries</h3>
+          <p style={{ color: 'var(--smis-muted, #64748b)', marginTop: 6 }}>Student and admission information is for lookup and follow-up only. This dashboard does not grant permission to edit records, make admission decisions, change user accounts or access financial controls.</p>
+        </div>}
         <div className="grid-form" style={{ marginTop: 22 }}>
-          <button className="secondary-button" onClick={() => onNavigate('students')}>Student Records — read only</button>
-          <button className="secondary-button" onClick={() => onNavigate('reports')}>Administrative Reports</button>
+          <button className="secondary-button" onClick={() => onNavigate('students')}>Open Student Records — read only</button>
+          {role !== 'AdminSecretary' && <button className="secondary-button" onClick={() => onNavigate('reports')}>Administrative Reports</button>}
         </div>
       </>}
 
@@ -73,8 +79,8 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
           <h3>Front Desk Operations</h3>
           <p style={{ color: '#64748b', marginTop: 6 }}>Use the operational navigation for front-desk tasks. Student and staff information is exposed only where the assigned permission permits it.</p>
           <div className="grid-form" style={{ marginTop: 16 }}>
-            <button className="secondary-button" onClick={() => onNavigate('students')}>Student Admissions & Requirements</button>
-            <button className="secondary-button" onClick={() => onNavigate('students')}>Student Records Lookup</button>
+            <button className="secondary-button" onClick={() => onNavigate('attendance')}>Gate / Front Desk Log</button>
+            <button className="secondary-button" onClick={() => onNavigate('reports')}>Daily Front Desk Reports</button>
           </div>
         </div>
       </>}
@@ -99,7 +105,7 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
 
       {role === 'Receptionist' ? null : role === 'HeadOfDepartment' ? null : null}
 
-      {role === 'Secretary' && <div className="panel" style={{ marginTop: 22, padding: 20 }}>
+      {(role === 'AdminSecretary' || role === 'Secretary') && <div className="panel" style={{ marginTop: 22, padding: 20 }}>
         <h3>Recent Admissions</h3>
         <div className="table-wrap" style={{ marginTop: 12 }}><table className="table"><thead><tr><th>Status</th><th>Programme</th><th>Decision date</th></tr></thead><tbody>
           {admissions.slice(0, 10).map(a => <tr key={a.id}><td>{a.status}</td><td>{a.programmeId}</td><td>{a.decidedAt ? new Date(a.decidedAt).toLocaleDateString('en-UG') : '—'}</td></tr>)}
