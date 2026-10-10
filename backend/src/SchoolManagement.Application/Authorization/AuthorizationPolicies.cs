@@ -20,7 +20,6 @@ public static class AuthorizationPolicies
     public const string CommunicationRead = "CommunicationRead";
     public const string AdmissionsRead = "AdmissionsRead";
     public const string StudentPortal = "StudentPortal";
-    public const string ParentPortal = "ParentPortal";
     public const string Student360 = "Student360";
     public const string StudentRead = "StudentRead";
 
@@ -46,7 +45,6 @@ public static class AuthorizationPolicies
         public static readonly string[] CommunicationManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.HrManager];
         public static readonly string[] CommunicationRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Lecturer, InstitutionalRoles.Student, InstitutionalRoles.StoreOfficer, InstitutionalRoles.HostelWarden, InstitutionalRoles.TransportOfficer, InstitutionalRoles.Principal, InstitutionalRoles.Secretary, InstitutionalRoles.ResidentDirector, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.AssistantPrincipal];
         public static readonly string[] StudentPortal = [InstitutionalRoles.Student];
-        public static readonly string[] ParentPortal = [];
         public static readonly string[] Student360 = [InstitutionalRoles.Student, InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar];
     }
 }
