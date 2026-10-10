@@ -93,15 +93,15 @@ public sealed class InventoryRegistersController(SchoolManagementDbContext db) :
         foreach (var row in requestedRows)
         {
             previousRows.TryGetValue(row.Id, out var previous);
-            previous?.Values.TryGetValue("_reorderLevel", out var previousThreshold);
+            string? previousThreshold = null;
+            if (previous is not null)
+                previous.Values.TryGetValue("_reorderLevel", out previousThreshold);
             row.Values.TryGetValue("_reorderLevel", out var requestedThreshold);
             if (!string.Equals(NormalizeThreshold(previousThreshold), NormalizeThreshold(requestedThreshold), StringComparison.Ordinal))
                 return true;
         }
 
-        return previousRows.Values.Any(previous =>
-            !requestedRows.Any(row => row.Id == previous.Id) &&
-            !string.IsNullOrWhiteSpace(previous.Values.GetValueOrDefault("_reorderLevel")));
+        return false;
     }
 
     private static string? NormalizeThreshold(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
