@@ -55,6 +55,9 @@ public sealed class InventoryRegistersController(SchoolManagementDbContext db) :
             return BadRequest(new { message = "Every row requires an ID and cell values." });
 
         var existing = await db.InventoryRegisters.SingleOrDefaultAsync(x => x.SectionId == sectionId, ct);
+        if (!User.IsInRole(InstitutionalRoles.SystemAdministrator) && HasThresholdChanges(existing, request.Rows))
+            return Forbid();
+
         var username = User.Identity?.Name ?? "system";
         if (existing is null)
         {
@@ -79,6 +82,29 @@ public sealed class InventoryRegistersController(SchoolManagementDbContext db) :
         await db.SaveChangesAsync(ct);
         return Ok(ToDto(existing));
     }
+
+    private static bool HasThresholdChanges(InventoryRegister? existing, IReadOnlyList<InventoryRegisterRow> requestedRows)
+    {
+        var previousRows = existing is null
+            ? new Dictionary<string, InventoryRegisterRow>(StringComparer.Ordinal)
+            : (JsonSerializer.Deserialize<List<InventoryRegisterRow>>(existing.RowsJson) ?? [])
+                .ToDictionary(row => row.Id, StringComparer.Ordinal);
+
+        foreach (var row in requestedRows)
+        {
+            previousRows.TryGetValue(row.Id, out var previous);
+            previous?.Values.TryGetValue("_reorderLevel", out var previousThreshold);
+            row.Values.TryGetValue("_reorderLevel", out var requestedThreshold);
+            if (!string.Equals(NormalizeThreshold(previousThreshold), NormalizeThreshold(requestedThreshold), StringComparison.Ordinal))
+                return true;
+        }
+
+        return previousRows.Values.Any(previous =>
+            !requestedRows.Any(row => row.Id == previous.Id) &&
+            !string.IsNullOrWhiteSpace(previous.Values.GetValueOrDefault("_reorderLevel")));
+    }
+
+    private static string? NormalizeThreshold(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static InventoryRegisterDto ToDto(InventoryRegister saved) =>
         new(saved.SectionId,
