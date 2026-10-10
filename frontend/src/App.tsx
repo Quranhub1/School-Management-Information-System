@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
-import { BarChart3, BriefcaseBusiness, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
+import { BarChart3, BriefcaseBusiness, CalendarDays, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
-import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance } from './auth/roleGuards'
-import { AcademicManagement } from './components/AcademicManagement'; import { HostelManagement } from './components/HostelManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import { RoleSpecificDashboard } from './components/RoleSpecificDashboard'; import { ResidentDirectorHRDashboard } from './components/ResidentDirectorHRDashboard'; import { DirectorExecutiveDashboard } from './components/DirectorExecutiveDashboard'; import type { InstitutionSettings } from './api/institutionSettings'
+import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable } from './auth/roleGuards'
+import { AcademicManagement } from './components/AcademicManagement'; import { HostelManagement } from './components/HostelManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { InventoryStockAlerts } from './components/InventoryStockAlerts'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import { RoleSpecificDashboard } from './components/RoleSpecificDashboard'; import { ResidentDirectorHRDashboard } from './components/ResidentDirectorHRDashboard'; import { DirectorExecutiveDashboard } from './components/DirectorExecutiveDashboard'; import { PrincipalDashboard } from './components/PrincipalDashboard'; import { TimetableManagement } from './components/TimetableManagement'; import type { InstitutionSettings } from './api/institutionSettings'
 import { InstitutionSettingsProvider, useInstitutionSettings } from './components/InstitutionSettingsContext'; import './components/PrintStyles.css'
-type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'system-administration'
+type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'timetable' | 'system-administration'
 const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
 function institutionLogoUrl(settings: InstitutionSettings): string {
   const path = settings.logoPath?.trim()
@@ -46,7 +46,106 @@ function LoginScreen({ institution }: { institution: InstitutionSettings }) {
     </main>
   )
 }
-function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canAccessFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),att=canManageAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('Registrar')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Student'); const studentRead=r.includes('Director')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment'); const admissionRead=ad||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment'); const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const storedModule=localStorage.getItem(stateKey); const [activeModule,setActiveModule]=useState<ModuleKey>(()=>{const allowed=new Set<ModuleKey>(['dashboard','administration','students','academics','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','system-administration']); return storedModule&&allowed.has(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'}); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail)setActiveModule(detail)};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
+function GlobalTableLayoutEditor() {
+  useEffect(() => {
+    const decorate = () => {
+      document.querySelectorAll<HTMLTableElement>('table:not([data-fixed-layout="true"])').forEach(table => {
+        table.querySelectorAll<HTMLTableCellElement>('thead th').forEach((cell, index) => {
+          if (cell.querySelector(':scope > .smis-column-resize-handle')) return;
+          cell.classList.add('smis-resizable-column');
+          const handle = document.createElement('span');
+          handle.className = 'smis-column-resize-handle';
+          handle.title = 'Drag to resize this column';
+          handle.setAttribute('aria-label', 'Resize column');
+          handle.setAttribute('role', 'separator');
+          handle.setAttribute('tabindex', '0');
+          handle.addEventListener('keydown', event => {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+            event.preventDefault();
+            const delta = event.key === 'ArrowRight' ? 12 : -12;
+            const width = Math.max(56, cell.getBoundingClientRect().width + delta);
+            table.querySelectorAll('tr').forEach(row => {
+              const target = row.children.item(index) as HTMLElement | null;
+              if (target) { target.style.width = width + 'px'; target.style.minWidth = width + 'px'; }
+            });
+          });
+          cell.appendChild(handle);
+        });
+        table.querySelectorAll<HTMLTableRowElement>('thead tr, tbody tr').forEach(row => {
+          if (row.querySelector(':scope > .smis-row-resize-handle')) return;
+          row.classList.add('smis-resizable-row');
+          const handle = document.createElement('span');
+          handle.className = 'smis-row-resize-handle';
+          handle.title = 'Drag to resize this row';
+          handle.setAttribute('aria-label', 'Resize row');
+          handle.setAttribute('role', 'separator');
+          handle.setAttribute('tabindex', '0');
+          handle.addEventListener('keydown', event => {
+            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+            event.preventDefault();
+            const delta = event.key === 'ArrowDown' ? 8 : -8;
+            row.style.height = Math.max(24, row.getBoundingClientRect().height + delta) + 'px';
+          });
+          row.appendChild(handle);
+        });
+      });
+    };
+    decorate();
+    const observer = new MutationObserver(decorate);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    let drag: { kind: 'column' | 'row'; start: number; size: number; table: HTMLTableElement; index: number; row?: HTMLTableRowElement } | null = null;
+    const down = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      const columnHandle = target.closest<HTMLElement>('.smis-column-resize-handle');
+      const rowHandle = target.closest<HTMLElement>('.smis-row-resize-handle');
+      if (!columnHandle && !rowHandle) return;
+      const table = target.closest('table') as HTMLTableElement | null;
+      if (!table) return;
+      event.preventDefault();
+      if (columnHandle) {
+        const cell = columnHandle.parentElement as HTMLTableCellElement;
+        const index = Array.from(cell.parentElement?.children ?? []).indexOf(cell);
+        drag = { kind: 'column', start: event.clientX, size: cell.getBoundingClientRect().width, table, index };
+      } else if (rowHandle) {
+        const row = rowHandle.parentElement as HTMLTableRowElement;
+        drag = { kind: 'row', start: event.clientY, size: row.getBoundingClientRect().height, table, index: -1, row };
+      }
+      if (drag) document.body.classList.add('smis-table-resizing');
+    };
+    const move = (event: PointerEvent) => {
+      if (!drag) return;
+      if (drag.kind === 'column') {
+        const width = Math.max(56, Math.min(900, drag.size + event.clientX - drag.start));
+        drag.table.querySelectorAll('tr').forEach(row => {
+          const cell = row.children.item(drag!.index) as HTMLElement | null;
+          if (cell) { cell.style.width = width + 'px'; cell.style.minWidth = width + 'px'; }
+        });
+      } else if (drag.row) {
+        drag.row.style.height = Math.max(24, Math.min(400, drag.size + event.clientY - drag.start)) + 'px';
+      }
+    };
+    const up = () => { drag = null; document.body.classList.remove('smis-table-resizing'); };
+    document.addEventListener('pointerdown', down);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      document.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      document.body.classList.remove('smis-table-resizing');
+    };
+  }, []);
+  return null;
+}
+
+function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canAccessFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),attManage=canManageAttendance(r)||r.includes('SystemAdministrator'),att=canReadAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('Registrar')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Student'); const studentRead=r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('Director')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment'); const admissionRead=ad||r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer'); const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const storedModule=localStorage.getItem(stateKey); const [activeModule,setActiveModule]=useState<ModuleKey>(()=>{const allowed=new Set<ModuleKey>(['dashboard','administration','students','academics','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','timetable','system-administration']); return storedModule&&allowed.has(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'}); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail)setActiveModule(detail)};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
   dashboard:LayoutDashboard,
   administration:BriefcaseBusiness,
   students:UsersRound,
@@ -61,6 +160,7 @@ function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: {
   communication:Megaphone,
   guild:UsersRound,
   reports:BarChart3,
+  timetable:CalendarDays,
   'system-administration':Settings
 };
 const moduleLabels:Record<ModuleKey,string>={
@@ -78,6 +178,7 @@ const moduleLabels:Record<ModuleKey,string>={
   communication:'Announcements',
   guild:'Guild',
   reports:'Reports & Analytics',
+  timetable:'Timetables',
   'system-administration':'System Administration'
 };
 const [activeSubsection,setActiveSubsection]=useState<string|null>(null);
@@ -96,6 +197,12 @@ const userInitials = useMemo(() => {
 }, [sessionUsername]);
 
 function navigate(module:ModuleKey, subsection?:string){
+  // System Administration remains warning-only for non-administrators.
+  if (module === 'system-administration' && !r.includes('SystemAdministrator')) {
+    setActiveSubsection(null);
+    setActiveModule(module);
+    return;
+  }
   setActiveModule(module);
   setActiveSubsection(subsection??null);
   if(subsection) window.dispatchEvent(new CustomEvent('smis:navigate-subsection',{detail:{module,subsection}}));
@@ -125,6 +232,7 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Registration',module:'students',subsection:'registration',child:true},
     {label:'Records',module:'students',subsection:'records',child:true},
     {label:'Academic Management',module:'academics'},
+    {label:'Timetables',module:'timetable'},
     {label:'Classes',module:'academics',subsection:'classes',child:true},
     {label:'Courses',module:'academics',subsection:'courses',child:true},
     {label:'Health & Clinical',module:'health'},
@@ -149,19 +257,20 @@ const sidebarGroups:SidebarGroup[]=[
 function canSeeSidebarItem(item:SidebarItem){
   if(item.module==='dashboard') return true;
   if(item.module==='administration') return a;
-  if(item.module==='students') return st || ad || s360 || studentRead;
-  if(item.module==='academics') return ac || lecturer || r.includes('HeadOfDepartment');
+  if(item.module==='students') return st || ad || s360 || studentRead || admissionRead || r.includes('HR Manager') || r.includes('Records Officer');
+  if(item.module==='academics') return ac || lecturer || r.includes('HeadOfDepartment') || r.includes('HR Manager') || r.includes('AssistantPrincipal') || r.includes('Principal');
+  if(item.module==='timetable') return canReadTimetable(r);
   if(item.module==='finance') return fi;
-  if(item.module==='staff') return sr || r.includes('HeadOfDepartment');
+  if(item.module==='staff') return sr || r.includes('HeadOfDepartment') || r.includes('HR Manager') || r.includes('Records Officer');
   if(item.module==='attendance') return att;
   if(item.module==='library') return lr;
-  if(item.module==='health') return att || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator');
-  if(item.module==='laboratories') return inv || r.includes('HostelWarden') || r.includes('SystemAdministrator');
+  if(item.module==='health') return att || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator') || r.includes('HR Manager');
+  if(item.module==='laboratories') return inv || r.includes('HostelWarden') || r.includes('SystemAdministrator') || r.includes('HR Manager');
   if(item.module==='inventory') return inv;
-  if(item.module==='communication') return cm;
-  if(item.module==='guild') return st || r.includes('Guild') || r.includes('SystemAdministrator');
+  if(item.module==='communication') return cm || r.includes('HR Manager');
+  if(item.module==='guild') return st || r.includes('Guild') || r.includes('SystemAdministrator') || r.includes('HR Manager');
   if(item.module==='reports') return rp || analytics;
-  if(item.module==='system-administration') return a;
+  if(item.module==='system-administration') return r.includes('SystemAdministrator') || (!item.child && (r.includes('Principal') || r.includes('AssistantPrincipal')));
   return false;
 }
 const visibleSidebarGroups=sidebarGroups.map(group=>({
@@ -184,6 +293,7 @@ useEffect(() => {
 }, [activeModule, activeSubsection, visibleSidebarGroups]);
 
 return <main className="app-shell">
+  <GlobalTableLayoutEditor />
   <div className="institution-watermark" aria-hidden="true">
     <img src={institutionLogoUrl(institution)} alt="" />
     <span>{institution.institutionName}</span>
@@ -269,21 +379,24 @@ return <main className="app-shell">
       </div>
     </div>
   </aside>
-  <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(moduleLabels[activeModule]||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
+  <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(moduleLabels[activeModule]||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
+{activeModule==='dashboard'&&(r.includes('Records Officer')||r.includes('RecordsOfficer')||r.includes('School Warden')||r.includes('SchoolWarden')||r.includes('HostelWarden'))&&<InventoryStockAlerts/>}
 {activeModule==='administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} 
-{activeModule==='students'&&(st||ad||s360||studentRead)&&<AdmissionsStudentManagement canManage={st||ad}/>} 
-{activeModule==='academics'&&(ac||lecturer)&&<AcademicManagement canManage={ac}/>}
-{activeModule==='finance'&&fi&&<FinanceManagement/>}
+{activeModule==='students'&&(st||ad||s360||studentRead||admissionRead)&&<AdmissionsStudentManagement canManage={st||ad} readOnly={!st&&!ad} accessProfile={r.includes('Receptionist')?'receptionist':r.includes('Records Officer')?'records':r.includes('HeadOfDepartment')?'department':'general'} />} 
+{activeModule==='academics'&&(ac||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/>} 
+{activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}
+{activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
 {activeModule==='staff'&&sr&&<StaffManagement canManage={sm}/>}
-{activeModule==='attendance'&&att&&<AttendanceManagement/>}
+{activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} />}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
-{activeModule==='health'&&(att||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
+{activeModule==='health'&&(attManage||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
 {activeModule==='laboratories'&&(inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator'))&&<HostelManagement canManage={inv||r.includes('HostelWarden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator')}/>}
 {activeModule==='inventory'&&inv&&<InventoryManagement canManage={inv}/>}
 {activeModule==='communication'&&cm&&<Announcements canManage={cm}/>}
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement/>}
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
-{activeModule==='system-administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} </motion.div></AnimatePresence></div></main> }
+{activeModule==='system-administration'&&r.includes('SystemAdministrator')&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>}
+{activeModule==='system-administration'&&!r.includes('SystemAdministrator')&&<section className="panel" role="alert" aria-labelledby="system-admin-warning-title" style={{border:'1px solid #f59e0b',background:'linear-gradient(135deg,rgba(255,251,235,.98),rgba(255,247,237,.96))',color:'#78350f',padding:24}}><div style={{display:'flex',alignItems:'flex-start',gap:14}}><span aria-hidden="true" style={{fontSize:28,lineHeight:1}}>⚠</span><div><span className="eyebrow" style={{color:'#b45309'}}>RESTRICTED SECTION</span><h2 id="system-admin-warning-title" style={{marginTop:6,color:'#78350f'}}>System Administration — Access Restricted</h2><p style={{marginTop:10,fontWeight:700}}>Warning: Changes in this section can affect the entire school management system.</p><p style={{marginTop:8}}>System administration includes institution-wide settings, user access, security and critical configuration. Unauthorized changes may disrupt school operations or compromise data integrity.</p><p style={{marginTop:8}}>Your current role cannot modify these settings. Contact the System Administrator for authorized changes.</p></div></div></section>} </motion.div></AnimatePresence></div></main> }
 function App(){
   return <InstitutionSettingsProvider><AppContent/></InstitutionSettingsProvider>
 }

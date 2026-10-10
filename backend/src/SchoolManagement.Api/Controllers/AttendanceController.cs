@@ -9,10 +9,11 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/attendance")]
-[Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
+[Authorize]
 public sealed class AttendanceController(AttendanceService service, IConfiguration configuration) : ControllerBase
 {
     [HttpPost("sessions")]
+    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
     public async Task<IActionResult> OpenSession(OpenAttendanceSessionRequest request, CancellationToken cancellationToken)
     {
         try
@@ -31,6 +32,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     }
 
     [HttpPost("sessions/{attendanceSessionId:guid}/close")]
+    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
     public async Task<IActionResult> CloseSession(Guid attendanceSessionId, CancellationToken cancellationToken)
     {
         try
@@ -49,6 +51,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     }
 
     [HttpGet("sessions/{attendanceSessionId:guid}/qr")]
+    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
     public IActionResult GetRotatingQrToken(Guid attendanceSessionId)
     {
         var now = DateTimeOffset.UtcNow;
@@ -66,6 +69,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     }
 
     [HttpPost("sessions/{attendanceSessionId:guid}/qr-records")]
+    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
     public async Task<IActionResult> MarkWithQr(Guid attendanceSessionId, MarkQrAttendanceRequest request, CancellationToken cancellationToken)
     {
         if (!IsValidQrToken(attendanceSessionId, request.Token))
@@ -91,6 +95,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     }
 
     [HttpPost("sessions/{attendanceSessionId:guid}/records")]
+    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
     public async Task<IActionResult> Mark(Guid attendanceSessionId, MarkAttendanceRequest request, CancellationToken cancellationToken)
     {
         try
@@ -113,6 +118,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     }
 
     [HttpGet("students/{studentId:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.AttendanceRead)]
     public async Task<IActionResult> StudentHistory(Guid studentId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
         => Ok(await service.GetStudentHistoryAsync(studentId, from, to, cancellationToken));
 

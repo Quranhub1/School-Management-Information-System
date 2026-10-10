@@ -51,13 +51,20 @@ public sealed class AuthorizationBoundaryTests
     }
 
     [Fact]
-    public void AttendanceControllerRequiresAttendanceManagementPolicy()
+    public void AttendanceControllerRequiresAuthenticationAndManagementActionsRequireAttendancePolicy()
     {
-        var attribute = typeof(AttendanceController)
+        var controllerAttribute = typeof(AttendanceController)
             .GetCustomAttribute<AuthorizeAttribute>();
 
-        Assert.NotNull(attribute);
-        Assert.Equal(AuthorizationPolicies.AttendanceManagement, attribute!.Policy);
+        Assert.NotNull(controllerAttribute);
+        Assert.Null(controllerAttribute!.Policy);
+
+        var method = typeof(AttendanceController).GetMethod("OpenSession");
+        Assert.NotNull(method);
+        var actionAttribute = method!.GetCustomAttribute<AuthorizeAttribute>();
+
+        Assert.NotNull(actionAttribute);
+        Assert.Equal(AuthorizationPolicies.AttendanceManagement, actionAttribute!.Policy);
     }
 
     [Fact]

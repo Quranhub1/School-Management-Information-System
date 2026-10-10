@@ -32,7 +32,7 @@ const statusFor = (balance: number, billed = 0, paid = 0) => {
 
 const money = (value: number) => formatCurrency(Number(value) || 0)
 
-export function FinanceManagement() {
+export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } = {}) {
   const isAssistantAccountant = getSession()?.roles?.includes('AssistantAccountant') ?? false
   const [tab, setTab] = useState<FinanceTab>('overview')
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null)
@@ -87,6 +87,51 @@ export function FinanceManagement() {
   const collectionRate = dashboard && dashboard.totalBilled > 0
     ? Math.min(100, Math.max(0, dashboard.totalPaid / dashboard.totalBilled * 100))
     : 0
+
+  if (readOnly) {
+    return (
+      <section className="finance-workspace" aria-label="Read-only finance overview">
+        <div className="workspace-header finance-workspace-header">
+          <div>
+            <p className="eyebrow">FINANCE & ACCOUNTS · UGX · READ ONLY</p>
+            <h2>Financial Oversight</h2>
+            <p>You can review financial summaries, outstanding balances and recent payments. Transaction posting, edits, refunds, fee configuration, payroll changes and account administration are disabled for this role.</p>
+          </div>
+          <div className="page-actions">
+            <span className="status-badge">View only</span>
+            <button type="button" className="secondary-button" onClick={() => void loadOverview()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
+          </div>
+        </div>
+        {error && <div className="error" role="alert">{error}</div>}
+        {loading ? <p className="empty">Loading financial overview…</p> : (
+          <>
+            <div className="finance-kpi-grid">
+              <article className="finance-kpi finance-kpi-blue"><span>Total billed</span><strong>{dashboard ? money(dashboard.totalBilled) : '—'}</strong></article>
+              <article className="finance-kpi finance-kpi-green"><span>Total collected</span><strong>{dashboard ? money(dashboard.totalPaid) : '—'}</strong></article>
+              <article className="finance-kpi finance-kpi-blue"><span>Outstanding</span><strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong></article>
+              <article className="finance-kpi finance-kpi-green"><span>Today's collection</span><strong>{dashboard ? money(dashboard.todayCollection) : '—'}</strong></article>
+            </div>
+            <div className="panel" style={{ marginTop: 20, padding: 20 }}>
+              <h3>Outstanding Balances</h3>
+              <div className="table-wrap" style={{ marginTop: 12 }}>
+                <table className="table"><thead><tr><th>Student</th><th>Student No.</th><th>Programme</th><th>Balance</th><th>Status</th></tr></thead>
+                  <tbody>{outstanding.length === 0 ? <tr><td colSpan={5} className="empty">No outstanding balances</td></tr> : outstanding.map((item, index) => <tr key={item.studentId ?? index}><td>{item.studentName}</td><td>{item.studentNumber}</td><td>{item.programmeName}</td><td>{money(item.balance)}</td><td>{item.status}</td></tr>)}</tbody>
+                </table>
+              </div>
+            </div>
+            <div className="panel" style={{ marginTop: 20, padding: 20 }}>
+              <h3>Recent Payments</h3>
+              <div className="table-wrap" style={{ marginTop: 12 }}>
+                <table className="table"><thead><tr><th>Receipt</th><th>Student</th><th>Amount</th><th>Method</th><th>Date</th></tr></thead>
+                  <tbody>{payments.length === 0 ? <tr><td colSpan={5} className="empty">No recent payments</td></tr> : payments.map((payment, index) => <tr key={payment.id ?? index}><td>{payment.receiptNumber ?? '—'}</td><td>{payment.studentName ?? '—'}</td><td>{money(payment.amount)}</td><td>{payment.paymentMethod ?? '—'}</td><td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td></tr>)}</tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+      </section>
+    )
+  }
 
   return (
     <section className="finance-workspace" aria-label="Finance and accounting workspace">

@@ -4,6 +4,7 @@ import { StudentManagement } from './StudentManagement'
 import { AlumniManagement } from './AlumniManagement'
 
 type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'alumni'
+type AccessProfile = 'receptionist' | 'records' | 'department' | 'general'
 
 const sections: { key: Section; label: string }[] = [
   { key: 'biodata', label: 'Bio-Data & Profiling' },
@@ -17,27 +18,30 @@ const sections: { key: Section; label: string }[] = [
 
 const statuses = ['Active', 'On Clinical Attachment', 'Retake/Repeat Year', 'Discontinued', 'Deferred', 'Graduated']
 
-export function AdmissionsStudentManagement({ canManage = false }: { canManage?: boolean }) {
+export function AdmissionsStudentManagement({ canManage = false, readOnly = false, accessProfile = 'general' }: { canManage?: boolean; readOnly?: boolean; accessProfile?: AccessProfile }) {
   const [section, setSection] = useState<Section>('biodata')
   const [uhpabNumber, setUhpabNumber] = useState('')
   const [legacyRegistrationNumber, setLegacyRegistrationNumber] = useState('')
   const [indexingStatus, setIndexingStatus] = useState('Not Indexed')
   const [uvtabRegistrationNumber, setUvtabRegistrationNumber] = useState('')
   const [studentStatus, setStudentStatus] = useState(statuses[0])
-  const selected = useMemo(() => sections.find(item => item.key === section), [section])
+  const visibleSections = readOnly
+    ? sections.filter(item => accessProfile === 'receptionist' ? ['biodata', 'admissions'].includes(item.key) : accessProfile === 'department' ? item.key === 'biodata' : accessProfile === 'records' ? ['biodata', 'admissions', 'status'].includes(item.key) : ['biodata', 'admissions', 'status'].includes(item.key))
+    : sections
+  const selected = useMemo(() => visibleSections.find(item => item.key === section), [visibleSections, section])
 
   return (
     <section className="student-lifecycle-workspace">
       <header className="workspace-header">
         <div>
           <p className="eyebrow">Student Lifecycle</p>
-          <h2>Admissions & Student Management</h2>
+          <h2>{readOnly ? 'Student Records · Read-only' : 'Admissions & Student Management'}</h2>
           <p>Manage the student journey from application and screening through national indexing, enrollment, results and identity services.</p>
         </div>
       </header>
 
       <div className="student-lifecycle-tabs" role="tablist" aria-label="Admissions and student management">
-        {sections.map(item => (
+        {visibleSections.map(item => (
           <button key={item.key} className={section === item.key ? 'active' : ''} onClick={() => setSection(item.key)} role="tab" aria-selected={section === item.key}>
             {item.label}
           </button>
@@ -56,7 +60,7 @@ export function AdmissionsStudentManagement({ canManage = false }: { canManage?:
               <article className="feature-card"><strong>Next of Kin</strong><span>Maintain emergency contact and relationship details. Not exposed in the normal student portal.</span></article>
               <article className="feature-card"><strong>UNEB Records</strong><span>Capture O-Level and A-Level index numbers and pass-slip records for admissions verification.</span></article>
             </div>
-            <StudentManagement canManage={canManage} />
+            <StudentManagement canManage={canManage} readOnly={readOnly} />
           </div>
         )}
 
@@ -67,7 +71,7 @@ export function AdmissionsStudentManagement({ canManage = false }: { canManage?:
               <article className="feature-card"><strong>Eligibility checks</strong><span>Record programme-specific requirements, including Biology, Chemistry, Physics and Mathematics where applicable.</span></article>
               <article className="feature-card"><strong>Admission letters</strong><span>Generate, verify and manage provisional admission documentation.</span></article>
             </div>
-            <AdmissionsManagement />
+            <AdmissionsManagement readOnly={readOnly} />
           </div>
         )}
 

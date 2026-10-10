@@ -4,7 +4,7 @@ import { getStudents, type Student } from '../api/students'
 
 type Role = 'Secretary' | 'Receptionist' | 'HeadOfDepartment'
 
-export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavigate: (module: 'students' | 'academics' | 'staff' | 'attendance' | 'reports' | 'laboratories') => void }) {
+export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavigate: (module: 'students' | 'academics' | 'staff' | 'attendance' | 'reports' | 'laboratories' | 'inventory') => void }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [admissions, setAdmissions] = useState<Admission[]>([])
@@ -73,8 +73,8 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
           <h3>Front Desk Operations</h3>
           <p style={{ color: '#64748b', marginTop: 6 }}>Use the operational navigation for front-desk tasks. Student and staff information is exposed only where the assigned permission permits it.</p>
           <div className="grid-form" style={{ marginTop: 16 }}>
-            <button className="secondary-button" onClick={() => onNavigate('attendance')}>Gate / Front Desk Log</button>
-            <button className="secondary-button" onClick={() => onNavigate('reports')}>Daily Front Desk Reports</button>
+            <button className="secondary-button" onClick={() => onNavigate('students')}>Student Admissions & Requirements</button>
+            <button className="secondary-button" onClick={() => onNavigate('students')}>Student Records Lookup</button>
           </div>
         </div>
       </>}

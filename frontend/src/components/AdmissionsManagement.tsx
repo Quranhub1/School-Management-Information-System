@@ -3,7 +3,7 @@ import { getAdmissions, createAdmission, updateAdmission, deleteAdmission, decid
 
 const statuses = ['Pending', 'Accepted', 'Rejected']
 
-export function AdmissionsManagement() {
+export function AdmissionsManagement({ readOnly = false }: { readOnly?: boolean }) {
   const [admissions, setAdmissions] = useState<Admission[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -61,17 +61,17 @@ export function AdmissionsManagement() {
 
   return <section className="panel" aria-label="Admissions">
     <div className="panel-heading">
-      <div><span className="eyebrow">Admissions</span><h2>Admission Management</h2></div>
+      <div><span className="eyebrow">Admissions</span><h2>{readOnly ? 'Admissions · Read-only' : 'Admission Management'}</h2></div>
     </div>
     {error && <div className="error" role="alert">{error}</div>}
-    <form className="form-grid" onSubmit={submit} style={{ marginBottom: 22 }}>
+    {!readOnly && <form className="form-grid" onSubmit={submit} style={{ marginBottom: 22 }}>
       <h3>New Admission</h3>
       <input placeholder="Applicant ID" value={form.applicantId} onChange={e => setForm({ ...form, applicantId: e.target.value })} required />
       <input placeholder="Programme ID" value={form.programmeId} onChange={e => setForm({ ...form, programmeId: e.target.value })} required />
       <input placeholder="Academic Year ID" value={form.academicYearId} onChange={e => setForm({ ...form, academicYearId: e.target.value })} required />
       <input placeholder="Intake ID" value={form.intakeId} onChange={e => setForm({ ...form, intakeId: e.target.value })} required />
       <button type="submit">Create Admission</button>
-    </form>
+    </form>}
     <div className="table-wrap">
       {loading ? <p className="empty">Loading admissions…</p> : admissions.length === 0 ? <p className="empty">No admissions found.</p> : (
         <table>
@@ -81,7 +81,7 @@ export function AdmissionsManagement() {
               <th>Applicant</th>
               <th>Programme</th>
               <th>Status</th>
-              <th>Actions</th>
+              {!readOnly && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -91,10 +91,10 @@ export function AdmissionsManagement() {
                 <td>{a.applicantId.slice(0, 8)}...</td>
                 <td>{a.programmeId.slice(0, 8)}...</td>
                 <td>{a.status}</td>
-                <td>
+                {!readOnly && <td>
                   <select value={a.status} onChange={e => changeStatus(a.id, e.target.value)}>{statuses.map(s => <option key={s} value={s}>{s}</option>)}</select>
                   <button className="secondary-button" onClick={() => remove(a.id)} style={{ marginLeft: 8 }}>Delete</button>
-                </td>
+                </td>}
               </tr>
             ))}
           </tbody>

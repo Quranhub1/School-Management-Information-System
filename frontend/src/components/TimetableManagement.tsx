@@ -3,7 +3,7 @@ import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, list
 
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-export function TimetableManagement() {
+export function TimetableManagement({ readOnly = false }: { readOnly?: boolean } = {}) {
   const [entries, setEntries] = useState<TimetableEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -49,8 +49,8 @@ export function TimetableManagement() {
 
   async function remove(id: string) { try { await deactivateTimetableEntry(id); await load() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate entry.') } }
 
-  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Scheduling</p><h2>Timetable Management</h2></div><button className="secondary-button" onClick={() => setShowGenerator(!showGenerator)}>{showGenerator ? 'Hide Generator' : 'Generate Timetable'}</button></div>
-    {showGenerator && (
+  return <section className="panel"><div className="section-heading"><div><p className="eyebrow">Scheduling</p><h2>{readOnly ? 'Timetable · Read-only' : 'Timetable Management'}</h2></div>{!readOnly && <button className="secondary-button" onClick={() => setShowGenerator(!showGenerator)}>{showGenerator ? 'Hide Generator' : 'Generate Timetable'}</button>}</div>
+    {!readOnly && showGenerator && (
       <form className="management-form" onSubmit={handleGenerate} style={{ marginBottom: 18 }}>
         <label>Semester ID<input value={semesterId} onChange={e => setSemesterId(e.target.value)} placeholder="Semester GUID" required /></label>
         <button type="submit" disabled={loading}>{loading ? 'Generating…' : 'Generate'}</button>
@@ -64,8 +64,8 @@ export function TimetableManagement() {
         {generatedResult.unscheduled.length > 0 && <div><strong>Unscheduled:</strong><ul>{generatedResult.unscheduled.map((u, i) => <li key={i}>{u}</li>)}</ul></div>}
       </div>
     )}
-    <form className="management-form" onSubmit={submit}><label>Teaching group ID<input name="teachingGroupId" required /></label><label>Course ID<input name="courseId" required /></label><label>Teacher ID<input name="teacherId" required /></label><label>Day<select name="dayOfWeek">{days.map((d, i) => <option key={d} value={i}>{d}</option>)}</select></label><label>Start<input type="time" name="startTime" required /></label><label>End<input type="time" name="endTime" required /></label><label>Room<input name="room" /></label><label>Session type<input name="sessionType" /></label><button type="submit" disabled={loading}>{loading ? 'Saving…' : 'Schedule session'}</button></form>
+    {!readOnly && <form className="management-form" onSubmit={submit}><label>Teaching group ID<input name="teachingGroupId" required /></label><label>Course ID<input name="courseId" required /></label><label>Teacher ID<input name="teacherId" required /></label><label>Day<select name="dayOfWeek">{days.map((d, i) => <option key={d} value={i}>{d}</option>)}</select></label><label>Start<input type="time" name="startTime" required /></label><label>End<input type="time" name="endTime" required /></label><label>Room<input name="room" /></label><label>Session type<input name="sessionType" /></label><button type="submit" disabled={loading}>{loading ? 'Saving…' : 'Schedule session'}</button></form>}
     {error && <div className="error" role="alert">{error}</div>}
-    <div className="table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Room</th><th>Type</th><th>Group</th><th>Course</th><th>Teacher</th><th /></tr></thead><tbody>{entries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek]}</td><td>{entry.startTime.slice(0,5)}–{entry.endTime.slice(0,5)}</td><td>{entry.room ?? '—'}</td><td>{entry.sessionType ?? '—'}</td><td>{entry.teachingGroupId}</td><td>{entry.courseId}</td><td>{entry.teacherId}</td><td><button className="secondary-button" onClick={() => void remove(entry.id)}>Remove</button></td></tr>)}{entries.length === 0 && <tr><td colSpan={8} className="empty">No timetable sessions scheduled.</td></tr>}</tbody></table></div>
+    <div className="table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Room</th><th>Type</th><th>Group</th><th>Course</th><th>Teacher</th>{!readOnly && <th>Actions</th>}</tr></thead><tbody>{entries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek]}</td><td>{entry.startTime.slice(0,5)}–{entry.endTime.slice(0,5)}</td><td>{entry.room ?? '—'}</td><td>{entry.sessionType ?? '—'}</td><td>{entry.teachingGroupId}</td><td>{entry.courseId}</td><td>{entry.teacherId}</td>{!readOnly && <td><button className="secondary-button" onClick={() => void remove(entry.id)}>Remove</button></td>}</tr>)}{entries.length === 0 && <tr><td colSpan={readOnly ? 7 : 8} className="empty">No timetable sessions scheduled.</td></tr>}</tbody></table></div>
   </section>
 }

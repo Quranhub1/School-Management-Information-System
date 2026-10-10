@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { createStudent, getStudentQrCode, getStudents, type CreateStudentRequest, type Student } from '../api/students'
 
-interface Props { canManage?: boolean }
+interface Props { canManage?: boolean; readOnly?: boolean }
 
 const emptyForm: CreateStudentRequest = { studentNumber: '', firstName: '', lastName: '', otherNames: '', dateOfBirth: '', gender: '', phoneNumber: '', email: '' }
 
-export function StudentManagement({ canManage = false }: Props) {
+export function StudentManagement({ canManage = false, readOnly = false }: Props) {
   const [students, setStudents] = useState<Student[]>([])
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(false)
@@ -18,9 +18,9 @@ export function StudentManagement({ canManage = false }: Props) {
     try { setStudents(await getStudents()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load students.') } finally { setLoading(false) }
   }
 
-  useEffect(() => { if (canManage) void load() }, [canManage])
+  useEffect(() => { if (canManage || readOnly) void load() }, [canManage, readOnly])
 
-  if (!canManage) return <section className="panel"><h3>Student Management</h3><p className="empty">Your role does not have student-management access.</p></section>
+  if (!canManage && !readOnly) return <section className="panel"><h3>Student Management</h3><p className="empty">Your role does not have student-record access.</p></section>
 
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setSaving(true); setError('')
@@ -30,8 +30,8 @@ export function StudentManagement({ canManage = false }: Props) {
   }
 
   return <section className="academic-workspace" aria-label="Student management workspace">
-    <div className="panel-heading"><div><p className="eyebrow">Student Management</p><h2>Student registry</h2></div><span>{students.length} students</span></div>
-    <form className="student-form" onSubmit={submit}>
+    <div className="panel-heading"><div><p className="eyebrow">Student Management</p><h2>{readOnly ? 'Student registry · Read-only' : 'Student registry'}</h2></div><span>{students.length} students</span></div>
+    {canManage && <form className="student-form" onSubmit={submit}>
       <div className="form-grid">
         <label>Student number<input value={form.studentNumber} onChange={e => setForm({...form, studentNumber: e.target.value})} required /></label>
         <label>First name<input value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} required /></label>
@@ -43,7 +43,7 @@ export function StudentManagement({ canManage = false }: Props) {
         <label>Email<input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></label>
       </div>
       <button type="submit" disabled={saving}>{saving ? 'Registering…' : 'Register student'}</button>
-    </form>
+    </form>}
     {error && <div className="error" role="alert">{error}</div>}
     <div className="table-wrap"><table><thead><tr><th>Student number</th><th>Name</th><th>Gender</th><th>Phone</th><th>Email</th><th>Status</th><th>QR Code</th></tr></thead><tbody>
       {loading ? <tr><td colSpan={7} className="empty">Loading students…</td></tr> : students.length === 0 ? <tr><td colSpan={7} className="empty">No students registered.</td></tr> : students.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{[s.firstName, s.otherNames, s.lastName].filter(Boolean).join(' ')}</td><td>{s.gender ?? '—'}</td><td>{s.phoneNumber ?? '—'}</td><td>{s.email ?? '—'}</td><td>{s.status}</td><td><button className="secondary-button" onClick={() => setQrStudentId(s.id)}>View QR</button></td></tr>)}

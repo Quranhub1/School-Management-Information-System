@@ -7,11 +7,12 @@ import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
 
 interface AcademicManagementProps {
   canManage?: boolean
+  readOnly?: boolean
 }
 
 type AcademicView = 'records' | 'programmes' | 'examinations'
 
-export function AcademicManagement({ canManage }: AcademicManagementProps) {
+export function AcademicManagement({ canManage = false, readOnly = false }: AcademicManagementProps) {
   const [view, setView] = useState<AcademicView>('records')
   const [studentId, setStudentId] = useState('')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
@@ -40,7 +41,7 @@ export function AcademicManagement({ canManage }: AcademicManagementProps) {
 
   async function loadRecords(event: FormEvent) {
     event.preventDefault()
-    if (!canManage || !studentId.trim()) return
+    if ((!canManage && !readOnly) || !studentId.trim()) return
     setLoading(true)
     setError('')
     try {
@@ -97,21 +98,21 @@ export function AcademicManagement({ canManage }: AcademicManagementProps) {
     }
   }
 
-  if (!canManage) {
+  if (!canManage && !readOnly) {
     return <section className="panel"><h3>Academic Management</h3><p className="empty">Your role does not have academic-management access.</p></section>
   }
 
   return (
     <section className="academic-workspace" aria-label="Academic management workspace">
       <div className="panel-heading">
-        <div><p className="eyebrow">Academic Management</p><h2>{view === 'records' ? 'Student academic records' : 'Programme management'}</h2></div>
+        <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : 'Programme management'}</h2></div>
         <span>{view === 'records' ? `${transcript.length} course results` : `${programmes.length} programmes`}</span>
       </div>
 
       <div className="form-row" role="tablist" aria-label="Academic management views">
         <button type="button" aria-selected={view === 'records'} onClick={() => setView('records')}>Academic Records</button>
-        <button type="button" aria-selected={view === 'programmes'} onClick={() => setView('programmes')}>Programmes</button>
-        <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>
+        {!readOnly && <button type="button" aria-selected={view === 'programmes'} onClick={() => setView('programmes')}>Programmes</button>}
+        {!readOnly && <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>}
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}

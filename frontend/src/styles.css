@@ -2578,3 +2578,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     transform: none !important;
   }
 }
+
+
+/* Global table layout editor: available in every authenticated module. */
+.smis-resizable-column { position: relative !important; }
+.smis-column-resize-handle {
+  position: absolute; z-index: 5; top: 0; right: -3px; width: 8px; height: 100%;
+  min-height: 24px; cursor: col-resize; touch-action: none; background: transparent;
+}
+.smis-column-resize-handle:hover,
+.smis-column-resize-handle:focus-visible { background: color-mix(in srgb, var(--smis-primary, #0f766e) 28%, transparent); outline: none; }
+.smis-resizable-row { position: relative; }
+.smis-row-resize-handle {
+  position: absolute; z-index: 4; left: 0; right: 0; bottom: -3px; height: 7px;
+  cursor: row-resize; touch-action: none; background: transparent;
+}
+.smis-row-resize-handle:hover,
+.smis-row-resize-handle:focus-visible { background: color-mix(in srgb, var(--smis-primary, #0f766e) 25%, transparent); outline: none; }
+body.smis-table-resizing, body.smis-table-resizing * { user-select: none !important; }
+@media print { .smis-column-resize-handle, .smis-row-resize-handle { display: none !important; } }
