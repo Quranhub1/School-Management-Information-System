@@ -19,6 +19,7 @@ public sealed record StudentGuardianDto(
     Guid StudentId,
     string FullName,
     string? Relationship,
+    string? Address,
     string? PhoneNumber,
     string? Email,
     bool IsPrimary);
