@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { getInventoryRegister, saveInventoryRegister, type InventoryColumn, type InventoryRow } from '../api/inventoryRegisters'
 
-type InventoryColumn = { id: string; label: string }
-type InventoryRow = { id: string; values: Record<string, string> }
-type InventoryRegister = { columns: InventoryColumn[]; rows: InventoryRow[] }
-
-const INVENTORY_SECTIONS = [
+type InventorySection = { id: string; name: string; group: string }
+const INVENTORY_SECTIONS: InventorySection[] = [
   { id: 'ict-skills-lab', name: 'ICT Skills Lab', group: 'Laboratories' },
   { id: 'dcm-lab', name: 'DCM Lab', group: 'Laboratories' },
   { id: 'pharmacy-lab', name: 'Pharmacy Lab', group: 'Laboratories' },
@@ -18,47 +16,85 @@ const INVENTORY_SECTIONS = [
   { id: 'kitchen', name: 'Kitchen', group: 'Other Inventories' },
   { id: 'sickbay', name: 'Sickbay', group: 'Other Inventories' },
   { id: 'infrastructure-details', name: 'Infrastructure Details', group: 'Other Inventories' },
-] as const
-
+]
 const DEFAULT_COLUMNS: InventoryColumn[] = [
-  { id: 'name', label: 'Name of item' },
+  { id: 'name', label: 'Name of Item' },
   { id: 'description', label: 'Description' },
   { id: 'quantity', label: 'Quantity' },
   { id: 'condition', label: 'Condition' },
   { id: 'location', label: 'Location' },
 ]
-const storageKey = (section: string) => `smis.inventory.register.${section}`
+const emptyRegister = () => ({ columns: DEFAULT_COLUMNS.map(column => ({ ...column })), rows: [] as InventoryRow[] })
 const makeId = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`
-const readRegister = (section: string): InventoryRegister => {
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey(section)) || 'null')
-    if (saved && Array.isArray(saved.columns) && Array.isArray(saved.rows)) {
-      return { columns: saved.columns, rows: saved.rows }
-    }
-  } catch { /* Start with a clean register if saved data is invalid. */ }
-  return { columns: DEFAULT_COLUMNS.map(column => ({ ...column })), rows: [] }
-}
+const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'The inventory register could not be saved.'
 
 export function InventoryManagement({ canManage }: { canManage?: boolean; initialTab?: string }) {
-  const [sectionId, setSectionId] = useState<string>(INVENTORY_SECTIONS[0].id)
-  const [registers, setRegisters] = useState<Record<string, InventoryRegister>>(() =>
-    Object.fromEntries(INVENTORY_SECTIONS.map(section => [section.id, readRegister(section.id)]))
-  )
+  const [sectionId, setSectionId] = useState(INVENTORY_SECTIONS[0].id)
+  const [register, setRegister] = useState(emptyRegister)
+  const [loading, setLoading] = useState(true)
+  const [loadedSection, setLoadedSection] = useState<string | null>(null)
+  const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [loadError, setLoadError] = useState('')
+  const [saveError, setSaveError] = useState('')
+  const [retryCounter, setRetryCounter] = useState(0)
   const [newColumnName, setNewColumnName] = useState('')
   const [renamingColumn, setRenamingColumn] = useState<string | null>(null)
   const [renamedLabel, setRenamedLabel] = useState('')
+  const revision = useRef(0)
   const section = INVENTORY_SECTIONS.find(item => item.id === sectionId) ?? INVENTORY_SECTIONS[0]
-  const register = registers[sectionId] ?? { columns: DEFAULT_COLUMNS, rows: [] }
+  const canEdit = Boolean(canManage && loadedSection === sectionId && !loading)
+  const filledRows = useMemo(() => register.rows.filter(row => register.columns.some(column => (row.values[column.id] ?? '').trim())).length, [register])
 
   useEffect(() => {
-    for (const item of INVENTORY_SECTIONS) {
-      const value = registers[item.id]
-      if (value) localStorage.setItem(storageKey(item.id), JSON.stringify(value))
-    }
-  }, [registers])
+    let active = true
+    setLoading(true)
+    setLoadedSection(null)
+    setDirty(false)
+    setLoadError('')
+    setSaveError('')
+    setRenamingColumn(null)
+    getInventoryRegister(sectionId).then(saved => {
+      if (!active) return
+      setRegister({ columns: saved.columns, rows: saved.rows })
+      setLoadedSection(sectionId)
+      setLoading(false)
+    }).catch(error => {
+      if (!active) return
+      setLoadError(errorMessage(error))
+      setLoading(false)
+    })
+    return () => { active = false }
+  }, [sectionId])
 
-  const updateRegister = (update: (current: InventoryRegister) => InventoryRegister) => {
-    setRegisters(current => ({ ...current, [sectionId]: update(current[sectionId] ?? { columns: DEFAULT_COLUMNS, rows: [] }) }))
+  useEffect(() => {
+    if (!canManage || loadedSection !== sectionId || !dirty) return
+    const savingRevision = revision.current
+    const snapshot = { columns: register.columns, rows: register.rows }
+    const timer = window.setTimeout(async () => {
+      setSaving(true)
+      setSaveError('')
+      try {
+        await saveInventoryRegister(sectionId, snapshot)
+        if (revision.current === savingRevision) setDirty(false)
+      } catch (error) {
+        if (revision.current === savingRevision) {
+          setDirty(false)
+          setSaveError(errorMessage(error))
+        }
+      } finally {
+        setSaving(false)
+      }
+    }, 700)
+    return () => window.clearTimeout(timer)
+  }, [canManage, dirty, loadedSection, register, retryCounter, sectionId])
+
+  const updateRegister = (update: (current: { columns: InventoryColumn[]; rows: InventoryRow[] }) => { columns: InventoryColumn[]; rows: InventoryRow[] }) => {
+    if (!canEdit) return
+    revision.current += 1
+    setSaveError('')
+    setDirty(true)
+    setRegister(current => update(current))
   }
   const addRow = () => updateRegister(current => ({
     ...current,
@@ -71,7 +107,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
   const deleteRow = (rowId: string) => updateRegister(current => ({ ...current, rows: current.rows.filter(row => row.id !== rowId) }))
   const addColumn = () => {
     const label = newColumnName.trim()
-    if (!label) return
+    if (!label || !canEdit) return
     const column = { id: makeId(), label }
     updateRegister(current => ({
       columns: [...current.columns, column],
@@ -93,20 +129,19 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
       rows: current.rows.map(row => { const values = { ...row.values }; delete values[columnId]; return { ...row, values } }),
     }))
   }
-  const filledRows = useMemo(() => register.rows.filter(row => register.columns.some(column => (row.values[column.id] ?? '').trim())).length, [register])
 
   return <section className="panel inventory-register-panel" aria-label="School inventory register">
     <div className="panel-heading">
       <div>
         <span className="eyebrow">SCHOOL INVENTORIES</span>
         <h3>Inventory Register</h3>
-        <p className="empty">One consistent, spreadsheet-style register for laboratory equipment, furniture, departments and school infrastructure. Select a register, edit cells directly, and add rows or custom columns as needed.</p>
+        <p className="empty">This is the school inventory workspace. Registers are loaded from and saved to the application database, not browser storage. Choose a laboratory, department or facility and manage its spreadsheet-style register.</p>
       </div>
     </div>
 
     <div className="inventory-card inventory-register-selector">
       <label>Choose inventory register
-        <select value={sectionId} onChange={event => { setSectionId(event.target.value); setRenamingColumn(null) }}>
+        <select value={sectionId} onChange={event => setSectionId(event.target.value)}>
           <optgroup label="Laboratories">
             {INVENTORY_SECTIONS.filter(item => item.group === 'Laboratories').map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
           </optgroup>
@@ -119,23 +154,28 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         <div><span>Selected register</span><strong>{section.name}</strong></div>
         <div><span>Rows with data</span><strong>{filledRows}</strong></div>
         <div><span>Columns</span><strong>{register.columns.length + 1}</strong></div>
+        <div><span>Database status</span><strong role="status">{loading ? 'Loading…' : saving ? 'Saving…' : saveError ? 'Save failed' : dirty ? 'Unsaved changes' : loadedSection === sectionId ? 'Saved' : 'Unavailable'}</strong></div>
       </div>
     </div>
 
-    {canManage && <div className="inventory-card inventory-column-tools">
+    {loadError && <div className="inventory-error" role="alert"><strong>Could not load this inventory register.</strong><p>{loadError}</p><button className="secondary-button" type="button" onClick={() => { setLoadedSection(null); setLoadError(''); setLoading(true); setSectionId(current => current) }}>Retry loading</button></div>}
+    {saveError && <div className="inventory-error" role="alert"><strong>Changes were not saved to the database.</strong><p>{saveError}</p><button className="secondary-button" type="button" onClick={() => { setSaveError(''); setDirty(true); setRetryCounter(value => value + 1) }}>Retry save</button></div>}
+
+    {canEdit && <div className="inventory-card inventory-column-tools">
       <form className="inventory-form-grid" onSubmit={event => { event.preventDefault(); addColumn() }}>
         <label>Add custom column<input value={newColumnName} onChange={event => setNewColumnName(event.target.value)} placeholder="e.g. Asset tag, supplier, purchase date" /></label>
         <button className="secondary-button" type="submit" disabled={!newColumnName.trim()}>Add column</button>
         <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>
       </form>
-      <p className="empty">Edit the column headings with the Rename action. S/N is automatic and remains continuous when rows are added or deleted.</p>
+      <p className="empty">Rename any heading, add custom columns, or remove custom columns. S/N is automatic and continuous, like a spreadsheet, and is not manually editable.</p>
     </div>}
 
     <div className="inventory-card inventory-spreadsheet-card">
       <div className="welfare-toolbar">
-        <div><span className="eyebrow">EDITABLE REGISTER</span><h4>{section.name}</h4></div>
-        {canManage && <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>}
+        <div><span className="eyebrow">DATABASE REGISTER</span><h4>{section.name}</h4></div>
+        {canEdit && <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>}
       </div>
+      {loading && <p className="empty" role="status">Loading register from database…</p>}
       <div className="table-wrap inventory-table-wrap inventory-spreadsheet-wrap">
         <table className="compact-table inventory-spreadsheet">
           <thead><tr>
@@ -147,30 +187,30 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
                     <button className="secondary-button" type="submit">Save</button>
                     <button className="secondary-button" type="button" onClick={() => setRenamingColumn(null)}>Cancel</button>
                   </form>
-                : <div className="inventory-column-heading"><span>{column.label}</span>{canManage && <div className="inventory-column-actions">
+                : <div className="inventory-column-heading"><span>{column.label}</span>{canEdit && <div className="inventory-column-actions">
                     <button type="button" title={`Rename ${column.label}`} onClick={() => { setRenamingColumn(column.id); setRenamedLabel(column.label) }}>Rename</button>
                     {!['name', 'description', 'quantity', 'condition', 'location'].includes(column.id) && <button type="button" title={`Delete ${column.label}`} onClick={() => deleteColumn(column.id)}>Remove</button>}
                   </div>}</div>}
             </th>)}
-            {canManage && <th>Actions</th>}
+            {canEdit && <th>Actions</th>}
           </tr></thead>
           <tbody>
-            {register.rows.map((row, index) => <tr key={row.id}>
+            {!loadError && register.rows.map((row, index) => <tr key={row.id}>
               <td className="inventory-serial-cell">{index + 1}</td>
               {register.columns.map(column => <td key={column.id}>
-                {canManage
+                {canEdit
                   ? <input className="inventory-cell-input" aria-label={`Row ${index + 1}, ${column.label}`} value={row.values[column.id] ?? ''} onChange={event => updateCell(row.id, column.id, event.target.value)} placeholder="—" type={column.id === 'quantity' ? 'number' : 'text'} min={column.id === 'quantity' ? 0 : undefined} />
                   : <span>{row.values[column.id] || '—'}</span>}
               </td>)}
-              {canManage && <td><button className="secondary-button" type="button" onClick={() => deleteRow(row.id)}>Delete row</button></td>}
+              {canEdit && <td><button className="secondary-button" type="button" onClick={() => deleteRow(row.id)}>Delete row</button></td>}
             </tr>)}
-            {register.rows.length === 0 && <tr><td colSpan={register.columns.length + (canManage ? 2 : 1)} className="inventory-empty-cell">No rows yet for {section.name}. {canManage ? 'Select “Add row” to start entering items.' : ''}</td></tr>}
+            {!loading && !loadError && register.rows.length === 0 && <tr><td colSpan={register.columns.length + (canEdit ? 2 : 1)} className="inventory-empty-cell">No rows yet for {section.name}. {canEdit ? 'Select “Add row” to start entering items.' : ''}</td></tr>}
           </tbody>
         </table>
       </div>
       <div className="inventory-spreadsheet-footer">
-        <span>{register.rows.length} total rows · {register.columns.length + 1} columns</span>
-        {canManage && <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>}
+        <span>{register.rows.length} total rows · {register.columns.length + 1} columns · Auto-numbered S/N</span>
+        {canEdit && <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>}
       </div>
     </div>
   </section>
