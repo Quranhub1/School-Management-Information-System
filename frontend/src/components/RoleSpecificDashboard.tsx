@@ -63,8 +63,8 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
           <p style={{ color: 'var(--smis-muted, #64748b)', marginTop: 6 }}>Student and admission information is for lookup and follow-up only. This dashboard does not grant permission to edit records, make admission decisions, change user accounts or access financial controls.</p>
         </div>}
         <div className="grid-form" style={{ marginTop: 22 }}>
-          <button className="secondary-button" onClick={() => onNavigate('students')}>Open Student Records</button>
-          <button className="secondary-button" onClick={() => onNavigate('reports')}>Administrative Reports</button>
+          <button className="secondary-button" onClick={() => onNavigate('students')}>Open Student Records — read only</button>
+          {role !== 'AdminSecretary' && <button className="secondary-button" onClick={() => onNavigate('reports')}>Administrative Reports</button>}
         </div>
       </>}
 
