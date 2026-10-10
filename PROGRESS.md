@@ -30,6 +30,15 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Publish the dashboard content, visualization, permission, and verification standard in `docs/ROLE_DASHBOARDS.md` (implementation remains in progress).
 - [ ] Verify shared row/column resizing across all authenticated tabular screens and decide whether user layout preferences should persist.
 
+## Inventory stock alerts — implementation in progress
+
+- [x] Add administrator-only dashboard controls to configure a low-stock threshold for each named inventory item.
+- [x] Persist each item's threshold with its database-backed inventory register; blank threshold means warn only when stock reaches zero.
+- [x] Add a backend endpoint that identifies items at/below threshold and always flags items at zero.
+- [x] Surface in-app warnings on Records Officer and School Warden/legacy Hostel Warden dashboards.
+- [ ] Verify backend role authorization, threshold persistence, quantity parsing, and dashboard alerts through automated tests and representative role accounts.
+- [ ] Run all affected CI workflows and confirm the database migration state remains consistent.
+
 ## Completed / verified
 
 - [x] .NET 8 backend solution and modular domain structure
