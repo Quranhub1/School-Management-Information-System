@@ -16,7 +16,7 @@ import {
 interface Props { canManage?: boolean; readOnly?: boolean }
 
 const emptyForm: CreateStudentRequest = { studentNumber: '', firstName: '', lastName: '', otherNames: '', dateOfBirth: '', gender: '', phoneNumber: '', email: '' }
-const emptyGuardian: GuardianInput = { fullName: '', relationship: 'Parent', phoneNumber: '', email: '', isPrimary: false }
+const emptyGuardian: GuardianInput = { fullName: '', relationship: 'Parent', address: '', phoneNumber: '', email: '', isPrimary: false }
 
 export function StudentManagement({ canManage = false, readOnly = false }: Props) {
   const [students, setStudents] = useState<Student[]>([])
@@ -84,7 +84,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
 
   function editGuardian(guardian: StudentGuardian) {
     setEditingGuardianId(guardian.id)
-    setGuardianForm({ fullName: guardian.fullName, relationship: guardian.relationship ?? '', phoneNumber: guardian.phoneNumber ?? '', email: guardian.email ?? '', isPrimary: guardian.isPrimary })
+    setGuardianForm({ fullName: guardian.fullName, relationship: guardian.relationship ?? '', address: guardian.address ?? '', phoneNumber: guardian.phoneNumber ?? '', email: guardian.email ?? '', isPrimary: guardian.isPrimary })
     setGuardianError('')
   }
 
@@ -119,6 +119,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       <div className="form-grid">
         <label>Parent / guardian full name<input value={guardianForm.fullName} onChange={e => setGuardianForm({...guardianForm, fullName: e.target.value})} required /></label>
         <label>Relationship<select value={guardianForm.relationship} onChange={e => setGuardianForm({...guardianForm, relationship: e.target.value})} required><option value="Parent">Parent</option><option value="Mother">Mother</option><option value="Father">Father</option><option value="Guardian">Guardian</option><option value="Other">Other</option></select></label>
+        <label>Parent / guardian address<input value={guardianForm.address} onChange={e => setGuardianForm({...guardianForm, address: e.target.value})} /></label>
         <label>Parent / guardian phone<input value={guardianForm.phoneNumber} onChange={e => setGuardianForm({...guardianForm, phoneNumber: e.target.value})} /></label>
         <label>Parent / guardian email<input type="email" value={guardianForm.email} onChange={e => setGuardianForm({...guardianForm, email: e.target.value})} /></label>
         <label className="checkbox-label"><input type="checkbox" checked={guardianForm.isPrimary} onChange={e => setGuardianForm({...guardianForm, isPrimary: e.target.checked})} /> Primary parent / guardian</label>
@@ -134,10 +135,11 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     {guardianStudent && <div className="modal-backdrop" onClick={() => setGuardianStudent(null)}><div className="auth-card" style={{ width: 'min(760px, 96vw)', maxHeight: '90vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
       <div className="panel-heading"><div><p className="eyebrow">Student record</p><h3>Parent / guardian details</h3><p>{guardianStudent.studentNumber} · {[guardianStudent.firstName, guardianStudent.otherNames, guardianStudent.lastName].filter(Boolean).join(' ')}</p></div><button type="button" className="secondary-button" onClick={() => setGuardianStudent(null)}>Close</button></div>
       {guardianError && <div className="error" role="alert">{guardianError}</div>}
-      {guardianLoading ? <p className="empty">Loading parent/guardian records…</p> : guardians.length === 0 ? <p className="empty">No parent/guardian details are recorded for this student yet.</p> : <div className="table-wrap"><table><thead><tr><th>Name</th><th>Relationship</th><th>Phone</th><th>Email</th><th>Primary</th>{canManage && <th>Actions</th>}</tr></thead><tbody>{guardians.map(g => <tr key={g.id}><td>{g.fullName}</td><td>{g.relationship || '—'}</td><td>{g.phoneNumber || '—'}</td><td>{g.email || '—'}</td><td>{g.isPrimary ? 'Yes' : 'No'}</td>{canManage && <td><button className="secondary-button" type="button" onClick={() => editGuardian(g)}>Edit</button><button className="secondary-button" type="button" onClick={() => void removeGuardian(g)}>Remove</button></td>}</tr>)}</tbody></table></div>}
+      {guardianLoading ? <p className="empty">Loading parent/guardian records…</p> : guardians.length === 0 ? <p className="empty">No parent/guardian details are recorded for this student yet.</p> : <div className="table-wrap"><table><thead><tr><th>Name</th><th>Relationship</th><th>Address</th><th>Phone</th><th>Email</th><th>Primary</th>{canManage && <th>Actions</th>}</tr></thead><tbody>{guardians.map(g => <tr key={g.id}><td>{g.fullName}</td><td>{g.relationship || '—'}</td><td>{g.address || '—'}</td><td>{g.phoneNumber || '—'}</td><td>{g.email || '—'}</td><td>{g.isPrimary ? 'Yes' : 'No'}</td>{canManage && <td><button className="secondary-button" type="button" onClick={() => editGuardian(g)}>Edit</button><button className="secondary-button" type="button" onClick={() => void removeGuardian(g)}>Remove</button></td>}</tr>)}</tbody></table></div>}
       {canManage && <form className="student-form" onSubmit={saveGuardian}><h4>{editingGuardianId ? 'Edit parent / guardian' : 'Add another parent / guardian'}</h4><div className="form-grid">
         <label>Full name<input value={guardianForm.fullName} onChange={e => setGuardianForm({...guardianForm, fullName: e.target.value})} required /></label>
         <label>Relationship<select value={guardianForm.relationship} onChange={e => setGuardianForm({...guardianForm, relationship: e.target.value})} required><option value="">Select relationship</option><option value="Parent">Parent</option><option value="Mother">Mother</option><option value="Father">Father</option><option value="Guardian">Guardian</option><option value="Other">Other</option></select></label>
+        <label>Address<input value={guardianForm.address} onChange={e => setGuardianForm({...guardianForm, address: e.target.value})} /></label>
         <label>Phone<input value={guardianForm.phoneNumber} onChange={e => setGuardianForm({...guardianForm, phoneNumber: e.target.value})} /></label>
         <label>Email<input type="email" value={guardianForm.email} onChange={e => setGuardianForm({...guardianForm, email: e.target.value})} /></label>
         <label className="checkbox-label"><input type="checkbox" checked={guardianForm.isPrimary} onChange={e => setGuardianForm({...guardianForm, isPrimary: e.target.checked})} /> Primary parent / guardian</label>
