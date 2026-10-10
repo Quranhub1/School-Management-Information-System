@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
-import { BarChart3, BriefcaseBusiness, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
+import { BarChart3, BriefcaseBusiness, CalendarDays, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
-import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance } from './auth/roleGuards'
-import { AcademicManagement } from './components/AcademicManagement'; import { HostelManagement } from './components/HostelManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import { RoleSpecificDashboard } from './components/RoleSpecificDashboard'; import { ResidentDirectorHRDashboard } from './components/ResidentDirectorHRDashboard'; import { DirectorExecutiveDashboard } from './components/DirectorExecutiveDashboard'; import { PrincipalDashboard } from './components/PrincipalDashboard'; import type { InstitutionSettings } from './api/institutionSettings'
+import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable } from './auth/roleGuards'
+import { AcademicManagement } from './components/AcademicManagement'; import { HostelManagement } from './components/HostelManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import { RoleSpecificDashboard } from './components/RoleSpecificDashboard'; import { ResidentDirectorHRDashboard } from './components/ResidentDirectorHRDashboard'; import { DirectorExecutiveDashboard } from './components/DirectorExecutiveDashboard'; import { PrincipalDashboard } from './components/PrincipalDashboard'; import { TimetableManagement } from './components/TimetableManagement'; import type { InstitutionSettings } from './api/institutionSettings'
 import { InstitutionSettingsProvider, useInstitutionSettings } from './components/InstitutionSettingsContext'; import './components/PrintStyles.css'
-type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'system-administration'
+type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'timetable' | 'system-administration'
 const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
 function institutionLogoUrl(settings: InstitutionSettings): string {
   const path = settings.logoPath?.trim()
@@ -61,6 +61,7 @@ function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: {
   communication:Megaphone,
   guild:UsersRound,
   reports:BarChart3,
+  timetable:CalendarDays,
   'system-administration':Settings
 };
 const moduleLabels:Record<ModuleKey,string>={
@@ -78,6 +79,7 @@ const moduleLabels:Record<ModuleKey,string>={
   communication:'Announcements',
   guild:'Guild',
   reports:'Reports & Analytics',
+  timetable:'Timetables',
   'system-administration':'System Administration'
 };
 const [activeSubsection,setActiveSubsection]=useState<string|null>(null);
@@ -131,6 +133,7 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Registration',module:'students',subsection:'registration',child:true},
     {label:'Records',module:'students',subsection:'records',child:true},
     {label:'Academic Management',module:'academics'},
+    {label:'Timetables',module:'timetable'},
     {label:'Classes',module:'academics',subsection:'classes',child:true},
     {label:'Courses',module:'academics',subsection:'courses',child:true},
     {label:'Health & Clinical',module:'health'},
@@ -157,6 +160,7 @@ function canSeeSidebarItem(item:SidebarItem){
   if(item.module==='administration') return a;
   if(item.module==='students') return st || ad || s360 || studentRead || admissionRead || r.includes('HR Manager') || r.includes('Records Officer');
   if(item.module==='academics') return ac || lecturer || r.includes('HeadOfDepartment') || r.includes('HR Manager') || r.includes('AssistantPrincipal') || r.includes('Principal');
+  if(item.module==='timetable') return canReadTimetable(r);
   if(item.module==='finance') return fi;
   if(item.module==='staff') return sr || r.includes('HeadOfDepartment') || r.includes('HR Manager') || r.includes('Records Officer');
   if(item.module==='attendance') return att;
@@ -278,7 +282,8 @@ return <main className="app-shell">
   <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(moduleLabels[activeModule]||'Dashboard').toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 {activeModule==='administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} 
 {activeModule==='students'&&(st||ad||s360||studentRead||admissionRead)&&<AdmissionsStudentManagement canManage={st||ad} readOnly={!st&&!ad} accessProfile={r.includes('Receptionist')?'receptionist':r.includes('Records Officer')?'records':r.includes('HeadOfDepartment')?'department':'general'} />} 
-{activeModule==='academics'&&(ac||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/>}
+{activeModule==='academics'&&(ac||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/> 
+{activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}}
 {activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
 {activeModule==='staff'&&sr&&<StaffManagement canManage={sm}/>}
 {activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} />}
