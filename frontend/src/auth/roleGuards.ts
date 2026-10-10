@@ -16,6 +16,7 @@ import {
   COMMUNICATION_ROLES,
   ATTENDANCE_ROLES,
   ATTENDANCE_READ_ROLES,
+  TIMETABLE_ROLES,
   LIBRARY_READ_ROLES,
   LIBRARY_MANAGE_ROLES,
 } from './roles'
@@ -45,7 +46,10 @@ export function canManageStudents(roles: string[]) {
   return hasAnyRole(roles, STUDENT_MANAGEMENT_ROLES)
 }
 export function canManageTimetable(roles: string[]) {
-  return hasAnyRole(roles, ['SystemAdministrator', 'System Administrator', 'Registrar', 'AcademicRegistrar', 'Academic Registrar', 'Lecturer', 'HR Manager'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'Lecturer', 'HR Manager'])
+}
+export function canReadTimetable(roles: string[]) {
+  return hasAnyRole(roles, TIMETABLE_ROLES)
 }
 export function canManageAdmissions(roles: string[]) {
   return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'AdmissionsOfficer', 'HR Manager'])
