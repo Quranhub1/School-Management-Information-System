@@ -16,12 +16,12 @@ import {
 interface Props { canManage?: boolean; readOnly?: boolean }
 
 const emptyForm: CreateStudentRequest = { studentNumber: '', firstName: '', lastName: '', otherNames: '', dateOfBirth: '', gender: '', phoneNumber: '', email: '' }
-const emptyGuardian: GuardianInput = { fullName: '', relationship: 'Parent', phoneNumber: '', email: '', isPrimary: true }
+const emptyGuardian: GuardianInput = { fullName: '', relationship: 'Parent', phoneNumber: '', email: '', isPrimary: false }
 
 export function StudentManagement({ canManage = false, readOnly = false }: Props) {
   const [students, setStudents] = useState<Student[]>([])
   const [form, setForm] = useState(emptyForm)
-  const [guardianForm, setGuardianForm] = useState<GuardianInput>(emptyGuardian)
+  const [guardianForm, setGuardianForm] = useState<GuardianInput>({ ...emptyGuardian, isPrimary: true })
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -62,7 +62,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
         setError(`Student ${created.studentNumber} was saved, but the parent/guardian details were not saved. Open Guardians for this student and retry. ${guardianFailure instanceof Error ? guardianFailure.message : ''}`.trim())
       }
       setStudents(current => [created!, ...current.filter(item => item.id !== created!.id)])
-      setForm(emptyForm); setGuardianForm(emptyGuardian)
+      setForm(emptyForm); setGuardianForm({ ...emptyGuardian, isPrimary: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to register student.')
     } finally { setSaving(false) }
