@@ -1,7 +1,7 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-10-04  
-**Tracking branch:** `main`  
+**Last updated:** 2026-10-10  
+**Tracking branch:** `feat/principal-readonly-finance-system-admin-guard` (active dashboard/table work; PR #123)  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
 
@@ -22,6 +22,13 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [ ] Verify successful login transfers the authenticated session into the existing SMIS application shell
 - [ ] Verify login failure, loading state, Remember Me and password recovery behaviour against the real backend
 - [ ] Complete Windows target-machine setup and validate the same backend/frontend workflow used for the production-style environment
+
+## Current work — role-specific dashboards and table layouts
+
+- [ ] Implement and verify a distinct, live-data dashboard for every configured role/role family, aligned to its permitted sidebar modules and backend authorization.
+- [ ] Verify chart data, drill-downs, loading/empty/error states, and read-only boundaries with representative role accounts.
+- [x] Publish the dashboard content, visualization, permission, and verification standard in `docs/ROLE_DASHBOARDS.md` (implementation remains in progress).
+- [ ] Verify shared row/column resizing across all authenticated tabular screens and decide whether user layout preferences should persist.
 
 ## Completed / verified
 
