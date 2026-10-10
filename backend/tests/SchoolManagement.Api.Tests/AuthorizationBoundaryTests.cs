@@ -27,7 +27,7 @@ public sealed class AuthorizationBoundaryTests
         var attribute = method!.GetCustomAttribute<AuthorizeAttribute>();
 
         Assert.NotNull(attribute);
-        Assert.Equal(AdmissionsPolicies.Management, attribute!.Policy);
+        Assert.Equal(AdmissionsPolicies.Read, attribute!.Policy)
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class AuthorizationBoundaryTests
     }
 
     [Fact]
-    public void AdmissionsControllerRequiresAdmissionsManagementPolicy()
+    public void AdmissionsControllerRequiresAdmissionsReadPolicy()
     {
         var attribute = typeof(AdmissionsController)
             .GetCustomAttribute<AuthorizeAttribute>();
