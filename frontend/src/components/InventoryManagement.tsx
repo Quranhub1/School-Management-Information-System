@@ -38,6 +38,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
   const [loadError, setLoadError] = useState('')
   const [saveError, setSaveError] = useState('')
   const [retryCounter, setRetryCounter] = useState(0)
+  const [loadCounter, setLoadCounter] = useState(0)
   const [newColumnName, setNewColumnName] = useState('')
   const [renamingColumn, setRenamingColumn] = useState<string | null>(null)
   const [renamedLabel, setRenamedLabel] = useState('')
@@ -65,7 +66,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
       setLoading(false)
     })
     return () => { active = false }
-  }, [sectionId])
+  }, [sectionId, loadCounter])
 
   useEffect(() => {
     if (!canManage || loadedSection !== sectionId || !dirty) return
@@ -158,7 +159,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
       </div>
     </div>
 
-    {loadError && <div className="inventory-error" role="alert"><strong>Could not load this inventory register.</strong><p>{loadError}</p><button className="secondary-button" type="button" onClick={() => { setLoadedSection(null); setLoadError(''); setLoading(true); setSectionId(current => current) }}>Retry loading</button></div>}
+    {loadError && <div className="inventory-error" role="alert"><strong>Could not load this inventory register.</strong><p>{loadError}</p><button className="secondary-button" type="button" onClick={() => { setLoadedSection(null); setLoadError(''); setLoading(true); setLoadCounter(value => value + 1) }}>Retry loading</button></div>}
     {saveError && <div className="inventory-error" role="alert"><strong>Changes were not saved to the database.</strong><p>{saveError}</p><button className="secondary-button" type="button" onClick={() => { setSaveError(''); setDirty(true); setRetryCounter(value => value + 1) }}>Retry save</button></div>}
 
     {canEdit && <div className="inventory-card inventory-column-tools">
