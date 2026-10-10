@@ -1,4 +1,4 @@
-export const ROLES = { systemAdministrator: 'SystemAdministrator', academicRegistrar: 'AcademicRegistrar', assistantRegistrar: 'AssistantRegistrar', admissionsOfficer: 'AdmissionsOfficer', accountant: 'Accountant', assistantAccountant: 'AssistantAccountant', lecturer: 'Lecturer', examinationsOfficer: 'ExaminationsOfficer', student: 'Student', storeOfficer: 'StoreOfficer', hostelWarden: 'HostelWarden', transportOfficer: 'TransportOfficer', principal: 'Principal', director: 'Director', secretary: 'Secretary', residentDirector: 'ResidentDirector', headOfDepartment: 'HeadOfDepartment', receptionist: 'Receptionist', assistantPrincipal: 'AssistantPrincipal' } as const
+export const ROLES = { systemAdministrator: 'SystemAdministrator', academicRegistrar: 'AcademicRegistrar', assistantRegistrar: 'AssistantRegistrar', admissionsOfficer: 'AdmissionsOfficer', accountant: 'Accountant', assistantAccountant: 'AssistantAccountant', lecturer: 'Lecturer', examinationsOfficer: 'ExaminationsOfficer', student: 'Student', hostelWarden: 'HostelWarden', principal: 'Principal', director: 'Director', secretary: 'Secretary', residentDirector: 'ResidentDirector', headOfDepartment: 'HeadOfDepartment', receptionist: 'Receptionist', assistantPrincipal: 'AssistantPrincipal' } as const
 export type InstitutionalRole = typeof ROLES[keyof typeof ROLES]
 export function hasAnyRole(userRoles: string[], allowedRoles: readonly string[]): boolean { return allowedRoles.some(role => userRoles.includes(role)) }
 export const ADMINISTRATION_ROLES = [ROLES.systemAdministrator, ROLES.academicRegistrar] as const
@@ -7,9 +7,9 @@ export const FINANCE_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.accoun
 export const FINANCE_OPERATIONS_ROLES = [ROLES.systemAdministrator, ROLES.accountant, ROLES.assistantAccountant] as const
 export const EXAMINATION_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.examinationsOfficer] as const
 export const STUDENT_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.academicRegistrar] as const
-export const INVENTORY_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.storeOfficer] as const
+export const recordsOfficer = 'Records Officer' as const
+export const INVENTORY_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.recordsOfficer] as const
 export const HOSTEL_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.hostelWarden] as const
-export const TRANSPORT_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.transportOfficer] as const
 export const REPORTS_ROLES = [ROLES.systemAdministrator, ROLES.academicRegistrar, ROLES.assistantRegistrar, ROLES.admissionsOfficer, ROLES.accountant, ROLES.assistantAccountant, ROLES.accountant, ROLES.examinationsOfficer, ROLES.principal, ROLES.director, ROLES.residentDirector, ROLES.assistantPrincipal, ROLES.headOfDepartment, ROLES.secretary] as const
 export const COMMUNICATION_ROLES = [ROLES.systemAdministrator, ROLES.academicRegistrar, ROLES.assistantRegistrar] as const
 export const ATTENDANCE_ROLES = [ROLES.systemAdministrator, ROLES.academicRegistrar, ROLES.academicRegistrar, ROLES.lecturer] as const
