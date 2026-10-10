@@ -11,7 +11,6 @@ public static class AuthorizationPolicies
     public const string ExaminationManagement = "ExaminationManagement";
     public const string AttendanceManagement = "AttendanceManagement";
     public const string HostelManagement = "HostelManagement";
-    public const string TransportManagement = "TransportManagement";
     public const string InventoryManagement = "InventoryManagement";
     public const string ReportingManagement = "ReportingManagement";
     public const string CommunicationManagement = "CommunicationManagement";
@@ -34,13 +33,13 @@ public static class AuthorizationPolicies
         public static readonly string[] AttendanceManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Lecturer, InstitutionalRoles.AcademicRegistrar];
         public static readonly string[] HostelManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.HostelWarden, InstitutionalRoles.ResidentDirector];
         public static readonly string[] TransportManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.TransportOfficer, InstitutionalRoles.ResidentDirector];
-        public static readonly string[] InventoryManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.StoreOfficer];
+        public static readonly string[] InventoryManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.RecordsOfficer];
         public static readonly string[] AdmissionsManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AdmissionsOfficer];
         public static readonly string[] AdmissionsRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AdmissionsOfficer, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Secretary, InstitutionalRoles.HeadOfDepartment];
         public static readonly string[] AdministrationManagement = [InstitutionalRoles.SystemAdministrator, ];
         public static readonly string[] ReportingManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AdmissionsOfficer, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.ResidentDirector, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.Secretary];
         public static readonly string[] CommunicationManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar];
-        public static readonly string[] CommunicationRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Lecturer, InstitutionalRoles.Student, InstitutionalRoles.StoreOfficer, InstitutionalRoles.HostelWarden, InstitutionalRoles.TransportOfficer, InstitutionalRoles.Principal, InstitutionalRoles.Secretary, InstitutionalRoles.ResidentDirector, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.AssistantPrincipal];
+        public static readonly string[] CommunicationRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Lecturer, InstitutionalRoles.Student, InstitutionalRoles.RecordsOfficer, InstitutionalRoles.HostelWarden, InstitutionalRoles.Principal, InstitutionalRoles.Secretary, InstitutionalRoles.ResidentDirector, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.AssistantPrincipal];
         public static readonly string[] StudentPortal = [InstitutionalRoles.Student];
         public static readonly string[] ParentPortal = [];
         public static readonly string[] Student360 = [InstitutionalRoles.Student, InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar];
