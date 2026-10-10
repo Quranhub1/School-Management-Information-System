@@ -8,7 +8,7 @@ import {
   type DepartmentalSummary,
 } from '../api/principal'
 
-type MainTab = 'overview' | 'academics' | 'staff' | 'departments'
+type MainTab = 'overview' | 'finance' | 'academics' | 'staff' | 'departments'
 
 export function PrincipalDashboard() {
   const [mainTab, setMainTab] = useState<MainTab>('overview')
@@ -61,6 +61,7 @@ export function PrincipalDashboard() {
 
       <div className="library-workspace-tabs" role="tablist" aria-label="Principal sections" style={{ marginBottom: 18 }}>
         <button role="tab" aria-selected={mainTab === 'overview'} className={mainTab === 'overview' ? 'active' : ''} onClick={() => setMainTab('overview')}>Overview</button>
+        <button role="tab" aria-selected={mainTab === 'finance'} className={mainTab === 'finance' ? 'active' : ''} onClick={() => setMainTab('finance')}>Accounts &amp; Finance · Read-only</button>
         <button role="tab" aria-selected={mainTab === 'academics'} className={mainTab === 'academics' ? 'active' : ''} onClick={() => setMainTab('academics')}>Academics</button>
         <button role="tab" aria-selected={mainTab === 'staff'} className={mainTab === 'staff' ? 'active' : ''} onClick={() => setMainTab('staff')}>Staff Performance</button>
         <button role="tab" aria-selected={mainTab === 'departments'} className={mainTab === 'departments' ? 'active' : ''} onClick={() => setMainTab('departments')}>Departments</button>
@@ -232,6 +233,49 @@ export function PrincipalDashboard() {
                 </div>
               </div>
             </>
+          )}
+
+          {mainTab === 'finance' && (
+            <div className="panel" style={{ padding: 22, marginBottom: 22 }} aria-label="Principal read-only finance overview">
+              <div className="panel-heading" style={{ padding: 0, border: 0, marginBottom: 15 }}>
+                <div>
+                  <span className="eyebrow">ACCOUNTS & FINANCE</span>
+                  <h3>Financial Oversight · Read-only</h3>
+                  <p>View financial position and payment activity. Transaction editing, posting, refunds, payroll changes and account configuration are not available to the Principal.</p>
+                </div>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 999, padding: '6px 10px', background: '#d1fae5', color: '#065f46', fontWeight: 800, fontSize: '.75rem' }}>VIEW ONLY</span>
+              </div>
+              <div className="summary-grid" style={{ marginBottom: 22 }}>
+                <div className="summary-card"><span>Total Invoiced</span><strong>UGX {dashboard.totalInvoiced.toLocaleString()}</strong></div>
+                <div className="summary-card"><span>Total Collected</span><strong style={{ color: '#059669' }}>UGX {dashboard.totalPaid.toLocaleString()}</strong></div>
+                <div className="summary-card"><span>Outstanding Invoices</span><strong style={{ color: '#dc2626' }}>{dashboard.outstandingInvoices}</strong></div>
+                <div className="summary-card"><span>Invoices Issued</span><strong>{dashboard.totalInvoices}</strong></div>
+                <div className="summary-card"><span>Pending Payroll Records</span><strong>{dashboard.pendingPayroll}</strong></div>
+                <div className="summary-card"><span>Paid Payroll Records</span><strong style={{ color: '#059669' }}>{dashboard.paidPayroll}</strong></div>
+              </div>
+              <h4 style={{ marginBottom: 10 }}>Outstanding Balances</h4>
+              <div className="table-wrap" style={{ marginBottom: 22 }}>
+                <table className="table">
+                  <thead><tr><th>Student No.</th><th>Student</th><th>Fee / Programme</th><th>Balance</th><th>Currency</th></tr></thead>
+                  <tbody>
+                    {dashboard.outstandingBalances.length === 0 ? <tr><td colSpan={5} className="empty">No outstanding balances</td></tr> : dashboard.outstandingBalances.map((item, idx) => (
+                      <tr key={item.studentId + '-' + idx}><td><strong>{item.studentNumber}</strong></td><td>{item.studentName}</td><td>{item.programmeName}</td><td>{item.balance.toLocaleString()}</td><td>{item.currency}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <h4 style={{ marginBottom: 10 }}>Recent Payments</h4>
+              <div className="table-wrap">
+                <table className="table">
+                  <thead><tr><th>Receipt No.</th><th>Student</th><th>Amount</th><th>Method</th><th>Date</th></tr></thead>
+                  <tbody>
+                    {dashboard.recentPayments.length === 0 ? <tr><td colSpan={5} className="empty">No recent payments</td></tr> : dashboard.recentPayments.map(payment => (
+                      <tr key={payment.id}><td><strong>{payment.receiptNumber}</strong></td><td>{payment.studentName}</td><td>UGX {payment.amount.toLocaleString()}</td><td>{payment.paymentMethod}</td><td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
 
           {mainTab === 'academics' && (
