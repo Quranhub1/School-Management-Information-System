@@ -96,6 +96,12 @@ const userInitials = useMemo(() => {
 }, [sessionUsername]);
 
 function navigate(module:ModuleKey, subsection?:string){
+  // System Administration remains warning-only for non-administrators.
+  if (module === 'system-administration' && !a) {
+    setActiveSubsection(null);
+    setActiveModule(module);
+    return;
+  }
   setActiveModule(module);
   setActiveSubsection(subsection??null);
   if(subsection) window.dispatchEvent(new CustomEvent('smis:navigate-subsection',{detail:{module,subsection}}));
@@ -283,7 +289,8 @@ return <main className="app-shell">
 {activeModule==='communication'&&cm&&<Announcements canManage={cm}/>}
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement/>}
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
-{activeModule==='system-administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} </motion.div></AnimatePresence></div></main> }
+{activeModule==='system-administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>}
+{activeModule==='system-administration'&&!a&&<section className="panel" role="alert" aria-labelledby="system-admin-warning-title" style={{border:'1px solid #f59e0b',background:'linear-gradient(135deg,rgba(255,251,235,.98),rgba(255,247,237,.96))',color:'#78350f',padding:24}}><div style={{display:'flex',alignItems:'flex-start',gap:14}}><span aria-hidden="true" style={{fontSize:28,lineHeight:1}}>⚠</span><div><span className="eyebrow" style={{color:'#b45309'}}>RESTRICTED SECTION</span><h2 id="system-admin-warning-title" style={{marginTop:6,color:'#78350f'}}>System Administration — Access Restricted</h2><p style={{marginTop:10,fontWeight:700}}>Warning: Changes in this section can affect the entire school management system.</p><p style={{marginTop:8}}>System administration includes institution-wide settings, user access, security and critical configuration. Unauthorized changes may disrupt school operations or compromise data integrity.</p><p style={{marginTop:8}}>Your current role cannot modify these settings. Contact the System Administrator for authorized changes.</p></div></div></section>} </motion.div></AnimatePresence></div></main> }
 function App(){
   return <InstitutionSettingsProvider><AppContent/></InstitutionSettingsProvider>
 }
