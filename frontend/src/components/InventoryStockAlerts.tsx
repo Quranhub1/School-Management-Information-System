@@ -8,11 +8,19 @@ export function InventoryStockAlerts() {
 
   useEffect(() => {
     let active = true
-    getInventoryStockAlerts()
-      .then(result => { if (active) setAlerts(result) })
-      .catch(reason => { if (active) setError(reason instanceof Error ? reason.message : 'Unable to load stock alerts.') })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    const refresh = async () => {
+      try {
+        const result = await getInventoryStockAlerts()
+        if (active) { setAlerts(result); setError('') }
+      } catch (reason) {
+        if (active) setError(reason instanceof Error ? reason.message : 'Unable to load stock alerts.')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    void refresh()
+    const timer = window.setInterval(() => { void refresh() }, 60_000)
+    return () => { active = false; window.clearInterval(timer) }
   }, [])
 
   return <section className="panel" aria-label="Inventory stock warnings">
