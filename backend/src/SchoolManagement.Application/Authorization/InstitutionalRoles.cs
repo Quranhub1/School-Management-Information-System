@@ -4,6 +4,7 @@ public static class InstitutionalRoles
 {
     public const string SystemAdministrator = "SystemAdministrator";
     public const string AcademicRegistrar = "AcademicRegistrar";
+    public const string AssistantRegistrar = "AssistantRegistrar";
     public const string AdmissionsOfficer = "AdmissionsOfficer";
     public const string Accountant = "Accountant";
     public const string AssistantAccountant = "AssistantAccountant";
