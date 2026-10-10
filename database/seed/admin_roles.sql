@@ -18,6 +18,5 @@ INSERT INTO roles (id, name, description) VALUES
     (gen_random_uuid(), 'Librarian', 'Library management and circulation'),
     (gen_random_uuid(), 'Student Affairs', 'Student welfare and support'),
     (gen_random_uuid(), 'HR Manager', 'Staff and human resource management'),
-    (gen_random_uuid(), 'Student', 'Student self-service access'),
-    (gen_random_uuid(), 'Parent', 'Guardian/parent self-service access')
+    (gen_random_uuid(), 'Student', 'Student self-service access')
 ON CONFLICT (name) DO NOTHING;
