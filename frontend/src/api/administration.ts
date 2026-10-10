@@ -2,6 +2,8 @@ import { getAccessToken } from './auth'
 
 export interface UserSummary { id: string; username: string; firstName: string; lastName: string; email?: string | null; isActive: boolean; createdAt: string; lastLoginAt?: string | null; roles: string[] }
 export interface CreateUserRequest { username: string; password: string; firstName: string; lastName: string; email?: string; roles: string[] }
+export interface UpdateUserRequest { firstName: string; lastName: string; email?: string | null; roles: string[] }
+export interface ResetPasswordRequest { newPassword: string }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken()
@@ -9,9 +11,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
   if (response.status === 403) throw new Error('Only System Administrators can manage users.')
   if (!response.ok) { const payload = await response.json().catch(() => null) as { message?: string } | null; throw new Error(payload?.message ?? `Request failed with status ${response.status}`) }
+  if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
 
 export const getUsers = () => request<UserSummary[]>('/api/administration/users')
 export const createUser = (body: CreateUserRequest) => request<UserSummary>('/api/administration/users', { method: 'POST', body: JSON.stringify(body) })
 export const setUserActive = (id: string, active: boolean) => request<UserSummary>(`/api/administration/users/${id}/active`, { method: 'PATCH', body: JSON.stringify({ active }) })
+
+export const updateUser = (id: string, body: UpdateUserRequest) => request<UserSummary>(`/api/administration/users/${id}`, { method: 'PUT', body: JSON.stringify(body) })
+export const resetUserPassword = (id: string, newPassword: string) => request<void>(`/api/administration/users/${id}/password`, { method: 'PATCH', body: JSON.stringify({ newPassword }) })

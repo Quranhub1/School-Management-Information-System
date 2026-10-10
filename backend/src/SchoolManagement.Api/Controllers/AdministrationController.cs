@@ -21,6 +21,41 @@ public sealed class AdministrationController(AdministrationService service) : Co
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
+    [HttpPut("users/{id:guid}")]
+    public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
+    {
+        var currentUserId = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+        var isSelf = Guid.TryParse(currentUserId, out var current) && current == id;
+        try
+        {
+            if (isSelf)
+            {
+                var existingUser = await service.GetUserAsync(id, cancellationToken);
+                if (existingUser is null) return NotFound();
+                var requestedRoles = (request.Roles ?? Array.Empty<string>())
+                    .Where(role => !string.IsNullOrWhiteSpace(role))
+                    .Select(role => role.Trim())
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                if (!requestedRoles.SetEquals(existingUser.Roles))
+                    return BadRequest(new { message = "You cannot change your own roles from this screen." });
+            }
+
+            var user = await service.UpdateUserAsync(id, request, cancellationToken);
+            return user is null ? NotFound() : Ok(user);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPatch("users/{id:guid}/password")]
+    public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await service.ResetPasswordAsync(id, request.NewPassword, cancellationToken) ? NoContent() : NotFound();
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
     [HttpPatch("users/{id:guid}/active")]
     public async Task<IActionResult> SetActive(Guid id, [FromBody] SetActiveRequest request, CancellationToken cancellationToken)
     {
@@ -44,5 +79,6 @@ public sealed class AdministrationController(AdministrationService service) : Co
     }
 
     public sealed record SetActiveRequest(bool Active);
+    public sealed record ResetPasswordRequest(string NewPassword);
     public sealed record RestoreRequest(string BackupData);
 }
