@@ -15,6 +15,7 @@ import {
   REPORTS_ROLES,
   COMMUNICATION_ROLES,
   ATTENDANCE_ROLES,
+  ATTENDANCE_READ_ROLES,
 } from './roles'
 
 export function canManageAdministration(roles: string[]) {
