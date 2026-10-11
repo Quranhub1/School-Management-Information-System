@@ -259,9 +259,9 @@ function App() {
   }, [activeModule, activeSubsection, visibleSidebarGroups]);
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
-      <aside className="flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+      <aside className="flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen">
         <div className="flex h-full flex-col">
           {/* Brand */}
           <div className="flex items-center px-4 py-6 border-b border-gray-200 dark:border-gray-700">
@@ -269,7 +269,7 @@ function App() {
           </div>
           
           {/* Sidebar Groups */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto h-full">
             {visibleSidebarGroups.map((group, groupIdx) => {
               const open = group.alwaysOpen || !!openSidebarGroups[group.label];
               const groupId = "sidebar-group-" + groupIdx;
@@ -320,7 +320,7 @@ function App() {
           </div>
           
           {/* User Info */}
-          <div className="flex items-center px-4 py-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center px-4 py-6 border-t border-gray-200 dark:border-gray-700 mt-auto">
             <img src="/user.png" alt="User" className="w-10 h-10 rounded-full" />
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{sessionUsername || 'User'}</p>
@@ -331,7 +331,7 @@ function App() {
       </aside>
       
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col">
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
