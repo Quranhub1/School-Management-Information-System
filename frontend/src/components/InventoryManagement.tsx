@@ -11,6 +11,16 @@ const INVENTORY_SECTIONS: InventorySection[] = [
   { id: 'biomedical-engineering-lab', name: 'Biomedical Engineering Lab', group: 'Laboratories' },
   { id: 'admin-block', name: 'Admin Block', group: 'Other Inventories' },
   { id: 'furniture', name: 'Furniture', group: 'Other Inventories' },
+  { id: 'classroom-furniture', name: 'Classroom Furniture', group: 'Other Inventories' },
+  { id: 'office-furniture', name: 'Office Furniture', group: 'Other Inventories' },
+  { id: 'dormitory-furniture', name: 'Dormitory Furniture', group: 'Other Inventories' },
+  { id: 'ict-equipment', name: 'ICT Equipment', group: 'Other Inventories' },
+  { id: 'teaching-aids', name: 'Teaching Aids & Equipment', group: 'Other Inventories' },
+  { id: 'sports-equipment', name: 'Sports Equipment', group: 'Other Inventories' },
+  { id: 'kitchen-equipment', name: 'Kitchen Equipment', group: 'Other Inventories' },
+  { id: 'maintenance-tools', name: 'Maintenance Tools', group: 'Other Inventories' },
+  { id: 'electrical-equipment', name: 'Electrical Equipment', group: 'Other Inventories' },
+  { id: 'sanitation-equipment', name: 'Water & Sanitation Equipment', group: 'Other Inventories' },
   { id: 'sports-department', name: 'Sports Department', group: 'Other Inventories' },
   { id: 'guild-department', name: 'Guild Department', group: 'Other Inventories' },
   { id: 'kitchen', name: 'Kitchen', group: 'Other Inventories' },
@@ -200,7 +210,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
               <td className="inventory-serial-cell">{index + 1}</td>
               {register.columns.map(column => <td key={column.id}>
                 {canEdit
-                  ? <input className="inventory-cell-input" aria-label={`Row ${index + 1}, ${column.label}`} value={row.values[column.id] ?? ''} onChange={event => updateCell(row.id, column.id, event.target.value)} placeholder="—" type={column.id === 'quantity' ? 'number' : 'text'} min={column.id === 'quantity' ? 0 : undefined} />
+                  ? <input className="inventory-cell-input" aria-label={`Row ${index + 1}, ${column.label}`} value={row.values[column.id] ?? ''} onChange={event => updateCell(row.id, column.id, event.target.value)} placeholder="—" type={column.id === 'quantity' ? 'number' : 'text'} min={column.id === 'quantity' ? 0 : undefined} step={column.id === 'quantity' ? '0.001' : undefined} />
                   : <span>{row.values[column.id] || '—'}</span>}
               </td>)}
               {canEdit && <td><button className="secondary-button" type="button" onClick={() => deleteRow(row.id)}>Delete row</button></td>}
