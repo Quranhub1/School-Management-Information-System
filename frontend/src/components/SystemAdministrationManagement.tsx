@@ -3,7 +3,7 @@ import { AuditLogManagement } from './AuditLog'
 
 type SystemAdministrationManagementProps = {
   activeSubsection?: string | null
-  onNavigate: (module: string, subsection?: string) => void
+  onNavigate: (module: 'administration' | 'system-administration', subsection?: string) => void
 }
 
 const tools = [
