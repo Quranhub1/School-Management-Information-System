@@ -89,7 +89,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         const title = galleryTitle.trim() || file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')
         uploaded.push(await uploadGalleryImage(file, title, galleryCaption.trim()))
       }
-      setGallery(current => [...uploaded, ...current])
+      await loadGallery()
       setGalleryFiles([]); setGalleryTitle(''); setGalleryCaption('')
       setSuccess(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} added to the gallery.`)
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to upload gallery images.') }
