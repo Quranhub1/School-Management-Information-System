@@ -62,6 +62,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [tab, setTab] = useState<AdminTab>('users')
   const [selectedOffice, setSelectedOffice] = useState<Office | null>(null)
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
@@ -137,15 +138,19 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
     if (!passwordResetUserId) return
     if (passwordResetValue.length < 8) {
       setError('Password must contain at least 8 characters.')
+      setSuccessMessage('')
       return
     }
+    const targetUser = users.find(user => user.id === passwordResetUserId)
     setActionBusy(true)
     setError('')
+    setSuccessMessage('')
     try {
       await resetUserPassword(passwordResetUserId, passwordResetValue)
+      setSuccessMessage(`Password changed successfully for ${targetUser?.username ?? 'the selected user'}.`)
       setPasswordResetUserId(null)
       setPasswordResetValue('')
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to reset password.') }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to change password.') }
     finally { setActionBusy(false) }
   }
 
@@ -169,6 +174,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
     </div>
 
     {error && <div className="error" role="alert">{error}</div>}
+    {successMessage && <div className="success" role="status">{successMessage}</div>}
 
     {tab === 'users' && (
       <>
@@ -227,7 +233,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
         )}
         {passwordResetUserId && (
           <form className="student-form" onSubmit={resetPassword} aria-label="Reset user password">
-            <div className="panel-heading"><div><p className="eyebrow">CREDENTIALS</p><h3>Reset password for {users.find(user => user.id === passwordResetUserId)?.username ?? 'user'}</h3></div><button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(null); setPasswordResetValue('') }}>Cancel</button></div>
+            <div className="panel-heading"><div><p className="eyebrow">CREDENTIALS</p><h3>Reset password for {users.find(user => user.id === passwordResetUserId)?.username ?? 'user'}</h3></div><button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(null); setPasswordResetValue(''); setSuccessMessage('') }}>Cancel</button></div>
             <label>New temporary password<input type="password" autoComplete="new-password" minLength={8} value={passwordResetValue} onChange={e => setPasswordResetValue(e.target.value)} required /></label>
             <button type="submit" disabled={actionBusy || passwordResetValue.length < 8}>{actionBusy ? 'Resetting…' : 'Reset password'}</button>
           </form>
@@ -287,7 +293,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 250 }}>
                       <button type="button" className="secondary-button" onClick={() => setViewingUser(user)} disabled={actionBusy}>View</button>
                       <button type="button" className="secondary-button" onClick={() => beginEdit(user)} disabled={actionBusy}>Edit / Modify</button>
-                      <button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(user.id); setPasswordResetValue(''); setError('') }} disabled={actionBusy}>Reset password</button>
+                      <button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(user.id); setPasswordResetValue(''); setError(''); setSuccessMessage('') }} disabled={actionBusy}>Reset password</button>
                       <button type="button" className="secondary-button" onClick={() => void toggle(user)} disabled={actionBusy}>{user.isActive ? 'Deactivate' : 'Activate'}</button>
                       {user.isActive && <button type="button" className="secondary-button" onClick={() => void removeAccess(user)} disabled={actionBusy}>Remove access</button>}
                     </div>
