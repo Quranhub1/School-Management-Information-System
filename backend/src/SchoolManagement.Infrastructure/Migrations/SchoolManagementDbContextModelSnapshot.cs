@@ -3503,7 +3503,11 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("Category", "Status");
 
-                    b.ToTable("WardenRecords");
+                    b.ToTable("WardenRecords", t =>
+                        {
+                            t.HasCheckConstraint("CK_WardenRecords_Category", "\"Category\" IN ('CheckIn', 'CheckOut', 'Inspection', 'Maintenance', 'Indiscipline')");
+                            t.HasCheckConstraint("CK_WardenRecords_Status", "\"Status\" IN ('Open', 'InProgress', 'Resolved', 'Closed')");
+                        });
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Hostel.Hostel", b =>
