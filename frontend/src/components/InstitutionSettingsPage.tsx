@@ -92,7 +92,11 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
       await loadGallery()
       setGalleryFiles([]); setGalleryTitle(''); setGalleryCaption('')
       setSuccess(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} added to the gallery.`)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to upload gallery images.') }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to upload gallery images.')
+      // If a later file in a multi-file batch fails, still show any earlier files saved successfully.
+      await loadGallery()
+    }
     finally { setUploadingGallery(false) }
   }
 
