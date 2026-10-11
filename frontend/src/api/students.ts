@@ -16,6 +16,26 @@ export interface Student {
   createdAt: string
 }
 
+export interface StudentGuardian {
+  id: string
+  studentId: string
+  fullName: string
+  relationship?: string | null
+  address?: string | null
+  phoneNumber?: string | null
+  email?: string | null
+  isPrimary: boolean
+}
+
+export interface GuardianInput {
+  fullName: string
+  relationship?: string
+  address?: string
+  phoneNumber?: string
+  email?: string
+  isPrimary: boolean
+}
+
 export interface CreateStudentRequest {
   studentNumber: string
   firstName: string
@@ -37,7 +57,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
   if (response.status === 403) throw new Error('Your role is not authorized to manage students.')
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`)
-  return response.json() as Promise<T>
+  return response.status === 204 ? (undefined as T) : response.json() as Promise<T>
 }
 
 export interface UpdateStudentRequest {
@@ -58,6 +78,10 @@ export const getStudent = (id: string) => request<Student>(`/api/students/${id}`
 export const createStudent = (requestBody: CreateStudentRequest) => request<Student>('/api/students', { method: 'POST', body: JSON.stringify(requestBody) })
 export const updateStudent = (id: string, requestBody: UpdateStudentRequest) => request<Student>(`/api/students/${id}`, { method: 'PUT', body: JSON.stringify(requestBody) })
 export const deleteStudent = (id: string) => request<void>(`/api/students/${id}`, { method: 'DELETE' })
+export const getStudentGuardians = (studentId: string) => request<StudentGuardian[]>(`/api/students/${studentId}/guardians`)
+export const addStudentGuardian = (studentId: string, input: GuardianInput) => request<StudentGuardian>(`/api/students/${studentId}/guardians`, { method: 'POST', body: JSON.stringify(input) })
+export const updateStudentGuardian = (studentId: string, guardianId: string, input: GuardianInput) => request<StudentGuardian>(`/api/students/${studentId}/guardians/${guardianId}`, { method: 'PUT', body: JSON.stringify(input) })
+export const deleteStudentGuardian = (studentId: string, guardianId: string) => request<void>(`/api/students/${studentId}/guardians/${guardianId}`, { method: 'DELETE' })
 export const getStudentQrCode = (id: string) => {
   const token = getAccessToken()
   return `${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''}/api/students/${id}/qrcode`

@@ -19,6 +19,7 @@ public sealed record StudentGuardianDto(
     Guid StudentId,
     string FullName,
     string? Relationship,
+    string? Address,
     string? PhoneNumber,
     string? Email,
     bool IsPrimary);
@@ -26,6 +27,15 @@ public sealed record StudentGuardianDto(
 public sealed record AddStudentGuardianRequest(
     string FullName,
     string? Relationship,
+    string? Address,
+    string? PhoneNumber,
+    string? Email,
+    bool IsPrimary = false);
+
+public sealed record UpdateStudentGuardianRequest(
+    string FullName,
+    string? Relationship,
+    string? Address,
     string? PhoneNumber,
     string? Email,
     bool IsPrimary = false);
