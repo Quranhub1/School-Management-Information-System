@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS "WardenRecords" (
     CONSTRAINT "CK_WardenRecords_Status" CHECK ("Status" IN ('Open', 'InProgress', 'Resolved', 'Closed'))
 );
 CREATE INDEX IF NOT EXISTS "IX_WardenRecords_Category_Status" ON "WardenRecords" ("Category", "Status");
-CREATE INDEX IF NOT EXISTS "IX_WardenRecords_RecordedAtUtc" ON "WardenRecords" ("RecordedAtUtc" DESC);
+CREATE INDEX IF NOT EXISTS "IX_WardenRecords_RecordedAtUtc" ON "WardenRecords" ("RecordedAtUtc");
 """);
     }
 
