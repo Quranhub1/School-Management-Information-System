@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run build:login-css && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:login-css": "vite build --config vite.login.config.ts"
+    "build:login-css": "vite build --config vite.login.config.ts",
+    "predev": "npm run build:login-css"
   },
   "dependencies": {
     "@superset-ui/embedded-sdk": "^0.4.0",
