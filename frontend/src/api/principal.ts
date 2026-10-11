@@ -61,12 +61,12 @@ export interface StaffPerformance {
   staffNumber: string
   firstName: string
   lastName: string
-  department?: string
-  position?: string
-  status: string
+  department?: string | null
+  staffType: string | number
+  employmentStatus: string
+  isActive: boolean
   classCount: number
-  studentCount: number
-  resultCount: number
+  teachingAllocations: number
 }
 
 export interface DepartmentalSummary {
