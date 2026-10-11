@@ -1,71 +1,50 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Domain.Administration;
+using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/public/institution-gallery")]
-public sealed class PublicInstitutionGalleryController(IWebHostEnvironment environment) : ControllerBase
+public sealed class PublicInstitutionGalleryController(SchoolManagementDbContext db) : ControllerBase
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-    private static readonly object Sync = new();
-    private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
-
     [AllowAnonymous]
     [HttpGet]
-    public IActionResult List()
+    public async Task<IActionResult> List(CancellationToken cancellationToken)
     {
-        var items = ReadItems();
+        var items = await db.InstitutionGalleryImages.AsNoTracking()
+            .OrderByDescending(x => x.UploadedAt)
+            .Select(x => new GalleryItem(
+                x.Id, x.Title, x.Caption,
+                x.Source == "url" ? x.ExternalUrl! : $"/api/public/institution-gallery/{x.Id}/image",
+                x.UploadedAt, x.Source))
+            .ToListAsync(cancellationToken);
         return Ok(items);
     }
 
     [AllowAnonymous]
     [HttpGet("{id:guid}/image")]
-    public IActionResult Image(Guid id)
+    public async Task<IActionResult> Image(Guid id, CancellationToken cancellationToken)
     {
-        var item = ReadItems().FirstOrDefault(x => x.Id == id && x.Source == "upload");
-        if (item is null || string.IsNullOrWhiteSpace(item.StoredFileName)) return NotFound();
-
-        var root = StorageRoot();
-        var file = Path.Combine(root, "images", item.StoredFileName);
-        if (!System.IO.File.Exists(file)) return NotFound();
-
-        return PhysicalFile(file, item.ContentType ?? "application/octet-stream");
-    }
-
-    private string MetadataFile() => Path.Combine(StorageRoot(), "gallery.json");
-
-    private string StorageRoot() => Path.Combine(environment.ContentRootPath, "App_Data", "Branding", "Gallery");
-
-    private List<GalleryItem> ReadItems()
-    {
-        lock (Sync)
-        {
-            var file = MetadataFile();
-            if (!System.IO.File.Exists(file)) return [];
-            try
-            {
-                return JsonSerializer.Deserialize<List<GalleryItem>>(System.IO.File.ReadAllText(file), JsonOptions) ?? [];
-            }
-            catch (JsonException)
-            {
-                return [];
-            }
-        }
+        var item = await db.InstitutionGalleryImages.AsNoTracking()
+            .Where(x => x.Id == id && x.Source == "upload")
+            .Select(x => new { x.ImageData, x.ContentType })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (item?.ImageData is not { Length: > 0 }) return NotFound();
+        return File(item.ImageData, item.ContentType ?? "application/octet-stream");
     }
 }
 
 [ApiController]
 [Route("api/administration/institution-gallery")]
 [Authorize(Policy = AuthorizationPolicies.Administration)]
-public sealed class InstitutionGalleryController(IWebHostEnvironment environment) : ControllerBase
+public sealed class InstitutionGalleryController(SchoolManagementDbContext db) : ControllerBase
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
-    private static readonly object Sync = new();
-    private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
     private const long MaxFileSize = 10 * 1024 * 1024;
+    private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
     [HttpPost("upload")]
     [RequestSizeLimit(MaxFileSize)]
@@ -75,116 +54,64 @@ public sealed class InstitutionGalleryController(IWebHostEnvironment environment
         if (file.Length > MaxFileSize) return BadRequest(new { message = "Each gallery image must be 10 MB or smaller." });
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!AllowedExtensions.Contains(extension)) return BadRequest(new { message = "Only JPG, PNG and WebP images are supported." });
+        if (!AllowedExtensions.Contains(extension)) return BadRequest(new { message = "Only JPG, PNG, WebP and GIF images are supported." });
+        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "The uploaded file must be an image." });
 
-        var id = Guid.NewGuid();
-        var storedFileName = id.ToString("N") + extension;
-        var imagesRoot = Path.Combine(StorageRoot(), "images");
-        Directory.CreateDirectory(imagesRoot);
-        var destination = Path.Combine(imagesRoot, storedFileName);
-
-        await using (var stream = System.IO.File.Create(destination))
+        await using var memory = new MemoryStream();
+        await file.CopyToAsync(memory, cancellationToken);
+        var item = new InstitutionGalleryImage
         {
-            await file.CopyToAsync(stream, cancellationToken);
-        }
-
-        var item = new GalleryItem(
-            id,
-            string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(file.FileName) : title.Trim(),
-            string.IsNullOrWhiteSpace(caption) ? null : caption.Trim(),
-            $"/api/public/institution-gallery/{id}/image",
-            DateTimeOffset.UtcNow,
-            "upload",
-            storedFileName,
-            file.ContentType);
-
-        var items = ReadItems();
-        items.Add(item);
-        WriteItems(items);
-        return Ok(item);
+            Id = Guid.NewGuid(),
+            Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(file.FileName) : title.Trim(),
+            Caption = string.IsNullOrWhiteSpace(caption) ? null : caption.Trim(),
+            Source = "upload",
+            ImageData = memory.ToArray(),
+            ContentType = file.ContentType,
+            OriginalFileName = Path.GetFileName(file.FileName),
+            UploadedAt = DateTimeOffset.UtcNow
+        };
+        db.InstitutionGalleryImages.Add(item);
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(ToDto(item));
     }
 
     [HttpPost("url")]
-    public IActionResult AddUrl([FromBody] AddGalleryUrlRequest request)
+    public async Task<IActionResult> AddUrl([FromBody] AddGalleryUrlRequest request, CancellationToken cancellationToken)
     {
         if (!Uri.TryCreate(request.Url?.Trim(), UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             return BadRequest(new { message = "A valid HTTP or HTTPS image URL is required." });
 
-        var item = new GalleryItem(
-            Guid.NewGuid(),
-            string.IsNullOrWhiteSpace(request.Title) ? "Institution photograph" : request.Title.Trim(),
-            string.IsNullOrWhiteSpace(request.Caption) ? null : request.Caption.Trim(),
-            uri.ToString(),
-            DateTimeOffset.UtcNow,
-            "url",
-            null,
-            null);
-
-        var items = ReadItems();
-        items.Add(item);
-        WriteItems(items);
-        return Ok(item);
+        var item = new InstitutionGalleryImage
+        {
+            Id = Guid.NewGuid(),
+            Title = string.IsNullOrWhiteSpace(request.Title) ? "Institution photograph" : request.Title.Trim(),
+            Caption = string.IsNullOrWhiteSpace(request.Caption) ? null : request.Caption.Trim(),
+            Source = "url",
+            ExternalUrl = uri.ToString(),
+            UploadedAt = DateTimeOffset.UtcNow
+        };
+        db.InstitutionGalleryImages.Add(item);
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(ToDto(item));
     }
 
     [HttpDelete("{id:guid}")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var items = ReadItems();
-        var item = items.FirstOrDefault(x => x.Id == id);
+        var item = await db.InstitutionGalleryImages.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (item is null) return NotFound();
-
-        items.Remove(item);
-        WriteItems(items);
-
-        if (item.Source == "upload" && !string.IsNullOrWhiteSpace(item.StoredFileName))
-        {
-            var file = Path.Combine(StorageRoot(), "images", item.StoredFileName);
-            if (System.IO.File.Exists(file)) System.IO.File.Delete(file);
-        }
-
+        db.InstitutionGalleryImages.Remove(item);
+        await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
 
-    private string MetadataFile() => Path.Combine(StorageRoot(), "gallery.json");
-
-    private string StorageRoot() => Path.Combine(environment.ContentRootPath, "App_Data", "Branding", "Gallery");
-
-    private List<GalleryItem> ReadItems()
-    {
-        lock (Sync)
-        {
-            var file = MetadataFile();
-            if (!System.IO.File.Exists(file)) return [];
-            try
-            {
-                return JsonSerializer.Deserialize<List<GalleryItem>>(System.IO.File.ReadAllText(file), JsonOptions) ?? [];
-            }
-            catch (JsonException)
-            {
-                return [];
-            }
-        }
-    }
-
-    private void WriteItems(List<GalleryItem> items)
-    {
-        lock (Sync)
-        {
-            Directory.CreateDirectory(StorageRoot());
-            System.IO.File.WriteAllText(MetadataFile(), JsonSerializer.Serialize(items, JsonOptions));
-        }
-    }
+    private static GalleryItem ToDto(InstitutionGalleryImage item) => new(
+        item.Id, item.Title, item.Caption,
+        item.Source == "url" ? item.ExternalUrl! : $"/api/public/institution-gallery/{item.Id}/image",
+        item.UploadedAt, item.Source);
 }
 
-public sealed record GalleryItem(
-    Guid Id,
-    string Title,
-    string? Caption,
-    string ImageUrl,
-    DateTimeOffset UploadedAt,
-    string Source,
-    string? StoredFileName,
-    string? ContentType);
-
+public sealed record GalleryItem(Guid Id, string Title, string? Caption, string ImageUrl, DateTimeOffset UploadedAt, string Source);
 public sealed record AddGalleryUrlRequest(string? Url, string? Title, string? Caption);
