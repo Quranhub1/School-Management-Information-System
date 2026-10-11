@@ -380,11 +380,10 @@ export function PrincipalDashboard() {
                       <th>Staff No.</th>
                       <th>Name</th>
                       <th>Department</th>
-                      <th>Position</th>
+                      <th>Staff Type</th>
                       <th>Status</th>
                       <th>Classes</th>
-                      <th>Students</th>
-                      <th>Results</th>
+                      <th>Teaching Allocations</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -395,16 +394,15 @@ export function PrincipalDashboard() {
                         <tr key={s.id}>
                           <td><strong>{s.staffNumber}</strong></td>
                           <td>{s.firstName} {s.lastName}</td>
-                          <td>{s.department || '—'}</td>
-                          <td>{s.position || '—'}</td>
+                          <td>{s.department || 'Unassigned'}</td>
+                          <td>{String(s.staffType)}</td>
                           <td>
-                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(s.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
-                              {s.status}
+                            <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(s.isActive ? s.employmentStatus : 'Inactive'), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                              {s.isActive ? s.employmentStatus : 'Inactive'}
                             </span>
                           </td>
                           <td>{s.classCount}</td>
-                          <td>{s.studentCount}</td>
-                          <td>{s.resultCount}</td>
+                          <td>{s.teachingAllocations}</td>
                         </tr>
                       ))
                     )}
