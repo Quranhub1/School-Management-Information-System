@@ -53,12 +53,43 @@ public sealed class StudentRecordsWorkflowService(IStudentRecordsRepository repo
             StudentId = studentId,
             FullName = request.FullName.Trim(),
             Relationship = Normalize(request.Relationship),
+            Address = Normalize(request.Address),
             PhoneNumber = Normalize(request.PhoneNumber),
             Email = Normalize(request.Email),
             IsPrimary = request.IsPrimary
         };
 
         await repository.AddGuardianAsync(guardian, cancellationToken);
+        await repository.SaveChangesAsync(cancellationToken);
+        return Map(guardian);
+    }
+
+
+    public async Task<StudentGuardianDto> UpdateGuardianAsync(
+        Guid studentId,
+        Guid guardianId,
+        UpdateStudentGuardianRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureStudentId(studentId);
+        if (guardianId == Guid.Empty) throw new ArgumentException("Guardian id is required.", nameof(guardianId));
+        if (request is null) throw new ArgumentNullException(nameof(request));
+        if (string.IsNullOrWhiteSpace(request.FullName))
+            throw new ArgumentException("Guardian full name is required.", nameof(request));
+
+        var guardian = await repository.GetGuardianAsync(studentId, guardianId, cancellationToken);
+        if (guardian is null) throw new KeyNotFoundException("Guardian was not found for this student.");
+
+        var existing = await repository.GetGuardiansAsync(studentId, cancellationToken);
+        if (request.IsPrimary && existing.Any(x => x.Id != guardianId && x.IsPrimary))
+            throw new InvalidOperationException("A primary guardian already exists for this student.");
+
+        guardian.FullName = request.FullName.Trim();
+        guardian.Relationship = Normalize(request.Relationship);
+        guardian.Address = Normalize(request.Address);
+        guardian.PhoneNumber = Normalize(request.PhoneNumber);
+        guardian.Email = Normalize(request.Email);
+        guardian.IsPrimary = request.IsPrimary;
         await repository.SaveChangesAsync(cancellationToken);
         return Map(guardian);
     }
@@ -96,5 +127,5 @@ public sealed class StudentRecordsWorkflowService(IStudentRecordsRepository repo
 
     private static StudentGuardianDto Map(StudentGuardian guardian) =>
         new(guardian.Id, guardian.StudentId, guardian.FullName, guardian.Relationship,
-            guardian.PhoneNumber, guardian.Email, guardian.IsPrimary);
+            guardian.Address, guardian.PhoneNumber, guardian.Email, guardian.IsPrimary);
 }
