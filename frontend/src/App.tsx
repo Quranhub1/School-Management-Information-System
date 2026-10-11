@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dashboard } from './components/dashboard';
 import { AdministrationManagement } from './components/administration-management';
 import { SystemAdministration } from './components/system-administration';
@@ -239,10 +239,10 @@ function App() {
     return false;
   }
 
-  const visibleSidebarGroups = sidebarGroups.map(group => ({
+  const visibleSidebarGroups = useMemo(() => sidebarGroups.map(group => ({
     ...group,
     items: group.items.filter(item => !(isAdminSecretary && (item.module === 'finance' || item.label === 'Payroll' || item.module === 'administration' || item.module === 'system-administration')) && canSeeSidebarItem(item))
-  })).filter(group => group.items.length > 0);
+  })).filter(group => group.items.length > 0), [sidebarGroups, isAdminSecretary]);
 
   useEffect(() => {
     if (!activeModule) return;
@@ -261,7 +261,7 @@ function App() {
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-20">
+      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-20" style="will-change: transform">
         <div className="flex h-full flex-col">
           {/* Brand */}
           <div className="flex items-center px-4 py-6 border-b border-gray-200 dark:border-gray-700">
