@@ -107,7 +107,17 @@ export async function uploadInstitutionLogo(file: File): Promise<InstitutionSett
   )
 }
 
-export const getGallery = () => request<GalleryItem[]>('/api/public/institution-gallery')
+function resolveGalleryItem(item: GalleryItem): GalleryItem {
+  if (/^https?:\/\//i.test(item.imageUrl)) return item
+  const base = API_BASE_URL
+  const path = item.imageUrl.startsWith('/') ? item.imageUrl : `/${item.imageUrl}`
+  return { ...item, imageUrl: `${base}${path}` }
+}
+
+export async function getGallery(): Promise<GalleryItem[]> {
+  const items = await request<GalleryItem[]>('/api/public/institution-gallery')
+  return items.map(resolveGalleryItem)
+}
 
 export async function uploadGalleryImage(file: File, title: string, caption: string): Promise<GalleryItem> {
   const form = new FormData()
@@ -124,7 +134,7 @@ export async function uploadGalleryImage(file: File, title: string, caption: str
     const body = await response.json().catch(() => null) as { message?: string } | null
     throw new Error(body?.message ?? `Upload failed with status ${response.status}`)
   }
-  return response.json() as Promise<GalleryItem>
+  return resolveGalleryItem(await response.json() as GalleryItem)
 }
 
 export const addGalleryUrl = (url: string, title: string, caption: string) =>
