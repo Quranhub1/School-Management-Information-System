@@ -13,6 +13,32 @@ namespace SchoolManagement.Api.Controllers;
 [Authorize]
 public sealed class TimetableController(SchoolManagementDbContext db, TimetableGeneratorService generator) : ControllerBase
 {
+    [HttpGet("options")]
+    [Authorize(Policy = TimetablePolicies.Read)]
+    public async Task<IActionResult> Options(CancellationToken cancellationToken)
+    {
+        var teachingGroups = await db.TeachingGroups.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.GroupCode)
+            .Select(x => new { x.Id, Label = x.Name == null || x.Name == "" ? x.GroupCode : x.GroupCode + " — " + x.Name })
+            .ToListAsync(cancellationToken);
+        var courses = await db.Courses.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Code)
+            .Select(x => new { x.Id, Label = x.Code + " — " + x.Name })
+            .ToListAsync(cancellationToken);
+        var teachers = await db.StaffMembers.AsNoTracking()
+            .Where(x => x.IsActive && x.EmploymentStatus == "Active")
+            .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
+            .Select(x => new { x.Id, Label = x.FirstName + " " + x.LastName + " (" + x.StaffNumber + ")" })
+            .ToListAsync(cancellationToken);
+        var semesters = await db.Semesters.AsNoTracking()
+            .OrderByDescending(x => x.IsCurrent).ThenByDescending(x => x.StartDate)
+            .Select(x => new { x.Id, Label = x.Name, x.AcademicYearId, x.IsCurrent, x.IsActive })
+            .ToListAsync(cancellationToken);
+        return Ok(new { teachingGroups, courses, teachers, semesters });
+    }
+
     [HttpGet]
     [Authorize(Policy = TimetablePolicies.Read)]
     public async Task<IActionResult> Get([FromQuery] Guid? teachingGroupId, CancellationToken cancellationToken)
