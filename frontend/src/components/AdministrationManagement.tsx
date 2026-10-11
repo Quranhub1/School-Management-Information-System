@@ -143,7 +143,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   }
 
   async function saveEdit(event: React.FormEvent) {
-    event.preventDefault()
+    event.preventDate()
     if (!editingUserId) return
     setActionBusy(true)
     setError('')
@@ -182,17 +182,19 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   }
 
   return <section className="panel" aria-label="Administration and user management">
-    <div className="panel-heading">
+    <div className="panel-heading" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <div>
         <p className="eyebrow">Administration</p>
+      </div>
+      <div>
         <h2>Administration</h2>
       </div>
     </div>
 
-    <div className="library-workspace-tabs" role="tablist" aria-label="Administration sections">
+    <div className="library-workspace-tabs" role="tablist" aria-label="Administration sections" style={{ marginBottom: '16px' }}>
       <button role="tab" aria-selected={tab === 'users'} className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>User Management</button>
       <button role="tab" aria-selected={tab === 'roles'} className={tab === 'roles' ? 'active' : ''} onClick={() => setTab('roles')}>Roles & Permissions</button>
-      <button role="tab" aria-selected={tab === 'offices'} className={tab === 'offices' ? 'active' : ''} onClick={() => { setTab('offices'); setSelectedOffice(null) }}>Leadership & Offices</button>
+      <button role="tab" aria-selected={tab === 'offices'} className={tab === 'offices' ? 'active' : ''} onClick={() => setTab('offices')}>Leadership & Offices</button
       <button role="tab" aria-selected={tab === 'settings'} className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Institution Settings</button>
       <button role="tab" aria-selected={tab === 'staff'} className={tab === 'staff' ? 'active' : ''} onClick={() => setTab('staff')}>Staff & HR</button>
       <button role="tab" aria-selected={tab === 'payroll'} className={tab === 'payroll' ? 'active' : ''} onClick={() => setTab('payroll')}>Payroll</button>
@@ -205,72 +207,78 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
 
     {tab === 'users' && (
       <>
-        <div className="panel" style={{ marginBottom: 18, borderLeft: '4px solid var(--brand-primary, #1e40af)' }}>
-          <div className="panel-heading">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <img
-                src={institution.logoPath || '/api/public/institution-settings/logo'}
-                alt=""
-                style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10 }}
-                onError={e => { e.currentTarget.style.display = 'none' }}
-              />
-              <div>
-                <p className="eyebrow">ACCESS CONTROL · INSTITUTION</p>
-                <h3 style={{ margin: 0 }}>{institution.institutionName || 'Institution'}</h3>
-                {institution.motto && <p style={{ margin: '4px 0 0', color: 'var(--text-muted, #64748b)' }}>{institution.motto}</p>}
-              </div>
+        <div className="panel" style={{ marginBottom: '18px', borderLeft: '4px solid var(--brand-primary, #1e40af)' }}>
+          <div className="panel-heading" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <img
+              src={institution.logoPath || '/api/public/institution-settings/logo'}
+              alt=""
+              style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10 }}
+              onError={e => { e.currentTarget.style.display = 'none' }}
+            />
+            <div>
+              <p className="eyebrow">ACCESS CONTROL · INSTITUTION</p>
+              <h3 style={{ margin: 0 }}>{institution.institutionName || 'Institution'}</h3>
+              {institution.motto && <p style={{ margin: '4px 0 0', color: 'var(--text-muted, #64748b)' }}>{institution.motto}</p>}
             </div>
           </div>
         </div>
-        <form className="student-form" onSubmit={submit}>
+        <form className="student-form" onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <h3>Create institutional account</h3>
-          <div className="form-grid">
-            <label>Username<input value={form.username} onChange={e => setForm({...form, username: e.target.value})} required /></label>
-            <label>Temporary password<input type="password" minLength={8} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required /></label>
-            <label>First name<input value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} required /></label>
-            <label>Last name<input value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} required /></label>
-            <label>Email<input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></label>
-            <label>Role
-              <select value={form.roles[0]} onChange={e => setForm({...form, roles: [e.target.value]})}>
-                {roles.map(role => <option key={role} value={role}>{role}</option>)}
-              </select>
-            </label>
+          <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <div>
+              <label>Username<input value={form.username} onChange={e => setForm({...form, username: e.target.value})} required /></label>
+              <label>Temporary password<input type="password" minLength={8} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required /></label>
+            </div>
+            <div>
+              <label>First name<input value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} required /></label>
+              <label>Last name<input value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} required /></label>
+              <label>Email<input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></label>
+            </div>
+            <div>
+              <label>Role
+                <select value={form.roles[0]} onChange={e => setForm({...form, roles: [e.target.value]})}>
+                  {roles.map(role => <option key={role} value={role}>{role}</option>)}
+                </select>
+              </label>
+            </div>
           </div>
           <button type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
         </form>
         {editingUserId && (
-          <form className="student-form" onSubmit={saveEdit} aria-label="Edit user account">
+          <form className="student-form" onSubmit={saveEdit} aria-label="Edit user account" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="panel-heading"><div><p className="eyebrow">ACCOUNT SETTINGS</p><h3>Edit user account</h3></div><button type="button" className="secondary-button" onClick={() => setEditingUserId(null)}>Cancel</button></div>
-            <div className="form-grid">
-              <label>First name<input value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} required /></label>
-              <label>Last name<input value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} required /></label>
-              <label>Email<input type="email" value={editForm.email ?? ''} onChange={e => setEditForm({ ...editForm, email: e.target.value })} /></label>
-            </div>
-            <fieldset style={{ border: '1px solid var(--border, #dbe2ea)', borderRadius: 10, padding: 12, margin: '12px 0' }}>
-              <legend>Assigned roles (choose at least one)</legend>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 8 }}>
-                {[...new Set([...roles, ...editForm.roles])].map(role => <label key={role} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input type="checkbox" checked={editForm.roles.includes(role)} onChange={e => setEditForm({ ...editForm, roles: e.target.checked ? [...editForm.roles, role] : editForm.roles.filter(item => item !== route) })} />
-                  {route}
-                </label>)}
-            </fieldset>
-            <button type="submit" disabled={actionBusy || editForm.roles.length === 0}>{actionBusy ? 'Saving…' : 'Save changes'}</button>
+            <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              <div>
+                <label>First name<input value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} required /></label>
+                <label>Last name<input value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} required /></label>
+                <label>Email<input type="email" value={editForm.email ?? ''} onChange={e => setEditForm({ ...editForm, email: e.target.value })} /></label>
+              </div>
+              <fieldset style={{ border: '1px solid var(--border, #dbe2ea)', borderRadius: 10, padding: 12, margin: '12px 0' }}>
+                <legend>Assigned roles (choose at least one)</legend>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 8 }}>
+                  {[...new Set([...roles, ...editForm.roles])].map(role => <label key={role} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input type="checkbox" checked={editForm.roles.includes(route)} onChange={e => setEditForm({ ...editForm, roles: e.target.checked ? [...editForm.roles, route] : editForm.roles.filter(item => item !== route) })} />
+                    {route}
+                  </label>)}
+                </div>
+              </div>
+              <button type="submit" disabled={actionBusy || editForm.routes.length === 0}>{actionBusy ? 'Saving…' : 'Save changes'}</button>
           </form>
         )}
         {passwordResetUserId && (
-          <form className="student-form" onSubmit={resetPassword} aria-label="Reset user password">
+          <form className="student-form" onSubmit={resetPassword} aria-label="Reset user password" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="panel-heading"><div><p className="eyebrow">CREDENTIALS</p><h3>Reset password for {users.find(user => user.id === passwordResetUserId)?.username ?? 'user'}</h3></div><button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(null); setPasswordResetValue(''); setSuccessMessage('') }}>Cancel</button></div>
             <label>New temporary password<input type="password" autoComplete="new-password" minLength={8} value={passwordResetValue} onChange={e => setPasswordResetValue(e.target.value)} required /></label>
             <button type="submit" disabled={actionBusy || passwordResetValue.length < 8}>{actionBusy ? 'Resetting…' : 'Reset password'}</button>
           </form>
         )}
-        <div className="table-wrap">
+        <div className="table-wrap" style={{ marginTop: '16px' }}>
           <table>
             <thead>
               <tr>
                 <th>Username</th>
                 <th>Name</th>
-                <th>Email</th>
+                <th>Email</th
                 <th>Roles</th>
                 <th>Status</th>
                 <th>Last Login</th>
@@ -281,14 +289,14 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
               {loading ? <tr><td colSpan={7} className="empty">Loading users…</td></tr> :
                users.length === 0 ? <tr><td colSpan={7} className="empty">No accounts found.</td></tr> :
                users.map(user => (
-                 <tr key={user.id}>
+                 <tr key={user.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '250px' }}>
                    <td>{user.username}</td>
                    <td>{user.firstName} {user.lastName}</td>
                    <td>{user.email ?? '—'}</td>
                    <td>
-                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                       {user.roles.map(role => (
-                         <span key={role} style={{
+                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                       {user.roles.map(route => (
+                         <span key={route} style={{
                            padding: '3px 10px',
                            borderRadius: '999px',
                            background: ROLE_COLORS[route] || '#78716c',
@@ -296,7 +304,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                            fontSize: '.68rem',
                            fontWeight: 800,
                          }}>
-                           {role}
+                           {route}
                          </span>
                        ))}
                      </div>
@@ -316,7 +324,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                    </td>
                    <td>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</td>
                    <td>
-                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 250 }}>
+                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', minWidth: '250px' }}>
                        <button type="button" className="secondary-button" onClick={() => setViewingUser(user)} disabled={actionBusy}>View</button>
                        <button type="button" className="secondary-button" onClick={() => beginEdit(user)} disabled={actionBusy}>Edit / Modify</button>
                        <button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(user.id); setPasswordResetValue(''); setError(''); setSuccessMessage('') }} disabled={actionBusy}>Reset password</button>
@@ -332,15 +340,15 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
       </>
     )}
     {tab === 'roles' && (
-      <div className="panel">
-        <div className="panel-heading">
+      <div className="panel" style={{ marginTop: '0' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px' }}>
           <div>
             <p className="eyebrow">ROLES & PERMISSIONS</p>
             <h3>Role Management</h3>
             <p>Define and manage institutional roles and their associated permissions.</p>
           </div>
         </div>
-        <div className="table-wrap">
+        <div className="table-wrap" style={{ marginTop: '16px' }}>
           <table>
             <thead>
               <tr>
@@ -352,12 +360,12 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
             </thead>
             <tbody>
               {roles.map(role => (
-                <tr key={role}>
-                  <td>{role}</td>
-                  <td>{getRoleDescription(role)}</td>
-                  <td>{getRolePermissions(role).join(', ')}</td>
-                  <td>
-                    <button type="button" className="secondary-button">
+                <tr key={role} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <td style={{ flex: '0 0 auto', minWidth: '120px' }}>{role}</td>
+                  <td style={{ flex: '0 0 auto', minWidth: '200px' }}>{getRoleDescription(role)}</td>
+                  <td style={{ flex: '0 0 auto', minWidth: '150px' }}>{getRolePermissions(role).join(', ')}</td>
+                  <td style={{ flex: '0 0 auto', minWidth: '100px' }}>
+                    <button type="button" className="secondary-button" style={{ padding: '6px 12px' }}>
                       View Details
                     </button>
                   </td>
@@ -373,34 +381,67 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
     )}
     {tab === 'offices' && (
       selectedOffice ? (() => { const OfficeIcon = selectedOffice.icon; return (
-        <div className="office-detail">
+        <div className="office-detail" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <button type="button" className="secondary-button office-back" onClick={() => setSelectedOffice(null)}><ArrowLeft size={16} /> Back to offices</button>
-          <div className="office-detail-header">
+          <div className="office-detail-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
             <div className="office-detail-icon"><OfficeIcon size={28} /></div>
-            <div><span className="eyebrow">{selectedOffice.group}</span><h3>{selectedOffice.title}</h3><p>{selectedOffice.description}</p></div>
+            <div>
+              <span className="eyebrow">{selectedOffice.group}</span>
+              <h3>{selectedOffice.title}</h3>
+              <p>{selectedOffice.description}</p>
+            </div>
           </div>
-          <div className="office-detail-grid">
-            <section className="panel office-detail-panel"><div className="panel-heading"><div><h3>Responsibilities</h3><p>Core responsibilities assigned to this office.</p></div></div><ul className="office-responsibilities">{selectedOffice.responsibilities.map(item => <li key={item}>{item}</li>)}</ul></section>
-            <section className="panel office-detail-panel"><div className="panel-heading"><div><h3>System workspace</h3><p>Most operational offices are connected directly to the screen they use.</p></div></div>{selectedOffice.workspace ? <button type="button" onClick={() => openWorkspace(selectedOffice.workspace)}>{selectedOffice.workspaceLabel}</button> : <p className="empty">No direct workspace has been assigned yet.</p>}</section>
+          <div className="office-detail-grid" style={{ display: 'flex', gap: '16px' }}>
+            <section className="panel office-detail-panel" style={{ marginBottom: '16px' }}>
+              <div className="panel-heading"><div><h3>Responsibilities</h3><p>Core responsibilities assigned to this office.</p></div></div><ul className="office-responsibilities">{selectedOffice.responsibilities.map(item => <li key={item}>{item}</li>)}</ul></section>
+            </section>
+            <section className="panel office-detail-panel" style={{ marginBottom: '16px' }}>
+              <div className="panel-heading"><div><h3>System workspace</h3><p>Most operational offices are connected directly to the screen they use.</p></div></div>{selectedOffice.workspace ? <button type="button" onClick={() => openWorkspace(selectedOffice.workspace)}>{selectedOffice.workspaceLabel}</button> : <p className="empty">No direct workspace has been assigned yet.</p>}</section>
           </div>
         </div>
       ) })() : (
-        <div className="office-directory">
-          <div className="office-directory-intro"><div><span className="eyebrow">INSTITUTIONAL LEADERSHIP</span><h3>Leadership & Offices</h3><p>Day-to-day school operations, governance and specialist offices. Operational support workers such as cooks, askaris and watchmen remain staff records rather than application-login roles.</p></div><span className="office-count">{OFFICES.length} offices</span></div>
-          <div className="office-groups">{Array.from(new Set(OFFICES.map(o => o.group))).map(group => <section key={group} className="office-group"><div className="office-group-heading"><h4>{group}</h4><span>{OFFICES.filter(o => o.group === group).length}</span></div><div className="office-card-grid">{OFFICES.filter(o => o.group === group).map(office => { const Icon = office.icon; return <button type="button" className="office-card" key={office.key} onClick={() => setSelectedOffice(office)}><span className="office-card-icon"><Icon size={21} /></span><span className="office-card-copy"><strong>{office.title}</strong><small>{office.description}</small></span><span className="office-card-link">{office.workspace ? 'Workspace →' : 'View office →'}</span></button> })}</div></section>)}</div>
-      )
+        <div className="office-directory" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="office-directory-intro" style={{ marginBottom: '16px' }}>
+            <div>
+              <span className="eyebrow">INSTITUTIONAL LEADERSHIP</span>
+              <h3>Leadership & Offices</h3>
+              <p>Day-to-day school operations, governance and specialist offices. Operational support workers such as cooks, askaris and watchmen remain staff records rather than application-login roles.</p>
+            </div>
+            <span className="office-count">{OFFICES.length} offices</span>
+          </div>
+          <div className="office-groups" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {Array.from(new Set(OFFICES.map(o => o.group))).map(group => (
+              <section key={group} className="office-group" style={{ marginBottom: '16px' }}>
+                <div className="office-group-heading" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <h4>{group}</h4>
+                  <span>{OFFICES.filter(o => o.group === group).length}</span>
+                </div>
+                <div className="office-card-grid" style={{ display: 'grid', gap: '12px' }}>
+                  {OFFICES.filter(o => o.group === group).map(office => (
+                    <button type="button" className="office-card" key={office.key} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                      <span className="office-card-icon"><Icon size={21} /></span>
+                      <span className="office-card-copy"><strong>{office.title}</strong><small>{office.description}</small></span>
+                      <span className="office-card-link">{office.workspace ? 'Workspace →' : 'View office →'}</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     )}
     {tab === 'settings' && <InstitutionSettingsPage onSaved={handleInstitutionSaved} />}
     {tab === 'staff' && (
-      <div className="panel">
-        <div className="panel-heading">
+      <div className="panel" style={{ marginTop: '0' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px' }}>
           <div>
             <p className="eyebrow">STAFF & HR</p>
             <h3>Staff Management Overview</h3>
             <p>View and manage staff records, employment details, and HR processes.</p>
           </div>
         </div>
-        <div className="table-wrap">
+        <div className="table-wrap" style={{ marginTop: '16px' }}>
           <table>
             <thead>
               <tr>
@@ -414,7 +455,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
             </thead>
             <tbody>
               {/* Placeholder - in a real implementation, this would fetch staff data */}
-              <tr>
+              <tr style={{ marginBottom: '8px' }}>
                 <td>STAFF001</td>
                 <td>John Doe</td>
                 <td>Senior Lecturer</td>
@@ -422,10 +463,10 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                 <td>Permanent</td>
                 <td><span style={{ color: '#059669' }}>Active</span></td>
               </tr>
-              <tr>
+              <tr style={{ marginBottom: '8px' }}>
                 <td>STAFF002</td>
                 <td>Jane Smith</td>
-                <td>Administrative Officer</td>
+                <td>Administrative Officer</td
                 <td>Administration</td>
                 <td>Permanent</td>
                 <td><span style={{ color: '#059669' }}>Active</span></td>
@@ -436,15 +477,15 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
       </div>
     )}
     {tab === 'payroll' && (
-      <div className="panel">
-        <div className="panel-heading">
+      <div className="panel" style={{ marginTop: '0' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px' }}>
           <div>
-            <p className="eyebrow">PAYROLL</p>
+            <p className="eyebrow">PAYROLL</p
             <h3>Payroll Management</h3>
             <p>Manage employee compensation, deductions, and payroll processing.</p>
           </div>
         </div>
-        <div className="table-wrap">
+        <div className="table-wrap" style={{ marginTop: '16px' }}>
           <table>
             <thead>
               <tr>
@@ -457,7 +498,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
             </thead>
             <tbody>
               {/* Placeholder - in a real implementation, this would fetch payroll data */}
-              <tr>
+              <tr style={{ marginBottom: '8px' }}>
                 <td>STAFF001</td>
                 <td>January 2026</td>
                 <td>2,500,000</td>
@@ -465,8 +506,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                 <td>
                   <button type="button" className="secondary-button">View Details</button>
                 </td>
-              </tr>
-              <tr>
+                <tr style={{ marginBottom: '8px' }}>
                 <td>STAFF002</td>
                 <td>February 2026</td>
                 <td>1,800,000</td>
@@ -474,22 +514,21 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                 <td>
                   <button type="button" className="secondary-button">Process</button>
                 </td>
-              </tr>
-            </tbody>
+              </tbody>
           </table>
         </div>
       </div>
     )}
     {tab === 'leave' && (
-      <div className="panel">
-        <div className="panel-heading">
+      <div className="panel" style={{ marginTop: '0' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px' }}>
           <div>
             <p className="eyebrow">LEAVE MANAGEMENT</p>
             <h3>Leave Requests & Approvals</h3>
             <p>Manage employee leave requests, approvals, and tracking.</p>
           </div>
-        </div>
-        <div className="table-wrap">
+        </div
+        <div className="table-wrap" style={{ marginTop: '16px' }}>
           <table>
             <thead>
               <tr>
@@ -498,13 +537,13 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                 <th>Start Date</th>
                 <th>End Date</th>
                 <th>Days</th>
-                <th>Status</th>
+                <th>Status</th
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {/* Placeholder - in a real implementation, this would fetch leave data */}
-              <tr>
+              <tr style={{ marginBottom: '8px' }}>
                 <td>STAFF001</td>
                 <td>Annual Leave</td>
                 <td>2026-01-15</td>
@@ -514,9 +553,8 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                 <td>
                   <button type="button" className="secondary-button">View Details</button>
                 </td>
-              </tr>
-              <tr>
-                <td>STAFF002</td>
+                <tr style={{ marginBottom: '8px' }}>
+                <td>STAFF002</td
                 <td>Sick Leave</td>
                 <td>2026-02-01</td>
                 <td>2026-02-03</td>
@@ -526,62 +564,58 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                   <button type="button" className="secondary-button" onClick={() => {/* approve/reject logic */}}>Approve</button>
                   <button type="button" className="secondary-button" onClick={() => {/* approve/reject logic */}}>Reject</button>
                 </td>
-              </tr>
-            </tbody>
+              </tbody>
           </table>
         </div>
       </div>
     )}
     {tab === 'recruitment' && (
-      <div className="panel">
-        <div className="panel-heading">
+      <div className="panel" style={{ marginTop: '0' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px' }}>
           <div>
             <p className="eyebrow">RECRUITMENT</p>
             <h3>Talent Acquisition & Onboarding</h3>
             <p>Manage job postings, applications, interviews, and employee onboarding.</p>
           </div>
-        </div>
-        <div className="table-wrap">
+        </div
+        <div className="table-wrap" style={{ marginTop: '16px' }}>
           <table>
             <thead>
               <tr>
                 <th>Position</th>
-                <th>Department</th>
+                <th>Department</th
                 <th>Status</th>
                 <th>Applications</th>
                 <th>Action</th>
-              </tr>
+              </tr
             </thead>
             <tbody>
               {/* Placeholder - in a real implementation, this would fetch recruitment data */}
-              <tr>
-                <td>Lecturer - Mathematics</td>
-                <td>Mathematics</td>
+              <tr style={{ marginBottom: '8px' }}>
+                <td>Lecturer - Mathematics</td
+                <td>Mathematics</td
                 <td>Open</td>
                 <td>12</td>
                 <td>
                   <button type="button" className="secondary-button">View Applications</button>
-                </td>
-              </tr>
-              <tr>
-                <td>Administrative Assistant</td>
-                <td>Administration</td>
+                </td
+              <tr style={{ marginBottom: '8px' }}>
+                <td>Administrative Assistant</td
+                <td>Administration</td
                 <td>Open</td>
-                <td>8</td>
+                <td>8</td
                 <td>
                   <button type="button" className="secondary-button">View Applications</button>
-                </td>
-              </tr>
-              <tr>
-                <td>College Principal</td>
-                <td>Executive</td>
+                </td
+              <tr style={{ marginBottom: '8px' }}>
+                <td>College Principal</td
+                <td>Executive</td
                 <td>Closed - Selected</td>
-                <td>25</td>
+                <td>25</td
                 <td>
                   <button type="button" className="secondary-button">View Details</button>
-                </td>
-              </tr>
-            </tbody>
+                </td
+              </tbody>
           </table>
         </div>
       </div>
@@ -601,7 +635,7 @@ function getRoleDescription(role: string): string {
     SchoolWarden: 'Oversees student welfare, discipline, accommodation, and safety',
     Principal: 'Provides academic leadership and oversees educational programs',
     Director: 'Provides executive leadership and institutional management',
-    Secretary: 'Handles administrative tasks, documentation, and office management',
+    Secretary: 'Hands administrative tasks, documentation, and office management',
     ResidentDirector: 'Manages residential facilities and student welfare in hostels',
     HeadOfDepartment: 'Leads academic department and oversees curriculum delivery',
     Receptionist: 'Manages front desk operations, visitor management, and communications',
