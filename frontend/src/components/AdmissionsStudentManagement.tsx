@@ -47,8 +47,8 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
   }, [visibleSections])
 
   return (
-    <section className="student-lifecycle-workspace">
-      <header className="workspace-header">
+    <section className="student-lifecycle-workspace" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <header className="workspace-header" style={{ padding: '16px', borderBottom: '1px solid #e2e8f0' }}>
         <div>
           <p className="eyebrow">Student Lifecycle</p>
           <h2>{readOnly ? 'Student Records · Read-only' : 'Admissions & Student Management'}</h2>
@@ -56,7 +56,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         </div>
       </header>
 
-      <div className="student-lifecycle-tabs" role="tablist" aria-label="Admissions and student management">
+      <div className="student-lifecycle-tabs" role="tablist" aria-label="Admissions and student management" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0' }}>
         {visibleSections.map(item => (
           <button key={item.key} className={section === item.key ? 'active' : ''} onClick={() => setSection(item.key)} role="tab" aria-selected={section === item.key}>
             {item.label}
@@ -64,13 +64,13 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         ))}
       </div>
 
-      <div className="student-lifecycle-panel">
+      <div className="student-lifecycle-panel" style={{ flex: '1', minHeight: '0', display: 'flex', flexDirection: 'column', padding: '16px' }}>
         <h3>{selected?.label}</h3>
 
         {section === 'biodata' && (
-          <div>
+          <div style={{ margin: '16px 0' }}>
             <p className="section-copy">The administration workspace may maintain the complete institutional record. Student-facing portals should expose only the minimum profile needed by the learner.</p>
-            <div className="feature-grid">
+            <div className="feature-grid" style={{ display: 'grid', gap: '16px', marginBottom: '16px' }}>
               <article className="feature-card"><strong>Bio-Data</strong><span>Student number, names, date of birth, gender, contacts and core profile.</span></article>
               <article className="feature-card"><strong>National ID / NIN</strong><span>Capture and maintain the student's national identification reference. Restricted to authorised staff.</span></article>
               <article className="feature-card"><strong>Next of Kin</strong><span>Maintain emergency contact and relationship details. Not exposed in the normal student portal.</span></article>
@@ -81,9 +81,9 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         )}
 
         {section === 'admissions' && (
-          <div>
+          <div style={{ margin: '16px 0' }}>
             <p className="section-copy">Application pipeline, programme eligibility screening and provisional admission processing.</p>
-            <div className="feature-grid compact">
+            <div className="feature-grid compact" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
               <article className="feature-card"><strong>Eligibility checks</strong><span>Record programme-specific requirements, including Biology, Chemistry, Physics and Mathematics where applicable.</span></article>
               <article className="feature-card"><strong>Admission letters</strong><span>Generate, verify and manage provisional admission documentation.</span></article>
             </div>
@@ -92,42 +92,50 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         )}
 
         {section === 'indexing' && (
-          <div className="lifecycle-form-grid">
+          <div className="lifecycle-form-grid" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <label>UHPAB HTIN<input value={uhpabNumber} onChange={e => setUhpabNumber(e.target.value)} placeholder="Health Trainee Identification Number" /></label>
             <label>Indexing Status<select value={indexingStatus} onChange={e => setIndexingStatus(e.target.value)}><option>Not Indexed</option><option>Pending</option><option>Indexed</option><option>Rejected</option></select></label>
             <label>Legacy UHPAB Registration / NSIN<input value={legacyRegistrationNumber} onChange={e => setLegacyRegistrationNumber(e.target.value)} placeholder="For trainees covered by earlier registration arrangements" /></label>
             <label>UVTAB Registration Number<input value={uvtabRegistrationNumber} onChange={e => setUvtabRegistrationNumber(e.target.value)} placeholder="TVET assessment registration number" /></label>
-            <div className="feature-card full-width"><strong>Regulatory identity</strong><span>For UHPAB, new health trainees are tracked with HTIN while applicable earlier cohorts retain their existing registration/NSIN identifiers. UVTAB learners use their assessment registration number for the candidate/results journey.</span></div>
-            <div className="info-banner full-width">National submission and synchronisation remain integration-ready placeholders until the institution supplies authorised UHPAB/UVTAB integration credentials and approved endpoints.</div>
+            <div className="feature-card full-width" style={{ margin: '16px 0' }}>
+              <strong>Regulatory identity</strong><span>For UHPAB, new health trainees are tracked with HTIN while applicable earlier cohorts retain their existing registration/NSIN identifiers. UVTAB learners use their assessment registration number for the candidate/results journey.</span>
+            </div>
+            <div className="info-banner full-width" style={{ margin: '16px 0' }}>
+              National submission and synchronisation remain integration-ready placeholders until the institution supplies authorised UHPAB/UVTAB integration credentials and approved endpoints.
+            </div>
           </div>
         )}
 
         {section === 'status' && (
-          <div className="lifecycle-form-grid">
+          <div className="lifecycle-form-grid" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <label>Enrollment / Student Status<select value={studentStatus} onChange={e => setStudentStatus(e.target.value)}>{statuses.map(status => <option key={status}>{status}</option>)}</select></label>
-            <div className="feature-card"><strong>Current status</strong><span>{studentStatus}</span></div>
-            <div className="feature-card full-width"><strong>Status workflow</strong><span>Active, On Clinical Attachment, Retake/Repeat Year, Discontinued, Deferred and Graduated.</span></div>
+            <div className="feature-card" style={{ margin: '16px 0' }}>
+              <strong>Current status</strong><span>{studentStatus}</span>
+            </div>
+            <div className="feature-card full-width" style={{ margin: '16px 0' }}>
+              <strong>Status workflow</strong><span>Active, On Clinical Attachment, Retake/Repeat Year, Discontinued, Deferred and Graduated.</span>
+            </div>
           </div>
         )}
 
         {section === 'cards' && (
-          <div className="feature-grid">
+          <div className="feature-grid" style={{ margin: '16px 0', display: 'grid', gap: '16px', marginBottom: '16px' }}>
             <article className="feature-card"><strong>Library ID Cards</strong><span>Prepare student library identity cards for batch production.</span><button className="secondary-button" type="button">Open Card Queue</button></article>
-            <article className="feature-card"><strong>Campus ID Cards</strong><span>Prepare campus identity cards with student details.</span><button className="secondary-button" type="button">Open Card Queue</button></article>
+            <article className="feature-card"><strong>Campus ID Cards</span>Prepare campus identity cards with student details.</span><button className="secondary-button" type="button">Open Card Queue</button></article>
             <article className="feature-card"><strong>Barcode / QR</strong><span>Identity cards are designed for barcode and QR-code identification.</span></article>
             <article className="feature-card"><strong>Batch Printing</strong><span>Organize selected students into printable card batches.</span></article>
           </div>
         )}
 
         {section === 'alumni' && (
-          <div>
+          <div style={{ margin: '16px 0' }}>
             <p className="section-copy">Maintain graduate and alumni records as part of the student lifecycle. Alumni are no longer a separate top-level application module.</p>
             <AlumniManagement />
           </div>
         )}
 
         {section === 'national-results' && (
-          <div className="feature-grid">
+          <div className="feature-grid" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <article className="feature-card">
               <strong>UHPAB Results</strong>
               <span>Official UHPAB assessment results will be surfaced here after release and institutional verification.</span>

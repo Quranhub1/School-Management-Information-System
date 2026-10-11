@@ -143,7 +143,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   }
 
   async function saveEdit(event: React.FormEvent) {
-    event.preventDate()
+    event.preventDefault()
     if (!editingUserId) return
     setActionBusy(true)
     setError('')
@@ -181,8 +181,8 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
     await toggle(user)
   }
 
-  return <section className="panel" aria-label="Administration and user management">
-    <div className="panel-heading" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+  return <section className="panel" aria-label="Administration and user management" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="panel-heading" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderBottom: '1px solid #e2e8f0' }}>
       <div>
         <p className="eyebrow">Administration</p>
       </div>
@@ -191,67 +191,71 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
       </div>
     </div>
 
-    <div className="library-workspace-tabs" role="tablist" aria-label="Administration sections" style={{ marginBottom: '16px' }}>
+    <div className="library-workspace-tabs" role="tablist" aria-label="Administration sections" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0' }}>
       <button role="tab" aria-selected={tab === 'users'} className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>User Management</button>
       <button role="tab" aria-selected={tab === 'roles'} className={tab === 'roles' ? 'active' : ''} onClick={() => setTab('roles')}>Roles & Permissions</button>
-      <button role="tab" aria-selected={tab === 'offices'} className={tab === 'offices' ? 'active' : ''} onClick={() => setTab('offices')}>Leadership & Offices</button
+      <button role="tab" aria-selected={tab === 'offices'} className={tab === 'offices' ? 'active' : ''} onClick={() => setTab('offices')}>Leadership & Offices</button>
       <button role="tab" aria-selected={tab === 'settings'} className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Institution Settings</button>
       <button role="tab" aria-selected={tab === 'staff'} className={tab === 'staff' ? 'active' : ''} onClick={() => setTab('staff')}>Staff & HR</button>
       <button role="tab" aria-selected={tab === 'payroll'} className={tab === 'payroll' ? 'active' : ''} onClick={() => setTab('payroll')}>Payroll</button>
-      <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button>
+      <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button
       <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>
     </div>
 
-    {error && <div className="error" role="alert">{error}</div>}
-    {successMessage && <div className="success" role="status">{successMessage}</div>}
+    <div className="sheet-content" style={{ flex: '1', minHeight: '0', display: 'flex', flexDirection: 'column' }}>
+      {error && <div className="error" role="alert" style={{ margin: '16px' }}>{error}</div>}
+      {successMessage && <div className="success" role="status" style={{ margin: '16px' }}>{successMessage}</div>}
 
-    {tab === 'users' && (
-      <>
-        <div className="panel" style={{ marginBottom: '18px', borderLeft: '4px solid var(--brand-primary, #1e40af)' }}>
-          <div className="panel-heading" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <img
-              src={institution.logoPath || '/api/public/institution-settings/logo'}
-              alt=""
-              style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10 }}
-              onError={e => { e.currentTarget.style.display = 'none' }}
-            />
-            <div>
-              <p className="eyebrow">ACCESS CONTROL · INSTITUTION</p>
-              <h3 style={{ margin: 0 }}>{institution.institutionName || 'Institution'}</h3>
-              {institution.motto && <p style={{ margin: '4px 0 0', color: 'var(--text-muted, #64748b)' }}>{institution.motto}</p>}
+      {tab === 'users' && (
+        <>
+          <div className="panel" style={{ margin: '16px', borderLeft: '4px solid var(--brand-primary, #1e40af)' }}>
+            <div className="panel-heading" style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px' }}>
+              <img
+                src={institution.logoPath || '/api/public/institution-settings/logo'}
+                alt=""
+                style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 10 }}
+                onError={e => { e.currentTarget.style.display = 'none' }}
+              />
+              <div>
+                <p className="eyebrow">ACCESS CONTROL · INSTITUTION</p>
+                <h3 style={{ margin: 0 }}>{institution.institutionName || 'Institution'}</h3>
+                {institution.motto && <p style={{ margin: '4px 0 0', color: 'var(--text-muted, #64748b)' }}>{institution.motto}</p>}
+              </div>
             </div>
           </div>
-        </div>
-        <form className="student-form" onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <h3>Create institutional account</h3>
-          <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            <div>
-              <label>Username<input value={form.username} onChange={e => setForm({...form, username: e.target.value})} required /></label>
-              <label>Temporary password<input type="password" minLength={8} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required /></label>
-            </div>
-            <div>
-              <label>First name<input value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} required /></label>
-              <label>Last name<input value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} required /></label>
-              <label>Email<input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></label>
-            </div>
-            <div>
-              <label>Role
-                <select value={form.roles[0]} onChange={e => setForm({...form, roles: [e.target.value]})}>
-                  {roles.map(role => <option key={role} value={role}>{role}</option>)}
-                </select>
-              </label>
-            </div>
-          </div>
-          <button type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
-        </form>
-        {editingUserId && (
-          <form className="student-form" onSubmit={saveEdit} aria-label="Edit user account" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="panel-heading"><div><p className="eyebrow">ACCOUNT SETTINGS</p><h3>Edit user account</h3></div><button type="button" className="secondary-button" onClick={() => setEditingUserId(null)}>Cancel</button></div>
+          <form className="student-form" onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px' }}>
+            <h3>Create institutional account</h3>
             <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
               <div>
-                <label>First name<input value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} required /></label>
-                <label>Last name<input value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} required /></label>
-                <label>Email<input type="email" value={editForm.email ?? ''} onChange={e => setEditForm({ ...editForm, email: e.target.value })} /></label>
+                <label>Username<input value={form.username} onChange={e => setForm({...form, username: e.target.value})} required /></label>
+                <label>Temporary password<input type="password" minLength={8} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required /></label>
+              </div>
+              <div>
+                <label>First name<input value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} required /></label>
+              <div>
+                <label>Last name<input value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} required /></label>
+              </div>
+              <div>
+                <label>Email<input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></label>
+              </div>
+              <div>
+                <label>Role
+                  <select value={form.roles[0]} onChange={e => setForm({...form, roles: [e.target.value]})}>
+                    {roles.map(role => <option key={role} value={role}>{role}</option>)}
+                  </select>
+                </label>
+              </div>
+            </div>
+            <button type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
+          </form>
+          {editingUserId && (
+            <form className="student-form" onSubmit={saveEdit} aria-label="Edit user account" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px' }}>
+              <div className="panel-heading"><div><p className="eyebrow">ACCOUNT SETTINGS</p><h3>Edit user account</h3></div><button type="button" className="secondary-button" onClick={() => setEditingUserId(null)}>Cancel</button></div>
+              <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                <div>
+                  <label>First name<input value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} required /></label>
+                  <label>Last name<input value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} required /></label>
+                  <label>Email<input type="email" value={editForm.email ?? ''} onChange={e => setEditForm({ ...editForm, email: e.target.value })} /></label>
               </div>
               <fieldset style={{ border: '1px solid var(--border, #dbe2ea)', borderRadius: 10, padding: 12, margin: '12px 0' }}>
                 <legend>Assigned roles (choose at least one)</legend>
@@ -262,128 +266,143 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                   </label>)}
                 </div>
               </div>
-              <button type="submit" disabled={actionBusy || editForm.routes.length === 0}>{actionBusy ? 'Saving…' : 'Save changes'}</button>
+              <button type="submit" disabled={actionBusy || editForm.roles.length === 0}>{actionBusy ? 'Saving…' : 'Save changes'}</button>
           </form>
         )}
         {passwordResetUserId && (
-          <form className="student-form" onSubmit={resetPassword} aria-label="Reset user password" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form className="student-form" onSubmit={resetPassword} aria-label="Reset user password" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px' }}>
             <div className="panel-heading"><div><p className="eyebrow">CREDENTIALS</p><h3>Reset password for {users.find(user => user.id === passwordResetUserId)?.username ?? 'user'}</h3></div><button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(null); setPasswordResetValue(''); setSuccessMessage('') }}>Cancel</button></div>
-            <label>New temporary password<input type="password" autoComplete="new-password" minLength={8} value={passwordResetValue} onChange={e => setPasswordResetValue(e.target.value)} required /></label>
-            <button type="submit" disabled={actionBusy || passwordResetValue.length < 8}>{actionBusy ? 'Resetting…' : 'Reset password'}</button>
+            <label>New temporary password<input type="password" autoComplete="new-password" minLength={8} value={paymentResetValue} onChange={e => setPaymentResetValue(e.target.value)} required /></label>
+            <button type="submit" disabled={actionBusy || paymentResetValue.length < 8}>{actionBusy ? 'Resetting…' : 'Reset password'}</button>
           </form>
         )}
-        <div className="table-wrap" style={{ marginTop: '16px' }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Name</th>
-                <th>Email</th
-                <th>Roles</th>
-                <th>Status</th>
-                <th>Last Login</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? <tr><td colSpan={7} className="empty">Loading users…</td></tr> :
-               users.length === 0 ? <tr><td colSpan={7} className="empty">No accounts found.</td></tr> :
-               users.map(user => (
-                 <tr key={user.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '250px' }}>
-                   <td>{user.username}</td>
-                   <td>{user.firstName} {user.lastName}</td>
-                   <td>{user.email ?? '—'}</td>
-                   <td>
-                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                       {user.roles.map(route => (
-                         <span key={route} style={{
-                           padding: '3px 10px',
-                           borderRadius: '999px',
-                           background: ROLE_COLORS[route] || '#78716c',
-                           color: 'white',
-                           fontSize: '.68rem',
-                           fontWeight: 800,
-                         }}>
-                           {route}
-                         </span>
-                       ))}
-                     </div>
-                   </td>
-                   <td>
-                     <span style={{
-                       display: 'inline-flex',
-                       padding: '4px 10px',
-                       borderRadius: '999px',
-                       background: user.isActive ? '#d1fae5' : '#fee2e2',
-                       color: user.isActive ? '#059669' : '#dc2626',
-                       fontSize: '.72rem',
-                       fontWeight: 800,
-                     }}>
-                       {user.isActive ? 'Active' : 'Inactive'}
-                     </span>
-                   </td>
-                   <td>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</td>
-                   <td>
-                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', minWidth: '250px' }}>
-                       <button type="button" className="secondary-button" onClick={() => setViewingUser(user)} disabled={actionBusy}>View</button>
-                       <button type="button" className="secondary-button" onClick={() => beginEdit(user)} disabled={actionBusy}>Edit / Modify</button>
-                       <button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(user.id); setPasswordResetValue(''); setError(''); setSuccessMessage('') }} disabled={actionBusy}>Reset password</button>
-                       <button type="button" className="secondary-button" onClick={() => void toggle(user)} disabled={actionBusy}>{user.isActive ? 'Deactivate' : 'Activate'}</button>
-                       {user.isActive && <button type="button" className="secondary-button" onClick={() => void removeAccess(user)} disabled={actionBusy}>Remove access</button>}
-                     </div>
-                   </td>
-                 </tr>
-               ))}
-            </tbody>
-          </table>
+        <div className="table-container" style={{ flex: '1', minHeight: '0', margin: '16px' }}>
+          <div className="table-wrap" style={{ flex: '1', minHeight: '0' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Username</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Name</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Email</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Roles</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Status</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Last Login</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr style={{ height: '60px' }}>
+                    <td colSpan={7} className="empty" style={{ padding: '16px', textAlign: 'center' }}>Loading users…</td>
+                  </tr>
+                ) : (
+                  users.length === 0 ? (
+                    <tr style={{ height: '60px' }}>
+                      <td colSpan={7} className="empty" style={{ padding: '16px', textAlign: 'center' }}>No accounts found.</td>
+                    </tr>
+                  ) : (
+                    users.map(user => (
+                      <tr key={user.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '12px 16px' }}>{user.username}</td>
+                        <td style={{ padding: '12px 16px' }}>{user.firstName} {user.lastName}</td>
+                        <td style={{ padding: '12px 16px' }}>{user.email ?? '—'}</td>
+                        <td>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            {user.roles.map(route => (
+                              <span key={route} style={{
+                                padding: '3px 10px',
+                                borderRadius: '999px',
+                                background: ROLE_COLORS[route] || '#78716c',
+                                color: 'white',
+                                fontSize: '.68rem',
+                                fontWeight: 800,
+                              }}>
+                                {route}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            padding: '4px 10px',
+                            borderRadius: '999px',
+                            background: user.isActive ? '#d1fae5' : '#fee2e2',
+                            color: user.isActive ? '#059669' : '#dc2626',
+                            fontSize: '.72rem',
+                            fontWeight: 800,
+                          }}>
+                            {user.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', minWidth: '250px' }}>
+                            <button type="button" className="secondary-button" onClick={() => setViewingUser(user)} disabled={actionBusy}>View</button>
+                            <button type="button" className="secondary-button" onClick={() => beginEdit(user)} disabled={actionBusy}>Edit / Modify</button>
+                            <button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(user.id); setPasswordResetValue(''); setError(''); setSuccessMessage('') }} disabled={actionBusy}>Reset password</button>
+                            <button type="button" className="secondary-button" onClick={() => void toggle(user)} disabled={actionBusy}>{user.isActive ? 'Deactivate' : 'Activate'}</button>
+                            {user.isActive && <button type="button" className="secondary-button" onClick={() => void removeAccess(user)} disabled={actionBusy}>Remove access</button>}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </>
     )}
     {tab === 'roles' && (
-      <div className="panel" style={{ marginTop: '0' }}>
-        <div className="panel-heading" style={{ marginBottom: '12px' }}>
+      <div className="panel" style={{ margin: '16px' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px', padding: '0 16px' }}>
           <div>
             <p className="eyebrow">ROLES & PERMISSIONS</p>
             <h3>Role Management</h3>
             <p>Define and manage institutional roles and their associated permissions.</p>
           </div>
         </div>
-        <div className="table-wrap" style={{ marginTop: '16px' }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Role</th>
-                <th>Description</th>
-                <th>Assigned Permissions</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roles.map(role => (
-                <tr key={role} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <td style={{ flex: '0 0 auto', minWidth: '120px' }}>{role}</td>
-                  <td style={{ flex: '0 0 auto', minWidth: '200px' }}>{getRoleDescription(role)}</td>
-                  <td style={{ flex: '0 0 auto', minWidth: '150px' }}>{getRolePermissions(role).join(', ')}</td>
-                  <td style={{ flex: '0 0 auto', minWidth: '100px' }}>
-                    <button type="button" className="secondary-button" style={{ padding: '6px 12px' }}>
-                      View Details
-                    </button>
-                  </td>
+        <div className="table-container" style={{ flex: '1', minHeight: '0', margin: '16px' }}>
+          <div className="table-wrap" style={{ flex: '1', minHeight: '0' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Role</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Description</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Assigned Permissions</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Action</th>
                 </tr>
-              ))}
-              {roles.length === 0 && (
-                <tr><td colSpan={4} className="empty">No roles configured.</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {roles.map(role => (
+                  <tr key={role} style={{ borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <td style={{ padding: '12px 16px', minWidth: '120px' }}>{role}</td>
+                    <td style={{ padding: '12px 16px', minWidth: '200px' }}>{getRoleDescription(role)}</td>
+                    <td style={{ padding: '12px 16px', minWidth: '150px' }}>{getRolePermissions(role).join(', ')}</td>
+                    <td style={{ padding: '12px 16px', minWidth: '100px' }}>
+                      <button type="button" className="secondary-button" style={{ padding: '8px 12px' }}>
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {roles.length === 0 && (
+                  <tr style={{ height: '60px' }}>
+                    <td colSpan={4} className="empty" style={{ padding: '16px', textAlign: 'center' }}>No roles configured.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     )}
     {tab === 'offices' && (
       selectedOffice ? (() => { const OfficeIcon = selectedOffice.icon; return (
-        <div className="office-detail" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="office-detail" style={{ display: 'flex', flexDirection: 'column', gap: '16px', margin: '16px' }}>
           <button type="button" className="secondary-button office-back" onClick={() => setSelectedOffice(null)}><ArrowLeft size={16} /> Back to offices</button>
-          <div className="office-detail-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <div className="office-detail-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', padding: '0 16px' }}>
             <div className="office-detail-icon"><OfficeIcon size={28} /></div>
             <div>
               <span className="eyebrow">{selectedOffice.group}</span>
@@ -392,16 +411,16 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
             </div>
           </div>
           <div className="office-detail-grid" style={{ display: 'flex', gap: '16px' }}>
-            <section className="panel office-detail-panel" style={{ marginBottom: '16px' }}>
+            <section className="panel office-detail-panel" style={{ margin: '16px 0 0', padding: '0 16px' }}>
               <div className="panel-heading"><div><h3>Responsibilities</h3><p>Core responsibilities assigned to this office.</p></div></div><ul className="office-responsibilities">{selectedOffice.responsibilities.map(item => <li key={item}>{item}</li>)}</ul></section>
             </section>
-            <section className="panel office-detail-panel" style={{ marginBottom: '16px' }}>
+            <section className="panel office-detail-panel" style={{ margin: '16px 0 0', padding: '0 16px' }}>
               <div className="panel-heading"><div><h3>System workspace</h3><p>Most operational offices are connected directly to the screen they use.</p></div></div>{selectedOffice.workspace ? <button type="button" onClick={() => openWorkspace(selectedOffice.workspace)}>{selectedOffice.workspaceLabel}</button> : <p className="empty">No direct workspace has been assigned yet.</p>}</section>
           </div>
         </div>
       ) })() : (
-        <div className="office-directory" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="office-directory-intro" style={{ marginBottom: '16px' }}>
+        <div className="office-directory" style={{ margin: '16px' }}>
+          <div className="office-directory-intro" style={{ marginBottom: '16px', padding: '0 16px' }}>
             <div>
               <span className="eyebrow">INSTITUTIONAL LEADERSHIP</span>
               <h3>Leadership & Offices</h3>
@@ -409,14 +428,14 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
             </div>
             <span className="office-count">{OFFICES.length} offices</span>
           </div>
-          <div className="office-groups" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="office-groups" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {Array.from(new Set(OFFICES.map(o => o.group))).map(group => (
-              <section key={group} className="office-group" style={{ marginBottom: '16px' }}>
-                <div className="office-group-heading" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <section key={group} className="office-group" style={{ margin: '16px 0', padding: '0 16px' }}>
+                <div className="office-group-heading" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                   <h4>{group}</h4>
                   <span>{OFFICES.filter(o => o.group === group).length}</span>
                 </div>
-                <div className="office-card-grid" style={{ display: 'grid', gap: '12px' }}>
+                <div className="office-card-grid" style={{ display: 'grid', gap: '12px', margin: '0 16px' }}>
                   {OFFICES.filter(o => o.group === group).map(office => (
                     <button type="button" className="office-card" key={office.key} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                       <span className="office-card-icon"><Icon size={21} /></span>
@@ -433,190 +452,207 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
     )}
     {tab === 'settings' && <InstitutionSettingsPage onSaved={handleInstitutionSaved} />}
     {tab === 'staff' && (
-      <div className="panel" style={{ marginTop: '0' }}>
-        <div className="panel-heading" style={{ marginBottom: '12px' }}>
+      <div className="panel" style={{ margin: '16px' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px', padding: '0 16px' }}>
           <div>
             <p className="eyebrow">STAFF & HR</p>
             <h3>Staff Management Overview</h3>
             <p>View and manage staff records, employment details, and HR processes.</p>
           </div>
         </div>
-        <div className="table-wrap" style={{ marginTop: '16px' }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Staff ID</th>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Department</th>
-                <th>Employment Type</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Placeholder - in a real implementation, this would fetch staff data */}
-              <tr style={{ marginBottom: '8px' }}>
-                <td>STAFF001</td>
-                <td>John Doe</td>
-                <td>Senior Lecturer</td>
-                <td>Computer Science</td>
-                <td>Permanent</td>
-                <td><span style={{ color: '#059669' }}>Active</span></td>
-              </tr>
-              <tr style={{ marginBottom: '8px' }}>
-                <td>STAFF002</td>
-                <td>Jane Smith</td>
-                <td>Administrative Officer</td
-                <td>Administration</td>
-                <td>Permanent</td>
-                <td><span style={{ color: '#059669' }}>Active</span></td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="table-container" style={{ flex: '1', minHeight: '0', margin: '16px' }}>
+          <div className="table-wrap" style={{ flex: '1', minHeight: '0' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Staff ID</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Name</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Position</th
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Department</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Employment Type</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Placeholder - in a real implementation, this would fetch staff data */}
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>STAFF001</td>
+                  <td style={{ padding: '12px 16px' }}>John Doe</td>
+                  <td style={{ padding: '12px 16px' }}>Senior Lecturer</td>
+                  <td style={{ padding: '12px 16px' }}>Computer Science</td>
+                  <td style={{ padding: '12px 16px' }}>Permanent</td>
+                  <td style={{ padding: '12px 16px', color: '#059669' }}>Active</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>STAFF002</td>
+                  <td style={{ padding: '12px 16px' }}>Jane Smith</td
+                  <td style={{ padding: '12px 16px' }}>Administrative Officer</td
+                  <td style={{ padding: '12px 16px' }}>Administration</td
+                  <td style={{ padding: '12px 16px' }}>Permanent</td
+                  <td style={{ padding: '12px 16px', color: '#059669' }}>Active</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     )}
     {tab === 'payroll' && (
-      <div className="panel" style={{ marginTop: '0' }}>
-        <div className="panel-heading" style={{ marginBottom: '12px' }}>
+      <div className="panel" style={{ margin: '16px' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px', padding: '0 16px' }}>
           <div>
-            <p className="eyebrow">PAYROLL</p
+            <p className="eyebrow">PAYROLL</p>
             <h3>Payroll Management</h3>
             <p>Manage employee compensation, deductions, and payroll processing.</p>
           </div>
-        </div>
-        <div className="table-wrap" style={{ marginTop: '16px' }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Month</th>
-                <th>Amount (UGX)</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Placeholder - in a real implementation, this would fetch payroll data */}
-              <tr style={{ marginBottom: '8px' }}>
-                <td>STAFF001</td>
-                <td>January 2026</td>
-                <td>2,500,000</td>
-                <td><span style={{ color: '#059669' }}>Paid</span></td>
-                <td>
-                  <button type="button" className="secondary-button">View Details</button>
-                </td>
-                <tr style={{ marginBottom: '8px' }}>
-                <td>STAFF002</td>
-                <td>February 2026</td>
-                <td>1,800,000</td>
-                <td><span style={{ color: '#d97706' }}>Pending</span></td>
-                <td>
-                  <button type="button" className="secondary-button">Process</button>
-                </td>
+        </div
+        <div className="table-container" style={{ flex: '1', minHeight: '0', margin: '16px' }}>
+          <div className="table-wrap" style={{ flex: '1', minHeight: '0' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Employee</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Month</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Amount (UGX)</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Status</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Placeholder - in a real implementation, this would fetch payroll data */}
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>STAFF001</td>
+                  <td style={{ padding: '12px 16px' }}>January 2026</td>
+                  <td style={{ padding: '12px 16px' }}>2,500,000</td>
+                  <td style={{ padding: '12px 16px', color: '#059669' }}>Paid</td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <button type="button" className="secondary-button">View Details</button>
+                  </td>
+                </tr
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>STAFF002</td
+                  <td style={{ padding: '12px 16px' }}>February 2026</td
+                  <td style={{ padding: '12px 16px' }}>1,800,000</td
+                  <td style={{ padding: '12px 16px', color: '#d97706' }}>Pending</td
+                  <td style={{ padding: '12px 16px' }}>
+                    <button type="button" className="secondary-button">Process</button>
+                  </td
+                </tbody>
               </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </div>
     )}
     {tab === 'leave' && (
-      <div className="panel" style={{ marginTop: '0' }}>
-        <div className="panel-heading" style={{ marginBottom: '12px' }}>
+      <div className="panel" style={{ margin: '16px' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px', padding: '0 16px' }}>
           <div>
             <p className="eyebrow">LEAVE MANAGEMENT</p>
             <h3>Leave Requests & Approvals</h3>
             <p>Manage employee leave requests, approvals, and tracking.</p>
           </div>
         </div
-        <div className="table-wrap" style={{ marginTop: '16px' }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Leave Type</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Days</th>
-                <th>Status</th
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Placeholder - in a real implementation, this would fetch leave data */}
-              <tr style={{ marginBottom: '8px' }}>
-                <td>STAFF001</td>
-                <td>Annual Leave</td>
-                <td>2026-01-15</td>
-                <td>2026-01-22</td>
-                <td>8</td>
-                <td><span style={{ color: '#059669' }}>Approved</span></td>
-                <td>
-                  <button type="button" className="secondary-button">View Details</button>
-                </td>
-                <tr style={{ marginBottom: '8px' }}>
-                <td>STAFF002</td
-                <td>Sick Leave</td>
-                <td>2026-02-01</td>
-                <td>2026-02-03</td>
-                <td>3</td>
-                <td><span style={{ color: '#dc2626' }}>Pending</span></td>
-                <td>
-                  <button type="button" className="secondary-button" onClick={() => {/* approve/reject logic */}}>Approve</button>
-                  <button type="button" className="secondary-button" onClick={() => {/* approve/reject logic */}}>Reject</button>
-                </td>
+        <div className="table-container" style={{ flex: '1', minHeight: '0', margin: '16px' }}>
+          <div className="table-wrap" style={{ flex: '1', minHeight: '0' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Employee</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Leave Type</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Start Date</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>End Date</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Days</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Status</th
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Placeholder - in a real implementation, this would fetch leave data */}
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>STAFF001</td
+                  <td style={{ padding: '12px 16px' }}>Annual Leave</td
+                  <td style={{ padding: '12px 16px' }}>2026-01-15</td
+                  <td style={{ padding: '12px 16px' }}>2026-01-22</td
+                  <td style={{ padding: '12px 16px' }}>8</td
+                  <td style={{ padding: '12px 16px', color: '#059669' }}>Approved</td
+                  <td style={{ padding: '12px 16px' }}>
+                    <button type="button" className="secondary-button">View Details</button>
+                  </td
+                </tr
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>STAFF002</td
+                  <td style={{ padding: '12px 16px' }}>Sick Leave</td
+                  <td style={{ padding: '12px 16px' }}>2026-02-01</td
+                  <td style={{ padding: '12px 16px' }}>2026-02-03</td
+                  <td style={{ padding: '12px 16px' }}>3</td
+                  <td style={{ padding: '12px 16px', color: '#dc2626' }}>Pending</td
+                  <td style={{ padding: '12px 16px' }}>
+                    <button type="button" className="secondary-button" onClick={() => {/* approve/reject logic */}}>Approve</button
+                  </td
+                  <td style={{ padding: '12px 16px' }}>
+                    <button type="button" className="secondary-button" onClick={() => {/* approve/reject logic */}}>Reject</button
+                  </td
+                </tbody>
               </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </div>
     )}
     {tab === 'recruitment' && (
-      <div className="panel" style={{ marginTop: '0' }}>
-        <div className="panel-heading" style={{ marginBottom: '12px' }}>
+      <div className="panel" style={{ margin: '16px' }}>
+        <div className="panel-heading" style={{ marginBottom: '12px', padding: '0 16px' }}>
           <div>
             <p className="eyebrow">RECRUITMENT</p>
             <h3>Talent Acquisition & Onboarding</h3>
             <p>Manage job postings, applications, interviews, and employee onboarding.</p>
           </div>
         </div
-        <div className="table-wrap" style={{ marginTop: '16px' }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Position</th>
-                <th>Department</th
-                <th>Status</th>
-                <th>Applications</th>
-                <th>Action</th>
-              </tr
-            </thead>
-            <tbody>
-              {/* Placeholder - in a real implementation, this would fetch recruitment data */}
-              <tr style={{ marginBottom: '8px' }}>
-                <td>Lecturer - Mathematics</td
-                <td>Mathematics</td
-                <td>Open</td>
-                <td>12</td>
-                <td>
-                  <button type="button" className="secondary-button">View Applications</button>
-                </td
-              <tr style={{ marginBottom: '8px' }}>
-                <td>Administrative Assistant</td
-                <td>Administration</td
-                <td>Open</td>
-                <td>8</td
-                <td>
-                  <button type="button" className="secondary-button">View Applications</button>
-                </td
-              <tr style={{ marginBottom: '8px' }}>
-                <td>College Principal</td
-                <td>Executive</td
-                <td>Closed - Selected</td>
-                <td>25</td
-                <td>
-                  <button type="button" className="secondary-button">View Details</button>
-                </td
+        <div className="table-container" style={{ flex: '1', minHeight: '0', margin: '16px' }}>
+          <div className="table-wrap" style={{ flex: '1', minHeight: '0' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Position</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Department</th
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Status</th
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Applications</th
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600' }}>Action</th
+                </tr>
+              </thead>
+              <tbody>
+                {/* Placeholder - in a real implementation, this would fetch recruitment data */}
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>Lecturer - Mathematics</td
+                  <td style={{ padding: '12px 16px' }}>Mathematics</td
+                  <td style={{ padding: '12px 16px' }}>Open</td
+                  <td style={{ padding: '12px 16px' }}>12</td
+                  <td style={{ padding: '12px 16px' }}>
+                    <button type="button" className="secondary-button">View Applications</button
+                  </td
+                </tr
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>Administrative Assistant</td
+                  <td style={{ padding: '12px 16px' }}>Administration</td
+                  <td style={{ padding: '12px 16px' }}>Open</td
+                  <td style={{ padding: '12px 16px' }}>8</td
+                  <td style={{ padding: '12px 16px' }}>
+                    <button type="button" className="secondary-button">View Applications</button
+                  </td
+                </tr
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 16px' }}>College Principal</td
+                  <td style={{ padding: '12px 16px' }}>Executive</td
+                  <td style={{ padding: '12px 16px' }}>Closed - Selected</td
+                  <td style={{ padding: '12px 16px' }}>25</td
+                  <td style={{ padding: '12px 16px' }}>
+                    <button type="button" className="secondary-button">View Details</button
+                  </td
+                </tbody>
               </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </div>
     )}
