@@ -115,6 +115,10 @@ jobs:
           git commit -m "chore: synchronize EF Core model snapshot"
           git push origin HEAD:main
 
+      - name: Rebuild backend after snapshot synchronization
+        working-directory: backend
+        run: dotnet build SchoolManagement.sln --configuration Release
+
       - name: Verify EF Core model matches migrations
         working-directory: backend
         run: |
