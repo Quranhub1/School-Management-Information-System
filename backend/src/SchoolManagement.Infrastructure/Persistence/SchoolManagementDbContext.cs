@@ -8,6 +8,7 @@ using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Domain.Audit;
 using SchoolManagement.Domain.Access;
 using SchoolManagement.Domain.Calendar;
+using SchoolManagement.Domain.CampusServices;
 using SchoolManagement.Domain.Clinical;
 using SchoolManagement.Domain.Communication;
 using SchoolManagement.Domain.Documents;
@@ -114,6 +115,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<GateLog> GateLogs => Set<GateLog>();
     public DbSet<GatePass> GatePasses => Set<GatePass>();
+    public DbSet<StudentMedicalRecord> StudentMedicalRecords => Set<StudentMedicalRecord>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<AssessmentWeightingProfile> AssessmentWeightingProfiles => Set<AssessmentWeightingProfile>();
     public DbSet<AssessmentWeightingComponent> AssessmentWeightingComponents => Set<AssessmentWeightingComponent>();
