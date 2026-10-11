@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:login-css": "vite build --config vite.login.config.ts",
+    "build:login-css": "npx --yes tailwindcss@3.4.17 -c tailwind.login.config.cjs -i institution-login-tailwind.css -o public/assets/css/institution-login.css",
     "predev": "npm run build:login-css"
   },
   "dependencies": {
