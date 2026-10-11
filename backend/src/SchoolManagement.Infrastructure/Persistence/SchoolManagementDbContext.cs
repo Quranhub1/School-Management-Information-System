@@ -158,6 +158,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.ApplyConfiguration(new SchoolManagement.Infrastructure.Workflows.WorkflowConfiguration());
         m.ApplyConfiguration(new AssessmentPlanConfiguration());
         m.ApplyConfiguration(new StudentAssessmentConfiguration());
+        m.ApplyConfiguration(new FinanceConfiguration());
         m.ApplyConfiguration(new FeeStructureItemConfiguration());
         m.Entity<InventoryRegister>(e => { e.HasKey(x => x.Id); e.Property(x => x.SectionId).HasMaxLength(100).IsRequired(); e.Property(x => x.ColumnsJson).HasColumnType("jsonb").IsRequired(); e.Property(x => x.RowsJson).HasColumnType("jsonb").IsRequired(); e.Property(x => x.UpdatedBy).HasMaxLength(200).IsRequired(); e.HasIndex(x => x.SectionId).IsUnique(); });
         m.Entity<WelfareCommodity>(e => { e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(200).IsRequired(); e.Property(x => x.Category).HasMaxLength(100).IsRequired(); e.Property(x => x.Unit).HasMaxLength(30).IsRequired(); e.Property(x => x.ReorderLevel).HasPrecision(18, 3); e.HasIndex(x => x.Name).IsUnique(); });
