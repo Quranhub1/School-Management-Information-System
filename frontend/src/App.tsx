@@ -259,9 +259,9 @@ function App() {
   }, [activeModule, activeSubsection, visibleSidebarGroups]);
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
-      <aside className="flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen">
+      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-20">
         <div className="flex h-full flex-col">
           {/* Brand */}
           <div className="flex items-center px-4 py-6 border-b border-gray-200 dark:border-gray-700">
@@ -269,7 +269,7 @@ function App() {
           </div>
           
           {/* Sidebar Groups */}
-          <div className="flex-1 overflow-y-auto h-full">
+          <div className="flex-1 overflow-y-auto">
             {visibleSidebarGroups.map((group, groupIdx) => {
               const open = group.alwaysOpen || !!openSidebarGroups[group.label];
               const groupId = "sidebar-group-" + groupIdx;
@@ -331,7 +331,7 @@ function App() {
       </aside>
       
       {/* Main Content */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col h-full ml-64">
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -348,7 +348,7 @@ function App() {
         </header>
         
         {/* Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-6 overflow-y-auto h-full">
           {!activeModule && <Dashboard />}
           {activeModule === 'dashboard' && <Dashboard />}
           {activeModule === 'administration' && <AdministrationManagement onInstitutionSaved={() => {}} />}
