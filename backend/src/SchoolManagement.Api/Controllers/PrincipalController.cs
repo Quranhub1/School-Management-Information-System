@@ -70,7 +70,17 @@ public sealed class PrincipalController(SchoolManagementDbContext db) : Controll
     {
         var data = await db.StaffMembers.AsNoTracking().Select(s => new
         {
-            s.Id, s.StaffNumber, s.FirstName, s.LastName, s.DepartmentId, s.StaffType, s.EmploymentStatus, s.IsActive,
+            s.Id,
+            s.StaffNumber,
+            s.FirstName,
+            s.LastName,
+            department = db.Departments
+                .Where(d => s.DepartmentId != null && d.Id == s.DepartmentId)
+                .Select(d => d.Name)
+                .FirstOrDefault(),
+            s.StaffType,
+            s.EmploymentStatus,
+            s.IsActive,
             classCount = db.TimetableEntries.Count(t => t.StaffMemberId == s.Id),
             teachingAllocations = db.TeachingAllocations.Count(t => t.StaffMemberId == s.Id)
         }).ToListAsync(cancellationToken);
