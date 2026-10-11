@@ -165,7 +165,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
-              <input required placeholder="Programme UUID" value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })} />
+              <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select programme</option>{programmes.filter(p => p.isActive).map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
               <div className="form-row">
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
                 <input required placeholder="Title" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
@@ -282,7 +282,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h4>Create Short-Course Curriculum</h4>
             <form className="student-form" onSubmit={saveCurriculum}>
               <div className="form-row">
-                <input required placeholder="Programme UUID (create short-course programme first)" value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })} />
+                <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select the programme this short course belongs to</option>{programmes.filter(p => p.isActive).map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
               </div>
               <input required placeholder="Curriculum title (e.g. Certificate in Public Health)" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
