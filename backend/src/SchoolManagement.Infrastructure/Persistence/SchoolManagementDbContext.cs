@@ -128,6 +128,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<HostelRoom> HostelRooms => Set<HostelRoom>();
     public DbSet<HostelBed> HostelBeds => Set<HostelBed>();
     public DbSet<HostelAllocation> HostelAllocations => Set<HostelAllocation>();
+    public DbSet<WardenRecord> WardenRecords => Set<WardenRecord>();
     public DbSet<AccountingDimension> AccountingDimensions => Set<AccountingDimension>();
     public DbSet<JournalLineDimension> JournalLineDimensions => Set<JournalLineDimension>();
     public DbSet<BankTransaction> BankTransactions => Set<BankTransaction>();
