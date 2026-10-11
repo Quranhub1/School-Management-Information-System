@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@source "./public/institution-login.html";
+@theme {
+  --font-sans: "Inter", sans-serif;
+}
