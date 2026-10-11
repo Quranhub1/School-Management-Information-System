@@ -69,6 +69,7 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   const [actionBusy, setActionBusy] = useState(false)
   const [passwordResetUserId, setPasswordResetUserId] = useState<string | null>(null)
   const [passwordResetValue, setPasswordResetValue] = useState('')
+  const [viewingUser, setViewingUser] = useState<UserSummary | null>(null)
 
   function openWorkspace(workspace?: string) {
     if (!workspace) return
@@ -240,7 +241,8 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                 <th>Email</th>
                 <th>Roles</th>
                 <th>Status</th>
-                <th>Action</th>
+                <th>Last Login</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -283,7 +285,8 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
                   <td>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</td>
                   <td>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 250 }}>
-                      <button type="button" className="secondary-button" onClick={() => beginEdit(user)} disabled={actionBusy}>Edit</button>
+                      <button type="button" className="secondary-button" onClick={() => setViewingUser(user)} disabled={actionBusy}>View</button>
+                      <button type="button" className="secondary-button" onClick={() => beginEdit(user)} disabled={actionBusy}>Edit / Modify</button>
                       <button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(user.id); setPasswordResetValue(''); setError('') }} disabled={actionBusy}>Reset password</button>
                       <button type="button" className="secondary-button" onClick={() => void toggle(user)} disabled={actionBusy}>{user.isActive ? 'Deactivate' : 'Activate'}</button>
                       {user.isActive && <button type="button" className="secondary-button" onClick={() => void removeAccess(user)} disabled={actionBusy}>Remove access</button>}
@@ -295,6 +298,28 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
           </table>
         </div>
       </>
+    )}
+
+    {viewingUser && (
+      <div className="gallery-lightbox" role="dialog" aria-modal="true" aria-labelledby="user-detail-title" onClick={() => setViewingUser(null)}>
+        <section className="gallery-lightbox-card" onClick={event => event.stopPropagation()}>
+          <button type="button" className="close-button" onClick={() => setViewingUser(null)} aria-label="Close user details">×</button>
+          <p className="eyebrow">USER ACCOUNT</p>
+          <h3 id="user-detail-title">{viewingUser.firstName} {viewingUser.lastName}</h3>
+          <dl className="user-detail-list">
+            <dt>Username</dt><dd>{viewingUser.username}</dd>
+            <dt>Email</dt><dd>{viewingUser.email || '—'}</dd>
+            <dt>Roles</dt><dd>{viewingUser.roles.join(', ') || 'No roles assigned'}</dd>
+            <dt>Status</dt><dd>{viewingUser.isActive ? 'Active' : 'Inactive'}</dd>
+            <dt>Created</dt><dd>{new Date(viewingUser.createdAt).toLocaleString()}</dd>
+            <dt>Last login</dt><dd>{viewingUser.lastLoginAt ? new Date(viewingUser.lastLoginAt).toLocaleString() : 'Never'}</dd>
+          </dl>
+          <div className="topbar-actions">
+            <button type="button" onClick={() => { beginEdit(viewingUser); setViewingUser(null) }}>Edit / Modify</button>
+            <button type="button" className="secondary-button" onClick={() => setViewingUser(null)}>Close</button>
+          </div>
+        </section>
+      </div>
     )}
 
     {tab === 'offices' && (
