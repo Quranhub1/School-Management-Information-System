@@ -1,4 +1,4 @@
-import { ACADEMIC_MANAGEMENT_ROLES, ADMINISTRATION_ROLES, EXAMINATION_MANAGEMENT_ROLES, FINANCE_MANAGEMENT_ROLES, STUDENT_MANAGEMENT_ROLES, INVENTORY_MANAGEMENT_ROLES, HOSTEL_MANAGEMENT_ROLES, TRANSPORT_MANAGEMENT_ROLES, REPORTS_ROLES, COMMUNICATION_ROLES, ATTENDANCE_ROLES, hasAnyRole } from '../auth/roles'
+import { ACADEMIC_MANAGEMENT_ROLES, ADMINISTRATION_ROLES, EXAMINATION_MANAGEMENT_ROLES, FINANCE_MANAGEMENT_ROLES, STUDENT_MANAGEMENT_ROLES, INVENTORY_MANAGEMENT_ROLES, HOSTEL_MANAGEMENT_ROLES, REPORTS_ROLES, COMMUNICATION_ROLES, ATTENDANCE_ROLES, hasAnyRole } from '../auth/roles'
 import './RoleNavigation.css'
 interface RoleNavigationProps { roles: string[] }
 export function RoleNavigation({ roles }: RoleNavigationProps) {
@@ -14,9 +14,8 @@ export function RoleNavigation({ roles }: RoleNavigationProps) {
     hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'Lecturer']) ? 'Timetable' : null,
     hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar']) ? 'Admissions' : null,
     hasAnyRole(roles, ATTENDANCE_ROLES) ? 'Attendance' : null,
-    hasAnyRole(roles, TRANSPORT_MANAGEMENT_ROLES) ? 'Transport' : null,
     hasAnyRole(roles, INVENTORY_MANAGEMENT_ROLES) ? 'Inventory' : null,
-    hasAnyRole(roles, ['System Administrator', 'Registrar', 'Principal', 'ResidentDirector', 'Secretary', 'StoreOfficer']) ? 'Printers' : null,
+    hasAnyRole(roles, ['System Administrator', 'Registrar', 'Principal', 'ResidentDirector', 'Secretary', 'Records Officer']) ? 'Printers' : null,
     hasAnyRole(roles, HOSTEL_MANAGEMENT_ROLES) ? 'Hostel' : null,
     hasAnyRole(roles, REPORTS_ROLES) ? 'Reports' : null,
     hasAnyRole(roles, COMMUNICATION_ROLES) ? 'Communication' : null,
