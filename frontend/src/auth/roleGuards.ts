@@ -45,7 +45,7 @@ export function canManageStudents(roles: string[]) {
   return hasAnyRole(roles, STUDENT_MANAGEMENT_ROLES)
 }
 export function canManageTimetable(roles: string[]) {
-  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'Lecturer', 'HR Manager'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'AcademicRegistrar', 'AssistantRegistrar', 'Lecturer', 'HR Manager'])
 }
 export function canReadTimetable(roles: string[]) {
   return hasAnyRole(roles, TIMETABLE_ROLES)
