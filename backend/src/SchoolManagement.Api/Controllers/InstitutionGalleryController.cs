@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,12 +10,15 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/public/institution-gallery")]
-public sealed class PublicInstitutionGalleryController(SchoolManagementDbContext db) : ControllerBase
+public sealed class PublicInstitutionGalleryController(SchoolManagementDbContext db, IWebHostEnvironment environment) : ControllerBase
 {
+    private static readonly JsonSerializerOptions LegacyJsonOptions = new(JsonSerializerDefaults.Web);
+
     [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken cancellationToken)
     {
+        await ImportLegacyGalleryAsync(cancellationToken);
         var items = await db.InstitutionGalleryImages.AsNoTracking()
             .OrderByDescending(x => x.UploadedAt)
             .Select(x => new GalleryItem(
@@ -36,6 +40,78 @@ public sealed class PublicInstitutionGalleryController(SchoolManagementDbContext
         if (item?.ImageData is not { Length: > 0 }) return NotFound();
         return File(item.ImageData, item.ContentType ?? "application/octet-stream");
     }
+    private async Task ImportLegacyGalleryAsync(CancellationToken cancellationToken)
+    {
+        var root = Path.Combine(environment.ContentRootPath, "App_Data", "Branding", "Gallery");
+        var metadataPath = Path.Combine(root, "gallery.json");
+        if (!System.IO.File.Exists(metadataPath)) return;
+
+        try
+        {
+            var json = await System.IO.File.ReadAllTextAsync(metadataPath, cancellationToken);
+            var legacyItems = JsonSerializer.Deserialize<List<LegacyGalleryItem>>(json, LegacyJsonOptions) ?? [];
+            if (legacyItems.Count == 0) return;
+
+            var existingIds = await db.InstitutionGalleryImages.AsNoTracking()
+                .Select(x => x.Id).ToListAsync(cancellationToken);
+            var existing = existingIds.ToHashSet();
+
+            foreach (var legacy in legacyItems)
+            {
+                if (!existing.Add(legacy.Id)) continue;
+                var isUpload = string.Equals(legacy.Source, "upload", StringComparison.OrdinalIgnoreCase);
+                byte[]? imageData = null;
+                if (isUpload)
+                {
+                    if (string.IsNullOrWhiteSpace(legacy.StoredFileName)) continue;
+                    var filePath = Path.Combine(root, "images", Path.GetFileName(legacy.StoredFileName));
+                    if (!System.IO.File.Exists(filePath)) continue;
+                    imageData = await System.IO.File.ReadAllBytesAsync(filePath, cancellationToken);
+                    if (imageData.Length == 0) continue;
+                }
+                else if (!Uri.TryCreate(legacy.ImageUrl, UriKind.Absolute, out var externalUri) ||
+                         (externalUri.Scheme != Uri.UriSchemeHttp && externalUri.Scheme != Uri.UriSchemeHttps))
+                {
+                    continue;
+                }
+
+                db.InstitutionGalleryImages.Add(new InstitutionGalleryImage
+                {
+                    Id = legacy.Id,
+                    Title = string.IsNullOrWhiteSpace(legacy.Title) ? "Institution photograph" : legacy.Title,
+                    Caption = legacy.Caption,
+                    Source = isUpload ? "upload" : "url",
+                    ExternalUrl = isUpload ? null : legacy.ImageUrl,
+                    ImageData = imageData,
+                    ContentType = legacy.ContentType,
+                    OriginalFileName = legacy.StoredFileName,
+                    UploadedAt = legacy.UploadedAt
+                });
+            }
+
+            if (db.ChangeTracker.HasChanges())
+                await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (JsonException)
+        {
+            // Leave the legacy file untouched; the regular database gallery remains available.
+        }
+        catch (IOException)
+        {
+            // A temporary legacy-file access problem must not take down the public gallery.
+        }
+    }
+
+    private sealed record LegacyGalleryItem(
+        Guid Id,
+        string Title,
+        string? Caption,
+        string ImageUrl,
+        DateTimeOffset UploadedAt,
+        string Source,
+        string? StoredFileName,
+        string? ContentType);
+
 }
 
 [ApiController]
