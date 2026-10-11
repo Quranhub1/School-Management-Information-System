@@ -22,45 +22,6 @@ namespace SchoolManagement.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("SchoolManagement.Domain.CampusServices.StudentMedicalRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AttendedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Condition")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Medication")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RecordType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("StudentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Treatment")
-                        .HasColumnType("text");
-
-                    b.Property<DateOnly>("VisitDate")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("StudentMedicalRecords");
-                });
-
             modelBuilder.Entity("SchoolManagement.Domain.Academic.AcademicYear", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1491,6 +1452,45 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("CalendarEvents");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.CampusServices.StudentMedicalRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AttendedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Condition")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Medication")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecordType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Treatment")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("VisitDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StudentMedicalRecords");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Clinical.Placement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2402,26 +2402,35 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.Property<string>("Currency")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
 
                     b.Property<string>("FeeType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
 
                     b.Property<Guid>("ProgrammeId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AcademicYearId", "IsActive");
+
+                    b.HasIndex("ProgrammeId", "AcademicYearId", "Name")
+                        .IsUnique();
 
                     b.ToTable("FeeStructures");
                 });
@@ -2472,7 +2481,7 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("FeeStructureId", "SortOrder");
 
-                    b.ToTable("FeeStructureItem");
+                    b.ToTable("FeeStructureItem", (string)null);
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.FinanceAuditEvent", b =>
@@ -4192,12 +4201,12 @@ namespace SchoolManagement.Infrastructure.Migrations
 
             modelBuilder.Entity("SchoolManagement.Domain.Students.StudentGuardian", b =>
                 {
-                    b.Property<string>("Address")
-                        .HasColumnType("text");
-
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .HasColumnType("text");
