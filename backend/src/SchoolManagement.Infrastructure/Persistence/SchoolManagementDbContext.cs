@@ -37,6 +37,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<InstitutionSettings> InstitutionSettings => Set<InstitutionSettings>();
+    public DbSet<InstitutionGalleryImage> InstitutionGalleryImages => Set<InstitutionGalleryImage>();
     public DbSet<Applicant> Applicants => Set<Applicant>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<StudentGuardian> StudentGuardians => Set<StudentGuardian>();
@@ -144,6 +145,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
 
     protected override void OnModelCreating(ModelBuilder m)
     {
+        m.Entity<InstitutionGalleryImage>(e => { e.HasKey(x => x.Id); e.Property(x => x.Title).HasMaxLength(200).IsRequired(); e.Property(x => x.Caption).HasMaxLength(1000); e.Property(x => x.Source).HasMaxLength(20).IsRequired(); e.Property(x => x.ExternalUrl).HasMaxLength(2000); e.Property(x => x.ContentType).HasMaxLength(100); e.Property(x => x.OriginalFileName).HasMaxLength(255); e.Property(x => x.ImageData).HasColumnType("bytea"); e.HasIndex(x => x.UploadedAt); });
         m.Entity<UserRole>(e =>
         {
             e.HasKey(x => new { x.UserId, x.RoleId });
