@@ -3452,6 +3452,7 @@ namespace SchoolManagement.Infrastructure.Migrations
             modelBuilder.Entity("SchoolManagement.Domain.Hostel.WardenRecord", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("ActionTaken")
