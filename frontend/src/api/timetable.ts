@@ -16,6 +16,12 @@ export type TimetableEntry = {
 }
 
 export type CreateTimetableEntry = Omit<TimetableEntry, 'id' | 'isActive' | 'generatedAt' | 'generationSource'>
+export type TimetableOptions = {
+  teachingGroups: { id: string; label: string }[]
+  courses: { id: string; label: string }[]
+  teachers: { id: string; label: string }[]
+  semesters: { id: string; label: string; academicYearId: string; isCurrent: boolean; isActive: boolean }[]
+}
 export type GenerateTimetableResult = {
   entries: TimetableEntry[]
   conflicts: string[]
@@ -37,6 +43,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? (undefined as T) : response.json() as Promise<T>
 }
 
+export const getTimetableOptions = () => request<TimetableOptions>('/api/timetable/options')
 export const listTimetable = (teachingGroupId?: string) => request<TimetableEntry[]>(`/api/timetable${teachingGroupId ? `?teachingGroupId=${encodeURIComponent(teachingGroupId)}` : ''}`)
 export const createTimetableEntry = (input: CreateTimetableEntry) => request<TimetableEntry>('/api/timetable', { method: 'POST', body: JSON.stringify(input) })
 export const deactivateTimetableEntry = (id: string) => request<void>(`/api/timetable/${id}`, { method: 'DELETE' })
