@@ -1,9 +1,13 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using SchoolManagement.Infrastructure.Persistence;
 
 #nullable disable
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
+[DbContext(typeof(SchoolManagementDbContext))]
+[Migration("20261007120000_RepairFeeStructureItemSchema")]
 public partial class RepairFeeStructureItemSchema : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
