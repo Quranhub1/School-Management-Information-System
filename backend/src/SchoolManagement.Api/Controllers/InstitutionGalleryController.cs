@@ -11,7 +11,7 @@ public sealed class PublicInstitutionGalleryController(IWebHostEnvironment envir
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly object Sync = new();
-    private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
     [AllowAnonymous]
     [HttpGet]
