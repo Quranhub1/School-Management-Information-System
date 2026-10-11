@@ -182,10 +182,15 @@ export interface AccountsOverviewDashboard { totalRevenue: number; totalPayments
 export interface AccountsOverviewOutstanding { studentId: string; studentNumber: string; studentName: string; programmeName: string; balance: number; status: string; currency: string }
 export interface AccountsOverviewPayment { id: string; receiptNumber: string; studentName: string; invoiceNumber: string; amount: number; paymentMethod: string; paidAt: string }
 export interface AccountsOverviewPayroll { id: string; staffName: string; staffNumber: string; basicSalary: number; allowances: number; deductions: number; netPay: number; status: string; paymentMethod: string }
-export async function getAccountsOverviewDashboard() { return request<AccountsOverviewDashboard>('/api/finance/administration/accounts-overview/dashboard') }
-export async function getAccountsOverviewOutstanding() { return request<AccountsOverviewOutstanding[]>('/api/finance/administration/accounts-overview/outstanding') }
-export async function getAccountsOverviewPayments() { return request<AccountsOverviewPayment[]>('/api/finance/administration/accounts-overview/payments') }
-export async function getAccountsOverviewPayroll(month?: number, year?: number) { return request<AccountsOverviewPayroll[]>(`/api/finance/administration/accounts-overview/payroll${month ? `?month=${month}` : ''}${year ? `&year=${year}` : ''}`) }
+export async function getAccountsOverviewDashboard() { return request<AccountsOverviewDashboard>('/api/accounts-overview/dashboard') }
+export async function getAccountsOverviewOutstanding() { return request<AccountsOverviewOutstanding[]>('/api/accounts-overview/outstanding') }
+export async function getAccountsOverviewPayments() { return request<AccountsOverviewPayment[]>('/api/accounts-overview/payments') }
+export async function getAccountsOverviewPayroll(month?: number, year?: number) {
+  const query = new URLSearchParams()
+  if (month !== undefined) query.set('month', String(month))
+  if (year !== undefined) query.set('year', String(year))
+  return request<AccountsOverviewPayroll[]>(`/api/accounts-overview/payroll${query.toString() ? `?${query.toString()}` : ''}`)
+}
 
 export interface FinanceDashboard { revenue: number; payments: number; outstanding: number; totalOutstanding: number; currency: string; totalBilled: number; totalPaid: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number }
 export async function getDashboard() { return request<FinanceDashboard>('/api/accounts-overview/dashboard') }
