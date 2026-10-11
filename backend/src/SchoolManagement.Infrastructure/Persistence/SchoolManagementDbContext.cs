@@ -171,6 +171,25 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<HostelRoom>(e => { e.HasKey(x => x.Id); e.Property(x => x.RoomNumber).HasMaxLength(50).IsRequired(); e.HasIndex(x => new { x.HostelId, x.RoomNumber }).IsUnique(); e.HasOne(x => x.Hostel).WithMany(x => x.Rooms).HasForeignKey(x => x.HostelId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<HostelBed>(e => { e.HasKey(x => x.Id); e.Property(x => x.BedNumber).HasMaxLength(50).IsRequired(); e.HasIndex(x => new { x.RoomId, x.BedNumber }).IsUnique(); e.HasOne(x => x.Room).WithMany(x => x.Beds).HasForeignKey(x => x.RoomId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<HostelAllocation>(e => { e.HasKey(x => x.Id); e.Property(x => x.Status).HasMaxLength(20).IsRequired(); e.Property(x => x.Notes).HasMaxLength(500); e.HasIndex(x => new { x.BedId, x.Status }); e.HasIndex(x => new { x.StudentId, x.Status }); e.HasOne(x => x.Bed).WithMany(x => x.Allocations).HasForeignKey(x => x.BedId).OnDelete(DeleteBehavior.Restrict); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict); });
+        m.Entity<WardenRecord>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Category).HasMaxLength(30).IsRequired();
+            e.Property(x => x.Subject).HasMaxLength(200).IsRequired();
+            e.Property(x => x.StudentName).HasMaxLength(200);
+            e.Property(x => x.StudentReference).HasMaxLength(100);
+            e.Property(x => x.Details).HasMaxLength(4000).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(30).IsRequired();
+            e.Property(x => x.ActionTaken).HasMaxLength(2000);
+            e.Property(x => x.RecordedBy).HasMaxLength(200).IsRequired();
+            e.HasIndex(x => new { x.Category, x.Status });
+            e.HasIndex(x => x.RecordedAtUtc);
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_WardenRecords_Category", "\"Category\" IN ('CheckIn', 'CheckOut', 'Inspection', 'Maintenance', 'Indiscipline')");
+                t.HasCheckConstraint("CK_WardenRecords_Status", "\"Status\" IN ('Open', 'InProgress', 'Resolved', 'Closed')");
+            });
+        });
         m.Entity<AccountingDimension>(e => { e.HasKey(x => x.Id); e.Property(x => x.DimensionType).HasMaxLength(50).IsRequired(); e.Property(x => x.Code).HasMaxLength(80).IsRequired(); e.Property(x => x.Name).HasMaxLength(200).IsRequired(); e.HasIndex(x => new { x.DimensionType, x.Code }).IsUnique(); });
         m.Entity<JournalLineDimension>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.JournalEntryLineId, x.AccountingDimensionId }).IsUnique(); e.HasOne<JournalEntryLine>().WithMany().HasForeignKey(x => x.JournalEntryLineId).OnDelete(DeleteBehavior.Cascade); e.HasOne<AccountingDimension>().WithMany().HasForeignKey(x => x.AccountingDimensionId).OnDelete(DeleteBehavior.Restrict); });
         m.Entity<BankTransaction>(e => { e.HasKey(x => x.Id); e.Property(x => x.Reference).HasMaxLength(100).IsRequired(); e.Property(x => x.Description).HasMaxLength(500); e.HasIndex(x => new { x.BankAccountId, x.TransactionDate }); e.HasIndex(x => x.BankStatementLineId).IsUnique(); });
