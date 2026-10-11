@@ -80,7 +80,7 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Announcements',module:'communication'},
     {label:'Hostel & Welfare',module:'laboratories'}
   ]},
-  {label:'Reports',items=[
+  {label:'Reports',items:[
     {label:'Reports & Analytics',module:'reports'}
   ]}
 ];
