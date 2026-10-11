@@ -70,7 +70,8 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
       })
     } catch {
       setError('Unable to load institution settings.')
-    } finally {
+    }
+    finally {
       setLoading(false)
     }
   }
@@ -90,9 +91,16 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         uploaded.push(await uploadGalleryImage(file, title, galleryCaption.trim()))
       }
       await loadGallery()
+      // Additional verification: reload gallery again after short delay to ensure DB commit
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      await loadGallery()
       setGalleryFiles([]); setGalleryTitle(''); setGalleryCaption('')
       setSuccess(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} added to the gallery.`)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to upload gallery images.') }
+    } catch (e) { 
+      setError(e instanceof Error ? e.message : 'Unable to upload gallery images.')
+      // Even on error, try to reload gallery in case partial success or to show current state
+      try { await loadGallery() } catch (reloadError) { /* ignore reload errors */ }
+    }
     finally { setUploadingGallery(false) }
   }
 
@@ -159,7 +167,8 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         channel.close()
       }
       setSuccess(isRemoteLogo ? 'Institution settings and logo saved successfully. The logo is now stored locally.' : 'Institution settings saved successfully.')
-    } catch (e) {
+    }
+    catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save settings.')
     } finally {
       setSaving(false)

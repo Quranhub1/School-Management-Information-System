@@ -30,6 +30,22 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
     : sections
   const selected = useMemo(() => visibleSections.find(item => item.key === section), [visibleSections, section])
 
+  // Handle subsection navigation from sidebar
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ module?: string; subsection?: string }>).detail
+      if (detail?.module !== 'students') return
+      const nextSection: Section | undefined = detail.subsection === 'registration' ? 'admissions'
+        : detail.subsection === 'records' ? 'biodata'
+        : undefined
+      if (nextSection && visibleSections.some(s => s.key === nextSection)) {
+        setSection(nextSection)
+      }
+    }
+    window.addEventListener('smis:navigate-subsection', handler)
+    return () => window.removeEventListener('smis:navigate-subsection', handler)
+  }, [visibleSections])
+
   return (
     <section className="student-lifecycle-workspace">
       <header className="workspace-header">

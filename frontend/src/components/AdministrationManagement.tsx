@@ -8,7 +8,7 @@ import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 const roles = ['SystemAdministrator', 'AcademicRegistrar', 'AssistantRegistrar', 'AdmissionsOfficer', 'Accountant', 'AssistantAccountant', 'Lecturer', 'ExaminationsOfficer', 'Student', 'SchoolWarden', 'Principal', 'Director', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'Receptionist', 'AssistantPrincipal', 'Admin Secretary', 'Records Officer', 'Librarian', 'HR Manager']
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['AcademicRegistrar'] }
 
-type AdminTab = 'users' | 'offices' | 'settings'
+type AdminTab = 'users' | 'roles' | 'offices' | 'settings' | 'staff' | 'payroll' | 'leave' | 'recruitment'
 
 type Office = { key: string; title: string; group: string; description: string; responsibilities: string[]; workspace?: string; workspaceLabel?: string; icon: typeof Building2 }
 
@@ -32,6 +32,7 @@ const OFFICES: Office[] = [
   { key: 'hostel', title: 'Hostel / Residence Office', group: 'Student Affairs', description: 'Manages residences, rooms, beds and student accommodation allocations.', responsibilities: ['Hostel and room registers', 'Bed allocation and occupancy', 'Residence reports and movements'], workspace: 'laboratories', workspaceLabel: 'Open Laboratories & Welfare', icon: ShieldCheck },
   { key: 'secretariat', title: 'Institutional Secretariat', group: 'Administration', description: 'Supports official correspondence, meetings, notices and institutional records.', responsibilities: ['Official correspondence', 'Meeting and document coordination', 'Institutional notices and communications'], workspace: 'communication', workspaceLabel: 'Open Communications', icon: CalendarDays },
 ]
+
 
 
 const ROLE_COLORS: Record<string, string> = {
@@ -91,6 +92,27 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   }
 
   useEffect(() => { void load() }, [])
+
+  // Handle subsection navigation from sidebar
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ module?: string; subsection?: string }>).detail
+      if (detail?.module !== 'administration' && detail?.module !== 'system-administration') return
+      const nextTab: AdminTab | undefined = detail.subsection === 'users' ? 'users'
+        : detail.subsection === 'roles' ? 'roles'
+        : detail.subsection === 'staff' ? 'staff'
+        : detail.subsection === 'payroll' ? 'payroll'
+        : detail.subsection === 'leave' ? 'leave'
+        : detail.subsection === 'recruitment' ? 'recruitment'
+        : detail.subsection === 'settings' ? 'settings'
+        : detail.subsection === 'logs' ? 'staff' // Logs maps to staff tab for now
+        : detail.subsection === 'backups' ? 'staff' // Backups maps to staff tab for now
+        : undefined
+      if (nextTab) setTab(nextTab)
+    }
+    window.addEventListener('smis:navigate-subsection', handler)
+    return () => window.removeEventListener('smis:navigate-subsection', handler)
+  }, [])
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -169,8 +191,13 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
 
     <div className="library-workspace-tabs" role="tablist" aria-label="Administration sections">
       <button role="tab" aria-selected={tab === 'users'} className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>User Management</button>
+      <button role="tab" aria-selected={tab === 'roles'} className={tab === 'roles' ? 'active' : ''} onClick={() => setTab('roles')}>Roles & Permissions</button>
       <button role="tab" aria-selected={tab === 'offices'} className={tab === 'offices' ? 'active' : ''} onClick={() => { setTab('offices'); setSelectedOffice(null) }}>Leadership & Offices</button>
       <button role="tab" aria-selected={tab === 'settings'} className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Institution Settings</button>
+      <button role="tab" aria-selected={tab === 'staff'} className={tab === 'staff' ? 'active' : ''} onClick={() => setTab('staff')}>Staff & HR</button>
+      <button role="tab" aria-selected={tab === 'payroll'} className={tab === 'payroll' ? 'active' : ''} onClick={() => setTab('payroll')}>Payroll</button>
+      <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button>
+      <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>
     </div>
 
     {error && <div className="error" role="alert">{error}</div>}
@@ -223,10 +250,9 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
               <legend>Assigned roles (choose at least one)</legend>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 8 }}>
                 {[...new Set([...roles, ...editForm.roles])].map(role => <label key={role} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input type="checkbox" checked={editForm.roles.includes(role)} onChange={e => setEditForm({ ...editForm, roles: e.target.checked ? [...editForm.roles, role] : editForm.roles.filter(item => item !== role) })} />
-                  {role}
+                  <input type="checkbox" checked={editForm.roles.includes(role)} onChange={e => setEditForm({ ...editForm, roles: e.target.checked ? [...editForm.roles, role] : editForm.roles.filter(item => item !== route) })} />
+                  {route}
                 </label>)}
-              </div>
             </fieldset>
             <button type="submit" disabled={actionBusy || editForm.roles.length === 0}>{actionBusy ? 'Saving…' : 'Save changes'}</button>
           </form>
@@ -255,79 +281,96 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
               {loading ? <tr><td colSpan={7} className="empty">Loading users…</td></tr> :
                users.length === 0 ? <tr><td colSpan={7} className="empty">No accounts found.</td></tr> :
                users.map(user => (
-                <tr key={user.id}>
-                  <td>{user.username}</td>
-                  <td>{user.firstName} {user.lastName}</td>
-                  <td>{user.email ?? '—'}</td>
-                  <td>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {user.roles.map(role => (
-                        <span key={role} style={{
-                          padding: '3px 10px',
-                          borderRadius: '999px',
-                          background: ROLE_COLORS[role] || '#78716c',
-                          color: 'white',
-                          fontSize: '.68rem',
-                          fontWeight: 800,
-                        }}>
-                          {role}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td>
-                    <span style={{
-                      display: 'inline-flex',
-                      padding: '4px 10px',
-                      borderRadius: '999px',
-                      background: user.isActive ? '#d1fae5' : '#fee2e2',
-                      color: user.isActive ? '#059669' : '#dc2626',
-                      fontSize: '.72rem',
-                      fontWeight: 800,
-                    }}>
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</td>
-                  <td>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 250 }}>
-                      <button type="button" className="secondary-button" onClick={() => setViewingUser(user)} disabled={actionBusy}>View</button>
-                      <button type="button" className="secondary-button" onClick={() => beginEdit(user)} disabled={actionBusy}>Edit / Modify</button>
-                      <button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(user.id); setPasswordResetValue(''); setError(''); setSuccessMessage('') }} disabled={actionBusy}>Reset password</button>
-                      <button type="button" className="secondary-button" onClick={() => void toggle(user)} disabled={actionBusy}>{user.isActive ? 'Deactivate' : 'Activate'}</button>
-                      {user.isActive && <button type="button" className="secondary-button" onClick={() => void removeAccess(user)} disabled={actionBusy}>Remove access</button>}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                 <tr key={user.id}>
+                   <td>{user.username}</td>
+                   <td>{user.firstName} {user.lastName}</td>
+                   <td>{user.email ?? '—'}</td>
+                   <td>
+                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                       {user.roles.map(role => (
+                         <span key={role} style={{
+                           padding: '3px 10px',
+                           borderRadius: '999px',
+                           background: ROLE_COLORS[route] || '#78716c',
+                           color: 'white',
+                           fontSize: '.68rem',
+                           fontWeight: 800,
+                         }}>
+                           {role}
+                         </span>
+                       ))}
+                     </div>
+                   </td>
+                   <td>
+                     <span style={{
+                       display: 'inline-flex',
+                       padding: '4px 10px',
+                       borderRadius: '999px',
+                       background: user.isActive ? '#d1fae5' : '#fee2e2',
+                       color: user.isActive ? '#059669' : '#dc2626',
+                       fontSize: '.72rem',
+                       fontWeight: 800,
+                     }}>
+                       {user.isActive ? 'Active' : 'Inactive'}
+                     </span>
+                   </td>
+                   <td>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</td>
+                   <td>
+                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minWidth: 250 }}>
+                       <button type="button" className="secondary-button" onClick={() => setViewingUser(user)} disabled={actionBusy}>View</button>
+                       <button type="button" className="secondary-button" onClick={() => beginEdit(user)} disabled={actionBusy}>Edit / Modify</button>
+                       <button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(user.id); setPasswordResetValue(''); setError(''); setSuccessMessage('') }} disabled={actionBusy}>Reset password</button>
+                       <button type="button" className="secondary-button" onClick={() => void toggle(user)} disabled={actionBusy}>{user.isActive ? 'Deactivate' : 'Activate'}</button>
+                       {user.isActive && <button type="button" className="secondary-button" onClick={() => void removeAccess(user)} disabled={actionBusy}>Remove access</button>}
+                     </div>
+                   </td>
+                 </tr>
+               ))}
             </tbody>
           </table>
         </div>
       </>
     )}
-
-    {viewingUser && (
-      <div className="gallery-lightbox" role="dialog" aria-modal="true" aria-labelledby="user-detail-title" onClick={() => setViewingUser(null)}>
-        <section className="gallery-lightbox-card" onClick={event => event.stopPropagation()}>
-          <button type="button" className="close-button" onClick={() => setViewingUser(null)} aria-label="Close user details">×</button>
-          <p className="eyebrow">USER ACCOUNT</p>
-          <h3 id="user-detail-title">{viewingUser.firstName} {viewingUser.lastName}</h3>
-          <dl className="user-detail-list">
-            <dt>Username</dt><dd>{viewingUser.username}</dd>
-            <dt>Email</dt><dd>{viewingUser.email || '—'}</dd>
-            <dt>Roles</dt><dd>{viewingUser.roles.join(', ') || 'No roles assigned'}</dd>
-            <dt>Status</dt><dd>{viewingUser.isActive ? 'Active' : 'Inactive'}</dd>
-            <dt>Created</dt><dd>{new Date(viewingUser.createdAt).toLocaleString()}</dd>
-            <dt>Last login</dt><dd>{viewingUser.lastLoginAt ? new Date(viewingUser.lastLoginAt).toLocaleString() : 'Never'}</dd>
-          </dl>
-          <div className="topbar-actions">
-            <button type="button" onClick={() => { beginEdit(viewingUser); setViewingUser(null) }}>Edit / Modify</button>
-            <button type="button" className="secondary-button" onClick={() => setViewingUser(null)}>Close</button>
+    {tab === 'roles' && (
+      <div className="panel">
+        <div className="panel-heading">
+          <div>
+            <p className="eyebrow">ROLES & PERMISSIONS</p>
+            <h3>Role Management</h3>
+            <p>Define and manage institutional roles and their associated permissions.</p>
           </div>
-        </section>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th>Description</th>
+                <th>Assigned Permissions</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roles.map(role => (
+                <tr key={role}>
+                  <td>{role}</td>
+                  <td>{getRoleDescription(role)}</td>
+                  <td>{getRolePermissions(role).join(', ')}</td>
+                  <td>
+                    <button type="button" className="secondary-button">
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {roles.length === 0 && (
+                <tr><td colSpan={4} className="empty">No roles configured.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     )}
-
     {tab === 'offices' && (
       selectedOffice ? (() => { const OfficeIcon = selectedOffice.icon; return (
         <div className="office-detail">
@@ -345,10 +388,253 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
         <div className="office-directory">
           <div className="office-directory-intro"><div><span className="eyebrow">INSTITUTIONAL LEADERSHIP</span><h3>Leadership & Offices</h3><p>Day-to-day school operations, governance and specialist offices. Operational support workers such as cooks, askaris and watchmen remain staff records rather than application-login roles.</p></div><span className="office-count">{OFFICES.length} offices</span></div>
           <div className="office-groups">{Array.from(new Set(OFFICES.map(o => o.group))).map(group => <section key={group} className="office-group"><div className="office-group-heading"><h4>{group}</h4><span>{OFFICES.filter(o => o.group === group).length}</span></div><div className="office-card-grid">{OFFICES.filter(o => o.group === group).map(office => { const Icon = office.icon; return <button type="button" className="office-card" key={office.key} onClick={() => setSelectedOffice(office)}><span className="office-card-icon"><Icon size={21} /></span><span className="office-card-copy"><strong>{office.title}</strong><small>{office.description}</small></span><span className="office-card-link">{office.workspace ? 'Workspace →' : 'View office →'}</span></button> })}</div></section>)}</div>
-        </div>
       )
     )}
     {tab === 'settings' && <InstitutionSettingsPage onSaved={handleInstitutionSaved} />}
+    {tab === 'staff' && (
+      <div className="panel">
+        <div className="panel-heading">
+          <div>
+            <p className="eyebrow">STAFF & HR</p>
+            <h3>Staff Management Overview</h3>
+            <p>View and manage staff records, employment details, and HR processes.</p>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Staff ID</th>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Department</th>
+                <th>Employment Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Placeholder - in a real implementation, this would fetch staff data */}
+              <tr>
+                <td>STAFF001</td>
+                <td>John Doe</td>
+                <td>Senior Lecturer</td>
+                <td>Computer Science</td>
+                <td>Permanent</td>
+                <td><span style={{ color: '#059669' }}>Active</span></td>
+              </tr>
+              <tr>
+                <td>STAFF002</td>
+                <td>Jane Smith</td>
+                <td>Administrative Officer</td>
+                <td>Administration</td>
+                <td>Permanent</td>
+                <td><span style={{ color: '#059669' }}>Active</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )}
+    {tab === 'payroll' && (
+      <div className="panel">
+        <div className="panel-heading">
+          <div>
+            <p className="eyebrow">PAYROLL</p>
+            <h3>Payroll Management</h3>
+            <p>Manage employee compensation, deductions, and payroll processing.</p>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Month</th>
+                <th>Amount (UGX)</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Placeholder - in a real implementation, this would fetch payroll data */}
+              <tr>
+                <td>STAFF001</td>
+                <td>January 2026</td>
+                <td>2,500,000</td>
+                <td><span style={{ color: '#059669' }}>Paid</span></td>
+                <td>
+                  <button type="button" className="secondary-button">View Details</button>
+                </td>
+              </tr>
+              <tr>
+                <td>STAFF002</td>
+                <td>February 2026</td>
+                <td>1,800,000</td>
+                <td><span style={{ color: '#d97706' }}>Pending</span></td>
+                <td>
+                  <button type="button" className="secondary-button">Process</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )}
+    {tab === 'leave' && (
+      <div className="panel">
+        <div className="panel-heading">
+          <div>
+            <p className="eyebrow">LEAVE MANAGEMENT</p>
+            <h3>Leave Requests & Approvals</h3>
+            <p>Manage employee leave requests, approvals, and tracking.</p>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Leave Type</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Days</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Placeholder - in a real implementation, this would fetch leave data */}
+              <tr>
+                <td>STAFF001</td>
+                <td>Annual Leave</td>
+                <td>2026-01-15</td>
+                <td>2026-01-22</td>
+                <td>8</td>
+                <td><span style={{ color: '#059669' }}>Approved</span></td>
+                <td>
+                  <button type="button" className="secondary-button">View Details</button>
+                </td>
+              </tr>
+              <tr>
+                <td>STAFF002</td>
+                <td>Sick Leave</td>
+                <td>2026-02-01</td>
+                <td>2026-02-03</td>
+                <td>3</td>
+                <td><span style={{ color: '#dc2626' }}>Pending</span></td>
+                <td>
+                  <button type="button" className="secondary-button" onClick={() => {/* approve/reject logic */}}>Approve</button>
+                  <button type="button" className="secondary-button" onClick={() => {/* approve/reject logic */}}>Reject</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )}
+    {tab === 'recruitment' && (
+      <div className="panel">
+        <div className="panel-heading">
+          <div>
+            <p className="eyebrow">RECRUITMENT</p>
+            <h3>Talent Acquisition & Onboarding</h3>
+            <p>Manage job postings, applications, interviews, and employee onboarding.</p>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Position</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Applications</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Placeholder - in a real implementation, this would fetch recruitment data */}
+              <tr>
+                <td>Lecturer - Mathematics</td>
+                <td>Mathematics</td>
+                <td>Open</td>
+                <td>12</td>
+                <td>
+                  <button type="button" className="secondary-button">View Applications</button>
+                </td>
+              </tr>
+              <tr>
+                <td>Administrative Assistant</td>
+                <td>Administration</td>
+                <td>Open</td>
+                <td>8</td>
+                <td>
+                  <button type="button" className="secondary-button">View Applications</button>
+                </td>
+              </tr>
+              <tr>
+                <td>College Principal</td>
+                <td>Executive</td>
+                <td>Closed - Selected</td>
+                <td>25</td>
+                <td>
+                  <button type="button" className="secondary-button">View Details</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )}
   </section>
 }
 
+// Helper functions for roles panel
+function getRoleDescription(role: string): string {
+  const descriptions: Record<string, string> = {
+    SystemAdministrator: 'Full system access including configuration, user management, and all modules',
+    AcademicRegistrar: 'Manages academic records, registration, examinations, and student progression',
+    AdmissionsOfficer: 'Handles student admissions, applications, screening, and enrollment',
+    Lecturer: 'Teaches courses, manages assessments, and supports student learning',
+    ExaminationsOfficer: 'Coordinates examination scheduling, invigilation, and results processing',
+    Student: 'Enrolled learner with access to academic resources and services',
+    SchoolWarden: 'Oversees student welfare, discipline, accommodation, and safety',
+    Principal: 'Provides academic leadership and oversees educational programs',
+    Director: 'Provides executive leadership and institutional management',
+    Secretary: 'Handles administrative tasks, documentation, and office management',
+    ResidentDirector: 'Manages residential facilities and student welfare in hostels',
+    HeadOfDepartment: 'Leads academic department and oversees curriculum delivery',
+    Receptionist: 'Manages front desk operations, visitor management, and communications',
+    AssistantPrincipal: 'Supports principal in academic administration and school management',
+    'Admin Secretary': 'Provides administrative support to management and coordinates office functions',
+    RecordsOfficer: 'Maintains student records, documents, and information systems',
+    Librarian: 'Manages library resources, cataloguing, and information services',
+    'HR Manager': 'Oversees human resources, personnel management, and staff welfare'
+  }
+  return descriptions[role] || 'No description available'
+}
+
+function getRolePermissions(role: string): string[] {
+  // Simplified permission mapping - in reality this would be more complex
+  const permissionsMap: Record<string, string[]> = {
+    SystemAdministrator: ['*'], // All permissions
+    AcademicRegistrar: ['academics:read', 'academics:write', 'students:read', 'students:write', 'examinations:read', 'examinations:write'],
+    AdmissionsOfficer: ['students:read', 'students:write', 'admissions:read', 'admissions:write'],
+    Lecturer: ['academics:read', 'examinations:read', 'examinations:write', 'students:read'],
+    ExaminationsOfficer: ['examinations:read', 'examinations:write', 'academics:read'],
+    Student: ['academics:read', 'examinations:read'],
+    SchoolWarden: ['students:read', 'students:write', 'laboratories:read', 'laboratories:write'],
+    Principal: ['academics:read', 'academics:write', 'students:read', 'students:write', 'finance:read'],
+    Director: ['*'], // All permissions (executive access)
+    Secretary: ['administration:read', 'administration:write', 'students:read'],
+    ResidentDirector: ['laboratories:read', 'laboratories:write', 'students:read'],
+    HeadOfDepartment: ['academics:read', 'academics:write', 'timetable:read'],
+    Receptionist: ['students:read', 'admissions:read', 'communication:read'],
+    AssistantPrincipal: ['academics:read', 'academics:write', 'students:read', 'students:write'],
+    'Admin Secretary': ['administration:read', 'administration:write', 'finance:read'],
+    RecordsOfficer: ['students:read', 'students:write', 'records:read', 'records:write'],
+    Librarian: ['library:read', 'library:write'],
+    'HR Manager': ['staff:read', 'staff:write', 'payroll:read', 'leave:read', 'leave:write']
+  }
+  return permissionsMap[role] || []
+}

@@ -10,7 +10,7 @@ interface AcademicManagementProps {
   readOnly?: boolean
 }
 
-type AcademicView = 'records' | 'programmes' | 'examinations'
+type AcademicView = 'records' | 'programmes' | 'examinations' | 'classes' | 'courses'
 
 export function AcademicManagement({ canManage = false, readOnly = false }: AcademicManagementProps) {
   const [view, setView] = useState<AcademicView>('records')
@@ -29,6 +29,23 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
   useEffect(() => {
     if (canManage) void loadProgrammes()
   }, [canManage])
+
+  // Handle subsection navigation from sidebar
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ module?: string; subsection?: string }>).detail
+      if (detail?.module !== 'academics') return
+      const nextView: AcademicView | undefined = detail.subsection === 'records' ? 'records'
+        : detail.subsection === 'programmes' ? 'programmes'
+        : detail.subsection === 'examinations' ? 'examinations'
+        : detail.subsection === 'classes' ? 'classes'
+        : detail.subsection === 'courses' ? 'courses'
+        : undefined
+      if (nextView) setView(nextView)
+    }
+    window.addEventListener('smis:navigate-subsection', handler)
+    return () => window.removeEventListener('smis:navigate-subsection', handler)
+  }, [])
 
   async function loadProgrammes() {
     try {
@@ -105,14 +122,16 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
   return (
     <section className="academic-workspace" aria-label="Academic management workspace">
       <div className="panel-heading">
-        <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : 'Programme management'}</h2></div>
-        <span>{view === 'records' ? `${transcript.length} course results` : `${programmes.length} programmes`}</span>
+        <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : view === 'programmes' ? 'Programme management' : view === 'examinations' ? 'Examinations & Results' : view === 'classes' ? 'Class Management' : 'Course Management'}</h2></div>
+        <span>{view === 'records' ? `${transcript.length} course results` : view === 'programmes' ? `${programmes.length} programmes` : view === 'classes' ? 'Managing class schedules' : view === 'courses' ? 'Managing course catalog' : `${programmes.length} programmes`}</span>
       </div>
 
       <div className="form-row" role="tablist" aria-label="Academic management views">
         <button type="button" aria-selected={view === 'records'} onClick={() => setView('records')}>Academic Records</button>
         {!readOnly && <button type="button" aria-selected={view === 'programmes'} onClick={() => setView('programmes')}>Programmes</button>}
         {!readOnly && <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>}
+        {!readOnly && <button type="button" aria-selected={view === 'classes'} onClick={() => setView('classes')}>Class Management</button>}
+        {!readOnly && <button type="button" aria-selected={view === 'courses'} onClick={() => setView('courses')}>Course Management</button>}
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
@@ -143,6 +162,129 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
             </table>
           </div>
         </>
+      ) : view === 'programmes' ? (
+        <>
+          <form className="student-form" onSubmit={saveProgramme}>
+            <div className="form-row"><input required value={programmeForm.departmentId} onChange={(e) => setProgrammeForm({ ...programmeForm, departmentId: e.target.value })} placeholder="Department UUID" /><input required value={programmeForm.code} onChange={(e) => setProgrammeForm({ ...programmeForm, code: e.target.value })} placeholder="Programme code" /></div>
+            <div className="form-row"><input required value={programmeForm.name} onChange={(e) => setProgrammeForm({ ...programmeForm, name: e.target.value })} placeholder="Programme name" /><input required value={programmeForm.award} onChange={(e) => setProgrammeForm({ ...programmeForm, award: e.target.value })} placeholder="Award" /></div>
+            <div className="form-row"><input value={programmeForm.awardTitle} onChange={(e) => setProgrammeForm({ ...programmeForm, awardTitle: e.target.value })} placeholder="Award title (optional)" /><input type="number" min="1" value={programmeForm.durationYears} onChange={(e) => setProgrammeForm({ ...programmeForm, durationYears: e.target.value })} placeholder="Duration" /></div>
+            <div className="form-row"><select value={programmeForm.studyMode} onChange={(e) => setProgrammeForm({ ...programmeForm, studyMode: e.target.value })}><option>Full-time</option><option>Part-time</option><option>Evening</option><option>Weekend</option></select><select value={programmeForm.deliveryType} onChange={(e) => setProgrammeForm({ ...programmeForm, deliveryType: e.target.value })}><option>Academic</option><option>CBET</option><option>Blended</option><option>Practical</option></select><button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add programme'}</button></div>
+          </form>
+          <div className="table-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Award</th><th>Duration</th><th>Mode</th><th>Delivery</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>{programmes.length === 0 ? <tr><td colSpan={8} className="empty">No programmes configured.</td></tr> : programmes.map((programme) => <tr key={programme.id}><td>{programme.code}</td><td>{programme.name}</td><td>{programme.award}</td><td>{programme.durationYears} {programme.durationUnit}</td><td>{programme.studyMode}</td><td>{programme.deliveryType}</td><td>{programme.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => void toggleProgramme(programme)}>{programme.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}</tbody>
+          </table></div>
+        </>
+      ) : view === 'classes' ? (
+        <div className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">CLASS MANAGEMENT</p>
+              <h3>Class Scheduling & Management</h3>
+              <p>Manage class timetables, room allocations, and instructor assignments.</p>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Class Code</th>
+                  <th>Course</th>
+                  <th>Instructor</th>
+                  <th>Room</th>
+                  <th>Schedule</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Placeholder - in a real implementation, this would fetch class data */}
+                <tr>
+                  <td>CS101-01</td>
+                  <td>Introduction to Programming</td>
+                  <td>John Doe</td>
+                  <td>Lab 301</td>
+                  <td>Mon/Wed/Fri 09:00-10:30</td>
+                  <td><span style={{ color: '#059669' }}>Active</span></td>
+                  <td>
+                    <button type="button" className="secondary-button">Edit Schedule</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>MTH205-02</td>
+                  <td>Calculus II</td>
+                  <td>Jane Smith</td>
+                  <td>Room 205</td>
+                  <td>Tue/Thu 14:00-15:30</td>
+                  <td><span style={{ color: '#059669' }}>Active</span></td>
+                  <td>
+                    <button type="button" className="secondary-button">Edit Schedule</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : view === 'courses' ? (
+        <div className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">COURSE MANAGEMENT</p>
+              <h3>Course Catalog & Curriculum</h3>
+              <p>Manage course offerings, descriptions, prerequisites, and academic levels.</p>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Course Code</th>
+                  <th>Course Name</th>
+                  <th>Department</th>
+                  <th>Level</th>
+                  <th>Credits</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Placeholder - in a real implementation, this would fetch course data */}
+                <tr>
+                  <td>CS101</td>
+                  <td>Introduction to Programming</td>
+                  <td>Computer Science</td>
+                  <td>Undergraduate</td>
+                  <td>3</td>
+                  <td><span style={{ color: '#059669' }}>Active</span></td>
+                  <td>
+                    <button type="button" className="secondary-button">Edit Course</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>MTH205</td>
+                  <td>Calculus II</td>
+                  <td>Mathematics</td>
+                  <td>Undergraduate</td>
+                  <td>4</td>
+                  <td><span style={{ color: '#059669' }}>Active</span></td>
+                  <td>
+                    <button type="button" className="secondary-button">Edit Course</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>ENG301</td>
+                  <td>Advanced Technical Writing</td>
+                  <td>English</td>
+                  <td>Undergraduate</td>
+                  <td>3</td>
+                  <td><span style={{ color: '#059669' }}>Active</span></td>
+                  <td>
+                    <button type="button" className="secondary-button">Edit Course</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
         <>
           <form className="student-form" onSubmit={saveProgramme}>

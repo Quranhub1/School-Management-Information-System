@@ -54,6 +54,20 @@ export function HealthRecordsManagement() {
     }
   }
 
+  // Handle subsection navigation from sidebar
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ module?: string; subsection?: string }>).detail
+      if (detail?.module !== 'health') return
+      const nextTab: Tab | undefined = detail.subsection === 'medical-records' ? 'student'
+        : detail.subsection === 'clinic' ? 'clinic'
+        : undefined
+      if (nextTab) setTab(nextTab)
+    }
+    window.addEventListener('smis:navigate-subsection', handler)
+    return () => window.removeEventListener('smis:navigate-subsection', handler)
+  }, [])
+
   useEffect(() => {
     if (tab === 'student' && studentId.trim()) void loadStudentRecords()
     else if (tab === 'clinic') void loadRecentVisits()
@@ -145,8 +159,6 @@ export function HealthRecordsManagement() {
                   Visit Date
                   <input type="date" value={form.visitDate} onChange={e => setForm({ ...form, visitDate: e.target.value })} required />
                 </label>
-              </div>
-              <div className="form-row">
                 <label>
                   Condition
                   <input value={form.condition} onChange={e => setForm({ ...form, condition: e.target.value })} placeholder="e.g. Malaria, Fever" />
@@ -204,6 +216,7 @@ export function HealthRecordsManagement() {
                       </td>
                       <td>{r.condition || '-'}</td>
                       <td>{r.treatment || '-'}</td>
+                      <td>{r.treatment || '-'}</td>
                       <td>{r.medication || '-'}</td>
                       <td>{r.attendedBy || '-'}</td>
                       <td>{new Date(r.visitDate).toLocaleDateString('en-UG')}</td>
@@ -227,30 +240,31 @@ export function HealthRecordsManagement() {
                 <th>Visit Date</th>
                 <th>Attended By</th>
               </tr>
-            </thead>
-            <tbody>
-              {recentVisits.length === 0 ? (
-                <tr><td colSpan={6} className="empty">No clinic visits in the last 7 days</td></tr>
-              ) : (
-                recentVisits.map(v => (
-                  <tr key={v.id}>
-                    <td><strong>{v.studentNumber}</strong> {v.studentName}</td>
-                    <td>
-                      <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getRecordTypeColor(v.recordType), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
-                        {v.recordType}
-                      </span>
-                    </td>
-                    <td>{v.condition || '-'}</td>
-                    <td>{v.treatment || '-'}</td>
-                    <td>{new Date(v.visitDate).toLocaleDateString('en-UG')}</td>
-                    <td>{v.attendedBy || '-'}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {recentVisits.length === 0 ? (
+                  <tr><td colSpan={6} className="empty">No clinic visits in the last 7 days</td></tr>
+                ) : (
+                  recentVisits.map(v => (
+                    <tr key={v.id}>
+                      <td><strong>{v.studentNumber}</strong> {v.studentName}</td>
+                      <td>
+                        <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getRecordTypeColor(v.recordType), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
+                          {v.recordType}
+                        </span>
+                      </td>
+                      <td>{v.condition || '-'}</td>
+                      <td>{v.treatment || '-'}</td>
+                      <td>{new Date(v.visitDate).toLocaleDateString('en-UG')}</td>
+                      <td>{v.attendedBy || '-'}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      )
     </section>
   )
 }
