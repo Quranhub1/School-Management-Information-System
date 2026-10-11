@@ -1,7 +1,7 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-10-10  
-**Tracking branch:** `feat/principal-readonly-finance-system-admin-guard` (active dashboard/table work; PR #123)  
+**Last updated:** 2026-10-11  
+**Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
 
