@@ -149,6 +149,17 @@ public sealed class InstitutionGalleryController(SchoolManagementDbContext db) :
         };
         db.InstitutionGalleryImages.Add(item);
         await db.SaveChangesAsync(cancellationToken);
+
+        // Verify the upload is visible to a fresh database query before reporting success.
+        // This helps distinguish a persisted gallery item from a UI-only success state.
+        var persisted = await db.InstitutionGalleryImages.AsNoTracking()
+            .AnyAsync(x => x.Id == item.Id, cancellationToken);
+        if (!persisted)
+            return Problem(
+                title: "Gallery image was not persisted",
+                detail: "The upload was received, but the saved image could not be read back from the gallery database.",
+                statusCode: StatusCodes.Status500InternalServerError);
+
         return Ok(ToDto(item));
     }
 
