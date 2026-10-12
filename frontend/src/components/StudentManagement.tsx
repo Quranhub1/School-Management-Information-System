@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode, type CSSProperties } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import {
   addStudentGuardian, createStudent, deleteStudentGuardian, getStudentGuardians, getStudentQrCode,
   getStudents, saveStudentApplicationForm, updateStudentGuardian, type CreateStudentRequest, type GuardianInput, type Student, type StudentGuardian,
@@ -252,7 +253,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     </form>}
     {view === 'registry' && <section className="panel student-registry-panel"><div className="panel-heading"><div><p className="eyebrow">Student Management</p><h3>{readOnly ? 'Student registry · Read-only' : 'Student registry'}</h3></div><span>{students.length} students</span></div>
       <div className="table-wrap"><table><thead><tr><th>Student number</th><th>Name</th><th>Gender</th><th>Phone</th><th>Email</th><th>Status</th><th>Parent / guardian</th><th>QR code</th></tr></thead><tbody>
-        {loading ? <tr><td colSpan={8} className="empty">Loading students…</td></tr> : students.length === 0 ? <tr><td colSpan={8} className="empty">No students registered.</td></tr> : students.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{[s.firstName, s.otherNames, s.lastName].filter(Boolean).join(' ')}</td><td>{s.gender ?? '—'}</td><td>{s.phoneNumber ?? '—'}</td><td>{s.email ?? '—'}</td><td>{s.status}</td><td><button className="secondary-button" type="button" onClick={() => openGuardians(s)}>View / manage</button></td><td><button className="secondary-button" type="button" onClick={() => setQrStudentId(s.id)}>View QR</button></td></tr>)}
+        {loading ? <tr><td colSpan={8}><LoadingSpinner label="Loading students…" /></td></tr> : students.length === 0 ? <tr><td colSpan={8} className="empty">No students registered.</td></tr> : students.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{[s.firstName, s.otherNames, s.lastName].filter(Boolean).join(' ')}</td><td>{s.gender ?? '—'}</td><td>{s.phoneNumber ?? '—'}</td><td>{s.email ?? '—'}</td><td>{s.status}</td><td><button className="secondary-button" type="button" onClick={() => openGuardians(s)}>View / manage</button></td><td><button className="secondary-button" type="button" onClick={() => setQrStudentId(s.id)}>View QR</button></td></tr>)}
       </tbody></table></div>
     </section>}
     {qrStudentId && <div className="modal-backdrop" onClick={() => setQrStudentId(null)}><div className="auth-card" onClick={e => e.stopPropagation()}><p className="eyebrow">Student QR code</p><h3>{qrStudentId}</h3><img src={getStudentQrCode(qrStudentId)} alt="Student QR code" style={{ width: '100%', height: 'auto' }} /><button type="button" className="secondary-button" style={{ marginTop: 12 }} onClick={() => setQrStudentId(null)}>Close</button></div></div>}
