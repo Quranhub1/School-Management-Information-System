@@ -156,6 +156,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
                         TeachingGroupId = teachingGroup.Id,
                         CourseId = course.Id,
                         TeacherId = teacher.Id,
+                        StaffMemberId = teacher.Id,
                         DayOfWeek = day,
                         StartTime = startTime,
                         EndTime = endTime,
