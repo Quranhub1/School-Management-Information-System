@@ -100,17 +100,17 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
             <div className="summary-card"><span>Paid</span><strong style={{ color: '#059669' }}>{payroll.filter(p => p.status === 'Paid').length}</strong></div>
             <div className="summary-card"><span>Pending</span><strong style={{ color: '#d97706' }}>{payroll.filter(p => p.status === 'Pending').length}</strong></div>
           </div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+          {canManage && <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
             <select value={payrollMonth} onChange={e => setPayrollMonth(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{new Date(2000, m-1).toLocaleString('default', { month: 'long' })}</option>)}</select>
             <input type="number" value={payrollYear} onChange={e => setPayrollYear(Number(e.target.value))} style={{ width: 100 }} />
             <button className="btn" onClick={() => void handleGeneratePayroll()}>Generate Payroll</button>
-          </div>
+          </div>}
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Staff</th><th>Month</th><th>Year</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net Pay</th><th>Status</th><th>Action</th></tr></thead>
+              <thead><tr><th>Staff</th><th>Month</th><th>Year</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net Pay</th><th>Status</th>{canManage && <th>Action</th>}</tr></thead>
               <tbody>
-                {payroll.length === 0 ? <tr><td colSpan={9} className="empty">No payroll records found.</td></tr> : payroll.map(p => (
-                  <tr key={p.id}><td>{p.staffMemberId}</td><td>{p.month}</td><td>{p.year}</td><td>UGX {p.basicSalary.toLocaleString()}</td><td>UGX {p.allowances.toLocaleString()}</td><td>UGX {p.deductions.toLocaleString()}</td><td><strong>UGX {p.netPay.toLocaleString()}</strong></td><td><span className="badge" style={{ background: p.status === 'Paid' ? '#d1fae5' : '#fef3c7', color: p.status === 'Paid' ? '#065f46' : '#92400e' }}>{p.status}</span></td><td>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)}>Mark Paid</button>}</td></tr>
+                {payroll.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No payroll records found.</td></tr> : payroll.map(p => (
+                  <tr key={p.id}><td>{p.staffMemberId}</td><td>{p.month}</td><td>{p.year}</td><td>UGX {p.basicSalary.toLocaleString()}</td><td>UGX {p.allowances.toLocaleString()}</td><td>UGX {p.deductions.toLocaleString()}</td><td><strong>UGX {p.netPay.toLocaleString()}</strong></td><td><span className="badge" style={{ background: p.status === 'Paid' ? '#d1fae5' : '#fef3c7', color: p.status === 'Paid' ? '#065f46' : '#92400e' }}>{p.status}</span></td>{canManage && <td>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)}>Mark Paid</button>}</td>}</tr>
                 ))}
               </tbody>
             </table>
