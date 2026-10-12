@@ -1,6 +1,13 @@
 export const ROLES = { systemAdministrator: 'SystemAdministrator', academicRegistrar: 'AcademicRegistrar', assistantRegistrar: 'AssistantRegistrar', admissionsOfficer: 'AdmissionsOfficer', accountant: 'Accountant', assistantAccountant: 'AssistantAccountant', lecturer: 'Lecturer', examinationsOfficer: 'ExaminationsOfficer', student: 'Student', schoolWarden: 'SchoolWarden', principal: 'Principal', director: 'Director', secretary: 'Secretary', adminSecretary: 'Admin Secretary', residentDirector: 'ResidentDirector', headOfDepartment: 'HeadOfDepartment', receptionist: 'Receptionist', assistantPrincipal: 'AssistantPrincipal', hrManager: 'HR Manager', recordsOfficer: 'Records Officer' } as const
 export type InstitutionalRole = typeof ROLES[keyof typeof ROLES]
-export function hasAnyRole(userRoles: string[], allowedRoles: readonly string[]): boolean { return allowedRoles.some(role => userRoles.includes(role)) }
+function normalizeRole(role: string): string {
+  return role.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+export function hasAnyRole(userRoles: string[], allowedRoles: readonly string[]): boolean {
+  const normalizedUserRoles = new Set(userRoles.map(normalizeRole))
+  return allowedRoles.some(role => normalizedUserRoles.has(normalizeRole(role)))
+}
 export const ADMINISTRATION_ROLES = [ROLES.systemAdministrator] as const
 export const ACADEMIC_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.academicRegistrar, ROLES.assistantRegistrar, ROLES.hrManager] as const
 export const FINANCE_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.accountant] as const
