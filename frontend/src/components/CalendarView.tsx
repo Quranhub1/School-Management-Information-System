@@ -125,7 +125,7 @@ export function CalendarView() {
           </select>
           <button type="submit" disabled={reminderLoading}>{reminderLoading ? 'Adding…' : 'Add Reminder'}</button>
         </form>
-        {reminderLoading ? <p className="empty">Loading reminders…</p> : <div className="table-wrap"><table><thead><tr><th>Channel</th><th>Recipient</th><th>Message</th><th>Remind On</th><th>Status</th><th>Actions</th></tr></thead><tbody>{reminders.length === 0 ? <tr><td colSpan={6} className="empty">No reminders set</td></tr> : reminders.map(r => <tr key={r.id}><td>{r.channel}</td><td>{r.recipientType}{r.recipientId ? ` (${r.recipientId})` : ''}</td><td>{r.message || '—'}</td><td>{r.remindOnUtc}</td><td>{r.isSent ? 'Sent' : 'Pending'}</td><td>{!r.isSent && <button className="secondary-button" onClick={() => void handleMarkSent(r.id)}>Mark Sent</button>}</td></tr>)}</tbody></table></div>}
+        {reminderLoading ? <LoadingSpinner label="Loading reminders…" /> : <div className="table-wrap"><table><thead><tr><th>Channel</th><th>Recipient</th><th>Message</th><th>Remind On</th><th>Status</th><th>Actions</th></tr></thead><tbody>{reminders.length === 0 ? <tr><td colSpan={6} className="empty">No reminders set</td></tr> : reminders.map(r => <tr key={r.id}><td>{r.channel}</td><td>{r.recipientType}{r.recipientId ? ` (${r.recipientId})` : ''}</td><td>{r.message || '—'}</td><td>{r.remindOnUtc}</td><td>{r.isSent ? 'Sent' : 'Pending'}</td><td>{!r.isSent && <button className="secondary-button" onClick={() => void handleMarkSent(r.id)}>Mark Sent</button>}</td></tr>)}</tbody></table></div>}
       </div>
     )}
   </section>
