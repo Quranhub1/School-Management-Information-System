@@ -3124,3 +3124,94 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
     transition: none !important;
   }
 }
+
+
+/* Modern accessible checkbox treatment inspired by Uiverse.io checkbox-wrapper-46. */
+/* Keep the real checkbox input in the accessibility tree and preserve native form behaviour. */
+.app-shell input[type="checkbox"],
+.student-application-form input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: inline-grid;
+  place-content: center;
+  flex: 0 0 18px;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #9098a9;
+  border-radius: 4px;
+  background: var(--smis-surface, #fff);
+  color: #fff;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.app-shell input[type="checkbox"]::before,
+.student-application-form input[type="checkbox"]::before {
+  content: "";
+  width: 9px;
+  height: 5px;
+  border: solid currentColor;
+  border-width: 0 0 2px 2px;
+  transform: translateY(-1px) rotate(-45deg) scale(0);
+  transform-origin: center;
+  transition: transform .18s ease;
+}
+.app-shell input[type="checkbox"]:checked,
+.student-application-form input[type="checkbox"]:checked {
+  border-color: #506eec;
+  background: #506eec;
+  box-shadow: 0 0 0 1px rgba(80, 110, 236, .08);
+  animation: smis-checkbox-wave .35s ease;
+}
+.app-shell input[type="checkbox"]:checked::before,
+.student-application-form input[type="checkbox"]:checked::before {
+  transform: translateY(-1px) rotate(-45deg) scale(1);
+}
+.app-shell input[type="checkbox"]:hover:not(:disabled),
+.student-application-form input[type="checkbox"]:hover:not(:disabled) {
+  border-color: #506eec;
+}
+.app-shell input[type="checkbox"]:focus-visible,
+.student-application-form input[type="checkbox"]:focus-visible {
+  outline: 3px solid rgba(80, 110, 236, .25);
+  outline-offset: 2px;
+}
+.app-shell input[type="checkbox"]:disabled,
+.student-application-form input[type="checkbox"]:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+.app-shell input[type="checkbox"]:indeterminate,
+.student-application-form input[type="checkbox"]:indeterminate {
+  border-color: #506eec;
+  background: #506eec;
+}
+.app-shell input[type="checkbox"]:indeterminate::before,
+.student-application-form input[type="checkbox"]:indeterminate::before {
+  width: 9px;
+  height: 0;
+  border-width: 0 0 2px;
+  transform: none;
+}
+@keyframes smis-checkbox-wave {
+  50% { transform: scale(.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell input[type="checkbox"],
+  .student-application-form input[type="checkbox"] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media print {
+  .student-application-form input[type="checkbox"] {
+    appearance: auto;
+    -webkit-appearance: checkbox;
+    print-color-adjust: exact;
+  }
+}
