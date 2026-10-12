@@ -4,7 +4,7 @@ import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } fro
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
-export function StaffManagement({ canManage }: { canManage?: boolean }) {
+export function StaffManagement({ canManage = false, canReadPayroll = false }: { canManage?: boolean; canReadPayroll?: boolean }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -30,15 +30,15 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
         : detail.subsection === 'leave' ? 'leave'
         : detail.subsection === 'recruitment' ? 'recruitment'
         : undefined
-      if (nextTab) setTab(nextTab)
+      if (nextTab === 'payroll' && !canReadPayroll) return; if ((nextTab === 'leave' || nextTab === 'recruitment') && !canManage) return; if (nextTab) setTab(nextTab)
     }
     window.addEventListener('smis:navigate-subsection', handler)
     return () => window.removeEventListener('smis:navigate-subsection', handler)
-  }, [])
+  }, [canManage, canReadPayroll])
 
   useEffect(() => { void loadStaff() }, [])
-  useEffect(() => { if (tab === 'leave') void loadLeave() }, [tab])
-  useEffect(() => { if (tab === 'payroll') void loadPayroll() }, [tab])
+  useEffect(() => { if (canManage && tab === 'leave') void loadLeave() }, [tab, canManage])
+  useEffect(() => { if (canReadPayroll && tab === 'payroll') void loadPayroll() }, [tab, canReadPayroll])
 
   async function submit(e: React.FormEvent) { e.preventDefault(); setError(''); try { await createStaff(form); setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' }); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create staff.') } }
   async function deactivate(id: string) { try { await deactivateStaff(id); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') } }
@@ -59,9 +59,9 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
 
       <div className="library-workspace-tabs" role="tablist" aria-label="Staff sections" style={{ marginBottom: 18 }}>
         <button role="tab" aria-selected={tab === 'staff'} className={tab === 'staff' ? 'active' : ''} onClick={() => setTab('staff')}>Staff</button>
-        <button role="tab" aria-selected={tab === 'payroll'} className={tab === 'payroll' ? 'active' : ''} onClick={() => setTab('payroll')}>Payroll</button>
-        <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button>
-        <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>
+        {canReadPayroll && <button role="tab" aria-selected={tab === 'payroll'} className={tab === 'payroll' ? 'active' : ''} onClick={() => setTab('payroll')}>Payroll</button>}
+        {canManage && <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button>}
+        {canManage && <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>}
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
