@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import { getInventoryRegister, saveInventoryRegister, type InventoryColumn, type InventoryRow } from '../api/inventoryRegisters'
 
 type InventorySection = { id: string; name: string; group: string }
@@ -186,7 +187,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         <div><span className="eyebrow">DATABASE REGISTER</span><h4>{section.name}</h4></div>
         {canEdit && <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>}
       </div>
-      {loading && <p className="empty" role="status">Loading register from database…</p>}
+      {loading && <LoadingSpinner label="Loading register from database…" />}
       <div className="table-wrap inventory-table-wrap inventory-spreadsheet-wrap">
         <table className="compact-table inventory-spreadsheet">
           <thead><tr>
