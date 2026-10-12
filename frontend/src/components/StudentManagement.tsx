@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode, type CSSProperties } from 'react'
 import {
   addStudentGuardian, createStudent, deleteStudentGuardian, getStudentGuardians, getStudentQrCode,
-  getStudents, updateStudentGuardian, type CreateStudentRequest, type GuardianInput, type Student, type StudentGuardian,
+  getStudents, saveStudentApplicationForm, updateStudentGuardian, type CreateStudentRequest, type GuardianInput, type Student, type StudentGuardian,
 } from '../api/students'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 
@@ -66,7 +66,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   const branding = useMemo(() => ({
     '--application-primary': institution.primaryColor || '#1e3a8a',
     '--application-accent': institution.accentColor || '#b45309',
-  } as React.CSSProperties), [institution.primaryColor, institution.accentColor])
+  } as CSSProperties), [institution.primaryColor, institution.accentColor])
 
   async function load() {
     setLoading(true); setError('')
@@ -106,6 +106,24 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
         phoneNumber: application.phone, email: application.email,
       }
       const created = await createStudent(profile)
+      let photographBase64: string | null = null
+      if (photo) {
+        photographBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => {
+            const result = String(reader.result ?? '')
+            resolve(result.includes(',') ? result.slice(result.indexOf(',') + 1) : result)
+          }
+          reader.onerror = () => reject(new Error('Unable to read the selected photograph.'))
+          reader.readAsDataURL(photo)
+        })
+      }
+      await saveStudentApplicationForm(created.id, {
+        application: { ...application, education, studentNumber: profile.studentNumber, institutionId: institution.id },
+        photographBase64,
+        photographContentType: photo?.type ?? null,
+        photographFileName: photo?.name ?? null,
+      })
       const primaryContact = application.fatherName || application.motherName || application.sponsorName
       if (primaryContact) {
         const guardian: GuardianInput = {
@@ -118,7 +136,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
         await addStudentGuardian(created.id, guardian)
       }
       setStudents(current => [created, ...current.filter(s => s.id !== created.id)])
-      setNotice('Student profile was saved. The extended application, health, education, sponsor, photograph and official-review fields are not yet stored by the current backend; submission is therefore incomplete.')
+      setNotice('Student application, photograph and student profile were saved successfully.')
       setView('registry')
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to save the application.') }
     finally { setSaving(false) }
@@ -231,7 +249,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
         </div></div>
       </Section>
       <div className="application-actions no-print"><button type="button" className="secondary-button" onClick={() => window.print()}>Print application</button><button type="button" className="secondary-button" onClick={() => { setApplication(emptyApplication); setEducation([emptyEducation()]); setPhoto(null); setStudentNumber(''); }}>Clear form</button><button type="submit" disabled={saving || !institutionLoaded || !institution.isActive}>{saving ? 'Saving…' : 'Submit application'}</button></div>
-      <p className="application-storage-warning">Important: the current backend only stores the student profile and one primary contact. The complete application payload, photograph, education history, health details, sponsor information and official review fields still require the dedicated application-record API and database migration before this form can be considered fully operational.</p>
+
     </form>}
     {view === 'registry' && <section className="panel student-registry-panel"><div className="panel-heading"><div><p className="eyebrow">Student Management</p><h3>{readOnly ? 'Student registry · Read-only' : 'Student registry'}</h3></div><span>{students.length} students</span></div>
       <div className="table-wrap"><table><thead><tr><th>Student number</th><th>Name</th><th>Gender</th><th>Phone</th><th>Email</th><th>Status</th><th>Parent / guardian</th><th>QR code</th></tr></thead><tbody>
