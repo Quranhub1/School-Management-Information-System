@@ -39,6 +39,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<InstitutionSettings> InstitutionSettings => Set<InstitutionSettings>();
     public DbSet<InstitutionGalleryImage> InstitutionGalleryImages => Set<InstitutionGalleryImage>();
     public DbSet<Applicant> Applicants => Set<Applicant>();
+    public DbSet<StudentApplicationRecord> StudentApplicationRecords => Set<StudentApplicationRecord>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<StudentGuardian> StudentGuardians => Set<StudentGuardian>();
     public DbSet<Faculty> Faculties => Set<Faculty>();
@@ -226,6 +227,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<PayrollRecord>(e => { e.HasKey(x => x.Id); e.Property(x => x.Status).HasMaxLength(20).IsRequired(); e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffMemberId).OnDelete(DeleteBehavior.Restrict); });
         m.Entity<StaffAllowance>(e => { e.HasKey(x => x.Id); e.Property(x => x.AllowanceType).HasMaxLength(100).IsRequired(); e.Property(x => x.Amount).HasPrecision(18, 2); e.Property(x => x.Currency).HasMaxLength(3).IsRequired(); e.Property(x => x.Frequency).HasMaxLength(30).IsRequired(); e.Property(x => x.Reason).HasMaxLength(1000); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.Property(x => x.AuthorizedBy).HasMaxLength(200); e.Property(x => x.RecordedBy).HasMaxLength(200); e.Property(x => x.Reference).HasMaxLength(100); e.HasIndex(x => new { x.StaffMemberId, x.EffectiveFrom, x.Status }); e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffMemberId).OnDelete(DeleteBehavior.Restrict); });
         m.Entity<TimetableEntry>(e => { e.HasKey(x => x.Id); e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffMemberId).OnDelete(DeleteBehavior.Restrict); });
+        m.Entity<StudentApplicationRecord>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.StudentId).IsUnique(); e.Property(x => x.ApplicationDataJson).HasColumnType("jsonb").IsRequired(); e.Property(x => x.PhotographData).HasColumnType("bytea"); e.Property(x => x.PhotographContentType).HasMaxLength(100); e.Property(x => x.PhotographFileName).HasMaxLength(255); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<InstitutionSettings>(e => { e.HasKey(x => x.Id); e.Property(x => x.InstitutionName).HasMaxLength(250).IsRequired(); e.Property(x => x.Abbreviation).HasMaxLength(50); e.Property(x => x.Motto).HasMaxLength(500); e.Property(x => x.Address).HasMaxLength(500); e.Property(x => x.Phone).HasMaxLength(50); e.Property(x => x.Email).HasMaxLength(200); e.Property(x => x.Website).HasMaxLength(200); e.Property(x => x.PostalAddress).HasMaxLength(200); e.Property(x => x.Country).HasMaxLength(100); e.Property(x => x.InstitutionType).HasMaxLength(100); e.Property(x => x.LogoPath).HasMaxLength(500); e.Property(x => x.LogoContentType).HasMaxLength(100); e.Property(x => x.PrimaryColor).HasMaxLength(20); e.Property(x => x.AccentColor).HasMaxLength(20); e.HasIndex(x => x.IsActive); });
     }
 }
