@@ -915,6 +915,46 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("AdmissionDecisions");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Admissions.StudentApplicationRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApplicationDataJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<byte[]>("PhotographData")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("PhotographContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PhotographFileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId")
+                        .IsUnique();
+
+                    b.ToTable("StudentApplicationRecords");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Admissions.Applicant", b =>
                 {
                     b.Property<Guid>("Id")
