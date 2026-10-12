@@ -71,7 +71,7 @@ export function Receipts({ canManage }: ReceiptsProps) {
         <div className="form-row">
           <label>From<input type="date" value={searchFrom} onChange={e => setSearchFrom(e.target.value)} /></label>
           <label>To<input type="date" value={searchTo} onChange={e => setSearchTo(e.target.value)} /></label>
-          <button type="submit" disabled={loading}>{loading ? 'Searching…' : 'Search'}</button>
+          <button type="submit" disabled={loading}>{loading ? <><span className="spinner spinner--small" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} />)}</span> Searching…</> : 'Search'}</button>
         </div>
       </form>
 
