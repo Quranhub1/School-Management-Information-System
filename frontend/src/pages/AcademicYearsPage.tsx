@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 type AcademicYear = { id: string; name: string; startDate: string; endDate: string; isCurrent: boolean; isActive: boolean };
 
@@ -48,7 +49,7 @@ export default function AcademicYearsPage() {
       <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add Academic Year'}</button>
     </form>
     {message && <p role="status">{message}</p>}
-    {loading ? <p>Loading academic years…</p> : <table><thead><tr><th>Name</th><th>Start</th><th>End</th><th>Current</th><th>Status</th></tr></thead><tbody>
+    {loading ? <LoadingSpinner label="Loading academic years…" /> : <table><thead><tr><th>Name</th><th>Start</th><th>End</th><th>Current</th><th>Status</th></tr></thead><tbody>
       {years.map(year => <tr key={year.id}><td>{year.name}</td><td>{year.startDate}</td><td>{year.endDate}</td><td>{year.isCurrent ? 'Yes' : 'No'}</td><td>{year.isActive ? 'Active' : 'Inactive'}</td></tr>)}
       {years.length === 0 && <tr><td colSpan={5}>No academic years found.</td></tr>}
     </tbody></table>}
