@@ -3268,7 +3268,7 @@ input[type="checkbox"]:indeterminate::before {
 button[aria-busy="true"] .spinner,
 button:disabled .spinner { --smis-loader-color: currentColor; }
 @media (prefers-reduced-motion: reduce) {
-  .spinner > span { animation-duration: 2s; }
+  .spinner > span { animation: none !important; opacity: .72; }
 }
 
 /* Compact spinner for buttons and inline search status. */
