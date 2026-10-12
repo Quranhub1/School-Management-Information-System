@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
-import { addGalleryUrl, createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSettings, getGallery, uploadGalleryImage, uploadInstitutionLogo, uploadInstitutionLogoFromUrl, type CreateInstitutionSettingsRequest, type GalleryItem, type InstitutionSettings } from '../api/institutionSettings'
+import { createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSettings, getGallery, uploadGalleryImage, uploadInstitutionLogo, uploadInstitutionLogoFromUrl, type CreateInstitutionSettingsRequest, type GalleryItem, type InstitutionSettings } from '../api/institutionSettings'
 
 type SettingsTab = 'general' | 'branding' | 'gallery'
+type GalleryFilter = 'all' | 'recent' | 'captioned'
 
 interface InstitutionSettingsPageProps {
   onSaved: (settings: InstitutionSettings) => void
@@ -18,6 +19,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
   const [tab, setTab] = useState<SettingsTab>('general')
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [gallery, setGallery] = useState<GalleryItem[]>([])
+  const [galleryFilter, setGalleryFilter] = useState<GalleryFilter>('all')
   const [galleryFiles, setGalleryFiles] = useState<File[]>([])
   const [galleryTitle, setGalleryTitle] = useState('')
   const [galleryCaption, setGalleryCaption] = useState('')
@@ -185,6 +187,26 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  const visibleGallery = gallery.filter(item => {
+    if (galleryFilter === 'captioned') return Boolean(item.caption?.trim())
+    if (galleryFilter === 'recent') return Date.now() - new Date(item.uploadedAt).getTime() <= 30 * 24 * 60 * 60 * 1000
+    return true
+  })
+
+  useEffect(() => {
+    if (!galleryPreview) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setGalleryPreview(null)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [galleryPreview])
+
   if (loading) return <p className="empty">Loading institution settings…</p>
 
   return (
@@ -250,61 +272,81 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         )}
 
         {tab === 'gallery' && (
-          <div className="gallery-section">
-            <div className="gallery-heading">
+          <div className="gallery-section smis-gallery">
+            <div className="gallery-heading smis-gallery-heading">
               <div>
-                <p className="eyebrow">Institution Gallery</p>
-                <h3>Classic photo gallery</h3>
-                <p>Upload as many campus, graduation, event, laboratory and facility photographs as needed. Photos are displayed as a traditional framed gallery.</p>
+                <p className="eyebrow">INSTITUTION MEDIA</p>
+                <h3>School Media & Event Gallery</h3>
+                <p>Manage campus photographs, school events, academic milestones, facilities and student activities. Images are saved through SMIS and remain available after refresh.</p>
               </div>
-              <span className="gallery-count">{gallery.length} image{gallery.length === 1 ? '' : 's'}</span>
+              <span className="gallery-count">{visibleGallery.length} of {gallery.length} photo{gallery.length === 1 ? '' : 's'}</span>
+            </div>
+
+            <div className="gallery-filter-tabs" role="group" aria-label="Filter gallery photos">
+              <button type="button" className={galleryFilter === 'all' ? 'active' : ''} aria-pressed={galleryFilter === 'all'} onClick={() => setGalleryFilter('all')}>All photos</button>
+              <button type="button" className={galleryFilter === 'recent' ? 'active' : ''} aria-pressed={galleryFilter === 'recent'} onClick={() => setGalleryFilter('recent')}>Last 30 days</button>
+              <button type="button" className={galleryFilter === 'captioned' ? 'active' : ''} aria-pressed={galleryFilter === 'captioned'} onClick={() => setGalleryFilter('captioned')}>With captions</button>
             </div>
 
             <div className="gallery-upload-panel">
-              <label>Choose multiple images
+              <label>Choose image files
                 <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple disabled={uploadingGallery} onChange={e => setGalleryFiles(Array.from(e.target.files ?? []))} />
+                <small>JPG, PNG, WebP or GIF · up to 10 MB per image</small>
               </label>
-              <label>Title (optional)<input value={galleryTitle} onChange={e => setGalleryTitle(e.target.value)} placeholder="Shared title, or leave blank to use filenames" /></label>
-              <label>Caption (optional)<textarea value={galleryCaption} onChange={e => setGalleryCaption(e.target.value)} rows={2} placeholder="Describe the selected photographs" /></label>
-              {galleryFiles.length > 0 && <p className="gallery-selection">{galleryFiles.length} image{galleryFiles.length === 1 ? '' : 's'} selected</p>}
-              <button type="button" onClick={() => void uploadGalleryFiles()} disabled={!galleryFiles.length || uploadingGallery}>
-                {uploadingGallery ? 'Uploading images…' : 'Upload selected images'}
-              </button>
+              <label>Photo / event title (optional)
+                <input value={galleryTitle} onChange={e => setGalleryTitle(e.target.value)} placeholder="Leave blank to use each filename" maxLength={180} />
+              </label>
+              <label>Caption or notes (optional)
+                <textarea value={galleryCaption} onChange={e => setGalleryCaption(e.target.value)} rows={2} placeholder="Add event details or context" maxLength={2000} />
+              </label>
+              <div className="gallery-upload-actions">
+                {galleryFiles.length > 0 && <span className="gallery-selection">{galleryFiles.length} file{galleryFiles.length === 1 ? '' : 's'} selected</span>}
+                <button type="button" className="gallery-upload-btn" onClick={() => void uploadGalleryFiles()} disabled={!galleryFiles.length || uploadingGallery}>
+                  <span aria-hidden="true">{uploadingGallery ? '…' : '+'}</span>
+                  {uploadingGallery ? 'Uploading…' : 'Upload photos'}
+                </button>
+              </div>
             </div>
 
-            {galleryLoading ? <p className="empty" role="status">Loading gallery…</p> : galleryError ? (
+            {galleryLoading ? <p className="empty" role="status">Loading gallery photos…</p> : galleryError ? (
               <div className="gallery-load-error" role="alert">
-                <p><strong>Unable to load gallery images.</strong></p>
+                <p><strong>Unable to load gallery photos.</strong></p>
                 <p>{galleryError}</p>
                 <button type="button" className="secondary-button" onClick={() => void loadGallery()}>Retry loading gallery</button>
               </div>
-            ) : gallery.length === 0 ? (
-              <div className="gallery-empty">No photographs have been uploaded yet. Add multiple images above.</div>
+            ) : visibleGallery.length === 0 ? (
+              <div className="gallery-empty">
+                <div className="gallery-empty-icon" aria-hidden="true">▧</div>
+                <h4>{gallery.length === 0 ? 'Your institution gallery is ready' : 'No photos match this filter'}</h4>
+                <p>{gallery.length === 0 ? 'Upload the first school photograph or event image using the panel above. Saved photographs will appear here.' : 'Choose another filter to see more of your saved photographs.'}</p>
+                {gallery.length > 0 && <button type="button" className="secondary-button" onClick={() => setGalleryFilter('all')}>Show all photos</button>}
+              </div>
             ) : (
               <div className="classic-gallery">
-                {gallery.map(item => (
+                {visibleGallery.map(item => (
                   <article className="classic-gallery-item" key={item.id}>
-                    <button type="button" className="classic-gallery-photo" onClick={() => { if (!galleryImageFailures.includes(item.id)) setGalleryPreview(item) }} aria-label={`View ${item.title}`}>
+                    <button type="button" className="classic-gallery-photo" onClick={() => { if (!galleryImageFailures.includes(item.id)) setGalleryPreview(item) }} aria-label={`Preview ${item.title}`} disabled={galleryImageFailures.includes(item.id)}>
+                      <span className="badge-category">{item.source === 'upload' ? 'SCHOOL PHOTO' : 'EXTERNAL IMAGE'}</span>
                       {galleryImageFailures.includes(item.id) ? (
                         <span className="gallery-image-fallback" role="img" aria-label={`${item.title}: image could not be loaded`}>
                           <span aria-hidden="true">Image unavailable</span>
-                          <small>Check the image URL or API connection.</small>
+                          <small>Check the API connection or stored image.</small>
                         </span>
                       ) : (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          loading="lazy"
+                        <img src={item.imageUrl} alt={item.title} loading="lazy"
                           onError={() => setGalleryImageFailures(current => current.includes(item.id) ? current : [...current, item.id])}
-                          onLoad={() => setGalleryImageFailures(current => current.filter(id => id !== item.id))}
-                        />
+                          onLoad={() => setGalleryImageFailures(current => current.filter(id => id !== item.id))} />
                       )}
                     </button>
                     <div className="classic-gallery-caption">
-                      <h4>{item.title}</h4>
-                      {item.caption && <p>{item.caption}</p>}
-                      <small>{new Date(item.uploadedAt).toLocaleDateString()}</small>
-                      <button type="button" className="secondary-button" onClick={() => void removeGalleryItem(item.id)}>Remove</button>
+                      <div className="classic-gallery-copy">
+                        <h4>{item.title}</h4>
+                        {item.caption && <p>{item.caption}</p>}
+                      </div>
+                      <div className="card-footer">
+                        <small>Added {new Date(item.uploadedAt).toLocaleDateString()}</small>
+                        <button type="button" className="delete-btn" onClick={() => void removeGalleryItem(item.id)} aria-label={`Remove ${item.title}`}>Remove</button>
+                      </div>
                     </div>
                   </article>
                 ))}
@@ -312,12 +354,16 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
             )}
 
             {galleryPreview && (
-              <div className="gallery-lightbox" role="dialog" aria-modal="true" onClick={() => setGalleryPreview(null)}>
+              <div className="gallery-lightbox" role="dialog" aria-modal="true" aria-label={galleryPreview.title} onClick={() => setGalleryPreview(null)}>
                 <div className="gallery-lightbox-card" onClick={e => e.stopPropagation()}>
-                  <button type="button" className="close-button" onClick={() => setGalleryPreview(null)}>×</button>
+                  <button type="button" className="lightbox-close" onClick={() => setGalleryPreview(null)} aria-label="Close photo preview">×</button>
                   <img src={galleryPreview.imageUrl} alt={galleryPreview.title} />
                   <h3>{galleryPreview.title}</h3>
                   {galleryPreview.caption && <p>{galleryPreview.caption}</p>}
+                  <div className="gallery-lightbox-meta">
+                    <span className="badge-category">{galleryPreview.source === 'upload' ? 'SCHOOL PHOTO' : 'EXTERNAL IMAGE'}</span>
+                    <small>Added {new Date(galleryPreview.uploadedAt).toLocaleString()}</small>
+                  </div>
                 </div>
               </div>
             )}
