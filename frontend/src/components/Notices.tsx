@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 import { createNotice, listNotices, type Notice } from '../api/notices';
 
 export function Notices({ canManage }: { canManage?: boolean }) {
@@ -22,7 +23,7 @@ export function Notices({ canManage }: { canManage?: boolean }) {
       </div>
       {canManage && <form className="grid-form" onSubmit={submit}><input placeholder="Title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required /><textarea placeholder="Body" value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} required /><select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}><option>General</option><option>Important</option><option>Urgent</option></select><input placeholder="Audience" value={form.audience} onChange={e => setForm({ ...form, audience: e.target.value })} /><button type="submit">Post Notice</button></form>}
       {error && <div className="error" role="alert">{error}</div>}
-      {loading ? <p className="empty">Loading notices…</p> : <div className="table-wrap"><table><thead><tr><th>Title</th><th>Priority</th><th>Audience</th></tr></thead><tbody>{notices.map(n => <tr key={n.id}><td>{n.title}</td><td>{n.priority}</td><td>{n.audience}</td></tr>)}</tbody></table></div>}
+      {loading ? <LoadingSpinner label="Loading notices…" /> : <div className="table-wrap"><table><thead><tr><th>Title</th><th>Priority</th><th>Audience</th></tr></thead><tbody>{notices.map(n => <tr key={n.id}><td>{n.title}</td><td>{n.priority}</td><td>{n.audience}</td></tr>)}</tbody></table></div>}
     </section>
   );
 }

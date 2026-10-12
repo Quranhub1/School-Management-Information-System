@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, listTimetable, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
 
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -98,7 +99,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     </form>}
     <div className="table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Room</th><th>Type</th><th>Group</th><th>Course</th><th>Teacher</th>{!readOnly && <th>Actions</th>}</tr></thead><tbody>
       {entries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{entry.startTime.slice(0, 5)}–{entry.endTime.slice(0, 5)}</td><td>{entry.room ?? '—'}</td><td>{entry.sessionType ?? '—'}</td><td>{groupLabels.get(entry.teachingGroupId) ?? entry.teachingGroupId}</td><td>{courseLabels.get(entry.courseId) ?? entry.courseId}</td><td>{teacherLabels.get(entry.teacherId) ?? entry.teacherId}</td>{!readOnly && <td><button className="secondary-button" type="button" onClick={() => void remove(entry.id)}>Remove</button></td>}</tr>)}
-      {entries.length === 0 && <tr><td colSpan={readOnly ? 7 : 8} className="empty">{loading ? 'Loading timetable…' : 'No timetable sessions scheduled.'}</td></tr>}
+      {entries.length === 0 && <tr><td colSpan={readOnly ? 7 : 8} className="empty">{loading ? <LoadingSpinner label="Loading timetable…" /> : 'No timetable sessions scheduled.'}</td></tr>}
     </tbody></table></div>
   </section>
 }

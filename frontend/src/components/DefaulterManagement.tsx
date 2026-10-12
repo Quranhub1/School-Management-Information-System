@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import {
   getDefaulterOverview,
   getDefaulters,
@@ -104,7 +105,7 @@ export function DefaulterManagement() {
       </div>
 
       {loading ? (
-        <p className="empty">Loading...</p>
+        <LoadingSpinner label="Loading defaulter records…" />
       ) : tab === 'overview' && overview ? (
         <div className="summary-grid" style={{ marginBottom: 22 }}>
           <div className="summary-card">

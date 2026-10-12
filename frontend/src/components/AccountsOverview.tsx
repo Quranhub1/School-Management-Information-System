@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import { getAccountsOverviewDashboard, getAccountsOverviewOutstanding, getAccountsOverviewPayments, getAccountsOverviewPayroll, type AccountsOverviewDashboard, type AccountsOverviewOutstanding, type AccountsOverviewPayment, type AccountsOverviewPayroll } from '../api/finance'
 
 export function AccountsOverview() {
@@ -99,7 +100,7 @@ export function AccountsOverview() {
       {error && <div className="error" role="alert">{error}</div>}
 
       {loading ? (
-        <p className="empty">Loading accounts overview…</p>
+        <LoadingSpinner label="Loading accounts overview…" />
       ) : (
         <>
           {dashboard && (

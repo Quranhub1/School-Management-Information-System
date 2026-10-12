@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { addGalleryUrl, createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSettings, getGallery, uploadGalleryImage, uploadInstitutionLogo, uploadInstitutionLogoFromUrl, type CreateInstitutionSettingsRequest, type GalleryItem, type InstitutionSettings } from '../api/institutionSettings'
 
@@ -272,7 +273,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
               </button>
             </div>
 
-            {galleryLoading ? <p className="empty" role="status">Loading gallery…</p> : galleryError ? (
+            {galleryLoading ? <LoadingSpinner label="Loading institution gallery…" /> : galleryError ? (
               <div className="gallery-load-error" role="alert">
                 <p><strong>Unable to load gallery images.</strong></p>
                 <p>{galleryError}</p>

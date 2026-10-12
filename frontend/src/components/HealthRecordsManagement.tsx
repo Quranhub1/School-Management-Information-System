@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import {
   getStudentMedicalRecords,
   getRecentClinicVisits,
@@ -110,7 +111,7 @@ export function HealthRecordsManagement() {
       </div>
 
       {loading ? (
-        <p className="empty">Loading...</p>
+        <LoadingSpinner label="Loading health records…" />
       ) : tab === 'student' ? (
         <>
           <form onSubmit={e => { e.preventDefault(); void loadStudentRecords() }} className="student-form" style={{ marginBottom: 22 }}>

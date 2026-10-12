@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import { getAdmissions, createAdmission, updateAdmission, deleteAdmission, decideAdmission, type Admission } from '../api/admissions'
 
 const statuses = ['Pending', 'Accepted', 'Rejected']
@@ -73,7 +74,7 @@ export function AdmissionsManagement({ readOnly = false }: { readOnly?: boolean 
       <button type="submit">Create Admission</button>
     </form>}
     <div className="table-wrap">
-      {loading ? <p className="empty">Loading admissions…</p> : admissions.length === 0 ? <p className="empty">No admissions found.</p> : (
+      {loading ? <LoadingSpinner label="Loading admissions…" /> : admissions.length === 0 ? <p className="empty">No admissions found.</p> : (
         <table>
           <thead>
             <tr>

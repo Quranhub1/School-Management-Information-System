@@ -3045,3 +3045,233 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
   .application-data-table td input { border:0; padding:2px; }
   .application-photo-upload input { display:none; }
 }
+
+
+/* Unified animated action-button finish.
+   Existing navigation tabs, icon-only controls, destructive actions, and explicitly
+   branded primary/library buttons keep their established component styling. */
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button) {
+  --smis-button-blue: #3653f8;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 2rem;
+  background-color: var(--smis-button-blue);
+  background-image: linear-gradient(135deg, rgba(255,255,255,.10), transparent 48%, rgba(8,25,115,.14));
+  color: #fff;
+  font-weight: 750;
+  box-shadow: 0 3px 10px rgba(54,83,248,.18);
+  transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button)::before,
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+}
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button)::before {
+  inset: 0;
+  border: 2px solid transparent;
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  transform: translateX(-105%);
+  transition: transform .3s linear, border-color .1s linear .2s;
+}
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button)::after {
+  inset: 0;
+  border: 2px solid transparent;
+  border-top-color: transparent;
+  border-right-color: transparent;
+  transform: translateX(105%);
+  transition: transform .3s linear, border-color .1s linear .2s;
+}
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button):hover {
+  background-color: #2946e8;
+  background-image:
+    radial-gradient(circle at 14% 0%, rgba(255,255,255,.45) 0 2px, transparent 3px),
+    radial-gradient(circle at 28% 5%, rgba(255,255,255,.30) 0 3px, transparent 4px),
+    radial-gradient(circle at 73% 0%, rgba(255,255,255,.38) 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 6%, rgba(255,255,255,.24) 0 3px, transparent 4px),
+    linear-gradient(135deg, #3653f8, #2946e8);
+  box-shadow: 0 5px 15px rgba(54,83,248,.38);
+  transform: translateY(-1px);
+}
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button):hover::before {
+  border-left-color: rgba(255,255,255,.95);
+  border-bottom-color: rgba(255,255,255,.95);
+  transform: translateX(0);
+}
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button):hover::after {
+  border-top-color: rgba(255,255,255,.95);
+  border-right-color: rgba(255,255,255,.95);
+  transform: translateX(0);
+}
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button):active {
+  transform: scale(.97);
+}
+.app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button):not(.library-tabs button):not(.library-workspace-tabs button):not(.application-view-switch button):not(.student-lifecycle-tabs button):not(.admission-tabs button):not(.finance-tab-strip button):not(.guild-primary-tabs button):not(.guild-electoral-tabs button):not(.detail-tabs button):not(.section-tabs button):not(.table-pagination button):not(.pagination button):not(.admin-dashboard-tabs button):not(.primary-button):not(.library-primary):not(.btn):not(.btn-secondary):not(.admin-refresh-button):not(.search-submit-button):disabled {
+  opacity: .58;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell button:not(.sidebar-item):not(.close-button):not(.danger-button) {
+    transition: none !important;
+  }
+}
+
+
+/* Modern accessible checkbox treatment inspired by Uiverse.io checkbox-wrapper-46. */
+/* Keep the real checkbox input in the accessibility tree and preserve native form behaviour. */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: inline-grid;
+  place-content: center;
+  flex: 0 0 18px;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #9098a9;
+  border-radius: 4px;
+  background: var(--smis-surface, #fff);
+  color: #fff;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+input[type="checkbox"]::before {
+  content: "";
+  width: 9px;
+  height: 5px;
+  border: solid currentColor;
+  border-width: 0 0 2px 2px;
+  transform: translateY(-1px) rotate(-45deg) scale(0);
+  transform-origin: center;
+  transition: transform .18s ease;
+}
+input[type="checkbox"]:checked,
+input[type="checkbox"]:checked {
+  border-color: #506eec;
+  background: #506eec;
+  box-shadow: 0 0 0 1px rgba(80, 110, 236, .08);
+  animation: smis-checkbox-wave .35s ease;
+}
+input[type="checkbox"]:checked::before,
+input[type="checkbox"]:checked::before {
+  transform: translateY(-1px) rotate(-45deg) scale(1);
+}
+input[type="checkbox"]:hover:not(:disabled),
+input[type="checkbox"]:hover:not(:disabled) {
+  border-color: #506eec;
+}
+input[type="checkbox"]:focus-visible,
+input[type="checkbox"]:focus-visible {
+  outline: 3px solid rgba(80, 110, 236, .25);
+  outline-offset: 2px;
+}
+input[type="checkbox"]:disabled,
+input[type="checkbox"]:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+input[type="checkbox"]:indeterminate,
+input[type="checkbox"]:indeterminate {
+  border-color: #506eec;
+  background: #506eec;
+}
+input[type="checkbox"]:indeterminate::before,
+input[type="checkbox"]:indeterminate::before {
+  width: 9px;
+  height: 0;
+  border-width: 0 0 2px;
+  transform: none;
+}
+@keyframes smis-checkbox-wave {
+  50% { transform: scale(.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  input[type="checkbox"] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media print {
+  input[type="checkbox"] {
+    appearance: auto;
+    -webkit-appearance: checkbox;
+    print-color-adjust: exact;
+  }
+}
+
+
+/* Unified SMIS loading indicator inspired by Uiverse.io spinner-fzua35. */
+/* Use the same ten-ray loader wherever an explicit loading indicator is rendered. */
+.spinner {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  color: var(--smis-loader-color, #3653f8);
+  vertical-align: middle;
+}
+.spinner > span {
+  position: absolute;
+  top: 0;
+  left: 25%;
+  width: 50%;
+  height: 75%;
+  border-radius: 2px;
+  background: currentColor;
+  transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1%));
+  transform-origin: center 66.666%;
+  animation: spinner-fzua35 1s calc(var(--delay) * 1s) infinite ease;
+}
+.spinner > span:nth-child(1) { --delay:.1; --rotation:36; --translation:150; }
+.spinner > span:nth-child(2) { --delay:.2; --rotation:72; --translation:150; }
+.spinner > span:nth-child(3) { --delay:.3; --rotation:108; --translation:150; }
+.spinner > span:nth-child(4) { --delay:.4; --rotation:144; --translation:150; }
+.spinner > span:nth-child(5) { --delay:.5; --rotation:180; --translation:150; }
+.spinner > span:nth-child(6) { --delay:.6; --rotation:216; --translation:150; }
+.spinner > span:nth-child(7) { --delay:.7; --rotation:252; --translation:150; }
+.spinner > span:nth-child(8) { --delay:.8; --rotation:288; --translation:150; }
+.spinner > span:nth-child(9) { --delay:.9; --rotation:324; --translation:150; }
+.spinner > span:nth-child(10) { --delay:1; --rotation:360; --translation:150; }
+@keyframes spinner-fzua35 {
+  0%, 10%, 20%, 30%, 50%, 60%, 70%, 80%, 90%, 100% {
+    transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1%));
+  }
+  50% {
+    transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1.5%));
+  }
+}
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 64px;
+  color: var(--smis-text-muted, #64748b);
+  font-size: .92rem;
+}
+.loading-state .spinner { --smis-loader-color: #3653f8; }
+button[aria-busy="true"] .spinner,
+button:disabled .spinner { --smis-loader-color: currentColor; }
+@media (prefers-reduced-motion: reduce) {
+  .spinner > span { animation: none !important; opacity: .72; }
+}
+
+/* Compact spinner for buttons and inline search status. */
+.spinner--small { width: 14px; height: 14px; flex-basis: 14px; vertical-align: -2px; }
+.spinner--small > span { border-radius: 1px; }
+button .spinner { margin-right: 4px; }

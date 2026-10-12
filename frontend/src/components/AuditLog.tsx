@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 import { searchAuditLogs, type AuditLog } from '../api/auditLog';
 
 export function AuditLogManagement() {
@@ -15,6 +16,6 @@ export function AuditLogManagement() {
     <div className="panel-heading"><div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div></div>
     <div className="library-search" style={{ margin: '14px 0' }}><input placeholder="User ID" value={userId} onChange={e => setUserId(e.target.value)} /><input placeholder="Action" value={action} onChange={e => setAction(e.target.value)} /><button onClick={() => void load()}>Search</button></div>
     {error && <div className="error" role="alert">{error}</div>}
-    {loading ? <p className="empty">Loading audit logs…</p> : <div className="table-wrap"><table><thead><tr><th>User</th><th>Action</th><th>Entity</th><th>Changes</th><th>IP</th><th>Timestamp</th></tr></thead><tbody>{logs.map(l => <tr key={l.id}><td>{l.userId || '—'}</td><td>{l.action}</td><td>{l.entityType}{l.entityId ? ` (${l.entityId})` : ''}</td><td>{l.changes || '—'}</td><td>{l.ipAddress || '—'}</td><td>{new Date(l.timestamp).toLocaleString()}</td></tr>)}</tbody></table></div>}
+    {loading ? <LoadingSpinner label="Loading audit logs…" /> : <div className="table-wrap"><table><thead><tr><th>User</th><th>Action</th><th>Entity</th><th>Changes</th><th>IP</th><th>Timestamp</th></tr></thead><tbody>{logs.map(l => <tr key={l.id}><td>{l.userId || '—'}</td><td>{l.action}</td><td>{l.entityType}{l.entityId ? ` (${l.entityId})` : ''}</td><td>{l.changes || '—'}</td><td>{l.ipAddress || '—'}</td><td>{new Date(l.timestamp).toLocaleString()}</td></tr>)}</tbody></table></div>}
   </section>
 }

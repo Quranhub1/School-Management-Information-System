@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import { createStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, type StaffMember, type LeaveRequest } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 
@@ -83,7 +84,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
             <table>
               <thead><tr><th>Staff No.</th><th>Name</th><th>Employment</th><th>Contact</th>{canManage && <th>Action</th>}</tr></thead>
               <tbody>
-                {loading ? <tr><td colSpan={5} className="empty">Loading staff…</td></tr> : staff.map(s => (
+                {loading ? <tr><td colSpan={5}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.map(s => (
                   <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.employmentType}</td><td>{s.email || s.phoneNumber || '—'}</td>{canManage && <td><button className="secondary-button" onClick={() => void deactivate(s.id)}>{s.isActive ? 'Deactivate' : 'Activate'}</button></td>}</tr>
                 ))}
               </tbody>

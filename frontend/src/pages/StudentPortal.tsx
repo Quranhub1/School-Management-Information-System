@@ -51,7 +51,7 @@ export function StudentPortal() {
         <div><span className="eyebrow">STUDENT</span><h2>Student Portal</h2><p className="section-copy">A deliberately limited learner view. Administrative records, staff tools, finance controls and sensitive personal records remain outside this portal.</p></div>
       </div>
       {error && <div className="error" role="alert">{error}</div>}
-      {loading ? <p className="empty">Loading…</p> : (
+      {loading ? <LoadingSpinner label="Loading student portal…" /> : (
         <>
           <div className="student-lifecycle-tabs" role="tablist" aria-label="Student portal sections">
             <button className={tab === 'overview' ? 'active' : ''} onClick={() => setTab('overview')} role="tab" aria-selected={tab === 'overview'}>Overview</button>

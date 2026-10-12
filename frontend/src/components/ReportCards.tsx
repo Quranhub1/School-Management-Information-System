@@ -46,7 +46,7 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
       <form className="student-form" onSubmit={e => { e.preventDefault(); void load() }} style={{ marginBottom: 22 }}>
         <div className="form-row">
           <label>Student ID<input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="Enter student ID" required /></label>
-          <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Generate'}</button>
+          <button type="submit" disabled={loading}>{loading ? <><span className="spinner spinner--small" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} />)}</span> Loading…</> : 'Generate'}</button>
         </div>
       </form>
 

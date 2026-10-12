@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import {
   getPendingGatePasses,
   getStudentGatePasses,
@@ -182,7 +183,7 @@ export function GatePassManagement() {
       </div>
 
       {loading && tab === 'pending' ? (
-        <p className="empty">Loading...</p>
+        <LoadingSpinner label="Loading gate passes…" />
       ) : tab === 'pending' ? (
         <div className="table-wrap">
           <table className="table">

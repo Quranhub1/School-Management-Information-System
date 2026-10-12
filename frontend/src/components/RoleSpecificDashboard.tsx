@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import { getAdmissions, type Admission } from '../api/admissions'
 import { getStudents, type Student } from '../api/students'
 
@@ -50,7 +51,7 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
     </div>
 
     {error && <div className="error" role="alert">{error}</div>}
-    {loading ? <p className="empty">Loading authorized workspace data…</p> : <>
+    {loading ? <LoadingSpinner label="Loading authorized workspace data…" /> : <>
       {(role === 'AdminSecretary' || role === 'Secretary') && <>
         <div className="summary-grid">
           <div className="summary-card"><span>Student records visible</span><strong>{students.length}</strong></div>

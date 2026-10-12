@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
 import { getUsers } from '../api/administration'
 import { getStudents } from '../api/students'
@@ -231,7 +232,7 @@ export function AdminDashboard() {
 
       {tab === 'overview' && (
         <div className="admin-dashboard-content">
-          {loading && <p className="admin-dashboard-loading" role="status">Updating school metrics…</p>}
+          {loading && <LoadingSpinner label="Updating school metrics…" className="admin-dashboard-loading" />}
           <div className="admin-kpi-grid">
             <div className="admin-kpi-card"><span className="admin-kpi-icon teal">ST</span><div><span>Students</span><strong>{numberFormat.format(students.total)}</strong><small>{numberFormat.format(students.active)} active</small></div></div>
             <div className="admin-kpi-card"><span className="admin-kpi-icon green">SF</span><div><span>Staff members</span><strong>{numberFormat.format(staff.total)}</strong><small>{numberFormat.format(staff.active)} active</small></div></div>
@@ -276,7 +277,7 @@ export function AdminDashboard() {
       {tab === 'users' && (
         <div className="table-wrap admin-tab-content">
           <h3>All Users</h3>
-          {loading ? <p className="empty">Loading users…</p> : <p className="empty">{users.total} total users, {users.active} active, {users.admins} system administrators</p>}
+          {loading ? <LoadingSpinner label="Loading users…" /> : <p className="empty">{users.total} total users, {users.active} active, {users.admins} system administrators</p>}
         </div>
       )}
 

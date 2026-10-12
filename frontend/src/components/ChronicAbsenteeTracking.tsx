@@ -78,7 +78,7 @@ export function ChronicAbsenteeTracking() {
       </div>
 
       {loading ? (
-        <p className="empty">Loading...</p>
+        <div className="loading-state" role="status" aria-live="polite"><span className="spinner" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} />)}</span><span>Loading...</span></div>
       ) : tab === 'report' ? (
         <div className="table-wrap">
           <table className="table">

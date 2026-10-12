@@ -62,7 +62,7 @@ export default function StreamsPage() {
       <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add Stream'}</button>
     </form>
     {message && <p role="status">{message}</p>}
-    {loading ? <p>Loading streams…</p> : <table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Action</th></tr></thead><tbody>
+    {loading ? <LoadingSpinner label="Loading streams…" /> : <table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Action</th></tr></thead><tbody>
       {streams.length === 0 && <tr><td colSpan={4}>No streams found.</td></tr>}
       {streams.map(s => <tr key={s.id}><td>{s.name}</td><td>{s.code}</td><td>{s.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => void toggleActive(s)}>{s.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
     </tbody></table>}

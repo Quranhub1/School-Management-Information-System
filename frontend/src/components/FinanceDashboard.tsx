@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import type { FormEvent } from 'react'
 import {
   getDashboard,
@@ -164,7 +165,7 @@ export function FinanceDashboard() {
       {error && <div className="error" role="alert">{error}</div>}
 
       {loading ? (
-        <p className="empty">Loading dashboard…</p>
+        <LoadingSpinner label="Loading finance dashboard…" />
       ) : dashboard && (
         <>
           <div className="summary-grid">

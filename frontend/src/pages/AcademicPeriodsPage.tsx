@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 type AcademicYear = { id: string; name: string };
 type AcademicPeriod = { id: string; name: string; sequence: number; startDate: string; endDate: string; isCurrent: boolean };
@@ -59,7 +60,7 @@ export default function AcademicPeriodsPage() {
       <button type="submit" disabled={!yearId}>Add Period</button>
     </form>
     {message && <p role="status">{message}</p>}
-    {loading ? <p>Loading periods…</p> : <table><thead><tr><th>Sequence</th><th>Name</th><th>Start</th><th>End</th><th>Current</th></tr></thead><tbody>
+    {loading ? <LoadingSpinner label="Loading academic periods…" /> : <table><thead><tr><th>Sequence</th><th>Name</th><th>Start</th><th>End</th><th>Current</th></tr></thead><tbody>
       {periods.map(p => <tr key={p.id}><td>{p.sequence}</td><td>{p.name}</td><td>{p.startDate}</td><td>{p.endDate}</td><td>{p.isCurrent ? 'Yes' : 'No'}</td></tr>)}
       {periods.length === 0 && <tr><td colSpan={5}>No periods found for this academic year.</td></tr>}
     </tbody></table>}
