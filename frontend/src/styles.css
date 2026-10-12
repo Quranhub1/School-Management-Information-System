@@ -3213,3 +3213,61 @@ input[type="checkbox"]:indeterminate::before {
     print-color-adjust: exact;
   }
 }
+
+
+/* Unified SMIS loading indicator inspired by Uiverse.io spinner-fzua35. */
+/* Use the same ten-ray loader wherever an explicit loading indicator is rendered. */
+.spinner {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  color: var(--smis-loader-color, #3653f8);
+  vertical-align: middle;
+}
+.spinner > span {
+  position: absolute;
+  top: 0;
+  left: 25%;
+  width: 50%;
+  height: 75%;
+  border-radius: 2px;
+  background: currentColor;
+  transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1%));
+  transform-origin: center 66.666%;
+  animation: spinner-fzua35 1s calc(var(--delay) * 1s) infinite ease;
+}
+.spinner > span:nth-child(1) { --delay:.1; --rotation:36; --translation:150; }
+.spinner > span:nth-child(2) { --delay:.2; --rotation:72; --translation:150; }
+.spinner > span:nth-child(3) { --delay:.3; --rotation:108; --translation:150; }
+.spinner > span:nth-child(4) { --delay:.4; --rotation:144; --translation:150; }
+.spinner > span:nth-child(5) { --delay:.5; --rotation:180; --translation:150; }
+.spinner > span:nth-child(6) { --delay:.6; --rotation:216; --translation:150; }
+.spinner > span:nth-child(7) { --delay:.7; --rotation:252; --translation:150; }
+.spinner > span:nth-child(8) { --delay:.8; --rotation:288; --translation:150; }
+.spinner > span:nth-child(9) { --delay:.9; --rotation:324; --translation:150; }
+.spinner > span:nth-child(10) { --delay:1; --rotation:360; --translation:150; }
+@keyframes spinner-fzua35 {
+  0%, 10%, 20%, 30%, 50%, 60%, 70%, 80%, 90%, 100% {
+    transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1%));
+  }
+  50% {
+    transform: rotate(calc(var(--rotation) * 1deg)) translate(0, calc(var(--translation) * 1.5%));
+  }
+}
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 64px;
+  color: var(--smis-text-muted, #64748b);
+  font-size: .92rem;
+}
+.loading-state .spinner { --smis-loader-color: #3653f8; }
+button[aria-busy="true"] .spinner,
+button:disabled .spinner { --smis-loader-color: currentColor; }
+@media (prefers-reduced-motion: reduce) {
+  .spinner > span { animation-duration: 2s; }
+}
