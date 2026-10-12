@@ -101,7 +101,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       // represented by the form below and must be persisted through the application-record endpoint.
       const profile: CreateStudentRequest = {
         studentNumber: studentNumber.trim(), firstName: application.firstName.trim(), lastName: application.lastName.trim(),
-        otherNames: application.otherNames.trim(), dateOfBirth: application.dateOfBirth, gender: application.gender,
+        otherNames: application.otherNames.trim(), dateOfBirth: application.dateOfBirth || undefined, gender: application.gender,
         phoneNumber: application.phone, email: application.email,
       }
       const created = await createStudent(profile)
