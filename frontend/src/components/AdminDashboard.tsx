@@ -232,7 +232,7 @@ export function AdminDashboard() {
 
       {tab === 'overview' && (
         <div className="admin-dashboard-content">
-          {loading && <p className="admin-dashboard-loading" role="status">Updating school metrics…</p>}
+          {loading && <LoadingSpinner label="Updating school metrics…" className="admin-dashboard-loading" />}
           <div className="admin-kpi-grid">
             <div className="admin-kpi-card"><span className="admin-kpi-icon teal">ST</span><div><span>Students</span><strong>{numberFormat.format(students.total)}</strong><small>{numberFormat.format(students.active)} active</small></div></div>
             <div className="admin-kpi-card"><span className="admin-kpi-icon green">SF</span><div><span>Staff members</span><strong>{numberFormat.format(staff.total)}</strong><small>{numberFormat.format(staff.active)} active</small></div></div>
