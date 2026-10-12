@@ -101,9 +101,22 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         const title = galleryTitle.trim() || file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')
         uploaded.push(await uploadGalleryImage(file, title, galleryCaption.trim()))
       }
-      await loadGallery()
+      // Read the gallery back from the public database endpoint before showing success.
+      // loadGallery() intentionally handles its own errors for normal page loads, so use
+      // getGallery() directly here to ensure a failed/stale listing cannot look successful.
+      const refreshedGallery = await getGallery()
+      setGallery(refreshedGallery)
+      setGalleryImageFailures([])
+      const visibleIds = new Set(refreshedGallery.map(item => item.id))
+      const missingUploads = uploaded.filter(item => !visibleIds.has(item.id))
+      if (missingUploads.length > 0) {
+        throw new Error(
+          `${missingUploads.length} upload(s) were accepted, but the public gallery could not read them back from the database. Check that the upload and gallery-list endpoints use the same running backend and database.`,
+        )
+      }
+
       setGalleryFiles([]); setGalleryTitle(''); setGalleryCaption('')
-      setSuccess(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} added to the gallery.`)
+      setSuccess(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} saved and verified in the gallery.`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to upload gallery images.')
       // If a later file in a multi-file batch fails, still show any earlier files saved successfully.
