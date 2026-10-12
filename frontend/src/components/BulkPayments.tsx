@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import { createBulkPayment, getOutstandingBalances, type OutstandingBalance } from '../api/finance'
 
 type PaymentMethod = 'Cash' | 'Mobile Money' | 'Bank' | 'Card'
@@ -152,7 +153,7 @@ export function BulkPayments() {
         </div>
 
         {loading ? (
-          <p className="empty">Loading students with outstanding balances…</p>
+          <LoadingSpinner label="Loading students with outstanding balances…" />
         ) : students.length === 0 ? (
           <p className="empty">No students with outstanding balances found.</p>
         ) : (
