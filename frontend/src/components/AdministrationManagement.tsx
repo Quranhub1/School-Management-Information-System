@@ -90,18 +90,45 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
     finally { setLoading(false) }
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void load()
+
+    // Re-query the API when returning to the tab/window. The API/database, not
+    // component state, is the source of truth for account records.
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void load()
+    }
+    window.addEventListener('focus', refreshWhenVisible)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () => {
+      window.removeEventListener('focus', refreshWhenVisible)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+    }
+  }, [])
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     setSaving(true)
     setError('')
+    setSuccessMessage('')
     try {
       const created = await createUser(form)
-      setUsers(current => [created, ...current])
       setForm(emptyForm)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create user.') }
-    finally { setSaving(false) }
+
+      // Verify the account is present in the authoritative GET response. This
+      // catches API/database mismatches instead of only showing optimistic UI.
+      const refreshedUsers = await getUsers()
+      setUsers(refreshedUsers)
+      if (!refreshedUsers.some(user => user.id === created.id)) {
+        setError(`The API reported that "${created.username}" was created, but the user-list endpoint did not return it. The frontend may be reaching different API/database instances. Check the backend connection string and API routing before creating the account again.`)
+        return
+      }
+      setSuccessMessage(`Account "${created.username}" created and verified in the user list.`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create or verify user.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function toggle(user: UserSummary) {
