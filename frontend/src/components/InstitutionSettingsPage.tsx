@@ -79,15 +79,17 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
     }
   }
 
-  async function loadGallery() {
+  async function loadGallery(): Promise<boolean> {
     setGalleryLoading(true)
     setGalleryError('')
     try {
       const items = await getGallery()
       setGallery(items)
       setGalleryImageFailures([])
+      return true
     } catch (e) {
       setGalleryError(e instanceof Error ? e.message : 'Unable to load gallery.')
+      return false
     } finally {
       setGalleryLoading(false)
     }
@@ -102,9 +104,13 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         const title = galleryTitle.trim() || file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')
         uploaded.push(await uploadGalleryImage(file, title, galleryCaption.trim()))
       }
-      await loadGallery()
+      const galleryReloaded = await loadGallery()
       setGalleryFiles([]); setGalleryTitle(''); setGalleryCaption('')
-      setSuccess(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} added to the gallery.`)
+      if (galleryReloaded) {
+        setSuccess(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} uploaded and displayed in the gallery.`)
+      } else {
+        setError(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} saved successfully, but the gallery could not refresh. Use “Retry loading gallery” and check the displayed API error.`)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to upload gallery images.')
       // If a later file in a multi-file batch fails, still show any earlier files saved successfully.
@@ -345,7 +351,12 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
                       </div>
                       <div className="card-footer">
                         <small>Added {new Date(item.uploadedAt).toLocaleDateString()}</small>
-                        <button type="button" className="delete-btn" onClick={() => void removeGalleryItem(item.id)} aria-label={`Remove ${item.title}`}>Remove</button>
+                        <button type="button" className="delete-btn" onClick={() => void removeGalleryItem(item.id)} aria-label={`Permanently delete ${item.title}`} title="Delete photo">
+                          <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="m19 6-1 14H6L5 6" /><path d="M10 11v5M14 11v5" />
+                          </svg>
+                          <span>Delete</span>
+                        </button>
                       </div>
                     </div>
                   </article>
