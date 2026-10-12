@@ -396,7 +396,7 @@ return <main className="app-shell">
 {activeModule==='academics'&&(ac||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/>} {activeModule==='curriculum'&&ac&&<CurriculumManagement canManage={ac}/>} 
 {activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}
 {activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
-{activeModule==='staff'&&sr&&<StaffManagement canManage={sm}/>}
+{activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={fi}/>
 {activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} />}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&(attManage||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
