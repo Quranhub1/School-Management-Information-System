@@ -71,6 +71,61 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
+
+    [HttpGet("{id:guid}/application-form")]
+    public async Task<IActionResult> GetApplicationForm(Guid id, CancellationToken cancellationToken)
+    {
+        var record = await db.StudentApplicationRecords.AsNoTracking().SingleOrDefaultAsync(x => x.StudentId == id, cancellationToken);
+        if (record is null) return NotFound();
+        return Ok(new { record.Id, record.StudentId, application = System.Text.Json.JsonDocument.Parse(record.ApplicationDataJson).RootElement, record.PhotographContentType, record.PhotographFileName, record.SubmittedAt, record.Status });
+    }
+
+    [HttpPut("{id:guid}/application-form")]
+    [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
+    [RequestSizeLimit(12_000_000)]
+    public async Task<IActionResult> SaveApplicationForm(Guid id, SaveStudentApplicationFormRequest request, CancellationToken cancellationToken)
+    {
+        if (!await db.Students.AnyAsync(x => x.Id == id, cancellationToken)) return NotFound(new { message = "Student was not found." });
+        if (request.Application.ValueKind != System.Text.Json.JsonValueKind.Object) return BadRequest(new { message = "Application data must be a JSON object." });
+        byte[]? photograph = null;
+        if (!string.IsNullOrWhiteSpace(request.PhotographBase64))
+        {
+            try { photograph = Convert.FromBase64String(request.PhotographBase64); }
+            catch (FormatException) { return BadRequest(new { message = "The photograph data is not valid base64." }); }
+            if (photograph.Length > 8 * 1024 * 1024) return BadRequest(new { message = "Photograph must be 8 MB or smaller." });
+            if (string.IsNullOrWhiteSpace(request.PhotographContentType) || !request.PhotographContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { message = "Photograph must be an image." });
+        }
+
+        var record = await db.StudentApplicationRecords.SingleOrDefaultAsync(x => x.StudentId == id, cancellationToken);
+        if (record is null)
+        {
+            record = new SchoolManagement.Domain.Admissions.StudentApplicationRecord { StudentId = id, ApplicationDataJson = request.Application.GetRawText(), PhotographData = photograph, PhotographContentType = request.PhotographContentType, PhotographFileName = request.PhotographFileName };
+            db.StudentApplicationRecords.Add(record);
+        }
+        else
+        {
+            record.ApplicationDataJson = request.Application.GetRawText();
+            if (request.PhotographBase64 is not null)
+            {
+                record.PhotographData = photograph;
+                record.PhotographContentType = request.PhotographContentType;
+                record.PhotographFileName = request.PhotographFileName;
+            }
+            record.Status = "Submitted";
+        }
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { record.Id, record.StudentId, record.SubmittedAt, record.Status });
+    }
+
+    [HttpGet("{id:guid}/application-form/photograph")]
+    public async Task<IActionResult> GetApplicationPhotograph(Guid id, CancellationToken cancellationToken)
+    {
+        var record = await db.StudentApplicationRecords.AsNoTracking().SingleOrDefaultAsync(x => x.StudentId == id, cancellationToken);
+        if (record?.PhotographData is null || string.IsNullOrWhiteSpace(record.PhotographContentType)) return NotFound();
+        return File(record.PhotographData, record.PhotographContentType);
+    }
+
     [HttpGet("{id:guid}/qrcode")]
     [AllowAnonymous]
     public async Task<IActionResult> GetQrCode(Guid id, CancellationToken cancellationToken)
@@ -126,3 +181,5 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         return deleted ? NoContent() : NotFound();
     }
 }
+
+public sealed record SaveStudentApplicationFormRequest(System.Text.Json.JsonElement Application, string? PhotographBase64 = null, string? PhotographContentType = null, string? PhotographFileName = null);

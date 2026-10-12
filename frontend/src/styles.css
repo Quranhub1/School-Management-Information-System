@@ -2962,3 +2962,86 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
   }
   .app-shell > .main-content > .content { overflow: visible; }
 }
+
+
+/* Student admission application form */
+.student-application-workspace { --application-primary: #1e3a8a; --application-accent: #b45309; }
+.student-application-toolbar { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; flex-wrap:wrap; margin-bottom:20px; }
+.student-application-toolbar h2 { margin:0; font-size:clamp(1.45rem,2.4vw,2rem); letter-spacing:-.025em; }
+.student-application-toolbar p:not(.eyebrow) { color:#78716c; margin:7px 0 0; }
+.application-view-switch { display:flex; gap:6px; padding:5px; border:1px solid #e7e5e4; border-radius:12px; background:#fff; }
+.application-view-switch button { border:0; border-radius:8px; padding:10px 13px; color:#57534e; background:transparent; font-weight:750; cursor:pointer; }
+.application-view-switch button.active { color:#fff; background:var(--application-primary); }
+.application-view-switch button:disabled { opacity:.5; cursor:not-allowed; }
+.application-view-switch span { display:inline-flex; min-width:22px; justify-content:center; margin-left:4px; padding:1px 5px; border-radius:999px; background:#e7e5e4; color:#44403c; }
+.student-application-form { max-width:1180px; margin:0 auto; padding:clamp(14px,3vw,34px); border:1px solid #d6d3d1; border-radius:8px; background:#fff; color:#1c1917; box-shadow:0 12px 36px rgba(28,25,23,.07); }
+.application-paper-header { display:grid; grid-template-columns:100px minmax(0,1fr) 110px; align-items:center; gap:18px; padding:4px 0 24px; border-bottom:3px double var(--application-primary); }
+.application-logo { display:grid; place-items:center; width:90px; height:90px; overflow:hidden; border:1px dashed #a8a29e; border-radius:8px; color:#78716c; font-size:.75rem; text-align:center; }
+.application-logo img { width:100%; height:100%; object-fit:contain; }
+.application-institution-title { text-align:center; }
+.application-institution-title h1 { margin:0; color:var(--application-primary); font-size:clamp(1.25rem,2.7vw,2rem); line-height:1.15; }
+.application-institution-title p { margin:5px 0 10px; color:#57534e; font-style:italic; }
+.application-institution-title h2 { margin:8px 0 0; font-size:1rem; letter-spacing:.07em; }
+.application-badge { display:inline-block; margin-top:6px; padding:3px 9px; border:1px solid var(--application-accent); border-radius:999px; color:var(--application-accent); font-size:.72rem; font-weight:850; letter-spacing:.08em; }
+.application-photo-upload { display:flex; flex-direction:column; align-items:center; gap:6px; color:#57534e; font-size:.72rem; text-align:center; cursor:pointer; }
+.application-photo-upload > span { display:grid; place-items:center; width:100px; height:116px; overflow:hidden; border:1px solid #a8a29e; background:#fafaf9; }
+.application-photo-upload img { width:100%; height:100%; object-fit:cover; }
+.application-photo-upload input { max-width:110px; font-size:.68rem; }
+.application-photo-upload small { color:#78716c; }
+.application-settings-warning,.application-storage-warning { margin:16px 0; padding:11px 13px; border:1px solid #fcd34d; border-radius:7px; background:#fffbeb; color:#92400e; font-size:.84rem; line-height:1.5; }
+.application-storage-warning { border-color:#fecaca; background:#fef2f2; color:#991b1b; }
+.application-form-intro { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px; padding:18px 0 8px; color:#57534e; font-size:.84rem; }
+.application-form-intro p { margin:0; }
+.application-form-intro label { display:grid; gap:5px; min-width:240px; font-weight:750; color:#292524; }
+.application-form-intro input,.application-field input,.application-field select,.application-field textarea,.application-data-table input { width:100%; min-width:0; padding:9px 10px; border:1px solid #d6d3d1; border-radius:5px; background:#fff; color:#1c1917; font:inherit; outline:none; }
+.application-form-intro input:focus,.application-field input:focus,.application-field select:focus,.application-field textarea:focus,.application-data-table input:focus { border-color:var(--application-primary); box-shadow:0 0 0 2px color-mix(in srgb,var(--application-primary) 14%,transparent); }
+.application-section { margin-top:22px; border:1px solid #d6d3d1; border-radius:6px; overflow:hidden; break-inside:avoid; }
+.application-section > h3 { display:flex; align-items:center; gap:10px; margin:0; padding:12px 14px; background:color-mix(in srgb,var(--application-primary) 7%,white); border-bottom:1px solid #d6d3d1; color:var(--application-primary); font-size:1rem; }
+.application-section > h3 > span { display:grid; place-items:center; flex:0 0 29px; height:29px; border-radius:5px; background:var(--application-primary); color:white; font-size:.72rem; }
+.application-section-body { padding:16px; }
+.application-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 18px; }
+.application-field { display:flex; flex-direction:column; gap:6px; min-width:0; color:#292524; font-size:.82rem; font-weight:750; }
+.application-field-wide { grid-column:1/-1; }
+.application-field textarea { resize:vertical; }
+.application-help { margin:0 0 12px; color:#78716c; font-size:.82rem; }
+.application-medical-note { margin:14px 0 0; padding:10px 12px; border-left:3px solid var(--application-accent); background:#fffbeb; color:#78350f; font-size:.82rem; line-height:1.5; }
+.application-table-scroll { overflow-x:auto; }
+.application-data-table { min-width:720px; border-collapse:collapse; }
+.application-data-table th,.application-data-table td { padding:8px; border:1px solid #d6d3d1; white-space:normal; vertical-align:middle; }
+.application-data-table th { background:#f5f5f4; color:#44403c; font-size:.7rem; letter-spacing:0; }
+.application-data-table td input { min-width:95px; padding:7px; border-radius:3px; font-size:.78rem; }
+.education-table { min-width:1120px; margin-bottom:12px; }
+.education-table td input { min-width:100px; }
+.application-declaration { margin-bottom:16px; line-height:1.65; font-size:.87rem; }
+.application-checkbox { display:flex; align-items:flex-start; gap:9px; font-weight:750; }
+.application-checkbox input { margin-top:4px; }
+.application-official-only { padding:14px; border:1px dashed #a8a29e; background:#fafaf9; }
+.application-official-only > strong { display:block; margin-bottom:14px; text-align:center; color:#78716c; font-size:.76rem; letter-spacing:.08em; text-transform:uppercase; }
+.application-actions { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:22px; padding-top:18px; border-top:1px solid #e7e5e4; }
+.application-actions > button[type="submit"] { border:0; border-radius:7px; padding:11px 17px; background:var(--application-primary); color:white; font-weight:800; cursor:pointer; }
+.application-actions > button:disabled { opacity:.55; cursor:not-allowed; }
+.student-registry-panel { margin-top:10px; }
+@media (max-width:720px) {
+  .application-paper-header { grid-template-columns:65px minmax(0,1fr) 75px; gap:8px; }
+  .application-logo { width:62px; height:62px; }
+  .application-photo-upload > span { width:70px; height:85px; }
+  .application-photo-upload input { width:78px; }
+  .application-grid { grid-template-columns:minmax(0,1fr); }
+  .application-field-wide { grid-column:auto; }
+  .application-form-intro { align-items:stretch; flex-direction:column; }
+  .student-application-form { padding:12px; }
+}
+@media print {
+  @page { size:A4 portrait; margin:12mm; }
+  body { background:#fff!important; }
+  .student-application-toolbar,.application-view-switch,.application-actions,.no-print,.error,.info-banner { display:none!important; }
+  .student-application-form { max-width:none; margin:0; padding:0; border:0; border-radius:0; box-shadow:none; }
+  .application-section { break-inside:avoid; }
+  .application-section > h3 { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  .application-settings-warning,.application-storage-warning { display:block; }
+  .application-table-scroll { overflow:visible; }
+  .application-data-table { min-width:0; width:100%; }
+  .application-data-table th,.application-data-table td { padding:4px; font-size:8pt; }
+  .application-data-table td input { border:0; padding:2px; }
+  .application-photo-upload input { display:none; }
+}
