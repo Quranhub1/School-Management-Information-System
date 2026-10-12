@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import LoadingSpinner from './LoadingSpinner';
 import {
   getDefaulterOverview,
   getDefaulters,
@@ -104,7 +105,7 @@ export function DefaulterManagement() {
       </div>
 
       {loading ? (
-        <div className="loading-state" role="status" aria-live="polite"><span className="spinner" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} />)}</span><span>Loading...</span></div>
+        <LoadingSpinner label="Loading defaulter records…" />
       ) : tab === 'overview' && overview ? (
         <div className="summary-grid" style={{ marginBottom: 22 }}>
           <div className="summary-card">
