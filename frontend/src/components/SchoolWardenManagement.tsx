@@ -117,7 +117,7 @@ export function SchoolWardenManagement() {
       <label>Student / resident name (optional)<input value={studentName} onChange={event => setStudentName(event.target.value)} maxLength={200} /></label>
       <label>Student / resident reference (optional)<input value={studentReference} onChange={event => setStudentReference(event.target.value)} maxLength={100} /></label>
       <label>Details and observations<textarea value={details} onChange={event => setDetails(event.target.value)} maxLength={4000} rows={3} required /></label>
-      <FancyButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save '${categories.find(item => item.id === category)?.label.toLowerCase()} record'}</FancyButton>
+      <FancyButton type="submit" disabled={saving}>{saving ? 'Saving…' : ``Save ${categories.find(item => item.id === category)?.label.toLowerCase()} record``}</FancyButton>
     </form>
 
     <div className="section-heading" style={{ marginTop: 24 }}>
