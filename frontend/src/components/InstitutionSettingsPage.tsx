@@ -23,6 +23,8 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
   const [galleryCaption, setGalleryCaption] = useState('')
   const [uploadingGallery, setUploadingGallery] = useState(false)
   const [galleryLoading, setGalleryLoading] = useState(false)
+  const [galleryError, setGalleryError] = useState('')
+  const [galleryImageFailures, setGalleryImageFailures] = useState<string[]>([])
   const [galleryPreview, setGalleryPreview] = useState<GalleryItem | null>(null)
   const [logoRefreshKey, setLogoRefreshKey] = useState(0)
 
@@ -77,7 +79,16 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
 
   async function loadGallery() {
     setGalleryLoading(true)
-    try { setGallery(await getGallery()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load gallery.') } finally { setGalleryLoading(false) }
+    setGalleryError('')
+    try {
+      const items = await getGallery()
+      setGallery(items)
+      setGalleryImageFailures([])
+    } catch (e) {
+      setGalleryError(e instanceof Error ? e.message : 'Unable to load gallery.')
+    } finally {
+      setGalleryLoading(false)
+    }
   }
 
   async function uploadGalleryFiles() {
@@ -261,14 +272,33 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
               </button>
             </div>
 
-            {galleryLoading ? <p className="empty">Loading gallery…</p> : gallery.length === 0 ? (
+            {galleryLoading ? <p className="empty" role="status">Loading gallery…</p> : galleryError ? (
+              <div className="gallery-load-error" role="alert">
+                <p><strong>Unable to load gallery images.</strong></p>
+                <p>{galleryError}</p>
+                <button type="button" className="secondary-button" onClick={() => void loadGallery()}>Retry loading gallery</button>
+              </div>
+            ) : gallery.length === 0 ? (
               <div className="gallery-empty">No photographs have been uploaded yet. Add multiple images above.</div>
             ) : (
               <div className="classic-gallery">
                 {gallery.map(item => (
                   <article className="classic-gallery-item" key={item.id}>
-                    <button type="button" className="classic-gallery-photo" onClick={() => setGalleryPreview(item)} aria-label={`View ${item.title}`}>
-                      <img src={item.imageUrl} alt={item.title} loading="lazy" />
+                    <button type="button" className="classic-gallery-photo" onClick={() => { if (!galleryImageFailures.includes(item.id)) setGalleryPreview(item) }} aria-label={`View ${item.title}`}>
+                      {galleryImageFailures.includes(item.id) ? (
+                        <span className="gallery-image-fallback" role="img" aria-label={`${item.title}: image could not be loaded`}>
+                          <span aria-hidden="true">Image unavailable</span>
+                          <small>Check the image URL or API connection.</small>
+                        </span>
+                      ) : (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          loading="lazy"
+                          onError={() => setGalleryImageFailures(current => current.includes(item.id) ? current : [...current, item.id])}
+                          onLoad={() => setGalleryImageFailures(current => current.filter(id => id !== item.id))}
+                        />
+                      )}
                     </button>
                     <div className="classic-gallery-caption">
                       <h4>{item.title}</h4>
