@@ -2905,13 +2905,24 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
 }
 
 
-/* Fixed SMIS sidebar: keep navigation stationary while the workspace scrolls. */
+/* ========================================================
+   SMIS Shell Layout and Scroll Performance
+   Keep navigation stationary and scroll the workspace independently.
+   Scoped to shell/navigation/workspace elements; avoid forced GPU
+   layers and paint containment on interactive cards or overlays.
+   ======================================================== */
 .app-shell {
+  display: flex;
+  position: relative;
   min-height: 100vh;
 }
+
+/* App.tsx renders the sidebar as a direct <aside> child. */
 .app-shell > aside {
   position: fixed !important;
   inset: 0 auto 0 0;
+  display: flex;
+  flex-direction: column;
   width: 18rem;
   height: 100vh;
   min-height: 0;
@@ -2919,32 +2930,80 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
   overflow: hidden;
   z-index: 40;
 }
+
+/* The actual navigation is a nav element inside the sidebar, not .sidebar-nav. */
 .app-shell > aside > nav {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
 }
+
+.app-shell > aside > nav::-webkit-scrollbar,
+.app-shell > .main-content::-webkit-scrollbar,
+.app-shell > .main-content .content::-webkit-scrollbar,
+.table-wrap::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.app-shell > aside > nav::-webkit-scrollbar-thumb,
+.app-shell > .main-content::-webkit-scrollbar-thumb,
+.app-shell > .main-content .content::-webkit-scrollbar-thumb,
+.table-wrap::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.4);
+}
+
 .app-shell > .main-content {
-  margin-left: 18rem;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   width: calc(100% - 18rem);
   height: 100vh;
+  min-width: 0;
   min-height: 0;
+  margin-left: 18rem;
+  overflow-x: clip;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
 }
+
+/* Keep page content and dialogs free to overflow; this avoids clipping menus. */
 .app-shell > .main-content > .content {
+  min-width: 0;
   overflow: visible;
 }
+
+.table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 920px) and (min-width: 641px) {
-  .app-shell > aside { width: 15.5rem; }
+  .app-shell > aside {
+    width: 15.5rem;
+  }
   .app-shell > .main-content {
-    margin-left: 15.5rem;
     width: calc(100% - 15.5rem);
+    margin-left: 15.5rem;
   }
 }
+
+/* On phones, restore normal document flow instead of a fixed sidebar. */
 @media (max-width: 640px) {
-  .app-shell { display: flex; flex-direction: column; }
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+  }
   .app-shell > aside {
     position: relative !important;
     inset: auto;
@@ -2953,16 +3012,31 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
     min-height: 0;
     max-height: 52vh;
   }
+  .app-shell > aside > nav {
+    max-height: calc(52vh - 5rem);
+  }
   .app-shell > .main-content {
-    margin-left: 0;
     width: 100%;
     height: auto;
     min-height: 0;
+    margin-left: 0;
     overflow: visible;
   }
-  .app-shell > .main-content > .content { overflow: visible; }
 }
 
+/* Reduce expensive glass blur on tablet-sized screens, as requested. */
+@media (max-width: 1024px) {
+  .topbar,
+  .library-tabs,
+  .detail-tabs,
+  .finance-tab-strip,
+  .guild-primary-tabs,
+  .library-workspace-tabs {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--smis-glass-bg-strong, #ffffff) !important;
+  }
+}
 
 /* Student admission application form */
 .student-application-workspace { --application-primary: #1e3a8a; --application-accent: #b45309; }
@@ -3275,3 +3349,67 @@ button:disabled .spinner { --smis-loader-color: currentColor; }
 .spinner--small { width: 14px; height: 14px; flex-basis: 14px; vertical-align: -2px; }
 .spinner--small > span { border-radius: 1px; }
 button .spinner { margin-right: 4px; }
+
+
+/* Institution gallery refresh: scoped to the settings gallery; leaves other modules unchanged. */
+
+
+/* Institution gallery refresh: scoped to the settings gallery; leaves the app shell and other modules unchanged. */
+.smis-gallery{display:grid;gap:20px;width:100%;min-width:0;color:var(--smis-text,#0f172a)}
+.smis-gallery .smis-gallery-heading{align-items:center;margin-bottom:0}
+.smis-gallery .gallery-heading h3{margin:0 0 6px;font-size:clamp(1.3rem,2vw,1.65rem);font-weight:800;letter-spacing:-.025em;color:var(--smis-text,#0f172a)}
+.smis-gallery .gallery-heading p:not(.eyebrow){max-width:760px;margin:0;color:var(--smis-text-muted,#475569);font-size:.9rem;line-height:1.65}
+.smis-gallery .gallery-count{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;border:1px solid var(--smis-border,#e2e8f0);border-radius:999px;padding:7px 13px;background:var(--smis-surface,#fff);color:var(--smis-text,#0f172a);box-shadow:var(--smis-shadow-sm,0 4px 20px -2px rgba(15,23,42,.05));font-size:.78rem;font-weight:750}
+.smis-gallery .gallery-count:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--brand-primary,#0284c7)}
+.smis-gallery .gallery-filter-tabs{display:flex;flex-wrap:wrap;gap:6px;width:fit-content;max-width:100%;padding:5px;border:1px solid var(--smis-glass-border,rgba(226,232,240,.8));border-radius:999px;background:var(--smis-glass-bg,rgba(255,255,255,.85));box-shadow:var(--smis-shadow-sm,0 4px 20px -2px rgba(15,23,42,.05))}
+.smis-gallery .gallery-filter-tabs button{border:0;border-radius:999px;padding:9px 15px;background:transparent;color:var(--smis-text-muted,#475569);font-size:.8rem;font-weight:700;cursor:pointer;transition:background .2s ease,color .2s ease,box-shadow .2s ease}
+.smis-gallery .gallery-filter-tabs button:hover{background:color-mix(in srgb,var(--brand-primary,#0284c7) 9%,transparent);color:var(--smis-text,#0f172a)}
+.smis-gallery .gallery-filter-tabs button.active{background:linear-gradient(135deg,var(--brand-primary,#0284c7),color-mix(in srgb,var(--brand-primary,#0284c7) 72%,#0f172a));color:#fff;box-shadow:0 6px 16px -6px color-mix(in srgb,var(--brand-primary,#0284c7) 60%,transparent)}
+.smis-gallery .gallery-upload-panel{display:grid;grid-template-columns:minmax(180px,1.1fr) minmax(170px,1fr) minmax(190px,1.2fr) auto;align-items:end;gap:14px;margin:0;padding:20px;border:1px solid var(--smis-border,#e2e8f0);border-radius:18px;background:var(--smis-surface,#fff);box-shadow:var(--smis-shadow-sm,0 4px 20px -2px rgba(15,23,42,.05))}
+.smis-gallery .gallery-upload-panel label{display:grid;align-content:start;gap:7px;min-width:0;color:var(--smis-text,#0f172a);font-size:.79rem;font-weight:750}
+.smis-gallery .gallery-upload-panel label small{color:var(--smis-text-soft,#64748b);font-size:.72rem;font-weight:500;line-height:1.4}
+.smis-gallery .gallery-upload-panel input[type=file],.smis-gallery .gallery-upload-panel input[type=text],.smis-gallery .gallery-upload-panel textarea{box-sizing:border-box;width:100%;min-width:0;min-height:40px;padding:9px 11px;border:1px solid var(--smis-border-strong,#cbd5e1);border-radius:10px;background:var(--smis-surface-muted,#f8fafc);color:var(--smis-text,#0f172a);font:inherit;font-size:.8rem}
+.smis-gallery .gallery-upload-panel textarea{resize:vertical}
+.smis-gallery .gallery-upload-panel input:focus,.smis-gallery .gallery-upload-panel textarea:focus{outline:2px solid color-mix(in srgb,var(--brand-primary,#0284c7) 25%,transparent);border-color:var(--brand-primary,#0284c7)}
+.smis-gallery .gallery-upload-actions{display:grid;gap:8px;justify-items:stretch}
+.smis-gallery .gallery-selection{margin:0;color:var(--smis-text-muted,#475569);font-size:.75rem;text-align:center}
+.smis-gallery .gallery-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:10px 16px;border:0;border-radius:10px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:.82rem;font-weight:750;white-space:nowrap;cursor:pointer;box-shadow:0 4px 14px rgba(16,185,129,.22);transition:transform .2s ease,box-shadow .2s ease,opacity .2s ease}
+.smis-gallery .gallery-upload-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 7px 18px rgba(16,185,129,.3)}
+.smis-gallery .gallery-upload-btn:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+.smis-gallery .classic-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,245px),1fr));gap:20px;min-width:0}
+.smis-gallery .classic-gallery-item{display:flex;flex-direction:column;min-width:0;overflow:hidden;border:1px solid var(--smis-border,#e2e8f0);border-radius:17px;background:var(--smis-surface,#fff);box-shadow:var(--smis-shadow-sm,0 4px 20px -2px rgba(15,23,42,.05));transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.smis-gallery .classic-gallery-item:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--brand-primary,#0284c7) 50%,var(--smis-border,#e2e8f0));box-shadow:var(--smis-shadow-md,0 12px 32px -8px rgba(15,23,42,.12))}
+.smis-gallery .classic-gallery-photo{position:relative;display:block;width:100%;padding:0;overflow:hidden;border:0;background:var(--smis-surface-muted,#f8fafc);cursor:zoom-in;text-align:left}
+.smis-gallery .classic-gallery-photo:disabled{cursor:default}
+.smis-gallery .classic-gallery-photo img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:var(--smis-surface-muted,#f8fafc);transition:transform .45s ease}
+.smis-gallery .classic-gallery-item:hover .classic-gallery-photo img{transform:scale(1.035)}
+.smis-gallery .badge-category{position:absolute;z-index:2;top:11px;left:11px;max-width:calc(100% - 22px);overflow:hidden;padding:5px 9px;border-radius:999px;background:rgba(15,23,42,.78);color:#fff;font-size:.63rem;font-weight:750;letter-spacing:.045em;text-overflow:ellipsis;white-space:nowrap;backdrop-filter:blur(8px)}
+.smis-gallery .classic-gallery-caption{display:flex;flex:1;flex-direction:column;justify-content:space-between;gap:12px;padding:15px 16px 13px}
+.smis-gallery .classic-gallery-copy h4{margin:0 0 7px;color:var(--smis-text,#0f172a);font-size:.98rem;font-weight:800;line-height:1.4;overflow-wrap:anywhere}
+.smis-gallery .classic-gallery-copy p{display:-webkit-box;overflow:hidden;margin:0;color:var(--smis-text-muted,#475569);font-size:.82rem;line-height:1.55;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+.smis-gallery .card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:11px;border-top:1px solid var(--smis-border,#e2e8f0)}
+.smis-gallery .card-footer small{color:var(--smis-text-soft,#64748b);font-size:.71rem;font-weight:600}
+.smis-gallery .delete-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 9px;border:1px solid transparent;border-radius:8px;background:transparent;color:#dc2626;font-size:.74rem;font-weight:750;cursor:pointer}
+.smis-gallery .delete-btn:hover{border-color:rgba(220,38,38,.2);background:rgba(220,38,38,.08)}
+.smis-gallery .gallery-image-fallback{display:flex;aspect-ratio:16/10;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:16px;box-sizing:border-box;color:var(--smis-text-muted,#475569);text-align:center}
+.smis-gallery .gallery-image-fallback>span{font-weight:750}
+.smis-gallery .gallery-image-fallback small{font-size:.73rem}
+.smis-gallery .gallery-empty{grid-column:1/-1;padding:44px 20px;border:2px dashed var(--smis-border-strong,#cbd5e1);border-radius:17px;background:var(--smis-surface,#fff);color:var(--smis-text-muted,#475569);text-align:center}
+.smis-gallery .gallery-empty-icon{margin-bottom:10px;font-size:2.1rem;opacity:.6}
+.smis-gallery .gallery-empty h4{margin:0 0 7px;color:var(--smis-text,#0f172a);font-size:1rem}
+.smis-gallery .gallery-empty p{max-width:520px;margin:0 auto 14px;font-size:.85rem;line-height:1.6}
+.smis-gallery .gallery-load-error{padding:18px;border:1px solid rgba(220,38,38,.25);border-radius:14px;background:var(--smis-surface,#fff);color:var(--smis-text,#0f172a)}
+.smis-gallery .gallery-load-error p{margin:0 0 8px}
+.smis-gallery .gallery-lightbox{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;overflow-y:auto;padding:22px;box-sizing:border-box;background:rgba(15,23,42,.84);backdrop-filter:blur(12px)}
+.smis-gallery .gallery-lightbox-card{position:relative;width:min(900px,100%);max-height:92vh;overflow-y:auto;padding:22px;box-sizing:border-box;border:1px solid var(--smis-border,#e2e8f0);border-radius:22px;background:var(--smis-surface,#fff);box-shadow:var(--smis-shadow-lg,0 25px 50px -12px rgba(15,23,42,.25))}
+.smis-gallery .gallery-lightbox-card img{display:block;max-width:100%;max-height:62vh;margin:0 auto;border-radius:12px;object-fit:contain;background:var(--smis-surface-muted,#f8fafc)}
+.smis-gallery .gallery-lightbox-card h3{margin:17px 45px 6px 0;color:var(--smis-text,#0f172a);font-size:1.25rem}
+.smis-gallery .gallery-lightbox-card p{margin:0 0 14px;color:var(--smis-text-muted,#475569);line-height:1.6}
+.smis-gallery .lightbox-close{position:absolute;z-index:2;top:12px;right:12px;display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--smis-border,#e2e8f0);border-radius:50%;background:var(--smis-surface-muted,#f8fafc);color:var(--smis-text,#0f172a);font-size:1.4rem;cursor:pointer}
+.smis-gallery .lightbox-close:hover{border-color:#dc2626;background:#dc2626;color:#fff}
+.smis-gallery .gallery-lightbox-meta{display:flex;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--smis-border,#e2e8f0)}
+.smis-gallery .gallery-lightbox-meta .badge-category{position:static}
+.smis-gallery .gallery-lightbox-meta small{color:var(--smis-text-soft,#64748b)}
+@media(max-width:1100px){.smis-gallery .gallery-upload-panel{grid-template-columns:repeat(2,minmax(0,1fr))}.smis-gallery .gallery-upload-actions{grid-column:1/-1;justify-items:start}}
+@media(max-width:700px){.smis-gallery .gallery-upload-panel{grid-template-columns:minmax(0,1fr);padding:15px}.smis-gallery .gallery-upload-actions{grid-column:auto;justify-items:stretch}.smis-gallery .gallery-filter-tabs{width:100%;box-sizing:border-box;border-radius:14px}.smis-gallery .gallery-filter-tabs button{flex:1;padding-inline:8px}.smis-gallery .classic-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.smis-gallery .classic-gallery-caption{padding:12px}}
+@media(max-width:480px){.smis-gallery .classic-gallery{grid-template-columns:minmax(0,1fr)}.smis-gallery .gallery-lightbox{padding:10px}.smis-gallery .gallery-lightbox-card{padding:14px;border-radius:16px}}
