@@ -195,8 +195,18 @@ public sealed class InstitutionGalleryController(SchoolManagementDbContext db, I
         var metadataPath = Path.Combine(root, "gallery.json");
         if (!System.IO.File.Exists(metadataPath)) return;
 
-        var json = await System.IO.File.ReadAllTextAsync(metadataPath, cancellationToken);
-        var legacyItems = JsonSerializer.Deserialize<List<LegacyGalleryItem>>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        List<LegacyGalleryItem>? legacyItems;
+        try
+        {
+            var json = await System.IO.File.ReadAllTextAsync(metadataPath, cancellationToken);
+            legacyItems = JsonSerializer.Deserialize<List<LegacyGalleryItem>>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        }
+        catch (JsonException)
+        {
+            // A malformed legacy file is already ignored by the importer; it must not
+            // prevent permanent deletion of the database-backed gallery record.
+            return;
+        }
         if (legacyItems is null) return;
 
         var removed = legacyItems.FirstOrDefault(x => x.Id == id);
