@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './preview.css'
 
+import { SearchBar } from '@/components/ui/search-bar';
 type Screen = {
   id: string
   label: string
@@ -55,7 +56,9 @@ function IntegrationPanel({ service }: { service: string }) {
 
 function DataTable({ screen }: { screen: Screen }) {
   const names = screen.id === 'students' ? ['AK-2026-0012', 'AK-2026-0013', 'AK-2026-0014', 'AK-2026-0015'] : screen.id === 'staff' ? ['Academic Registrar', 'Senior Lecturer', 'Librarian', 'Accounts Officer'] : screen.id === 'finance' ? ['INV-2026-0012', 'INV-2026-0013', 'INV-2026-0014', 'INV-2026-0015'] : screen.id === 'exams' ? ['BIO 101', 'PHA 102', 'MED 103', 'ICT 104'] : ['BME-01', 'BME-02', 'PHA-01', 'HIM-01']
-  return <div className="table-wrap"><div className="table-toolbar"><input placeholder="Search records..." /><select><option>All status</option><option>Active</option><option>Pending</option></select></div><table><thead><tr><th>Reference</th><th>Name / Description</th><th>Status</th><th>Updated</th><th>Action</th></tr></thead><tbody>{names.map((name, i) => <tr key={name}><td>{name}</td><td>{i % 2 ? 'Current institutional record' : 'Registered system record'}</td><td><span className={`badge ${i === 2 ? 'pending' : ''}`}>{i === 2 ? 'Pending' : 'Active'}</span></td><td>26 Aug 2026</td><td><button className="link-button">View</button></td></tr>)}</tbody></table></div>
+  return <div className="table-wrap"><div className="table-toolbar"><SearchBar
+          placeholder="Search records..."
+        /><select><option>All status</option><option>Active</option><option>Pending</option></select></div><table><thead><tr><th>Reference</th><th>Name / Description</th><th>Status</th><th>Updated</th><th>Action</th></tr></thead><tbody>{names.map((name, i) => <tr key={name}><td>{name}</td><td>{i % 2 ? 'Current institutional record' : 'Registered system record'}</td><td><span className={`badge ${i === 2 ? 'pending' : ''}`}>{i === 2 ? 'Pending' : 'Active'}</span></td><td>26 Aug 2026</td><td><button className="link-button">View</button></td></tr>)}</tbody></table></div>
 }
 
 export function PreviewApp() {

@@ -3238,3 +3238,72 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
     background-size: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%;
   }
 }
+\n/* Search Bar Styles from Uiverse.io by LightAndy1 */
+
+/* Search Bar Styles from Uiverse.io by LightAndy1 */
+.search-group {
+  display: flex;
+  line-height: 28px;
+  align-items: center;
+  position: relative;
+  max-width: 190px;
+}
+
+.search-input {
+  font-family: "Montserrat", sans-serif;
+  width: 100%;
+  height: 45px;
+  padding-left: 2.5rem;
+  box-shadow: 0 0 0 1.5px #2b2c37, 0 0 25px -17px #000;
+  border: 0;
+  border-radius: 12px;
+  background-color: #16171d;
+  outline: none;
+  color: #bdbecb;
+  transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
+  cursor: text;
+  z-index: 0;
+}
+
+.search-input::placeholder {
+  color: #bdbecb;
+}
+
+.search-input:hover {
+  box-shadow: 0 0 0 2.5px #2f303d, 0px 0px 25px -15px #000;
+}
+
+.search-input:active {
+  transform: scale(0.95);
+}
+
+.search-input:focus {
+  box-shadow: 0 0 0 2.5px #2f303d;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  fill: #bdbecb;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .search-group {
+  /* Keep the same colors as they work well on dark backgrounds */
+}
+
+[data-theme="dark"] .search-input {
+  /* The colors are already dark-themed */
+}
+
+[data-theme="dark"] .search-input::placeholder {
+  color: #bdbecb;
+}
+
+[data-theme="dark"] .search-icon {
+  fill: #bdbecb;
+}

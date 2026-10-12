@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { globalSearch, type GlobalSearchResponse } from '../api/globalSearch'
 
+import { SearchBar } from '@/components/ui/search-bar';
 const EMPTY: GlobalSearchResponse = {
   query: '',
   students: [],
@@ -88,9 +89,7 @@ export function GlobalSearch() {
   return (
     <div className="global-search" ref={containerRef}>
       <div className="search-input-row">
-        <input
-          ref={inputRef}
-          type="search"
+        <SearchBar
           placeholder="Search registration number, name, class, year, staff, courses..."
           value={query}
           onChange={e => setQuery(e.target.value)}
@@ -100,6 +99,8 @@ export function GlobalSearch() {
           aria-expanded={open}
           aria-haspopup="listbox"
           role="combobox"
+          searchRef={inputRef}
+          containerRef={containerRef}
         />
         <button type="button" className="search-submit-button" onClick={() => setOpen(total > 0)} disabled={query.trim().length < 2} aria-label="Search">Search</button>
         <button type="button" className="search-filter-toggle" onClick={() => setShowFilters(f => !f)} aria-pressed={showFilters}>Filters</button>

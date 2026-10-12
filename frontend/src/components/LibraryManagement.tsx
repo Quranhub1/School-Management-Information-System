@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import {
+import { SearchBar } from '@/components/ui/search-bar';
   addBook,
   getBookBarcode,
   issueBook,
@@ -229,13 +230,14 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               <p>Track active circulation and return books when received.</p>
             </div>
             <div className="library-search">
-              <input
-                placeholder="Search title, author or ISBN"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void load();
-                }}
+              <SearchBar
+          placeholder="Search title, author or ISBN"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void load();
+          }}
+        />
               />
               <button onClick={() => void load()}>Search</button>
             </div>

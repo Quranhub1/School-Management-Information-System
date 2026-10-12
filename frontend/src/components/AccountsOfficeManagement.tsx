@@ -1,6 +1,7 @@
 import React, { useEffect, useState, type FormEvent } from 'react'
 import type { Invoice } from '../api/finance'
 import { getInvoices, recordPayment, getPayments, issueCreditNote, getCreditNotes, addInvoiceNote, getInvoiceNotes, requestStaffAdvance, approveStaffAdvance, recoverStaffAdvance, getStaffAdvances, getInvoiceFeeItems } from '../api/finance'
+import { SearchBar } from '@/components/ui/search-bar';
 import { listStaff, type StaffMember } from '../api/staff'
 import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } from '../api/payroll'
 
@@ -729,7 +730,12 @@ export function AccountsOfficeManagement() {
                 <option value="Placement Fee">Placement Fee</option>
                 <option value="Total Fees">Total Fees</option>
               </select>
-              <input aria-label="Student ID or code" placeholder="Enter student ID or code" value={studentSearch} onChange={e => setStudentSearch(e.target.value)} />
+              <SearchBar
+          aria-label="Student ID or code"
+          placeholder="Enter student ID or code"
+          value={studentSearch}
+          onChange={e => setStudentSearch(e.target.value)}
+        />
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '.85rem' }}>
                 <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} />
                 Show Inactive
@@ -1062,7 +1068,12 @@ export function AccountsOfficeManagement() {
           <form className="student-form" onSubmit={handleGeneratePayroll} style={{ marginBottom: 22 }}>
             <h3>Payroll Period</h3>
             <div className="form-row">
-              <input aria-label="Staff search" placeholder="Search staff by name or staff no." value={staffSearchQuery} onChange={e => setStaffSearchQuery(e.target.value)} />
+              <SearchBar
+          aria-label="Staff search"
+          placeholder="Search staff by name or staff no."
+          value={staffSearchQuery}
+          onChange={e => setStaffSearchQuery(e.target.value)}
+        />
               <button type="button" className="secondary-button" onClick={handleStaffSearch}>Search Staff</button>
               {staffSearchResults.length > 0 && (
                 <select aria-label="Staff result" onChange={e => { const s = staffSearchResults.find(s => s.id === e.target.value); if (s) selectStaffForHistory(s); }}>
