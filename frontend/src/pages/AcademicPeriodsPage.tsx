@@ -56,7 +56,7 @@ export default function AcademicPeriodsPage() {
       <label>Sequence <input type="number" min={1} value={sequence} onChange={e => setSequence(Number(e.target.value))} required /></label>
       <label>Start <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required /></label>
       <label>End <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required /></label>
-      <button type="submit" disabled={!yearId}>Add Period</button>
+      <FancyButton type="submit" disabled={!yearId}>Add Period</FancyButton>
     </form>
     {message && <p role="status">{message}</p>}
     {loading ? <p>Loading periods…</p> : <table><thead><tr><th>Sequence</th><th>Name</th><th>Start</th><th>End</th><th>Current</th></tr></thead><tbody>

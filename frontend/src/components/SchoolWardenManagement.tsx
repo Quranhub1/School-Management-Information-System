@@ -3,6 +3,7 @@ import { getAccessToken } from '../api/auth'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 type Category = 'CheckIn' | 'CheckOut' | 'Inspection' | 'Maintenance' | 'Indiscipline'
+import { FancyButton } from "@/components/ui/fancy-button";
 type RecordStatus = 'Open' | 'InProgress' | 'Resolved' | 'Closed'
 type WardenRecord = {
   id: string
@@ -116,7 +117,7 @@ export function SchoolWardenManagement() {
       <label>Student / resident name (optional)<input value={studentName} onChange={event => setStudentName(event.target.value)} maxLength={200} /></label>
       <label>Student / resident reference (optional)<input value={studentReference} onChange={event => setStudentReference(event.target.value)} maxLength={100} /></label>
       <label>Details and observations<textarea value={details} onChange={event => setDetails(event.target.value)} maxLength={4000} rows={3} required /></label>
-      <button type="submit" disabled={saving}>{saving ? 'Saving…' : `Save ${categories.find(item => item.id === category)?.label.toLowerCase()} record`}</button>
+      <FancyButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save '${categories.find(item => item.id === category)?.label.toLowerCase()} record'}</FancyButton>
     </form>
 
     <div className="section-heading" style={{ marginTop: 24 }}>
@@ -131,7 +132,7 @@ export function SchoolWardenManagement() {
         <td>{record.details}</td>
         <td>{statusLabel(record.status)}</td>
         <td>{record.actionTaken || '—'}</td>
-        <td>{editingId === record.id ? <div className="grid-form"><label>Status<select value={status} onChange={event => setStatus(event.target.value as RecordStatus)}>{statuses.map(item => <option key={item} value={item}>{statusLabel(item)}</option>)}</select></label><label>Action taken / notes<textarea rows={2} value={actionTaken} onChange={event => setActionTaken(event.target.value)} maxLength={2000} /></label><button type="button" disabled={saving} onClick={() => void updateRecord(record.id)}>Save update</button><button type="button" className="secondary-button" onClick={() => setEditingId(null)}>Cancel</button></div> : <button type="button" className="secondary-button" onClick={() => { setEditingId(record.id); setStatus(record.status); setActionTaken(record.actionTaken ?? '') }}>Update</button>}</td>
+        <td>{editingId === record.id ? <div className="grid-form"><label>Status<select value={status} onChange={event => setStatus(event.target.value as RecordStatus)}>{statuses.map(item => <option key={item} value={item}>{statusLabel(item)}</option>)}</select></label><label>Action taken / notes<textarea rows={2} value={actionTaken} onChange={event => setActionTaken(event.target.value)} maxLength={2000} /></label><FancyButton type="button" disabled={saving} onClick={() => void updateRecord(record.id)}>Save update</FancyButton><button type="button" className="secondary-button" onClick={() => setEditingId(null)}>Cancel</button></div> : <button type="button" className="secondary-button" onClick={() => { setEditingId(record.id); setStatus(record.status); setActionTaken(record.actionTaken ?? '') }}>Update</button>}</td>
       </tr>)}
       {visible.length === 0 && <tr><td colSpan={7} className="empty">No saved records for this filter yet.</td></tr>}
     </tbody></table></div>}

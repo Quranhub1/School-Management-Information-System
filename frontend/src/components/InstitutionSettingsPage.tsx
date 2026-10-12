@@ -4,6 +4,7 @@ import { addGalleryUrl, createInstitutionSettings, deleteGalleryItem, getActiveI
 
 type SettingsTab = 'general' | 'branding' | 'gallery'
 
+import { FancyButton } from "@/components/ui/fancy-button";
 interface InstitutionSettingsPageProps {
   onSaved: (settings: InstitutionSettings) => void
 }
@@ -325,7 +326,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         )}
 
         <div className="topbar-actions" style={{ marginTop: 22 }}>
-          <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Settings'}</button>
+          <FancyButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Settings'}</FancyButton>
           <button type="button" className="secondary-button" onClick={() => void load()}>Reset</button>
         </div>
       </form>

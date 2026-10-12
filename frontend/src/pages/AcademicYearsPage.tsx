@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 type AcademicYear = { id: string; name: string; startDate: string; endDate: string; isCurrent: boolean; isActive: boolean };
+import { FancyButton } from "@/components/ui/fancy-button";
 
 export default function AcademicYearsPage() {
   const [years, setYears] = useState<AcademicYear[]>([]);
@@ -45,7 +46,7 @@ export default function AcademicYearsPage() {
       <label>Year name <input value={name} onChange={e => setName(e.target.value)} placeholder="2026/2027" required /></label>
       <label>Start <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required /></label>
       <label>End <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required /></label>
-      <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add Academic Year'}</button>
+      <FancyButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add Academic Year'}</FancyButton>
     </form>
     {message && <p role="status">{message}</p>}
     {loading ? <p>Loading academic years…</p> : <table><thead><tr><th>Name</th><th>Start</th><th>End</th><th>Current</th><th>Status</th></tr></thead><tbody>
