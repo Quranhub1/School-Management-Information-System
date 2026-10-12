@@ -124,17 +124,11 @@ export async function uploadGalleryImage(file: File, title: string, caption: str
   form.append('file', file)
   form.append('title', title)
   form.append('caption', caption)
-  const token = getAccessToken()
-  const response = await fetch(`${API_BASE_URL}/api/administration/institution-gallery/upload`, {
+  const item = await authedRequest<GalleryItem>('/api/administration/institution-gallery/upload', {
     method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: form,
   })
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { message?: string } | null
-    throw new Error(body?.message ?? `Upload failed with status ${response.status}`)
-  }
-  return resolveGalleryItem(await response.json() as GalleryItem)
+  return resolveGalleryItem(item)
 }
 
 export const addGalleryUrl = (url: string, title: string, caption: string) =>
