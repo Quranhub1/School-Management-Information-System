@@ -116,7 +116,7 @@ export function GlobalSearch() {
           </label>
         </div>
       )}
-      {loading && <span className="search-status" aria-live="polite">Searching…</span>}
+      {loading && <span className="search-status" role="status" aria-live="polite"><span className="spinner spinner--small" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} />)}</span> Searching…</span>}
       {open && total > 0 && (
         <div className="search-dropdown" role="listbox" aria-label="Search results">
           {items.map((item, idx) => (
