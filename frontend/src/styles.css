@@ -2905,13 +2905,24 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
 }
 
 
-/* Fixed SMIS sidebar: keep navigation stationary while the workspace scrolls. */
+/* ========================================================
+   SMIS Shell Layout and Scroll Performance
+   Keep navigation stationary and scroll the workspace independently.
+   Scoped to shell/navigation/workspace elements; avoid forced GPU
+   layers and paint containment on interactive cards or overlays.
+   ======================================================== */
 .app-shell {
+  display: flex;
+  position: relative;
   min-height: 100vh;
 }
+
+/* App.tsx renders the sidebar as a direct <aside> child. */
 .app-shell > aside {
   position: fixed !important;
   inset: 0 auto 0 0;
+  display: flex;
+  flex-direction: column;
   width: 18rem;
   height: 100vh;
   min-height: 0;
@@ -2919,32 +2930,80 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
   overflow: hidden;
   z-index: 40;
 }
+
+/* The actual navigation is a nav element inside the sidebar, not .sidebar-nav. */
 .app-shell > aside > nav {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
 }
+
+.app-shell > aside > nav::-webkit-scrollbar,
+.app-shell > .main-content::-webkit-scrollbar,
+.app-shell > .main-content .content::-webkit-scrollbar,
+.table-wrap::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.app-shell > aside > nav::-webkit-scrollbar-thumb,
+.app-shell > .main-content::-webkit-scrollbar-thumb,
+.app-shell > .main-content .content::-webkit-scrollbar-thumb,
+.table-wrap::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.4);
+}
+
 .app-shell > .main-content {
-  margin-left: 18rem;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   width: calc(100% - 18rem);
   height: 100vh;
+  min-width: 0;
   min-height: 0;
+  margin-left: 18rem;
+  overflow-x: clip;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
 }
+
+/* Keep page content and dialogs free to overflow; this avoids clipping menus. */
 .app-shell > .main-content > .content {
+  min-width: 0;
   overflow: visible;
 }
+
+.table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 920px) and (min-width: 641px) {
-  .app-shell > aside { width: 15.5rem; }
+  .app-shell > aside {
+    width: 15.5rem;
+  }
   .app-shell > .main-content {
-    margin-left: 15.5rem;
     width: calc(100% - 15.5rem);
+    margin-left: 15.5rem;
   }
 }
+
+/* On phones, restore normal document flow instead of a fixed sidebar. */
 @media (max-width: 640px) {
-  .app-shell { display: flex; flex-direction: column; }
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+  }
   .app-shell > aside {
     position: relative !important;
     inset: auto;
@@ -2953,12 +3012,28 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
     min-height: 0;
     max-height: 52vh;
   }
+  .app-shell > aside > nav {
+    max-height: calc(52vh - 5rem);
+  }
   .app-shell > .main-content {
-    margin-left: 0;
     width: 100%;
     height: auto;
     min-height: 0;
+    margin-left: 0;
     overflow: visible;
   }
-  .app-shell > .main-content > .content { overflow: visible; }
+}
+
+/* Reduce expensive glass blur on tablet-sized screens, as requested. */
+@media (max-width: 1024px) {
+  .topbar,
+  .library-tabs,
+  .detail-tabs,
+  .finance-tab-strip,
+  .guild-primary-tabs,
+  .library-workspace-tabs {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--smis-glass-bg-strong, #ffffff) !important;
+  }
 }
