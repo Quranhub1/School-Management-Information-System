@@ -409,3 +409,65 @@ td strong { display: block; }
 @media (prefers-reduced-motion: reduce) {
   .sidebar-item:hover, .primary-button:hover, .library-primary:hover, .form-row button:hover, .auth-form button:hover, .secondary-button:hover { transform: none; }
 }
+
+/* ==========================================================
+   AGILE OFFLINE & LAG-FREE SCROLLING OPTIMIZATIONS
+   ========================================================== */
+
+/* 1. Force hardware acceleration on independent scroll containers */
+.app-shell > aside,
+.app-shell > .main-content,
+.sidebar-nav,
+.content {
+  -webkit-overflow-scrolling: touch;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 2. Isolate layout rendering calculations to prevent full-page repaints */
+.sidebar,
+.main-content,
+.panel,
+.summary-card,
+.table-wrap {
+  contain: layout style paint;
+}
+
+/* 3. Optimize custom scrollbars for instant, non-blocking rendering */
+.sidebar-nav,
+.content,
+.table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar,
+.content::-webkit-scrollbar,
+.table-wrap::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb,
+.content::-webkit-scrollbar-thumb,
+.table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+}
+
+/* 4. Fallback for heavy visual filters during active scroll */
+@media (max-width: 1024px) {
+  /* Disable heavy backdrop-filter blurring on mobile/tablets to prevent CPU stutter */
+  .topbar,
+  .library-tabs,
+  .detail-tabs,
+  .finance-tab-strip,
+  .guild-primary-tabs {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--smis-glass-bg-strong) !important;
+  }
+}
+
