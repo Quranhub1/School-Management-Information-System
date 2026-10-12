@@ -28,7 +28,6 @@ const emptyApplication: ApplicationForm = {
   declaration: false, applicantSignature: '', signatureDate: '', applicationFee: '50000', feePaid: 'Not paid', approvedBy: '', approvalSignature: '', approvalDate: '',
 }
 const emptyEducation = (): EducationRow => ({ school: '', location: '', from: '', to: '', qualification: '', grade: '', language: '' })
-const emptyStudent: CreateStudentRequest = { studentNumber: '', firstName: '', lastName: '', otherNames: '', dateOfBirth: '', gender: '', phoneNumber: '', email: '' }
 const emptyGuardian: GuardianInput = { fullName: '', relationship: 'Parent', address: '', phoneNumber: '', email: '', isPrimary: false }
 const logoUrl = (path?: string | null) => {
   if (!path?.trim()) return ''
@@ -244,8 +243,8 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       </Section>
       <Section number="08" title="Official use only">
         <div className="application-official-only"><strong>Please do not write in this section.</strong><div className="application-grid">
-          <Field label="Application fee (UGX)"><input value={application.applicationFee} readOnly /></Field><Field label="Payment status"><select value={application.feePaid} onChange={e => setApp('feePaid', e.target.value)}><option>Not paid</option><option>Paid</option></select></Field>
-          <Field label="Approved / reviewed by"><input value={application.approvedBy} onChange={e => setApp('approvedBy', e.target.value)} /></Field><Field label="Official signature"><input value={application.approvalSignature} onChange={e => setApp('approvalSignature', e.target.value)} /></Field><Field label="Date"><input type="date" value={application.approvalDate} onChange={e => setApp('approvalDate', e.target.value)} /></Field>
+          <Field label="Application fee (UGX)"><input value={application.applicationFee} readOnly /></Field><Field label="Payment status"><input value={application.feePaid} readOnly aria-readonly="true" /></Field>
+          <Field label="Approved / reviewed by"><input value={application.approvedBy} readOnly aria-readonly="true" /></Field><Field label="Official signature"><input value={application.approvalSignature} readOnly aria-readonly="true" /></Field><Field label="Date"><input type="date" value={application.approvalDate} readOnly aria-readonly="true" /></Field>
         </div></div>
       </Section>
       <div className="application-actions no-print"><button type="button" className="secondary-button" onClick={() => window.print()}>Print application</button><button type="button" className="secondary-button" onClick={() => { setApplication(emptyApplication); setEducation([emptyEducation()]); setPhoto(null); setStudentNumber(''); }}>Clear form</button><button type="submit" disabled={saving || !institutionLoaded || !institution.isActive}>{saving ? 'Saving…' : 'Submit application'}</button></div>
