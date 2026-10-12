@@ -3149,7 +3149,6 @@ input[type="checkbox"] {
   cursor: pointer;
   transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
-input[type="checkbox"]::before,
 input[type="checkbox"]::before {
   content: "";
   width: 9px;
@@ -3271,3 +3270,8 @@ button:disabled .spinner { --smis-loader-color: currentColor; }
 @media (prefers-reduced-motion: reduce) {
   .spinner > span { animation-duration: 2s; }
 }
+
+/* Compact spinner for buttons and inline search status. */
+.spinner--small { width: 14px; height: 14px; flex-basis: 14px; vertical-align: -2px; }
+.spinner--small > span { border-radius: 1px; }
+button .spinner { margin-right: 4px; }
