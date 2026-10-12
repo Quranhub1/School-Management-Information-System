@@ -117,7 +117,7 @@ public sealed class PublicInstitutionGalleryController(SchoolManagementDbContext
 [ApiController]
 [Route("api/administration/institution-gallery")]
 [Authorize(Policy = AuthorizationPolicies.Administration)]
-public sealed class InstitutionGalleryController(SchoolManagementDbContext db) : ControllerBase
+public sealed class InstitutionGalleryController(SchoolManagementDbContext db, IWebHostEnvironment environment) : ControllerBase
 {
     private const long MaxFileSize = 10 * 1024 * 1024;
     private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
@@ -189,10 +189,60 @@ public sealed class InstitutionGalleryController(SchoolManagementDbContext db) :
     {
         var item = await db.InstitutionGalleryImages.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (item is null) return NotFound();
+        // Remove the legacy metadata entry too; otherwise a later list request
+        // can import a deleted legacy image back into the database.
+        await RemoveLegacyGalleryEntryAsync(id, cancellationToken);
+
         db.InstitutionGalleryImages.Remove(item);
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
+
+    private async Task RemoveLegacyGalleryEntryAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var root = Path.Combine(environment.ContentRootPath, "App_Data", "Branding", "Gallery");
+        var metadataPath = Path.Combine(root, "gallery.json");
+        if (!System.IO.File.Exists(metadataPath)) return;
+
+        List<LegacyGalleryItem>? legacyItems;
+        try
+        {
+            var json = await System.IO.File.ReadAllTextAsync(metadataPath, cancellationToken);
+            legacyItems = JsonSerializer.Deserialize<List<LegacyGalleryItem>>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        }
+        catch (JsonException)
+        {
+            return;
+        }
+        if (legacyItems is null) return;
+
+        var removed = legacyItems.FirstOrDefault(x => x.Id == id);
+        if (removed is null) return;
+
+        var remaining = legacyItems.Where(x => x.Id != id).ToList();
+        await System.IO.File.WriteAllTextAsync(
+            metadataPath,
+            JsonSerializer.Serialize(remaining, new JsonSerializerOptions(JsonSerializerDefaults.Web)),
+            cancellationToken);
+
+        if (string.Equals(removed.Source, "upload", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(removed.StoredFileName))
+        {
+            var filePath = Path.Combine(root, "images", Path.GetFileName(removed.StoredFileName));
+            if (System.IO.File.Exists(filePath))
+                System.IO.File.Delete(filePath);
+        }
+    }
+
+    private sealed record LegacyGalleryItem(
+        Guid Id,
+        string Title,
+        string? Caption,
+        string ImageUrl,
+        DateTimeOffset UploadedAt,
+        string Source,
+        string? StoredFileName,
+        string? ContentType);
 
     private static GalleryItem ToDto(InstitutionGalleryImage item) => new(
         item.Id, item.Title, item.Caption,
