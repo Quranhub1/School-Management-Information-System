@@ -125,7 +125,7 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
             <label htmlFor="academic-student-id">Student ID</label>
             <div className="form-row">
               <input id="academic-student-id" value={studentId} onChange={(event) => setStudentId(event.target.value)} placeholder="Enter student UUID" />
-              <button type="submit" disabled={loading || !studentId.trim()}>{loading ? 'Loading…' : 'Retrieve records'}</button>
+              <button type="submit" disabled={loading || !studentId.trim()}>{loading ? <><span className="spinner spinner--small" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} />)}</span> Loading…</> : 'Retrieve records'}</button>
             </div>
           </form>
           <div className="summary-grid">
