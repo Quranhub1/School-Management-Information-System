@@ -14,5 +14,10 @@ export default defineConfig({
     proxy: { '/api': { target: 'http://127.0.0.1:5000', changeOrigin: true } },
     hmr: { host: 'localhost', protocol: 'ws', clientPort: 5173 },
   },
-  test: { environment: 'jsdom', globals: true, setupFiles: './src/test/setup.ts' },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.ts',
+    include: ['src/**/*.test.{ts,tsx,js,jsx}', 'src/**/*.spec.{ts,tsx,js,jsx}'],
+  },
 })

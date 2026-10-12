@@ -1,3 +1,4 @@
+import LoadingSpinner from '../components/LoadingSpinner'
 import { useEffect, useMemo, useState } from 'react'
 import { getStudentPortalProfile, getStudentSummaries, getStudentTranscript, type StudentPortalProfile, type StudentSemesterResult } from '../api/studentPortal'
 import type { TranscriptEntry, AcademicResultSummary } from '../types/academic'
