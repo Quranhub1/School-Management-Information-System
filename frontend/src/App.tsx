@@ -155,7 +155,7 @@ function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: {
   case 'staff': return sr;
   case 'attendance': return att;
   case 'library': return lr;
-  case 'health': return att || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator');
+  case 'health': return attManage || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator');
   case 'laboratories': return hostel;
   case 'inventory': return inv;
   case 'communication': return cm || ['ExaminationsOfficer','Lecturer','Student','Records Officer','SchoolWarden','Principal','Secretary','ResidentDirector','HeadOfDepartment','AssistantPrincipal'].some(role => r.includes(role));
@@ -280,6 +280,7 @@ const sidebarGroups:SidebarGroup[]=[
 function canSeeSidebarItem(item:SidebarItem){
   if (!moduleAllowed(item.module)) return false;
   if (item.module === 'staff' && item.subsection === 'payroll') return fi && !isAdminSecretary;
+  if (item.module === 'staff' && (item.subsection === 'leave' || item.subsection === 'recruitment')) return sm;
   if (item.module === 'system-administration') return r.includes('SystemAdministrator');
   return true;
 }
