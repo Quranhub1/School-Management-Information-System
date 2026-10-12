@@ -952,6 +952,12 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("StudentId")
                         .IsUnique();
 
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.ToTable("StudentApplicationRecords");
                 });
 
