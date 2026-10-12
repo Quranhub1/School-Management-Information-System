@@ -86,3 +86,17 @@ export const getStudentQrCode = (id: string) => {
   const token = getAccessToken()
   return `${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''}/api/students/${id}/qrcode`
 }
+
+export interface SaveStudentApplicationFormRequest {
+  application: Record<string, unknown>
+  photographBase64?: string | null
+  photographContentType?: string | null
+  photographFileName?: string | null
+}
+export const saveStudentApplicationForm = (studentId: string, input: SaveStudentApplicationFormRequest) =>
+  request<{ id: string; studentId: string; submittedAt: string; status: string }>(`/api/students/${studentId}/application-form`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
+export const getStudentApplicationForm = (studentId: string) =>
+  request<{ id: string; studentId: string; application: Record<string, unknown>; photographContentType?: string; photographFileName?: string; submittedAt: string; status: string }>(`/api/students/${studentId}/application-form`)
