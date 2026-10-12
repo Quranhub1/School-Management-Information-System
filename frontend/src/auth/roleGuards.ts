@@ -78,7 +78,7 @@ export function canManageInventory(roles: string[]) {
   return hasAnyRole(roles, INVENTORY_MANAGEMENT_ROLES)
 }
 export function canManageHostel(roles: string[]) {
-  return hasAnyRole(roles, HOSTEL_MANAGEMENT_ROLES)
+  return hasAnyRole(roles, [...HOSTEL_MANAGEMENT_ROLES, 'ResidentDirector'])
 }
 export function canManagePrinters(roles: string[]) {
   return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'Principal', 'Director', 'ResidentDirector', 'Secretary', 'Records Officer'])
