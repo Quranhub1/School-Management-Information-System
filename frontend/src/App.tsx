@@ -402,7 +402,7 @@ return <main className="app-shell">
 {activeModule==='health'&&(attManage||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
 {activeModule==='laboratories'&&hostel&&((r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:<HostelManagement canManage={hostel}/>)}
 {activeModule==='inventory'&&inv&&<InventoryManagement canManage={inv}/>}
-{activeModule==='communication'&&cm&&<Announcements canManage={cm}/>}
+{activeModule==='communication'&&moduleAllowed('communication')&&<Announcements canManage={cm}/>
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement/>}
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
 {activeModule==='system-administration'&&r.includes('SystemAdministrator')&&<SystemAdministrationManagement activeSubsection={activeSubsection} onNavigate={navigate}/>}
