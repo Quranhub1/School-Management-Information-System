@@ -4,7 +4,7 @@ import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } fro
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
-export function StaffManagement({ canManage }: { canManage?: boolean }) {
+export function StaffManagement({ canManage = false, canReadPayroll = false }: { canManage?: boolean; canReadPayroll?: boolean }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -30,15 +30,15 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
         : detail.subsection === 'leave' ? 'leave'
         : detail.subsection === 'recruitment' ? 'recruitment'
         : undefined
-      if (nextTab) setTab(nextTab)
+      if (nextTab === 'payroll' && !canReadPayroll) return; if ((nextTab === 'leave' || nextTab === 'recruitment') && !canManage) return; if (nextTab) setTab(nextTab)
     }
     window.addEventListener('smis:navigate-subsection', handler)
     return () => window.removeEventListener('smis:navigate-subsection', handler)
-  }, [])
+  }, [canManage, canReadPayroll])
 
   useEffect(() => { void loadStaff() }, [])
-  useEffect(() => { if (tab === 'leave') void loadLeave() }, [tab])
-  useEffect(() => { if (tab === 'payroll') void loadPayroll() }, [tab])
+  useEffect(() => { if (canManage && tab === 'leave') void loadLeave() }, [tab, canManage])
+  useEffect(() => { if (canReadPayroll && tab === 'payroll') void loadPayroll() }, [tab, canReadPayroll])
 
   async function submit(e: React.FormEvent) { e.preventDefault(); setError(''); try { await createStaff(form); setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' }); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create staff.') } }
   async function deactivate(id: string) { try { await deactivateStaff(id); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') } }
@@ -59,9 +59,9 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
 
       <div className="library-workspace-tabs" role="tablist" aria-label="Staff sections" style={{ marginBottom: 18 }}>
         <button role="tab" aria-selected={tab === 'staff'} className={tab === 'staff' ? 'active' : ''} onClick={() => setTab('staff')}>Staff</button>
-        <button role="tab" aria-selected={tab === 'payroll'} className={tab === 'payroll' ? 'active' : ''} onClick={() => setTab('payroll')}>Payroll</button>
-        <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button>
-        <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>
+        {canReadPayroll && <button role="tab" aria-selected={tab === 'payroll'} className={tab === 'payroll' ? 'active' : ''} onClick={() => setTab('payroll')}>Payroll</button>}
+        {canManage && <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button>}
+        {canManage && <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>}
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
@@ -100,17 +100,17 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
             <div className="summary-card"><span>Paid</span><strong style={{ color: '#059669' }}>{payroll.filter(p => p.status === 'Paid').length}</strong></div>
             <div className="summary-card"><span>Pending</span><strong style={{ color: '#d97706' }}>{payroll.filter(p => p.status === 'Pending').length}</strong></div>
           </div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+          {canManage && <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
             <select value={payrollMonth} onChange={e => setPayrollMonth(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{new Date(2000, m-1).toLocaleString('default', { month: 'long' })}</option>)}</select>
             <input type="number" value={payrollYear} onChange={e => setPayrollYear(Number(e.target.value))} style={{ width: 100 }} />
             <button className="btn" onClick={() => void handleGeneratePayroll()}>Generate Payroll</button>
-          </div>
+          </div>}
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Staff</th><th>Month</th><th>Year</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net Pay</th><th>Status</th><th>Action</th></tr></thead>
+              <thead><tr><th>Staff</th><th>Month</th><th>Year</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net Pay</th><th>Status</th>{canManage && <th>Action</th>}</tr></thead>
               <tbody>
-                {payroll.length === 0 ? <tr><td colSpan={9} className="empty">No payroll records found.</td></tr> : payroll.map(p => (
-                  <tr key={p.id}><td>{p.staffMemberId}</td><td>{p.month}</td><td>{p.year}</td><td>UGX {p.basicSalary.toLocaleString()}</td><td>UGX {p.allowances.toLocaleString()}</td><td>UGX {p.deductions.toLocaleString()}</td><td><strong>UGX {p.netPay.toLocaleString()}</strong></td><td><span className="badge" style={{ background: p.status === 'Paid' ? '#d1fae5' : '#fef3c7', color: p.status === 'Paid' ? '#065f46' : '#92400e' }}>{p.status}</span></td><td>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)}>Mark Paid</button>}</td></tr>
+                {payroll.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No payroll records found.</td></tr> : payroll.map(p => (
+                  <tr key={p.id}><td>{p.staffMemberId}</td><td>{p.month}</td><td>{p.year}</td><td>UGX {p.basicSalary.toLocaleString()}</td><td>UGX {p.allowances.toLocaleString()}</td><td>UGX {p.deductions.toLocaleString()}</td><td><strong>UGX {p.netPay.toLocaleString()}</strong></td><td><span className="badge" style={{ background: p.status === 'Paid' ? '#d1fae5' : '#fef3c7', color: p.status === 'Paid' ? '#065f46' : '#92400e' }}>{p.status}</span></td>{canManage && <td>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)}>Mark Paid</button>}</td>}</tr>
                 ))}
               </tbody>
             </table>

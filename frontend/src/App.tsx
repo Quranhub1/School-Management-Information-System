@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react'
 import { BarChart3, BriefcaseBusiness, CalendarDays, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
-import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable } from './auth/roleGuards'
+import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canManageHostel, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable } from './auth/roleGuards'
 import { AcademicManagement } from './components/AcademicManagement'; import { HostelManagement } from './components/HostelManagement'; import { AdministrationManagement } from './components/AdministrationManagement'; import { AdmissionsStudentManagement } from './components/AdmissionsStudentManagement'; import { FinanceManagement } from './components/FinanceManagement'; import { StaffManagement } from './components/StaffManagement'; import { LibraryManagementWorkspace } from './components/LibraryManagementWorkspace'; import { Announcements } from './components/Announcements'; import { ReportCards } from './components/ReportCards'; import { Receipts } from './components/Receipts'; import { CertificateManagement } from './components/CertificateManagement'; import { InventoryManagement } from './components/InventoryManagement'; import { InventoryStockAlerts } from './components/InventoryStockAlerts'; import { GlobalSearch } from './components/GlobalSearch'; import { AnalyticsDashboard } from './components/AnalyticsDashboard'; import { AdminDashboard } from './components/AdminDashboard'; import { HealthRecordsManagement } from './components/HealthRecordsManagement'; import { GuildManagement } from './components/GuildManagement'; import { AttendanceManagement } from './components/AttendanceManagement'; import { RoleSpecificDashboard } from './components/RoleSpecificDashboard'; import { ResidentDirectorHRDashboard } from './components/ResidentDirectorHRDashboard'; import { DirectorExecutiveDashboard } from './components/DirectorExecutiveDashboard'; import { PrincipalDashboard } from './components/PrincipalDashboard'; import { TimetableManagement } from './components/TimetableManagement'; import { CurriculumManagement } from './components/CurriculumManagement'; import type { InstitutionSettings } from './api/institutionSettings'
 import { InstitutionSettingsProvider, useInstitutionSettings } from './components/InstitutionSettingsContext'; import { SchoolWardenManagement } from './components/SchoolWardenManagement'; import { SystemAdministrationManagement } from './components/SystemAdministrationManagement'; import './components/PrintStyles.css'
 type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'curriculum' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'timetable' | 'system-administration'
@@ -145,7 +145,28 @@ function GlobalTableLayoutEditor() {
   return null;
 }
 
-function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canAccessFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),attManage=canManageAttendance(r)||r.includes('SystemAdministrator'),att=canReadAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('Registrar')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Student'); const isAdminSecretary=r.includes('Admin Secretary')||r.includes('AdminSecretary'); const studentRead=r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('Director')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||isAdminSecretary; const admissionRead=ad||r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer')||isAdminSecretary; const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const storedModule=localStorage.getItem(stateKey); const [activeModule,setActiveModule]=useState<ModuleKey>(()=>{const allowed=new Set<ModuleKey>(['dashboard','administration','students','academics','curriculum','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','timetable','system-administration']); return storedModule&&allowed.has(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'}); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail)setActiveModule(detail)};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
+function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canAccessFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),hostel=canManageHostel(r),attManage=canManageAttendance(r)||r.includes('SystemAdministrator'),att=canReadAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Student'); const isAdminSecretary=r.includes('Admin Secretary')||r.includes('AdminSecretary'); const studentRead=r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('Director')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer')||isAdminSecretary; const admissionRead=ad||r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Principal')||r.includes('Director')||r.includes('AssistantPrincipal')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer')||isAdminSecretary; const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const moduleAllowed=(module:ModuleKey):boolean=>{switch(module){
+  case 'dashboard': return true;
+  case 'administration': return a && !isAdminSecretary;
+  case 'students': return st || ad || s360 || studentRead || admissionRead || r.includes('HR Manager') || r.includes('Records Officer');
+  case 'academics': return ac || lecturer || r.includes('HeadOfDepartment') || r.includes('Principal') || r.includes('AssistantPrincipal');
+  case 'curriculum': return ac;
+  case 'finance': return fi && !isAdminSecretary;
+  case 'staff': return sr;
+  case 'attendance': return att;
+  case 'library': return lr;
+  case 'health': return attManage || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator');
+  case 'laboratories': return hostel;
+  case 'inventory': return inv;
+  case 'communication': return cm || ['ExaminationsOfficer','Lecturer','Student','Records Officer','SchoolWarden','Principal','Secretary','ResidentDirector','HeadOfDepartment','AssistantPrincipal'].some(role => r.includes(role));
+  case 'guild': return r.includes('Student') || r.includes('Guild') || r.includes('SystemAdministrator') || r.includes('HR Manager');
+  case 'reports': return rp || analytics;
+  case 'timetable': return canReadTimetable(r);
+  case 'system-administration': return r.includes('SystemAdministrator');
+  default: return false;
+}};
+const storedModule=localStorage.getItem(stateKey);
+const [activeModule,setActiveModule]=useState<ModuleKey>(()=>storedModule&&(['dashboard','administration','students','academics','curriculum','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','timetable','system-administration'] as string[]).includes(storedModule)&&moduleAllowed(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail&&moduleAllowed(detail)){setActiveModule(detail);setActiveSubsection(null)}else{setActiveModule('dashboard');setActiveSubsection(null)}};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
   dashboard:LayoutDashboard,
   administration:BriefcaseBusiness,
   students:UsersRound,
@@ -199,10 +220,9 @@ const userInitials = useMemo(() => {
 }, [sessionUsername]);
 
 function navigate(module:ModuleKey, subsection?:string){
-  // System Administration remains warning-only for non-administrators.
-  if (module === 'system-administration' && !r.includes('SystemAdministrator')) {
+  if (!moduleAllowed(module)) {
     setActiveSubsection(null);
-    setActiveModule(module);
+    setActiveModule('dashboard');
     return;
   }
   setActiveModule(module);
@@ -258,28 +278,15 @@ const sidebarGroups:SidebarGroup[]=[
   ]}
 ];
 function canSeeSidebarItem(item:SidebarItem){
-  if(item.module==='dashboard') return true;
-  if(item.module==='administration') return a && !isAdminSecretary;
-  if(item.module==='students') return st || ad || s360 || studentRead || admissionRead || r.includes('HR Manager') || r.includes('Records Officer');
-  if(item.module==='curriculum') return ac || r.includes('SystemAdministrator');
-  if(item.module==='academics') return ac || lecturer || r.includes('HeadOfDepartment') || r.includes('HR Manager') || r.includes('AssistantPrincipal') || r.includes('Principal') || isAdminSecretary;
-  if(item.module==='timetable') return canReadTimetable(r) || isAdminSecretary;
-  if(item.module==='finance') return fi && !isAdminSecretary;
-  if(item.module==='staff') return sr || r.includes('HeadOfDepartment') || r.includes('HR Manager') || r.includes('Records Officer') || isAdminSecretary;
-  if(item.module==='attendance') return att || isAdminSecretary;
-  if(item.module==='library') return lr || isAdminSecretary;
-  if(item.module==='health') return att || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator') || r.includes('HR Manager') || isAdminSecretary;
-  if(item.module==='laboratories') return inv || r.includes('SchoolWarden') || r.includes('SystemAdministrator') || r.includes('HR Manager') || isAdminSecretary;
-  if(item.module==='inventory') return inv || isAdminSecretary;
-  if(item.module==='communication') return cm || r.includes('HR Manager') || isAdminSecretary;
-  if(item.module==='guild') return st || r.includes('Guild') || r.includes('SystemAdministrator') || r.includes('HR Manager') || isAdminSecretary;
-  if(item.module==='reports') return rp || analytics || isAdminSecretary;
-  if(item.module==='system-administration') return !isAdminSecretary && (r.includes('SystemAdministrator') || (!item.child && (r.includes('Principal') || r.includes('AssistantPrincipal'))));
-  return false;
+  if (!moduleAllowed(item.module)) return false;
+  if (item.module === 'staff' && item.subsection === 'payroll') return fi && !isAdminSecretary;
+  if (item.module === 'staff' && (item.subsection === 'leave' || item.subsection === 'recruitment')) return sm;
+  if (item.module === 'system-administration') return r.includes('SystemAdministrator');
+  return true;
 }
 const visibleSidebarGroups=sidebarGroups.map(group=>({
   ...group,
-  items:group.items.filter(item => !(isAdminSecretary && (item.module === 'finance' || item.label === 'Payroll' || item.module === 'administration' || item.module === 'system-administration')) && canSeeSidebarItem(item))
+  items:group.items.filter(canSeeSidebarItem)
 })).filter(group=>group.items.length>0);
 
 useEffect(() => {
@@ -383,24 +390,24 @@ return <main className="app-shell">
       </div>
     </div>
   </aside>
-  <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(activeModule === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden')) ? 'School Warden' : (moduleLabels[activeModule]||'Dashboard')).toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('Admin Secretary')||r.includes('AdminSecretary'))?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:a?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
+  <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(activeModule === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden')) ? 'School Warden' : (moduleLabels[activeModule]||'Dashboard')).toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('Admin Secretary')||r.includes('AdminSecretary'))?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:r.includes('SystemAdministrator')?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 {activeModule==='dashboard'&&(r.includes('Records Officer')||r.includes('RecordsOfficer')||r.includes('School Warden')||r.includes('SchoolWarden')||r.includes('SchoolWarden'))&&<InventoryStockAlerts/>}
 {activeModule==='administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} 
 {activeModule==='students'&&(st||ad||s360||studentRead||admissionRead)&&<AdmissionsStudentManagement canManage={st||ad} readOnly={!st&&!ad} accessProfile={r.includes('Receptionist')?'receptionist':r.includes('Records Officer')?'records':r.includes('HeadOfDepartment')?'department':'general'} />} 
 {activeModule==='academics'&&(ac||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/>} {activeModule==='curriculum'&&ac&&<CurriculumManagement canManage={ac}/>} 
 {activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}
 {activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
-{activeModule==='staff'&&sr&&<StaffManagement canManage={sm}/>}
+{activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={fi}/>}
 {activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} />}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&(attManage||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
-{activeModule==='laboratories'&&(inv||r.includes('SchoolWarden')||r.includes('School Warden')||r.includes('ResidentDirector')||r.includes('SystemAdministrator')||isAdminSecretary)&&((r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:<HostelManagement canManage={inv||r.includes('ResidentDirector')||r.includes('SystemAdministrator')}/>)}
+{activeModule==='laboratories'&&hostel&&((r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:<HostelManagement canManage={hostel}/>)}
 {activeModule==='inventory'&&inv&&<InventoryManagement canManage={inv}/>}
-{activeModule==='communication'&&cm&&<Announcements canManage={cm}/>}
+{activeModule==='communication'&&moduleAllowed('communication')&&<Announcements canManage={cm}/>}
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement/>}
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
 {activeModule==='system-administration'&&r.includes('SystemAdministrator')&&<SystemAdministrationManagement activeSubsection={activeSubsection} onNavigate={navigate}/>}
-{activeModule==='system-administration'&&!r.includes('SystemAdministrator')&&<section className="panel" role="alert" aria-labelledby="system-admin-warning-title" style={{border:'1px solid #f59e0b',background:'linear-gradient(135deg,rgba(255,251,235,.98),rgba(255,247,237,.96))',color:'#78350f',padding:24}}><div style={{display:'flex',alignItems:'flex-start',gap:14}}><span aria-hidden="true" style={{fontSize:28,lineHeight:1}}>⚠</span><div><span className="eyebrow" style={{color:'#b45309'}}>RESTRICTED SECTION</span><h2 id="system-admin-warning-title" style={{marginTop:6,color:'#78350f'}}>System Administration — Access Restricted</h2><p style={{marginTop:10,fontWeight:700}}>Warning: Changes in this section can affect the entire school management system.</p><p style={{marginTop:8}}>System administration includes institution-wide settings, user access, security and critical configuration. Unauthorized changes may disrupt school operations or compromise data integrity.</p><p style={{marginTop:8}}>Your current role cannot modify these settings. Contact the System Administrator for authorized changes.</p></div></div></section>} </motion.div></AnimatePresence></div></main> }
+ </motion.div></AnimatePresence></div></main> }
 function App(){
   return <InstitutionSettingsProvider><AppContent/></InstitutionSettingsProvider>
 }

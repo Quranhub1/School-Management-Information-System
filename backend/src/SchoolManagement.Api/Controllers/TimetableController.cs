@@ -75,7 +75,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         var conflict = await db.TimetableEntries.AnyAsync(x => x.IsActive && x.DayOfWeek == request.DayOfWeek && x.Room == request.Room && x.StartTime < request.EndTime && request.StartTime < x.EndTime, cancellationToken);
         if (conflict) return Conflict(new { message = "The room is already booked for an overlapping session." });
 
-        var entry = new Domain.Academic.TimetableEntry { TeachingGroupId = request.TeachingGroupId, CourseId = request.CourseId, TeacherId = request.TeacherId, DayOfWeek = request.DayOfWeek, StartTime = request.StartTime, EndTime = request.EndTime, Room = request.Room, SessionType = request.SessionType };
+        var entry = new Domain.Academic.TimetableEntry { TeachingGroupId = request.TeachingGroupId, CourseId = request.CourseId, TeacherId = request.TeacherId, StaffMemberId = request.TeacherId, DayOfWeek = request.DayOfWeek, StartTime = request.StartTime, EndTime = request.EndTime, Room = request.Room, SessionType = request.SessionType };
         db.TimetableEntries.Add(entry);
         await db.SaveChangesAsync(cancellationToken);
         return Created($"api/timetable/{entry.Id}", entry);
