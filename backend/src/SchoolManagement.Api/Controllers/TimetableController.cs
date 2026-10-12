@@ -45,7 +45,31 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     {
         var query = db.TimetableEntries.AsNoTracking().Where(x => x.IsActive);
         if (teachingGroupId.HasValue) query = query.Where(x => x.TeachingGroupId == teachingGroupId.Value);
-        return Ok(await query.OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime).ToListAsync(cancellationToken));
+
+        // Return an explicit API shape instead of serializing EF entities and their
+        // navigation properties. This keeps the endpoint stable and avoids cycles
+        // or unexpected lazy/navigation serialization.
+        var entries = await query
+            .OrderBy(x => x.DayOfWeek)
+            .ThenBy(x => x.StartTime)
+            .Select(x => new
+            {
+                x.Id,
+                x.TeachingGroupId,
+                x.CourseId,
+                teacherId = x.TeacherId,
+                x.DayOfWeek,
+                x.StartTime,
+                x.EndTime,
+                x.Room,
+                x.SessionType,
+                x.IsActive,
+                x.GeneratedAt,
+                x.GenerationSource
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(entries);
     }
 
     [HttpGet("conflicts")]
