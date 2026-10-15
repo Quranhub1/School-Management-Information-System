@@ -21,10 +21,14 @@ public sealed class LibrariansController(
     public async Task<IActionResult> List(CancellationToken ct)
     {
         var librarians = await db.Librarians.AsNoTracking()
-            .Join(db.StaffMembers, l => l.StaffMemberId, s => s.Id, (l, s) => new LibrarianView(
-                l.Id, s.Id, s.StaffNumber, s.FirstName, s.LastName, s.PhoneNumber, s.Email,
-                l.LibraryRole, l.IsActive, l.AssignedAtUtc, l.DeactivatedAtUtc))
-            .OrderBy(x => x.LastName).ThenBy(x => x.FirstName).ToListAsync(ct);
+            .Join(db.StaffMembers, l => l.StaffMemberId, s => s.Id, (l, s) => new { Librarian = l, Staff = s })
+            .OrderBy(x => x.Staff.LastName)
+            .ThenBy(x => x.Staff.FirstName)
+            .Select(x => new LibrarianView(
+                x.Librarian.Id, x.Staff.Id, x.Staff.StaffNumber, x.Staff.FirstName, x.Staff.LastName,
+                x.Staff.PhoneNumber, x.Staff.Email, x.Librarian.LibraryRole, x.Librarian.IsActive,
+                x.Librarian.AssignedAtUtc, x.Librarian.DeactivatedAtUtc))
+            .ToListAsync(ct);
         return Ok(librarians);
     }
 
