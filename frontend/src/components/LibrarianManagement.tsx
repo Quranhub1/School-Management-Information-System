@@ -25,7 +25,7 @@ export function LibrarianManagement() {
 
   async function add(event: React.FormEvent) {
     event.preventDefault();
-    if (!staffMemberId || !libraryRole.trim()) return;
+    if (!staffMemberId || !libraryRole.trim() || libraryRole.trim().length > 80) return;
     try {
       await addLibrarian(staffMemberId, libraryRole);
       setStaffMemberId('');
@@ -45,8 +45,8 @@ export function LibrarianManagement() {
     <div className="library-toolbar"><div><span className="eyebrow">LIBRARY STAFF</span><h3 id="librarian-management-title">Librarian Management</h3><p>Assign staff to library operations and control their library status.</p></div></div>
     <form onSubmit={add} className="library-form">
       <label>Staff member<select value={staffMemberId} onChange={event => setStaffMemberId(event.target.value)}><option value="">Select staff member</option>{staff.map(person => <option key={person.id} value={person.id}>{person.staffNumber} — {person.firstName} {person.lastName}</option>)}</select></label>
-      <label>Library role<input value={libraryRole} onChange={event => setLibraryRole(event.target.value)} placeholder="Librarian" /></label>
-      <button type="submit" disabled={!staffMemberId}>Assign librarian</button>
+      <label>Library role<input value={libraryRole} onChange={event => setLibraryRole(event.target.value)} placeholder="Librarian" maxLength={80} required /></label>
+      <button type="submit" disabled={!staffMemberId || !libraryRole.trim() || libraryRole.trim().length > 80}>Assign librarian</button>
     </form>
     {message && <p role="status">{message}</p>}
     {loading ? <p>Loading librarians…</p> : <div className="table-wrap"><table><thead><tr><th>Staff</th><th>Contact</th><th>Library role</th><th>Status</th><th>Action</th></tr></thead><tbody>{librarians.map(librarian => <tr key={librarian.id}><td>{librarian.staffNumber} — {librarian.firstName} {librarian.lastName}</td><td>{librarian.email || librarian.phoneNumber || '—'}</td><td>{librarian.libraryRole}</td><td>{librarian.isActive ? 'Active' : 'Inactive'}</td><td><button className="secondary-button" onClick={() => void toggle(librarian)}>{librarian.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}</tbody></table></div>}
