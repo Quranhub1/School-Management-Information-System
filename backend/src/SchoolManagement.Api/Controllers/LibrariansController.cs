@@ -57,7 +57,7 @@ public sealed class LibrariansController(
             return HandlePersistenceFailure(ex, "assign librarian");
         }
 
-        return CreatedAtAction(nameof(List), new { id = librarian.Id }, librarian);
+        return Created($"/api/library/librarians/{librarian.Id}", librarian);
     }
 
     [HttpPatch("{id:guid}")]
