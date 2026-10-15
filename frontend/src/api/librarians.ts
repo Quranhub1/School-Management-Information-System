@@ -15,8 +15,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
     try {
-      const payload = await response.json() as { message?: string; title?: string };
-      message = payload.message ?? payload.title ?? message;
+      const payload = await response.json() as { message?: string; title?: string; detail?: string; errors?: Record<string, string[]> };
+      const validationMessage = payload.errors
+        ? Object.values(payload.errors).flat().find(Boolean)
+        : undefined;
+      message = payload.message ?? validationMessage ?? payload.detail ?? payload.title ?? message;
     } catch { /* fall back to the HTTP status */ }
     throw new Error(message);
   }
