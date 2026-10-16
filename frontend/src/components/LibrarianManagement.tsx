@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { addLibrarian, listLibrarians, updateLibrarian, type Librarian } from '../api/librarians';
+import { addLibrarian, deleteLibrarian, listLibrarians, updateLibrarian, type Librarian } from '../api/librarians';
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff';
 
 export function LibrarianManagement() {
@@ -50,6 +50,18 @@ export function LibrarianManagement() {
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to update librarian.'); }
   }
 
+  async function remove(librarian: Librarian) {
+    if (!window.confirm(`Remove ${librarian.firstName} ${librarian.lastName} from the librarian assignments? Their staff record will be retained.`)) return;
+    setMessage('');
+    try {
+      await deleteLibrarian(librarian.id);
+      setLibrarians(current => current.filter(item => item.id !== librarian.id));
+      setStaff(current => [...current.filter(person => person.id !== librarian.staffMemberId)]);
+      setMessage(`${librarian.firstName} ${librarian.lastName} was removed from librarian assignments. The staff record remains.`);
+      void refresh();
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to remove librarian assignment.'); }
+  }
+
   return <section aria-labelledby="librarian-management-title">
     <div className="library-toolbar"><div><span className="eyebrow">LIBRARY STAFF</span><h3 id="librarian-management-title">Librarian Management</h3><p>Assign staff to library operations and control their library status.</p></div></div>
     <form onSubmit={add} className="library-form">
@@ -58,6 +70,6 @@ export function LibrarianManagement() {
       <button type="submit" disabled={!staffMemberId || !libraryRole.trim() || libraryRole.trim().length > 80}>Assign librarian</button>
     </form>
     {message && <p role="status">{message}</p>}
-    {loading ? <p>Loading librarians…</p> : <div className="table-wrap"><table><thead><tr><th>Staff</th><th>Contact</th><th>Library role</th><th>Status</th><th>Action</th></tr></thead><tbody>{librarians.map(librarian => <tr key={librarian.id}><td>{librarian.staffNumber} — {librarian.firstName} {librarian.lastName}</td><td>{librarian.email || librarian.phoneNumber || '—'}</td><td>{librarian.libraryRole}</td><td>{librarian.isActive ? 'Active' : 'Inactive'}</td><td><button className="secondary-button" onClick={() => void toggle(librarian)}>{librarian.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}</tbody></table></div>}
+    {loading ? <p>Loading librarians…</p> : <div className="table-wrap"><table><thead><tr><th>Staff</th><th>Contact</th><th>Library role</th><th>Status</th><th>Action</th></tr></thead><tbody>{librarians.map(librarian => <tr key={librarian.id}><td>{librarian.staffNumber} — {librarian.firstName} {librarian.lastName}</td><td>{librarian.email || librarian.phoneNumber || '—'}</td><td>{librarian.libraryRole}</td><td>{librarian.isActive ? 'Active' : 'Inactive'}</td><td><button className="secondary-button" onClick={() => void toggle(librarian)}>{librarian.isActive ? 'Deactivate' : 'Activate'}</button><button className="secondary-button" onClick={() => void remove(librarian)}>Delete assignment</button></td></tr>)}</tbody></table></div>}
   </section>;
 }
