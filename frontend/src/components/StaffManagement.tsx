@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest } from '../api/staff'
+import { createStaff, updateStaff, deleteStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
@@ -9,6 +9,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'staff' | 'payroll' | 'leave' | 'recruitment'>('staff')
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
@@ -59,23 +60,57 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
     setError('')
     setSuccess('')
     try {
-      const created = await createStaff(form)
-      // Show the server-confirmed record immediately; refresh in the background.
-      setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
+      if (editingStaffId) {
+        const updated = await updateStaff(editingStaffId, { id: editingStaffId, ...form })
+        setStaff(current => current.map(item => item.id === updated.id ? updated : item))
+        setSuccess(`${updated.firstName} ${updated.lastName} was updated successfully.`)
+        setEditingStaffId(null)
+      } else {
+        const created = await createStaff(form)
+        // Add the server-confirmed record immediately, then reconcile with the API list.
+        setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
+        setSuccess(`${created.firstName} ${created.lastName} was saved and added to the staff table.`)
+        void listStaff(false).then(latest => {
+          setStaff(latest.some(item => item.id === created.id) ? latest : [created, ...latest])
+        }).catch(() => {
+          // Keep the confirmed create response visible even if the follow-up list refresh fails.
+        })
+      }
       setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
-      setSuccess(`${created.firstName} ${created.lastName} was saved and added to the staff table.`)
-      void listStaff(false).then(latest => {
-        setStaff(latest.some(item => item.id === created.id) ? latest : [created, ...latest])
-      }).catch(() => {
-        // Keep the confirmed create response visible even if the follow-up list refresh fails.
-      })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to create staff.')
+      setError(e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.')
       // A duplicate may be an inactive record, so refresh the complete staff list too.
       try { setStaff(await listStaff(false)) } catch { /* Preserve the original create error. */ }
     }
   }
-  async function deactivate(id: string) { try { await deactivateStaff(id); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') } }
+  function beginEdit(person: StaffMember) {
+    setEditingStaffId(person.id)
+    setForm({ staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching' })
+    setError('')
+    setSuccess('')
+    setTab('staff')
+  }
+  function cancelEdit() {
+    setEditingStaffId(null)
+    setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
+  }
+  async function deactivate(id: string) {
+    if (!window.confirm('Deactivate this staff member? They will remain in the records but will be marked inactive.')) return
+    try {
+      await deactivateStaff(id)
+      setStaff(current => current.map(person => person.id === id ? { ...person, isActive: false } : person))
+      setSuccess('Staff member deactivated.')
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') }
+  }
+  async function removeStaff(person: StaffMember) {
+    if (!window.confirm(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`)) return
+    try {
+      await deleteStaff(person.id)
+      setStaff(current => current.filter(item => item.id !== person.id))
+      if (editingStaffId === person.id) cancelEdit()
+      setSuccess(`${person.firstName} ${person.lastName} was deleted.`)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to delete staff. They may be linked to other records.') }
+  }
   async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to request leave.') } }
   async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, '', approved); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to approve leave.') } }
   async function handleGeneratePayroll() { try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to generate payroll.') } }
@@ -149,15 +184,16 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
               <input placeholder="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required />
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              <button type="submit">Add staff member</button>
+              <button type="submit">{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
+              {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
             </form>
           )}
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Staff No.</th><th>Name</th><th>Employment</th><th>Contact</th><th>Status</th>{canManage && <th>Action</th>}</tr></thead>
+              <thead><tr><th>Staff No.</th><th>Name</th><th>Employment</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
                 {loading ? <tr><td colSpan={canManage ? 6 : 5}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 6 : 5} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.employmentType}</td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td>{s.isActive ? <button className="secondary-button" onClick={() => void deactivate(s.id)}>Deactivate</button> : '—'}</td>}</tr>
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.employmentType}</td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap gap-2"><button type="button" className="secondary-button" onClick={() => beginEdit(s)}>Edit</button>{s.isActive && <button type="button" className="secondary-button" onClick={() => void deactivate(s.id)}>Deactivate</button>}<button type="button" className="secondary-button" onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
                 ))}
               </tbody>
             </table>
