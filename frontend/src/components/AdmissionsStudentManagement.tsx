@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
 import { AlumniManagement } from './AlumniManagement'
@@ -25,6 +25,19 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
   const [indexingStatus, setIndexingStatus] = useState('Not Indexed')
   const [uvtabRegistrationNumber, setUvtabRegistrationNumber] = useState('')
   const [studentStatus, setStudentStatus] = useState(statuses[0])
+
+  // Keep the sidebar's Students > Records destination synchronized with this workspace.
+  useEffect(() => {
+    const handleSubsectionNavigation = (event: Event) => {
+      const detail = (event as CustomEvent<{ module?: string; subsection?: string }>).detail
+      if (detail?.module !== 'students' || !detail.subsection) return
+      if (detail.subsection === 'records') setSection('biodata')
+      else if (detail.subsection === 'registration') setSection('admissions')
+    }
+    window.addEventListener('smis:navigate-subsection', handleSubsectionNavigation)
+    return () => window.removeEventListener('smis:navigate-subsection', handleSubsectionNavigation)
+  }, [])
+
   const visibleSections = readOnly
     ? sections.filter(item => accessProfile === 'receptionist' ? ['biodata', 'admissions'].includes(item.key) : accessProfile === 'department' ? item.key === 'biodata' : accessProfile === 'records' ? ['biodata', 'admissions', 'status'].includes(item.key) : ['biodata', 'admissions', 'status'].includes(item.key))
     : sections
