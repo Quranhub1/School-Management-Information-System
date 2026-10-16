@@ -51,6 +51,11 @@ export const addLibrarian = (staffMemberId: string, libraryRole: string) => {
   });
 };
 
+export const deleteLibrarian = (id: string) => {
+  if (!id) throw new Error('Librarian id is required.');
+  return request<void>(`/api/library/librarians/${id}`, { method: 'DELETE' });
+};
+
 export const updateLibrarian = (id: string, libraryRole: string, isActive: boolean) => {
   if (!id || !libraryRole.trim()) throw new Error('Librarian and library role are required.');
   return request<Librarian>(`/api/library/librarians/${id}`, {
