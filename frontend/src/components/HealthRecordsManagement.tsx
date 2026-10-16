@@ -10,7 +10,7 @@ import {
 
 type Tab = 'student' | 'clinic'
 
-export function HealthRecordsManagement() {
+export function HealthRecordsManagement({ activeSubsection = null }: { activeSubsection?: string | null }) {
   const [tab, setTab] = useState<Tab>('student')
   const [studentId, setStudentId] = useState('')
   const [records, setRecords] = useState<MedicalRecord[]>([])
@@ -18,6 +18,11 @@ export function HealthRecordsManagement() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  useEffect(() => {
+    if (activeSubsection === 'clinic') setTab('clinic')
+    else if (activeSubsection === 'medical-records' || activeSubsection === 'student') setTab('student')
+  }, [activeSubsection])
+
   const [form, setForm] = useState({
     recordType: 'ClinicVisit',
     condition: '',
