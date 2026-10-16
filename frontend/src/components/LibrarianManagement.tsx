@@ -32,10 +32,14 @@ export function LibrarianManagement() {
     event.preventDefault();
     if (!staffMemberId || !libraryRole.trim() || libraryRole.trim().length > 80) return;
     try {
-      await addLibrarian(staffMemberId, libraryRole);
+      const assigned = await addLibrarian(staffMemberId, libraryRole);
+      // Render the server-confirmed assignment immediately instead of waiting for another list request.
+      setLibrarians(current => [assigned, ...current.filter(item => item.id !== assigned.id)]);
+      setStaff(current => current.filter(person => person.id !== assigned.staffMemberId));
       setStaffMemberId('');
-      setMessage('Librarian added successfully.');
-      await refresh();
+      setMessage(`${assigned.firstName} ${assigned.lastName} is now listed as ${assigned.libraryRole}.`);
+      // Reconcile with persisted server state in the background.
+      void refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to add librarian.'); }
   }
 
