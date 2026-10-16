@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { readApiErrorMessage } from './errors'
 
 export interface SmsTemplate {
   name: string
@@ -38,9 +39,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   })
-  if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
-  if (response.status === 403) throw new Error('Your role is not authorized to send SMS.')
-  if (!response.ok) throw new Error((await response.text()) || `Request failed with status ${response.status}`)
+  if (!response.ok) throw new Error(await readApiErrorMessage(response))
+  if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
 
