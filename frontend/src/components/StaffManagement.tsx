@@ -42,7 +42,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
     void loadStaff()
     const onStaffChanged = (event: Event) => {
       const detail = (event as CustomEvent<{ staff?: StaffMember }>).detail
-      if (detail?.staff) setStaff(current => [detail.staff!, ...current.filter(item => item.id !== detail.staff!.id)])
+      if (detail?.staff) {
+        setStaff(current => [detail.staff!, ...current.filter(item => item.id !== detail.staff!.id)])
+        return
+      }
       void loadStaff()
     }
     window.addEventListener(STAFF_CHANGED_EVENT, onStaffChanged)
