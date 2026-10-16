@@ -110,6 +110,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
     try {
       await deactivateStaff(id)
       setStaff(current => current.map(person => person.id === id ? { ...person, isActive: false } : person))
+      window.dispatchEvent(new Event(STAFF_CHANGED_EVENT))
       setSuccess('Staff member deactivated.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') }
   }
@@ -117,6 +118,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
     try {
       await activateStaff(id)
       setStaff(current => current.map(person => person.id === id ? { ...person, isActive: true } : person))
+      window.dispatchEvent(new Event(STAFF_CHANGED_EVENT))
       setSuccess('Staff member activated.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to activate staff.') }
   }
@@ -126,6 +128,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
       await deleteStaff(person.id)
       setStaff(current => current.filter(item => item.id !== person.id))
       if (editingStaffId === person.id) cancelEdit()
+      window.dispatchEvent(new Event(STAFF_CHANGED_EVENT))
       setSuccess(`${person.firstName} ${person.lastName} was deleted.`)
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to delete staff. They may be linked to other records.') }
   }
