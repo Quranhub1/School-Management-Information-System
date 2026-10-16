@@ -100,27 +100,27 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
 
       {error && (
         <div
-          className="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 p-4 text-sm text-amber-950 shadow-sm"
+          className="mb-5 flex items-start justify-between gap-3 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-yellow-50 p-4 text-sm text-amber-950 shadow-md shadow-amber-900/5 ring-1 ring-amber-100"
           role="alert"
           aria-live="assertive"
         >
           <div className="flex min-w-0 items-start gap-3">
             <span
               aria-hidden="true"
-              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-white text-xl font-bold text-amber-700 shadow-sm"
+              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-amber-200 bg-white text-xl font-bold text-amber-600 shadow-sm ring-4 ring-amber-100/70"
             >
               !
             </span>
-            <div className="min-w-0">
-              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-amber-700">Warning</p>
-              <h3 className="mb-1 text-base font-semibold text-amber-950">
+            <div className="min-w-0 pt-0.5">
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700">Warning</p>
+              <h3 className="mb-1 text-base font-semibold tracking-tight text-slate-900">
                 {/staff number is already registered|staff member with this staff number already exists/i.test(error)
                   ? 'Staff member already registered'
-                  : 'Unable to complete the request'}
+                  : 'Action requires attention'}
               </h3>
-              <p className="leading-6 text-amber-900">
+              <p className="max-w-3xl leading-6 text-slate-700">
                 {/staff number is already registered|staff member with this staff number already exists/i.test(error)
-                  ? 'This user is already registered. Please use a unique staff number or check the existing staff record.'
+                  ? 'This staff number is already in use. Please check the existing staff record or enter a unique staff number.'
                   : error}
               </p>
             </div>
@@ -129,7 +129,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
             type="button"
             aria-label="Dismiss warning"
             title="Dismiss warning"
-            className="shrink-0 rounded-lg px-2.5 py-1.5 text-lg font-semibold leading-none text-amber-800 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-lg font-semibold leading-none text-slate-500 transition hover:bg-amber-100 hover:text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
             onClick={() => setError('')}
           >
             ×
