@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { addLibrarian, listLibrarians, updateLibrarian, type Librarian } from '../api/librarians';
-import { listStaff, type StaffMember } from '../api/staff';
+import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff';
 
 export function LibrarianManagement() {
   const [librarians, setLibrarians] = useState<Librarian[]>([]);
@@ -21,7 +21,12 @@ export function LibrarianManagement() {
     } finally { setLoading(false); }
   }
 
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    void refresh();
+    const refreshStaff = () => { void refresh(); };
+    window.addEventListener(STAFF_CHANGED_EVENT, refreshStaff);
+    return () => window.removeEventListener(STAFF_CHANGED_EVENT, refreshStaff);
+  }, []);
 
   async function add(event: React.FormEvent) {
     event.preventDefault();
