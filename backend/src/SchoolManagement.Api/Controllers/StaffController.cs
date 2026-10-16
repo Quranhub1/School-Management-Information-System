@@ -10,6 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/staff")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class StaffController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet]
