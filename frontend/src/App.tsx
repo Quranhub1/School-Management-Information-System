@@ -227,7 +227,8 @@ function navigate(module:ModuleKey, subsection?:string){
   }
   setActiveModule(module);
   setActiveSubsection(subsection??null);
-  if(subsection) window.dispatchEvent(new CustomEvent('smis:navigate-subsection',{detail:{module,subsection}}));
+  // Dispatch after React commits the destination workspace so newly mounted screens receive the request.
+  if (subsection) window.setTimeout(() => window.dispatchEvent(new CustomEvent('smis:navigate-subsection', { detail: { module, subsection } })), 0);
 }
 type SidebarItem={label:string;module:ModuleKey;subsection?:string;child?:boolean};
 type SidebarGroup={label:string;items:SidebarItem[];alwaysOpen?:boolean};
@@ -392,15 +393,15 @@ return <main className="app-shell">
   </aside>
   <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(activeModule === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden')) ? 'School Warden' : (moduleLabels[activeModule]||'Dashboard')).toUpperCase()}</strong></div></div><GlobalSearch/></header><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('Admin Secretary')||r.includes('AdminSecretary'))?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:r.includes('SystemAdministrator')?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 {activeModule==='dashboard'&&(r.includes('Records Officer')||r.includes('RecordsOfficer')||r.includes('School Warden')||r.includes('SchoolWarden')||r.includes('SchoolWarden'))&&<InventoryStockAlerts/>}
-{activeModule==='administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved}/>} 
+{activeModule==='administration'&&a&&<AdministrationManagement onInstitutionSaved={onInstitutionSaved} activeSubsection={activeSubsection}/>} 
 {activeModule==='students'&&(st||ad||s360||studentRead||admissionRead)&&<AdmissionsStudentManagement canManage={st||ad} readOnly={!st&&!ad} activeSubsection={activeSubsection} accessProfile={r.includes('Receptionist')?'receptionist':r.includes('Records Officer')?'records':r.includes('HeadOfDepartment')?'department':'general'} />} 
 {activeModule==='academics'&&(ac||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/>} {activeModule==='curriculum'&&ac&&<CurriculumManagement canManage={ac}/>} 
 {activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}
 {activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
-{activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={fi}/>}
+{activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={fi} activeSubsection={activeSubsection}/>}
 {activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} />}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
-{activeModule==='health'&&(attManage||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement/>}
+{activeModule==='health'&&(attManage||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement activeSubsection={activeSubsection}/>}
 {activeModule==='laboratories'&&hostel&&((r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:<HostelManagement canManage={hostel}/>)}
 {activeModule==='inventory'&&inv&&<InventoryManagement canManage={inv}/>}
 {activeModule==='communication'&&moduleAllowed('communication')&&<Announcements canManage={cm}/>}
