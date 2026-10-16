@@ -31,7 +31,7 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
 
     [HttpPost]
     [Authorize(Policy = StaffPolicies.Management)]
-    public async Task<IActionResult> Create(CreateStaffRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromBody] CreateStaffRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.StaffNumber) || string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.EmploymentType))
             return BadRequest(new { message = "Staff number, names and employment type are required." });
