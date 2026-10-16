@@ -295,7 +295,7 @@ export function GuildElectoralCommission() {
               <span><FileSignature size={17} /><strong>Digitally sign declaration</strong><small>Chairman authorisation required before publication</small></span>
             </label>
             <div className="guild-declaration-actions">
-              <button type="button" className="secondary-button"><Download size={16} /> Download PDF</button>
+              <button type="button" className="secondary-button" onClick={() => window.print()}><Download size={16} /> Print / Save as PDF</button>
               <button type="button" className="primary-button" onClick={publishResults}><Send size={16} /> Publish results</button>
             </div>
           </div>
