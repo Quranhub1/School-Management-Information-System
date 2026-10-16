@@ -280,6 +280,8 @@ const sidebarGroups:SidebarGroup[]=[
 ];
 function canSeeSidebarItem(item:SidebarItem){
   if (!moduleAllowed(item.module)) return false;
+  // Class setup is a management screen; do not expose a destination that renders blank for read-only roles.
+  if (item.module === 'academics' && item.subsection === 'classes' && !ac) return false;
   if (item.module === 'staff' && item.subsection === 'payroll') return fi && !isAdminSecretary;
   if (item.module === 'staff' && (item.subsection === 'leave' || item.subsection === 'recruitment')) return sm;
   if (item.module === 'system-administration') return r.includes('SystemAdministrator');
