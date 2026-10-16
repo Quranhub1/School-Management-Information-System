@@ -31,7 +31,7 @@ const activity = [
 
 type GuildView = 'governance' | 'electoral' | 'calendar'
 
-export function GuildManagement() {
+export function GuildManagement({ canOpenCalendar = false, canOpenNotices = false, canOpenFinance = false }: { canOpenCalendar?: boolean; canOpenNotices?: boolean; canOpenFinance?: boolean }) {
   const [view, setView] = useState<GuildView>('governance')
   const [selected, setSelected] = useState(0)
   const [showPortfolioList, setShowPortfolioList] = useState(true)
@@ -47,8 +47,8 @@ export function GuildManagement() {
           <p>Coordinate student leadership, council business, portfolios, meetings, resolutions and official communication in one structured area.</p>
         </div>
         <div className="page-actions">
-          <button className="secondary-button" type="button" onClick={() => setView('calendar')}><CalendarDays size={16} /> Record meeting</button>
-          <button className="primary-button" type="button" onClick={() => setView('calendar')}><Plus size={16} /> New record</button>
+          {canOpenCalendar && <button className="secondary-button" type="button" onClick={() => setView('calendar')}><CalendarDays size={16} /> Record meeting</button>}
+          {canOpenCalendar && <button className="primary-button" type="button" onClick={() => setView('calendar')}><Plus size={16} /> New calendar record</button>}
         </div>
       </header>
 
@@ -59,9 +59,9 @@ export function GuildManagement() {
         <button type="button" className={view === 'electoral' ? 'active' : ''} onClick={() => setView('electoral')} role="tab" aria-selected={view === 'electoral'}>
           <ShieldCheck size={16} /> Electoral Commission
         </button>
-        <button type="button" className={view === 'calendar' ? 'active' : ''} onClick={() => setView('calendar')} role="tab" aria-selected={view === 'calendar'}>
+        {canOpenCalendar && <button type="button" className={view === 'calendar' ? 'active' : ''} onClick={() => setView('calendar')} role="tab" aria-selected={view === 'calendar'}>
           <CalendarDays size={16} /> Meetings & Calendar
-        </button>
+        </button>}
       </div>
 
       {view === 'electoral' ? (
@@ -127,10 +127,10 @@ export function GuildManagement() {
               <div><p className="eyebrow">Governance controls</p><h3>Quick actions</h3></div>
             </div>
             <div className="guild-quick-actions">
-              <button type="button" onClick={() => setView('calendar')}><CalendarDays size={17} /><span><strong>Meetings</strong><small>Open the institutional calendar to record a sitting</small></span></button>
+              {canOpenCalendar && <button type="button" onClick={() => setView('calendar')}><CalendarDays size={17} /><span><strong>Meetings</strong><small>Open the institutional calendar to record a sitting</small></span></button>}
               <button type="button" onClick={() => setView('governance')}><FileText size={17} /><span><strong>Resolutions</strong><small>Review governance portfolios and responsibilities</small></span></button>
-              <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('smis:navigate-module', { detail: 'communication' }))}><Megaphone size={17} /><span><strong>Notices</strong><small>Open the announcements workspace</small></span></button>
-              <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('smis:navigate-module', { detail: 'finance' }))}><WalletCards size={17} /><span><strong>Budget</strong><small>Open Finance & Accounting</small></span></button>
+              {canOpenNotices && <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('smis:navigate-module', { detail: 'communication' }))}><Megaphone size={17} /><span><strong>Notices</strong><small>Open the announcements workspace</small></span></button>}
+              {canOpenFinance && <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('smis:navigate-module', { detail: 'finance' }))}><WalletCards size={17} /><span><strong>Budget</strong><small>Open Finance & Accounting</small></span></button>}
             </div>
           </section>
 
