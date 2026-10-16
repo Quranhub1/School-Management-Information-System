@@ -65,7 +65,18 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
         {canManage && <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>}
       </div>
 
-      {error && <div className="error" role="alert">{error}</div>}
+      {error && (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm" role="alert" aria-live="polite">
+          <div className="flex items-start gap-3">
+            <span aria-hidden="true" className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-lg font-semibold text-amber-700">!</span>
+            <div>
+              <h3 className="mb-1 font-semibold">Unable to complete the request</h3>
+              <p className="leading-6 text-amber-900">{error}</p>
+            </div>
+          </div>
+          <button type="button" aria-label="Dismiss notification" className="shrink-0 rounded-md px-2 py-1 font-semibold text-amber-800 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500" onClick={() => setError('')}>×</button>
+        </div>
+      )}
 
       {tab === 'staff' && (
         <>
