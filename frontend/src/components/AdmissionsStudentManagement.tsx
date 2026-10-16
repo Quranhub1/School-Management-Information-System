@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
 import { AlumniManagement } from './AlumniManagement'
+import { getStudents, type Student } from '../api/students'
 
 type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'alumni'
 type AccessProfile = 'receptionist' | 'records' | 'department' | 'general'
@@ -25,6 +26,12 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
   const [indexingStatus, setIndexingStatus] = useState('Not Indexed')
   const [uvtabRegistrationNumber, setUvtabRegistrationNumber] = useState('')
   const [studentStatus, setStudentStatus] = useState(statuses[0])
+  const [cardType, setCardType] = useState<'campus' | 'library'>('campus')
+  const [cardStudents, setCardStudents] = useState<Student[]>([])
+  const [selectedCardStudentIds, setSelectedCardStudentIds] = useState<string[]>([])
+  const [cardQueueLoading, setCardQueueLoading] = useState(false)
+  const [cardQueueError, setCardQueueError] = useState('')
+  const [cardQueueNotice, setCardQueueNotice] = useState('')
 
   // Prop synchronization also handles navigation into Students from another module,
   // where the sidebar event can fire before this component has mounted.
@@ -44,6 +51,41 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
     window.addEventListener('smis:navigate-subsection', handleSubsectionNavigation)
     return () => window.removeEventListener('smis:navigate-subsection', handleSubsectionNavigation)
   }, [])
+
+  useEffect(() => {
+    if (section !== 'cards') return
+    let cancelled = false
+    setCardQueueLoading(true)
+    setCardQueueError('')
+    getStudents()
+      .then(items => {
+        if (!cancelled) setCardStudents(items)
+      })
+      .catch(error => {
+        if (!cancelled) setCardQueueError(error instanceof Error ? error.message : 'Unable to load students for ID cards.')
+      })
+      .finally(() => {
+        if (!cancelled) setCardQueueLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [section])
+
+  function toggleCardStudent(studentId: string) {
+    setSelectedCardStudentIds(current => current.includes(studentId)
+      ? current.filter(id => id !== studentId)
+      : [...current, studentId])
+    setCardQueueNotice('')
+  }
+
+  function printSelectedCards() {
+    if (selectedCardStudentIds.length === 0) {
+      setCardQueueError('Select at least one student before printing ID cards.')
+      return
+    }
+    setCardQueueError('')
+    setCardQueueNotice(`Preparing ${selectedCardStudentIds.length} ${cardType === 'campus' ? 'campus' : 'library'} ID card(s) for printing.`)
+    window.setTimeout(() => window.print(), 0)
+  }
 
   const visibleSections = readOnly
     ? sections.filter(item => accessProfile === 'receptionist' ? ['biodata', 'admissions'].includes(item.key) : accessProfile === 'department' ? item.key === 'biodata' : accessProfile === 'records' ? ['biodata', 'admissions', 'status'].includes(item.key) : ['biodata', 'admissions', 'status'].includes(item.key))
@@ -115,12 +157,52 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         )}
 
         {section === 'cards' && (
-          <div className="feature-grid">
-            <article className="feature-card"><strong>Library ID Cards</strong><span>Prepare student library identity cards for batch production.</span><button className="secondary-button" type="button">Open Card Queue</button></article>
-            <article className="feature-card"><strong>Campus ID Cards</strong><span>Prepare campus identity cards with student details.</span><button className="secondary-button" type="button">Open Card Queue</button></article>
-            <article className="feature-card"><strong>Barcode / QR</strong><span>Identity cards are designed for barcode and QR-code identification.</span></article>
-            <article className="feature-card"><strong>Batch Printing</strong><span>Organize selected students into printable card batches.</span></article>
-          </div>
+          <section className="panel" aria-label="Student ID card queue">
+            <div className="panel-heading">
+              <div><p className="eyebrow">STUDENT SERVICES</p><h3>ID Card Queue</h3><p>Select registered students, choose a card type, and print a batch of cards.</p></div>
+              <label>Card type<select value={cardType} onChange={event => { setCardType(event.target.value as 'campus' | 'library'); setCardQueueNotice('') }}><option value="campus">Campus ID</option><option value="library">Library ID</option></select></label>
+            </div>
+            {cardQueueError && <div className="error" role="alert">{cardQueueError}</div>}
+            {cardQueueNotice && <div className="info-banner" role="status">{cardQueueNotice}</div>}
+            <div className="form-actions no-print" style={{ marginBottom: 12 }}>
+              <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds(cardStudents.map(student => student.id))} disabled={cardQueueLoading || cardStudents.length === 0}>Select all</button>
+              <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds([])} disabled={selectedCardStudentIds.length === 0}>Clear selection</button>
+              <button type="button" onClick={printSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Print selected cards ({selectedCardStudentIds.length})</button>
+            </div>
+            {cardQueueLoading ? <p className="empty">Loading registered students…</p> : cardStudents.length === 0 ? <p className="empty">No registered students are available for ID card printing.</p> : (
+              <div className="table-wrap no-print">
+                <table>
+                  <thead><tr><th>Select</th><th>Student number</th><th>Student name</th><th>Status</th></tr></thead>
+                  <tbody>{cardStudents.map(student => <tr key={student.id}>
+                    <td><input type="checkbox" aria-label={`Select ${student.studentNumber}`} checked={selectedCardStudentIds.includes(student.id)} onChange={() => toggleCardStudent(student.id)} /></td>
+                    <td>{student.studentNumber}</td>
+                    <td>{[student.firstName, student.otherNames, student.lastName].filter(Boolean).join(' ')}</td>
+                    <td>{student.status}</td>
+                  </tr>)}</tbody>
+                </table>
+              </div>
+            )}
+            <div id="print-queue-section" className="student-id-card-print-grid">
+              {cardStudents.filter(student => selectedCardStudentIds.includes(student.id)).map(student => (
+                <article key={student.id} className="student-id-card">
+                  <header><strong>{cardType === 'campus' ? 'STUDENT ID CARD' : 'LIBRARY ID CARD'}</strong></header>
+                  <div><span>Student number</span><strong>{student.studentNumber}</strong></div>
+                  <h4>{[student.firstName, student.otherNames, student.lastName].filter(Boolean).join(' ')}</h4>
+                  <div><span>Status</span><strong>{student.status || 'Active'}</strong></div>
+                  <small>Keep this card for institutional identification.</small>
+                </article>
+              ))}
+            </div>
+            <style>{`
+              .student-id-card-print-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 18px; }
+              .student-id-card { min-height: 145px; padding: 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white; color: #0f172a; break-inside: avoid; }
+              .student-id-card header { padding-bottom: 8px; margin-bottom: 10px; border-bottom: 2px solid #1d4ed8; color: #1d4ed8; font-size: 12px; letter-spacing: .08em; }
+              .student-id-card h4 { margin: 8px 0; font-size: 18px; }
+              .student-id-card div { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+              .student-id-card small { display: block; margin-top: 12px; color: #475569; }
+              @media print { .student-id-card-print-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .student-id-card { box-shadow: none; } }
+            `}</style>
+          </section>
         )}
 
         {section === 'alumni' && (
