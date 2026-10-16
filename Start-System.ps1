@@ -29,14 +29,14 @@ if ((Test-LocalPortListening 5000) -or (Test-LocalPortListening 5173)) {
 # Base64-encode child commands to handle paths containing spaces safely.
 $escapedRoot = $RepoRoot.Replace("'", "''")
 $backendCommand = @(
-    "$Host.UI.RawUI.WindowTitle = 'SMIS Backend'",
+    '$Host.UI.RawUI.WindowTitle = ''SMIS Backend''',
     "Set-Location -LiteralPath '$escapedRoot'",
-    "$env:ASPNETCORE_ENVIRONMENT = 'Development'",
-    "$env:ASPNETCORE_URLS = 'http://127.0.0.1:5000'",
+    '$env:ASPNETCORE_ENVIRONMENT = ''Development''',
+    '$env:ASPNETCORE_URLS = ''http://127.0.0.1:5000''',
     "dotnet run --project '.\backend\src\SchoolManagement.Api\SchoolManagement.Api.csproj'"
 ) -join "`n"
 $frontendCommand = @(
-    "$Host.UI.RawUI.WindowTitle = 'SMIS Frontend'",
+    '$Host.UI.RawUI.WindowTitle = ''SMIS Frontend''',
     "Set-Location -LiteralPath '$escapedRoot\frontend'",
     'npm run dev -- --host 0.0.0.0'
 ) -join "`n"
