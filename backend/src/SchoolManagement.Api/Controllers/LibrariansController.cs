@@ -61,7 +61,13 @@ public sealed class LibrariansController(
             return HandlePersistenceFailure(ex, "assign librarian");
         }
 
-        return Created($"/api/library/librarians/{librarian.Id}", librarian);
+        // Return the same shape as GET /api/library/librarians.
+        // The frontend needs staff details to display the new assignment immediately.
+        var response = new LibrarianView(
+            librarian.Id, staff.Id, staff.StaffNumber, staff.FirstName, staff.LastName,
+            staff.PhoneNumber, staff.Email, librarian.LibraryRole, librarian.IsActive,
+            librarian.AssignedAtUtc, librarian.DeactivatedAtUtc);
+        return Created($"/api/library/librarians/{librarian.Id}", response);
     }
 
     [HttpPatch("{id:guid}")]
