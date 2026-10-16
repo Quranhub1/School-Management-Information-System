@@ -67,15 +67,54 @@ public sealed class AdministrationController(AdministrationService service) : Co
     }
 
     [HttpGet("backup")]
-    public IActionResult Backup()
+    public async Task<IActionResult> Backup(CancellationToken cancellationToken)
     {
-        return StatusCode(StatusCodes.Status501NotImplemented, new { message = "Database backup is not yet implemented. Use pg_dump for production backups." });
+        try
+        {
+            var backupFilePath = await service.BackupDatabaseAsync(cancellationToken);
+            var fileName = Path.GetFileName(backupFilePath);
+            
+            // Return the backup file as a download
+            var memory = new MemoryStream();
+            await using (var stream = new FileStream(backupFilePath, FileMode.Open))
+            {
+                await stream.CopyToAsync(memory);
+            }
+            memory.Position = 0;
+            
+            return File(memory, "application/octet-stream", fileName);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Backup failed: {ex.Message}" });
+        }
     }
 
     [HttpPost("restore")]
-    public IActionResult Restore([FromBody] RestoreRequest request)
+    public async Task<IActionResult> Restore([FromBody] RestoreRequest request, CancellationToken cancellationToken)
     {
-        return StatusCode(StatusCodes.Status501NotImplemented, new { message = "Database restore is not yet implemented. Use pg_restore for production restores." });
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.BackupData))
+            {
+                return BadRequest(new { message = "Backup data is required." });
+            }
+
+            // In a real implementation, we would save the uploaded backup data to a file first
+            // For simplicity, we're assuming BackupData contains the file path
+            // A better approach would be to accept file upload via multipart/form-data
+            
+            await service.RestoreDatabaseAsync(request.BackupData, cancellationToken);
+            return Ok(new { message = "Database restore completed successfully." });
+        }
+        catch (FileNotFoundException ex)
+        {
+            return NotFound(new { message = $"Backup file not found: {ex.Message}" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Restore failed: {ex.Message}" });
+        }
     }
 
     public sealed record SetActiveRequest(bool Active);

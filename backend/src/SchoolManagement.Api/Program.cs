@@ -1,17 +1,3 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using SchoolManagement.Application;
-using SchoolManagement.Application.Authorization;
-using SchoolManagement.Infrastructure;
-using SchoolManagement.Infrastructure.Finance;
-using SchoolManagement.Infrastructure.Identity;
-using SchoolManagement.Infrastructure.Persistence;
-using System.Text;
-using System.Text.Json;
-using System.Threading.RateLimiting;
-
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(o =>
 {
@@ -37,7 +23,7 @@ var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<stri
 if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
     throw new InvalidOperationException("AllowedOrigins must contain at least one trusted frontend origin in Production.");
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); else policy.AllowAnyOrigin(); policy.AllowAnyHeader().AllowAnyMethod(); }); });
-builder.Services.AddApplication();
+builder.Services.AddApplication(builder.Configuration);
 var connectionString = builder.Configuration.GetConnectionString("SchoolManagement") ?? throw new InvalidOperationException("Connection string 'SchoolManagement' is not configured.");
 if (builder.Environment.IsProduction() && (connectionString.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase) || connectionString.Contains("replace-me", StringComparison.OrdinalIgnoreCase)))
     throw new InvalidOperationException("Production database connection string contains an unresolved placeholder.");
@@ -48,22 +34,4 @@ if (builder.Environment.IsProduction() && (jwtKey.Contains("CHANGE_ME", StringCo
 var jwtIssuer = builder.Configuration["Authentication:JwtIssuer"] ?? throw new InvalidOperationException("Authentication:JwtIssuer is not configured.");
 var jwtAudience = builder.Configuration["Authentication:JwtAudience"] ?? throw new InvalidOperationException("Authentication:JwtAudience is not configured.");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o => o.TokenValidationParameters = new TokenValidationParameters { ValidateIssuerSigningKey = true, IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), ValidateIssuer = true, ValidIssuer = jwtIssuer, ValidateAudience = true, ValidAudience = jwtAudience, ValidateLifetime = true, ClockSkew = TimeSpan.FromMinutes(1) });
-builder.Services.AddAuthorization(options => { options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build(); options.AddPolicy(AuthorizationPolicies.AcademicManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.AcademicManagement)); options.AddPolicy(AuthorizationPolicies.AcademicRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.AcademicRead)); options.AddPolicy(AuthorizationPolicies.StudentManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.StudentManagement)); options.AddPolicy(AuthorizationPolicies.StudentRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.StudentRead)); options.AddPolicy(AuthorizationPolicies.FinanceManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.FinanceManagement)); options.AddPolicy(AuthorizationPolicies.FinanceOperations, p => p.RequireRole(AuthorizationPolicies.RoleSets.FinanceOperations)); options.AddPolicy(AuthorizationPolicies.FinanceRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.FinanceRead)); options.AddPolicy(AuthorizationPolicies.ExaminationManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.ExaminationManagement)); options.AddPolicy(AuthorizationPolicies.AttendanceManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.AttendanceManagement)); options.AddPolicy(AuthorizationPolicies.AttendanceRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.AttendanceRead)); options.AddPolicy(AuthorizationPolicies.HostelManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.HostelManagement)); options.AddPolicy(AuthorizationPolicies.InventoryManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.InventoryManagement)); options.AddPolicy(AdmissionsPolicies.Management, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsManagement)); options.AddPolicy(AdmissionsPolicies.Read, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsRead)); options.AddPolicy(AuthorizationPolicies.AdmissionsRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsRead)); options.AddPolicy(TimetablePolicies.Management, p => p.RequireRole(InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AssistantRegistrar, InstitutionalRoles.Lecturer, InstitutionalRoles.HrManager)); options.AddPolicy(TimetablePolicies.Read, p => p.RequireRole(InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AssistantRegistrar, InstitutionalRoles.Lecturer, InstitutionalRoles.Principal, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.HrManager)); options.AddPolicy(StaffPolicies.Read, p => p.RequireRole(InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Lecturer, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.HrManager, InstitutionalRoles.RecordsOfficer)); options.AddPolicy(StaffPolicies.Management, p => p.RequireRole(InstitutionalRoles.SystemAdministrator, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Accountant, InstitutionalRoles.HrManager)); options.AddPolicy(LibraryPolicies.Read, p => p.RequireRole(InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Librarian, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.Lecturer)); options.AddPolicy(LibraryPolicies.Management, p => p.RequireRole(InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Librarian, InstitutionalRoles.HrManager)); options.AddPolicy(AuthorizationPolicies.Administration, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdministrationManagement)); options.AddPolicy(AuthorizationPolicies.ReportingManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.ReportingManagement)); options.AddPolicy(AuthorizationPolicies.CommunicationManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.CommunicationManagement)); options.AddPolicy(AuthorizationPolicies.CommunicationRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.CommunicationRead)); options.AddPolicy(AuthorizationPolicies.StudentPortal, p => p.RequireRole(AuthorizationPolicies.RoleSets.StudentPortal)); options.AddPolicy(AuthorizationPolicies.Student360, p => p.RequireRole(AuthorizationPolicies.RoleSets.Student360)); });
-var app = builder.Build();
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<SchoolManagementDbContext>();
-    await db.Database.MigrateAsync();
-    await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
-    await scope.ServiceProvider.GetRequiredService<FinanceAccountSeeder>().SeedAsync();
-}
-if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
-app.UseHttpsRedirection();
-app.UseCors();
-app.UseRateLimiter();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapHealthChecks("/health").AllowAnonymous();
-app.MapControllers();
-app.Run();
-public partial class Program { }
+builder.Services.AddAuthorization(options => { options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build(); options.AddPolicy(AuthorizationPolicies.AcademicManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.AcademicManagement)); options.AddPolicy(AuthorizationPolicies.AcademicRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.AcademicRead)); options.AddPolicy(AuthorizationPolicies.StudentManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.StudentManagement)); options.AddPolicy(AuthorizationPolicies.StudentRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.StudentRead)); options.AddPolicy(AuthorizationPolicies.FinanceManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.FinanceManagement)); options.AddPolicy(AuthorizationPolicies.FinanceOperations, p => p.RequireRole(AuthorizationPolicies.RoleSets.FinanceOperations)); options.AddPolicy(AuthorizationPolicies.FinanceRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.FinanceRead)); options.AddPolicy(AuthorizationPolicies.ExaminationManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.ExaminationManagement)); options.AddPolicy(AuthorizationPolicies.AttendanceManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.AttendanceManagement)); options.AddPolicy(AuthorizationPolicies.AttendanceRead, p => p.RequireRole(AuthorizationPolicies.RoleSets.AttendanceRead)); options.AddPolicy(AuthorizationPolicies.HostelManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.HostelManagement)); options.AddPolicy(AuthorizationPolicies.InventoryManagement, p => p.RequireRole(AuthorizationPolicies.RoleSets.InventoryManagement)); options.AddPolicy(AdmissionsPolicies.Management, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsManagement)); options.AddPolicy(AdmissionsPolicies.Read, p => p.RequireRole(AuthorizationPolicies.RoleSets.AdmissionsRead)); options.AddPolicy(AuthorizationPolicies.AdmissionsRe... (line truncated to 2000 chars)
