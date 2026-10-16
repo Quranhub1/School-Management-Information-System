@@ -9,7 +9,6 @@ const roles = ['SystemAdministrator', 'AcademicRegistrar', 'AssistantRegistrar',
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['AcademicRegistrar'] }
 
 type AdminTab = 'users' | 'offices' | 'settings'
-type AdministrationManagementProps = { onInstitutionSaved?: (settings: InstitutionSettings) => void; activeSubsection?: string | null }
 
 type Office = { key: string; title: string; group: string; description: string; responsibilities: string[]; workspace?: string; workspaceLabel?: string; icon: typeof Building2 }
 
@@ -54,6 +53,7 @@ const ROLE_COLORS: Record<string, string> = {
 
 interface AdministrationManagementProps {
   onInstitutionSaved?: (settings: InstitutionSettings) => void
+  activeSubsection?: string | null
 }
 
 export function AdministrationManagement({ onInstitutionSaved, activeSubsection = null }: AdministrationManagementProps) {
