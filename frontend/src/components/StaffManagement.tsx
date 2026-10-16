@@ -16,7 +16,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
   const [payrollMonth, setPayrollMonth] = useState(new Date().getMonth() + 1)
   const [payrollYear, setPayrollYear] = useState(new Date().getFullYear())
 
-  async function loadStaff() { setLoading(true); try { setStaff(await listStaff()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load staff.') } finally { setLoading(false) } }
+  async function loadStaff() { setLoading(true); try { setStaff(await listStaff(false)) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load staff.') } finally { setLoading(false) } }
   async function loadLeave() { if (!leaveForm.staffMemberId.trim()) return; try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
   async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
 
@@ -64,13 +64,15 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
       setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
       setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
       setSuccess(`${created.firstName} ${created.lastName} was saved and added to the staff table.`)
-      void listStaff().then(latest => {
+      void listStaff(false).then(latest => {
         setStaff(latest.some(item => item.id === created.id) ? latest : [created, ...latest])
       }).catch(() => {
         // Keep the confirmed create response visible even if the follow-up list refresh fails.
       })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to create staff.')
+      // A duplicate may be an inactive record, so refresh the complete staff list too.
+      try { setStaff(await listStaff(false)) } catch { /* Preserve the original create error. */ }
     }
   }
   async function deactivate(id: string) { try { await deactivateStaff(id); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') } }
@@ -152,10 +154,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
           )}
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Staff No.</th><th>Name</th><th>Employment</th><th>Contact</th>{canManage && <th>Action</th>}</tr></thead>
+              <thead><tr><th>Staff No.</th><th>Name</th><th>Employment</th><th>Contact</th><th>Status</th>{canManage && <th>Action</th>}</tr></thead>
               <tbody>
-                {loading ? <tr><td colSpan={5}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.employmentType}</td><td>{s.email || s.phoneNumber || '—'}</td>{canManage && <td><button className="secondary-button" onClick={() => void deactivate(s.id)}>{s.isActive ? 'Deactivate' : 'Activate'}</button></td>}</tr>
+                {loading ? <tr><td colSpan={canManage ? 6 : 5}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 6 : 5} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.employmentType}</td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td>{s.isActive ? <button className="secondary-button" onClick={() => void deactivate(s.id)}>Deactivate</button> : '—'}</td>}</tr>
                 ))}
               </tbody>
             </table>
