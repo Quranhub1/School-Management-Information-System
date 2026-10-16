@@ -12,7 +12,7 @@ npm install
 npm start
 ```
 
-It normally runs at `http://localhost:5000`.
+It normally runs at `http://127.0.0.1:5000`.
 
 Start the frontend in another terminal:
 
@@ -109,7 +109,7 @@ Swagger is available when enabled by the environment.
 In a controlled development/bootstrap database, create a System Administrator using the registration endpoint if registration is enabled:
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://127.0.0.1:5000/api/auth/register \
   -H 'Content-Type: application/json' \
   -d '{"username":"admin","password":"REPLACE_WITH_A_STRONG_PASSWORD","firstName":"System","lastName":"Administrator","roles":["SystemAdministrator"]}'
 ```
