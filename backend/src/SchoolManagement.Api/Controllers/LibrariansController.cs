@@ -70,6 +70,29 @@ public sealed class LibrariansController(
         return Created($"/api/library/librarians/{librarian.Id}", response);
     }
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var librarian = await db.Librarians.SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (librarian is null) return NotFound(new { message = "Librarian assignment not found." });
+
+        db.Librarians.Remove(librarian);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex)
+        {
+            logger.LogError(ex, "Failed to remove librarian assignment {LibrarianId}.", id);
+            return Problem(
+                statusCode: StatusCodes.Status500InternalServerError,
+                title: "Librarian assignment could not be deleted",
+                detail: "The database rejected this deletion. Check the server log for the underlying constraint error.");
+        }
+
+        return NoContent();
+    }
+
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateLibrarianRequest request, CancellationToken ct)
     {
