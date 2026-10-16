@@ -9,6 +9,7 @@ const roles = ['SystemAdministrator', 'AcademicRegistrar', 'AssistantRegistrar',
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['AcademicRegistrar'] }
 
 type AdminTab = 'users' | 'offices' | 'settings'
+type AdministrationManagementProps = { onInstitutionSaved?: (settings: InstitutionSettings) => void; activeSubsection?: string | null }
 
 type Office = { key: string; title: string; group: string; description: string; responsibilities: string[]; workspace?: string; workspaceLabel?: string; icon: typeof Building2 }
 
@@ -55,7 +56,7 @@ interface AdministrationManagementProps {
   onInstitutionSaved?: (settings: InstitutionSettings) => void
 }
 
-export function AdministrationManagement({ onInstitutionSaved }: AdministrationManagementProps) {
+export function AdministrationManagement({ onInstitutionSaved, activeSubsection = null }: AdministrationManagementProps) {
   const { institution } = useInstitutionSettings()
   const [users, setUsers] = useState<UserSummary[]>([])
   const [form, setForm] = useState(emptyForm)
@@ -64,6 +65,11 @@ export function AdministrationManagement({ onInstitutionSaved }: AdministrationM
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [tab, setTab] = useState<AdminTab>('users')
+  useEffect(() => {
+    if (activeSubsection === 'users' || activeSubsection === 'roles') setTab('users')
+    else if (activeSubsection === 'offices') setTab('offices')
+    else if (activeSubsection === 'settings') setTab('settings')
+  }, [activeSubsection])
   const [selectedOffice, setSelectedOffice] = useState<Office | null>(null)
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<UpdateUserRequest>({ firstName: '', lastName: '', email: '', roles: [] })
