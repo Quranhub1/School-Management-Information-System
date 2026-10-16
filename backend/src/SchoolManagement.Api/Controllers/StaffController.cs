@@ -60,6 +60,17 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
         return NoContent();
     }
 
+    [HttpPatch("{id:guid}/activate")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> Activate(Guid id, CancellationToken cancellationToken)
+    {
+        var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (staff is null) return NotFound();
+        staff.IsActive = true;
+        await db.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     [HttpPut("{id:guid}")]
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> Update(Guid id, UpdateStaffRequest request, CancellationToken cancellationToken)
