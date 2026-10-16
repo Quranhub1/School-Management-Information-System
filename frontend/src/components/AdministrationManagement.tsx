@@ -8,7 +8,7 @@ import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 const roles = ['SystemAdministrator', 'AcademicRegistrar', 'AssistantRegistrar', 'AdmissionsOfficer', 'Accountant', 'AssistantAccountant', 'Lecturer', 'ExaminationsOfficer', 'Student', 'SchoolWarden', 'Principal', 'Director', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'Receptionist', 'AssistantPrincipal', 'Admin Secretary', 'Records Officer', 'Librarian', 'HR Manager']
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['AcademicRegistrar'] }
 
-type AdminTab = 'users' | 'offices' | 'settings'
+type AdminTab = 'users' | 'roles' | 'offices' | 'settings'
 
 type Office = { key: string; title: string; group: string; description: string; responsibilities: string[]; workspace?: string; workspaceLabel?: string; icon: typeof Building2 }
 
@@ -66,7 +66,8 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
   const [successMessage, setSuccessMessage] = useState('')
   const [tab, setTab] = useState<AdminTab>('users')
   useEffect(() => {
-    if (activeSubsection === 'users' || activeSubsection === 'roles') setTab('users')
+    if (activeSubsection === 'users') setTab('users')
+    else if (activeSubsection === 'roles') setTab('roles')
     else if (activeSubsection === 'offices') setTab('offices')
     else if (activeSubsection === 'settings') setTab('settings')
   }, [activeSubsection])
@@ -202,6 +203,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
 
     <div className="library-workspace-tabs" role="tablist" aria-label="Administration sections">
       <button role="tab" aria-selected={tab === 'users'} className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>User Management</button>
+      <button role="tab" aria-selected={tab === 'roles'} className={tab === 'roles' ? 'active' : ''} onClick={() => setTab('roles')}>Roles</button>
       <button role="tab" aria-selected={tab === 'offices'} className={tab === 'offices' ? 'active' : ''} onClick={() => { setTab('offices'); setSelectedOffice(null) }}>Leadership & Offices</button>
       <button role="tab" aria-selected={tab === 'settings'} className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>Institution Settings</button>
     </div>
@@ -359,6 +361,25 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
           </div>
         </section>
       </div>
+    )}
+
+    {tab === 'roles' && (
+      <section className="panel" aria-labelledby="role-directory-title">
+        <div className="panel-heading">
+          <div><p className="eyebrow">ACCESS CONTROL</p><h3 id="role-directory-title">Role Directory</h3><p>Review the roles currently available in SMIS and how many user accounts have each role assigned.</p></div>
+          <button type="button" className="secondary-button" onClick={() => setTab('users')}>Manage user accounts</button>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Role</th><th>Accounts assigned</th><th>Action</th></tr></thead>
+            <tbody>{roles.map(role => {
+              const assignedCount = users.filter(user => user.roles.includes(role)).length;
+              return <tr key={role}><td>{role}</td><td>{assignedCount}</td><td><button type="button" className="secondary-button" onClick={() => setTab('users')}>Open user management</button></td></tr>;
+            })}</tbody>
+          </table>
+        </div>
+        <p className="empty">Role assignments are edited on individual user accounts. This directory does not invent or change backend permissions.</p>
+      </section>
     )}
 
     {tab === 'offices' && (
