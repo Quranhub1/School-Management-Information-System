@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, updateStaff, deleteStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest } from '../api/staff'
+import { createStaff, updateStaff, deleteStaff, activateStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
@@ -102,6 +102,13 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
       setSuccess('Staff member deactivated.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') }
   }
+  async function activate(id: string) {
+    try {
+      await activateStaff(id)
+      setStaff(current => current.map(person => person.id === id ? { ...person, isActive: true } : person))
+      setSuccess('Staff member activated.')
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to activate staff.') }
+  }
   async function removeStaff(person: StaffMember) {
     if (!window.confirm(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`)) return
     try {
@@ -193,7 +200,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
               <thead><tr><th>Staff No.</th><th>Name</th><th>Employment</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
                 {loading ? <tr><td colSpan={canManage ? 6 : 5}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 6 : 5} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.employmentType}</td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap gap-2"><button type="button" className="secondary-button" onClick={() => beginEdit(s)}>Edit</button>{s.isActive && <button type="button" className="secondary-button" onClick={() => void deactivate(s.id)}>Deactivate</button>}<button type="button" className="secondary-button" onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.employmentType}</td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap gap-2"><button type="button" className="secondary-button" onClick={() => beginEdit(s)}>Edit</button>{s.isActive ? <button type="button" className="secondary-button" onClick={() => void deactivate(s.id)}>Deactivate</button> : <button type="button" className="secondary-button" onClick={() => void activate(s.id)}>Activate</button>}<button type="button" className="secondary-button" onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
                 ))}
               </tbody>
             </table>
