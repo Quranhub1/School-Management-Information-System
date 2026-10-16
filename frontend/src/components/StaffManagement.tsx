@@ -40,10 +40,10 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
   useEffect(() => { if (tab === 'leave') void loadLeave() }, [tab])
   useEffect(() => { if (tab === 'payroll') void loadPayroll() }, [tab])
 
-  async function submit(e: React.FormEvent) { e.preventDefault(); setError(''); try { await createStaff(form); setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' }); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create staff.') } }
   async function deactivate(id: string) { try { await deactivateStaff(id); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') } }
   async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to request leave.') } }
   async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, '', approved); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to approve leave.') } }
+  async function submit(e: React.FormEvent) { e.preventDefault(); setError(''); try { await createStaff(form); console.log("Creating staff with form:", form); setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' }); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create staff.') } }
   async function handleGeneratePayroll() { try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to generate payroll.') } }
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to mark payroll as paid.') } }
 
@@ -73,10 +73,16 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
               <input placeholder="Staff number" value={form.staffNumber} onChange={e => setForm({ ...form, staffNumber: e.target.value })} required />
               <input placeholder="First name" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} required />
               <input placeholder="Last name" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} required />
+              <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
               <input placeholder="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required />
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              <button type="submit">Add staff member</button>
+              <select placeholder="Staff type" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value })} required >
+                <option value="">Select staff type</option>
+                <option value="Teaching">Teaching</option>
+                <option value="NonTeaching">Non-Teaching</option>
+                <option value="Administrative">Administrative</option>
+                <option value="Support">Support</option>
             </form>
           )}
           <div className="table-wrap">
