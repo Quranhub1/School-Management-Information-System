@@ -3,7 +3,7 @@ import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
 import { getUsers } from '../api/administration'
 import { getStudents } from '../api/students'
-import { listStaff } from '../api/staff'
+import { listStaff, STAFF_CHANGED_EVENT } from '../api/staff'
 import { getInvoices } from '../api/finance'
 import { listPayroll } from '../api/payroll'
 import { InventoryStockSettings } from './InventoryStockSettings'
@@ -150,7 +150,12 @@ export function AdminDashboard() {
     }
   }
 
-  useEffect(() => { void loadMetrics() }, [])
+  useEffect(() => {
+    void loadMetrics()
+    const refreshMetrics = () => { void loadMetrics() }
+    window.addEventListener(STAFF_CHANGED_EVENT, refreshMetrics)
+    return () => window.removeEventListener(STAFF_CHANGED_EVENT, refreshMetrics)
+  }, [])
 
   async function searchStudent(e: React.FormEvent) {
     e.preventDefault()
