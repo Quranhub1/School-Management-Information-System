@@ -18,13 +18,20 @@ const sections: { key: Section; label: string }[] = [
 
 const statuses = ['Active', 'On Clinical Attachment', 'Retake/Repeat Year', 'Discontinued', 'Deferred', 'Graduated']
 
-export function AdmissionsStudentManagement({ canManage = false, readOnly = false, accessProfile = 'general' }: { canManage?: boolean; readOnly?: boolean; accessProfile?: AccessProfile }) {
+export function AdmissionsStudentManagement({ canManage = false, readOnly = false, accessProfile = 'general', activeSubsection = null }: { canManage?: boolean; readOnly?: boolean; accessProfile?: AccessProfile; activeSubsection?: string | null }) {
   const [section, setSection] = useState<Section>('biodata')
   const [uhpabNumber, setUhpabNumber] = useState('')
   const [legacyRegistrationNumber, setLegacyRegistrationNumber] = useState('')
   const [indexingStatus, setIndexingStatus] = useState('Not Indexed')
   const [uvtabRegistrationNumber, setUvtabRegistrationNumber] = useState('')
   const [studentStatus, setStudentStatus] = useState(statuses[0])
+
+  // Prop synchronization also handles navigation into Students from another module,
+  // where the sidebar event can fire before this component has mounted.
+  useEffect(() => {
+    if (activeSubsection === 'records') setSection('biodata')
+    else if (activeSubsection === 'registration') setSection('admissions')
+  }, [activeSubsection])
 
   // Keep the sidebar's Students > Records destination synchronized with this workspace.
   useEffect(() => {
