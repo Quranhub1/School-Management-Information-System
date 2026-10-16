@@ -99,15 +99,41 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
       {success && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status" aria-live="polite">{success}</div>}
 
       {error && (
-        <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm" role="alert" aria-live="polite">
-          <div className="flex items-start gap-3">
-            <span aria-hidden="true" className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-lg font-semibold text-amber-700">!</span>
-            <div>
-              <h3 className="mb-1 font-semibold">Unable to complete the request</h3>
-              <p className="leading-6 text-amber-900">{error}</p>
+        <div
+          className="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 p-4 text-sm text-amber-950 shadow-sm"
+          role="alert"
+          aria-live="assertive"
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <span
+              aria-hidden="true"
+              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-white text-xl font-bold text-amber-700 shadow-sm"
+            >
+              !
+            </span>
+            <div className="min-w-0">
+              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-amber-700">Warning</p>
+              <h3 className="mb-1 text-base font-semibold text-amber-950">
+                {/staff number is already registered|staff member with this staff number already exists/i.test(error)
+                  ? 'Staff member already registered'
+                  : 'Unable to complete the request'}
+              </h3>
+              <p className="leading-6 text-amber-900">
+                {/staff number is already registered|staff member with this staff number already exists/i.test(error)
+                  ? 'This user is already registered. Please use a unique staff number or check the existing staff record.'
+                  : error}
+              </p>
             </div>
           </div>
-          <button type="button" aria-label="Dismiss notification" className="shrink-0 rounded-md px-2 py-1 font-semibold text-amber-800 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500" onClick={() => setError('')}>×</button>
+          <button
+            type="button"
+            aria-label="Dismiss warning"
+            title="Dismiss warning"
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-lg font-semibold leading-none text-amber-800 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            onClick={() => setError('')}
+          >
+            ×
+          </button>
         </div>
       )}
 
