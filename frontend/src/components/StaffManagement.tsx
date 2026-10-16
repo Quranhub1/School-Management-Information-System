@@ -5,7 +5,7 @@ import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } fro
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
-export function StaffManagement({ canManage = false, canReadPayroll = false }: { canManage?: boolean; canReadPayroll?: boolean }) {
+export function StaffManagement({ canManage = false, canReadPayroll = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; activeSubsection?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -16,6 +16,17 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
   const [payroll, setPayroll] = useState<PayrollRecord[]>([])
   const [payrollMonth, setPayrollMonth] = useState(new Date().getMonth() + 1)
   const [payrollYear, setPayrollYear] = useState(new Date().getFullYear())
+
+  useEffect(() => {
+    const nextTab: Tab | undefined = activeSubsection === 'staff' ? 'staff'
+      : activeSubsection === 'payroll' ? 'payroll'
+      : activeSubsection === 'leave' ? 'leave'
+      : activeSubsection === 'recruitment' ? 'recruitment'
+      : undefined
+    if (nextTab === 'payroll' && !canReadPayroll) return
+    if ((nextTab === 'leave' || nextTab === 'recruitment') && !canManage) return
+    if (nextTab) setTab(nextTab)
+  }, [activeSubsection, canManage, canReadPayroll])
 
   async function loadStaff() { setLoading(true); try { setStaff(await listStaff(false)) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load staff.') } finally { setLoading(false) } }
   async function loadLeave() { if (!leaveForm.staffMemberId.trim()) return; try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
