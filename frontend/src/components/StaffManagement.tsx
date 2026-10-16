@@ -188,7 +188,13 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
               <input placeholder="Staff number" value={form.staffNumber} onChange={e => setForm({ ...form, staffNumber: e.target.value })} required />
               <input placeholder="First name" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} required />
               <input placeholder="Last name" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} required />
-              <input placeholder="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required />
+              <label className="field-label">Employment type
+                <select aria-label="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required>
+                  <option value="Permanent">Permanent</option>
+                  <option value="Temporary">Temporary</option>
+                  <option value="Part-time">Part-time</option>
+                </select>
+              </label>
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
               <button type="submit">{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
