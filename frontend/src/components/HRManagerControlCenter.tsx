@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { listStaff, listLeave, type LeaveRequest, type StaffMember } from '../api/staff'
+import { listStaff, listLeave, STAFF_CHANGED_EVENT, type LeaveRequest, type StaffMember } from '../api/staff'
 import { listPayroll, type PayrollRecord } from '../api/payroll'
 import { formatCurrency } from '../lib/currency'
 
@@ -34,7 +34,12 @@ export function HRManagerControlCenter({ onNavigate }: Props) {
     setRefreshing(false)
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void load()
+    const refreshWorkforce = () => { void load() }
+    window.addEventListener(STAFF_CHANGED_EVENT, refreshWorkforce)
+    return () => window.removeEventListener(STAFF_CHANGED_EVENT, refreshWorkforce)
+  }, [])
 
   const now = new Date()
   const currentPayroll = payroll.filter(p => p.month === now.getMonth() + 1 && p.year === now.getFullYear())
