@@ -92,8 +92,24 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (staff is null) return NotFound();
+        // A librarian assignment is a role link, not the staff record itself.
+        // Remove that link in the same SaveChanges operation before deleting staff.
+        var librarianAssignments = await db.Librarians
+            .Where(x => x.StaffMemberId == id)
+            .ToListAsync(cancellationToken);
+        db.Librarians.RemoveRange(librarianAssignments);
         db.StaffMembers.Remove(staff);
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new
+            {
+                message = "This staff member is linked to historical or financial records that must be retained. Deactivate the staff member instead of permanently deleting them."
+            });
+        }
         return NoContent();
     }
 
