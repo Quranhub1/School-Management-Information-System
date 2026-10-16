@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, type StaffMember, type LeaveRequest } from '../api/staff'
+import { createStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
@@ -8,6 +8,7 @@ type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 export function StaffManagement({ canManage = false, canReadPayroll = false }: { canManage?: boolean; canReadPayroll?: boolean }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'staff' | 'payroll' | 'leave' | 'recruitment'>('staff')
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
@@ -37,11 +38,38 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
     return () => window.removeEventListener('smis:navigate-subsection', handler)
   }, [canManage, canReadPayroll])
 
-  useEffect(() => { void loadStaff() }, [])
+  useEffect(() => {
+    void loadStaff()
+    const onStaffChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ staff?: StaffMember }>).detail
+      if (detail?.staff) setStaff(current => [detail.staff!, ...current.filter(item => item.id !== detail.staff!.id)])
+      void loadStaff()
+    }
+    window.addEventListener(STAFF_CHANGED_EVENT, onStaffChanged)
+    return () => window.removeEventListener(STAFF_CHANGED_EVENT, onStaffChanged)
+  }, [])
   useEffect(() => { if (canManage && tab === 'leave') void loadLeave() }, [tab, canManage])
   useEffect(() => { if (canReadPayroll && tab === 'payroll') void loadPayroll() }, [tab, canReadPayroll])
 
-  async function submit(e: React.FormEvent) { e.preventDefault(); setError(''); try { await createStaff(form); setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' }); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create staff.') } }
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    try {
+      const created = await createStaff(form)
+      // Show the server-confirmed record immediately; refresh in the background.
+      setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
+      setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
+      setSuccess(`${created.firstName} ${created.lastName} was saved and added to the staff table.`)
+      void listStaff().then(latest => {
+        setStaff(latest.some(item => item.id === created.id) ? latest : [created, ...latest])
+      }).catch(() => {
+        // Keep the confirmed create response visible even if the follow-up list refresh fails.
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create staff.')
+    }
+  }
   async function deactivate(id: string) { try { await deactivateStaff(id); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') } }
   async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to request leave.') } }
   async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, '', approved); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to approve leave.') } }
@@ -64,6 +92,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false }: {
         {canManage && <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button>}
         {canManage && <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>}
       </div>
+
+      {success && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status" aria-live="polite">{success}</div>}
 
       {error && (
         <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm" role="alert" aria-live="polite">
