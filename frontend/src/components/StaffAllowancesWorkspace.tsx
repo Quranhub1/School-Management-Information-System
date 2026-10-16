@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { getSession } from '../api/auth'
-import { listStaff, type StaffMember } from '../api/staff'
+import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
 import { authorizeStaffAllowance, listStaffAllowances, recordStaffAllowance, type StaffAllowance } from '../api/staffAllowances'
 
 const ALLOWANCE_TYPES = ['Transport', 'Housing', 'Medical', 'Responsibility', 'Acting', 'Communication', 'Airtime', 'Meal', 'Travel', 'Duty', 'Overtime', 'Other']
@@ -36,7 +36,12 @@ export function StaffAllowancesWorkspace() {
     }
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void load()
+    const refreshStaff = () => { void listStaff().then(setStaff).catch(() => {}) }
+    window.addEventListener(STAFF_CHANGED_EVENT, refreshStaff)
+    return () => window.removeEventListener(STAFF_CHANGED_EVENT, refreshStaff)
+  }, [])
 
   async function authorize(event: FormEvent) {
     event.preventDefault()
