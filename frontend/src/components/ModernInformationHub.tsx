@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowDownRight, ArrowRight, ArrowUpRight, BellRing, BookOpenCheck, BrainCircuit, CalendarClock, CheckCircle2, CircleDollarSign, GraduationCap, RefreshCw, Search, ShieldAlert, UsersRound, Wallet, X } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BellRing, BookOpenCheck, BrainCircuit, CalendarClock, CheckCircle2, CircleDollarSign, GraduationCap, RefreshCw, Search, ShieldAlert, UsersRound, Wallet, X } from 'lucide-react'
 import { getModernDashboard, getStudentRisk, getStudent360, getWorkflowSummary, type ModernDashboard, type StudentRisk, type Student360, type WorkflowSummary } from '../api/modern'
 import { getAccessToken } from '../api/auth'
 import './ModernInformationHub.css'
