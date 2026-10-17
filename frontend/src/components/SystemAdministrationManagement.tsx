@@ -1,5 +1,6 @@
 import { Activity, Archive, ArrowRight, Database, FileSearch, LockKeyhole, Settings2, ShieldCheck, UsersRound } from 'lucide-react'
-import { AuditLogManagement } from './AuditLog'\nimport { BackupRestore } from './BackupRestore'
+import { AuditLogManagement } from './AuditLog'
+import { BackupRestore } from './BackupRestore'
 
 type SystemAdministrationManagementProps = {
   activeSubsection?: string | null
