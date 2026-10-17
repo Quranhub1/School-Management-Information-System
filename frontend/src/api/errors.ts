@@ -22,7 +22,7 @@ export async function readApiErrorMessage(response: Response): Promise<string> {
   const fallback = statusMessages[response.status] ??
     `We couldn't complete the request (error ${response.status}). Please try again.`
   const raw = await response.text().catch(() => '')
-  if (!raw.trim()) return fallback
+  if (!raw.trim() || response.status >= 500) return fallback
 
   let payload: unknown
   try {
