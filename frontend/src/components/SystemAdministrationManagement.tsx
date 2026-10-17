@@ -1,5 +1,5 @@
 import { Activity, Archive, ArrowRight, Database, FileSearch, LockKeyhole, Settings2, ShieldCheck, UsersRound } from 'lucide-react'
-import { AuditLogManagement } from './AuditLog'
+import { AuditLogManagement } from './AuditLog'\nimport { BackupRestore } from './BackupRestore'
 
 type SystemAdministrationManagementProps = {
   activeSubsection?: string | null
@@ -33,14 +33,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
     </nav>
 
     {selected === 'logs' ? <AuditLogManagement /> : selected === 'backups' ? (
-      <section className="panel" aria-labelledby="system-backups-title">
-        <div className="panel-heading"><div><p className="eyebrow">DATA PROTECTION</p><h2 id="system-backups-title">Backups & recovery</h2></div><Archive size={22} /></div>
-        <div style={{ padding: 20 }}>
-          <p>Database backup and restore actions are not yet connected to a dedicated application endpoint. No backup has been created or restored from this screen.</p>
-          <div className="offline-banner" style={{ marginTop: 14 }}>Backup automation is not configured in this workspace.</div>
-          <p style={{ color: 'var(--text-muted, #64748b)' }}>Do not use this page as confirmation that the database is backed up. Configure and verify a PostgreSQL backup process before relying on recovery.</p>
-        </div>
-      </section>
+      <BackupRestore />
     ) : selected === 'settings' ? (
       <section className="panel" aria-labelledby="system-settings-title">
         <div className="panel-heading"><div><p className="eyebrow">CONFIGURATION</p><h2 id="system-settings-title">System settings</h2></div><Settings2 size={22} /></div>
