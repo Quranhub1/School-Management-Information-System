@@ -1,111 +1,102 @@
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+type BackupInfo = { fileName: string; sizeBytes: number; lastWriteTimeUtc: string }
+type BackupDirectoryInfo = { directory: string; automaticBackupsEnabled: boolean; intervalHours: number }
 
 async function readError(response: Response): Promise<string> {
   const payload = await response.json().catch(() => null) as { message?: string; detail?: string; title?: string } | null
   return payload?.message ?? payload?.detail ?? payload?.title ?? `Request failed with status ${response.status}`
+}
+function authHeaders(): HeadersInit {
+  const token = getAccessToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+function sizeLabel(size: number): string {
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(2)} MB`
 }
 
 export function BackupRestore() {
   const [status, setStatus] = useState('')
   const [error, setError] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [backupFile, setBackupFile] = useState<File | null>(null)
-  const fileInput = useRef<HTMLInputElement>(null)
+  const [backups, setBackups] = useState<BackupInfo[]>([])
+  const [directory, setDirectory] = useState<BackupDirectoryInfo | null>(null)
+  const [selected, setSelected] = useState('')
+
+  const refresh = useCallback(async () => {
+    const [listResponse, directoryResponse] = await Promise.all([
+      fetch(`${API_BASE}/api/administration/backups`, { headers: authHeaders(), cache: 'no-store' }),
+      fetch(`${API_BASE}/api/administration/backup-directory`, { headers: authHeaders(), cache: 'no-store' }),
+    ])
+    if (!listResponse.ok) throw new Error(await readError(listResponse))
+    if (!directoryResponse.ok) throw new Error(await readError(directoryResponse))
+    const items = await listResponse.json() as BackupInfo[]
+    setBackups(items)
+    setDirectory(await directoryResponse.json() as BackupDirectoryInfo)
+    setSelected(current => current && items.some(item => item.fileName === current) ? current : (items[0]?.fileName ?? ''))
+  }, [])
+
+  useEffect(() => {
+    void refresh().catch(e => { setError(true); setStatus(e instanceof Error ? e.message : 'Could not load local backups.') })
+  }, [refresh])
 
   async function backup() {
-    setBusy(true)
-    setStatus('Creating a database backup…')
-    setError(false)
+    setBusy(true); setStatus('Saving a PostgreSQL backup to the local backup folder…'); setError(false)
     try {
-      const token = getAccessToken()
-      const response = await fetch(`${API_BASE}/api/administration/backup`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        cache: 'no-store',
-      })
+      const response = await fetch(`${API_BASE}/api/administration/backup`, { method: 'POST', headers: authHeaders(), cache: 'no-store' })
       if (!response.ok) throw new Error(await readError(response))
-      const blob = await response.blob()
-      if (!blob.size) throw new Error('The server returned an empty backup file.')
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = response.headers.get('Content-Disposition')?.match(/filename="?([^";]+)"?/i)?.[1] ?? `smis-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.dump`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(url)
-      setStatus(`Backup downloaded successfully (${(blob.size / 1024 / 1024).toFixed(2)} MB).`)
-    } catch (e) {
-      setError(true)
-      setStatus(e instanceof Error ? e.message : 'Backup failed.')
-    } finally {
-      setBusy(false)
-    }
+      const result = await response.json() as BackupInfo
+      await refresh()
+      setStatus(`Local backup saved: ${result.fileName} (${sizeLabel(result.sizeBytes)}).`)
+    } catch (e) { setError(true); setStatus(e instanceof Error ? e.message : 'Local backup failed.') }
+    finally { setBusy(false) }
   }
 
   async function restore() {
-    if (!backupFile) {
-      setError(true)
-      setStatus('Choose a .dump backup file first.')
-      return
-    }
-    const approved = window.confirm('WARNING: Restoring will replace database objects/data from the selected backup and may remove newer records. Ensure you have a recent backup. Continue?')
-    if (!approved) return
+    if (!selected) { setError(true); setStatus('There is no local backup selected.'); return }
+    if (!window.confirm(`WARNING: Restoring ${selected} can replace current database contents and remove newer records. Make sure you have a recent backup. Continue?`)) return
     const typed = window.prompt('To confirm the database restore, type exactly: RESTORE DATABASE')
-    if (typed !== 'RESTORE DATABASE') {
-      setError(true)
-      setStatus('Restore cancelled: confirmation text did not match.')
-      return
-    }
-
-    setBusy(true)
-    setStatus('Restoring the database. Do not close this window…')
-    setError(false)
+    if (typed !== 'RESTORE DATABASE') { setError(true); setStatus('Restore cancelled: confirmation text did not match.'); return }
+    setBusy(true); setStatus(`Restoring ${selected} from the local backup folder…`); setError(false)
     try {
-      const form = new FormData()
-      form.append('backupFile', backupFile)
-      form.append('confirmation', typed)
-      const token = getAccessToken()
       const response = await fetch(`${API_BASE}/api/administration/restore`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: form,
+        method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: selected, confirmation: typed }),
       })
       if (!response.ok) throw new Error(await readError(response))
-      const payload = await response.json().catch(() => null) as { message?: string } | null
-      setStatus(payload?.message ?? 'Database restore completed successfully. Reload the application.')
-      setBackupFile(null)
-      if (fileInput.current) fileInput.current.value = ''
-    } catch (e) {
-      setError(true)
-      setStatus(e instanceof Error ? e.message : 'Restore failed.')
-    } finally {
-      setBusy(false)
-    }
+      const result = await response.json() as { message?: string }
+      setStatus(result.message ?? 'Database restore completed successfully.')
+    } catch (e) { setError(true); setStatus(e instanceof Error ? e.message : 'Restore failed.') }
+    finally { setBusy(false) }
   }
 
-  return (
-    <section className="panel" aria-label="Backup and restore">
-      <div className="panel-heading"><div><span className="eyebrow">DATA PROTECTION</span><h2>Backup and Restore</h2></div></div>
-      <div style={{ padding: 20, display: 'grid', gap: 18 }}>
-        <div>
-          <h3 style={{ marginTop: 0 }}>Create a database backup</h3>
-          <p>Exports the current PostgreSQL database to a downloadable custom-format .dump file.</p>
-          <button className="primary-button" onClick={() => void backup()} disabled={busy}>{busy ? 'Please wait…' : 'Create & Download Backup'}</button>
-        </div>
-        <div style={{ borderTop: '1px solid var(--border, #e2e8f0)', paddingTop: 18 }}>
-          <h3 style={{ marginTop: 0 }}>Restore from a backup</h3>
-          <p>Choose a .dump file previously created by SMIS. Restore changes live database contents and should only be used when necessary.</p>
-          <label htmlFor="smis-backup-file" style={{ display: 'block', fontWeight: 600, marginBottom: 8 }}>Backup file (.dump)</label>
-          <input ref={fileInput} id="smis-backup-file" type="file" accept=".dump,application/octet-stream" onChange={event => setBackupFile(event.target.files?.[0] ?? null)} disabled={busy} />
-          {backupFile && <p>{backupFile.name} — {(backupFile.size / 1024 / 1024).toFixed(2)} MB</p>}
-          <button className="secondary-button" onClick={() => void restore()} disabled={busy || !backupFile} style={{ marginTop: 12 }}>{busy ? 'Please wait…' : 'Restore Selected Backup'}</button>
-        </div>
-        {status && <p role={error ? 'alert' : 'status'} aria-live="polite" style={{ padding: 14, margin: 0, borderRadius: 8, background: error ? '#fef2f2' : '#f0fdf4', color: error ? '#991b1b' : '#166534' }}>{status}</p>}
-        <p style={{ color: 'var(--text-muted, #64748b)', fontSize: 13, margin: 0 }}>Keep a copy of important backups off this computer. Restore is restricted to administrators and requires explicit confirmation.</p>
+  return <section className="panel" aria-label="Local database backup and restore">
+    <div className="panel-heading"><div><span className="eyebrow">LOCAL DATA PROTECTION</span><h2>Backup and Restore</h2></div></div>
+    <div style={{ padding: 20, display: 'grid', gap: 18 }}>
+      <div>
+        <h3 style={{ marginTop: 0 }}>Local backup folder</h3>
+        <p>Backups are stored on the computer running the SMIS backend. They are not uploaded to a cloud service or saved inside the SMIS project folder.</p>
+        <code style={{ display: 'block', padding: 12, overflowWrap: 'anywhere' }}>{directory?.directory ?? 'Loading backup folder…'}</code>
+        {directory && <p>{directory.automaticBackupsEnabled ? `Automatic backup is enabled every ${directory.intervalHours} hours while the backend is running.` : 'Automatic backup is disabled in configuration.'}</p>}
+        <button className="primary-button" onClick={() => void backup()} disabled={busy}>{busy ? 'Please wait…' : 'Back Up Now to This Folder'}</button>
+        <button className="secondary-button" onClick={() => void refresh().catch(e => { setError(true); setStatus(e instanceof Error ? e.message : 'Refresh failed.') })} disabled={busy} style={{ marginLeft: 8 }}>Refresh List</button>
       </div>
-    </section>
-  )
+      <div style={{ borderTop: '1px solid var(--border, #e2e8f0)', paddingTop: 18 }}>
+        <h3 style={{ marginTop: 0 }}>Saved local backups</h3>
+        {backups.length === 0 ? <p>No backup files found yet. Create one now or wait for the automatic backup.</p> : <div style={{ display: 'grid', gap: 8 }}>
+          {backups.map(item => <label key={item.fileName} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', border: '1px solid var(--border, #e2e8f0)', borderRadius: 8, padding: 12 }}>
+            <input type="radio" name="smis-local-backup" value={item.fileName} checked={selected === item.fileName} onChange={() => setSelected(item.fileName)} disabled={busy} />
+            <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}><strong>{item.fileName}</strong><br /><small>{sizeLabel(item.sizeBytes)} · {new Date(item.lastWriteTimeUtc).toLocaleString()}</small></span>
+          </label>)}
+        </div>}
+        <button className="secondary-button" onClick={() => void restore()} disabled={busy || !selected} style={{ marginTop: 12 }}>{busy ? 'Please wait…' : 'Restore Selected Local Backup'}</button>
+      </div>
+      {status && <p role={error ? 'alert' : 'status'} aria-live="polite" style={{ padding: 14, margin: 0, borderRadius: 8, background: error ? '#fef2f2' : '#f0fdf4', color: error ? '#991b1b' : '#166534' }}>{status}</p>}
+      <p style={{ color: 'var(--text-muted, #64748b)', fontSize: 13, margin: 0 }}>Keep a copy on a separate drive for protection against disk failure. Automatic backups only run while the SMIS backend is running.</p>
+    </div>
+  </section>
 }
