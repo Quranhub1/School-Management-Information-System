@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Authorization;
-using System.Diagnostics;
+using SchoolManagement.Api.Services;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -13,10 +13,8 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class AdministrationController(
     AdministrationService service,
     IConfiguration configuration,
-    IWebHostEnvironment environment) : ControllerBase
+    LocalDatabaseBackupService backupService) : ControllerBase
 {
-    private const long MaximumBackupUploadBytes = 2L * 1024 * 1024 * 1024;
-
     [HttpGet("users")]
     public Task<IReadOnlyList<UserSummary>> GetUsers(CancellationToken cancellationToken) => service.GetUsersAsync(cancellationToken);
 
@@ -73,195 +71,42 @@ public sealed class AdministrationController(
         return user is null ? NotFound() : Ok(user);
     }
 
-    [HttpGet("backup")]
+    [HttpGet("backups")]
+    public ActionResult<IReadOnlyList<LocalBackupInfo>> ListBackups() => Ok(backupService.ListBackups());
+
+    [HttpGet("backup-directory")]
+    public ActionResult<object> GetBackupDirectory() => Ok(new
+    {
+        directory = backupService.BackupDirectory,
+        automaticBackupsEnabled = configuration.GetValue("DatabaseBackups:AutomaticEnabled", true),
+        intervalHours = Math.Clamp(configuration.GetValue("DatabaseBackups:IntervalHours", 24), 1, 168)
+    });
+
+    [HttpPost("backup")]
     public async Task<IActionResult> Backup(CancellationToken cancellationToken)
     {
-        var tempFile = Path.Combine(Path.GetTempPath(), $"smis-backup-{Guid.NewGuid():N}.dump");
-        try
-        {
-            var connectionString = configuration.GetConnectionString("SchoolManagement");
-            if (string.IsNullOrWhiteSpace(connectionString))
-                return Problem("The SchoolManagement database connection string is not configured.", statusCode: 500);
-
-            var connection = new NpgsqlConnectionStringBuilder(connectionString);
-            var password = connection.Password;
-            connection.Password = string.Empty;
-            connection.PersistSecurityInfo = false;
-
-            var start = CreatePgToolStartInfo("pg_dump", connection);
-            start.ArgumentList.Add("--format=custom");
-            start.ArgumentList.Add("--no-owner");
-            start.ArgumentList.Add("--no-privileges");
-            start.ArgumentList.Add("--dbname");
-            start.ArgumentList.Add(connection.Database);
-            start.ArgumentList.Add("--file");
-            start.ArgumentList.Add(tempFile);
-            start.Environment["PGPASSWORD"] = password;
-            start.Environment["PGCONNECT_TIMEOUT"] = "15";
-
-            await RunPgToolAsync(start, cancellationToken);
-            if (!System.IO.File.Exists(tempFile) || new FileInfo(tempFile).Length == 0)
-                return Problem("pg_dump completed without producing a backup file.", statusCode: 500);
-
-            var fileName = $"smis-backup-{DateTime.UtcNow:yyyyMMdd-HHmmss}Z.dump";
-            Response.OnCompleted(() =>
-            {
-                try { System.IO.File.Delete(tempFile); } catch { }
-                return Task.CompletedTask;
-            });
-            return PhysicalFile(tempFile, "application/octet-stream", fileName);
-        }
-        catch (FileNotFoundException ex)
-        {
-            return Problem(ex.Message, statusCode: 500, title: "PostgreSQL backup tools not found");
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Problem(ex.Message, statusCode: 500, title: "Database backup failed");
-        }
-        finally
-        {
-            // A successful file response is deleted in OnCompleted; failures are cleaned here.
-            if (Response.StatusCode >= 400)
-            {
-                try { System.IO.File.Delete(tempFile); } catch { }
-            }
-        }
+        try { return Ok(await backupService.CreateBackupAsync(cancellationToken)); }
+        catch (FileNotFoundException ex) { return Problem(ex.Message, statusCode: 500, title: "PostgreSQL backup tools not found"); }
+        catch (InvalidOperationException ex) { return Problem(ex.Message, statusCode: 500, title: "Database backup failed"); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { return Problem($"Could not save the backup locally: {ex.Message}", statusCode: 500, title: "Local backup failed"); }
     }
+
+    public sealed record RestoreLocalBackupRequest(string FileName, string Confirmation);
 
     [HttpPost("restore")]
-    [Consumes("multipart/form-data")]
-    [RequestSizeLimit(MaximumBackupUploadBytes)]
-    public async Task<IActionResult> Restore(
-        [FromForm] IFormFile? backupFile,
-        [FromForm] string? confirmation,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Restore([FromBody] RestoreLocalBackupRequest request, CancellationToken cancellationToken)
     {
-        if (!string.Equals(confirmation, "RESTORE DATABASE", StringComparison.Ordinal))
+        if (!string.Equals(request.Confirmation, "RESTORE DATABASE", StringComparison.Ordinal))
             return BadRequest(new { message = "Type RESTORE DATABASE in the confirmation field to proceed." });
-        if (backupFile is null || backupFile.Length == 0)
-            return BadRequest(new { message = "Choose a non-empty PostgreSQL custom-format .dump backup file." });
-        if (!string.Equals(Path.GetExtension(backupFile.FileName), ".dump", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { message = "Only custom-format .dump files created by the SMIS backup action are supported." });
-
-        var tempFile = Path.Combine(Path.GetTempPath(), $"smis-restore-{Guid.NewGuid():N}.dump");
         try
         {
-            var connectionString = configuration.GetConnectionString("SchoolManagement");
-            if (string.IsNullOrWhiteSpace(connectionString))
-                return Problem("The SchoolManagement database connection string is not configured.", statusCode: 500);
-
-            await using (var output = new FileStream(tempFile, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                await backupFile.CopyToAsync(output, cancellationToken);
-
-            var connection = new NpgsqlConnectionStringBuilder(connectionString);
-            var password = connection.Password;
-            connection.Password = string.Empty;
-            connection.PersistSecurityInfo = false;
-
-            var start = CreatePgToolStartInfo("pg_restore", connection);
-            start.ArgumentList.Add("--clean");
-            start.ArgumentList.Add("--if-exists");
-            start.ArgumentList.Add("--no-owner");
-            start.ArgumentList.Add("--no-privileges");
-            start.ArgumentList.Add("--exit-on-error");
-            start.ArgumentList.Add("--single-transaction");
-            start.ArgumentList.Add("--dbname");
-            start.ArgumentList.Add(connection.ConnectionString);
-            start.ArgumentList.Add(tempFile);
-            start.Environment["PGPASSWORD"] = password;
-            start.Environment["PGCONNECT_TIMEOUT"] = "15";
-
-            await RunPgToolAsync(start, cancellationToken);
+            await backupService.RestoreBackupAsync(request.FileName, cancellationToken);
             return Ok(new { message = "Database restore completed successfully. Reload the application before continuing." });
         }
-        catch (FileNotFoundException ex)
-        {
-            return Problem(ex.Message, statusCode: 500, title: "PostgreSQL restore tools not found");
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Problem(ex.Message, statusCode: 500, title: "Database restore failed");
-        }
-        finally
-        {
-            try { System.IO.File.Delete(tempFile); } catch { }
-        }
-    }
-
-    private ProcessStartInfo CreatePgToolStartInfo(string toolName, NpgsqlConnectionStringBuilder connection)
-    {
-        var executable = ResolvePgTool(toolName);
-        var start = new ProcessStartInfo
-        {
-            FileName = executable,
-            UseShellExecute = false,
-            RedirectStandardError = true,
-            RedirectStandardOutput = false,
-            CreateNoWindow = true,
-            WorkingDirectory = environment.ContentRootPath
-        };
-        start.ArgumentList.Add("--host");
-        start.ArgumentList.Add(connection.Host);
-        start.ArgumentList.Add("--port");
-        start.ArgumentList.Add(connection.Port.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        start.ArgumentList.Add("--username");
-        start.ArgumentList.Add(connection.Username);
-        return start;
-    }
-
-    private string ResolvePgTool(string toolName)
-    {
-        var configured = configuration[$"DatabaseTools:{(toolName == "pg_dump" ? "PgDumpPath" : "PgRestorePath")}"];
-        if (!string.IsNullOrWhiteSpace(configured) && System.IO.File.Exists(configured))
-            return configured;
-
-        var fromEnvironment = Environment.GetEnvironmentVariable(toolName == "pg_dump" ? "PG_DUMP_PATH" : "PG_RESTORE_PATH");
-        if (!string.IsNullOrWhiteSpace(fromEnvironment) && System.IO.File.Exists(fromEnvironment))
-            return fromEnvironment;
-
-        var executableName = OperatingSystem.IsWindows() ? $"{toolName}.exe" : toolName;
-        var pathDirectories = (Environment.GetEnvironmentVariable("PATH") ?? string.Empty)
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var found = pathDirectories.Select(directory => Path.Combine(directory, executableName))
-            .FirstOrDefault(System.IO.File.Exists);
-        if (found is not null) return found;
-
-        if (OperatingSystem.IsWindows())
-        {
-            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            var postgresRoot = Path.Combine(programFiles, "PostgreSQL");
-            if (Directory.Exists(postgresRoot))
-            {
-                var candidate = Directory.GetDirectories(postgresRoot)
-                    .Select(directory => Path.Combine(directory, "bin", executableName))
-                    .Where(System.IO.File.Exists)
-                    .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
-                    .FirstOrDefault();
-                if (candidate is not null) return candidate;
-            }
-        }
-
-        throw new FileNotFoundException($"Could not find {toolName}. Install PostgreSQL client tools or configure DatabaseTools:{(toolName == "pg_dump" ? "PgDumpPath" : "PgRestorePath")} / the corresponding PG_*_PATH environment variable.");
-    }
-
-    private static async Task RunPgToolAsync(ProcessStartInfo start, CancellationToken cancellationToken)
-    {
-        using var process = new Process { StartInfo = start };
-        try
-        {
-            if (!process.Start()) throw new InvalidOperationException($"Could not start {Path.GetFileName(start.FileName)}.");
-        }
-        catch (Exception ex) when (ex is not InvalidOperationException)
-        {
-            throw new InvalidOperationException($"Could not start PostgreSQL tool '{Path.GetFileName(start.FileName)}': {ex.Message}", ex);
-        }
-
-        var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
-        await process.WaitForExitAsync(cancellationToken);
-        var error = await errorTask;
-        if (process.ExitCode != 0)
-            throw new InvalidOperationException($"{Path.GetFileName(start.FileName)} exited with code {process.ExitCode}: {error.Trim()}");
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (FileNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Problem(ex.Message, statusCode: 500, title: "Database restore failed"); }
     }
 
     public sealed record SetActiveRequest(bool Active);
