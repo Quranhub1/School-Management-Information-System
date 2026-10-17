@@ -16,7 +16,7 @@ public sealed class LocalDatabaseBackupService(IConfiguration configuration, IHo
             var configured = configuration["DatabaseBackups:Directory"] ?? Environment.GetEnvironmentVariable("SMIS_BACKUP_DIRECTORY");
             if (!string.IsNullOrWhiteSpace(configured)) return Path.GetFullPath(Environment.ExpandEnvironmentVariables(configured));
             return OperatingSystem.IsWindows()
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "SMIS", "Backups")
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "SMIS-Backups")
                 : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "SMIS-Backups");
         }
     }
@@ -52,6 +52,15 @@ public sealed class LocalDatabaseBackupService(IConfiguration configuration, IHo
             File.Move(temporary, destination, false);
             var file = new FileInfo(destination);
             logger.LogInformation("Created local SMIS database backup {BackupPath} ({SizeBytes} bytes)", destination, file.Length);
+            // Keep the newest 30 completed backups to prevent unbounded disk growth.
+            foreach (var oldBackup in Directory.EnumerateFiles(BackupDirectory, "smis-backup-*.dump")
+                .Select(path => new FileInfo(path))
+                .OrderByDescending(item => item.LastWriteTimeUtc)
+                .Skip(30))
+            {
+                try { oldBackup.Delete(); }
+                catch (Exception ex) { logger.LogWarning(ex, "Could not prune old backup {BackupPath}", oldBackup.FullName); }
+            }
             return new LocalBackupInfo(file.Name, file.Length, file.LastWriteTimeUtc);
         }
         finally { try { if (File.Exists(temporary)) File.Delete(temporary); } catch { } }
