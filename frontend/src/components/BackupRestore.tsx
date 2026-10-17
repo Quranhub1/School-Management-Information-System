@@ -28,16 +28,29 @@ export function BackupRestore() {
   const [selected, setSelected] = useState('')
 
   const refresh = useCallback(async () => {
-    const [listResponse, directoryResponse] = await Promise.all([
+    const [listResult, directoryResult] = await Promise.allSettled([
       fetch(`${API_BASE}/api/administration/backups`, { headers: authHeaders(), cache: 'no-store' }),
       fetch(`${API_BASE}/api/administration/backup-directory`, { headers: authHeaders(), cache: 'no-store' }),
     ])
-    if (!listResponse.ok) throw new Error(await readError(listResponse))
-    if (!directoryResponse.ok) throw new Error(await readError(directoryResponse))
-    const items = await listResponse.json() as BackupInfo[]
-    setBackups(items)
-    setDirectory(await directoryResponse.json() as BackupDirectoryInfo)
-    setSelected(current => current && items.some(item => item.fileName === current) ? current : (items[0]?.fileName ?? ''))
+    const errors: string[] = []
+    if (directoryResult.status === 'fulfilled') {
+      const response = directoryResult.value
+      if (response.ok) setDirectory(await response.json() as BackupDirectoryInfo)
+      else errors.push(`GET /api/administration/backup-directory: ${await readError(response)}`)
+    } else errors.push(`GET /api/administration/backup-directory: ${directoryResult.reason instanceof Error ? directoryResult.reason.message : 'network error'}`)
+
+    if (listResult.status === 'fulfilled') {
+      const response = listResult.value
+      if (response.ok) {
+        const items = await response.json() as BackupInfo[]
+        setBackups(items)
+        setSelected(current => current && items.some(item => item.fileName === current) ? current : (items[0]?.fileName ?? ''))
+      } else errors.push(`GET /api/administration/backups: ${await readError(response)}`)
+    } else errors.push(`GET /api/administration/backups: ${listResult.reason instanceof Error ? listResult.reason.message : 'network error'}`)
+
+    if (errors.length) throw new Error(errors.join(' | '))
+    setError(false)
+    setStatus('')
   }, [])
 
   useEffect(() => {
