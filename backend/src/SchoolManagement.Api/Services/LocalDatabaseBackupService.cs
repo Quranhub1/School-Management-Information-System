@@ -13,7 +13,8 @@ public sealed class LocalDatabaseBackupService(IConfiguration configuration, IHo
     {
         get
         {
-            var configured = configuration["DatabaseBackups:Directory"] ?? Environment.GetEnvironmentVariable("SMIS_BACKUP_DIRECTORY");
+            var configured = configuration["DatabaseBackups:Directory"];
+            if (string.IsNullOrWhiteSpace(configured)) configured = Environment.GetEnvironmentVariable("SMIS_BACKUP_DIRECTORY");
             if (!string.IsNullOrWhiteSpace(configured)) return Path.GetFullPath(Environment.ExpandEnvironmentVariables(configured));
             return OperatingSystem.IsWindows()
                 ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "SMIS-Backups")
@@ -34,7 +35,7 @@ public sealed class LocalDatabaseBackupService(IConfiguration configuration, IHo
         var connectionString = configuration.GetConnectionString("SchoolManagement");
         if (string.IsNullOrWhiteSpace(connectionString)) throw new InvalidOperationException("The SchoolManagement database connection string is not configured.");
         Directory.CreateDirectory(BackupDirectory);
-        var destination = Path.Combine(BackupDirectory, $"smis-backup-{DateTime.UtcNow:yyyyMMdd-HHmmss}Z.dump");
+        var destination = Path.Combine(BackupDirectory, $"smis-backup-{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}Z.dump");
         var temporary = destination + ".partial";
         var connection = new NpgsqlConnectionStringBuilder(connectionString);
         var start = CreateStartInfo("pg_dump", connection, connection.Password);
@@ -77,7 +78,7 @@ public sealed class LocalDatabaseBackupService(IConfiguration configuration, IHo
         if (string.IsNullOrWhiteSpace(connectionString)) throw new InvalidOperationException("The SchoolManagement database connection string is not configured.");
         var connection = new NpgsqlConnectionStringBuilder(connectionString);
         var start = CreateStartInfo("pg_restore", connection, connection.Password);
-        foreach (var arg in new[] { "--clean", "--if-exists", "--no-owner", "--no-privileges", "--exit-on-error", "--single-transaction", "--dbname", connection.ConnectionString, path })
+        foreach (var arg in new[] { "--clean", "--if-exists", "--no-owner", "--no-privileges", "--exit-on-error", "--single-transaction", "--dbname", connection.Database, path })
             start.ArgumentList.Add(arg);
         await RunToolAsync(start, cancellationToken);
         logger.LogWarning("Restored SMIS database from local backup {BackupPath}", path);
@@ -119,10 +120,19 @@ public sealed class LocalDatabaseBackupService(IConfiguration configuration, IHo
     {
         using var process = new Process { StartInfo = start };
         if (!process.Start()) throw new InvalidOperationException($"Could not start {Path.GetFileName(start.FileName)}.");
-        var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
-        await process.WaitForExitAsync(cancellationToken);
-        var error = await errorTask;
-        if (process.ExitCode != 0) throw new InvalidOperationException($"{Path.GetFileName(start.FileName)} exited with code {process.ExitCode}: {error.Trim()}");
+        try
+        {
+            var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+            await process.WaitForExitAsync(cancellationToken);
+            var error = await errorTask;
+            if (process.ExitCode != 0)
+                throw new InvalidOperationException($"{Path.GetFileName(start.FileName)} exited with code {process.ExitCode}: {error.Trim()}");
+        }
+        catch (OperationCanceledException)
+        {
+            try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { }
+            throw;
+        }
     }
 }
 
