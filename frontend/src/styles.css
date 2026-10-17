@@ -3413,3 +3413,25 @@ button .spinner { margin-right: 4px; }
 @media(max-width:1100px){.smis-gallery .gallery-upload-panel{grid-template-columns:repeat(2,minmax(0,1fr))}.smis-gallery .gallery-upload-actions{grid-column:1/-1;justify-items:start}}
 @media(max-width:700px){.smis-gallery .gallery-upload-panel{grid-template-columns:minmax(0,1fr);padding:15px}.smis-gallery .gallery-upload-actions{grid-column:auto;justify-items:stretch}.smis-gallery .gallery-filter-tabs{width:100%;box-sizing:border-box;border-radius:14px}.smis-gallery .gallery-filter-tabs button{flex:1;padding-inline:8px}.smis-gallery .classic-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.smis-gallery .classic-gallery-caption{padding:12px}}
 @media(max-width:480px){.smis-gallery .classic-gallery{grid-template-columns:minmax(0,1fr)}.smis-gallery .gallery-lightbox{padding:10px}.smis-gallery .gallery-lightbox-card{padding:14px;border-radius:16px}}
+
+
+/* SMIS global typography refresh — Google Fonts with resilient local fallbacks. */
+:root {
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-optical-sizing: auto;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body, button, input, select, textarea {
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+h1, h2, h3, h4, h5, h6,
+.topbar h1, .hero h2, .library-heading h2,
+.admin-dashboard-heading h2, .admin-section-title h3 {
+  font-family: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+table { font-variant-numeric: tabular-nums; }
