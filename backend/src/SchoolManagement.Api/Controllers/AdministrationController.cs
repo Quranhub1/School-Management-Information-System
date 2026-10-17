@@ -92,6 +92,8 @@ public sealed class AdministrationController(
             start.ArgumentList.Add("--format=custom");
             start.ArgumentList.Add("--no-owner");
             start.ArgumentList.Add("--no-privileges");
+            start.ArgumentList.Add("--dbname");
+            start.ArgumentList.Add(connection.Database);
             start.ArgumentList.Add("--file");
             start.ArgumentList.Add(tempFile);
             start.Environment["PGPASSWORD"] = password;
@@ -205,11 +207,6 @@ public sealed class AdministrationController(
         start.ArgumentList.Add(connection.Port.ToString(System.Globalization.CultureInfo.InvariantCulture));
         start.ArgumentList.Add("--username");
         start.ArgumentList.Add(connection.Username);
-        if (!string.IsNullOrWhiteSpace(connection.Database))
-        {
-            start.ArgumentList.Add("--dbname");
-            start.ArgumentList.Add(connection.Database);
-        }
         return start;
     }
 
