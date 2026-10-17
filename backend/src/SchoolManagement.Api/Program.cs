@@ -8,6 +8,7 @@ using SchoolManagement.Infrastructure;
 using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Api.Services;
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
@@ -41,6 +42,8 @@ if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
     throw new InvalidOperationException("AllowedOrigins must contain at least one trusted frontend origin in Production.");
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); else policy.AllowAnyOrigin(); policy.AllowAnyHeader().AllowAnyMethod(); }); });
 builder.Services.AddApplication();
+builder.Services.AddSingleton<LocalDatabaseBackupService>();
+builder.Services.AddHostedService<ScheduledLocalBackupWorker>();
 var connectionString = builder.Configuration.GetConnectionString("SchoolManagement") ?? throw new InvalidOperationException("Connection string 'SchoolManagement' is not configured.");
 if (builder.Environment.IsProduction() && (connectionString.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase) || connectionString.Contains("replace-me", StringComparison.OrdinalIgnoreCase)))
     throw new InvalidOperationException("Production database connection string contains an unresolved placeholder.");
