@@ -60,15 +60,18 @@
 .app-shell .admin-dashboard-tabs { margin-bottom: 12px !important; border-radius: 4px !important; }
 .app-shell .admin-dashboard-tabs button { border-radius: 3px !important; }
 
-/* Form controls occupy their field column and align cleanly. */
+/* Form controls use the full width of their field without forcing the form wider. */
 .app-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
 .app-shell select,
 .app-shell textarea {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
   border-radius: 3px !important;
 }
-.app-shell textarea { width: 100%; }
+.app-shell textarea { resize: vertical; }
 .app-shell form { min-width: 0; max-width: 100%; }
 .app-shell form label { display: block; }
 .app-shell .form-row,
@@ -90,6 +93,12 @@
 .app-shell .badge,
 .app-shell [class*="badge"] {
   border-radius: 3px !important;
+}
+
+/* Keep keyboard focus visible throughout the signed-in workspace. */
+.app-shell :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--smis-ui-primary, #465fff);
+  outline-offset: 2px;
 }
 
 /* Tables stretch to the workspace width with less empty space around cells. */
@@ -128,4 +137,15 @@
   .app-shell .admin-dashboard-action-card { padding: 9px !important; }
   .app-shell th,
   .app-shell td { padding: 7px 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell *,
+  .app-shell *::before,
+  .app-shell *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
