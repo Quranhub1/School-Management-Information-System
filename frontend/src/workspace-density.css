@@ -1,0 +1,132 @@
+/* Dense, square-edged SMIS workspace layout.
+   Keep login/auth screens unchanged; scope these rules to the signed-in application shell. */
+:root {
+  --smis-ui-radius: 4px;
+}
+
+/* Use the available workspace instead of surrounding every screen with large gutters. */
+.app-shell .content,
+.app-shell main.content {
+  padding: 10px !important;
+  min-width: 0;
+}
+.app-shell .topbar {
+  margin-bottom: 0 !important;
+  padding: 12px 16px !important;
+  min-height: 60px;
+}
+.app-shell .content > *,
+.app-shell main.content > * {
+  max-width: none;
+}
+.app-shell .content > * + *,
+.app-shell main.content > * + * {
+  margin-top: 10px;
+}
+
+/* Compact surfaces with restrained, nearly square edges. */
+.app-shell .panel,
+.app-shell .summary-card,
+.app-shell .admin-chart-card,
+.app-shell .admin-dashboard-action-card,
+.app-shell .admin-kpi-card,
+.app-shell .admin-monitoring-notice,
+.app-shell .admin-tab-content,
+.app-shell .table-wrap,
+.app-shell .library-main-card,
+.app-shell .library-side-card,
+.app-shell .library-catalogue,
+.app-shell .library-add-card,
+.app-shell .card,
+.app-shell [class*="form-card"],
+.app-shell [class*="settings-card"] {
+  border-radius: 4px !important;
+}
+.app-shell .panel,
+.app-shell .admin-tab-content {
+  padding: 12px !important;
+}
+.app-shell .summary-card,
+.app-shell .admin-kpi-card,
+.app-shell .admin-chart-card,
+.app-shell .admin-dashboard-action-card {
+  padding: 12px !important;
+}
+.app-shell .admin-dashboard-content { gap: 12px !important; }
+.app-shell .admin-kpi-grid,
+.app-shell .admin-charts-grid,
+.app-shell .admin-dashboard-bottom-grid { gap: 10px !important; }
+.app-shell .admin-dashboard-heading { padding-bottom: 12px !important; }
+.app-shell .admin-dashboard-tabs { margin-bottom: 12px !important; border-radius: 4px !important; }
+.app-shell .admin-dashboard-tabs button { border-radius: 3px !important; }
+
+/* Form controls occupy their field column and align cleanly. */
+.app-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.app-shell select,
+.app-shell textarea {
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 3px !important;
+}
+.app-shell textarea { width: 100%; }
+.app-shell form { min-width: 0; max-width: 100%; }
+.app-shell form label { display: block; }
+.app-shell .form-row,
+.app-shell .form-grid,
+.app-shell [class*="form-grid"] {
+  min-width: 0;
+  gap: 10px !important;
+}
+.app-shell .form-row > *,
+.app-shell .form-grid > *,
+.app-shell [class*="form-grid"] > * { min-width: 0; }
+.app-shell button,
+.app-shell .secondary-button,
+.app-shell .admin-refresh-button,
+.app-shell .admin-quick-actions button {
+  border-radius: 3px !important;
+}
+.app-shell .status,
+.app-shell .badge,
+.app-shell [class*="badge"] {
+  border-radius: 3px !important;
+}
+
+/* Tables stretch to the workspace width with less empty space around cells. */
+.app-shell .table-wrap,
+.app-shell .admin-tab-content .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
+  border-radius: 3px !important;
+}
+.app-shell table { width: 100%; }
+.app-shell th,
+.app-shell td {
+  padding: 8px 10px;
+}
+.app-shell .admin-tab-content thead th { padding: 9px 10px; }
+.app-shell .admin-tab-content tbody td { padding: 9px 10px; }
+
+/* Remove excess section spacing while retaining clear separation and readable density. */
+.app-shell section,
+.app-shell .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-block-start: 10px;
+}
+.app-shell h2,
+.app-shell h3 { margin-block-end: 8px; }
+
+@media (max-width: 760px) {
+  .app-shell .content,
+  .app-shell main.content { padding: 6px !important; }
+  .app-shell .topbar { padding: 10px !important; }
+  .app-shell .panel,
+  .app-shell .admin-tab-content { padding: 9px !important; }
+  .app-shell .summary-card,
+  .app-shell .admin-kpi-card,
+  .app-shell .admin-chart-card,
+  .app-shell .admin-dashboard-action-card { padding: 9px !important; }
+  .app-shell th,
+  .app-shell td { padding: 7px 8px; }
+}
