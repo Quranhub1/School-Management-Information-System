@@ -5,7 +5,7 @@
 ### Backend Framework
 **Laravel PHP Framework** - CONFIRMED
 - **Evidence**:
-  - CSRF token in meta tag: `<meta name="csrf-token" content="MyiKgxNi36NWdtvpKxAVInVWVnoRRHhL0hSRYmpZ">`
+  - CSRF token in meta tag: `<meta name="csrf-token" content="[REDACTED CSRF TOKEN]">`
   - Session cookie: `osrs_session` (Laravel's encrypted session cookie)
   - XSRF-TOKEN cookie: Laravel's CSRF protection token
   - Route patterns: RESTful resource routing (`/admin/students`, `/admin/students/{id}/edit`)
@@ -45,7 +45,7 @@
 ### Frontend Framework
 **Livewire (Laravel's Frontend Framework)** - CONFIRMED
 - **Evidence**:
-  - Script: `<script src="/livewire/livewire.js?id=40a765a4" data-csrf="MyiKgxNi36NWdtvpKxAVInVWVnoRRHhL0hSRYmpZ" data-update-uri="/livewire/update" data-navigate-once="true"></script>`
+  - Script: `<script src="/livewire/livewire.js?id=40a765a4" data-csrf="[REDACTED CSRF TOKEN]" data-update-uri="/livewire/update" data-navigate-once="true"></script>`
   - Attributes: `wire:loading`, `wire:loading.delay`, `wire:model` (inferred from behavior)
   - Actions: `data-action="click->menu#toggle"` observed
   - Event listeners: `data-action="keypress->form#disableKey"` observed
