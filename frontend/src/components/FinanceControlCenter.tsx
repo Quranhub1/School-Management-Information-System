@@ -225,7 +225,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
             <div><span>Invoices issued</span><strong>{dashboard?.invoiceCount.toLocaleString() ?? '—'}</strong></div>
             <div><span>Outstanding accounts</span><strong className="finance-value-danger">{dashboard?.outstandingCount.toLocaleString() ?? '—'}</strong></div>
           </div>
-          <p className="finance-control-note">Billing remains itemized by fee structure and can be applied to students through the existing finance workflow. External payment channels are intentionally not required for this control center.</p>
+          
         </section>
 
         <section className="finance-surface">
