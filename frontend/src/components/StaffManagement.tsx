@@ -237,9 +237,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
             <div className="summary-card"><span>Paid</span><strong style={{ color: '#059669' }}>{selectedPayroll.filter(p => p.status === 'Paid').length}</strong></div>
             <div className="summary-card"><span>Pending</span><strong style={{ color: '#d97706' }}>{selectedPayroll.filter(p => p.status === 'Pending').length}</strong></div>
           </div>
-          {canManage && <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
-            <select value={payrollMonth} onChange={e => setPayrollMonth(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{new Date(2000, m-1).toLocaleString('default', { month: 'long' })}</option>)}</select>
-            <input type="number" value={payrollYear} onChange={e => setPayrollYear(Number(e.target.value))} style={{ width: 100 }} />
+          {canManage && <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+            <select aria-label="Payroll month" value={payrollMonth} onChange={e => setPayrollMonth(Number(e.target.value))} style={{ width: 142, minWidth: 142, height: 38, padding: '7px 10px', fontSize: 14, lineHeight: 1.2 }}>{[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{new Date(2000, m-1).toLocaleString('default', { month: 'long' })}</option>)}</select>
+            <input aria-label="Payroll year" type="number" value={payrollYear} onChange={e => setPayrollYear(Number(e.target.value))} style={{ width: 88, minWidth: 88, height: 38, boxSizing: 'border-box', padding: '7px 10px', fontSize: 14 }} />
             <button className="btn" onClick={() => void handleGeneratePayroll()}>Generate Payroll</button>
           </div>}
           <div className="table-wrap">
