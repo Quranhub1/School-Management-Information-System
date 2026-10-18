@@ -363,3 +363,33 @@
   outline: 2px solid #d7cfbb !important;
   outline-offset: -2px !important;
 }
+
+
+/* Sidebar tabs: rounded corners, but no solid borders or teal accents. */
+.app-shell > aside nav section button:not([aria-expanded]),
+.app-shell > aside nav section button:not([aria-expanded]):hover,
+.app-shell > aside nav section button[aria-current="page"] {
+  border: 0 !important;
+  border-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-radius: 10px !important;
+}
+.app-shell > aside nav section button:not([aria-expanded])::after {
+  display: none !important;
+  content: none !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]) {
+  background: transparent !important;
+  color: #d7cfbb !important;
+  box-shadow: none !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]):hover {
+  background: #26251f !important;
+  color: #f5efdf !important;
+  box-shadow: none !important;
+}
+.app-shell > aside nav section button[aria-current="page"] {
+  background: #302e26 !important;
+  color: #f5efdf !important;
+  box-shadow: inset 3px 0 0 #f5efdf !important;
+}
