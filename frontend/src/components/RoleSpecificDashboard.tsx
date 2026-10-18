@@ -36,17 +36,11 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
   }, [role])
 
   const title = role === 'AdminSecretary' ? 'Admin Secretary Dashboard' : role === 'Secretary' ? 'Secretary Dashboard' : role === 'Receptionist' ? 'Receptionist Dashboard' : 'Head of Department Dashboard'
-  const subtitle = role === 'AdminSecretary'
-    ? 'Secretariat workspace for admissions visibility, student record lookup and administrative follow-up. Records are read-only.'
-    : role === 'Secretary'
-    ? 'Office administration, correspondence, admissions visibility and institutional records.'
-    : role === 'Receptionist'
-      ? 'Front desk, visitor coordination, appointments, enquiries and controlled institutional lookup.'
-      : 'Department-focused academic, staff and student oversight.'
+  const subtitle = ''
 
   return <section className="panel" aria-label={title}>
     <div className="panel-heading">
-      <div><span className="eyebrow">{role.toUpperCase()}</span><h2>{title}</h2><p style={{ marginTop: 6, color: '#64748b' }}>{subtitle}</p></div>
+      <div><span className="eyebrow">{role.toUpperCase()}</span><h2>{title}</h2></div>
       <span className="status-badge">Authorized workspace</span>
     </div>
 
@@ -60,9 +54,7 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
           <div className="summary-card"><span>Accepted admissions</span><strong>{admissions.filter(x => x.status.toLowerCase() === 'accepted').length}</strong></div>
         </div>
         {role === 'AdminSecretary' && <div className="panel" style={{ marginTop: 18, padding: 18 }}>
-          <h3>Access boundaries</h3>
-          <p style={{ color: 'var(--smis-muted, #64748b)', marginTop: 6 }}>Student and admission information is for lookup and follow-up only. This dashboard does not grant permission to edit records, make admission decisions, change user accounts or access financial controls.</p>
-        </div>}
+          </div>}
         <div className="grid-form" style={{ marginTop: 22 }}>
           <button className="secondary-button" onClick={() => onNavigate('students')}>Open Student Records — read only</button>
           {role !== 'AdminSecretary' && <button className="secondary-button" onClick={() => onNavigate('reports')}>Administrative Reports</button>}
@@ -78,7 +70,6 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
         </div>
         <div className="panel" style={{ marginTop: 22, padding: 20 }}>
           <h3>Front Desk Operations</h3>
-          <p style={{ color: '#64748b', marginTop: 6 }}>Use the operational navigation for front-desk tasks. Student and staff information is exposed only where the assigned permission permits it.</p>
           <div className="grid-form" style={{ marginTop: 16 }}>
             <button className="secondary-button" onClick={() => onNavigate('attendance')}>Gate / Front Desk Log</button>
             <button className="secondary-button" onClick={() => onNavigate('reports')}>Daily Front Desk Reports</button>
@@ -95,10 +86,9 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
         </div>
         <div className="panel" style={{ marginTop: 22, padding: 20 }}>
           <h3>Department Workspace</h3>
-          <p style={{ color: '#64748b', marginTop: 6 }}>Departmental actions are intended to be scoped to the authenticated department. Institution-wide administration and unrelated departments remain outside this workspace.</p>
           <div className="grid-form" style={{ marginTop: 16 }}>
             <button className="secondary-button" onClick={() => onNavigate('academics')}>Academic Management</button>
-            <button className="secondary-button" onClick={() => onNavigate('staff')}>Department Staff</button>
+            <button className="secondary-button" onClick={() => onClick={() => onNavigate('staff')}>Department Staff</button>
             <button className="secondary-button" onClick={() => onNavigate('reports')}>Department Reports</button>
           </div>
         </div>

@@ -112,7 +112,7 @@ export function AlumniManagement() {
 
   return <section className="panel alumni-workspace" aria-label="Alumni">
     <div className="panel-heading">
-      <div><span className="eyebrow">Alumni</span><h2>Alumni & Graduate Relations</h2><p className="panel-subtitle">Maintain lifelong ties, professional licensure, postgraduate progress, document requests, and final certificate clearance.</p></div>
+      <div><span className="eyebrow">Alumni</span><h2>Alumni & Graduate Relations</h2></div>
     </div>
 
     <form className="grid-form" onSubmit={submit}>

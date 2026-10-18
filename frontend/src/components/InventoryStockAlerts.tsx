@@ -25,11 +25,11 @@ export function InventoryStockAlerts() {
 
   return <section className="panel" aria-label="Inventory stock warnings">
     <div className="panel-heading">
-      <div><span className="eyebrow">INVENTORY WATCH</span><h3>Low-stock warnings</h3><p className="empty">Items at or below the thresholds configured by the System Administrator, plus any item that has run out.</p></div>
+      <div><span className="eyebrow">INVENTORY WATCH</span><h3>Low-stock warnings</h3></div>
       <span className="status-badge">{loading ? 'Checking…' : `${alerts.length} alert${alerts.length === 1 ? '' : 's'}`}</span>
     </div>
     {error && <div className="error" role="alert">Stock warnings could not be loaded: {error}</div>}
-    {!loading && !error && alerts.length === 0 && <p className="empty">No low-stock items right now. Items that run out will be flagged automatically.</p>}
+    {!loading && !error && alerts.length === 0 && <p className="empty">No low-stock items right now.</p>}
     {alerts.length > 0 && <div className="table-wrap"><table>
       <thead><tr><th>Severity</th><th>Item</th><th>Inventory</th><th>Current quantity</th><th>Warning threshold</th></tr></thead>
       <tbody>{alerts.map(alert => <tr key={`${alert.sectionId}:${alert.rowId}`}>

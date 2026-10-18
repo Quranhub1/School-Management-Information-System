@@ -115,12 +115,11 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
         {section === 'biodata' && (
           <div>
-            <p className="section-copy">The administration workspace may maintain the complete institutional record. Student-facing portals should expose only the minimum profile needed by the learner.</p>
             <div className="feature-grid">
-              <article className="feature-card"><strong>Bio-Data</strong><span>Student number, names, date of birth, gender, contacts and core profile.</span></article>
-              <article className="feature-card"><strong>National ID / NIN</strong><span>Capture and maintain the student's national identification reference. Restricted to authorised staff.</span></article>
-              <article className="feature-card"><strong>Next of Kin</strong><span>Maintain emergency contact and relationship details. Not exposed in the normal student portal.</span></article>
-              <article className="feature-card"><strong>UNEB Records</strong><span>Capture O-Level and A-Level index numbers and pass-slip records for admissions verification.</span></article>
+              <article className="feature-card"><strong>Bio-Data</strong></article>
+              <article className="feature-card"><strong>National ID / NIN</strong></article>
+              <article className="feature-card"><strong>Next of Kin</strong></article>
+              <article className="feature-card"><strong>UNEB Records</strong></article>
             </div>
             <StudentManagement canManage={canManage} readOnly={readOnly} />
           </div>
@@ -128,10 +127,9 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
         {section === 'admissions' && (
           <div>
-            <p className="section-copy">Application pipeline, programme eligibility screening and provisional admission processing.</p>
             <div className="feature-grid compact">
-              <article className="feature-card"><strong>Eligibility checks</strong><span>Record programme-specific requirements, including Biology, Chemistry, Physics and Mathematics where applicable.</span></article>
-              <article className="feature-card"><strong>Admission letters</strong><span>Generate, verify and manage provisional admission documentation.</span></article>
+              <article className="feature-card"><strong>Eligibility checks</strong></article>
+              <article className="feature-card"><strong>Admission letters</strong></article>
             </div>
             <AdmissionsManagement readOnly={readOnly} />
           </div>
@@ -207,22 +205,17 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
         {section === 'alumni' && (
           <div>
-            <p className="section-copy">Maintain graduate and alumni records as part of the student lifecycle. Alumni are no longer a separate top-level application module.</p>
-            <AlumniManagement />
-          </div>
-        )}
+            <div className="feature-grid">
 
         {section === 'national-results' && (
           <div className="feature-grid">
             <article className="feature-card">
               <strong>UHPAB Results</strong>
-              <span>Official UHPAB assessment results will be surfaced here after release and institutional verification.</span>
-              <button className="secondary-button" type="button" disabled>UHPAB Results Integration — Coming Soon</button>
+              <button className="secondary-button" type="button" disabled>UHPAB Results Integration</button>
             </article>
             <article className="feature-card">
               <strong>UVTAB Results</strong>
-              <span>Official UVTAB assessment results and certification information will be surfaced here after release and verification.</span>
-              <button className="secondary-button" type="button" disabled>UVTAB Results Integration — Coming Soon</button>
+              <button className="secondary-button" type="button" disabled>UVTAB Results Integration</button>
             </article>
           </div>
         )}

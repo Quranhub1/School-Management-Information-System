@@ -72,7 +72,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   return <section className="panel">
-    <div className="section-heading"><div><p className="eyebrow">Scheduling</p><h2>{readOnly ? 'Timetable · Read-only' : 'Timetable Management'}</h2><p>Select real teaching groups, courses and staff instead of entering database IDs manually.</p></div>{!readOnly && <button className="secondary-button" type="button" onClick={() => setShowGenerator(!showGenerator)}>{showGenerator ? 'Hide Generator' : 'Generate Timetable'}</button>}</div>
+    <div className="section-heading"><div><p className="eyebrow">Scheduling</p><h2>{readOnly ? 'Timetable · Read-only' : 'Timetable Management'}</h2></div>{!readOnly && <button className="secondary-button" type="button" onClick={() => setShowGenerator(!showGenerator)}>{showGenerator ? 'Hide Generator' : 'Generate Timetable'}</button>}</div>
     {error && <div className="error" role="alert">{error}</div>}
     {!readOnly && showGenerator && <form className="management-form" onSubmit={handleGenerate} style={{ marginBottom: 18 }}>
       <label>Academic period<select value={semesterId} onChange={event => setSemesterId(event.target.value)} required><option value="">Select period</option>{activeSemesters.map(item => <option key={item.id} value={item.id}>{item.label}{item.isCurrent ? ' (Current)' : ''}</option>)}</select></label>

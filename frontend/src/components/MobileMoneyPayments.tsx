@@ -214,7 +214,7 @@ export default function MobileMoneyPayments() {
                 type="text"
                 value={studentName}
                 readOnly
-                placeholder="Student name will appear here"
+                placeholder=""
                 style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px', background: '#f9fafb' }}
               />
             </div>

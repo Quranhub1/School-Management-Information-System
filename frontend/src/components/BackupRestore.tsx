@@ -92,7 +92,6 @@ export function BackupRestore() {
     <div style={{ padding: 20, display: 'grid', gap: 18 }}>
       <div>
         <h3 style={{ marginTop: 0 }}>Local backup folder</h3>
-        <p>Backups are stored on the computer running the SMIS backend. They are not uploaded to a cloud service or saved inside the SMIS project folder.</p>
         <code style={{ display: 'block', padding: 12, overflowWrap: 'anywhere' }}>{directory?.directory ?? 'Loading backup folder…'}</code>
         {directory && <p>{directory.automaticBackupsEnabled ? `Automatic backup is enabled every ${directory.intervalHours} hours while the backend is running.` : 'Automatic backup is disabled in configuration.'}</p>}
         <button className="primary-button" onClick={() => void backup()} disabled={busy}>{busy ? 'Please wait…' : 'Back Up Now to This Folder'}</button>

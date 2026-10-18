@@ -63,7 +63,7 @@ export function LibrarianManagement() {
   }
 
   return <section aria-labelledby="librarian-management-title">
-    <div className="library-toolbar"><div><span className="eyebrow">LIBRARY STAFF</span><h3 id="librarian-management-title">Librarian Management</h3><p>Assign staff to library operations and control their library status.</p></div></div>
+    <div className="library-toolbar"><div><span className="eyebrow">LIBRARY STAFF</span><h3 id="librarian-management-title">Librarian Management</h3></div></div>
     <form onSubmit={add} className="library-form">
       <label>Staff member<select value={staffMemberId} onChange={event => setStaffMemberId(event.target.value)}><option value="">Select staff member</option>{staff.map(person => <option key={person.id} value={person.id}>{person.staffNumber} — {person.firstName} {person.lastName}</option>)}</select></label>
       <label>Library role<input value={libraryRole} onChange={event => setLibraryRole(event.target.value)} placeholder="Librarian" maxLength={80} required /></label>

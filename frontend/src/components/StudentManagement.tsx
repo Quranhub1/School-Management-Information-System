@@ -215,8 +215,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
           {application.regularMedication === 'Yes' && <Field label="Medication details" wide><textarea value={application.medicationDetails} onChange={e => setApp('medicationDetails', e.target.value)} rows={3} /></Field>}
           <Field label="Special medication / support requirements" wide><textarea value={application.specialRequirements} onChange={e => setApp('specialRequirements', e.target.value)} rows={3} /></Field>
         </div>
-        <p className="application-medical-note">The applicant is responsible for costs associated with specialised medical care or treatment not covered by the institution.</p>
-      </Section>
+</Section>
       <Section number="04" title="Parent / guardian details">
         <div className="application-table-scroll"><table className="application-data-table"><thead><tr><th>Relationship</th><th>Full name</th><th>Address</th><th>Telephone</th><th>Occupation</th></tr></thead><tbody>
           <tr><th>Father</th><td><input aria-label="Father full name" value={application.fatherName} onChange={e => setApp('fatherName', e.target.value)} /></td><td><input aria-label="Father address" value={application.fatherAddress} onChange={e => setApp('fatherAddress', e.target.value)} /></td><td><input aria-label="Father telephone" value={application.fatherPhone} onChange={e => setApp('fatherPhone', e.target.value)} /></td><td><input aria-label="Father occupation" value={application.fatherOccupation} onChange={e => setApp('fatherOccupation', e.target.value)} /></td></tr>
@@ -243,7 +242,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
         <div className="application-grid"><Field label="Applicant signature (type full legal name) *"><input value={application.applicantSignature} onChange={e => setApp('applicantSignature', e.target.value)} required /></Field><Field label="Date *"><input type="date" value={application.signatureDate} onChange={e => setApp('signatureDate', e.target.value)} required /></Field></div>
       </Section>
       <Section number="08" title="Official use only">
-        <div className="application-official-only"><strong>Please do not write in this section.</strong><div className="application-grid">
+        <div className="application-official-only"><div className="application-grid">
           <Field label="Application fee (UGX)"><input value={application.applicationFee} readOnly /></Field><Field label="Payment status"><input value={application.feePaid} readOnly aria-readonly="true" /></Field>
           <Field label="Approved / reviewed by"><input value={application.approvedBy} readOnly aria-readonly="true" /></Field><Field label="Official signature"><input value={application.approvalSignature} readOnly aria-readonly="true" /></Field><Field label="Date"><input type="date" value={application.approvalDate} readOnly aria-readonly="true" /></Field>
         </div></div>

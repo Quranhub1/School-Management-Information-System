@@ -70,7 +70,6 @@ export function BulkOperations() {
               </select>
             </label>
           </div>
-          <p className="hint">Upload a CSV file or paste CSV data below.</p>
           <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFileChange} />
           <label>CSV data
             <textarea value={csv} onChange={e => setCsv(e.target.value)} rows={8} placeholder={SAMPLE_CSV[entityType]} />

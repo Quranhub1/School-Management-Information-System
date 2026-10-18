@@ -39,7 +39,7 @@ export function WelfareInventory({ canManage }: { canManage?: boolean }) {
 
   return <div className="welfare-workspace">
     <div className="welfare-heading">
-      <div><span className="eyebrow">WELFARE • KITCHEN & COMMODITIES</span><h4>Daily Welfare Stock Ledger</h4><p>Receipts, consumption, wastage and adjustments are recorded as transactions. Closing balances are calculated, not typed.</p></div>
+      <div><span className="eyebrow">WELFARE • KITCHEN & COMMODITIES</span><h4>Daily Welfare Stock Ledger</h4></div>
       <div className="welfare-total"><span>Recorded usage</span><strong>{totals.used.toLocaleString()} units</strong></div>
     </div>
     {message && <div className="success">{message}</div>}{error && <div className="error">{error}</div>}

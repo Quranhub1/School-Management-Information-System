@@ -49,7 +49,7 @@ export function StudentPortal() {
   return (
     <section className="panel" aria-label="Student Portal">
       <div className="panel-heading">
-        <div><span className="eyebrow">STUDENT</span><h2>Student Portal</h2><p className="section-copy">A deliberately limited learner view. Administrative records, staff tools, finance controls and sensitive personal records remain outside this portal.</p></div>
+        <div><span className="eyebrow">STUDENT</span><h2>Student Portal</h2></div>
       </div>
       {error && <div className="error" role="alert">{error}</div>}
       {loading ? <LoadingSpinner label="Loading student portal…" /> : (
@@ -72,7 +72,6 @@ export function StudentPortal() {
               <div className="student-board-card" style={{ marginTop: 18 }}>
                 <span className="eyebrow">MY ACADEMIC SNAPSHOT</span>
                 <h3>Current academic standing</h3>
-                <p>Only the student's own academic summary is shown here. Full administrative records remain restricted to authorised staff.</p>
               </div>
             </>
           )}
@@ -106,15 +105,15 @@ export function StudentPortal() {
 
           {tab === 'national' && (
             <div className="student-results-boards">
-              <article className="student-board-card"><span className="eyebrow">UHPAB</span><h3>Official UHPAB Results</h3><p>Released and institutionally verified national assessment results will appear here.</p><button className="secondary-button" type="button" disabled>UHPAB Results Portal — Coming Soon</button></article>
-              <article className="student-board-card"><span className="eyebrow">UVTAB</span><h3>Official UVTAB Results</h3><p>Released and institutionally verified TVET assessment results and certification information will appear here.</p><button className="secondary-button" type="button" disabled>UVTAB Results Portal — Coming Soon</button></article>
+              <article className="student-board-card"><span className="eyebrow">UHPAB</span><h3>Official UHPAB Results</h3><button className="secondary-button" type="button" disabled>UHPAB Results Portal</button></article>
+              <article className="student-board-card"><span className="eyebrow">UVTAB</span><h3>Official UVTAB Results</h3><button className="secondary-button" type="button" disabled>UVTAB Results Portal</button></article>
             </div>
           )}
 
           {tab === 'documents' && (
             <div className="feature-grid">
-              <article className="feature-card"><strong>Student Documents</strong><span>Institution-issued documents will be exposed here according to the student's permissions.</span><button className="secondary-button" type="button" disabled>Document Vault — Coming Soon</button></article>
-              <article className="feature-card"><strong>Certificates & Letters</strong><span>Eligible requests and released documents can be surfaced without exposing internal clearance data.</span><button className="secondary-button" type="button" disabled>Request Centre — Coming Soon</button></article>
+              <article className="feature-card"><strong>Student Documents</strong><button className="secondary-button" type="button" disabled>Document Vault</button></article>
+              <article className="feature-card"><strong>Certificates & Letters</strong><button className="secondary-button" type="button" disabled>Request Centre</button></article>
             </div>
           )}
         </>
