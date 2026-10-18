@@ -161,6 +161,7 @@ The installer is intended to be distributed through GitHub Releases and can then
 ## Documentation
 
 - [`INSTALLATION.md`](INSTALLATION.md) — complete installation, deployment, acceptance testing and release checklist
+- [`docs/SYSTEM_GUIDE.md`](docs/SYSTEM_GUIDE.md) — how the system is organized, institution-wide branding, backup/restore behavior and operational troubleshooting
 - [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) — complete SMIS privacy policy and data-protection baseline
 - [`PROGRESS.md`](PROGRESS.md) — authoritative implementation and production-gate tracker
 - [`BACKEND_SETUP.md`](BACKEND_SETUP.md) — backend-focused setup notes
