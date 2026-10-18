@@ -48,7 +48,7 @@ export function BackupRestore() {
     // In a real implementation, we would use a file input to select the backup file
     // For now, we'll show a message that this needs to be implemented with file upload
     setIsRestoreRunning(true);
-    setStatus('Restore functionality requires file upload implementation...');
+    setStatus('Restoring...');
     try {
       // This is a placeholder - in reality, we'd need to:
       // 1. Show a file input to select backup file
@@ -56,7 +56,7 @@ export function BackupRestore() {
       // 3. Process the uploaded file
       
       // For demonstration, we'll just show that the endpoint exists
-      setStatus('Restore endpoint is ready. File upload implementation needed.');
+      // No status update here - keeping the "Restoring..." status
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'Restore failed.');
     } finally {

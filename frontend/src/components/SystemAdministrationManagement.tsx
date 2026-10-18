@@ -8,9 +8,9 @@ type SystemAdministrationManagementProps = {
 }
 
 const tools = [
-  { key: 'logs', title: 'Audit logs', description: 'Review recorded account and data-change activity.', icon: FileSearch },
-  { key: 'backups', title: 'Backups & recovery', description: 'Check backup and recovery readiness for the system database.', icon: Archive },
-  { key: 'settings', title: 'System settings', description: 'Review system-level configuration and security controls.', icon: Settings2 },
+  { key: 'logs', title: 'Audit logs', icon: FileSearch },
+  { key: 'backups', title: 'Backups & recovery', icon: Archive },
+  { key: 'settings', title: 'System settings', icon: Settings2 },
 ]
 
 export function SystemAdministrationManagement({ activeSubsection, onNavigate }: SystemAdministrationManagementProps) {
@@ -43,16 +43,16 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
       <section className="panel" aria-labelledby="system-settings-title">
         <div className="panel-heading"><div><p className="eyebrow">CONFIGURATION</p><h2 id="system-settings-title">System settings</h2></div><Settings2 size={22} /></div>
         <div className="summary-grid" style={{ padding: 18, margin: 0 }}>
-          <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><p>Manage user accounts, assigned roles and sign-in access.</p><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
-          <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><p>Institution identity and branding are maintained in Administration.</p><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
+          <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
+          <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
         </div>
       </section>
     ) : (
       <>
         <div className="summary-grid">
-          <article className="summary-card"><Activity size={22} /><span>Workspace</span><strong>System controls</strong></article>
-          <article className="summary-card"><ShieldCheck size={22} /><span>Security</span><strong>Role-protected</strong></article>
-          <article className="summary-card"><FileSearch size={22} /><span>Audit trail</span><strong>Available</strong></article>
+          <article className="summary-card"><Activity size={22} /><span>Workspace</span></article>
+          <article className="summary-card"><ShieldCheck size={22} /><span>Security</span></article>
+          <article className="summary-card"><FileSearch size={22} /><span>Audit trail</span></article>
         </div>
         <div className="settings-grid">
           {tools.map(tool => {

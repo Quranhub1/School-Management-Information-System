@@ -14,10 +14,6 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
   const [payrollMonth, setPayrollMonth] = useState(new Date().getMonth() + 1)
   const [payrollYear, setPayrollYear] = useState(new Date().getFullYear())
 
-  async function loadStaff() { setLoading(true); try { setStaff(await listStaff()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load staff.') } finally { setLoading(false) } }
-  async function loadLeave() { if (!leaveForm.staffMemberId.trim()) return; try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
-  async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
-
   const [form, setForm] = useState({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
 
@@ -37,14 +33,21 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
   }, [])
 
   useEffect(() => { void loadStaff() }, [])
+
   useEffect(() => { if (tab === 'leave') void loadLeave() }, [tab])
+
   useEffect(() => { if (tab === 'payroll') void loadPayroll() }, [tab])
 
   async function deactivate(id: string) { try { await deactivateStaff(id); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') } }
+
   async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to request leave.') } }
+
   async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, '', approved); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to approve leave.') } }
+
   async function submit(e: React.FormEvent) { e.preventDefault(); setError(''); try { await createStaff(form); console.log("Creating staff with form:", form); setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' }); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create staff.') } }
+
   async function handleGeneratePayroll() { try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to generate payroll.') } }
+
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to mark payroll as paid.') } }
 
   return (
@@ -83,6 +86,7 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
                 <option value="NonTeaching">Non-Teaching</option>
                 <option value="Administrative">Administrative</option>
                 <option value="Support">Support</option>
+              </select>
             </form>
           )}
           <div className="table-wrap">
@@ -153,7 +157,6 @@ export function StaffManagement({ canManage }: { canManage?: boolean }) {
       {tab === 'recruitment' && (
         <div className="card">
           <h3>Recruitment & Onboarding</h3>
-          <p className="empty">Staff recruitment workflow will be available here. Post vacancies, receive applications, shortlist, interview, and onboard new staff.</p>
         </div>
       )}
     </section>
