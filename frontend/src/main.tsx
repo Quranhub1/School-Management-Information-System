@@ -5,6 +5,7 @@ import './styles.css'
 import './tailadmin-inspired.css'
 import './sidebar-fixed.css'
 import './table-font.css'
+import './workspace-density.css'
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
