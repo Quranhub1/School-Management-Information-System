@@ -247,3 +247,67 @@
   transform: none !important;
   transition: none !important;
 }
+
+
+/* Refined sidebar navigation: teal separators and a restrained illuminated hover.
+   The rows stay rectangular and never scale, rotate, or slide. */
+.app-shell > aside nav section > div:last-child > div {
+  gap: 0.35rem !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]) {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid rgba(20, 184, 166, 0.38) !important;
+  box-shadow: inset 0 -1px 0 rgba(20, 184, 166, 0.08) !important;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease !important;
+  transform: none !important;
+}
+.app-shell > aside nav section button:not([aria-expanded])::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #14b8a6 18%, #5eead4 50%, #14b8a6 82%, transparent);
+  opacity: 0.55;
+  transition: opacity 180ms ease, height 180ms ease;
+}
+.app-shell > aside nav section button:not([aria-expanded]):hover {
+  background: linear-gradient(90deg, rgba(20, 184, 166, 0.20), rgba(20, 184, 166, 0.07) 72%, rgba(20, 184, 166, 0.02)) !important;
+  color: #fff8e8 !important;
+  border-bottom-color: rgba(94, 234, 212, 0.95) !important;
+  box-shadow:
+    inset 3px 0 0 #2dd4bf,
+    inset 0 0 18px rgba(20, 184, 166, 0.10),
+    0 0 12px rgba(20, 184, 166, 0.10) !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]):hover::after {
+  opacity: 1;
+  height: 2px;
+}
+.app-shell > aside nav section button[aria-current="page"] {
+  background: linear-gradient(90deg, rgba(20, 184, 166, 0.24), rgba(20, 184, 166, 0.08)) !important;
+  color: #fff8e8 !important;
+  border-left-color: #5eead4 !important;
+  border-bottom-color: #14b8a6 !important;
+  box-shadow:
+    inset 3px 0 0 #5eead4,
+    inset 0 0 14px rgba(20, 184, 166, 0.09) !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]):focus-visible {
+  outline: 2px solid #5eead4 !important;
+  outline-offset: -2px !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell > aside nav section button:not([aria-expanded]),
+  .app-shell > aside nav section button:not([aria-expanded])::after {
+    transition: none !important;
+  }
+}
