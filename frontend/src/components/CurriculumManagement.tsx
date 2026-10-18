@@ -145,7 +145,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   if (!canManage) return null
 
   return (
-    <section className="panel">
+    <section className="panel curriculum-management">
       <div className="panel-heading">
         <div>
           <p className="eyebrow">Academic Structure</p>
