@@ -14,8 +14,8 @@
   font-display: block;
 }
 html, body, .font-sans {
-  font-family: "Inter Variable";
+  font-family: "Inter Variable" !important;
 }
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Plus Jakarta Sans Variable";
+  font-family: "Plus Jakarta Sans Variable" !important;
 }
