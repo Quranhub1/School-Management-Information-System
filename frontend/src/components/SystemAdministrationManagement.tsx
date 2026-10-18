@@ -21,7 +21,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
       <div>
         <p className="eyebrow">SYSTEM CONTROL CENTER</p>
         <h1>System Administration</h1>
-        <p></p>
+        
       </div>
       <span className="status"><ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} /> Administrator area</span>
     </header>
@@ -39,17 +39,17 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
       <section className="panel" aria-labelledby="system-settings-title">
         <div className="panel-heading"><div><p className="eyebrow">CONFIGURATION</p><h2 id="system-settings-title">System settings</h2></div><Settings2 size={22} /></div>
         <div className="summary-grid" style={{ padding: 18, margin: 0 }}>
-          <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><p></p><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
-          <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><p></p><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
+          <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
+          <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
         </div>
-        <p style={{ padding: '0 18px 18px', color: 'var(--text-muted, #64748b)' }}></p>
+        
       </section>
     ) : (
       <>
         <div className="summary-grid">
-          <article className="summary-card"><Activity size={22} /><span>Workspace</span><strong>System controls</strong><small></small></article>
-          <article className="summary-card"><ShieldCheck size={22} /><span>Security</span><strong>Role-protected</strong><small></small></article>
-          <article className="summary-card"><FileSearch size={22} /><span>Audit trail</span><strong>Available</strong><small></small></article>
+          <article className="summary-card"><Activity size={22} /><span>Workspace</span><strong>System controls</strong></article>
+          <article className="summary-card"><ShieldCheck size={22} /><span>Security</span><strong>Role-protected</strong></article>
+          <article className="summary-card"><FileSearch size={22} /><span>Audit trail</span><strong>Available</strong></article>
         </div>
         <div className="settings-grid">
           {tools.map(tool => {
@@ -57,14 +57,14 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
             return <article className="panel" key={tool.key} style={{ padding: 18 }}>
               <Icon size={24} />
               <h2 style={{ margin: '12px 0 6px', fontSize: '1.05rem' }}>{tool.title}</h2>
-              <p style={{ color: 'var(--text-muted, #64748b)', minHeight: 42 }}>{tool.description}</p>
+              
               <button className="secondary-button" onClick={() => onNavigate('system-administration', tool.key)}>Open section <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button>
             </article>
           })}
           <article className="panel" style={{ padding: 18 }}>
             <UsersRound size={24} />
             <h2 style={{ margin: '12px 0 6px', fontSize: '1.05rem' }}>User administration</h2>
-            <p style={{ color: 'var(--text-muted, #64748b)', minHeight: 42 }}></p>
+            
             <button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button>
           </article>
         </div>
