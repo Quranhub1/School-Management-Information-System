@@ -150,7 +150,7 @@ function GlobalTableLayoutEditor() {
   }, []);
 
   useEffect(() => {
-    let drag: { kind: 'column' | 'row'; start: number; size: number; table: HTMLTableElement; index: number; row?: HTMLTableRowElement } | null = null;
+    let drag: { kind: 'column'; start: number; size: number; table: HTMLTableElement; index: number; cells: HTMLTableCellElement[] } | { kind: 'row'; start: number; size: number; table: HTMLTableElement; index: number; row: HTMLTableRowElement } | null = null;
     const down = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
@@ -163,7 +163,10 @@ function GlobalTableLayoutEditor() {
       if (columnHandle) {
         const cell = columnHandle.parentElement as HTMLTableCellElement;
         const index = Array.from(cell.parentElement?.children ?? []).indexOf(cell);
-        drag = { kind: 'column', start: event.clientX, size: cell.getBoundingClientRect().width, table, index };
+        const cells = Array.from(table.rows)
+          .map(row => row.cells.item(index))
+          .filter((candidate): candidate is HTMLTableCellElement => candidate !== null);
+        drag = { kind: 'column', start: event.clientX, size: cell.getBoundingClientRect().width, table, index, cells };
       } else if (rowHandle) {
         const row = rowHandle.parentElement as HTMLTableRowElement;
         drag = { kind: 'row', start: event.clientY, size: row.getBoundingClientRect().height, table, index: -1, row };
@@ -174,11 +177,11 @@ function GlobalTableLayoutEditor() {
       if (!drag) return;
       if (drag.kind === 'column') {
         const width = Math.max(56, Math.min(900, drag.size + event.clientX - drag.start));
-        drag.table.querySelectorAll('tr').forEach(row => {
-          const cell = row.children.item(drag!.index) as HTMLElement | null;
-          if (cell) { cell.style.width = width + 'px'; cell.style.minWidth = width + 'px'; }
+        drag.cells.forEach(cell => {
+          cell.style.width = width + 'px';
+          cell.style.minWidth = width + 'px';
         });
-      } else if (drag.row) {
+      } else {
         drag.row.style.height = Math.max(24, Math.min(400, drag.size + event.clientY - drag.start)) + 'px';
       }
     };
