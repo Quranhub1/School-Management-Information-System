@@ -215,7 +215,6 @@ export function AdminDashboard() {
         <div>
           <p className="eyebrow">SYSTEM ADMINISTRATION</p>
           <h2>Welcome, {session?.username ?? 'Admin'}</h2>
-          <p className="admin-dashboard-subtitle">A live overview of school operations and key records.</p>
         </div>
         <div className="admin-dashboard-heading-actions">
           <span className="admin-dashboard-date">{new Date().toLocaleDateString('en-UG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
