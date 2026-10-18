@@ -98,7 +98,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         <div>
           <p className="eyebrow">Student Lifecycle</p>
           <h2>{readOnly ? 'Student Records · Read-only' : 'Admissions & Student Management'}</h2>
-          <p>Manage the student journey from application and screening through national indexing, enrollment, results and identity services.</p>
+          
         </div>
       </header>
 
