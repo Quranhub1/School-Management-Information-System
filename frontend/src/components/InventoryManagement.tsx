@@ -147,7 +147,6 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
       <div>
         <span className="eyebrow">SCHOOL INVENTORIES</span>
         <h3>Inventory Register</h3>
-        <p className="empty">This is the school inventory workspace. Registers are loaded from and saved to the application database, not browser storage. Choose a laboratory, department or facility and manage its spreadsheet-style register.</p>
       </div>
     </div>
 
