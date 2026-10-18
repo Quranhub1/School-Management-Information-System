@@ -84,13 +84,6 @@ export function BackupRestore() {
         </button>
       </div>
       {status && <p className="empty" style={{ padding: 20 }}>{status}</p>}
-      <p style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.875rem', marginTop: 12 }}>
-        Note: Backup files are stored in {process.env.PUBLIC_URL && process.env.PUBLIC_URL !== '' ? 'the configured backup directory' : '/workspace/app/backups'} on the server.
-      </p>
-      <p style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.875rem' }}>
-        Do not use this page as confirmation that the database is backed up. 
-        Configure and verify a PostgreSQL backup process before relying on recovery.
-      </p>
     </section>
   );
 }
