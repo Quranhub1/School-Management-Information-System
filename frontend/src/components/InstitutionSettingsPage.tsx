@@ -272,7 +272,6 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
             <section aria-label="Institution logo" style={{ border: '1px solid #e7e5e4', borderRadius: 10, padding: 18, background: '#fffdf8' }}>
               <div style={{ marginBottom: 14 }}>
                 <h3 style={{ margin: '0 0 5px', color: '#292524', fontSize: 16 }}>Institution logo</h3>
-                <p style={{ margin: 0, color: '#78716c', fontSize: 13 }}>Upload a logo or provide an image URL. Uploaded logos are stored with the institution settings.</p>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(180px, 230px)', gap: 18, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 14 }}>
@@ -293,7 +292,6 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
             <section aria-label="Institution brand colours" style={{ border: '1px solid #e7e5e4', borderRadius: 10, padding: 18, background: '#fffdf8' }}>
               <div style={{ marginBottom: 14 }}>
                 <h3 style={{ margin: '0 0 5px', color: '#292524', fontSize: 16 }}>Brand colours</h3>
-                <p style={{ margin: 0, color: '#78716c', fontSize: 13 }}>Choose the main institutional colour and the accent used for highlights.</p>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14 }}>
                 <label style={{ display: 'grid', gap: 8 }}>Primary colour
