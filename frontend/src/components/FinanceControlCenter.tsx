@@ -249,7 +249,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
 
       <section className="finance-surface">
         <div className="finance-surface-heading">
-          <div><span className="eyebrow">EXTERNAL PAYMENT INTEGRATIONS</span><h3>Payment channels</h3><p>These integrations remain deliberately disabled until the institution's provider APIs and credentials are available.</p></div>
+          <div><span className="eyebrow">EXTERNAL PAYMENT INTEGRATIONS</span><h3>Payment channels</h3></div>
           <span className="finance-coming-soon-badge">COMING SOON</span>
         </div>
         <div className="finance-channel-grid">
