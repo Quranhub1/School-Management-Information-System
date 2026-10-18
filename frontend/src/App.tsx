@@ -312,22 +312,21 @@ return <main className="app-shell">
     <img src={institutionLogoUrl(institution)} alt="" />
     <span>{institution.institutionName}</span>
   </div>
-  <aside className="flex flex-col w-72 h-screen bg-white/65 backdrop-blur-2xl border-r border-white/60 shadow-[4px_0_30px_rgba(30,41,59,0.06)] font-sans text-slate-700 select-none">
-    <div className="flex items-center gap-3.5 px-6 py-6 border-b border-white/60 group cursor-pointer">
+  <aside className="flex flex-col w-72 h-screen bg-white border-r border-slate-200 font-sans text-slate-700 select-none">
+    <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-200">
       {institution && (
         <div className="relative flex-shrink-0">
-          <div className="absolute inset-0 bg-indigo-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-          <img src={institutionLogoUrl(institution)} alt={institution.institutionName + " Logo"} className="relative w-11 h-11 rounded-xl object-cover shadow-sm ring-1 ring-slate-900/10 group-hover:scale-105 group-hover:-rotate-3 transition-all duration-300" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          <img src={institutionLogoUrl(institution)} alt={institution.institutionName + " Logo"} className="w-10 h-10 rounded-xl object-cover ring-1 ring-slate-900/10" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         </div>
       )}
       <div className="flex flex-col min-w-0 overflow-hidden">
-        <span className="text-[10px] font-extrabold tracking-widest text-blue-600 uppercase mb-0.5 group-hover:text-blue-500 transition-colors truncate">{institutionShortName(institution)}</span>
-        <h1 className="text-sm font-bold text-slate-900 truncate leading-tight group-hover:text-blue-950 transition-colors">{institution.institutionName}</h1>
+        <span className="text-[10px] font-bold tracking-[0.18em] text-slate-500 uppercase mb-0.5 truncate">{institutionShortName(institution)}</span>
+        <h1 className="text-sm font-semibold text-slate-900 truncate leading-tight">{institution.institutionName}</h1>
         {institution.motto && <p className="text-xs font-medium text-slate-500 truncate mt-0.5">{institution.motto}</p>}
       </div>
     </div>
 
-    <nav className="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-6" aria-label="Primary navigation">
+    <nav className="flex-1 px-3 py-5 overflow-y-auto custom-scrollbar space-y-5" aria-label="Primary navigation">
       {visibleSidebarGroups.map((group, groupIdx) => {
         const open = group.alwaysOpen || !!openSidebarGroups[group.label];
         const groupId = "sidebar-group-" + groupIdx;
@@ -338,13 +337,13 @@ return <main className="app-shell">
         return (
           <section key={group.label} className="flex flex-col">
             {group.alwaysOpen ? (
-              <div className="flex items-center justify-between w-full px-2 py-1.5 text-xs font-bold tracking-wider uppercase text-slate-400 cursor-default">
+              <div className="flex items-center w-full px-2.5 py-1.5 text-[11px] font-semibold tracking-wider uppercase text-slate-400 cursor-default">
                 <span>{group.label}</span>
               </div>
             ) : (
-              <button type="button" className="flex items-center justify-between w-full px-2 py-1.5 text-xs font-bold tracking-wider uppercase transition-colors duration-200 rounded-md group text-slate-500 hover:text-slate-900 hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-slate-400/30" onClick={toggle} aria-expanded={open} aria-controls={groupId}>
+              <button type="button" className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-[11px] font-semibold tracking-wider uppercase text-slate-400 transition-colors duration-200 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40" onClick={toggle} aria-expanded={open} aria-controls={groupId}>
                 <span>{group.label}</span>
-                <ChevronDown size={14} className={"transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)] text-slate-400 group-hover:text-slate-700 " + (open ? "rotate-180" : "rotate-0")} aria-hidden="true" />
+                <ChevronDown size={14} className={"transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)] text-slate-400 " + (open ? "rotate-180" : "rotate-0")} aria-hidden="true" />
               </button>
             )}
 
@@ -357,14 +356,14 @@ return <main className="app-shell">
                   return (
                     <button key={group.label + "-" + item.label + "-" + (item.subsection || "root")} type="button" onClick={() => navigate(item.module, item.subsection)} aria-current={isItemActive ? "page" : undefined}
                       className={[
-                        "group relative flex items-center w-full text-sm font-medium transition-colors duration-200 ease-out text-left",
-                        item.child ? "py-2 pr-3 pl-9 rounded-r-xl border-l-2" : "py-2.5 px-3 gap-3 rounded-xl",
+                        "group relative flex items-center w-full text-sm font-medium transition-colors duration-200 ease-out text-left rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40",
+                        item.child ? "py-2 pr-3 pl-9 border-l-2 rounded-l-none" : "py-2.5 px-3 gap-3",
                         isItemActive
-                          ? (item.child ? "border-slate-900 bg-white/80 text-slate-900 font-semibold" : "bg-slate-900 text-white font-semibold shadow-sm")
-                          : (item.child ? "border-slate-200/70 text-black hover:border-slate-400 hover:bg-white/70" : "text-black hover:bg-white/70")
+                          ? (item.child ? "border-slate-900 bg-slate-100 text-slate-900 font-semibold" : "bg-slate-900 text-white font-semibold shadow-sm shadow-slate-900/10")
+                          : (item.child ? "border-slate-200 text-black hover:border-slate-400 hover:bg-slate-50" : "text-black hover:bg-slate-100")
                       ].join(" ")}
                     >
-                      {!item.child && <Icon size={18} strokeWidth={isItemActive ? 2.5 : 2} className={"transition-colors duration-200 flex-shrink-0 " + (isItemActive ? "text-white" : "text-black")} aria-hidden="true" />}
+                      {!item.child && <Icon size={18} strokeWidth={isItemActive ? 2.5 : 2} className={"transition-colors duration-200 flex-shrink-0 " + (isItemActive ? "text-white" : "text-black group-hover:text-slate-900")} aria-hidden="true" />}
                       <span className="relative z-10 truncate">{(item.module === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden'))) ? 'School Warden' : item.label}</span>
                     </button>
                   );
@@ -376,17 +375,17 @@ return <main className="app-shell">
       })}
     </nav>
 
-    <div className="p-4 mt-auto border-t border-white/60 bg-white/40 backdrop-blur-xl">
-      <div className="group flex items-center p-2 transition-all duration-300 rounded-xl hover:bg-white/80 hover:shadow-[0_4px_20px_rgba(30,41,59,0.06)] ring-1 ring-transparent hover:ring-white/80 cursor-pointer">
-        <div className="relative flex items-center justify-center flex-shrink-0 w-9 h-9 font-bold text-xs text-blue-700 bg-blue-100 rounded-full shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+    <div className="p-3 mt-auto border-t border-slate-200 bg-slate-50">
+      <div className="flex items-center p-2 rounded-xl">
+        <div className="relative flex items-center justify-center flex-shrink-0 w-9 h-9 font-bold text-xs text-white bg-slate-900 rounded-full">
           {userInitials}
-          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full transition-transform duration-300 group-hover:scale-110"></div>
+          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
         </div>
-        <div className="flex flex-col min-w-0 ml-3 mr-auto transition-transform duration-300 group-hover:translate-x-1 text-left">
+        <div className="flex flex-col min-w-0 ml-3 mr-auto text-left">
           <span className="text-sm font-bold text-slate-900 truncate">{sessionUsername || "Guest User"}</span>
-          <span className="text-xs font-medium text-slate-500 truncate capitalize group-hover:text-indigo-500 transition-colors duration-300">{r?.[0] || "User"}</span>
+          <span className="text-xs font-medium text-slate-500 truncate capitalize">{r?.[0] || "User"}</span>
         </div>
-        <button type="button" className="p-2 ml-1 text-slate-400 transition-all duration-300 rounded-lg hover:text-white hover:bg-red-500 hover:shadow-md hover:shadow-red-200 hover:-rotate-12 hover:scale-110 active:scale-95 focus:outline-none" onClick={signOut} title="Sign out" aria-label="Sign out">
+        <button type="button" className="p-2 ml-1 text-slate-400 transition-colors duration-200 rounded-lg hover:text-red-600 hover:bg-red-50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300" onClick={signOut} title="Sign out" aria-label="Sign out">
           <LogOut size={16} strokeWidth={2.5} />
         </button>
       </div>

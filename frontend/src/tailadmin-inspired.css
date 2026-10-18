@@ -21,10 +21,10 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
   position: sticky;
   top: 0;
   align-self: flex-start;
-  background: var(--smis-ui-surface) !important;
+  background: #fff !important;
   color: #334155 !important;
-  border-right: 1px solid var(--smis-ui-border) !important;
-  box-shadow: 5px 0 24px rgba(15, 23, 42, .025) !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
   backdrop-filter: none !important;
   z-index: 20;
 }
@@ -34,16 +34,8 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
   border-bottom: 1px solid var(--smis-ui-border) !important;
   background: #fff;
 }
-.app-shell > aside nav { padding: 18px 12px !important; gap: 22px !important; }
-.app-shell > aside nav section > button[aria-expanded] {
-  padding: 8px 10px !important;
-  color: #94a3b8 !important;
-  font-size: 10px !important;
-  letter-spacing: .11em !important;
-}
 .app-shell > aside nav section > div > div > button {
   min-height: 40px;
-  border-radius: 10px !important;
   font-size: 13px !important;
 }
 .app-shell > aside nav section > div > div > button[aria-current="page"] {
@@ -52,7 +44,7 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
   box-shadow: 0 2px 6px rgba(15, 23, 42, .15) !important;
 }
 .app-shell > aside nav section > div > div > button:not([aria-current="page"]):hover {
-  background: #f4f6fb !important;
+  background: #f1f5f9 !important;
   color: #000 !important;
 }
 .app-shell > aside nav button:focus-visible,
@@ -61,9 +53,12 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
   outline-offset: 2px;
 }
 .app-shell > aside > div:last-child {
-  background: #fff !important;
+  background: #f8fafc !important;
   color: #64748b !important;
-  border-top: 1px solid var(--smis-ui-border) !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell > aside, .app-shell > aside * { transition-duration: 0.01ms !important; }
 }
 .app-shell > aside > div:last-child strong,
 .app-shell > aside > div:last-child a { color: #334155 !important; }
