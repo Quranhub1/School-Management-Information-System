@@ -95,7 +95,6 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
         </div>
         <div className="panel" style={{ marginTop: 22, padding: 20 }}>
           <h3>Department Workspace</h3>
-          <p style={{ color: '#64748b', marginTop: 6 }}>Departmental actions are intended to be scoped to the authenticated department. Institution-wide administration and unrelated departments remain outside this workspace.</p>
           <div className="grid-form" style={{ marginTop: 16 }}>
             <button className="secondary-button" onClick={() => onNavigate('academics')}>Academic Management</button>
             <button className="secondary-button" onClick={() => onNavigate('staff')}>Department Staff</button>
