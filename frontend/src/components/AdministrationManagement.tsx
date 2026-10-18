@@ -244,7 +244,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
               </select>
             </label>
           </div>
-          <button type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
+          <button type="submit" className="create-account-button" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
         </form>
         {editingUserId && (
           <form className="student-form" onSubmit={saveEdit} aria-label="Edit user account">
