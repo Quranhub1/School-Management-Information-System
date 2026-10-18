@@ -118,7 +118,7 @@ export function GuildElectoralCommission() {
         <div>
           <p className="eyebrow">Student Governance</p>
           <h3>Electoral Commission</h3>
-          <p>Manage the Guild President election and the Electoral Commission's vetting of presidential appointees.</p>
+          
         </div>
         <div className="guild-electoral-chair">
           <ShieldCheck size={18} />
