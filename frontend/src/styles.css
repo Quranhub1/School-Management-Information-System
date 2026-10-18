@@ -18,6 +18,8 @@
 }
 
 @theme {
+  --font-sans: "Inter Variable";
+  --font-display: "Plus Jakarta Sans Variable";
   --color-smis-primary: #3b82f6;
   --color-smis-secondary: #10b981;
   --color-smis-warning: #f59e0b;
