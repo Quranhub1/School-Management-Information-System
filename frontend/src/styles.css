@@ -1334,7 +1334,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .office-directory-intro { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:22px; border:1px solid var(--smis-border); border-radius:18px; background:var(--smis-surface); box-shadow:var(--smis-shadow-sm); }
 .office-directory-intro h3 { margin:4px 0 6px; font-size:1.35rem; color:var(--smis-text); }
 .office-directory-intro p { margin:0; max-width:820px; color:var(--smis-text-muted); line-height:1.55; }
-.office-count, .office-group-heading span { display:inline-flex; align-items:center; justify-content:center; min-width:34px; padding:5px 10px; border-radius:999px; background:var(--brand-primary-soft); color:var(--brand-primary); font-weight:800; font-size:.75rem; }
+.office-group-heading span { display:inline-flex; align-items:center; justify-content:center; min-width:34px; padding:5px 10px; border-radius:999px; background:var(--brand-primary-soft); color:var(--brand-primary); font-weight:800; font-size:.75rem; }
+.office-count { display:flex; flex-direction:column; align-items:center; min-width:104px; padding:12px 18px; border:1px solid var(--smis-border); border-radius:14px; background:var(--smis-surface-muted); }
+.office-count strong { font-size:1.6rem; line-height:1; font-weight:800; color:var(--smis-text); }
+.office-count span { margin-top:5px; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--smis-text-muted); }
 .office-groups { display:grid; gap:22px; }
 .office-group { display:grid; gap:10px; }
 .office-group-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 4px; }

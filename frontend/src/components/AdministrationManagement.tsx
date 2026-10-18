@@ -397,7 +397,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
         </div>
       ) })() : (
         <div className="office-directory">
-          <div className="office-directory-intro"><div><span className="eyebrow">INSTITUTIONAL LEADERSHIP</span><h3>Leadership & Offices</h3></div></div>
+          <div className="office-directory-intro"><div><span className="eyebrow">INSTITUTIONAL LEADERSHIP</span><h3>Leadership & Offices</h3></div><div className="office-count"><strong>{OFFICES.length}</strong><span>offices</span></div></div>
           <div className="office-groups">{Array.from(new Set(OFFICES.map(o => o.group))).map(group => <section key={group} className="office-group"><div className="office-group-heading"><h4>{group}</h4><span>{OFFICES.filter(o => o.group === group).length}</span></div><div className="office-card-grid">{OFFICES.filter(o => o.group === group).map(office => { const Icon = office.icon; return <button type="button" className="office-card" key={office.key} onClick={() => setSelectedOffice(office)}><span className="office-card-icon"><Icon size={21} /></span><span className="office-card-copy"><strong>{office.title}</strong><small>{office.description}</small></span><span className="office-card-link">{office.workspace ? 'Workspace →' : 'View office →'}</span></button> })}</div></section>)}</div>
         </div>
       )
