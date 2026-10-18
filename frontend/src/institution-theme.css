@@ -153,3 +153,97 @@
 .app-shell .library-workspace-tabs button.active {
   background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent)) !important;
 }
+
+
+/* Sidebar-only override: square black menu rows, cream labels, no button motion/elevation. */
+.app-shell > aside {
+  background: #11110f !important;
+  color: #f5efdf !important;
+  border-right: 1px solid #37352e !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.app-shell > aside > div:first-child {
+  background: #11110f !important;
+  border-bottom: 1px solid #37352e !important;
+  border-radius: 0 !important;
+}
+.app-shell > aside > div:first-child span,
+.app-shell > aside > div:first-child h1,
+.app-shell > aside > div:first-child p {
+  color: #f5efdf !important;
+}
+.app-shell > aside nav {
+  background: #11110f !important;
+}
+.app-shell > aside nav section > button,
+.app-shell > aside nav section button[aria-current],
+.app-shell > aside nav section button:not([aria-expanded]) {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+  text-decoration: none !important;
+}
+.app-shell > aside nav section > button[aria-expanded] {
+  background: #11110f !important;
+  color: #d7cfbb !important;
+}
+.app-shell > aside nav section > button[aria-expanded]:hover {
+  background: #26251f !important;
+  color: #f5efdf !important;
+}
+.app-shell > aside nav section button[aria-current="page"] {
+  background: #302e26 !important;
+  color: #f5efdf !important;
+  border-left-color: #f5efdf !important;
+  font-weight: 700 !important;
+  box-shadow: inset 3px 0 0 #f5efdf !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]) {
+  background: #11110f !important;
+  color: #d7cfbb !important;
+  border-color: #37352e !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]):hover {
+  background: #26251f !important;
+  color: #f5efdf !important;
+  border-color: #37352e !important;
+}
+.app-shell > aside nav section button svg,
+.app-shell > aside nav section button span {
+  color: inherit !important;
+  transform: none !important;
+  transition: none !important;
+}
+.app-shell > aside nav section button .group-hover\\:scale-105,
+.app-shell > aside nav section button .group-hover\\:scale-110,
+.app-shell > aside nav section button .group-hover\\:-rotate-3,
+.app-shell > aside nav section button .group-hover\\:translate-x-1 {
+  transform: none !important;
+}
+.app-shell > aside nav section button:focus-visible {
+  outline: 2px solid #f5efdf !important;
+  outline-offset: -2px !important;
+  box-shadow: none !important;
+}
+.app-shell > aside > div:last-child {
+  background: #11110f !important;
+  color: #d7cfbb !important;
+  border-top: 1px solid #37352e !important;
+}
+.app-shell > aside > div:last-child > div {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  background: #11110f !important;
+}
+.app-shell > aside > div:last-child span {
+  color: #f5efdf !important;
+}
+.app-shell > aside > div:last-child button {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
