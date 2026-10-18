@@ -108,7 +108,6 @@ export function BackupRestore() {
         <button className="secondary-button" onClick={() => void restore()} disabled={busy || !selected} style={{ marginTop: 12 }}>{busy ? 'Please wait…' : 'Restore Selected Local Backup'}</button>
       </div>
       {status && <p role={error ? 'alert' : 'status'} aria-live="polite" style={{ padding: 14, margin: 0, borderRadius: 8, background: error ? '#fef2f2' : '#f0fdf4', color: error ? '#991b1b' : '#166534' }}>{status}</p>}
-      <p style={{ color: 'var(--text-muted, #64748b)', fontSize: 13, margin: 0 }}>Keep a copy on a separate drive for protection against disk failure. Automatic backups only run while the SMIS backend is running.</p>
     </div>
   </section>
 }
