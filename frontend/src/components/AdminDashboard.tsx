@@ -245,7 +245,7 @@ export function AdminDashboard() {
           </div>
 
           <div className="admin-section-title">
-            <div><h3>School at a glance</h3><p>Colour-coded breakdowns of the latest records returned by SMIS.</p></div>
+            <div><h3>School at a glance</h3></div>
             <span className="admin-data-note"><i /> Based on loaded records</span>
           </div>
           <div className="admin-charts-grid">
@@ -258,7 +258,7 @@ export function AdminDashboard() {
 
           <div className="admin-dashboard-bottom-grid">
             <div className="admin-dashboard-action-card">
-              <div><h3>Quick actions</h3><p>Jump directly to common administrative tasks.</p></div>
+              <div><h3>Quick actions</h3></div>
               <div className="admin-quick-actions">
                 <button type="button" onClick={() => setTab('students')}>Search students <span>→</span></button>
                 <button type="button" onClick={() => setTab('staff')}>Search staff <span>→</span></button>
@@ -267,7 +267,7 @@ export function AdminDashboard() {
               </div>
             </div>
             <div className="admin-dashboard-action-card admin-attention-card">
-              <div><h3>Needs attention</h3><p>Items that may need a follow-up.</p></div>
+              <div><h3>Needs attention</h3></div>
               <div className="admin-attention-list">
                 <div><span className="admin-attention-dot amber" /><span>Outstanding fees</span><strong>{moneyFormat(finance.outstanding)}</strong></div>
                 <div><span className="admin-attention-dot purple" /><span>Pending payroll</span><strong>{numberFormat.format(payroll.pending)}</strong></div>
@@ -353,7 +353,6 @@ export function AdminDashboard() {
             <div className="admin-kpi-card"><span className="admin-kpi-icon amber">PN</span><div><span>Payroll pending</span><strong>{numberFormat.format(payroll.pending)}</strong><small>Records awaiting payment</small></div></div>
           </div>
           <div className="admin-monitoring-notice"><strong>Health checks are not connected to this dashboard yet.</strong><span>Service and database availability are intentionally not labelled as operational until backed by a real health-check endpoint.</span></div>
-          <p className="admin-dashboard-footnote">Audit logs, backups, and detailed service checks remain in their existing administration modules.</p>
         </div>
       )}
     </section>

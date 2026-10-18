@@ -366,7 +366,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
     {tab === 'roles' && (
       <section className="panel" aria-labelledby="role-directory-title">
         <div className="panel-heading">
-          <div><p className="eyebrow">ACCESS CONTROL</p><h3 id="role-directory-title">Role Directory</h3><p>Review the roles currently available in SMIS and how many user accounts have each role assigned.</p></div>
+          <div><p className="eyebrow">ACCESS CONTROL</p><h3 id="role-directory-title">Role Directory</h3></div>
           <button type="button" className="secondary-button" onClick={() => setTab('users')}>Manage user accounts</button>
         </div>
         <div className="table-wrap">
@@ -397,7 +397,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
         </div>
       ) })() : (
         <div className="office-directory">
-          <div className="office-directory-intro"><div><span className="eyebrow">INSTITUTIONAL LEADERSHIP</span><h3>Leadership & Offices</h3><p>Day-to-day school operations, governance and specialist offices. Operational support workers such as cooks, askaris and watchmen remain staff records rather than application-login roles.</p></div><span className="office-count">{OFFICES.length} offices</span></div>
+          <div className="office-directory-intro"><div><span className="eyebrow">INSTITUTIONAL LEADERSHIP</span><h3>Leadership & Offices</h3></div></div>
           <div className="office-groups">{Array.from(new Set(OFFICES.map(o => o.group))).map(group => <section key={group} className="office-group"><div className="office-group-heading"><h4>{group}</h4><span>{OFFICES.filter(o => o.group === group).length}</span></div><div className="office-card-grid">{OFFICES.filter(o => o.group === group).map(office => { const Icon = office.icon; return <button type="button" className="office-card" key={office.key} onClick={() => setSelectedOffice(office)}><span className="office-card-icon"><Icon size={21} /></span><span className="office-card-copy"><strong>{office.title}</strong><small>{office.description}</small></span><span className="office-card-link">{office.workspace ? 'Workspace →' : 'View office →'}</span></button> })}</div></section>)}</div>
         </div>
       )
@@ -405,4 +405,3 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
     {tab === 'settings' && <InstitutionSettingsPage onSaved={handleInstitutionSaved} />}
   </section>
 }
-

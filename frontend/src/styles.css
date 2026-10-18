@@ -1341,13 +1341,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .office-group-heading h4 { margin:0; color:var(--smis-text); font-size:.82rem; text-transform:uppercase; letter-spacing:.09em; }
 .office-card-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 .office-card { display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; align-items:start; gap:4px 12px; text-align:left; width:100%; padding:17px; border:1px solid var(--smis-border); border-radius:16px; background:var(--smis-surface); color:var(--smis-text); cursor:pointer; box-shadow:var(--smis-shadow-sm); transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
-.office-card:hover { transform:translateY(-2px); border-color:var(--brand-primary); box-shadow:var(--smis-shadow-md); }
+.office-card:hover { transform:translateY(-2px); border-color:var(--smis-border); box-shadow:var(--smis-shadow-md); }
 .office-card:focus-visible { outline:3px solid color-mix(in srgb,var(--brand-primary) 25%,transparent); outline-offset:2px; }
-.office-card-icon { grid-row:1 / span 2; width:42px; height:42px; display:grid; place-items:center; border-radius:12px; background:var(--brand-primary-soft); color:var(--brand-primary); }
+.office-card-icon { grid-row:1 / span 2; width:42px; height:42px; display:grid; place-items:center; border-radius:12px; background:var(--smis-surface-muted); color:var(--smis-text-muted); }
 .office-card-copy { display:grid; gap:4px; min-width:0; }
 .office-card-copy strong { font-size:.93rem; }
 .office-card-copy small { color:var(--smis-text-muted); line-height:1.45; }
-.office-card-link { grid-column:2; color:var(--brand-primary); font-size:.72rem; font-weight:800; margin-top:4px; }
+.office-card-link { grid-column:2; color:var(--smis-text-muted); font-size:.72rem; font-weight:800; margin-top:4px; }
 .office-detail { display:grid; gap:18px; }
 .office-back { width:max-content; display:inline-flex; align-items:center; gap:7px; }
 .office-detail-header { display:flex; align-items:center; gap:16px; padding:22px; border:1px solid var(--smis-border); border-radius:18px; background:var(--smis-surface); }
