@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:login-css && node scripts/check-offline-login.mjs && tsc -b && vite build",
+    "build": "npm run copy-fonts && npm run build:login-css && node scripts/check-offline-login.mjs && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "build:login-css": "npx --yes tailwindcss@3.4.17 -c tailwind.login.config.cjs -i institution-login-tailwind.css -o public/assets/css/institution-login.css",
-    "predev": "npm run build:login-css"
+    "predev": "npm run copy-fonts && npm run build:login-css",
+    "copy-fonts": "node scripts/copy-local-fonts.mjs"
   },
   "dependencies": {
     "@superset-ui/embedded-sdk": "^0.4.0",
@@ -20,7 +21,9 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.468.0",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",
