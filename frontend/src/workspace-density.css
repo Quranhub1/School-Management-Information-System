@@ -109,7 +109,6 @@
 .app-shell .admin-tab-content tbody td { padding: 9px 10px; }
 
 /* Remove excess section spacing while retaining clear separation and readable density. */
-.app-shell section,
 .app-shell .space-y-6 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-block-start: 10px;
