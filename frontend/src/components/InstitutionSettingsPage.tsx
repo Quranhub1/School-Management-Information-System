@@ -297,13 +297,13 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
                 <label style={{ display: 'grid', gap: 8 }}>Primary colour
                   <span style={{ display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e7e5e4', borderRadius: 8, padding: 10, background: '#ffffff' }}>
                     <input aria-label="Primary brand colour" type="color" value={form.primaryColor} onChange={e => updateField('primaryColor', e.target.value)} style={{ width: 42, height: 34, padding: 2, border: 0, background: 'transparent', cursor: 'pointer' }} />
-                    <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{form.primaryColor.toUpperCase()}</span>
+                    <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{(form.primaryColor ?? '#1e40af').toUpperCase()}</span>
                   </span>
                 </label>
                 <label style={{ display: 'grid', gap: 8 }}>Accent colour
                   <span style={{ display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e7e5e4', borderRadius: 8, padding: 10, background: '#ffffff' }}>
                     <input aria-label="Accent brand colour" type="color" value={form.accentColor} onChange={e => updateField('accentColor', e.target.value)} style={{ width: 42, height: 34, padding: 2, border: 0, background: 'transparent', cursor: 'pointer' }} />
-                    <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{form.accentColor.toUpperCase()}</span>
+                    <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{(form.accentColor ?? '#f97316').toUpperCase()}</span>
                   </span>
                 </label>
               </div>
