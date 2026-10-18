@@ -366,7 +366,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
     {tab === 'roles' && (
       <section className="panel" aria-labelledby="role-directory-title">
         <div className="panel-heading">
-          <div><p className="eyebrow">ACCESS CONTROL</p><h3 id="role-directory-title">Role Directory</h3><p>Review the roles currently available in SMIS and how many user accounts have each role assigned.</p></div>
+          <div><p className="eyebrow">ACCESS CONTROL</p><h3 id="role-directory-title">Role Directory</h3></div>
           <button type="button" className="secondary-button" onClick={() => setTab('users')}>Manage user accounts</button>
         </div>
         <div className="table-wrap">
