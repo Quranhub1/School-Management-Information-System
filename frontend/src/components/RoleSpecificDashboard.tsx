@@ -36,17 +36,9 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
   }, [role])
 
   const title = role === 'AdminSecretary' ? 'Admin Secretary Dashboard' : role === 'Secretary' ? 'Secretary Dashboard' : role === 'Receptionist' ? 'Receptionist Dashboard' : 'Head of Department Dashboard'
-  const subtitle = role === 'AdminSecretary'
-    ? 'Secretariat workspace for admissions visibility, student record lookup and administrative follow-up. Records are read-only.'
-    : role === 'Secretary'
-    ? 'Office administration, correspondence, admissions visibility and institutional records.'
-    : role === 'Receptionist'
-      ? 'Front desk, visitor coordination, appointments, enquiries and controlled institutional lookup.'
-      : 'Department-focused academic, staff and student oversight.'
-
   return <section className="panel" aria-label={title}>
     <div className="panel-heading">
-      <div><span className="eyebrow">{role.toUpperCase()}</span><h2>{title}</h2><p style={{ marginTop: 6, color: '#64748b' }}>{subtitle}</p></div>
+      <div><span className="eyebrow">{role.toUpperCase()}</span><h2>{title}</h2></div>
       <span className="status-badge">Authorized workspace</span>
     </div>
 
@@ -78,7 +70,6 @@ export function RoleSpecificDashboard({ role, onNavigate }: { role: Role; onNavi
         </div>
         <div className="panel" style={{ marginTop: 22, padding: 20 }}>
           <h3>Front Desk Operations</h3>
-          <p style={{ color: '#64748b', marginTop: 6 }}>Use the operational navigation for front-desk tasks. Student and staff information is exposed only where the assigned permission permits it.</p>
           <div className="grid-form" style={{ marginTop: 16 }}>
             <button className="secondary-button" onClick={() => onNavigate('attendance')}>Gate / Front Desk Log</button>
             <button className="secondary-button" onClick={() => onNavigate('reports')}>Daily Front Desk Reports</button>
