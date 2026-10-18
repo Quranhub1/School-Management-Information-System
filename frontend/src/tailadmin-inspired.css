@@ -12,7 +12,13 @@
   --smis-ui-radius: 16px;
   --smis-ui-shadow: 0 2px 8px rgba(15, 23, 42, .035), 0 12px 28px rgba(15, 23, 42, .025);
 }
-body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
+body { background: var(--smis-ui-bg); color: var(--smis-ui-text); font-family: "Inter Variable"; }
+h1, h2, h3, h4, h5, h6,
+.admin-dashboard-heading h2,
+.admin-section-title h3,
+.admin-dashboard-action-card h3 {
+  font-family: "Plus Jakarta Sans Variable";
+}
 .app-shell { background: var(--smis-ui-bg); gap: 0; }
 .app-shell > aside {
   width: 272px !important;
