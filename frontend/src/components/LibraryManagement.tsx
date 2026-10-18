@@ -149,7 +149,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div>
           <span className="eyebrow">LIBRARY SERVICES</span>
           <h2>Library Management</h2>
-          <p>Manage books, circulation, members and overdue loans from one workspace.</p>
+          
         </div>
         {canManage && (
           <button
@@ -226,7 +226,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           <div className="library-toolbar">
             <div>
               <h3>{tab === 'recent' ? 'Recent Book Loans' : 'Overdue Book Loans'}</h3>
-              <p>Track active circulation and return books when received.</p>
+              
             </div>
             <div className="library-search">
               <input
@@ -369,7 +369,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div className="library-toolbar">
           <div>
             <h3>Book Catalogue</h3>
-            <p>Registered titles and copy availability.</p>
+            
           </div>
           <span className="status">{books.length} titles</span>
         </div>
@@ -415,7 +415,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           <div>
             <span className="eyebrow">CATALOGUE</span>
             <h3>Add New Book</h3>
-            <p>Register a title and its available physical copies.</p>
+            
           </div>
           <form className="library-book-form" onSubmit={submitBook}>
             <input
