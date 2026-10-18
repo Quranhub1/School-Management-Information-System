@@ -146,7 +146,6 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
       <div>
         <span className="eyebrow">SCHOOL INVENTORIES</span>
         <h3>Inventory Register</h3>
-        <p className="empty">This is the school inventory workspace. Registers are loaded from and saved to the application database, not browser storage. Choose a laboratory, department or facility and manage its spreadsheet-style register.</p>
       </div>
     </div>
 
@@ -178,8 +177,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         <button className="secondary-button" type="submit" disabled={!newColumnName.trim()}>Add column</button>
         <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>
       </form>
-      <p className="empty">Rename any heading, add custom columns, or remove custom columns. S/N is automatic and continuous, like a spreadsheet, and is not manually editable.</p>
-    </div>}
+    </div>
 
     <div className="inventory-card inventory-spreadsheet-card">
       <div className="welfare-toolbar">
@@ -212,7 +210,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
                 {canEdit
                   ? <input className="inventory-cell-input" aria-label={`Row ${index + 1}, ${column.label}`} value={row.values[column.id] ?? ''} onChange={event => updateCell(row.id, column.id, event.target.value)} placeholder="—" type={column.id === 'quantity' ? 'number' : 'text'} min={column.id === 'quantity' ? 0 : undefined} step={column.id === 'quantity' ? '0.001' : undefined} />
                   : <span>{row.values[column.id] || '—'}</span>}
-              </td>)}
+              </td>}
               {canEdit && <td><button className="secondary-button" type="button" onClick={() => deleteRow(row.id)}>Delete row</button></td>}
             </tr>)}
             {!loading && !loadError && register.rows.length === 0 && <tr><td colSpan={register.columns.length + (canEdit ? 2 : 1)} className="inventory-empty-cell">No rows yet for {section.name}. {canEdit ? 'Select “Add row” to start entering items.' : ''}</td></tr>}
