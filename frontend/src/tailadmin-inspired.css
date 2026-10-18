@@ -2,11 +2,11 @@
    Original SMIS functionality and permissions remain in their existing components.
    This stylesheet is local and has no CDN/font/network dependency. */
 :root {
-  --smis-ui-bg: #f5f7fb;
-  --smis-ui-surface: #ffffff;
-  --smis-ui-border: #e5eaf2;
-  --smis-ui-text: #172033;
-  --smis-ui-muted: #64748b;
+  --smis-ui-bg: #f5efdf;
+  --smis-ui-surface: #fffdf7;
+  --smis-ui-border: #e5dcc8;
+  --smis-ui-text: #29271f;
+  --smis-ui-muted: #766f60;
   --smis-ui-primary: #465fff;
   --smis-ui-primary-soft: #eef2ff;
   --smis-ui-radius: 16px;
@@ -104,7 +104,7 @@ h1, h2, h3, h4, h5, h6,
 .app-shell .topbar {
   min-height: 76px;
   padding: 16px 28px !important;
-  background: #fff !important;
+  background: #fffaf0 !important;
   color: var(--smis-ui-text) !important;
   border-bottom: 1px solid var(--smis-ui-border) !important;
   box-shadow: 0 2px 6px rgba(15, 23, 42, .018);
@@ -308,4 +308,40 @@ h1, h2, h3, h4, h5, h6,
 @media (prefers-reduced-motion: reduce) {
   .admin-kpi-card { transition: none; }
   .admin-kpi-card:hover { transform: none; }
+}
+
+
+/* Unified warm-cream workspace canvas. Keep the dark sidebar and login page intact. */
+.app-shell,
+.app-shell .main-content,
+.app-shell .content,
+.app-shell main.content {
+  background: var(--smis-ui-bg, #f5efdf) !important;
+  color: var(--smis-ui-text, #29271f);
+}
+.app-shell .topbar {
+  background: #fffaf0 !important;
+  border-bottom-color: #e5dcc8 !important;
+}
+.app-shell :is(.panel, .summary-card, .admin-chart-card, .admin-dashboard-action-card,
+  .admin-kpi-card, .admin-monitoring-notice, .admin-tab-content, .library-main-card,
+  .library-side-card, .library-catalogue, .library-add-card, .library-stat,
+  .gallery-card, .inventory-card, .workspace-card) {
+  background: #fffdf7 !important;
+  border-color: #e5dcc8 !important;
+}
+.app-shell :is(input, select, textarea) {
+  background-color: #fffdf7;
+  border-color: #d9cfba;
+  color: #29271f;
+}
+.app-shell :is(th, .table-header) {
+  background: #f1e9d8;
+}
+.app-shell :is(.empty, .muted, .text-slate-500, .text-gray-500) {
+  color: #766f60;
+}
+@media (max-width: 640px) {
+  .app-shell .content,
+  .app-shell main.content { padding: 16px !important; }
 }
