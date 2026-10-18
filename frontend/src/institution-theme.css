@@ -325,3 +325,41 @@
 .app-shell > aside nav section button:not([aria-expanded]) {
   border-radius: 10px !important;
 }
+
+
+/* Sidebar navigation: remove the rounded teal/green treatment. Keep a restrained,
+   square-edged neutral active state and no decorative glow or animated underline. */
+.app-shell > aside nav section button:not([aria-expanded]) {
+  border-radius: 4px !important;
+  border: 1px solid transparent !important;
+  border-bottom-color: transparent !important;
+  background: #11110f !important;
+  color: #d7cfbb !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+.app-shell > aside nav section button:not([aria-expanded])::after {
+  content: none !important;
+  display: none !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]):hover {
+  border-color: #37352e !important;
+  border-bottom-color: #37352e !important;
+  border-radius: 4px !important;
+  background: #26251f !important;
+  color: #f5efdf !important;
+  box-shadow: none !important;
+}
+.app-shell > aside nav section button[aria-current="page"] {
+  border-radius: 4px !important;
+  border: 1px solid #49463c !important;
+  border-left: 3px solid #f5efdf !important;
+  border-bottom-color: #49463c !important;
+  background: #302e26 !important;
+  color: #f5efdf !important;
+  box-shadow: none !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]):focus-visible {
+  outline: 2px solid #d7cfbb !important;
+  outline-offset: -2px !important;
+}
