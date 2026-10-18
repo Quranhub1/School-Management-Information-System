@@ -108,7 +108,7 @@ export function DocumentManagement({ canManage }: { canManage: boolean }) {
     )}
     {error && <div className="error" role="alert">{error}</div>}
     <div className="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Size</th><th>Uploaded</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-      {!selectedStudentId ? <tr><td colSpan={6} className="empty">Select a student to view documents.</td></tr> : loading ? <tr><td colSpan={6} className="empty">Loading documents…</td></tr> : documents.length === 0 ? <tr><td colSpan={6} className="empty">No documents found.</td></tr> : documents.map((d) => <tr key={d.id}>
+      {!selectedStudentId ? <tr><td colSpan={6} className="empty">—</td></tr> : loading ? <tr><td colSpan={6} className="empty">Loading documents…</td></tr> : documents.length === 0 ? <tr><td colSpan={6} className="empty">No documents found.</td></tr> : documents.map((d) => <tr key={d.id}>
         <td>{d.fileName}</td>
         <td>{d.documentType}</td>
         <td>{formatSize(d.fileSizeBytes)}</td>
