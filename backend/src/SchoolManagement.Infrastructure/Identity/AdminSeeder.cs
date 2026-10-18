@@ -95,7 +95,7 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
                 InstitutionName = "Institution Management System",
                 Abbreviation = "SMIS",
                 InstitutionType = "School",
-                PrimaryColor = "#1e40af",
+                PrimaryColor = "#0f766e",
                 AccentColor = "#f97316",
                 IsActive = true,
                 UpdatedAt = DateTimeOffset.UtcNow

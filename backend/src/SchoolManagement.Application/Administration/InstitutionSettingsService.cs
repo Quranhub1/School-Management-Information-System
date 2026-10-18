@@ -91,7 +91,7 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
                 existing.LogoContentType = request.LogoContentType?.Trim();
             }
 
-            existing.PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#1e40af" : request.PrimaryColor.Trim();
+            existing.PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#0f766e" : request.PrimaryColor.Trim();
             existing.AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#f97316" : request.AccentColor.Trim();
             existing.IsActive = true;
             existing.UpdatedAt = DateTimeOffset.UtcNow;
@@ -114,7 +114,7 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
             LogoPath = request.LogoPath?.Trim(),
             LogoData = request.LogoData,
             LogoContentType = request.LogoContentType?.Trim(),
-            PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#1e40af" : request.PrimaryColor.Trim(),
+            PrimaryColor = string.IsNullOrWhiteSpace(request.PrimaryColor) ? "#0f766e" : request.PrimaryColor.Trim(),
             AccentColor = string.IsNullOrWhiteSpace(request.AccentColor) ? "#f97316" : request.AccentColor.Trim(),
             IsActive = true,
             UpdatedAt = DateTimeOffset.UtcNow

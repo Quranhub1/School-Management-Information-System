@@ -129,7 +129,7 @@ app.get('/api/public/institution-settings/active', (req, res) => {
     country: 'Uganda',
     institutionType: 'Health Sciences',
     logoPath: null,
-    primaryColor: '#1e40af',
+    primaryColor: '#0f766e',
     accentColor: '#f97316',
     isActive: true,
     updatedAt: new Date().toISOString(),

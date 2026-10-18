@@ -42,7 +42,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
     country: '',
     institutionType: '',
     logoPath: '',
-    primaryColor: '#1e40af',
+    primaryColor: '#0f766e',
     accentColor: '#f97316',
   })
 
@@ -69,7 +69,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         country: data.country ?? '',
         institutionType: data.institutionType ?? '',
         logoPath: data.logoPath ?? '',
-        primaryColor: data.primaryColor ?? '#1e40af',
+        primaryColor: data.primaryColor ?? '#0f766e',
         accentColor: data.accentColor ?? '#f97316',
       })
     } catch {

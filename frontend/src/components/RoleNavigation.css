@@ -1,5 +1,5 @@
 .role-navigation { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
-.module-chip { padding: 7px 14px; border-radius: 999px; background: #1e40af; color: white; font-size: .78rem; font-weight: 800; letter-spacing: .02em; }
+.module-chip { padding: 7px 14px; border-radius: 999px; background: #0f766e; color: white; font-size: .78rem; font-weight: 800; letter-spacing: .02em; }
 .module-chip:nth-child(2n) { background: #f97316; }
 .module-chip:nth-child(3n) { background: #92400e; color: white; }
 .module-chip:nth-child(4n) { background: #059669; }

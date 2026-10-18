@@ -35,7 +35,7 @@ const OFFICES: Office[] = [
 
 
 const ROLE_COLORS: Record<string, string> = {
-  SystemAdministrator: '#1e40af',
+  SystemAdministrator: '#0f766e',
   AcademicRegistrar: '#7c3aed',
   AdmissionsOfficer: '#2563eb',
   Lecturer: '#2563eb',
@@ -213,7 +213,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
 
     {tab === 'users' && (
       <>
-        <div className="panel" style={{ marginBottom: 18, borderLeft: '4px solid var(--brand-primary, #1e40af)' }}>
+        <div className="panel" style={{ marginBottom: 18, borderLeft: '4px solid var(--brand-primary, #0f766e)' }}>
           <div className="panel-heading">
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <img
