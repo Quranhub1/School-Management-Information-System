@@ -626,3 +626,30 @@
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+
+/* Final override: remove any selected-tab C-shaped edge, inset, or pseudo-marker.
+   Selected sidebar tabs are indicated only by a slightly lighter black background. */
+.app-shell > aside nav section button[aria-current="page"],
+.app-shell > aside nav section button[aria-current="page"]:hover,
+.app-shell > aside nav section button[aria-current="page"]:focus,
+.app-shell > aside nav section button[aria-current="page"]:focus-visible,
+.app-shell > aside nav section button[aria-current="page"]::before,
+.app-shell > aside nav section button[aria-current="page"]::after {
+  border: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-radius: 10px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  content: none !important;
+}
+.app-shell > aside nav section button[aria-current="page"] {
+  background-color: #292821 !important;
+  color: #f5efdf !important;
+}
+.app-shell > aside nav section button[aria-current="page"]:focus-visible {
+  outline: 2px solid #d7cfbb !important;
+  outline-offset: -2px !important;
+}
