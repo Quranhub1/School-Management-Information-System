@@ -168,7 +168,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   const schoolLogo = institutionLoaded && institution.isActive ? logoUrl(institution.logoPath) : ''
   return <section className="academic-workspace student-application-workspace" style={branding} aria-label="Student management workspace">
     <div className="student-application-toolbar">
-      <div><p className="eyebrow">Student Management</p><h2>{readOnly ? 'Student records · Read-only' : 'Student applications & registry'}</h2><p>Admission application, supporting details and student records.</p></div>
+      <div><p className="eyebrow">Student Management</p><h2>{readOnly ? 'Student records · Read-only' : 'Student applications & registry'}</h2></div>
       <div className="application-view-switch"><button type="button" className={view === 'application' ? 'active' : ''} onClick={() => setView('application')} disabled={!canManage}>New application</button><button type="button" className={view === 'registry' ? 'active' : ''} onClick={() => setView('registry')}>Student registry <span>{students.length}</span></button></div>
     </div>
     {error && <div className="error" role="alert">{error}</div>}
