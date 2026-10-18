@@ -85,7 +85,6 @@ export function LibraryIntegrations({ canManage }: { canManage?: boolean }) {
                 {integration.enabled ? 'Configured' : 'Not configured'}
               </span>
             </div>
-            <p>{integration.description}</p>
             <div className="integration-url">
               <small>Service URL</small>
               <span>{integration.baseUrl || 'No endpoint configured.'}</span>
