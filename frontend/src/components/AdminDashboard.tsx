@@ -48,7 +48,7 @@ function DonutChart({
       <div className="admin-chart-heading">
         <div>
           <h3>{title}</h3>
-          <p>{description}</p>
+          {description && <p>{description}</p>}
         </div>
       </div>
       <div className="admin-chart-body">
@@ -304,7 +304,6 @@ export function AdminDashboard() {
               </table>
             </div>
           )}
-          {!studentResults.length && <p className="admin-search-hint">Search by student number, first name, or last name.</p>}
         </div>
       )}
 
@@ -327,7 +326,6 @@ export function AdminDashboard() {
               </table>
             </div>
           )}
-          {!staffResults.length && <p className="admin-search-hint">Search by staff number, first name, or last name.</p>}
         </div>
       )}
 
@@ -339,7 +337,7 @@ export function AdminDashboard() {
             <div className="admin-kpi-card"><span className="admin-kpi-icon amber">OS</span><div><span>Outstanding</span><strong>{moneyFormat(finance.outstanding)}</strong></div></div>
             <div className="admin-kpi-card"><span className="admin-kpi-icon purple">IN</span><div><span>Invoices</span><strong>{numberFormat.format(finance.invoices)}</strong></div></div>
           </div>
-          <DonutChart title="Fee collection overview" description="Based on invoice totals loaded from the finance API" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
+          <DonutChart title="Fee collection overview" description="" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
         </div>
       )}
 
