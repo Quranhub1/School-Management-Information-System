@@ -391,7 +391,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         )}
 
         <div className="topbar-actions" style={{ marginTop: 22 }}>
-          <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Settings'}</button>
+          <button type="submit" disabled={saving} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #15803d', borderRadius: 6, minHeight: 42, padding: '10px 20px', fontWeight: 600, boxShadow: 'none' }}>{saving ? 'Saving…' : 'Save Settings'}</button>
           <button type="button" className="secondary-button" onClick={() => void load()}>Reset</button>
         </div>
       </form>
