@@ -78,8 +78,9 @@ function LoginScreen({ institution }: { institution: InstitutionSettings }) {
 }
 function GlobalTableLayoutEditor() {
   useEffect(() => {
-    const decorate = () => {
-      document.querySelectorAll<HTMLTableElement>('table:not([data-fixed-layout="true"])').forEach(table => {
+    const decorateTables = (tables: Iterable<HTMLTableElement>) => {
+      for (const table of tables) {
+        if (table.dataset.fixedLayout === 'true') continue;
         table.querySelectorAll<HTMLTableCellElement>('thead th').forEach((cell, index) => {
           if (cell.querySelector(':scope > .smis-column-resize-handle')) return;
           cell.classList.add('smis-resizable-column');
@@ -118,10 +119,31 @@ function GlobalTableLayoutEditor() {
           });
           row.appendChild(handle);
         });
-      });
+      }
     };
-    decorate();
-    const observer = new MutationObserver(decorate);
+
+    const tablesForNode = (node: Element): Set<HTMLTableElement> => {
+      const tables = new Set<HTMLTableElement>();
+      const containingTable = node.closest<HTMLTableElement>('table:not([data-fixed-layout="true"])');
+      if (containingTable) tables.add(containingTable);
+      if (node.matches('table:not([data-fixed-layout="true"])')) tables.add(node as HTMLTableElement);
+      node.querySelectorAll<HTMLTableElement>('table:not([data-fixed-layout="true"])').forEach(table => tables.add(table));
+      return tables;
+    };
+
+    decorateTables(document.querySelectorAll<HTMLTableElement>('table:not([data-fixed-layout="true"])'));
+
+    // React updates elsewhere in the page should not trigger a full-document table scan.
+    // Ignore our own resize-handle insertions to prevent unnecessary observer callbacks.
+    const observer = new MutationObserver(records => {
+      const affectedTables = new Set<HTMLTableElement>();
+      records.forEach(record => record.addedNodes.forEach(node => {
+        if (!(node instanceof Element)) return;
+        if (node.matches('.smis-column-resize-handle, .smis-row-resize-handle')) return;
+        tablesForNode(node).forEach(table => affectedTables.add(table));
+      }));
+      if (affectedTables.size) decorateTables(affectedTables);
+    });
     observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
   }, []);
@@ -174,7 +196,6 @@ function GlobalTableLayoutEditor() {
   }, []);
   return null;
 }
-
 function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canAccessFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),hostel=canManageHostel(r),attManage=canManageAttendance(r)||r.includes('SystemAdministrator'),att=canReadAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Student'); const isAdminSecretary=r.includes('Admin Secretary')||r.includes('AdminSecretary'); const studentRead=r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('Director')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer')||isAdminSecretary; const admissionRead=ad||r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Principal')||r.includes('Director')||r.includes('AssistantPrincipal')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer')||isAdminSecretary; const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const moduleAllowed=(module:ModuleKey):boolean=>{switch(module){
   case 'dashboard': return true;
   case 'administration': return a && !isAdminSecretary;
