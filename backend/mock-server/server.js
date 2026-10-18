@@ -488,6 +488,96 @@ app.get('/api/academic-structure/streams', authMiddleware, (req, res) => {
   res.json([]);
 });
 
+// ADMINISTRATION
+app.get('/api/administration/users', authMiddleware, (req, res) => {
+  res.json(users.map(u => ({
+    id: u.id,
+    username: u.username,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    email: null,
+    isActive: u.isActive,
+    createdAt: '2024-08-01T00:00:00Z',
+    lastLoginAt: null,
+    roles: u.roles,
+  })));
+});
+
+// ACCOUNTS OVERVIEW
+function studentNameFor(studentId) {
+  const s = students.find(x => x.id === studentId);
+  return s ? `${s.firstName} ${s.lastName}` : '';
+}
+
+app.get('/api/accounts-overview/dashboard', authMiddleware, (req, res) => {
+  const totalBilled = invoices.reduce((sum, i) => sum + i.amount, 0);
+  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+  const outstanding = invoices.filter(i => i.balance > 0);
+  res.json({
+    totalBilled,
+    totalPaid,
+    totalOutstanding: outstanding.reduce((sum, i) => sum + i.balance, 0),
+    todayCollection: payments.filter(p => p.paidAt.slice(0, 10) === new Date().toISOString().slice(0, 10)).reduce((sum, p) => sum + p.amount, 0),
+    invoiceCount: invoices.length,
+    paymentCount: payments.length,
+    outstandingCount: outstanding.length,
+  });
+});
+
+app.get('/api/accounts-overview/outstanding', authMiddleware, (req, res) => {
+  res.json(invoices.filter(i => i.balance > 0).map(i => {
+    const student = students.find(s => s.id === i.studentId);
+    return {
+      studentId: i.studentId,
+      studentNumber: student?.studentNumber ?? '',
+      studentName: studentNameFor(i.studentId),
+      programmeName: programmes[0].name,
+      balance: i.balance,
+      currency: i.currency,
+      status: i.status,
+    };
+  }));
+});
+
+app.get('/api/accounts-overview/payments', authMiddleware, (req, res) => {
+  const studentId = req.query.studentId;
+  const results = studentId ? payments.filter(p => p.studentId === studentId) : payments;
+  res.json(results.map(p => ({
+    id: p.id,
+    receiptNumber: p.receiptNumber,
+    amount: p.amount,
+    paymentMethod: p.paymentMethod,
+    reference: p.reference,
+    paidAt: p.paidAt,
+    studentName: studentNameFor(p.studentId),
+    invoiceNumber: p.invoiceNumber,
+  })));
+});
+
+app.get('/api/accounts-overview/payroll', authMiddleware, (req, res) => {
+  const { staffMemberId, month, year } = req.query;
+  let results = payrollRecords;
+  if (staffMemberId) results = results.filter(r => r.staffMemberId === staffMemberId);
+  if (month) results = results.filter(r => r.month === Number(month));
+  if (year) results = results.filter(r => r.year === Number(year));
+  res.json(results.map(r => {
+    const s = staff.find(x => x.id === r.staffMemberId);
+    return {
+      id: r.id,
+      staffName: s ? `${s.firstName} ${s.lastName}` : '',
+      staffNumber: s?.staffNumber ?? '',
+      month: r.month,
+      year: r.year,
+      basicSalary: r.basicSalary,
+      allowances: r.allowances,
+      deductions: r.deductions,
+      netPay: r.netPay,
+      status: r.status,
+      paymentMethod: r.paymentMethod,
+    };
+  }));
+});
+
 // HEALTH
 app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
