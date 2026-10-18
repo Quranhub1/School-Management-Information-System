@@ -378,7 +378,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
             })}</tbody>
           </table>
         </div>
-        <p className="empty">Role assignments are edited on individual user accounts. This directory does not invent or change backend permissions.</p>
+        
       </section>
     )}
 
