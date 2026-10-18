@@ -151,22 +151,34 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
       </div>
     </div>
 
+    <div className="inventory-register-navigation" aria-label="Choose an inventory">
+      {(['Laboratories', 'Other Inventories'] as const).map(group => (
+        <div className="inventory-tab-group" key={group}>
+          <div className="inventory-tab-group-label">{group}</div>
+          <div className="inventory-register-tabs" role="group" aria-label={group}>
+            {INVENTORY_SECTIONS.filter(item => item.group === group).map(item => (
+              <button
+                key={item.id}
+                type="button"
+                className={`inventory-register-tab${sectionId === item.id ? ' is-active' : ''}`}
+                aria-pressed={sectionId === item.id}
+                onClick={() => setSectionId(item.id)}
+              >
+                <span className="inventory-register-tab-indicator" aria-hidden="true" />
+                <span>{item.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
     <div className="inventory-card inventory-register-selector">
-      <label>Choose inventory register
-        <select value={sectionId} onChange={event => setSectionId(event.target.value)}>
-          <optgroup label="Laboratories">
-            {INVENTORY_SECTIONS.filter(item => item.group === 'Laboratories').map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-          </optgroup>
-          <optgroup label="Other Inventories">
-            {INVENTORY_SECTIONS.filter(item => item.group === 'Other Inventories').map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-          </optgroup>
-        </select>
-      </label>
       <div className="inventory-register-summary">
         <div><span>Selected register</span><strong>{section.name}</strong></div>
         <div><span>Rows with data</span><strong>{filledRows}</strong></div>
         <div><span>Columns</span><strong>{register.columns.length + 1}</strong></div>
-        <div><span>Database status</span><strong role="status">{loading ? 'Loading…' : saving ? 'Saving…' : saveError ? 'Save failed' : dirty ? 'Unsaved changes' : loadedSection === sectionId ? 'Saved' : 'Unavailable'}</strong></div>
+        <div><span>Database status</span><strong className={`inventory-database-status${loadError || saveError ? ' has-error' : loadedSection === sectionId && !dirty && !saving ? ' is-saved' : ''}`} role="status">{loading ? 'Loading…' : saving ? 'Saving…' : saveError ? 'Save failed' : dirty ? 'Unsaved changes' : loadedSection === sectionId ? 'Saved' : 'Unavailable'}</strong></div>
       </div>
     </div>
 
