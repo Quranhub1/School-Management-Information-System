@@ -53,7 +53,7 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
 }
 .app-shell > aside nav section > div > div > button:not([aria-current="page"]):hover {
   background: #f4f6fb !important;
-  color: #26334d !important;
+  color: #000 !important;
 }
 .app-shell > aside nav button:focus-visible,
 .admin-dashboard button:focus-visible {

@@ -361,10 +361,10 @@ return <main className="app-shell">
                         item.child ? "py-2 pr-3 pl-9 rounded-r-xl border-l-2" : "py-2.5 px-3 gap-3 rounded-xl",
                         isItemActive
                           ? (item.child ? "border-slate-900 bg-white/80 text-slate-900 font-semibold" : "bg-slate-900 text-white font-semibold shadow-sm")
-                          : (item.child ? "border-slate-200/70 text-slate-500 hover:border-slate-400 hover:bg-white/70 hover:text-slate-900" : "text-slate-600 hover:bg-white/70 hover:text-slate-900")
+                          : (item.child ? "border-slate-200/70 text-black hover:border-slate-400 hover:bg-white/70" : "text-black hover:bg-white/70")
                       ].join(" ")}
                     >
-                      {!item.child && <Icon size={18} strokeWidth={isItemActive ? 2.5 : 2} className={"transition-colors duration-200 flex-shrink-0 " + (isItemActive ? "text-white" : "text-slate-400 group-hover:text-slate-700")} aria-hidden="true" />}
+                      {!item.child && <Icon size={18} strokeWidth={isItemActive ? 2.5 : 2} className={"transition-colors duration-200 flex-shrink-0 " + (isItemActive ? "text-white" : "text-black")} aria-hidden="true" />}
                       <span className="relative z-10 truncate">{(item.module === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden'))) ? 'School Warden' : item.label}</span>
                     </button>
                   );
