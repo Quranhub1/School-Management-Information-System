@@ -393,3 +393,51 @@
   color: #f5efdf !important;
   box-shadow: inset 3px 0 0 #f5efdf !important;
 }
+
+
+/* Final sidebar tab treatment: the background shade alone indicates hover/selection.
+   No marker, border, glow, underline, or animation. */
+.app-shell > aside nav section button:not([aria-expanded]),
+.app-shell > aside nav section button:not([aria-expanded]):hover,
+.app-shell > aside nav section button[aria-current="page"],
+.app-shell > aside nav section button[aria-current="page"]:hover {
+  border: 0 !important;
+  border-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-left: 0 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.app-shell > aside nav section button:not([aria-expanded]) {
+  background: #11110f !important;
+  color: #d7cfbb !important;
+}
+
+.app-shell > aside nav section button:not([aria-expanded]):hover {
+  background: #1e1e1a !important;
+  color: #f5efdf !important;
+}
+
+.app-shell > aside nav section button[aria-current="page"],
+.app-shell > aside nav section button[aria-current="page"]:hover {
+  background: #292821 !important;
+  color: #f5efdf !important;
+}
+
+.app-shell > aside nav section button:not([aria-expanded])::before,
+.app-shell > aside nav section button:not([aria-expanded])::after,
+.app-shell > aside nav section button[aria-current="page"]::before,
+.app-shell > aside nav section button[aria-current="page"]::after {
+  content: none !important;
+  display: none !important;
+}
+
+.app-shell > aside nav section button:not([aria-expanded]):focus-visible {
+  outline: 2px solid #d7cfbb !important;
+  outline-offset: -2px !important;
+}
