@@ -1,0 +1,109 @@
+.workspace-loading {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  gap: 8px 14px;
+  min-height: min(62vh, 520px);
+  margin: clamp(16px, 2.5vw, 32px);
+  padding: clamp(22px, 3vw, 36px);
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.09), transparent 36%),
+    linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+  color: #334155;
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.045);
+}
+
+.workspace-loading-spinner {
+  grid-column: 1;
+  grid-row: 1;
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(59, 130, 246, 0.16);
+  border-top-color: var(--brand-primary, #2563eb);
+  border-radius: 50%;
+  animation: smis-workspace-spin 0.8s linear infinite;
+}
+
+.workspace-loading-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.workspace-loading-copy small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.workspace-loading-skeleton {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.workspace-loading-skeleton i {
+  display: block;
+  height: clamp(64px, 10vh, 92px);
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  border-radius: 14px;
+  background: linear-gradient(100deg, #edf2fa 25%, #f8fafc 45%, #edf2fa 65%);
+  background-size: 220% 100%;
+  animation: smis-workspace-shimmer 1.6s ease-in-out infinite;
+}
+
+.workspace-loading-skeleton i:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.workspace-loading-skeleton i:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+@keyframes smis-workspace-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes smis-workspace-shimmer {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0 0; }
+}
+
+@media (max-width: 640px) {
+  .workspace-loading {
+    min-height: 42vh;
+    margin: 12px;
+    border-radius: 16px;
+  }
+
+  .workspace-loading-skeleton {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .workspace-loading-skeleton i {
+    height: 48px;
+  }
+
+  .workspace-loading-skeleton i:nth-child(n + 2) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-loading-spinner,
+  .workspace-loading-skeleton i {
+    animation: none;
+  }
+}
