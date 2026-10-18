@@ -251,7 +251,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       {tab === 'short' && (
         <div className="short-course-section">
           <h3>UHPAB Short Courses (Health)</h3>
-          <p className="section-description">School-based courses regulated by UHPAB. Click to apply as a curriculum template.</p>
+          
           <div className="short-course-grid">
             {UHPAB_SHORT_COURSES.map(course => (
               <div key={course.name} className="short-course-card" onClick={() => applyShortCourseTemplate(course)}>
@@ -265,7 +265,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </div>
 
           <h3>UVTAB Short Courses (TVET)</h3>
-          <p className="section-description">Competency-based short courses regulated by UVTAB. Click to apply as a curriculum template.</p>
+          
           <div className="short-course-grid">
             {UVTAB_SHORT_COURSES.map(course => (
               <div key={course.name} className="short-course-card" onClick={() => applyShortCourseTemplate(course)}>
