@@ -292,7 +292,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
               <div>
                 <p className="eyebrow">INSTITUTION MEDIA</p>
                 <h3>School Media & Event Gallery</h3>
-                <p>Manage campus photographs, school events, academic milestones, facilities and student activities. Images are saved through SMIS and remain available after refresh.</p>
+                
               </div>
               <span className="gallery-count">{visibleGallery.length} of {gallery.length} photo{gallery.length === 1 ? '' : 's'}</span>
             </div>
