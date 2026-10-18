@@ -110,7 +110,6 @@ export function SchoolWardenManagement() {
     <div className="library-workspace-tabs" role="tablist" aria-label="Warden record categories">
       {categories.map(item => <button type="button" key={item.id} role="tab" aria-selected={category === item.id} className={category === item.id ? 'active' : ''} onClick={() => setCategory(item.id)}>{item.label}</button>)}
     </div>
-    <p className="empty">{categories.find(item => item.id === category)?.description}</p>
     <form className="management-form" onSubmit={createRecord}>
       <label>Record subject<input value={subject} onChange={event => setSubject(event.target.value)} maxLength={200} required /></label>
       <label>Student / resident name (optional)<input value={studentName} onChange={event => setStudentName(event.target.value)} maxLength={200} /></label>
