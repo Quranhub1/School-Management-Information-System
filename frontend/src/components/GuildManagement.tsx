@@ -44,7 +44,7 @@ export function GuildManagement({ canOpenCalendar = false, canOpenNotices = fals
         <div>
           <p className="eyebrow">Student Governance</p>
           <h2>Guild</h2>
-          <p>Coordinate student leadership, council business, portfolios, meetings, resolutions and official communication in one structured area.</p>
+          
         </div>
         <div className="page-actions">
           {canOpenCalendar && <button className="secondary-button" type="button" onClick={() => setView('calendar')}><CalendarDays size={16} /> Record meeting</button>}
