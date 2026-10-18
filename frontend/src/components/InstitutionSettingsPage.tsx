@@ -268,21 +268,58 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         )}
 
         {tab === 'branding' && (
-          <div className="settings-grid">
-            <div className="form-row">
-              <label>Logo URL<input value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://..." /></label>
-              <label>Upload Logo<input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo || !active} onChange={e => { const file=e.target.files?.[0]; if(file) void uploadLogo(file) }} /></label>
-              <label>Primary Color<input type="color" value={form.primaryColor} onChange={e => updateField('primaryColor', e.target.value)} /></label>
-            </div>
-            <div className="form-row">
-              <label>Accent Color<input type="color" value={form.accentColor} onChange={e => updateField('accentColor', e.target.value)} /></label>
-            </div>
-            {form.logoPath && (
-              <div className="logo-preview" key={logoRefreshKey}>
-                <p><strong>Logo Preview:</strong></p>
-                <img src={getLogoPreviewUrl(form.logoPath)} alt="Institution logo" style={{ maxHeight: 120, maxWidth: 200, objectFit: 'contain', border: '1px solid #e7e5e4', borderRadius: 8, padding: 8 }} onError={(e) => { e.currentTarget.style.display = 'none' }} />
+          <div className="settings-grid" style={{ gap: 18 }}>
+            <section aria-label="Institution logo" style={{ border: '1px solid #e7e5e4', borderRadius: 10, padding: 18, background: '#fffdf8' }}>
+              <div style={{ marginBottom: 14 }}>
+                <h3 style={{ margin: '0 0 5px', color: '#292524', fontSize: 16 }}>Institution logo</h3>
+                <p style={{ margin: 0, color: '#78716c', fontSize: 13 }}>Upload a logo or provide an image URL. Uploaded logos are stored with the institution settings.</p>
               </div>
-            )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(180px, 230px)', gap: 18, alignItems: 'start' }}>
+                <div style={{ display: 'grid', gap: 14 }}>
+                  <label>Logo image URL
+                    <input type="url" value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://example.com/logo.png" />
+                  </label>
+                  <label>Upload logo file
+                    <input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo || !active} onChange={e => { const file=e.target.files?.[0]; if(file) void uploadLogo(file); e.currentTarget.value = '' }} />
+                    <small style={{ display: 'block', marginTop: 5, color: '#78716c' }}>{uploadingLogo ? 'Uploading logo…' : 'PNG, JPG or WebP recommended.'}</small>
+                  </label>
+                </div>
+                <div style={{ minHeight: 150, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, border: '1px dashed #d6d3d1', borderRadius: 8, padding: 12, background: '#ffffff' }} key={logoRefreshKey}>
+                  {form.logoPath ? <img src={getLogoPreviewUrl(form.logoPath)} alt="Institution logo preview" style={{ maxHeight: 100, maxWidth: '100%', objectFit: 'contain' }} onError={e => { e.currentTarget.style.display = 'none' }} /> : <span style={{ color: '#a8a29e', fontSize: 13, textAlign: 'center' }}>Logo preview will appear here</span>}
+                  <span style={{ color: '#78716c', fontSize: 12 }}>Logo preview</span>
+                </div>
+              </div>
+            </section>
+            <section aria-label="Institution brand colours" style={{ border: '1px solid #e7e5e4', borderRadius: 10, padding: 18, background: '#fffdf8' }}>
+              <div style={{ marginBottom: 14 }}>
+                <h3 style={{ margin: '0 0 5px', color: '#292524', fontSize: 16 }}>Brand colours</h3>
+                <p style={{ margin: 0, color: '#78716c', fontSize: 13 }}>Choose the main institutional colour and the accent used for highlights.</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14 }}>
+                <label style={{ display: 'grid', gap: 8 }}>Primary colour
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e7e5e4', borderRadius: 8, padding: 10, background: '#ffffff' }}>
+                    <input aria-label="Primary brand colour" type="color" value={form.primaryColor} onChange={e => updateField('primaryColor', e.target.value)} style={{ width: 42, height: 34, padding: 2, border: 0, background: 'transparent', cursor: 'pointer' }} />
+                    <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{form.primaryColor.toUpperCase()}</span>
+                  </span>
+                </label>
+                <label style={{ display: 'grid', gap: 8 }}>Accent colour
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e7e5e4', borderRadius: 8, padding: 10, background: '#ffffff' }}>
+                    <input aria-label="Accent brand colour" type="color" value={form.accentColor} onChange={e => updateField('accentColor', e.target.value)} style={{ width: 42, height: 34, padding: 2, border: 0, background: 'transparent', cursor: 'pointer' }} />
+                    <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{form.accentColor.toUpperCase()}</span>
+                  </span>
+                </label>
+              </div>
+              <div style={{ marginTop: 16, border: '1px solid #e7e5e4', borderRadius: 8, overflow: 'hidden', background: '#ffffff' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: form.primaryColor, color: '#ffffff' }}>
+                  <span style={{ width: 8, height: 28, borderRadius: 3, background: form.accentColor, flexShrink: 0 }} />
+                  <strong style={{ fontSize: 14 }}>{form.institutionName.trim() || 'Institution name'}</strong>
+                </div>
+                <div style={{ padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <span style={{ color: '#57534e', fontSize: 13 }}>Sample interface accent</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 5, padding: '7px 12px', background: form.accentColor, color: '#ffffff', fontSize: 12, fontWeight: 600 }}>Highlight</span>
+                </div>
+              </div>
+            </section>
           </div>
         )}
 
@@ -392,7 +429,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
 
         <div className="topbar-actions" style={{ marginTop: 22 }}>
           <button type="submit" disabled={saving} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #15803d', borderRadius: 6, minHeight: 42, padding: '10px 20px', fontWeight: 600, boxShadow: 'none' }}>{saving ? 'Saving…' : 'Save Settings'}</button>
-          <button type="button" className="secondary-button" onClick={() => void load()}>Reset</button>
+          <button type="button" onClick={() => void load()} disabled={saving || uploadingLogo || uploadingGallery} style={{ background: '#ffffff', color: '#44403c', border: '1px solid #d6d3d1', borderRadius: 6, minHeight: 42, padding: '10px 18px', fontWeight: 600, boxShadow: 'none', cursor: saving || uploadingLogo || uploadingGallery ? 'not-allowed' : 'pointer', opacity: saving || uploadingLogo || uploadingGallery ? 0.65 : 1 }}>Reset</button>
         </div>
       </form>
     </section>
