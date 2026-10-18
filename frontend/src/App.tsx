@@ -173,7 +173,7 @@ function GlobalTableLayoutEditor() {
       }
       if (drag) document.body.classList.add('smis-table-resizing');
     };
-    const move = (event: PointerEvent) => {
+    const applyMove = (event: PointerEvent) => {
       if (!drag) return;
       if (drag.kind === 'column') {
         const width = Math.max(56, Math.min(900, drag.size + event.clientX - drag.start));
@@ -185,7 +185,30 @@ function GlobalTableLayoutEditor() {
         drag.row.style.height = Math.max(24, Math.min(400, drag.size + event.clientY - drag.start)) + 'px';
       }
     };
-    const up = () => { drag = null; document.body.classList.remove('smis-table-resizing'); };
+    // Pointer devices can emit more move events than the browser can paint. Apply only
+    // the latest position per animation frame to avoid redundant layout/style work.
+    let pendingMove: PointerEvent | null = null;
+    let frameId: number | null = null;
+    const move = (event: PointerEvent) => {
+      if (!drag) return;
+      pendingMove = event;
+      if (frameId !== null) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        const latest = pendingMove;
+        pendingMove = null;
+        if (latest) applyMove(latest);
+      });
+    };
+    const up = (event?: PointerEvent) => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      frameId = null;
+      if (event && drag) applyMove(event);
+      else if (pendingMove) applyMove(pendingMove);
+      pendingMove = null;
+      drag = null;
+      document.body.classList.remove('smis-table-resizing');
+    };
     document.addEventListener('pointerdown', down);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -195,6 +218,8 @@ function GlobalTableLayoutEditor() {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      pendingMove = null;
       document.body.classList.remove('smis-table-resizing');
     };
   }, []);
