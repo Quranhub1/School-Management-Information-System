@@ -72,7 +72,7 @@ export function InventoryStockSettings() {
   }
 
   return <section className="panel" aria-label="Inventory threshold settings">
-    <div className="panel-heading"><div><span className="eyebrow">SYSTEM SETTINGS</span><h3>Inventory low-stock thresholds</h3><p className="empty">Only the System Administrator configures these thresholds. Records Officers and School Wardens see in-app warnings when stock is at or below the configured level; items at zero are always flagged.</p></div><button type="button" className="secondary-button" onClick={() => void load()} disabled={loading}>Refresh</button></div>
+    <div className="panel-heading"><div><span className="eyebrow">SYSTEM SETTINGS</span><h3>Inventory low-stock thresholds</h3></div><button type="button" className="secondary-button" onClick={() => void load()} disabled={loading}>Refresh</button></div>
     {error && <div className="error" role="alert">{error}</div>}
     {savedMessage && <p role="status" className="empty">{savedMessage}</p>}
     {loading ? <p className="empty">Loading inventory registers…</p> : settings.length === 0 ? <p className="empty">No named inventory items with a quantity column were found. Add items and quantities in the Inventory & Property register first.</p> :
