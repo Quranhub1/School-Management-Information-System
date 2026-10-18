@@ -28,6 +28,26 @@ The complete installation guide covers the full stack, including:
 - Release and deployment checklist
 - End-to-end acceptance testing
 
+## Software used
+
+The SMIS core stack and optional visual design tools are listed separately. The visual editors below are **design/development aids, not required runtime dependencies**. Evaluate them on the dedicated `docs/visual-screen-designers` branch or another feature branch before adopting any generated changes. Preserve existing React components, routing, authentication, role-based authorization, API integration and backend business logic.
+
+### Core application stack
+
+- **Frontend:** React, TypeScript and Vite
+- **Backend:** .NET 8 / ASP.NET Core
+- **Database:** PostgreSQL with Entity Framework Core
+- **Desktop packaging:** Tauri
+- **Source control and CI:** Git and GitHub Actions
+
+### Visual screen designers
+
+1. **[Onlook](https://onlook.com/) — visual React editor.** A tool to investigate for visually editing existing React components and adjusting layout, spacing, colors and typography. [GitHub repository](https://github.com/onlook-dev/onlook). Best candidate to test first for redesigning existing dashboards and screens. Verify current Linux/browser workflow and compatibility with the project's React/Vite setup before adoption.
+2. **[Plasmic](https://www.plasmic.app/) — browser-based visual builder.** Provides a drag-and-drop studio and React integration for designing new pages and reusable interface components. [Documentation](https://docs.plasmic.app/). Best candidate for browser-based design and new screens; integration with existing screens may require wrapping or refactoring components.
+3. **[SculptUI for VS Code](https://marketplace.visualstudio.com/items?itemName=ardevia.sculptui-vscode) — visual React editing extension.** Intended for selecting rendered React elements and making targeted visual changes through a VS Code workflow. Best considered as a supplementary option for focused edits.
+
+These are candidate tools, not yet an approved part of the production build. Do not introduce their SDKs, generated code, credentials or external runtime dependencies into production without reviewing the diff and testing the frontend build, authorization behavior and key workflows.
+
 ## Privacy
 
 SMIS now includes a complete software-level [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md), covering institutional data-controller responsibilities, student and staff data, minors and sensitive records, access control, audit logs, financial data, documents and backups, third-party services, retention, data-subject rights, complaints, incident response and Ugandan data-protection references.
