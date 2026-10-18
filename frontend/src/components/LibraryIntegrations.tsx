@@ -37,7 +37,7 @@ export function LibraryIntegrations({ canManage }: { canManage?: boolean }) {
         <div>
           <span className="eyebrow">LIBRARY INTEGRATIONS</span>
           <h3 id="library-integrations-title">KOHA &amp; DSpace Configuration</h3>
-          <p>Configure the institution's existing library services. Local network endpoints are supported; these integrations are not required for normal operation.</p>
+          
         </div>
       </div>
 
