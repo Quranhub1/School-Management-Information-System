@@ -114,7 +114,7 @@ export function GuildManagement({ canOpenCalendar = false, canOpenNotices = fals
               {portfolio.responsibilities.map((item, index) => (
                 <div className="guild-responsibility" key={item}>
                   <span>{index + 1}</span>
-                  <div><strong>{item}</strong><small>Record actions, follow-ups and institutional escalation against this responsibility.</small></div>
+                  <div><strong>{item}</strong></div>
                 </div>
               ))}
             </div>
