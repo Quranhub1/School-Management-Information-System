@@ -115,24 +115,12 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
         {section === 'biodata' && (
           <div>
-            <p className="section-copy">The administration workspace may maintain the complete institutional record. Student-facing portals should expose only the minimum profile needed by the learner.</p>
-            <div className="feature-grid">
-              <article className="feature-card"><strong>Bio-Data</strong><span>Student number, names, date of birth, gender, contacts and core profile.</span></article>
-              <article className="feature-card"><strong>National ID / NIN</strong><span>Capture and maintain the student's national identification reference. Restricted to authorised staff.</span></article>
-              <article className="feature-card"><strong>Next of Kin</strong><span>Maintain emergency contact and relationship details. Not exposed in the normal student portal.</span></article>
-              <article className="feature-card"><strong>UNEB Records</strong><span>Capture O-Level and A-Level index numbers and pass-slip records for admissions verification.</span></article>
-            </div>
             <StudentManagement canManage={canManage} readOnly={readOnly} />
           </div>
         )}
 
         {section === 'admissions' && (
           <div>
-            <p className="section-copy">Application pipeline, programme eligibility screening and provisional admission processing.</p>
-            <div className="feature-grid compact">
-              <article className="feature-card"><strong>Eligibility checks</strong><span>Record programme-specific requirements, including Biology, Chemistry, Physics and Mathematics where applicable.</span></article>
-              <article className="feature-card"><strong>Admission letters</strong><span>Generate, verify and manage provisional admission documentation.</span></article>
-            </div>
             <AdmissionsManagement readOnly={readOnly} />
           </div>
         )}
@@ -152,14 +140,13 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
           <div className="lifecycle-form-grid">
             <label>Enrollment / Student Status<select value={studentStatus} onChange={e => setStudentStatus(e.target.value)}>{statuses.map(status => <option key={status}>{status}</option>)}</select></label>
             <div className="feature-card"><strong>Current status</strong><span>{studentStatus}</span></div>
-            <div className="feature-card full-width"><strong>Status workflow</strong><span>Active, On Clinical Attachment, Retake/Repeat Year, Discontinued, Deferred and Graduated.</span></div>
           </div>
         )}
 
         {section === 'cards' && (
           <section className="panel" aria-label="Student ID card queue">
             <div className="panel-heading">
-              <div><p className="eyebrow">STUDENT SERVICES</p><h3>ID Card Queue</h3><p>Select registered students, choose a card type, and print a batch of cards.</p></div>
+              <div><p className="eyebrow">STUDENT SERVICES</p><h3>ID Card Queue</h3></div>
               <label>Card type<select value={cardType} onChange={event => { setCardType(event.target.value as 'campus' | 'library'); setCardQueueNotice('') }}><option value="campus">Campus ID</option><option value="library">Library ID</option></select></label>
             </div>
             {cardQueueError && <div className="error" role="alert">{cardQueueError}</div>}
@@ -207,7 +194,6 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
         {section === 'alumni' && (
           <div>
-            <p className="section-copy">Maintain graduate and alumni records as part of the student lifecycle. Alumni are no longer a separate top-level application module.</p>
             <AlumniManagement />
           </div>
         )}
@@ -216,12 +202,10 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
           <div className="feature-grid">
             <article className="feature-card">
               <strong>UHPAB Results</strong>
-              <span>Official UHPAB assessment results will be surfaced here after release and institutional verification.</span>
               <button className="secondary-button" type="button" disabled>UHPAB Results Integration — Coming Soon</button>
             </article>
             <article className="feature-card">
               <strong>UVTAB Results</strong>
-              <span>Official UVTAB assessment results and certification information will be surfaced here after release and verification.</span>
               <button className="secondary-button" type="button" disabled>UVTAB Results Integration — Coming Soon</button>
             </article>
           </div>
