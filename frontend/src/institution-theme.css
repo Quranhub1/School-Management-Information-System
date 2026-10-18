@@ -1,0 +1,313 @@
+/* Institution-wide theme tokens. App.tsx updates --brand-primary and --brand-accent
+   from the active institution settings; shared actions should consume these variables. */
+:root {
+  --brand-primary: #1e40af;
+  --brand-accent: #f97316;
+  --brand-primary-soft: color-mix(in srgb, var(--brand-primary) 10%, white);
+  --brand-accent-soft: color-mix(in srgb, var(--brand-accent) 12%, white);
+}
+
+/* Shared primary actions across modules, including the backup/restore workspace. */
+.app-shell button.primary-button,
+.app-shell button.library-primary,
+.app-shell button.gallery-upload-btn,
+.app-shell button.btn-primary {
+  background: var(--brand-primary) !important;
+  border-color: var(--brand-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--brand-primary) 22%, transparent);
+}
+
+.app-shell button.primary-button:hover:not(:disabled),
+.app-shell button.library-primary:hover:not(:disabled),
+.app-shell button.gallery-upload-btn:hover:not(:disabled),
+.app-shell button.btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-primary) 88%, black) !important;
+  border-color: color-mix(in srgb, var(--brand-primary) 88%, black) !important;
+}
+
+.app-shell button.primary-button:disabled,
+.app-shell button.library-primary:disabled,
+.app-shell button.gallery-upload-btn:disabled,
+.app-shell button.btn-primary:disabled {
+  opacity: .58;
+  cursor: not-allowed;
+}
+
+/* Recolour Tailwind blue/indigo button utilities without changing semantic
+   success, warning, danger or neutral actions. */
+.app-shell button[class~="bg-blue-500"],
+.app-shell button[class~="bg-blue-600"],
+.app-shell button[class~="bg-blue-700"],
+.app-shell button[class~="bg-indigo-500"],
+.app-shell button[class~="bg-indigo-600"],
+.app-shell button[class~="bg-indigo-700"] {
+  background-color: var(--brand-primary) !important;
+  border-color: var(--brand-primary) !important;
+  color: #fff !important;
+}
+
+.app-shell button[class*="from-blue-600"][class*="to-indigo-600"],
+.app-shell button[class*="from-blue-500"][class*="to-indigo-500"] {
+  background-image: linear-gradient(135deg, var(--brand-primary), var(--brand-accent)) !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+
+.app-shell button[class~="bg-blue-50"],
+.app-shell button[class~="bg-indigo-50"] {
+  background-color: var(--brand-primary-soft) !important;
+  color: var(--brand-primary) !important;
+  border-color: color-mix(in srgb, var(--brand-primary) 28%, white) !important;
+}
+
+.app-shell button[class~="text-blue-600"],
+.app-shell button[class~="text-blue-700"],
+.app-shell button[class~="text-indigo-600"],
+.app-shell button[class~="text-indigo-700"] {
+  color: var(--brand-primary) !important;
+}
+
+.app-shell button[class*="hover:bg-blue-"]:hover:not(:disabled),
+.app-shell button[class*="hover:bg-indigo-"]:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--brand-primary) 12%, white) !important;
+  color: var(--brand-primary) !important;
+}
+
+.app-shell button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand-accent) 60%, transparent);
+  outline-offset: 2px;
+}
+
+/* Sidebar is intentionally neutral: matte black with warm cream typography.
+   Institutional primary/accent colours remain reserved for the workspace. */
+:root {
+  --sidebar-background: #11110f;
+  --sidebar-background-hover: #26251f;
+  --sidebar-cream: #f5efdf;
+  --sidebar-cream-muted: #d7cfbb;
+  --sidebar-border: #37352e;
+}
+
+.app-shell .sidebar {
+  background: var(--sidebar-background) !important;
+  color: var(--sidebar-cream) !important;
+  border-right: 1px solid var(--sidebar-border);
+}
+.app-shell .sidebar-header {
+  background: var(--sidebar-background) !important;
+  border-bottom-color: var(--sidebar-border) !important;
+}
+.app-shell .sidebar-header .eyebrow,
+.app-shell .sidebar-header p,
+.app-shell .sidebar-header small {
+  color: var(--sidebar-cream-muted) !important;
+}
+.app-shell .sidebar-header h1,
+.app-shell .sidebar-header strong,
+.app-shell .sidebar-header a {
+  color: var(--sidebar-cream) !important;
+}
+.app-shell .sidebar-nav {
+  background: var(--sidebar-background) !important;
+}
+.app-shell .sidebar-item,
+.app-shell .sidebar-nav button,
+.app-shell .sidebar-nav a {
+  background-color: transparent !important;
+  color: var(--sidebar-cream-muted) !important;
+  border-color: transparent;
+}
+.app-shell .sidebar-item:hover,
+.app-shell .sidebar-nav button:hover,
+.app-shell .sidebar-nav a:hover {
+  background: var(--sidebar-background-hover) !important;
+  color: var(--sidebar-cream) !important;
+}
+.app-shell .sidebar-item.active,
+.app-shell .sidebar-nav button.active,
+.app-shell .sidebar-nav a.active,
+.app-shell .sidebar-item[aria-current="page"] {
+  background: #302e26 !important;
+  color: var(--sidebar-cream) !important;
+  box-shadow: inset 3px 0 0 var(--sidebar-cream);
+}
+.app-shell .sidebar-item svg,
+.app-shell .sidebar-nav button svg,
+.app-shell .sidebar-nav a svg {
+  color: currentColor !important;
+}
+.app-shell .sidebar-footer {
+  background: var(--sidebar-background) !important;
+  border-top-color: var(--sidebar-border) !important;
+  color: var(--sidebar-cream-muted) !important;
+}
+.app-shell .sidebar-footer strong,
+.app-shell .sidebar-footer a {
+  color: var(--sidebar-cream) !important;
+}
+
+/* Workspace tabs still follow the institution's saved primary and accent colours. */
+.app-shell .library-tabs button.active,
+.app-shell .library-workspace-tabs button.active {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent)) !important;
+}
+
+
+/* Sidebar-only override: square black menu rows, cream labels, no button motion/elevation. */
+.app-shell > aside {
+  background: #11110f !important;
+  color: #f5efdf !important;
+  border-right: 1px solid #37352e !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.app-shell > aside > div:first-child {
+  background: #11110f !important;
+  border-bottom: 1px solid #37352e !important;
+  border-radius: 0 !important;
+}
+.app-shell > aside > div:first-child span,
+.app-shell > aside > div:first-child h1,
+.app-shell > aside > div:first-child p {
+  color: #f5efdf !important;
+}
+.app-shell > aside nav {
+  background: #11110f !important;
+}
+.app-shell > aside nav section > button,
+.app-shell > aside nav section button[aria-current],
+.app-shell > aside nav section button:not([aria-expanded]) {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+  text-decoration: none !important;
+}
+.app-shell > aside nav section > button[aria-expanded] {
+  background: #11110f !important;
+  color: #d7cfbb !important;
+}
+.app-shell > aside nav section > button[aria-expanded]:hover {
+  background: #26251f !important;
+  color: #f5efdf !important;
+}
+.app-shell > aside nav section button[aria-current="page"] {
+  background: #302e26 !important;
+  color: #f5efdf !important;
+  border-left-color: #f5efdf !important;
+  font-weight: 700 !important;
+  box-shadow: inset 3px 0 0 #f5efdf !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]) {
+  background: #11110f !important;
+  color: #d7cfbb !important;
+  border-color: #37352e !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]):hover {
+  background: #26251f !important;
+  color: #f5efdf !important;
+  border-color: #37352e !important;
+}
+.app-shell > aside nav section button svg,
+.app-shell > aside nav section button span {
+  color: inherit !important;
+  transform: none !important;
+  transition: none !important;
+}
+.app-shell > aside nav section button .group-hover\\:scale-105,
+.app-shell > aside nav section button .group-hover\\:scale-110,
+.app-shell > aside nav section button .group-hover\\:-rotate-3,
+.app-shell > aside nav section button .group-hover\\:translate-x-1 {
+  transform: none !important;
+}
+.app-shell > aside nav section button:focus-visible {
+  outline: 2px solid #f5efdf !important;
+  outline-offset: -2px !important;
+  box-shadow: none !important;
+}
+.app-shell > aside > div:last-child {
+  background: #11110f !important;
+  color: #d7cfbb !important;
+  border-top: 1px solid #37352e !important;
+}
+.app-shell > aside > div:last-child > div {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  background: #11110f !important;
+}
+.app-shell > aside > div:last-child span {
+  color: #f5efdf !important;
+}
+.app-shell > aside > div:last-child button {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+
+/* Refined sidebar navigation: teal separators and a restrained illuminated hover.
+   The rows stay rectangular and never scale, rotate, or slide. */
+.app-shell > aside nav section > div:last-child > div {
+  gap: 0.35rem !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]) {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid rgba(20, 184, 166, 0.38) !important;
+  box-shadow: inset 0 -1px 0 rgba(20, 184, 166, 0.08) !important;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease !important;
+  transform: none !important;
+}
+.app-shell > aside nav section button:not([aria-expanded])::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #14b8a6 18%, #5eead4 50%, #14b8a6 82%, transparent);
+  opacity: 0.55;
+  transition: opacity 180ms ease, height 180ms ease;
+}
+.app-shell > aside nav section button:not([aria-expanded]):hover {
+  background: linear-gradient(90deg, rgba(20, 184, 166, 0.20), rgba(20, 184, 166, 0.07) 72%, rgba(20, 184, 166, 0.02)) !important;
+  color: #fff8e8 !important;
+  border-bottom-color: rgba(94, 234, 212, 0.95) !important;
+  box-shadow:
+    inset 3px 0 0 #2dd4bf,
+    inset 0 0 18px rgba(20, 184, 166, 0.10),
+    0 0 12px rgba(20, 184, 166, 0.10) !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]):hover::after {
+  opacity: 1;
+  height: 2px;
+}
+.app-shell > aside nav section button[aria-current="page"] {
+  background: linear-gradient(90deg, rgba(20, 184, 166, 0.24), rgba(20, 184, 166, 0.08)) !important;
+  color: #fff8e8 !important;
+  border-left-color: #5eead4 !important;
+  border-bottom-color: #14b8a6 !important;
+  box-shadow:
+    inset 3px 0 0 #5eead4,
+    inset 0 0 14px rgba(20, 184, 166, 0.09) !important;
+}
+.app-shell > aside nav section button:not([aria-expanded]):focus-visible {
+  outline: 2px solid #5eead4 !important;
+  outline-offset: -2px !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell > aside nav section button:not([aria-expanded]),
+  .app-shell > aside nav section button:not([aria-expanded])::after {
+    transition: none !important;
+  }
+}
