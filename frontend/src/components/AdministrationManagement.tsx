@@ -277,6 +277,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
           <table>
             <thead>
               <tr>
+                <th>ID NO</th>
                 <th>Username</th>
                 <th>Name</th>
                 <th>Email</th>
@@ -287,10 +288,11 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
               </tr>
             </thead>
             <tbody>
-              {loading ? <tr><td colSpan={7} className="empty">Loading users…</td></tr> :
-               users.length === 0 ? <tr><td colSpan={7} className="empty">No accounts found.</td></tr> :
-               users.map(user => (
+              {loading ? <tr><td colSpan={8} className="empty">Loading users…</td></tr> :
+               users.length === 0 ? <tr><td colSpan={8} className="empty">No accounts found.</td></tr> :
+               users.map((user, index) => (
                 <tr key={user.id}>
+                  <td>{index + 1}</td>
                   <td>{user.username}</td>
                   <td>{user.firstName} {user.lastName}</td>
                   <td>{user.email ?? '—'}</td>
