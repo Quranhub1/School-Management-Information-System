@@ -86,7 +86,6 @@ export function StaffAllowancesWorkspace() {
         <div>
           <span className="eyebrow">STAFF FINANCE</span>
           <h3>Staff Allowances</h3>
-          <p>{isAccountant ? 'Authorize staff allowances. The Assistant Accountant records authorized allowances before payroll processing.' : 'Record allowances supplied and authorized by the Accountant. You cannot authorize new allowances.'}</p>
         </div>
         <button type="button" className="secondary-button" onClick={() => void load()} disabled={loading}>Refresh</button>
       </div>

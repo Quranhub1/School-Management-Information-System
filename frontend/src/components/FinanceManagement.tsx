@@ -96,7 +96,6 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
           <div>
             <p className="eyebrow">FINANCE & ACCOUNTS · UGX · READ ONLY</p>
             <h2>Financial Oversight</h2>
-            <p>You can review financial summaries, outstanding balances and recent payments. Transaction posting, edits, refunds, fee configuration, payroll changes and account administration are disabled for this role.</p>
           </div>
           <div className="page-actions">
             <span className="status-badge">View only</span>
