@@ -80,11 +80,75 @@
   outline-offset: 2px;
 }
 
-/* Sidebar and tab active indicators use the same institution palette. */
-.app-shell .sidebar-item.active {
-  background: var(--brand-primary) !important;
-  box-shadow: inset 3px 0 0 var(--brand-accent);
+/* Sidebar is intentionally neutral: matte black with warm cream typography.
+   Institutional primary/accent colours remain reserved for the workspace. */
+:root {
+  --sidebar-background: #11110f;
+  --sidebar-background-hover: #26251f;
+  --sidebar-cream: #f5efdf;
+  --sidebar-cream-muted: #d7cfbb;
+  --sidebar-border: #37352e;
 }
+
+.app-shell .sidebar {
+  background: var(--sidebar-background) !important;
+  color: var(--sidebar-cream) !important;
+  border-right: 1px solid var(--sidebar-border);
+}
+.app-shell .sidebar-header {
+  background: var(--sidebar-background) !important;
+  border-bottom-color: var(--sidebar-border) !important;
+}
+.app-shell .sidebar-header .eyebrow,
+.app-shell .sidebar-header p,
+.app-shell .sidebar-header small {
+  color: var(--sidebar-cream-muted) !important;
+}
+.app-shell .sidebar-header h1,
+.app-shell .sidebar-header strong,
+.app-shell .sidebar-header a {
+  color: var(--sidebar-cream) !important;
+}
+.app-shell .sidebar-nav {
+  background: var(--sidebar-background) !important;
+}
+.app-shell .sidebar-item,
+.app-shell .sidebar-nav button,
+.app-shell .sidebar-nav a {
+  background-color: transparent !important;
+  color: var(--sidebar-cream-muted) !important;
+  border-color: transparent;
+}
+.app-shell .sidebar-item:hover,
+.app-shell .sidebar-nav button:hover,
+.app-shell .sidebar-nav a:hover {
+  background: var(--sidebar-background-hover) !important;
+  color: var(--sidebar-cream) !important;
+}
+.app-shell .sidebar-item.active,
+.app-shell .sidebar-nav button.active,
+.app-shell .sidebar-nav a.active,
+.app-shell .sidebar-item[aria-current="page"] {
+  background: #302e26 !important;
+  color: var(--sidebar-cream) !important;
+  box-shadow: inset 3px 0 0 var(--sidebar-cream);
+}
+.app-shell .sidebar-item svg,
+.app-shell .sidebar-nav button svg,
+.app-shell .sidebar-nav a svg {
+  color: currentColor !important;
+}
+.app-shell .sidebar-footer {
+  background: var(--sidebar-background) !important;
+  border-top-color: var(--sidebar-border) !important;
+  color: var(--sidebar-cream-muted) !important;
+}
+.app-shell .sidebar-footer strong,
+.app-shell .sidebar-footer a {
+  color: var(--sidebar-cream) !important;
+}
+
+/* Workspace tabs still follow the institution's saved primary and accent colours. */
 .app-shell .library-tabs button.active,
 .app-shell .library-workspace-tabs button.active {
   background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent)) !important;
