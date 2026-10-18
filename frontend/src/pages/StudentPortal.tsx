@@ -106,7 +106,7 @@ export function StudentPortal() {
 
           {tab === 'national' && (
             <div className="student-results-boards">
-              <article className="student-board-card"><span className="eyebrow">UHPAB</span><h3>Official UHPAB Results</h3><p>Released and institutionally verified national assessment results will appear here.</p><button className="secondary-button" type="button" disabled>UHPAB Results Portal — Coming Soon</button></article>
+              <article className="student-board-card"><span className="eyebrow">UHPAB</span><h3>Official UHPAB Results</h3><button className="secondary-button" type="button" disabled>UHPAB Results Portal — Coming Soon</button></article>
               <article className="student-board-card"><span className="eyebrow">UVTAB</span><h3>Official UVTAB Results</h3><p>Released and institutionally verified TVET assessment results and certification information will appear here.</p><button className="secondary-button" type="button" disabled>UVTAB Results Portal — Coming Soon</button></article>
             </div>
           )}
