@@ -372,7 +372,7 @@ return <main className="app-shell">
       {institution && (
         <div className="relative flex-shrink-0">
           <div className="absolute inset-0 bg-indigo-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-          <img src={institutionLogoUrl(institution)} alt={institution.institutionName + " Logo"} className="relative w-11 h-11 rounded-xl object-cover shadow-sm ring-1 ring-slate-900/10 group-hover:scale-105 group-hover:-rotate-3 transition-all duration-300" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          <img src={institutionLogoUrl(institution)} alt={institution.institutionName + " Logo"} className="relative w-11 h-11 rounded-xl object-cover shadow-sm ring-1 ring-slate-900/10 " onError={(e) => { e.currentTarget.style.display = "none"; }} />
         </div>
       )}
       <div className="flex flex-col min-w-0 overflow-hidden">
@@ -420,7 +420,7 @@ return <main className="app-shell">
                       ].join(" ")}
                     >
                       {!item.child && !isItemActive && <span className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-indigo-400 rounded-r-full opacity-0 scale-y-0 group-hover:opacity-100 group-hover:scale-y-100 transition-all duration-300 origin-center"></span>}
-                      {!item.child && <Icon size={18} strokeWidth={isItemActive ? 2.5 : 2} className={"transition-all duration-300 flex-shrink-0 " + (isItemActive ? "text-white" : "text-slate-400 group-hover:text-blue-500 group-hover:scale-110 group-hover:-rotate-3")} aria-hidden="true" />}
+                      {!item.child && <Icon size={18} strokeWidth={isItemActive ? 2.5 : 2} className={"flex-shrink-0 " + (isItemActive ? "text-white" : "text-slate-400 ")} aria-hidden="true" />}
                       <span className="relative z-10 truncate">{(item.module === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden'))) ? 'School Warden' : item.label}</span>
                     </button>
                   );
@@ -442,7 +442,7 @@ return <main className="app-shell">
           <span className="text-sm font-bold text-slate-900 truncate">{sessionUsername || "Guest User"}</span>
           <span className="text-xs font-medium text-slate-500 truncate capitalize group-hover:text-indigo-500 transition-colors duration-300">{r?.[0] || "User"}</span>
         </div>
-        <button type="button" className="p-2 ml-1 text-slate-400 transition-all duration-300 rounded-lg hover:text-white hover:bg-red-500 hover:shadow-md hover:shadow-red-200 hover:-rotate-12 hover:scale-110 active:scale-95 focus:outline-none" onClick={signOut} title="Sign out" aria-label="Sign out">
+        <button type="button" className="p-2 ml-1 text-slate-400 rounded-lg hover:text-white hover:bg-red-500 focus:outline-none" onClick={signOut} title="Sign out" aria-label="Sign out">
           <LogOut size={16} strokeWidth={2.5} />
         </button>
       </div>
