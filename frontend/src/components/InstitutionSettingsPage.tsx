@@ -292,7 +292,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
               <div>
                 <p className="eyebrow">INSTITUTION MEDIA</p>
                 <h3>School Media & Event Gallery</h3>
-                <p>Manage campus photographs, school events, academic milestones, facilities and student activities. Images are saved through SMIS and remain available after refresh.</p>
+                
               </div>
               <span className="gallery-count">{visibleGallery.length} of {gallery.length} photo{gallery.length === 1 ? '' : 's'}</span>
             </div>
@@ -333,7 +333,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
               <div className="gallery-empty">
                 <div className="gallery-empty-icon" aria-hidden="true">▧</div>
                 <h4>{gallery.length === 0 ? 'Your institution gallery is ready' : 'No photos match this filter'}</h4>
-                <p>{gallery.length === 0 ? 'Upload the first school photograph or event image using the panel above. Saved photographs will appear here.' : 'Choose another filter to see more of your saved photographs.'}</p>
+                
                 {gallery.length > 0 && <button type="button" className="secondary-button" onClick={() => setGalleryFilter('all')}>Show all photos</button>}
               </div>
             ) : (

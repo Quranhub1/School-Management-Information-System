@@ -26,7 +26,7 @@ export function ResidentDirectorHRDashboard({ onNavigate }: { onNavigate: (modul
       <div>
         <span className="eyebrow">RESIDENT DIRECTOR • HUMAN RESOURCES</span>
         <h2>Human Resource Manager Dashboard</h2>
-        <p style={{marginTop:6,color:'#64748b'}}>The Resident Director is the institution's Human Resource Manager: workforce oversight, HR approvals, payroll review and people operations are controlled from this workspace.</p>
+        
       </div>
       <span className="status-badge">HR authority</span>
     </div>

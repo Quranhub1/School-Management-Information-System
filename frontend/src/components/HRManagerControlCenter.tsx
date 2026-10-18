@@ -62,7 +62,7 @@ export function HRManagerControlCenter({ onNavigate }: Props) {
   return (
     <section className="hr-control-center" aria-label="Human resources manager control center">
       <div className="hr-control-heading">
-        <div><span className="eyebrow">HUMAN RESOURCES · MANAGER CONTROL CENTER</span><h3>Workforce & people operations</h3><p>Manage the institution's workforce position, payroll exposure, leave approvals and staffing actions from one screen.</p></div>
+        <div><span className="eyebrow">HUMAN RESOURCES · MANAGER CONTROL CENTER</span><h3>Workforce & people operations</h3></div>
         <button type="button" className="secondary-button" onClick={() => void load()} disabled={refreshing}>{refreshing ? 'Refreshing…' : 'Refresh HR position'}</button>
       </div>
 

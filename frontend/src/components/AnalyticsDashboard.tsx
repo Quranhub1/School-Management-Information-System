@@ -42,7 +42,7 @@ export function AnalyticsDashboard() {
 
   return <section className="analytics-panel">
     <div className="analytics-heading">
-      <div><p className="eyebrow">Business intelligence</p><h2>Institutional Analytics & Intelligence</h2><p>One offline command centre connecting the operational SMIS modules with predictive analytics and Apache Superset BI.</p></div>
+      <div><p className="eyebrow">Business intelligence</p><h2>Institutional Analytics & Intelligence</h2></div>
     </div>
     <div className="library-workspace-tabs" role="tablist" aria-label="Analytics sections">
       <button role="tab" aria-selected={tab === 'overview'} className={tab === 'overview' ? 'active' : ''} onClick={() => setTab('overview')}>Modern command centre</button>
