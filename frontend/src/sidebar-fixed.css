@@ -192,3 +192,30 @@
   box-shadow: none !important;
 }
 
+/* Keep workspace scrolling native and immediate, matching the sidebar's wheel response.
+   Do not animate scroll positions or route wheel input through JavaScript. */
+.app-shell > .main-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.app-shell > .main-content > .content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-behavior: auto !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+@media (max-width: 640px) {
+  .app-shell > .main-content > .content {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow-y: visible;
+    touch-action: auto;
+  }
+}
