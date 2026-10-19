@@ -9,6 +9,7 @@ import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { notify } from './GlobalNotifications'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getCurricula, type Curriculum } from '../api/curriculumManagement'
+import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -94,15 +95,10 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       setAcademicCurricula(curriculumRows.filter(c => c.isActive))
     }).catch(e => setCourseOptionsError(e instanceof Error ? e.message : 'Unable to load academic programmes.'))
   }, [canManage, readOnly])
-  const authorityOf = (programmeId: string) => {
-    const regulator = academicProgrammes.find(p => p.id === programmeId)?.regulator?.toUpperCase() ?? ''
-    if (regulator.includes('UHPAB')) return 'UHPAB'
-    if (regulator.includes('UVTAB')) return 'UVTAB'
-    if (regulator.includes('UNMEB')) return 'UNMEB'
-    return 'School-based'
-  }
+  const authorityOf = (programmeId: string) => resolveAcademicAuthority(academicProgrammes.find(p => p.id === programmeId)?.regulator)
   const availableCurricula = academicCurricula.filter(c => authorityOf(c.programmeId) === application.authority)
   const availableCourses = Array.from(new Set([
+    ...VERIFIED_ACADEMIC_COURSES.filter(course => course.authority === application.authority).map(course => course.name),
     ...availableCurricula.map(c => c.title),
     ...academicProgrammes.filter(p => authorityOf(p.id) === application.authority).map(p => p.name),
   ])).sort((a, b) => a.localeCompare(b))
