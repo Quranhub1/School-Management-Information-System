@@ -418,3 +418,44 @@
   }
 }
 
+
+/* Keep the existing curriculum catalogue filters compact and aligned. */
+.app-shell .curriculum-management .catalogue-filters {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.8fr) minmax(170px, 1fr) minmax(170px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.app-shell .curriculum-management .catalogue-filters input,
+.app-shell .curriculum-management .catalogue-filters select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  min-height: 34px;
+  padding: 6px 9px !important;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px !important;
+  background: #fff;
+  font-size: 12px;
+}
+.app-shell .curriculum-management .catalogue-result-count {
+  color: #64748b;
+  font-size: 11px;
+  white-space: nowrap;
+  text-align: right;
+}
+.app-shell .curriculum-management .catalogue-empty-cell {
+  padding: 18px !important;
+  color: #64748b;
+  text-align: center;
+}
+.app-shell .curriculum-management .catalogue-status { max-width: 160px; white-space: normal; }
+@media (max-width: 760px) {
+  .app-shell .curriculum-management .catalogue-filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .app-shell .curriculum-management .catalogue-result-count { text-align: left; }
+}
+@media (max-width: 480px) {
+  .app-shell .curriculum-management .catalogue-filters { grid-template-columns: minmax(0, 1fr); }
+}
