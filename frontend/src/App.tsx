@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
-import { BarChart3, BriefcaseBusiness, CalendarDays, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
+import { BarChart3, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canManageHostel, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable } from './auth/roleGuards'
@@ -39,7 +39,8 @@ const TimetableManagement = lazy(() => import('./components/TimetableManagement'
 const CurriculumManagement = lazy(() => import('./components/CurriculumManagement').then(module => ({ default: module.CurriculumManagement })))
 const SchoolWardenManagement = lazy(() => import('./components/SchoolWardenManagement').then(module => ({ default: module.SchoolWardenManagement })))
 const SystemAdministrationManagement = lazy(() => import('./components/SystemAdministrationManagement').then(module => ({ default: module.SystemAdministrationManagement })))
-type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'curriculum' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'timetable' | 'system-administration'
+const CampusManagement = lazy(() => import('./components/CampusManagement').then(module => ({ default: module.CampusManagement })))
+type ModuleKey = 'dashboard' | 'administration' | 'students' | 'academics' | 'curriculum' | 'finance' | 'staff' | 'attendance' | 'library' | 'health' | 'laboratories' | 'inventory' | 'communication' | 'guild' | 'reports' | 'timetable' | 'system-administration' | 'campuses'
 const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
 function institutionLogoUrl(settings: InstitutionSettings): string {
   const path = settings.logoPath?.trim()
@@ -244,10 +245,11 @@ function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: {
   case 'reports': return rp || analytics;
   case 'timetable': return canReadTimetable(r);
   case 'system-administration': return r.includes('SystemAdministrator');
+  case 'campuses': return r.includes('SystemAdministrator');
   default: return false;
 }};
 const storedModule=localStorage.getItem(stateKey);
-const [activeModule,setActiveModule]=useState<ModuleKey>(()=>storedModule&&(['dashboard','administration','students','academics','curriculum','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','timetable','system-administration'] as string[]).includes(storedModule)&&moduleAllowed(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail&&moduleAllowed(detail)){setActiveModule(detail);setActiveSubsection(null)}else{setActiveModule('dashboard');setActiveSubsection(null)}};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
+const [activeModule,setActiveModule]=useState<ModuleKey>(()=>storedModule&&(['dashboard','administration','students','academics','curriculum','finance','staff','attendance','library','health','laboratories','inventory','communication','guild','reports','timetable','system-administration','campuses'] as string[]).includes(storedModule)&&moduleAllowed(storedModule as ModuleKey)?storedModule as ModuleKey:'dashboard'); useEffect(()=>{localStorage.setItem(stateKey,activeModule)},[stateKey,activeModule]);useEffect(()=>{const handler=(event:Event)=>{const detail=(event as CustomEvent<ModuleKey>).detail;if(detail&&moduleAllowed(detail)){setActiveModule(detail);setActiveSubsection(null)}else{setActiveModule('dashboard');setActiveSubsection(null)}};window.addEventListener('smis:navigate-module',handler);return()=>window.removeEventListener('smis:navigate-module',handler)},[]); function signOut(){localStorage.setItem(stateKey,activeModule);logout();onLogout()} const iconByModule:Record<ModuleKey,LucideIcon>={
   dashboard:LayoutDashboard,
   administration:BriefcaseBusiness,
   students:UsersRound,
@@ -264,7 +266,8 @@ const [activeModule,setActiveModule]=useState<ModuleKey>(()=>storedModule&&(['da
   guild:UsersRound,
   reports:BarChart3,
   timetable:CalendarDays,
-  'system-administration':Settings
+  'system-administration':Settings,
+  campuses:Building2
 };
 const moduleLabels:Record<ModuleKey,string>={
   dashboard:'Dashboard',
@@ -283,7 +286,8 @@ const moduleLabels:Record<ModuleKey,string>={
   guild:'Guild',
   reports:'Reports & Analytics',
   timetable:'Timetables',
-  'system-administration':'System Administration'
+  'system-administration':'System Administration',
+  campuses:'Campus Management'
 };
 const [activeSubsection,setActiveSubsection]=useState<string|null>(null);
 const [rptTab,setRptTab]=useState<'cards'|'receipts'|'certificates'|'analytics'>('cards');
@@ -327,6 +331,7 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Leave',module:'staff',subsection:'leave',child:true},
     {label:'Recruitment',module:'staff',subsection:'recruitment',child:true},
     {label:'System Administration',module:'system-administration'},
+    {label:'Campuses',module:'campuses'},
     {label:'Logs',module:'system-administration',subsection:'logs',child:true},
     {label:'Backups',module:'system-administration',subsection:'backups',child:true},
     {label:'Settings',module:'system-administration',subsection:'settings',child:true}
@@ -491,6 +496,7 @@ return <main className="app-shell">
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement canOpenCalendar={ac} canOpenNotices={moduleAllowed('communication')} canOpenFinance={fi && !isAdminSecretary}/>}
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
 {activeModule==='system-administration'&&r.includes('SystemAdministrator')&&<SystemAdministrationManagement activeSubsection={activeSubsection} onNavigate={navigate}/>}
+ {activeModule==='campuses'&&r.includes('SystemAdministrator')&&<CampusManagement/>}
  </motion.div></AnimatePresence></Suspense></div></main> }
 function App(){
   return <InstitutionSettingsProvider><AppContent/></InstitutionSettingsProvider>

@@ -22,6 +22,41 @@ namespace SchoolManagement.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.Campus", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("Address").HasMaxLength(500).HasColumnType("character varying(500)");
+                    b.Property<string>("Code").IsRequired().HasMaxLength(50).HasColumnType("character varying(50)");
+                    b.Property<string>("District").HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<Guid>("InstitutionId").HasColumnType("uuid");
+                    b.Property<bool>("IsActive").HasColumnType("boolean");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.HasKey("Id");
+                    b.HasIndex("InstitutionId", "Code").IsUnique();
+                    b.ToTable("Campuses");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.Institution", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("Address").HasMaxLength(500).HasColumnType("character varying(500)");
+                    b.Property<string>("Code").IsRequired().HasMaxLength(50).HasColumnType("character varying(50)");
+                    b.Property<string>("District").HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<string>("Email").HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<bool>("IsActive").HasColumnType("boolean");
+                    b.Property<string>("InstitutionType").IsRequired().HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(250).HasColumnType("character varying(250)");
+                    b.Property<string>("Phone").HasMaxLength(50).HasColumnType("character varying(50)");
+                    b.Property<string>("Region").HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<string>("RegistrationNumber").HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<string>("Regulator").HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<string>("Website").HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.HasKey("Id");
+                    b.HasIndex("Code").IsUnique();
+                    b.ToTable("Institutions");
+                });
+
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.AcademicYear", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4624,6 +4659,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("WorkflowType", "EntityType", "EntityId");
 
                     b.ToTable("WorkflowInstances");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.Campus", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Institution", null)
+                        .WithMany()
+                        .HasForeignKey("InstitutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Certificate", b =>
