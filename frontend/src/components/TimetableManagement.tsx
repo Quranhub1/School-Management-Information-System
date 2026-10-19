@@ -55,6 +55,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const distinctTeachers = useMemo(() => new Set(activeEntries.map(item => item.teacherId)).size, [activeEntries])
   const practicalCount = useMemo(() => activeEntries.filter(item => item.sessionType?.toLowerCase() === 'practical').length, [activeEntries])
   const orderedEntries = useMemo(() => [...activeEntries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)), [activeEntries])
+  const timeSlots = useMemo(() => [...new Set(activeEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b)), [activeEntries])
 
   async function handleGenerate(event: React.FormEvent) {
     event.preventDefault()
@@ -181,24 +182,38 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       </div>
     </div>
 
-    {loading && activeEntries.length === 0 ? <div className="timetable-empty"><LoadingSpinner label="Loading timetable…" /></div> : activeEntries.length === 0 ? <div className="timetable-empty"><CalendarDays size={26} /><strong>No sessions scheduled yet</strong><span>When sessions are added or generated, they will appear here by day and time.</span></div> : view === 'week' ? <div className="timetable-week">
-      {weekOrder.map(dayIndex => {
-        const dayEntries = orderedEntries.filter(entry => entry.dayOfWeek === dayIndex)
-        return <section className="timetable-day" key={dayIndex} aria-label={days[dayIndex] + ' sessions'}>
-          <header className="timetable-day-head"><span>{days[dayIndex].slice(0, 3)}</span><strong>{dayEntries.length} {dayEntries.length === 1 ? 'session' : 'sessions'}</strong></header>
-          <div className="timetable-day-body">
-            {dayEntries.length === 0 && <div className="timetable-day-empty">No sessions</div>}
-            {dayEntries.map(entry => <article className="timetable-event" key={entry.id}>
-              <span className="timetable-event-time"><Clock3 size={12} /> {timeRange(entry)}</span>
-              <strong>{courseLabels.get(entry.courseId) ?? 'Course not found'}</strong>
-              <small>{groupLabels.get(entry.teachingGroupId) ?? 'Group not found'}</small>
-              <small>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</small>
-              {(entry.room || entry.sessionType) && <small>{[entry.room, entry.sessionType].filter(Boolean).join(' · ')}</small>}
-              {!readOnly && <button className="timetable-event-remove" type="button" onClick={() => void remove(entry.id)}><Trash2 size={12} /> Remove session</button>}
-            </article>)}
-          </div>
-        </section>
-      })}
+    {loading && activeEntries.length === 0 ? <div className="timetable-empty"><LoadingSpinner label="Loading timetable…" /></div> : activeEntries.length === 0 ? <div className="timetable-empty"><CalendarDays size={26} /><strong>No sessions scheduled yet</strong><span>Schedule or generate sessions to populate the formal weekly timetable.</span></div> : view === 'week' ? <div className="timetable-print-area">
+      <div className="timetable-document-heading">
+        <div className="timetable-document-mark">KSHS</div>
+        <p>REPUBLIC OF UGANDA</p>
+        <h3>KAMPALA SCHOOL OF HEALTH SCIENCES</h3>
+        <p>TEACHING TIMETABLE</p>
+        <small>Academic year and semester are managed in the academic structure.</small>
+      </div>
+      <div className="timetable-grid-scroll">
+        <table className="timetable-formal-grid">
+          <thead><tr><th className="timetable-day-column">DAY</th>{timeSlots.map((slot, index) => <th key={slot}><span className="timetable-period-label">PERIOD {index + 1}</span><strong>{timeLabel(slot)}</strong><span>START TIME</span></th>)}</tr></thead>
+          <tbody>{weekOrder.filter(day => day !== 0).map(dayIndex => <tr key={dayIndex}>
+            <th className="timetable-day-column">{days[dayIndex].toUpperCase()}</th>
+            {timeSlots.map(slot => {
+              const cellEntries = orderedEntries.filter(entry => entry.dayOfWeek === dayIndex && entry.startTime === slot)
+              return <td key={slot} className={cellEntries.length ? 'has-session' : 'empty-session'}>
+                {cellEntries.map(entry => <article className="timetable-grid-session" key={entry.id}>
+                  <strong>{courseLabels.get(entry.courseId) ?? 'Course not found'}</strong>
+                  <span>{groupLabels.get(entry.teachingGroupId) ?? 'Teaching group'}</span>
+                  <span>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</span>
+                  <span className="timetable-grid-time">{timeRange(entry)}</span>
+                  {entry.room && <span>Venue: {entry.room}</span>}
+                  {!readOnly && <button className="timetable-event-remove" type="button" onClick={() => void remove(entry.id)}><Trash2 size={12} /> Remove</button>}
+                </article>)}
+                {cellEntries.length === 0 && <span className="timetable-grid-dash">—</span>}
+              </td>
+            })}
+          </tr>)}</tbody>
+        </table>
+      </div>
+      <div className="timetable-document-footer"><span>Prepared for academic use</span><span>Academic Registrar: ____________________</span></div>
+      <div className="timetable-document-print-actions"><button type="button" className="timetable-action" onClick={() => window.print()}>Print timetable</button></div>
     </div> : <div className="timetable-table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Room</th><th>Type</th><th>Teaching group</th><th>Course</th><th>Teacher</th>{!readOnly && <th>Actions</th>}</tr></thead><tbody>
       {orderedEntries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{timeRange(entry)}</td><td>{entry.room || '—'}</td><td>{entry.sessionType || '—'}</td><td>{groupLabels.get(entry.teachingGroupId) ?? 'Group not found'}</td><td>{courseLabels.get(entry.courseId) ?? 'Course not found'}</td><td>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</td>{!readOnly && <td><button className="timetable-action" type="button" onClick={() => void remove(entry.id)}><Trash2 /> Remove</button></td>}</tr>)}
     </tbody></table></div>}
