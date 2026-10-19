@@ -11,7 +11,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
-export type StaffMember = { id:string; staffNumber:string; firstName:string; lastName:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string; staffType:string; isActive:boolean };
+export type StaffCourseUnit = { id: string; code: string; name: string; creditUnits: number };
+export type StaffDepartment = { id: string; code: string; name: string };
+export type StaffMember = { id:string; staffNumber:string; firstName:string; lastName:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string; staffType:string; isActive:boolean; departmentId?:string|null; jobTitle?:string|null; highestQualification?:string|null; speciality?:string|null; professionalRegistration?:string|null; courseUnitIds?:string[] };
+export type StaffProfileInput = Omit<StaffMember, 'id' | 'isActive'>;
 export type LeaveRequest = { id:string; staffMemberId:string; leaveType:string; startDate:string; endDate:string; reason:string; status:string; approvedBy?:string; approvedAt?:string };
 export const STAFF_CHANGED_EVENT = 'smis:staff-changed'
 
@@ -22,7 +25,9 @@ export function notifyStaffChanged(staff?: StaffMember) {
 }
 
 export function listStaff(activeOnly=true){ return request<StaffMember[]>(`/api/staff?activeOnly=${activeOnly}`); }
-export async function createStaff(input: Omit<StaffMember,'id'|'isActive'>) {
+export function listStaffCourseUnits(){ return request<StaffCourseUnit[]>('/api/staff/course-units'); }
+export function listStaffDepartments(){ return request<StaffDepartment[]>('/api/staff/departments'); }
+export async function createStaff(input: StaffProfileInput) {
   const created = await request<StaffMember>('/api/staff',{method:'POST',body:JSON.stringify(input)})
   notifyStaffChanged(created)
   return created
@@ -32,6 +37,6 @@ export function activateStaff(id:string){ return request<void>(`/api/staff/${id}
 export function listLeave(staffId:string){ return request<LeaveRequest[]>(`/api/staff/${staffId}/leave`); }
 export function requestLeave(staffId:string,input: Omit<LeaveRequest,'id'|'status'|'approvedBy'|'approvedAt'>){ return request<LeaveRequest>(`/api/staff/${staffId}/leave`,{method:'POST',body:JSON.stringify(input)}); }
 export function approveLeave(id:string,approvedBy:string,approved:boolean){ return request<void>(`/api/staff/leave/${id}/approve`,{method:'PATCH',body:JSON.stringify({approvedBy,approved})}); }
-export type UpdateStaffRequest = { id:string; staffNumber:string; firstName:string; lastName:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string }
+export type UpdateStaffRequest = StaffProfileInput & { id:string }
 export function updateStaff(id:string, input: UpdateStaffRequest){ return request<StaffMember>(`/api/staff/${id}`,{method:'PUT',body:JSON.stringify(input)}); }
 export function deleteStaff(id:string){ return request<void>(`/api/staff/${id}`,{method:'DELETE'}); }
