@@ -164,15 +164,16 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setError('')
     try {
         for (const entry of groupEntries) {
-        const slotIndex = templateSlots.findIndex(slot => slot.startTime === timeLabel(entry.startTime))
-        const key = entry.dayOfWeek + '-' + slotIndex
-        const cell = templateCells[key]
-        if (!cell || (!cell.courseId && !cell.teacherId)) {
+        const matchingCell = Object.entries(templateCells).find(([, cell]) => cell.id === entry.id)
+        const cell = matchingCell?.[1]
+        const slotIndex = matchingCell ? Number(matchingCell[0].split('-')[1]) : -1
+        const slot = templateSlots[slotIndex]
+        if (!cell || (!cell.courseId && !cell.teacherId) || !slot) {
           await deactivateTimetableEntry(entry.id)
         } else {
           await updateTimetableEntry(entry.id, {
             teachingGroupId: templateGroupId, courseId: cell.courseId, teacherId: cell.teacherId,
-            dayOfWeek: entry.dayOfWeek, startTime: (templateSlots[slotIndex]?.startTime ?? timeLabel(entry.startTime)) + ':00', endTime: (templateSlots[slotIndex]?.endTime ?? timeLabel(entry.endTime)) + ':00',
+            dayOfWeek: Number(matchingCell![0].split('-')[0]), startTime: slot.startTime + ':00', endTime: slot.endTime + ':00',
             room: cell.room.trim() || undefined, sessionType: cell.sessionType || 'Lecture',
           })
         }
