@@ -473,3 +473,43 @@ h1, h2, h3, h4, h5, h6,
 .app-shell .content :is(.btn-danger, .danger-button, .delete-button, button[class*="destructive"], button[class*="delete"]) {
   border-radius: 3px !important;
 }
+
+
+/* Cancel, Edit and other secondary workflow actions: consistent rectangular
+   neutral controls, distinct from green primary submit/save actions. */
+.app-shell .content button.secondary-button,
+.app-shell .content .secondary-button,
+.app-shell .content button[class*="secondary"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 8px 13px;
+  border: 1px solid #cfc5b2 !important;
+  border-radius: 3px !important;
+  background: #fffdf7 !important;
+  background-image: none !important;
+  color: #39352b !important;
+  font-weight: 650;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.app-shell .content button.secondary-button:hover:not(:disabled),
+.app-shell .content .secondary-button:hover:not(:disabled),
+.app-shell .content button[class*="secondary"]:hover:not(:disabled) {
+  border-color: #a89b83 !important;
+  background: #f1e9d8 !important;
+  color: #29271f !important;
+}
+.app-shell .content button.secondary-button:focus-visible,
+.app-shell .content .secondary-button:focus-visible,
+.app-shell .content button[class*="secondary"]:focus-visible {
+  outline: 3px solid rgba(70, 95, 255, .22) !important;
+  outline-offset: 2px;
+}
+.app-shell .content button.secondary-button:disabled,
+.app-shell .content .secondary-button:disabled,
+.app-shell .content button[class*="secondary"]:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
