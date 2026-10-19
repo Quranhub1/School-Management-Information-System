@@ -9,7 +9,7 @@ import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { notify } from './GlobalNotifications'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getCurricula, type Curriculum } from '../api/curriculumManagement'
-import { ACADEMIC_AUTHORITY_OPTIONS, VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
+import { ACADEMIC_AUTHORITY_OPTIONS, SCHOOL_BASED_PROGRAMME_REFERENCES, VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -98,6 +98,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   const authorityOf = (programmeId: string) => resolveAcademicAuthority(academicProgrammes.find(p => p.id === programmeId)?.regulator)
   const availableCurricula = academicCurricula.filter(c => authorityOf(c.programmeId) === application.authority)
   const availableCourses = Array.from(new Set([
+    ...(application.authority === 'School-based' ? SCHOOL_BASED_PROGRAMME_REFERENCES : []),
     ...VERIFIED_ACADEMIC_COURSES.filter(course => course.authority === application.authority).map(course => course.name),
     ...availableCurricula.map(c => c.title),
     ...academicProgrammes.filter(p => authorityOf(p.id) === application.authority).map(p => p.name),
