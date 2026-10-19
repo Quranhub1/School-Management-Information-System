@@ -95,6 +95,31 @@ public sealed class AddCampusScopedAcademicRecords : Migration
             principalTable: "Campuses",
             principalColumn: "Id",
             onDelete: ReferentialAction.SetNull);
+
+        migrationBuilder.Sql("""
+            WITH primary_campus AS (
+                SELECT "Id" FROM "Campuses" WHERE "IsActive" = TRUE ORDER BY "Code", "Id" LIMIT 1
+            )
+            UPDATE "Students"
+            SET "CampusId" = (SELECT "Id" FROM primary_campus)
+            WHERE "CampusId" IS NULL AND EXISTS (SELECT 1 FROM primary_campus);
+
+            WITH primary_campus AS (
+                SELECT "Id" FROM "Campuses" WHERE "IsActive" = TRUE ORDER BY "Code", "Id" LIMIT 1
+            )
+            UPDATE "CourseRegistrations"
+            SET "CampusId" = (SELECT "Id" FROM primary_campus)
+            WHERE "CampusId" IS NULL AND EXISTS (SELECT 1 FROM primary_campus);
+
+            WITH primary_campus AS (
+                SELECT "Id" FROM "Campuses" WHERE "IsActive" = TRUE ORDER BY "Code", "Id" LIMIT 1
+            )
+            INSERT INTO "UserCampusAssignments" ("Id", "UserId", "CampusId", "IsPrimary", "AssignedAt")
+            SELECT gen_random_uuid(), u."Id", c."Id", TRUE, NOW()
+            FROM "Users" u CROSS JOIN primary_campus c
+            WHERE u."IsActive" = TRUE
+              AND NOT EXISTS (SELECT 1 FROM "UserCampusAssignments" a WHERE a."UserId" = u."Id");
+            """);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
