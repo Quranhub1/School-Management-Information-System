@@ -167,7 +167,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       programmeId: '',
       version: '1.0',
       title: course.name,
-      minimumCredits: course.duration ? String(course.duration * 30) : '',
+      minimumCredits: '',
       effectiveFrom: new Date().toISOString().slice(0, 10),
       effectiveTo: '',
       type,
