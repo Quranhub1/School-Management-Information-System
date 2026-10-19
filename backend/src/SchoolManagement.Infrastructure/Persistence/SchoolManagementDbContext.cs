@@ -243,6 +243,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         });
         m.Entity<Student>().HasOne<Campus>().WithMany().HasForeignKey(x => x.CampusId).OnDelete(DeleteBehavior.SetNull);
         m.Entity<CourseRegistration>().HasOne<Campus>().WithMany().HasForeignKey(x => x.CampusId).OnDelete(DeleteBehavior.SetNull);
+        m.Entity<StaffMember>().HasOne<Campus>().WithMany().HasForeignKey(x => x.CampusId).OnDelete(DeleteBehavior.SetNull);
         m.Entity<InstitutionSettings>(e => { e.HasKey(x => x.Id); e.Property(x => x.InstitutionName).HasMaxLength(250).IsRequired(); e.Property(x => x.Abbreviation).HasMaxLength(50); e.Property(x => x.Motto).HasMaxLength(500); e.Property(x => x.Address).HasMaxLength(500); e.Property(x => x.Phone).HasMaxLength(50); e.Property(x => x.Email).HasMaxLength(200); e.Property(x => x.Website).HasMaxLength(200); e.Property(x => x.PostalAddress).HasMaxLength(200); e.Property(x => x.Country).HasMaxLength(100); e.Property(x => x.InstitutionType).HasMaxLength(100); e.Property(x => x.LogoPath).HasMaxLength(500); e.Property(x => x.LogoContentType).HasMaxLength(100); e.Property(x => x.PrimaryColor).HasMaxLength(20); e.Property(x => x.AccentColor).HasMaxLength(20); e.HasIndex(x => x.IsActive); });
     }
 }
