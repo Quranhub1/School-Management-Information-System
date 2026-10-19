@@ -58,10 +58,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
 
   useEffect(() => {
     void loadStaff()
-    if (canManage) {
-      void listStaffCourseUnits().then(setCourseUnits).catch(e => setError(e instanceof Error ? e.message : 'Unable to load course units.'))
-      void listStaffDepartments().then(setDepartments).catch(e => setError(e instanceof Error ? e.message : 'Unable to load departments.'))
-    }
+    void listStaffCourseUnits().then(setCourseUnits).catch(e => setError(e instanceof Error ? e.message : 'Unable to load course units.'))
+    void listStaffDepartments().then(setDepartments).catch(e => setError(e instanceof Error ? e.message : 'Unable to load departments.'))
     const onStaffChanged = (event: Event) => {
       const detail = (event as CustomEvent<{ staff?: StaffMember }>).detail
       if (detail?.staff) {
@@ -90,7 +88,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
         setEditingStaffId(null)
       } else {
         const profile = { ...form, departmentId: form.departmentId || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
-      const created = await createStaff(profile)
+        const created = await createStaff(profile)
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
         setSuccess(`${created.firstName} ${created.lastName} was saved and added to the staff table.`)
