@@ -306,18 +306,38 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("charges/{chargeId:guid}/void")]
-    public async Task<IActionResult> VoidStudentCharge(Guid chargeId, VoidStudentChargeRequest request, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a charge void." }); return Ok(await charges.VoidAsync(chargeId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> VoidStudentCharge(Guid chargeId, VoidStudentChargeRequest request, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessChargeAsync(chargeId, cancellationToken)) return Forbid();
+        try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a charge void." }); return Ok(await charges.VoidAsync(chargeId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [HttpGet("invoices/{invoiceId:guid}/credit-notes")]
-    public async Task<IActionResult> GetCreditNotes(Guid invoiceId, CancellationToken cancellationToken) => Ok(await adjustments.GetCreditNotesAsync(invoiceId, cancellationToken));
+    public async Task<IActionResult> GetCreditNotes(Guid invoiceId, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
+        return Ok(await adjustments.GetCreditNotesAsync(invoiceId, cancellationToken));
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices/{invoiceId:guid}/credit-notes")]
-    public async Task<IActionResult> CreateCreditNote(Guid invoiceId, CreateCreditNoteRequest request, CancellationToken cancellationToken) { try { return Created($"/api/finance/invoices/{invoiceId}/credit-notes", await adjustments.CreateCreditNoteAsync(invoiceId, request.Amount, request.Reason, User.Identity?.Name, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> CreateCreditNote(Guid invoiceId, CreateCreditNoteRequest request, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
+        try { return Created($"/api/finance/invoices/{invoiceId}/credit-notes", await adjustments.CreateCreditNoteAsync(invoiceId, request.Amount, request.Reason, User.Identity?.Name, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("credit-notes/{creditNoteId:guid}/cancel")]
-    public async Task<IActionResult> CancelCreditNote(Guid creditNoteId, CancelCreditNoteRequest request, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a credit note cancellation." }); return Ok(await adjustments.CancelCreditNoteAsync(creditNoteId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> CancelCreditNote(Guid creditNoteId, CancelCreditNoteRequest request, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessCreditNoteAsync(creditNoteId, cancellationToken)) return Forbid();
+        try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a credit note cancellation." }); return Ok(await adjustments.CancelCreditNoteAsync(creditNoteId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/refund")]
-    public async Task<IActionResult> RefundPayment(Guid paymentId, CreateRefundRequest request, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a refund." }); return Ok(await adjustments.CreateRefundAsync(paymentId, request.Amount, request.RefundMethod, request.Reason, request.Reference, user, request.CreditNoteId, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> RefundPayment(Guid paymentId, CreateRefundRequest request, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessPaymentAsync(paymentId, cancellationToken)) return Forbid();
+        try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a refund." }); return Ok(await adjustments.CreateRefundAsync(paymentId, request.Amount, request.RefundMethod, request.Reason, request.Reference, user, request.CreditNoteId, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices")]
     public async Task<IActionResult> CreateInvoice(CreateInvoiceRequest request, CancellationToken cancellationToken)
@@ -326,26 +346,58 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         try { var invoice = await finance.CreateInvoiceAsync(request.StudentId, request.FeeStructureId, request.InvoiceNumber, cancellationToken); return Created($"/api/finance/invoices/{invoice.Id}", invoice); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
     [HttpGet("invoices/{invoiceId:guid}/discounts")]
-    public async Task<IActionResult> GetDiscounts(Guid invoiceId, CancellationToken cancellationToken) => Ok(await discounts.GetAsync(invoiceId, cancellationToken));
+    public async Task<IActionResult> GetDiscounts(Guid invoiceId, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
+        return Ok(await discounts.GetAsync(invoiceId, cancellationToken));
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices/{invoiceId:guid}/discounts")]
-    public async Task<IActionResult> RequestDiscount(Guid invoiceId, RequestDiscountRequest request, CancellationToken cancellationToken) { try { return Ok(await discounts.RequestAsync(invoiceId, request.DiscountType, request.Percentage, request.Amount, request.Reason, User.Identity?.Name, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> RequestDiscount(Guid invoiceId, RequestDiscountRequest request, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
+        try { return Ok(await discounts.RequestAsync(invoiceId, request.DiscountType, request.Percentage, request.Amount, request.Reason, User.Identity?.Name, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("discounts/{discountId:guid}/approve")]
-    public async Task<IActionResult> ApproveDiscount(Guid discountId, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for approval." }); return Ok(await discounts.ApproveAsync(discountId, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> ApproveDiscount(Guid discountId, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessDiscountAsync(discountId, cancellationToken)) return Forbid();
+        try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for approval." }); return Ok(await discounts.ApproveAsync(discountId, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("discounts/{discountId:guid}/reject")]
-    public async Task<IActionResult> RejectDiscount(Guid discountId, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for rejection." }); return Ok(await discounts.RejectAsync(discountId, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> RejectDiscount(Guid discountId, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessDiscountAsync(discountId, cancellationToken)) return Forbid();
+        try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for rejection." }); return Ok(await discounts.RejectAsync(discountId, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [HttpGet("invoices/{invoiceId:guid}/installments")]
-    public async Task<IActionResult> GetInstallments(Guid invoiceId, CancellationToken cancellationToken) => Ok(await installments.GetAsync(invoiceId, cancellationToken));
+    public async Task<IActionResult> GetInstallments(Guid invoiceId, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
+        return Ok(await installments.GetAsync(invoiceId, cancellationToken));
+    }
     [HttpGet("invoices/{invoiceId:guid}/installments/overdue")]
-    public async Task<IActionResult> GetOverdueInstallments(Guid invoiceId, [FromQuery] DateOnly? asOf, CancellationToken cancellationToken) => Ok(await installments.GetOverdueAsync(invoiceId, asOf ?? DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken));
+    public async Task<IActionResult> GetOverdueInstallments(Guid invoiceId, [FromQuery] DateOnly? asOf, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
+        return Ok(await installments.GetOverdueAsync(invoiceId, asOf ?? DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken));
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices/{invoiceId:guid}/installments")]
-    public async Task<IActionResult> CreateInstallmentSchedule(Guid invoiceId, CreateInstallmentScheduleRequest request, CancellationToken cancellationToken) { try { return Ok(await installments.CreateScheduleAsync(invoiceId, request.Installments, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> CreateInstallmentSchedule(Guid invoiceId, CreateInstallmentScheduleRequest request, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
+        try { return Ok(await installments.CreateScheduleAsync(invoiceId, request.Installments, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices/{invoiceId:guid}/payments")]
-    public async Task<IActionResult> RecordPayment(Guid invoiceId, RecordPaymentRequest request, CancellationToken cancellationToken) { try { return Ok(await finance.RecordPaymentAsync(invoiceId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Reference, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> RecordPayment(Guid invoiceId, RecordPaymentRequest request, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
+        try { return Ok(await finance.RecordPaymentAsync(invoiceId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Reference, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("students/{studentId:guid}/payments")]
     public async Task<IActionResult> RecordUnallocatedPayment(Guid studentId, RecordUnallocatedPaymentRequest request, CancellationToken cancellationToken)
@@ -355,10 +407,18 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/allocate")]
-    public async Task<IActionResult> AllocatePayment(Guid paymentId, AllocatePaymentRequest request, CancellationToken cancellationToken) { try { return Ok(await finance.AllocatePaymentAsync(paymentId, request.Allocations, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> AllocatePayment(Guid paymentId, AllocatePaymentRequest request, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessPaymentAsync(paymentId, cancellationToken)) return Forbid();
+        try { return Ok(await finance.AllocatePaymentAsync(paymentId, request.Allocations, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/allocate-fifo")]
-    public async Task<IActionResult> AllocatePaymentFifo(Guid paymentId, CancellationToken cancellationToken) { try { return Ok(await finance.AllocatePaymentFifoAsync(paymentId, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> AllocatePaymentFifo(Guid paymentId, CancellationToken cancellationToken)
+    {
+        if (!await CanAccessPaymentAsync(paymentId, cancellationToken)) return Forbid();
+        try { return Ok(await finance.AllocatePaymentFifoAsync(paymentId, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("journal-entries/{journalEntryId:guid}/reverse")]
     public async Task<IActionResult> ReverseJournalEntry(Guid journalEntryId, ReverseJournalEntryRequest request, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a reversal." }); return Ok(await reversals.ReverseAsync(journalEntryId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
