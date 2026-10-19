@@ -27,7 +27,7 @@ const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
 ]
 
 const SCHOOL_BASED_SHORT_COURSES: CatalogueEntry[] = [
-  { name: 'Bridging Programme', award: 'Bridging programme', duration: null, regulator: 'School-based', family: 'Access programme', review: true },
+  { name: 'Bridging Programme', award: 'Bridging programme', duration: 0.75, regulator: 'School-based', family: 'Access programme', review: true },
 ]
 
 const UHPAB_LONG_COURSES: CatalogueEntry[] = [
@@ -288,7 +288,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <tr key={course.name}>
                 <td className="catalogue-course-name">{course.name}</td>
                 <td>{course.award}</td>
-                <td>{course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
+                <td>{course.duration === 0.75 ? '9 months*' : course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
                 <td>{course.family}</td>
                 <td>
                   <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
