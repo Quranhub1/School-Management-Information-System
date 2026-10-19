@@ -221,7 +221,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
               </label>
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              <button type="submit">{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
+              <button type="submit" className={editingStaffId ? undefined : 'staff-add-button'} style={!editingStaffId ? { backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #166534', borderRadius: 2, padding: '10px 18px', fontWeight: 600, cursor: 'pointer' } : undefined}>{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
               {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
             </form>
           )}
