@@ -258,7 +258,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <select aria-label="Filter by verification status" value={verificationFilter} onChange={e => setVerificationFilter(e.target.value as typeof verificationFilter)}>
           <option value="all">All reference statuses</option>
           <option value="review">Needs verification</option>
-          <option value="reference">Reference listing</option>
+          <option value="reference">Website/reference listing</option>
         </select>
         <span className="catalogue-result-count">{visibleEntries.length} of {entries.length}</span>
       </div>
@@ -293,7 +293,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 </td>
               </tr>
             ))}
-            {visibleEntries.length === 0 && <tr><td colSpan={6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
+            {visibleEntries.length === 0 && <tr><td colSpan={authority === 'School-based' ? 8 : 6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
           </tbody>
         </table>
         <p className="catalogue-footnote">* Indicative duration where listed. A reference listing is not confirmation of current accreditation or approval. Verify the programme and award against the awarding body's current documentation before publishing.</p>
@@ -341,7 +341,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
           </section>}
-          {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-long-title"><h3 id="school-based-long-title">School-based · KSHS programme list</h3><p className="catalogue-footnote">Transcribed from the KSHS programmes page, which labels this list 2024/2025. These are school website references, not a statement of current external accreditation. Confirm current admissions requirements before publishing.</p>{renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}</section>
+          {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-long-title"><h3 id="school-based-long-title">School-based · KSHS programme list</h3><p className="catalogue-footnote">Transcribed from the KSHS programmes page, which labels this list 2024/2025. These are school website references, not a statement of current external accreditation. Confirm current admissions requirements before publishing.</p>{renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}</section>}
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
@@ -439,7 +439,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>UVTAB · Modular and occupational skills</h3>
             {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
           </section>}
-          {authority === 'School-based' && <p className="empty">School-based short courses are managed in your saved curricula.</p>}
+          {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-short-title"><h3 id="school-based-short-title">KSHS · Other short and in-service listings</h3><p className="catalogue-footnote">These entries appear under “Other Short & In-Service Courses” on the school website. Their classification is preserved as listed; confirm current intake and entry details.</p>{renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}</section>}
           {authority === 'UHPAB' && <p className="empty">UHPAB health programmes are listed under Full Programmes.</p>}
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
 
