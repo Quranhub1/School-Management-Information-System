@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Clock3, LayoutGrid, List, Plus, Sparkles, Trash2, Pencil, Save } from 'lucide-react'
 import LoadingSpinner from './LoadingSpinner'
-import { createTimetableEntry, updateTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, listTimetable, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
+import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, listTimetable, saveTimetableTemplate, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
 import './TimetableManagement.css'
 
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -133,7 +133,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   function loadTemplate() {
     if (!templateGroupId) { setError('Choose a class or teaching group before opening the editable template.'); return }
     const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
-    const slots = [...defaultTemplateSlots]
+    const slots = [...defaultTemplateSlots.map(slot => ({ ...slot }))]
     for (const entry of groupEntries) {
       const start = timeLabel(entry.startTime)
       const existingSlot = slots.find(slot => slot.startTime === start)
@@ -145,6 +145,10 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     for (const entry of groupEntries) {
       const slotIndex = slots.findIndex(slot => slot.startTime === timeLabel(entry.startTime))
       const key = entry.dayOfWeek + '-' + slotIndex
+      if (cells[key]) {
+        setError('This class has multiple sessions at the same day and start time. Resolve the duplicate sessions before editing its template.')
+        return
+      }
       cells[key] = { id: entry.id, courseId: entry.courseId, teacherId: entry.teacherId, room: entry.room ?? '', sessionType: entry.sessionType ?? 'Lecture' }
     }
     setTemplateSlots(slots)
@@ -160,45 +164,35 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
   async function saveTemplate() {
     if (!templateGroupId || templateLoadedGroupId !== templateGroupId) { setError('Choose a class and load it into the template before saving.'); return }
-    const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
-    const cells = Object.entries(templateCells)
-    const populated = cells.filter(([, cell]) => cell.courseId || cell.teacherId)
+    const populated = Object.entries(templateCells).filter(([, cell]) => cell.courseId || cell.teacherId)
     if (templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)) { setError('Every period must have an end time later than its start time.'); return }
     if (populated.some(([, cell]) => !cell.courseId || !cell.teacherId)) { setError('Every filled timetable cell needs both a course and a teacher.'); return }
+
+    const entries: CreateTimetableEntry[] = populated.map(([key, cell]) => {
+      const [day, slotIndexText] = key.split('-')
+      const slot = templateSlots[Number(slotIndexText)]
+      return {
+        teachingGroupId: templateGroupId,
+        courseId: cell.courseId,
+        teacherId: cell.teacherId,
+        dayOfWeek: Number(day),
+        startTime: slot.startTime + ':00',
+        endTime: slot.endTime + ':00',
+        room: cell.room.trim() || undefined,
+        sessionType: cell.sessionType || 'Lecture',
+      }
+    })
+
     setTemplateSaving(true)
     setError('')
     try {
-        for (const entry of groupEntries) {
-        const matchingCell = Object.entries(templateCells).find(([, cell]) => cell.id === entry.id)
-        const cell = matchingCell?.[1]
-        const slotIndex = matchingCell ? Number(matchingCell[0].split('-')[1]) : -1
-        const slot = templateSlots[slotIndex]
-        if (!cell || (!cell.courseId && !cell.teacherId) || !slot) {
-          await deactivateTimetableEntry(entry.id)
-        } else {
-          await updateTimetableEntry(entry.id, {
-            teachingGroupId: templateGroupId, courseId: cell.courseId, teacherId: cell.teacherId,
-            dayOfWeek: Number(matchingCell![0].split('-')[0]), startTime: slot.startTime + ':00', endTime: slot.endTime + ':00',
-            room: cell.room.trim() || undefined, sessionType: cell.sessionType || 'Lecture',
-          })
-        }
-      }
-      for (const [key, cell] of populated) {
-        if (cell.id && groupEntries.some(entry => entry.id === cell.id)) continue
-        const [day, slotIndexText] = key.split('-')
-        const slot = templateSlots[Number(slotIndexText)]
-        if (!slot) continue
-        await createTimetableEntry({
-          teachingGroupId: templateGroupId, courseId: cell.courseId, teacherId: cell.teacherId,
-          dayOfWeek: Number(day), startTime: slot.startTime + ':00', endTime: slot.endTime + ':00',
-          room: cell.room.trim() || undefined, sessionType: cell.sessionType || 'Lecture',
-        })
-      }
+      await saveTimetableTemplate(templateGroupId, entries)
       await load()
       setShowTemplateEditor(false)
       setTemplateCells({})
+      setTemplateLoadedGroupId('')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save the timetable template.')
+      setError(e instanceof Error ? e.message : 'Unable to save the timetable template. No changes were saved.')
     } finally {
       setTemplateSaving(false)
     }

@@ -49,3 +49,5 @@ export const createTimetableEntry = (input: CreateTimetableEntry) => request<Tim
 export const updateTimetableEntry = (id: string, input: CreateTimetableEntry) => request<TimetableEntry>(`/api/timetable/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
 export const deactivateTimetableEntry = (id: string) => request<void>(`/api/timetable/${id}`, { method: 'DELETE' })
 export const generateTimetable = (semesterId: string, teachingGroupId?: string) => request<GenerateTimetableResult>('/api/timetable/generate', { method: 'POST', body: JSON.stringify({ semesterId, teachingGroupId, rotationIntervalMinutes: 15, generationSource: 'Manual' }) })
+
+export const saveTimetableTemplate = (teachingGroupId: string, entries: CreateTimetableEntry[]) => request<TimetableEntry[]>(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`, { method: 'PUT', body: JSON.stringify({ teachingGroupId, entries }) })
