@@ -1,21 +1,57 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Assessment;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Assessment;
+using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/assessments")]
 [Authorize(Policy = AuthorizationPolicies.ExaminationManagement)]
-public sealed class AssessmentsController(AssessmentService service) : ControllerBase
+public sealed class AssessmentsController(AssessmentService service, SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("plans")]
     public async Task<ActionResult<IReadOnlyList<AssessmentPlan>>> GetPlans(
         [FromQuery] Guid? courseId,
         CancellationToken cancellationToken) =>
         Ok(await service.GetPlansAsync(courseId, cancellationToken));
+
+    [HttpPost("plans")]
+    public async Task<ActionResult<AssessmentPlan>> CreatePlan(
+        [FromBody] CreateAssessmentPlanRequest request,
+        CancellationToken cancellationToken)
+    {
+        var name = request.Name?.Trim();
+        var assessmentType = request.AssessmentType?.Trim();
+        if (request.CourseId == Guid.Empty)
+            return BadRequest(new { message = "A valid course ID is required." });
+        if (string.IsNullOrWhiteSpace(name) || name.Length > 160)
+            return BadRequest(new { message = "Plan name is required and must not exceed 160 characters." });
+        if (string.IsNullOrWhiteSpace(assessmentType) || assessmentType.Length > 80)
+            return BadRequest(new { message = "Assessment type is required and must not exceed 80 characters." });
+        if (request.WeightPercentage < 0m || request.WeightPercentage > 100m)
+            return BadRequest(new { message = "Assessment weight must be between 0 and 100 percent." });
+        if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId, cancellationToken))
+            return NotFound(new { message = "The selected course does not exist." });
+        if (await db.AssessmentPlans.AnyAsync(x => x.CourseId == request.CourseId && x.Name.ToLower() == name.ToLower(), cancellationToken))
+            return Conflict(new { message = "An assessment plan with this name already exists for the selected course." });
+
+        var plan = new AssessmentPlan
+        {
+            CourseId = request.CourseId,
+            Name = name,
+            AssessmentType = assessmentType,
+            WeightPercentage = request.WeightPercentage,
+            IsCompetencyBased = request.IsCompetencyBased,
+            IsActive = true
+        };
+        db.AssessmentPlans.Add(plan);
+        await db.SaveChangesAsync(cancellationToken);
+        return Created($"/api/assessments/plans?courseId={plan.CourseId}", plan);
+    }
 
     [HttpGet("registrations/{courseRegistrationId:guid}")]
     public async Task<ActionResult<IReadOnlyList<StudentAssessment>>> GetStudentAssessments(
@@ -46,7 +82,7 @@ public sealed class AssessmentsController(AssessmentService service) : Controlle
         return Created($"/api/assessments/records/{assessment.Id}", assessment);
     }
 
-    public sealed record RecordAssessmentRequest(
+    public sealed record CreateAssessmentPlanRequest(Guid CourseId, string? Name, string? AssessmentType, decimal WeightPercentage, bool IsCompetencyBased);\n\n    public sealed record RecordAssessmentRequest(
         Guid StudentId,
         Guid CourseRegistrationId,
         Guid AssessmentPlanId,
