@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+import { confirmAction } from './GlobalNotifications'
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -49,7 +50,7 @@ export function CalendarWorkspace() {
   }
 
   async function deactivate(id: string) {
-    if (!window.confirm('Deactivate this calendar event?')) return
+    if (!await confirmAction('This calendar event will be deactivated.', 'Deactivate calendar event', 'Deactivate')) return
     try { await request(`/api/calendar/${id}`, { method: 'DELETE' }); await load() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate event.') }
   }
 
