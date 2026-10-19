@@ -1,3 +1,4 @@
+import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode, type CSSProperties } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import {
@@ -157,7 +158,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     setEditingGuardianId(g.id); setGuardianForm({ fullName: g.fullName, relationship: g.relationship ?? '', address: g.address ?? '', phoneNumber: g.phoneNumber ?? '', email: g.email ?? '', isPrimary: g.isPrimary }); setGuardianError('')
   }
   async function removeGuardian(g: StudentGuardian) {
-    if (!guardianStudent || !window.confirm(`Remove ${g.fullName} from this student's records?`)) return
+    if (!guardianStudent || !(await showConfirmDialog(`Remove ${g.fullName} from this student's records?`, { title: 'Remove parent / guardian', confirmLabel: 'Yes, remove', destructive: true }))) return
     try { await deleteStudentGuardian(guardianStudent.id, g.id); await loadGuardians(guardianStudent.id); notify('Parent/guardian record removed.', 'success', 'Record deleted') }
     catch (e) { const message = e instanceof Error ? e.message : 'Unable to remove parent/guardian record.'; setGuardianError(message); notify(message, 'error', 'Delete failed') }
   }
