@@ -140,7 +140,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     slots.sort((a, b) => a.startTime.localeCompare(b.startTime))
     const cells: Record<string, TemplateCell> = {}
     for (const entry of groupEntries) {
-      const key = entry.dayOfWeek + '-' + timeLabel(entry.startTime)
+      const slotIndex = slots.findIndex(slot => slot.startTime === timeLabel(entry.startTime))
+      const key = entry.dayOfWeek + '-' + slotIndex
       cells[key] = { id: entry.id, courseId: entry.courseId, teacherId: entry.teacherId, room: entry.room ?? '', sessionType: entry.sessionType ?? 'Lecture' }
     }
     setTemplateSlots(slots)
@@ -162,24 +163,24 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setTemplateSaving(true)
     setError('')
     try {
-      const desiredKeys = new Set(populated.map(([key]) => key))
-      for (const entry of groupEntries) {
-        const key = entry.dayOfWeek + '-' + timeLabel(entry.startTime)
+        for (const entry of groupEntries) {
+        const slotIndex = templateSlots.findIndex(slot => slot.startTime === timeLabel(entry.startTime))
+        const key = entry.dayOfWeek + '-' + slotIndex
         const cell = templateCells[key]
         if (!cell || (!cell.courseId && !cell.teacherId)) {
           await deactivateTimetableEntry(entry.id)
         } else {
           await updateTimetableEntry(entry.id, {
             teachingGroupId: templateGroupId, courseId: cell.courseId, teacherId: cell.teacherId,
-            dayOfWeek: entry.dayOfWeek, startTime: entry.startTime, endTime: entry.endTime,
+            dayOfWeek: entry.dayOfWeek, startTime: (templateSlots[slotIndex]?.startTime ?? timeLabel(entry.startTime)) + ':00', endTime: (templateSlots[slotIndex]?.endTime ?? timeLabel(entry.endTime)) + ':00',
             room: cell.room.trim() || undefined, sessionType: cell.sessionType || 'Lecture',
           })
         }
       }
       for (const [key, cell] of populated) {
         if (cell.id && groupEntries.some(entry => entry.id === cell.id)) continue
-        const [day, start] = key.split('-')
-        const slot = templateSlots.find(item => item.startTime === start)
+        const [day, slotIndexText] = key.split('-')
+        const slot = templateSlots[Number(slotIndexText)]
         if (!slot) continue
         await createTimetableEntry({
           teachingGroupId: templateGroupId, courseId: cell.courseId, teacherId: cell.teacherId,
@@ -188,7 +189,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         })
       }
       await load()
-      loadTemplate()
+      setShowTemplateEditor(false)
+      setTemplateCells({})
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save the timetable template.')
     } finally {
@@ -255,10 +257,10 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       {templateGroupId && <div className="timetable-grid-scroll">
         <table className="timetable-editable-grid">
           <thead><tr><th>DAY</th>{templateSlots.map((slot, index) => <th key={slot.startTime}><span>PERIOD {index + 1}</span><label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map(item => item.startTime === slot.startTime ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map(item => item.startTime === slot.startTime ? { ...item, endTime: event.target.value } : item))}/></label></th>)}</tr></thead>
-          <tbody>{weekOrder.filter(day => day !== 0).map(day => <tr key={day}><th>{days[day].toUpperCase()}</th>{templateSlots.map(slot => {
-            const key = day + '-' + slot.startTime
+          <tbody>{weekOrder.filter(day => day !== 0).map(day => <tr key={day}><th>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
+            const key = day + '-' + slotIndex
             const cell = templateCells[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture' }
-            return <td key={slot.startTime}>
+            return <td key={slotIndex}>
               <select aria-label={`${days[day]} ${slot.startTime} course`} value={cell.courseId} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}><option value="">— Course —</option>{options.courses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
               <select aria-label={`${days[day]} ${slot.startTime} teacher`} value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}><option value="">— Teacher —</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
               <input aria-label={`${days[day]} ${slot.startTime} venue`} value={cell.room} onChange={event => changeTemplateCell(key, 'room', event.target.value)} placeholder="Venue"/>
