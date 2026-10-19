@@ -133,3 +133,62 @@
   outline-offset: -2px !important;
 }
 
+/* Recursive sidebar fix: cover options, suboptions, and deeper nested items regardless of wrapper depth.
+   Older selectors only matched section > div > div > button, which misses nested controls. */
+.app-shell > aside nav section button,
+.app-shell > aside nav section a,
+.app-shell > aside nav section button:hover,
+.app-shell > aside nav section a:hover,
+.app-shell > aside nav section button:active,
+.app-shell > aside nav section a:active,
+.app-shell > aside nav section button[aria-current],
+.app-shell > aside nav section a[aria-current],
+.app-shell > aside nav section button[aria-selected="true"],
+.app-shell > aside nav section a[aria-selected="true"] {
+  border: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  transform: none !important;
+  filter: none !important;
+  text-decoration: none !important;
+}
+
+.app-shell > aside nav section button::before,
+.app-shell > aside nav section button::after,
+.app-shell > aside nav section a::before,
+.app-shell > aside nav section a::after {
+  content: none !important;
+  display: none !important;
+  box-shadow: none !important;
+}
+
+.app-shell > aside nav section button[aria-current="page"],
+.app-shell > aside nav section a[aria-current="page"],
+.app-shell > aside nav section button[aria-selected="true"],
+.app-shell > aside nav section a[aria-selected="true"] {
+  background: #292821 !important;
+  background-color: #292821 !important;
+  color: #f5efdf !important;
+}
+
+.app-shell > aside nav section button[aria-current="page"]::before,
+.app-shell > aside nav section button[aria-current="page"]::after,
+.app-shell > aside nav section a[aria-current="page"]::before,
+.app-shell > aside nav section a[aria-current="page"]::after,
+.app-shell > aside nav section button[aria-selected="true"]::before,
+.app-shell > aside nav section button[aria-selected="true"]::after,
+.app-shell > aside nav section a[aria-selected="true"]::before,
+.app-shell > aside nav section a[aria-selected="true"]::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Keep a simple keyboard focus indicator, never an inset/edge marker. */
+.app-shell > aside nav section button:focus-visible,
+.app-shell > aside nav section a:focus-visible {
+  outline: 2px solid #d7cfbb !important;
+  outline-offset: -2px !important;
+  box-shadow: none !important;
+}
+
