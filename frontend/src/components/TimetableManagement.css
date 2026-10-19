@@ -120,10 +120,13 @@
 .timetable-template-existing{display:inline-block;margin-top:2px;padding:3px 5px;background:#edf6f0;color:#236044;font-size:.64rem;font-weight:700}
 @media(max-width:850px){.timetable-template-editor-heading{flex-direction:column}.timetable-template-controls{width:100%}.timetable-template-controls label{flex:1}}
 @media print{
-  body *{visibility:hidden!important}
-  .timetable-template-editor,.timetable-template-editor *{visibility:visible!important}
-  .timetable-template-editor{position:absolute!important;inset:0 auto auto 0!important;width:100%!important;padding:0!important;border:0!important}
-   .timetable-template-editor-heading p:not(.timetable-eyebrow),.timetable-template-controls,.timetable-template-editor .timetable-form-footer,.timetable-template-existing{display:none!important}
+  .timetable-template-editor[data-print-target="false"]{display:none!important}
+  body:has(.timetable-template-editor[data-print-target="true"]) *{visibility:hidden!important}
+  .timetable-template-editor[data-print-target="true"],
+  .timetable-template-editor[data-print-target="true"] *{visibility:visible!important}
+  body:has(.timetable-class-document[data-print-target="true"]) .timetable-template-editor{display:none!important}
+  .timetable-template-editor[data-print-target="true"]{position:absolute!important;inset:0 auto auto 0!important;width:100%!important;padding:0!important;border:0!important}
+  .timetable-template-editor-heading p:not(.timetable-eyebrow),.timetable-template-controls,.timetable-template-editor .timetable-form-footer,.timetable-template-existing{display:none!important}
   .timetable-editable-grid select,.timetable-editable-grid input{appearance:none!important;border:0!important;background:transparent!important;color:#111827!important;padding:0!important;font-size:7pt!important;box-shadow:none!important}
   .timetable-editable-grid{min-width:0!important;font-size:7pt}
   .timetable-editable-grid th,.timetable-editable-grid td{padding:4px;height:70px}
