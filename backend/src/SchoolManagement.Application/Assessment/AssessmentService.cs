@@ -14,6 +14,16 @@ public sealed class AssessmentService(SchoolManagement.Application.Abstractions.
     public Task<StudentAssessment?> GetStudentAssessmentByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         assessments.GetStudentAssessmentByIdAsync(id, cancellationToken);
 
+    public async Task<StudentAssessment?> FinalizeStudentAssessmentAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var assessment = await assessments.GetStudentAssessmentByIdAsync(id, cancellationToken);
+        if (assessment is null) return null;
+        if (assessment.IsFinalized) throw new InvalidOperationException("This mark has already been finalized and is locked.");
+        if (!await assessments.FinalizeStudentAssessmentAsync(id, cancellationToken))
+            throw new InvalidOperationException("This mark was finalized by another user. Refresh the record before continuing.");
+        return await assessments.GetStudentAssessmentByIdAsync(id, cancellationToken);
+    }
+
     public async Task<StudentAssessment> RecordAssessmentAsync(
         Guid studentId,
         Guid courseRegistrationId,
