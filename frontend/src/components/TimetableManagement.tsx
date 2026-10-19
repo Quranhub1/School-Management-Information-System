@@ -27,6 +27,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [generatedResult, setGeneratedResult] = useState<GenerateTimetableResult | null>(null)
   const [showGenerator, setShowGenerator] = useState(false)
   const [showScheduleForm, setShowScheduleForm] = useState(false)
+  const [timetableCount, setTimetableCount] = useState('1')
+  const [generatedTimetables, setGeneratedTimetables] = useState<Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }>>([])
+  const [printTargetGroupId, setPrintTargetGroupId] = useState('')
   const [view, setView] = useState<'week' | 'list'>('week')
 
   const load = useCallback(async () => {
@@ -57,18 +60,36 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const orderedEntries = useMemo(() => [...activeEntries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)), [activeEntries])
   const timeSlots = useMemo(() => [...new Set(activeEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b)), [activeEntries])
 
+  useEffect(() => {
+    if (!printTargetGroupId) return
+    const finishPrint = () => setPrintTargetGroupId('')
+    window.addEventListener('afterprint', finishPrint)
+    window.print()
+    return () => window.removeEventListener('afterprint', finishPrint)
+  }, [printTargetGroupId])
+
   async function handleGenerate(event: React.FormEvent) {
     event.preventDefault()
     setError('')
     setGeneratedResult(null)
+    setGeneratedTimetables([])
     if (!semesterId) { setError('Select an active academic period before generating a timetable.'); return }
+    const selectedGroups = teachingGroupId
+      ? options.teachingGroups.filter(group => group.id === teachingGroupId)
+      : options.teachingGroups.slice(0, Math.max(1, Math.min(options.teachingGroups.length, Number(timetableCount) || 1)))
+    if (selectedGroups.length === 0) { setError('Create teaching groups before generating timetables.'); return }
     setLoading(true)
     try {
-      const result = await generateTimetable(semesterId, teachingGroupId || undefined)
-      setGeneratedResult(result)
+      const results: Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }> = []
+      for (const group of selectedGroups) {
+        const result = await generateTimetable(semesterId, group.id)
+        results.push({ groupId: group.id, groupLabel: group.label, result })
+      }
+      setGeneratedTimetables(results)
+      if (results.length === 1) setGeneratedResult(results[0].result)
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to generate timetable.')
+      setError(e instanceof Error ? e.message : 'Unable to generate timetables.')
     } finally {
       setLoading(false)
     }
@@ -138,8 +159,10 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <h3>Generate a timetable</h3>
       <div className="timetable-form-grid">
         <label>Academic period<select value={semesterId} onChange={event => setSemesterId(event.target.value)} required><option value="">Select period</option>{activeSemesters.map(item => <option key={item.id} value={item.id}>{item.label}{item.isCurrent ? ' (Current)' : ''}</option>)}</select></label>
-        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">All eligible groups</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        {!teachingGroupId && <label>Number of timetables<input type="number" min="1" max={Math.max(1, options.teachingGroups.length)} value={timetableCount} onChange={event => setTimetableCount(event.target.value)} required /></label>}
       </div>
+      {!teachingGroupId && <p className="timetable-generator-help">Generates one separate timetable for each of the first N teaching groups. Available groups: {options.teachingGroups.length}.</p>}
       <div className="timetable-form-footer">
         <button className="timetable-action primary" type="submit" disabled={loading || activeSemesters.length === 0}>{loading ? 'Generating…' : 'Generate schedule'}</button>
         {activeSemesters.length === 0 && <span className="timetable-day-empty">Create an active academic period before generating.</span>}
@@ -164,6 +187,31 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         {(!options.teachingGroups.length || !options.courses.length || !options.teachers.length) && <span className="timetable-day-empty">Add teaching groups, courses and staff before scheduling.</span>}
       </div>
     </form>}
+
+    {generatedTimetables.length > 0 && <section className="timetable-generated-list" aria-live="polite">
+      <div className="timetable-generated-heading"><h3>Generated class timetables</h3><span>{generatedTimetables.length} timetable{generatedTimetables.length === 1 ? '' : 's'}</span></div>
+      {generatedTimetables.map(({ groupId, groupLabel, result }) => <article className="timetable-class-document" data-print-target={printTargetGroupId === groupId ? 'true' : 'false'} key={groupId}>
+        <div className="timetable-class-document-heading"><div><h4>{groupLabel}</h4><span>Teaching timetable · {activeSemesters.find(item => item.id === semesterId)?.label ?? 'Selected academic period'}</span></div>
+          <div className="timetable-class-actions">
+            <button className="timetable-action" type="button" onClick={() => {
+              const rows = activeEntries.filter(entry => entry.teachingGroupId === groupId).sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
+              const escape = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+              const body = rows.map(entry => '<tr><td>' + escape(days[entry.dayOfWeek] ?? '') + '</td><td>' + escape(timeRange(entry)) + '</td><td>' + escape(courseLabels.get(entry.courseId) ?? 'Course not found') + '</td><td>' + escape(teacherLabels.get(entry.teacherId) ?? 'Teacher not found') + '</td><td>' + escape(entry.room ?? '') + '</td><td>' + escape(entry.sessionType ?? '') + '</td></tr>').join('')
+              const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + escape(groupLabel) + ' timetable</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#111}h1,h2,p{text-align:center}table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:8px;text-align:center}th{background:#eee}@media print{@page{size:landscape;margin:10mm}}</style></head><body><p>REPUBLIC OF UGANDA</p><h1>KAMPALA SCHOOL OF HEALTH SCIENCES</h1><h2>' + escape(groupLabel) + ' — TEACHING TIMETABLE</h2><p>' + escape(activeSemesters.find(item => item.id === semesterId)?.label ?? '') + '</p><table><thead><tr><th>Day</th><th>Time</th><th>Course</th><th>Teacher</th><th>Venue</th><th>Type</th></tr></thead><tbody>' + body + '</tbody></table><p style="margin-top:48px;text-align:right">Academic Registrar: ____________________</p></body></html>'
+              const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }))
+              const anchor = document.createElement('a'); anchor.href = url; anchor.download = groupLabel.replace(/[^a-z0-9-_]+/gi, '-').replace(/^-|-$/g, '') + '-timetable.html'; anchor.click(); URL.revokeObjectURL(url)
+            }}>Download</button>
+            <button className="timetable-action" type="button" onClick={() => setPrintTargetGroupId(groupId)}>Print</button>
+          </div>
+        </div>
+        <p className="timetable-class-status">Score: {result.optimizationScore.toFixed(1)}% · {result.isConflictFree ? 'No conflicts reported' : 'Conflicts detected'}</p>
+        {result.conflicts.length > 0 && <p className="timetable-class-warning">Conflicts: {result.conflicts.join('; ')}</p>}
+        {result.warnings.length > 0 && <p className="timetable-class-warning">Warnings: {result.warnings.join('; ')}</p>}
+        <div className="timetable-table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Course</th><th>Teacher</th><th>Venue</th><th>Type</th></tr></thead><tbody>
+          {activeEntries.filter(entry => entry.teachingGroupId === groupId).sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)).map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{timeRange(entry)}</td><td>{courseLabels.get(entry.courseId) ?? 'Course not found'}</td><td>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</td><td>{entry.room || '—'}</td><td>{entry.sessionType || '—'}</td></tr>)}
+        </tbody></table></div>
+      </article>)}
+    </section>}
 
     {generatedResult && <section className="timetable-result" aria-live="polite">
       <h3>Generation result</h3>
