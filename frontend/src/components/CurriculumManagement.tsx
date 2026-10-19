@@ -31,6 +31,8 @@ const SCHOOL_BASED_SHORT_COURSES: CatalogueEntry[] = [
 ]
 
 const UHPAB_LONG_COURSES: CatalogueEntry[] = [
+  { name: 'Certificate in Enrolled Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing', review: true },
+  { name: 'Certificate in Enrolled Midwifery', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Midwifery', review: true },
   { name: 'Certificate in Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing' },
   { name: 'Certificate in Midwifery', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Midwifery' },
   { name: 'Certificate in Mental Health Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing' },
@@ -298,7 +300,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 </td>
               </tr>
             ))}
-            {visibleEntries.length === 0 && <tr><td colSpan={authority === 'School-based' ? 8 : 6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
+            {visibleEntries.length === 0 && <tr><td colSpan={6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
           </tbody>
         </table>
         <p className="catalogue-footnote">* Indicative duration where listed. A reference listing is not confirmation of current accreditation or approval. Verify the programme and award against the awarding body's current documentation before publishing.</p>
