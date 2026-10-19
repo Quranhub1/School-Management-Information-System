@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   createAssessmentPlan,
+  finalizeAssessment,
   getAssessmentPlans,
   getExaminationTranscript,
   getStudentAssessments,
@@ -96,6 +97,18 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
     } finally { setBusy(false); }
   }
 
+  async function finalizeMark(id: string) {
+    if (!canManage) { setError('Your role has read-only access to examinations.'); return; }
+    if (!window.confirm('Finalize this mark? Finalized marks are locked and cannot be finalized again.')) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      await finalizeAssessment(id);
+      setNotice('Mark finalized successfully.');
+      if (registrationId.trim()) setRegistrationAssessments(await getStudentAssessments(registrationId.trim()));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to finalize the mark.');
+    } finally { setBusy(false); }
+  }
   async function submitMark(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canManage) { setError('Your role has read-only access to examinations.'); return; }
@@ -211,7 +224,7 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
             <label>Load existing marks by registration ID<input value={registrationId} onChange={e => setRegistrationId(e.target.value)} placeholder="Course registration UUID" /></label>
             <button type="button" onClick={() => void loadRegistrationAssessments()} disabled={busy}>Load marks</button>
           </div>
-          {registrationAssessments.length > 0 && <div className="table-wrap"><table><thead><tr><th>Assessment plan</th><th>Score</th><th>Maximum</th><th>Grade</th><th>Competency</th><th>Finalized</th><th>Recorded</th></tr></thead><tbody>{registrationAssessments.map(item => <tr key={item.id}><td>{activePlans.find(p => p.id === item.assessmentPlanId)?.name ?? item.assessmentPlanId}</td><td>{item.score}</td><td>{item.maximumScore}</td><td>{item.grade ?? '—'}</td><td>{item.competencyLevel ?? '—'}</td><td>{item.isFinalized ? 'Yes' : 'No'}</td><td>{new Date(item.recordedAt).toLocaleString()}</td></tr>)}</tbody></table></div>}
+          {registrationAssessments.length > 0 && <div className="table-wrap"><table><thead><tr><th>Assessment plan</th><th>Score</th><th>Maximum</th><th>Grade</th><th>Competency</th><th>Finalized</th><th>Recorded</th><th>Action</th></tr></thead><tbody>{registrationAssessments.map(item => <tr key={item.id}><td>{activePlans.find(p => p.id === item.assessmentPlanId)?.name ?? item.assessmentPlanId}</td><td>{item.score}</td><td>{item.maximumScore}</td><td>{item.grade ?? '—'}</td><td>{item.competencyLevel ?? '—'}</td><td>{item.isFinalized ? 'Yes' : 'No'}</td><td>{new Date(item.recordedAt).toLocaleString()}</td><td>{item.isFinalized ? 'Locked' : <button type="button" disabled={!canManage || busy} onClick={() => void finalizeMark(item.id)}>Finalize</button>}</td></tr>)}</tbody></table></div>}
         </section>
       )}
 
