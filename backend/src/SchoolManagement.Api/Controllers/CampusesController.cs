@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Academic;
+using SchoolManagement.Domain.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 [ApiController, Route("api/campuses"), Authorize(Roles = "SystemAdministrator")]
