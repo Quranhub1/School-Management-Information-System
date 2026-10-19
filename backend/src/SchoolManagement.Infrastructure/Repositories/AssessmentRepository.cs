@@ -29,4 +29,12 @@ public sealed class AssessmentRepository(SchoolManagementDbContext db) : IAssess
         await db.SaveChangesAsync(cancellationToken);
         return assessment;
     }
+
+    public async Task<bool> FinalizeStudentAssessmentAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var updated = await db.StudentAssessments
+            .Where(x => x.Id == id && !x.IsFinalized)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.IsFinalized, true), cancellationToken);
+        return updated == 1;
+    }
 }
