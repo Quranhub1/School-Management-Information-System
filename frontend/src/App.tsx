@@ -6,6 +6,7 @@ import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canManageHostel, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable } from './auth/roleGuards'
 import { GlobalSearch } from './components/GlobalSearch'
+import { GlobalNotificationViewport } from './components/GlobalNotifications'
 import type { InstitutionSettings } from './api/institutionSettings'
 import { InstitutionSettingsProvider, useInstitutionSettings } from './components/InstitutionSettingsContext'
 import './components/PrintStyles.css'
@@ -537,8 +538,8 @@ function AppContent(){
 
   if (!institutionLoaded) return <div className="institution-login-host" aria-label="Loading institution settings" />
 
-  return authed
+  return <><GlobalNotificationViewport />{authed
     ? <AuthenticatedWorkspace onLogout={()=>setAuthed(false)} institution={institution} onInstitutionSaved={setInstitution}/>
-    : <LoginScreen institution={institution}/>
+    : <LoginScreen institution={institution}/>}</>
 }
 export default App
