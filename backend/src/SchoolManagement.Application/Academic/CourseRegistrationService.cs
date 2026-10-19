@@ -8,7 +8,7 @@ public sealed class CourseRegistrationService(ICourseRegistrationRepository repo
     public Task<IReadOnlyList<CourseRegistration>> GetByStudentAsync(Guid studentId, CancellationToken cancellationToken = default)
         => repository.GetByStudentAsync(studentId, cancellationToken);
 
-    public async Task<CourseRegistration> RegisterAsync(Guid studentId, Guid courseId, Guid semesterId, CancellationToken cancellationToken = default)
+    public async Task<CourseRegistration> RegisterAsync(Guid studentId, Guid courseId, Guid semesterId, CancellationToken cancellationToken = default, Guid? campusId = null)
     {
         if (await repository.ExistsActiveAsync(studentId, courseId, semesterId, cancellationToken))
             throw new InvalidOperationException("The student is already registered for this course in this semester.");
@@ -18,6 +18,7 @@ public sealed class CourseRegistrationService(ICourseRegistrationRepository repo
             StudentId = studentId,
             CourseId = courseId,
             SemesterId = semesterId,
+            CampusId = campusId,
             Status = "Registered"
         };
 
