@@ -96,7 +96,8 @@ public sealed class CampusAccessService(SchoolManagementDbContext db)
             .Where(x => x.IsActive).OrderBy(x => x.Id)
             .Select(x => new { x.InstitutionName, x.Abbreviation })
             .FirstOrDefaultAsync(cancellationToken);
-        if (settings is null) return [];
+        if (settings is null)
+            return await db.Campuses.AsNoTracking().Where(x => x.IsActive).Select(x => x.Id).ToListAsync(cancellationToken);
 
         var source = string.IsNullOrWhiteSpace(settings.Abbreviation) ? settings.InstitutionName : settings.Abbreviation;
         var code = new string(source.Trim().ToUpperInvariant().Where(char.IsLetterOrDigit).Take(50).ToArray());
