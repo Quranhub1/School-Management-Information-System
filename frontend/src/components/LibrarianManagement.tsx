@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { addLibrarian, deleteLibrarian, listLibrarians, updateLibrarian, type Librarian } from '../api/librarians';
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff';
+import { confirmAction } from './GlobalNotifications';
 
 export function LibrarianManagement() {
   const [librarians, setLibrarians] = useState<Librarian[]>([]);
@@ -51,7 +52,7 @@ export function LibrarianManagement() {
   }
 
   async function remove(librarian: Librarian) {
-    if (!window.confirm(`Remove ${librarian.firstName} ${librarian.lastName} from the librarian assignments? Their staff record will be retained.`)) return;
+    if (!await confirmAction(`Remove ${librarian.firstName} ${librarian.lastName} from the librarian assignments? Their staff record will be retained.`, 'Delete librarian assignment', 'Delete assignment')) return;
     setMessage('');
     try {
       await deleteLibrarian(librarian.id);
