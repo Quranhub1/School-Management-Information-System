@@ -1,3 +1,4 @@
+import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
 
@@ -49,7 +50,7 @@ export function CalendarWorkspace() {
   }
 
   async function deactivate(id: string) {
-    if (!window.confirm('Deactivate this calendar event?')) return
+    if (!(await showConfirmDialog('Deactivate this calendar event?', { title: 'Deactivate calendar event', confirmLabel: 'Yes, deactivate', destructive: true }))) return
     try { await request(`/api/calendar/${id}`, { method: 'DELETE' }); await load() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate event.') }
   }
 
