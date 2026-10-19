@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Academic;
+using SchoolManagement.Api.Services;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -9,13 +10,13 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/campuses/{campusId:guid}/users")]
 [Authorize(Roles = "SystemAdministrator")]
-public sealed class CampusAssignmentsController(SchoolManagementDbContext db) : ControllerBase
+public sealed class CampusAssignmentsController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CampusUserResponse>>> Get(Guid campusId, CancellationToken cancellationToken)
     {
-        if (!await db.Campuses.AnyAsync(x => x.Id == campusId, cancellationToken))
-            return NotFound(new { message = "Campus was not found." });
+        if (!await IsActiveInstitutionCampus(campusId, cancellationToken))
+            return NotFound(new { message = "Campus was not found in the active institution." });
 
         var assignments = await db.UserCampusAssignments.AsNoTracking()
             .Where(x => x.CampusId == campusId)
@@ -37,10 +38,8 @@ public sealed class CampusAssignmentsController(SchoolManagementDbContext db) : 
         if (request.UserId == Guid.Empty)
             return BadRequest(new { message = "A valid user ID is required." });
 
-        var campus = await db.Campuses.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == campusId && x.IsActive, cancellationToken);
-        if (campus is null)
-            return NotFound(new { message = "The campus does not exist or is inactive." });
+        if (!await IsActiveInstitutionCampus(campusId, cancellationToken))
+            return NotFound(new { message = "The campus does not exist, is inactive, or belongs to another institution." });
 
         var user = await db.Users.AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == request.UserId && x.IsActive, cancellationToken);
@@ -88,9 +87,24 @@ public sealed class CampusAssignmentsController(SchoolManagementDbContext db) : 
             .SingleOrDefaultAsync(x => x.CampusId == campusId && x.UserId == userId, cancellationToken);
         if (assignment is null) return NotFound(new { message = "Campus access assignment was not found." });
 
+        var wasPrimary = assignment.IsPrimary;
         db.UserCampusAssignments.Remove(assignment);
+        if (wasPrimary)
+        {
+            var replacement = await db.UserCampusAssignments
+                .Where(x => x.UserId == userId && x.CampusId != campusId)
+                .OrderBy(x => x.CampusId)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (replacement is not null) replacement.IsPrimary = true;
+        }
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
+    }
+
+    private async Task<bool> IsActiveInstitutionCampus(Guid campusId, CancellationToken cancellationToken)
+    {
+        var activeCampusIds = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        return activeCampusIds is not null && activeCampusIds.Contains(campusId);
     }
 
     public sealed record AssignCampusUserRequest(Guid UserId, bool IsPrimary = false);
