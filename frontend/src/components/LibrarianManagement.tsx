@@ -1,3 +1,4 @@
+import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react';
 import { addLibrarian, deleteLibrarian, listLibrarians, updateLibrarian, type Librarian } from '../api/librarians';
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff';
@@ -51,7 +52,7 @@ export function LibrarianManagement() {
   }
 
   async function remove(librarian: Librarian) {
-    if (!window.confirm(`Remove ${librarian.firstName} ${librarian.lastName} from the librarian assignments? Their staff record will be retained.`)) return;
+    if (!(await showConfirmDialog(`Remove ${librarian.firstName} ${librarian.lastName} from the librarian assignments? Their staff record will be retained.`, { title: 'Remove librarian assignment', confirmLabel: 'Yes, remove', destructive: true }))) return;
     setMessage('');
     try {
       await deleteLibrarian(librarian.id);
