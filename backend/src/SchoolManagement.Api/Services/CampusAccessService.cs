@@ -7,8 +7,9 @@ namespace SchoolManagement.Api.Services;
 
 /// <summary>
 /// Resolves campus access from server-managed assignments for the active institution.
-/// A null campus list means no active campus is configured and legacy single-campus
-/// behavior is retained until the first campus is registered.
+/// A null campus list means the institution has never registered a campus, so legacy
+/// single-campus behavior is retained. Once campus records exist, only active assigned
+/// campuses are accessible; deactivating all campuses never disables access checks.
 /// </summary>
 public sealed class CampusAccessService(SchoolManagementDbContext db)
 {
