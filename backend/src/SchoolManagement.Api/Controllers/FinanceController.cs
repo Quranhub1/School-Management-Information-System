@@ -4,20 +4,27 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Api.Services;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
-public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals, SchoolManagementDbContext db) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] string? studentId, CancellationToken cancellationToken)
     {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
         if (string.IsNullOrWhiteSpace(studentId))
         {
-            var invoices = await db.StudentInvoices.AsNoTracking()
+            var invoiceQuery = db.StudentInvoices.AsNoTracking();
+            if (accessibleCampuses is not null)
+                invoiceQuery = invoiceQuery.Where(x => db.Students.Any(s => s.Id == x.StudentId && s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value)));
+            var invoices = await invoiceQuery
                 .OrderByDescending(x => x.IssuedAt)
                 .Select(x => new
                 {
@@ -42,6 +49,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
 
         if (student is null) return NotFound(new { message = "Student was not found." });
+        if (!await campusAccess.CanAccessStudentAsync(User, student.Id, cancellationToken)) return Forbid();
 
         return Ok(await finance.GetStudentInvoicesAsync(student.Id, cancellationToken));
     }
@@ -51,14 +59,20 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboardCompatibility(CancellationToken cancellationToken)
     {
-        var totalBilled = await db.StudentInvoices.AsNoTracking()
-            .SumAsync(x => (decimal?)(x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m), cancellationToken) ?? 0m;
-        var totalPaid = await db.StudentInvoices.AsNoTracking()
-            .SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        var invoices = db.StudentInvoices.AsNoTracking().AsQueryable();
+        var payments = db.Payments.AsNoTracking().AsQueryable();
+        if (accessibleCampuses is not null)
+        {
+            invoices = invoices.Where(x => db.Students.Any(s => s.Id == x.StudentId && s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value)));
+            payments = payments.Where(x => db.Students.Any(s => s.Id == x.StudentId && s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value)));
+        }
+        var totalBilled = await invoices.SumAsync(x => (decimal?)(x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m), cancellationToken) ?? 0m;
+        var totalPaid = await invoices.SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
         var todayUtc = DateTimeOffset.UtcNow.Date;
         var tomorrowUtc = todayUtc.AddDays(1);
-        var todayPayments = await db.Payments.AsNoTracking()
-            .Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
+        var todayPayments = await payments.Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
             .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
 
         return Ok(new
@@ -67,9 +81,9 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             totalPaid,
             totalOutstanding = Math.Max(0m, totalBilled - totalPaid),
             todayCollection = todayPayments,
-            invoiceCount = await db.StudentInvoices.LongCountAsync(cancellationToken),
-            paymentCount = await db.Payments.LongCountAsync(cancellationToken),
-            outstandingCount = await db.StudentInvoices.LongCountAsync(x => x.Amount - x.DiscountAmount - x.PaidAmount > 0, cancellationToken),
+            invoiceCount = await invoices.LongCountAsync(cancellationToken),
+            paymentCount = await payments.LongCountAsync(cancellationToken),
+            outstandingCount = await invoices.LongCountAsync(x => x.Amount - x.DiscountAmount - x.PaidAmount > 0, cancellationToken),
             currency = "UGX"
         });
     }
@@ -84,6 +98,10 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             from invoice in invoices.DefaultIfEmpty()
             select new { payment, student, invoice };
 
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        if (accessibleCampuses is not null)
+            query = query.Where(x => x.student.CampusId.HasValue && accessibleCampuses.Contains(x.student.CampusId.Value));
         if (studentId.HasValue) query = query.Where(x => x.payment.StudentId == studentId.Value);
 
         return Ok(await query
@@ -105,7 +123,9 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     [HttpGet("reports/outstanding-balances")]
     public async Task<IActionResult> GetOutstandingBalancesCompatibility(CancellationToken cancellationToken)
     {
-        var data = await (
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        var dataQuery = (
             from invoice in db.StudentInvoices.AsNoTracking()
             join student in db.Students.AsNoTracking() on invoice.StudentId equals student.Id
             join fee in db.FeeStructures.AsNoTracking() on invoice.FeeStructureId equals fee.Id into fees
@@ -122,9 +142,10 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 balance = invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount,
                 invoice.Currency,
                 invoice.Status
-            })
-            .ToListAsync(cancellationToken);
-
+            });
+        if (accessibleCampuses is not null)
+            dataQuery = dataQuery.Where(x => db.Students.Any(s => s.Id == x.studentId && s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value)));
+        var data = await dataQuery.ToListAsync(cancellationToken);
         return Ok(data);
     }
     [HttpGet("students/profile")]
@@ -136,6 +157,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
             : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
         if (student is null) return NotFound(new { message = "Student was not found." });
+        if (!await campusAccess.CanAccessStudentAsync(User, student.Id, cancellationToken)) return Forbid();
         return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.FirstName, student.OtherNames, student.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
     }
 
