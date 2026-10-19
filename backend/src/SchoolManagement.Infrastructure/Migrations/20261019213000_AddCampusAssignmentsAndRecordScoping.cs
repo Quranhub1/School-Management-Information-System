@@ -8,9 +8,21 @@ public sealed partial class AddCampusAssignmentsAndRecordScoping : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.AddColumn<Guid>(
+        migrationBuilder.AddColumn<Guid?>(
             name: "CampusId",
             table: "CourseRegistrations",
+            type: "uuid",
+            nullable: true);
+
+        migrationBuilder.AddColumn<Guid?>(
+            name: "CampusId",
+            table: "Students",
+            type: "uuid",
+            nullable: true);
+
+        migrationBuilder.AddColumn<Guid?>(
+            name: "CampusId",
+            table: "StaffMembers",
             type: "uuid",
             nullable: true);
 
@@ -111,5 +123,7 @@ public sealed partial class AddCampusAssignmentsAndRecordScoping : Migration
         migrationBuilder.DropIndex(name: "IX_StaffMembers_CampusId", table: "StaffMembers");
         migrationBuilder.DropIndex(name: "IX_CourseRegistrations_CampusId", table: "CourseRegistrations");
         migrationBuilder.DropColumn(name: "CampusId", table: "CourseRegistrations");
+        migrationBuilder.DropColumn(name: "CampusId", table: "Students");
+        migrationBuilder.DropColumn(name: "CampusId", table: "StaffMembers");
     }
 }
