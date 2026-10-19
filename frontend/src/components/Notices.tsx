@@ -17,14 +17,12 @@ export function Notices({ canManage }: { canManage?: boolean }) {
 
     // A blank optional date must be JSON null, not an empty string. Normalize
     // selected dates to ISO 8601 so ASP.NET can deserialize DateTimeOffset?.
-    const expiresAt = form.expiresAt.trim()
-      ? new Date(form.expiresAt).toISOString()
-      : null;
-
-    if (expiresAt && Number.isNaN(Date.parse(expiresAt))) {
+    const parsedExpiry = form.expiresAt.trim() ? new Date(form.expiresAt) : null;
+    if (parsedExpiry && Number.isNaN(parsedExpiry.getTime())) {
       setError('Enter a valid notice expiry date and time.');
       return;
     }
+    const expiresAt = parsedExpiry ? parsedExpiry.toISOString() : null;
 
     try {
       await createNotice({
