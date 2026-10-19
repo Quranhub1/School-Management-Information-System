@@ -136,7 +136,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     const slots = [...defaultTemplateSlots]
     for (const entry of groupEntries) {
       const start = timeLabel(entry.startTime)
-      if (!slots.some(slot => slot.startTime === start)) slots.push({ startTime: start, endTime: timeLabel(entry.endTime) })
+      const existingSlot = slots.find(slot => slot.startTime === start)
+      if (existingSlot) existingSlot.endTime = timeLabel(entry.endTime)
+      else slots.push({ startTime: start, endTime: timeLabel(entry.endTime) })
     }
     slots.sort((a, b) => a.startTime.localeCompare(b.startTime))
     const cells: Record<string, TemplateCell> = {}
