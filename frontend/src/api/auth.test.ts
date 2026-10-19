@@ -11,6 +11,7 @@ function storageFor(store: Record<string, string>) {
 }
 const mockSessionStorage = storageFor(sessionStore)
 const mockLocalStorage = storageFor(localStore)
+const futureExpiry = () => new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
 beforeEach(() => {
   Object.keys(sessionStore).forEach(k => delete sessionStore[k])
@@ -32,7 +33,7 @@ describe('auth API — login', () => {
   it('stores token and session in durable and tab storage on successful login', async () => {
     const mockResponse = {
       accessToken: 'test-token',
-      expiresAt: '2026-12-31T00:00:00Z',
+      expiresAt: futureExpiry(),
       username: 'admin',
       roles: ['SystemAdministrator'],
     }
@@ -90,7 +91,7 @@ describe('auth API — getSession', () => {
   it('recovers session and token from durable storage when tab storage is empty', async () => {
     localStore['smis.accessToken'] = 'durable-token'
     localStore['smis.session'] = JSON.stringify({
-      expiresAt: '2026-12-31T00:00:00Z',
+      expiresAt: futureExpiry(),
       username: 'admin',
       roles: ['SystemAdministrator'],
     })
@@ -100,5 +101,30 @@ describe('auth API — getSession', () => {
     expect(getAccessToken()).toBe('durable-token')
     expect(sessionStore['smis.accessToken']).toBe('durable-token')
     expect(sessionStore['smis.session']).toBe(localStore['smis.session'])
+  })
+
+  it('does not authenticate a saved profile without an access token', async () => {
+    localStore['smis.session'] = JSON.stringify({
+      expiresAt: futureExpiry(),
+      username: 'admin',
+      roles: ['SystemAdministrator'],
+    })
+
+    const { getSession } = await import('./auth')
+    expect(getSession()).toBeNull()
+  })
+
+  it('clears an expired session instead of showing an authenticated workspace', async () => {
+    localStore['smis.accessToken'] = 'expired-token'
+    localStore['smis.session'] = JSON.stringify({
+      expiresAt: new Date(Date.now() - 60_000).toISOString(),
+      username: 'admin',
+      roles: ['SystemAdministrator'],
+    })
+
+    const { getSession } = await import('./auth')
+    expect(getSession()).toBeNull()
+    expect(localStore['smis.accessToken']).toBeUndefined()
+    expect(localStore['smis.session']).toBeUndefined()
   })
 })
