@@ -32,6 +32,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [timetableCount, setTimetableCount] = useState('1')
   const [generatedTimetables, setGeneratedTimetables] = useState<Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }>>([])
   const [printTargetGroupId, setPrintTargetGroupId] = useState('')
+  const [printTemplate, setPrintTemplate] = useState(false)
   const [view, setView] = useState<'week' | 'list'>('week')
   const [showTemplateEditor, setShowTemplateEditor] = useState(false)
   const [templateGroupId, setTemplateGroupId] = useState('')
@@ -75,6 +76,14 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     window.print()
     return () => window.removeEventListener('afterprint', finishPrint)
   }, [printTargetGroupId])
+
+  useEffect(() => {
+    if (!printTemplate) return
+    const finishPrint = () => setPrintTemplate(false)
+    window.addEventListener('afterprint', finishPrint)
+    window.print()
+    return () => window.removeEventListener('afterprint', finishPrint)
+  }, [printTemplate])
 
   async function handleGenerate(event: React.FormEvent) {
     event.preventDefault()
@@ -246,7 +255,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       </div>
     </form>}
 
-    {!readOnly && showTemplateEditor && <section className="timetable-template-editor" aria-label="Editable timetable template">
+    {!readOnly && showTemplateEditor && <section className="timetable-template-editor" data-print-target={printTemplate ? 'true' : 'false'} aria-label="Editable timetable template">
       <div className="timetable-template-document-heading">
         <p>REPUBLIC OF UGANDA</p>
         <h3>KAMPALA SCHOOL OF HEALTH SCIENCES</h3>
@@ -277,7 +286,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         </table>
       </div>}
       {templateGroupId && templateLoadedGroupId !== templateGroupId && <p className="timetable-generator-help">Click “Load class” to fill the template with that class’s saved sessions before editing.</p>}
-      <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !options.courses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={() => window.print()}>Print template</button></div>
+      <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !options.courses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={() => setPrintTemplate(true)}>Print template</button></div>
     </section>}
 
     {!readOnly && showScheduleForm && <form className="timetable-form-panel" onSubmit={submit}>
