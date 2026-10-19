@@ -135,6 +135,10 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
                 cancellationToken);
             return Created($"/api/assessments/records/{assessment.Id}", assessment);
         }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { message = "A mark has already been recorded for this student, registration and assessment plan." });
+        }
         catch (ArgumentOutOfRangeException ex)
         {
             return BadRequest(new { message = ex.Message });
