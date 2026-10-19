@@ -36,6 +36,14 @@ const UHPAB_LONG_COURSES: CatalogueEntry[] = [
 ]
 
 const UVTAB_LONG_COURSES: CatalogueEntry[] = [
+  { name: 'Certificate in Biomedical Engineering', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
+  { name: 'Diploma in Biomedical Engineering', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
+  { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
+  { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
+  { name: 'Certificate in Sonography', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Medical Imaging', review: true },
+  { name: 'Diploma in Sonography', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Medical Imaging', review: true },
+  { name: 'Certificate in Medical Records', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Health Informatics', review: true },
+  { name: 'Diploma in Medical Records', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Health Informatics', review: true },
   { name: 'National Certificate — Technology Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Technology', review: true },
   { name: 'Uganda Certificate in Practical Competencies (UCPC) — Technology', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Technology', review: true },
   { name: 'National Certificate — Agriculture Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Agriculture', review: true },
@@ -66,6 +74,24 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [courses, setCourses] = useState<Course[]>([])
   const [programmes, setProgrammes] = useState<Programme[]>([])
   const [selected, setSelected] = useState('')
+  const [authority, setAuthority] = useState<'School-based' | 'UHPAB' | 'UVTAB'>('School-based')
+  const authorityOfProgramme = (programmeId: string) => {
+    const regulator = programmes.find(p => p.id === programmeId)?.regulator?.toUpperCase() ?? ''
+    if (regulator.includes('UHPAB')) return 'UHPAB'
+    if (regulator.includes('UVTAB')) return 'UVTAB'
+    if (regulator.includes('UNMEB')) return 'UNMEB'
+    return 'School-based'
+  }
+  const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === authority)
+  const authorityProgrammes = programmes.filter(p => p.isActive && authorityOfProgramme(p.id) === authority)
+  const authorityCourses = courses.filter(course => {
+    const curriculumIds = authorityCurricula.map(c => c.id)
+    return mappings.some(m => m.courseId === course.id && curriculumIds.includes(m.curriculumId)) ||
+      !curricula.some(c => getCourseIdsForCurriculum(c.id).includes(course.id))
+  })
+  function getCourseIdsForCurriculum(curriculumId: string) {
+    return mappings.filter(m => m.curriculumId === curriculumId).map(m => m.courseId)
+  }
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -225,6 +251,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       </div>
       {error && <div className="error">{error}</div>}
 
+      <div className="form-row academic-authority-picker">
+        <label>Curriculum authority
+          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setCf(current => ({ ...current, programmeId: '' })) }}>
+            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
+          </select>
+        </label>
+      </div>
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
         <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => setTab('full')}>Full Programmes</button>
         <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => setTab('short')}>Short Courses</button>
@@ -247,7 +280,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
-              <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select programme</option>{programmes.filter(p => p.isActive).map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
+              <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select programme</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
               <div className="form-row">
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
                 <input required placeholder="Title" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
@@ -282,13 +315,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="form-row">
             <select value={selected} onChange={e => void refreshMappings(e.target.value)}>
               <option value="">Select curriculum</option>
-              {curricula.map(c => (
+              {authorityCurricula.map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
               ))}
             </select>
             <select value={mf.courseId} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
               <option value="">Select course</option>
-              {courses.map(c => (
+              {courses.filter(course => authorityCurricula.some(cur => authorityOfProgramme(cur.programmeId) === authority) || authority === 'School-based').map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
               ))}
             </select>
@@ -345,7 +378,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h4>Create Short-Course Curriculum</h4>
             <form className="student-form" onSubmit={saveCurriculum}>
               <div className="form-row">
-                <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select the programme this short course belongs to</option>{programmes.filter(p => p.isActive).map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
+                <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select the programme this short course belongs to</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
               </div>
               <input required placeholder="Curriculum title (e.g. Certificate in Public Health)" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
