@@ -17,6 +17,38 @@ type Tab = 'full' | 'short'
 
 type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'School-based' | 'UHPAB' | 'UVTAB'; family: string; review?: boolean }
 
+const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
+  { name: 'Certificate in Enrolled Nursing', award: 'Certificate', duration: 2.5, regulator: 'School-based', family: 'Nursing' },
+  { name: 'Certificate in Enrolled Midwifery', award: 'Certificate', duration: 2.5, regulator: 'School-based', family: 'Midwifery' },
+  { name: 'Certificate in Pharmacy', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Pharmacy' },
+  { name: 'Certificate in Medical Laboratory Techniques', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Laboratory' },
+  { name: 'Certificate in Public Health', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Public Health' },
+  { name: 'Certificate in Medical Records and Health Informatics', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Health Informatics' },
+  { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Food Science & Nutrition' },
+  { name: 'Certificate in Biomedical Engineering', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Biomedical Engineering' },
+  { name: 'Certificate in Secretarial Studies and Office Management', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Administration', review: true },
+  { name: 'Certificate in Guidance and Counselling', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Counselling', review: true },
+  { name: 'Certificate in Records and Information Management', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Records Management' },
+  { name: 'Diploma in Clinical Medicine and Community Health', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Clinical Medicine', review: true },
+  { name: 'Diploma in Pharmacy', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Pharmacy', review: true },
+  { name: 'Diploma in Diagnostic Sonography', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Medical Imaging', review: true },
+  { name: 'Diploma in Biomedical Engineering', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Biomedical Engineering' },
+  { name: 'Diploma in Secretarial Studies and Office Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Administration' },
+  { name: 'Diploma in Medical Records and Health Informatics', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Health Informatics' },
+  { name: 'Diploma in Public Health', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Public Health' },
+  { name: 'Diploma in Records and Information Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Records Management' },
+  { name: 'Diploma in Health Counselling and Guidance', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Counselling', review: true },
+  { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Food Science & Nutrition' },
+]
+
+const SCHOOL_BASED_SHORT_COURSES: CatalogueEntry[] = [
+  { name: 'Bridging Programme', award: 'Bridging programme', duration: null, regulator: 'School-based', family: 'Access programme', review: true },
+  { name: 'Advanced Diploma in Diagnostic Sonography', award: 'Advanced Diploma', duration: 1, regulator: 'School-based', family: 'Medical Imaging', review: true },
+  { name: 'Diploma in Human Nutrition and Dietetics', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Nutrition', review: true },
+  { name: 'Diploma in Food Science and Technology', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Food Science & Technology', review: true },
+  { name: 'Advanced Diploma in Health Promotion and Education', award: 'Advanced Diploma', duration: 2, regulator: 'School-based', family: 'Public Health', review: true },
+]
+
 const UHPAB_LONG_COURSES: CatalogueEntry[] = [
   { name: 'Certificate in Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing' },
   { name: 'Certificate in Midwifery', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Midwifery' },
@@ -321,7 +353,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
           </section>}
-          {authority === 'School-based' && <p className="empty">School-based courses are managed through the school's saved programme and curriculum records.</p>}
+          {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
@@ -419,7 +451,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>UVTAB · Modular and occupational skills</h3>
             {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
           </section>}
-          {authority === 'School-based' && <p className="empty">School-based courses are managed through the school's saved programme and curriculum records.</p>}
+          {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}
           {authority === 'UHPAB' && <p className="empty">UHPAB health programmes are listed under Full Programmes.</p>}
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
 
