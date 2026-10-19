@@ -75,6 +75,17 @@ export function getAssessmentPlans(courseId?: string): Promise<AssessmentPlan[]>
   return getJson<AssessmentPlan[]>(`/api/assessments/plans${query}`)
 }
 
+
+export function createAssessmentPlan(input: {
+  courseId: string
+  name: string
+  assessmentType: string
+  weightPercentage: number
+  isCompetencyBased: boolean
+}): Promise<AssessmentPlan> {
+  return sendJson<AssessmentPlan>('/api/assessments/plans', input)
+}
+
 export function getStudentAssessments(courseRegistrationId: string): Promise<StudentAssessment[]> {
   return getJson<StudentAssessment[]>(`/api/assessments/registrations/${courseRegistrationId}`)
 }
