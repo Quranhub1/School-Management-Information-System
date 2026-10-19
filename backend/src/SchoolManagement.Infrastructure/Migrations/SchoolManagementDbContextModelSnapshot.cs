@@ -262,6 +262,8 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CampusId");
+
                     b.ToTable("CourseRegistrations");
                 });
 
@@ -4425,6 +4427,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CampusId");
 
                     b.ToTable("Students");
                 });
