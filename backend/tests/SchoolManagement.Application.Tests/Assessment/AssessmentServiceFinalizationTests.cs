@@ -47,7 +47,7 @@ public sealed class AssessmentServiceFinalizationTests
         Assert.Equal(0, repository.FinalizeCalls);
     }
 
-    private sealed class FakeRepository(StudentAssessment assessment) : IAssessmentRepository
+    private sealed class FakeRepository(StudentAssessment assessment) : SchoolManagement.Application.Abstractions.IAssessmentRepository
     {
         public int FinalizeCalls { get; private set; }
 
