@@ -39,4 +39,5 @@ export function requestLeave(staffId:string,input: Omit<LeaveRequest,'id'|'statu
 export function approveLeave(id:string,approvedBy:string,approved:boolean){ return request<void>(`/api/staff/leave/${id}/approve`,{method:'PATCH',body:JSON.stringify({approvedBy,approved})}); }
 export type UpdateStaffRequest = StaffProfileInput & { id:string }
 export function updateStaff(id:string, input: UpdateStaffRequest){ return request<StaffMember>(`/api/staff/${id}`,{method:'PUT',body:JSON.stringify(input)}); }
+export function updateStaffCourseUnits(id:string, courseUnitIds:string[]){ return request<StaffMember>(`/api/staff/${id}/course-units`,{method:'PATCH',body:JSON.stringify({ courseUnitIds })}); }
 export function deleteStaff(id:string){ return request<void>(`/api/staff/${id}`,{method:'DELETE'}); }
