@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
+  createAssessmentPlan,
   getAssessmentPlans,
   getExaminationTranscript,
   getStudentAssessments,
@@ -19,6 +20,10 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [courseId, setCourseId] = useState('');
+  const [planName, setPlanName] = useState('');
+  const [assessmentType, setAssessmentType] = useState('Examination');
+  const [weightPercentage, setWeightPercentage] = useState('100');
+  const [isCompetencyBased, setIsCompetencyBased] = useState(false);
   const [studentId, setStudentId] = useState('');
   const [registrationId, setRegistrationId] = useState('');
   const [planId, setPlanId] = useState('');
@@ -47,6 +52,36 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
   }
 
   useEffect(() => { void loadPlans(); }, []);
+
+
+  async function submitPlan(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canManage) { setError('Your role has read-only access to assessment configuration.'); return; }
+    if (!courseId.trim() || !planName.trim() || !assessmentType.trim()) {
+      setError('Course ID, plan name and assessment type are required.');
+      return;
+    }
+    const weight = Number(weightPercentage);
+    if (!Number.isFinite(weight) || weight < 0 || weight > 100) {
+      setError('Assessment weight must be between 0 and 100 percent.');
+      return;
+    }
+    setBusy(true); setError(''); setNotice('');
+    try {
+      await createAssessmentPlan({
+        courseId: courseId.trim(),
+        name: planName.trim(),
+        assessmentType: assessmentType.trim(),
+        weightPercentage: weight,
+        isCompetencyBased,
+      });
+      setNotice('Assessment plan saved to the school database.');
+      setPlanName('');
+      await loadPlans();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to save assessment plan.');
+    } finally { setBusy(false); }
+  }
 
   async function loadRegistrationAssessments() {
     if (!registrationId.trim()) {
@@ -136,6 +171,17 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
             </label>
             <button type="button" onClick={() => void loadPlans()} disabled={loadingPlans}>Apply filter</button>
           </div>
+          {canManage && <form onSubmit={submitPlan}>
+            <h5>Create assessment plan</h5>
+            <div className="form-row">
+              <label>Course ID<input required value={courseId} onChange={e => setCourseId(e.target.value)} placeholder="Course UUID" /></label>
+              <label>Plan name<input required maxLength={160} value={planName} onChange={e => setPlanName(e.target.value)} placeholder="e.g. End of semester examination" /></label>
+              <label>Assessment type<input required maxLength={80} value={assessmentType} onChange={e => setAssessmentType(e.target.value)} placeholder="Examination, practical, coursework" /></label>
+              <label>Weight (%)<input required type="number" min="0" max="100" step="0.01" value={weightPercentage} onChange={e => setWeightPercentage(e.target.value)} /></label>
+            </div>
+            <label><input type="checkbox" checked={isCompetencyBased} onChange={e => setIsCompetencyBased(e.target.checked)} /> Competency-based assessment</label>
+            <button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Create assessment plan'}</button>
+          </form>}
           {loadingPlans ? <p>Loading assessment plans…</p> : activePlans.length === 0 ? <p className="empty">No active assessment plans were returned by the server.</p> : (
             <div className="table-wrap"><table><thead><tr><th>Plan</th><th>Course ID</th><th>Type</th><th>Weight</th><th>Assessment mode</th><th>Status</th></tr></thead>
               <tbody>{activePlans.map(plan => <tr key={plan.id}><td>{plan.name}</td><td>{plan.courseId}</td><td>{plan.assessmentType}</td><td>{plan.weightPercentage}%</td><td>{plan.isCompetencyBased ? 'Competency-based' : 'Score-based'}</td><td>Active</td></tr>)}</tbody>
