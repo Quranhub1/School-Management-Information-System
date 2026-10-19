@@ -46,5 +46,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const getTimetableOptions = () => request<TimetableOptions>('/api/timetable/options')
 export const listTimetable = (teachingGroupId?: string) => request<TimetableEntry[]>(`/api/timetable${teachingGroupId ? `?teachingGroupId=${encodeURIComponent(teachingGroupId)}` : ''}`)
 export const createTimetableEntry = (input: CreateTimetableEntry) => request<TimetableEntry>('/api/timetable', { method: 'POST', body: JSON.stringify(input) })
+export const updateTimetableEntry = (id: string, input: CreateTimetableEntry) => request<TimetableEntry>(`/api/timetable/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
 export const deactivateTimetableEntry = (id: string) => request<void>(`/api/timetable/${id}`, { method: 'DELETE' })
 export const generateTimetable = (semesterId: string, teachingGroupId?: string) => request<GenerateTimetableResult>('/api/timetable/generate', { method: 'POST', body: JSON.stringify({ semesterId, teachingGroupId, rotationIntervalMinutes: 15, generationSource: 'Manual' }) })
