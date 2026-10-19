@@ -1,3 +1,4 @@
+import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import { createStaff, updateStaff, deleteStaff, activateStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest } from '../api/staff'
@@ -112,7 +113,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
     setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
   }
   async function deactivate(id: string) {
-    if (!window.confirm('Deactivate this staff member? They will remain in the records but will be marked inactive.')) return
+    if (!(await showConfirmDialog('Deactivate this staff member? They will remain in the records but will be marked inactive.', { title: 'Deactivate staff member', confirmLabel: 'Yes, deactivate' }))) return
     try {
       await deactivateStaff(id)
       setStaff(current => current.map(person => person.id === id ? { ...person, isActive: false } : person))
@@ -131,7 +132,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to activate staff.'; setError(message); notify(message, 'error', 'Activation failed') }
   }
   async function removeStaff(person: StaffMember) {
-    if (!window.confirm(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`)) return
+    if (!(await showConfirmDialog(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`, { title: 'Delete staff member', confirmLabel: "Yes, I'm sure", destructive: true }))) return
     try {
       await deleteStaff(person.id)
       setStaff(current => current.filter(item => item.id !== person.id))
