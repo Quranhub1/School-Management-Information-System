@@ -81,6 +81,40 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         return Created($"api/timetable/{entry.Id}", entry);
     }
 
+    [HttpPut("{id:guid}")]
+    [Authorize(Policy = TimetablePolicies.Management)]
+    public async Task<IActionResult> Update(Guid id, CreateTimetableEntryRequest request, CancellationToken cancellationToken)
+    {
+        if (request.EndTime <= request.StartTime) return BadRequest(new { message = "End time must be after start time." });
+        var existing = await db.TimetableEntries.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, cancellationToken);
+        if (existing is null) return NotFound(new { message = "Timetable session was not found or has already changed." });
+        if (!await db.TeachingGroups.AnyAsync(x => x.Id == request.TeachingGroupId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teaching group not found." });
+        if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Course not found." });
+        if (!await db.StaffMembers.AnyAsync(x => x.Id == request.TeacherId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teacher not found." });
+
+        var conflict = await db.TimetableEntries.AnyAsync(x => x.IsActive && x.Id != id && x.DayOfWeek == request.DayOfWeek && x.Room == request.Room && x.StartTime < request.EndTime && request.StartTime < x.EndTime, cancellationToken);
+        if (conflict) return Conflict(new { message = "The room is already booked for an overlapping session." });
+
+        // Timetable fields are immutable in the domain model, so replace the row atomically.
+        existing.IsActive = false;
+        var updated = new Domain.Academic.TimetableEntry
+        {
+            TeachingGroupId = request.TeachingGroupId,
+            CourseId = request.CourseId,
+            TeacherId = request.TeacherId,
+            StaffMemberId = request.TeacherId,
+            DayOfWeek = request.DayOfWeek,
+            StartTime = request.StartTime,
+            EndTime = request.EndTime,
+            Room = request.Room,
+            SessionType = request.SessionType,
+            GenerationSource = "TemplateEditor"
+        };
+        db.TimetableEntries.Add(updated);
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(updated);
+    }
+
     [HttpPost("generate")]
     [Authorize(Policy = TimetablePolicies.Management)]
     public async Task<IActionResult> Generate(GenerateTimetableRequest request, CancellationToken cancellationToken)
