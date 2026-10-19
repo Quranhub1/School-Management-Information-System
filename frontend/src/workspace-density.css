@@ -149,3 +149,138 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Curriculum & Courses: compact, aligned controls without changing form behaviour. */
+.app-shell .curriculum-management .summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px !important;
+  margin: 12px 0;
+}
+.app-shell .curriculum-management .student-form {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  min-width: 0;
+  margin-top: 0;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #fff;
+}
+.app-shell .curriculum-management .student-form h3 {
+  margin: 0 0 2px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.app-shell .curriculum-management .student-form input:not([type="checkbox"]):not([type="radio"]),
+.app-shell .curriculum-management .student-form select,
+.app-shell .curriculum-management > .form-row input:not([type="checkbox"]),
+.app-shell .curriculum-management > .form-row select {
+  height: 35px;
+  min-height: 35px;
+  padding: 6px 9px !important;
+  font-size: 13px;
+  line-height: 1.25;
+  background-color: #fff;
+  border: 1px solid #cbd5e1;
+  box-shadow: none;
+}
+.app-shell .curriculum-management .student-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  align-items: center;
+  gap: 8px !important;
+}
+.app-shell .curriculum-management .student-form > .form-row > *,
+.app-shell .curriculum-management .student-form > input,
+.app-shell .curriculum-management .student-form > select {
+  width: 100%;
+  min-width: 0;
+}
+.app-shell .curriculum-management .student-form button,
+.app-shell .curriculum-management > .form-row button {
+  width: fit-content;
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 12px;
+  line-height: 1.2;
+  justify-self: start;
+}
+.app-shell .curriculum-management > .form-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.6fr) minmax(170px, 1.6fr) minmax(78px, .55fr) minmax(90px, .65fr) auto auto;
+  align-items: center;
+  gap: 8px !important;
+  margin: 12px 0;
+}
+.app-shell .curriculum-management > .form-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.app-shell .curriculum-management > .form-row input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+.app-shell .curriculum-management .short-course-section {
+  display: grid;
+  gap: 12px;
+}
+.app-shell .curriculum-management .short-course-section > h3 {
+  margin: 8px 0 0;
+  font-size: 15px;
+}
+.app-shell .curriculum-management .short-course-grid {
+  gap: 10px;
+}
+.app-shell .curriculum-management .short-course-card {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.app-shell .curriculum-management .short-course-card h4 {
+  margin: 0 0 7px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.app-shell .curriculum-management .short-course-card p {
+  margin: 4px 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.app-shell .curriculum-management .short-course-form-panel {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #fff;
+}
+.app-shell .curriculum-management .short-course-form-panel h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+@media (max-width: 900px) {
+  .app-shell .curriculum-management > .form-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .app-shell .curriculum-management .summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-shell .curriculum-management > .form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-shell .curriculum-management .student-form {
+    padding: 9px;
+  }
+  .app-shell .curriculum-management .student-form .form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
