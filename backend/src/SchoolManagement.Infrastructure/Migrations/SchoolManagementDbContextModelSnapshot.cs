@@ -3850,6 +3850,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CampusId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ColumnsJson")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -3873,7 +3876,7 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SectionId")
+                    b.HasIndex("CampusId", "SectionId")
                         .IsUnique();
 
                     b.ToTable("InventoryRegisters");
@@ -5224,6 +5227,14 @@ namespace SchoolManagement.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Students.Student", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Inventory.InventoryRegister", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
                         .WithMany()
