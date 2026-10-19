@@ -737,9 +737,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<byte[]>("ImageData")
                         .HasColumnType("bytea");
 
-                    b.Property<DateTimeOffset>("UploadedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("OriginalFileName")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
@@ -753,6 +750,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -915,52 +915,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("AdmissionDecisions");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Admissions.StudentApplicationRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ApplicationDataJson")
-                        .IsRequired()
-                        .HasColumnType("jsonb");
-
-                    b.Property<byte[]>("PhotographData")
-                        .HasColumnType("bytea");
-
-                    b.Property<string>("PhotographContentType")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("PhotographFileName")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<Guid>("StudentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("SubmittedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StudentId")
-                        .IsUnique();
-
-                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.ToTable("StudentApplicationRecords");
-                });
-
             modelBuilder.Entity("SchoolManagement.Domain.Admissions.Applicant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1007,6 +961,46 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Applicants");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Admissions.StudentApplicationRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApplicationDataJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("PhotographContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<byte[]>("PhotographData")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("PhotographFileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId")
+                        .IsUnique();
+
+                    b.ToTable("StudentApplicationRecords");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Assessment.AcademicResultSummary", b =>
@@ -3540,68 +3534,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Vendors");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Hostel.WardenRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ActionTaken")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<DateTimeOffset?>("ClosedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Details")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
-
-                    b.Property<DateTimeOffset>("RecordedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("RecordedBy")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<string>("StudentName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("StudentReference")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Subject")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecordedAtUtc");
-
-                    b.HasIndex("Category", "Status");
-
-                    b.ToTable("WardenRecords", t =>
-                        {
-                            t.HasCheckConstraint("CK_WardenRecords_Category", "\"Category\" IN ('CheckIn', 'CheckOut', 'Inspection', 'Maintenance', 'Indiscipline')");
-                            t.HasCheckConstraint("CK_WardenRecords_Status", "\"Status\" IN ('Open', 'InProgress', 'Resolved', 'Closed')");
-                        });
-                });
-
             modelBuilder.Entity("SchoolManagement.Domain.Hostel.Hostel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3718,6 +3650,69 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("HostelRooms");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Hostel.WardenRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActionTaken")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTimeOffset?>("ClosedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset>("RecordedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RecordedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("StudentName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("StudentReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecordedAtUtc");
+
+                    b.HasIndex("Category", "Status");
+
+                    b.ToTable("WardenRecords", t =>
+                        {
+                            t.HasCheckConstraint("CK_WardenRecords_Category", "\"Category\" IN ('CheckIn', 'CheckOut', 'Inspection', 'Maintenance', 'Indiscipline')");
+
+                            t.HasCheckConstraint("CK_WardenRecords_Status", "\"Status\" IN ('Open', 'InProgress', 'Resolved', 'Closed')");
+                        });
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Identity.Role", b =>
@@ -4185,6 +4180,12 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CourseUnitIdsJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("[]");
+
                     b.Property<DateOnly?>("DateJoined")
                         .HasColumnType("date");
 
@@ -4207,8 +4208,16 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("HighestQualification")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -4222,6 +4231,14 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("text");
+
+                    b.Property<string>("ProfessionalRegistration")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Speciality")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("StaffNumber")
                         .IsRequired()
@@ -4659,6 +4676,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasOne("SchoolManagement.Domain.Admissions.Admission", null)
                         .WithMany()
                         .HasForeignKey("AdmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Admissions.StudentApplicationRecord", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
