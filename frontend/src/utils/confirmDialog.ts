@@ -18,8 +18,17 @@ export function showConfirmDialog(message: string, options: ConfirmDialogOptions
     const dialog = document.createElement('dialog')
     dialog.setAttribute('aria-labelledby', 'smis-confirm-title')
     dialog.style.cssText = [
-      'width:min( calc(100vw - 32px), 440px)',
+      'position:fixed',
+      'top:50%',
+      'left:50%',
+      'right:auto',
+      'bottom:auto',
+      'transform:translate(-50%,-50%)',
+      'margin:0',
+      'width:min(calc(100vw - 32px), 440px)',
       'max-width:440px',
+      'max-height:calc(100vh - 32px)',
+      'overflow-y:auto',
       'padding:0',
       'border:1px solid #e5dcc8',
       'border-radius:4px',
