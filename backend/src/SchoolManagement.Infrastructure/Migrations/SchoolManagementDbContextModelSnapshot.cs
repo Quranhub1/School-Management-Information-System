@@ -4244,6 +4244,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid?>("DepartmentId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CampusId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
@@ -4306,6 +4309,8 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("StaffNumber")
                         .IsUnique();
+
+                    b.HasIndex("CampusId");
 
                     b.ToTable("StaffMembers");
                 });
@@ -5181,6 +5186,14 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasForeignKey("WorkflowInstanceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Staff.StaffMember", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.UserCampusAssignment", b =>
