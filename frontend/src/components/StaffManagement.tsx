@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import { createStaff, updateStaff, deleteStaff, activateStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
-import { notify } from './GlobalNotifications'
+import { confirmAction, notify } from './GlobalNotifications'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
@@ -112,7 +112,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
     setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
   }
   async function deactivate(id: string) {
-    if (!window.confirm('Deactivate this staff member? They will remain in the records but will be marked inactive.')) return
+    if (!await confirmAction('This staff member will remain in the records but will be marked inactive.', 'Deactivate staff member', 'Deactivate')) return
     try {
       await deactivateStaff(id)
       setStaff(current => current.map(person => person.id === id ? { ...person, isActive: false } : person))
@@ -131,7 +131,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to activate staff.'; setError(message); notify(message, 'error', 'Activation failed') }
   }
   async function removeStaff(person: StaffMember) {
-    if (!window.confirm(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`)) return
+    if (!await confirmAction(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`, 'Delete staff member', 'Delete staff member')) return
     try {
       await deleteStaff(person.id)
       setStaff(current => current.filter(item => item.id !== person.id))
