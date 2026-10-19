@@ -25,17 +25,22 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             return new GeneratedTimetableResult([], [], ["Semester not found."], 0, [], false);
         }
 
-        var courseOfferingsQuery = db.CourseOfferings.AsNoTracking()
-            .Where(x => x.SemesterId == semesterId && x.IsActive);
-
-        if (request.TeachingGroupId.HasValue)
-            courseOfferingsQuery = courseOfferingsQuery.Where(x => x.Id == request.TeachingGroupId.Value);
-
-        var courseOfferings = await courseOfferingsQuery.ToListAsync(cancellationToken);
-
-        var teachingGroups = await db.TeachingGroups.AsNoTracking()
-            .Where(x => courseOfferings.Select(co => co.Id).Contains(x.CourseOfferingId) && x.IsActive)
+        var courseOfferings = await db.CourseOfferings.AsNoTracking()
+            .Where(x => x.SemesterId == semesterId && x.IsActive)
             .ToListAsync(cancellationToken);
+
+        var courseOfferingIds = courseOfferings.Select(x => x.Id).ToHashSet();
+        var teachingGroupsQuery = db.TeachingGroups.AsNoTracking()
+            .Where(x => courseOfferingIds.Contains(x.CourseOfferingId) && x.IsActive);
+
+        // The API accepts a teaching-group ID. Do not compare it with a course-offering ID:
+        // those are separate records and the mismatch silently generated empty timetables.
+        if (request.TeachingGroupId.HasValue)
+            teachingGroupsQuery = teachingGroupsQuery.Where(x => x.Id == request.TeachingGroupId.Value);
+
+        var teachingGroups = await teachingGroupsQuery.ToListAsync(cancellationToken);
+        var selectedOfferingIds = teachingGroups.Select(x => x.CourseOfferingId).ToHashSet();
+        courseOfferings = courseOfferings.Where(x => selectedOfferingIds.Contains(x.Id)).ToList();
 
         var courses = await db.Courses.AsNoTracking()
             .Where(x => courseOfferings.Select(co => co.CourseId).Contains(x.Id))
