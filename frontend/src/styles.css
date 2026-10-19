@@ -3712,3 +3712,300 @@ table { font-variant-numeric: tabular-nums; }
   .office-detail-header { align-items: flex-start; padding: 16px; }
   .office-detail-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* SMIS main workspace polish: consistent shell, spacing, surfaces and responsive behaviour.
+   Keep the institutional login iframe and module-specific functionality unchanged. */
+:root {
+  --smis-workspace-bg: #f5f7fb;
+  --smis-surface: #ffffff;
+  --smis-border: #e5eaf2;
+  --smis-text: #172033;
+  --smis-text-muted: #64748b;
+  --smis-accent: #3653f8;
+  --smis-accent-soft: #eef2ff;
+  --smis-card-shadow: 0 2px 8px rgba(15, 23, 42, .035), 0 12px 28px rgba(15, 23, 42, .035);
+}
+
+/* Fixed full-height navigation; the content pane owns its own scroll. */
+.app-shell {
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--smis-workspace-bg);
+  color: var(--smis-text);
+}
+.app-shell > aside {
+  position: fixed !important;
+  inset: 0 auto 0 0;
+  z-index: 60;
+  width: 288px !important;
+  height: 100vh !important;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid #e7ebf3 !important;
+  background: rgba(255, 255, 255, .97) !important;
+  box-shadow: 8px 0 28px rgba(15, 23, 42, .035) !important;
+  color: #334155 !important;
+  backdrop-filter: blur(18px);
+}
+.app-shell > aside > nav {
+  min-height: 0;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.app-shell > aside > nav button {
+  transition: background-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.main-content {
+  width: calc(100% - 288px);
+  height: 100vh;
+  min-width: 0;
+  min-height: 0;
+  margin-left: 288px;
+  overflow: hidden;
+  background: var(--smis-workspace-bg);
+}
+.main-content > .topbar {
+  position: relative;
+  z-index: 20;
+  flex: 0 0 auto;
+  min-height: 76px;
+  margin: 0;
+  padding: 15px clamp(18px, 2.2vw, 32px);
+  border-bottom: 1px solid #e7ebf3;
+  background: rgba(255, 255, 255, .96);
+  color: var(--smis-text);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, .025);
+}
+.main-content > .topbar h1,
+.main-content > .topbar h2,
+.main-content > .topbar strong {
+  color: var(--smis-text);
+}
+.main-content > .content {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: clamp(18px, 2.2vw, 32px);
+  background: var(--smis-workspace-bg);
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.main-content > .content > * {
+  min-width: 0;
+}
+.main-content .eyebrow {
+  color: var(--smis-accent);
+  letter-spacing: .11em;
+}
+.main-content .panel,
+.main-content .summary-card,
+.main-content .library-main-card,
+.main-content .library-side-card,
+.main-content .library-catalogue,
+.main-content .library-add-card,
+.main-content .admin-dashboard-card,
+.main-content .dashboard-card,
+.main-content .stat-card,
+.main-content .metric-card,
+.main-content .chart-card {
+  border-color: var(--smis-border);
+  border-radius: 16px;
+  background: var(--smis-surface);
+  box-shadow: var(--smis-card-shadow);
+}
+.main-content .panel-heading {
+  padding: 18px 20px;
+  border-bottom-color: #edf0f5;
+}
+.main-content .panel-heading h2,
+.main-content .panel-heading h3,
+.main-content .library-toolbar h3 {
+  color: var(--smis-text);
+  letter-spacing: -.02em;
+}
+.main-content .summary-grid {
+  gap: 16px;
+  margin-block: 20px;
+}
+.main-content .summary-card {
+  padding: 20px;
+}
+.main-content .summary-card > span,
+.main-content .summary-card small,
+.main-content .metrics span {
+  color: var(--smis-text-muted);
+}
+.main-content .summary-card strong,
+.main-content .metrics b {
+  color: var(--smis-text);
+}
+.main-content .table-wrap {
+  max-width: 100%;
+  overflow: auto;
+  border-radius: 0 0 16px 16px;
+}
+.main-content table {
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.main-content th {
+  padding: 13px 16px;
+  border-bottom: 1px solid #e7ebf3;
+  background: #f8faff;
+  color: #64748b;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .055em;
+}
+.main-content td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #edf0f5;
+  color: #334155;
+  font-size: .84rem;
+}
+.main-content tbody tr:last-child td {
+  border-bottom: 0;
+}
+.main-content tbody tr:hover td {
+  background: #f8faff;
+}
+.main-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.main-content select,
+.main-content textarea {
+  max-width: 100%;
+  border-color: #d9e0eb;
+  border-radius: 9px;
+}
+.main-content input:focus,
+.main-content select:focus,
+.main-content textarea:focus {
+  outline: none;
+  border-color: #7c8dfb;
+  box-shadow: 0 0 0 3px rgba(54, 83, 248, .10);
+}
+.main-content button:focus-visible,
+.app-shell > aside button:focus-visible,
+.main-content a:focus-visible {
+  outline: 3px solid rgba(54, 83, 248, .35);
+  outline-offset: 2px;
+}
+[data-theme="dark"] .app-shell,
+[data-theme="dark"] .main-content,
+[data-theme="dark"] .main-content > .content {
+  background: #0b1220;
+}
+[data-theme="dark"] .app-shell > aside {
+  background: #111b2e !important;
+  border-right-color: #263449 !important;
+  color: #dbe5f4 !important;
+}
+[data-theme="dark"] .main-content > .topbar {
+  background: #111b2e;
+  border-bottom-color: #263449;
+}
+[data-theme="dark"] .main-content > .topbar h1,
+[data-theme="dark"] .main-content > .topbar h2,
+[data-theme="dark"] .main-content > .topbar strong {
+  color: #f1f5f9;
+}
+[data-theme="dark"] .main-content .panel,
+[data-theme="dark"] .main-content .summary-card,
+[data-theme="dark"] .main-content .library-main-card,
+[data-theme="dark"] .main-content .library-side-card,
+[data-theme="dark"] .main-content .library-catalogue,
+[data-theme="dark"] .main-content .library-add-card,
+[data-theme="dark"] .main-content .admin-dashboard-card,
+[data-theme="dark"] .main-content .dashboard-card,
+[data-theme="dark"] .main-content .stat-card,
+[data-theme="dark"] .main-content .metric-card,
+[data-theme="dark"] .main-content .chart-card {
+  border-color: #263449;
+  background: #111b2e;
+  box-shadow: none;
+}
+[data-theme="dark"] .main-content th {
+  border-bottom-color: #263449;
+  background: #172338;
+  color: #9aabc2;
+}
+[data-theme="dark"] .main-content td {
+  border-bottom-color: #263449;
+  color: #dbe5f4;
+}
+[data-theme="dark"] .main-content tbody tr:hover td {
+  background: #172338;
+}
+@media (max-width: 900px) {
+  .app-shell { height: auto; min-height: 100vh; overflow: visible; }
+  .app-shell > aside {
+    position: relative !important;
+    inset: auto;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 42vh;
+    border-right: 0 !important;
+    border-bottom: 1px solid #e7ebf3 !important;
+  }
+  .main-content {
+    width: 100%;
+    height: auto;
+    min-height: 58vh;
+    margin-left: 0;
+    overflow: visible;
+  }
+  .main-content > .content {
+    height: auto;
+    overflow: visible;
+    padding: 18px;
+  }
+  .main-content > .topbar {
+    min-height: 68px;
+    padding: 12px 18px;
+  }
+}
+@media (max-width: 560px) {
+  .app-shell > aside { max-height: 36vh; }
+  .main-content > .content { padding: 14px; }
+  .main-content .summary-grid { grid-template-columns: minmax(0, 1fr); }
+  .main-content .panel-heading { align-items: flex-start; gap: 10px; padding: 15px; }
+  .main-content th,
+  .main-content td { padding: 11px 12px; }
+}
+
+/* Typography system: Inter for readable UI text, Plus Jakarta Sans for hierarchy. */
+:root {
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-optical-sizing: auto;
+}
+
+.main-content h1,
+.main-content h2,
+.main-content h3,
+.main-content h4,
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.dashboard-page-heading h2,
+.modern-hero h2 {
+  font-family: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.025em;
+}
+
+.main-content button,
+.main-content input,
+.main-content select,
+.main-content textarea,
+.content button,
+.content input,
+.content select,
+.content textarea {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
