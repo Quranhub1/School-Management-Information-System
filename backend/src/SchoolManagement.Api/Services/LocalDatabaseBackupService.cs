@@ -98,12 +98,21 @@ public sealed class LocalDatabaseBackupService(IConfiguration configuration, IHo
         var configured = configuration[$"DatabaseTools:{(tool == "pg_dump" ? "PgDumpPath" : "PgRestorePath")}"]
             ?? Environment.GetEnvironmentVariable(tool == "pg_dump" ? "PG_DUMP_PATH" : "PG_RESTORE_PATH");
         var executable = !string.IsNullOrWhiteSpace(configured) && File.Exists(configured) ? configured : ResolveTool(tool);
+        var host = RequireConnectionValue(connection.Host, "host");
+        var username = RequireConnectionValue(connection.Username, "username");
         var start = new ProcessStartInfo { FileName = executable, UseShellExecute = false, RedirectStandardError = true, CreateNoWindow = true, WorkingDirectory = environment.ContentRootPath };
-        start.ArgumentList.Add("--host"); start.ArgumentList.Add(connection.Host);
+        start.ArgumentList.Add("--host"); start.ArgumentList.Add(host);
         start.ArgumentList.Add("--port"); start.ArgumentList.Add(connection.Port.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        start.ArgumentList.Add("--username"); start.ArgumentList.Add(connection.Username);
+        start.ArgumentList.Add("--username"); start.ArgumentList.Add(username);
         start.Environment["PGPASSWORD"] = password; start.Environment["PGCONNECT_TIMEOUT"] = "15";
         return start;
+    }
+
+    private static string RequireConnectionValue(string? value, string settingName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidOperationException($"The SchoolManagement database connection {settingName} is not configured.");
+        return value;
     }
 
     private static string ResolveTool(string tool)
