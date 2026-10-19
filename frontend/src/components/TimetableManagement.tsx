@@ -81,7 +81,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setError('')
     setGeneratedResult(null)
     setGeneratedTimetables([])
-    if (!semesterId) { setError('Select an active academic period before generating a timetable.'); return }
+    if (!semesterId) { setError('Select an academic period before generating a timetable.'); return }
     const selectedGroups = teachingGroupId
       ? options.teachingGroups.filter(group => group.id === teachingGroupId)
       : options.teachingGroups.slice(0, Math.max(1, Math.min(options.teachingGroups.length, Number(timetableCount) || 1)))
