@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   getAssessmentPlans,
   getExaminationTranscript,
@@ -61,7 +61,7 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
     } finally { setBusy(false); }
   }
 
-  async function submitMark(event: React.FormEvent<HTMLFormElement>) {
+  async function submitMark(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canManage) { setError('Your role has read-only access to examinations.'); return; }
     if (!studentId.trim() || !registrationId.trim() || !planId) {
