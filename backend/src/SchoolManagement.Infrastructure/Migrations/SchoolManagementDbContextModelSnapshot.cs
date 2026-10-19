@@ -241,7 +241,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CampusId")
+                    b.Property<Guid?>("CampusId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("CourseId")
