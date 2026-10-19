@@ -270,7 +270,11 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
 
     [HttpGet("students/{studentId:guid}/ledger")]
-    public async Task<IActionResult> GetStudentLedger(Guid studentId, CancellationToken cancellationToken) => Ok(await finance.GetStudentLedgerAsync(studentId, cancellationToken));
+    public async Task<IActionResult> GetStudentLedger(Guid studentId, CancellationToken cancellationToken)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
+        return Ok(await finance.GetStudentLedgerAsync(studentId, cancellationToken));
+    }
     [HttpGet("reports/receivables-ageing")]
     public async Task<IActionResult> ReceivablesAgeing([FromQuery] DateOnly? asOf, [FromQuery] string currency = "UGX", CancellationToken cancellationToken = default) { try { return Ok(await receivables.GetAgeingAsync(asOf, currency, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } }
     [HttpGet("reports/receivables-reconciliation")]
@@ -288,10 +292,18 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         }
     }
     [HttpGet("students/{studentId:guid}/charges")]
-    public async Task<IActionResult> GetStudentCharges(Guid studentId, CancellationToken cancellationToken) { try { return Ok(await charges.GetStudentChargesAsync(studentId, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } }
+    public async Task<IActionResult> GetStudentCharges(Guid studentId, CancellationToken cancellationToken)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
+        try { return Ok(await charges.GetStudentChargesAsync(studentId, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("students/{studentId:guid}/charges")]
-    public async Task<IActionResult> CreateStudentCharge(Guid studentId, CreateStudentChargeRequest request, CancellationToken cancellationToken) { try { var charge = await charges.CreateAsync(studentId, request.ChargeType, request.Description, request.Amount, request.Currency, User.Identity?.Name, cancellationToken); return Created($"/api/finance/students/{studentId}/charges/{charge.Id}", charge); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> CreateStudentCharge(Guid studentId, CreateStudentChargeRequest request, CancellationToken cancellationToken)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
+        try { var charge = await charges.CreateAsync(studentId, request.ChargeType, request.Description, request.Amount, request.Currency, User.Identity?.Name, cancellationToken); return Created($"/api/finance/students/{studentId}/charges/{charge.Id}", charge); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("charges/{chargeId:guid}/void")]
     public async Task<IActionResult> VoidStudentCharge(Guid chargeId, VoidStudentChargeRequest request, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a charge void." }); return Ok(await charges.VoidAsync(chargeId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
@@ -308,7 +320,11 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> RefundPayment(Guid paymentId, CreateRefundRequest request, CancellationToken cancellationToken) { try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a refund." }); return Ok(await adjustments.CreateRefundAsync(paymentId, request.Amount, request.RefundMethod, request.Reason, request.Reference, user, request.CreditNoteId, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices")]
-    public async Task<IActionResult> CreateInvoice(CreateInvoiceRequest request, CancellationToken cancellationToken) { try { var invoice = await finance.CreateInvoiceAsync(request.StudentId, request.FeeStructureId, request.InvoiceNumber, cancellationToken); return Created($"/api/finance/invoices/{invoice.Id}", invoice); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> CreateInvoice(CreateInvoiceRequest request, CancellationToken cancellationToken)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, request.StudentId, cancellationToken)) return Forbid();
+        try { var invoice = await finance.CreateInvoiceAsync(request.StudentId, request.FeeStructureId, request.InvoiceNumber, cancellationToken); return Created($"/api/finance/invoices/{invoice.Id}", invoice); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [HttpGet("invoices/{invoiceId:guid}/discounts")]
     public async Task<IActionResult> GetDiscounts(Guid invoiceId, CancellationToken cancellationToken) => Ok(await discounts.GetAsync(invoiceId, cancellationToken));
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
@@ -332,7 +348,11 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> RecordPayment(Guid invoiceId, RecordPaymentRequest request, CancellationToken cancellationToken) { try { return Ok(await finance.RecordPaymentAsync(invoiceId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Reference, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("students/{studentId:guid}/payments")]
-    public async Task<IActionResult> RecordUnallocatedPayment(Guid studentId, RecordUnallocatedPaymentRequest request, CancellationToken cancellationToken) { try { return Ok(await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Currency, request.Reference, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
+    public async Task<IActionResult> RecordUnallocatedPayment(Guid studentId, RecordUnallocatedPaymentRequest request, CancellationToken cancellationToken)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
+        try { return Ok(await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Currency, request.Reference, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/allocate")]
     public async Task<IActionResult> AllocatePayment(Guid paymentId, AllocatePaymentRequest request, CancellationToken cancellationToken) { try { return Ok(await finance.AllocatePaymentAsync(paymentId, request.Allocations, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); } }
@@ -352,6 +372,68 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> BalanceSheet([FromQuery] DateOnly? asOf, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken) => Ok(await reports.GetBalanceSheetAsync(asOf, cancellationToken, campusId, facultyId, departmentId, programmeId));
     [HttpGet("reports/student-receivables")]
     public async Task<IActionResult> StudentReceivables(CancellationToken cancellationToken) => Ok(await reports.GetStudentReceivablesAsync(cancellationToken));
+
+
+    private async Task<bool> CanAccessInvoiceAsync(Guid invoiceId, CancellationToken ct)
+    {
+        var studentId = await db.StudentInvoices.AsNoTracking()
+            .Where(x => x.Id == invoiceId).Select(x => (Guid?)x.StudentId).SingleOrDefaultAsync(ct);
+        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
+    }
+
+    private async Task<bool> CanAccessChargeAsync(Guid chargeId, CancellationToken ct)
+    {
+        var studentId = await db.Set<SchoolManagement.Domain.Finance.StudentCharge>().AsNoTracking()
+            .Where(x => x.Id == chargeId).Select(x => (Guid?)x.StudentId).SingleOrDefaultAsync(ct);
+        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
+    }
+
+    private async Task<bool> CanAccessPaymentAsync(Guid paymentId, CancellationToken ct)
+    {
+        var studentId = await db.Payments.AsNoTracking()
+            .Where(x => x.Id == paymentId).Select(x => (Guid?)x.StudentId).SingleOrDefaultAsync(ct);
+        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
+    }
+
+    private async Task<bool> CanAccessCreditNoteAsync(Guid creditNoteId, CancellationToken ct)
+    {
+        var studentId = await (
+            from note in db.CreditNotes.AsNoTracking()
+            join invoice in db.StudentInvoices.AsNoTracking() on note.StudentInvoiceId equals invoice.Id
+            where note.Id == creditNoteId
+            select (Guid?)invoice.StudentId).SingleOrDefaultAsync(ct);
+        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
+    }
+
+    private async Task<bool> CanAccessDiscountAsync(Guid discountId, CancellationToken ct)
+    {
+        var studentId = await (
+            from discount in db.Set<SchoolManagement.Domain.Finance.InvoiceDiscount>().AsNoTracking()
+            join invoice in db.StudentInvoices.AsNoTracking() on discount.StudentInvoiceId equals invoice.Id
+            where discount.Id == discountId
+            select (Guid?)invoice.StudentId).SingleOrDefaultAsync(ct);
+        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
+    }
+
+    private async Task<(Guid? CampusId, IActionResult? Error)> ResolveReportCampusAsync(Guid? requestedCampusId, CancellationToken ct)
+    {
+        if (campusAccess.IsSystemAdministrator(User))
+            return (requestedCampusId, null);
+
+        var accessible = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
+        if (accessible is null) return (requestedCampusId, null);
+        if (accessible.Count == 0) return (null, Forbid());
+        if (requestedCampusId.HasValue)
+            return accessible.Contains(requestedCampusId.Value) ? (requestedCampusId, null) : (null, Forbid());
+        if (accessible.Count == 1) return (accessible[0], null);
+        return (null, BadRequest(new { message = "Select one of your assigned campuses to run this financial report." }));
+    }
+
+    private async Task<bool> CanViewUnscopedFinancialReportAsync(CancellationToken ct)
+    {
+        if (campusAccess.IsSystemAdministrator(User)) return true;
+        return await campusAccess.GetAccessibleCampusIdsAsync(User, ct) is null;
+    }
 
     public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
     public sealed record FeeStructureItemRequest(string Code, string Name, decimal Amount, Guid? IncomeAccountId = null, int SortOrder = 0, bool IsOptional = false);
