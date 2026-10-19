@@ -1,5 +1,4 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import { BarChart3, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
@@ -81,6 +80,33 @@ function LoginScreen({ institution }: { institution: InstitutionSettings }) {
 }
 function GlobalTableLayoutEditor() {
   useEffect(() => {
+    // Row resize handles are created only for the row under the pointer.
+    // Large registers no longer pay the DOM/layout cost of an extra element per row.
+    let activeResizeRow: HTMLTableRowElement | null = null;
+    const decorateActiveRow = (row: HTMLTableRowElement) => {
+      if (activeResizeRow === row && row.querySelector(':scope > .smis-row-resize-handle')) return;
+      if (activeResizeRow?.isConnected) {
+        activeResizeRow.querySelector(':scope > .smis-row-resize-handle')?.remove();
+        activeResizeRow.classList.remove('smis-resizable-row');
+      }
+      activeResizeRow = row;
+      if (row.querySelector(':scope > .smis-row-resize-handle')) return;
+      row.classList.add('smis-resizable-row');
+      const handle = document.createElement('span');
+      handle.className = 'smis-row-resize-handle';
+      handle.title = 'Drag to resize this row';
+      handle.setAttribute('aria-label', 'Resize row');
+      handle.setAttribute('role', 'separator');
+      handle.setAttribute('tabindex', '0');
+      handle.addEventListener('keydown', event => {
+        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+        event.preventDefault();
+        const delta = event.key === 'ArrowDown' ? 8 : -8;
+        row.style.height = Math.max(24, row.getBoundingClientRect().height + delta) + 'px';
+      });
+      row.appendChild(handle);
+    };
+
     const decorateTables = (tables: Iterable<HTMLTableElement>) => {
       for (const table of tables) {
         if (table.dataset.fixedLayout === 'true') continue;
@@ -104,23 +130,6 @@ function GlobalTableLayoutEditor() {
             });
           });
           cell.appendChild(handle);
-        });
-        table.querySelectorAll<HTMLTableRowElement>('thead tr, tbody tr').forEach(row => {
-          if (row.querySelector(':scope > .smis-row-resize-handle')) return;
-          row.classList.add('smis-resizable-row');
-          const handle = document.createElement('span');
-          handle.className = 'smis-row-resize-handle';
-          handle.title = 'Drag to resize this row';
-          handle.setAttribute('aria-label', 'Resize row');
-          handle.setAttribute('role', 'separator');
-          handle.setAttribute('tabindex', '0');
-          handle.addEventListener('keydown', event => {
-            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
-            event.preventDefault();
-            const delta = event.key === 'ArrowDown' ? 8 : -8;
-            row.style.height = Math.max(24, row.getBoundingClientRect().height + delta) + 'px';
-          });
-          row.appendChild(handle);
         });
       }
     };
@@ -148,7 +157,19 @@ function GlobalTableLayoutEditor() {
       if (affectedTables.size) decorateTables(affectedTables);
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    const onPointerOver = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const row = target.closest<HTMLTableRowElement>('table:not([data-fixed-layout="true"]) tr');
+      if (!row || (event.relatedTarget instanceof Node && row.contains(event.relatedTarget))) return;
+      decorateActiveRow(row);
+    };
+    document.addEventListener('pointerover', onPointerOver, { passive: true });
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('pointerover', onPointerOver);
+      activeResizeRow?.querySelector(':scope > .smis-row-resize-handle')?.remove();
+    };
   }, []);
 
   useEffect(() => {
@@ -479,7 +500,7 @@ return <main className="app-shell">
       </div>
     </div>
   </aside>
-  <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(activeModule === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden')) ? 'School Warden' : (moduleLabels[activeModule]||'Dashboard')).toUpperCase()}</strong></div></div><GlobalSearch/></header><Suspense fallback={<div className="workspace-loading" role="status" aria-live="polite"><span className="workspace-loading-spinner" aria-hidden="true" /><span className="workspace-loading-copy">Loading workspace…</span><span className="workspace-loading-skeleton" aria-hidden="true"><i /><i /><i /></span></div>}><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('Admin Secretary')||r.includes('AdminSecretary'))?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:r.includes('SystemAdministrator')?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
+  <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(activeModule === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden')) ? 'School Warden' : (moduleLabels[activeModule]||'Dashboard')).toUpperCase()}</strong></div></div><GlobalSearch/></header><Suspense fallback={<div className="workspace-loading" role="status" aria-live="polite"><span className="workspace-loading-spinner" aria-hidden="true" /><span className="workspace-loading-copy">Loading workspace…</span><span className="workspace-loading-skeleton" aria-hidden="true"><i /><i /><i /></span></div>}><div key={activeModule} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('Admin Secretary')||r.includes('AdminSecretary'))?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:r.includes('SystemAdministrator')?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 {activeModule==='dashboard'&&(r.includes('Records Officer')||r.includes('RecordsOfficer')||r.includes('School Warden')||r.includes('SchoolWarden')||r.includes('SchoolWarden'))&&<InventoryStockAlerts/>}
 {activeModule==='administration'&&a&&<AdministrationManagement institution={institution} onInstitutionSaved={onInstitutionSaved} activeSubsection={activeSubsection}/>} 
 {activeModule==='students'&&(st||ad||s360||studentRead||admissionRead)&&<AdmissionsStudentManagement canManage={st||ad} readOnly={!st&&!ad} activeSubsection={activeSubsection} accessProfile={r.includes('Receptionist')?'receptionist':r.includes('Records Officer')?'records':r.includes('HeadOfDepartment')?'department':'general'} />} 
@@ -497,7 +518,7 @@ return <main className="app-shell">
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
 {activeModule==='system-administration'&&r.includes('SystemAdministrator')&&<SystemAdministrationManagement activeSubsection={activeSubsection} onNavigate={navigate}/>}
  {activeModule==='campuses'&&r.includes('SystemAdministrator')&&<CampusManagement/>}
- </motion.div></AnimatePresence></Suspense></div></main> }
+ </div></Suspense></div></main> }
 function App(){
   return <InstitutionSettingsProvider><AppContent/></InstitutionSettingsProvider>
 }
