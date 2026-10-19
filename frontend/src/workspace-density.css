@@ -467,3 +467,19 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.app-shell .curriculum-management .catalogue-table-school {
+  min-width: 1180px;
+}
+.app-shell .curriculum-management .catalogue-table-school th:nth-child(5),
+.app-shell .curriculum-management .catalogue-table-school td:nth-child(5) {
+  min-width: 290px;
+  max-width: 390px;
+  white-space: normal;
+}
+.app-shell .curriculum-management .catalogue-table-school th:nth-child(6),
+.app-shell .curriculum-management .catalogue-table-school td:nth-child(6) {
+  min-width: 170px;
+  max-width: 220px;
+  white-space: normal;
+}
