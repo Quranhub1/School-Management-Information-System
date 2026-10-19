@@ -34,11 +34,15 @@ export function showConfirmDialog(message: string, options: ConfirmDialogOptions
     backdropStyle.textContent = 'dialog.smis-confirm-dialog::backdrop{background:rgba(15,18,16,.58);backdrop-filter:blur(2px)}'
     dialog.className = 'smis-confirm-dialog'
     const header = document.createElement('div')
-    header.style.cssText = 'padding:18px 22px;border-bottom:1px solid #e5dcc8;font-weight:750;font-size:17px'
+    header.style.cssText = 'padding:18px 22px 0;font-weight:750;font-size:17px;text-align:center;border:0'
     header.id = 'smis-confirm-title'
     header.textContent = options.title ?? 'Please confirm'
+    const icon = document.createElement('div')
+    icon.style.cssText = 'display:grid;place-items:center;width:52px;height:52px;margin:22px auto 0;border:2px solid #a8a29e;border-radius:50%;color:#78716c;font-size:30px;font-weight:500;line-height:1'
+    icon.setAttribute('aria-hidden', 'true')
+    icon.textContent = '!'
     const body = document.createElement('div')
-    body.style.cssText = 'padding:22px;color:#4b463b;font-size:14px;line-height:1.6;white-space:pre-line'
+    body.style.cssText = 'padding:16px 24px 22px;color:#4b463b;font-size:14px;line-height:1.6;white-space:pre-line;text-align:center' 
     body.textContent = message
     const actions = document.createElement('div')
     actions.style.cssText = 'display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:0 22px 22px'
@@ -67,7 +71,7 @@ export function showConfirmDialog(message: string, options: ConfirmDialogOptions
     dialog.addEventListener('cancel', event => { event.preventDefault(); finish(false) })
     dialog.addEventListener('click', event => { if (event.target === dialog) finish(false) })
     actions.append(cancel, confirm)
-    dialog.append(header, body, actions)
+    dialog.append(header, icon, body, actions)
     document.head.append(backdropStyle)
     document.body.append(dialog)
     dialog.showModal()
