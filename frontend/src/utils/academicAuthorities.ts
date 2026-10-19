@@ -26,6 +26,7 @@ export const VERIFIED_ACADEMIC_COURSES: { authority: AcademicAuthority; name: st
     'Certificate in Medical Records and Health Informatics',
     'Certificate in Medical Theatre Techniques',
     'Certificate in Pharmacy',
+    'Certificate in Comprehensive Nursing (legacy intake)',
     'Diploma in Nursing',
     'Diploma in Midwifery',
     'Diploma in Mental Health Nursing',
