@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Staff;
 using SchoolManagement.Domain.Staff;
 using System.Text.Json;
@@ -12,13 +13,17 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/staff")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public sealed class StaffController(SchoolManagementDbContext db) : ControllerBase
+public sealed class StaffController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet]
     [Authorize(Policy = StaffPolicies.Read)]
     public async Task<IActionResult> List([FromQuery] bool activeOnly = true, CancellationToken cancellationToken = default)
     {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
         var query = db.StaffMembers.AsNoTracking();
+        if (accessibleCampuses is not null)
+            query = query.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
         if (activeOnly) query = query.Where(x => x.IsActive);
         var staff = await query.OrderBy(x => x.LastName).ThenBy(x => x.FirstName).ToListAsync(cancellationToken);
         return Ok(staff.Select(ToProfile));
@@ -29,7 +34,9 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        return staff is null ? NotFound() : Ok(ToProfile(staff));
+        if (staff is null) return NotFound();
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
+        return Ok(ToProfile(staff));
     }
 
     [HttpGet("course-units")]
@@ -53,8 +60,14 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
         if (await db.StaffMembers.AnyAsync(x => x.StaffNumber == request.StaffNumber.Trim(), cancellationToken))
             return Conflict(new { message = "A staff member with this staff number already exists." });
 
+        var campusId = await campusAccess.ResolveCampusForWriteAsync(User, request.CampusId, cancellationToken);
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is not null && !campusId.HasValue) return Forbid();
+        if (request.CampusId.HasValue && !campusId.HasValue) return Forbid();
+
         var staff = new StaffMember
         {
+            CampusId = campusId,
             StaffNumber = request.StaffNumber.Trim(), FirstName = request.FirstName.Trim(), LastName = request.LastName.Trim(),
             NationalId = request.NationalId, PhoneNumber = request.PhoneNumber, Email = request.Email,
             EmploymentType = request.EmploymentType.Trim(), StaffType = request.StaffType,
@@ -76,6 +89,7 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (staff is null) return NotFound();
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         if (staff.StaffType != StaffType.Teaching)
             return BadRequest(new { message = "Course units can only be assigned to teaching staff." });
 
@@ -101,6 +115,7 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (staff is null) return NotFound();
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         staff.IsActive = false;
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
@@ -124,6 +139,7 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
         if (id != request.Id) return BadRequest(new { message = "Route ID and body ID must match." });
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (staff is null) return NotFound();
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         staff.StaffNumber = request.StaffNumber.Trim(); staff.FirstName = request.FirstName.Trim(); staff.LastName = request.LastName.Trim();
         staff.NationalId = request.NationalId?.Trim(); staff.PhoneNumber = request.PhoneNumber?.Trim(); staff.Email = request.Email?.Trim();
         staff.EmploymentType = request.EmploymentType.Trim();
@@ -144,6 +160,7 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (staff is null) return NotFound();
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         // A librarian assignment is a role link, not the staff record itself.
         // Remove that link in the same SaveChanges operation before deleting staff.
         var librarianAssignments = await db.Librarians
@@ -182,12 +199,18 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
     [HttpGet("{id:guid}/leave")]
     [Authorize(Policy = StaffPolicies.Read)]
     public async Task<IActionResult> GetLeave(Guid id, CancellationToken cancellationToken)
-        => Ok(await db.LeaveRequests.AsNoTracking().Where(x => x.StaffMemberId == id).OrderByDescending(x => x.StartDate).ToListAsync(cancellationToken));
+    {
+        var campusId = await db.StaffMembers.Where(x => x.Id == id).Select(x => x.CampusId).SingleOrDefaultAsync(cancellationToken);
+        if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)) return Forbid();
+        return Ok(await db.LeaveRequests.AsNoTracking().Where(x => x.StaffMemberId == id).OrderByDescending(x => x.StartDate).ToListAsync(cancellationToken));
+    }
 
     [HttpPost("{id:guid}/leave")]
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> RequestLeave(Guid id, [FromBody] CreateLeaveRequestDto request, CancellationToken cancellationToken)
     {
+        var staffCampusId = await db.StaffMembers.Where(x => x.Id == id).Select(x => x.CampusId).SingleOrDefaultAsync(cancellationToken);
+        if (!await campusAccess.CanAccessCampusAsync(User, staffCampusId, cancellationToken)) return Forbid();
         var leaveRequest = new LeaveRequest { StaffMemberId = id, LeaveType = request.LeaveType, StartDate = request.StartDate, EndDate = request.EndDate, Reason = request.Reason, Status = "Pending" };
         db.LeaveRequests.Add(leaveRequest);
         await db.SaveChangesAsync(cancellationToken);
@@ -200,6 +223,8 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
     {
         var leaveRequest = await db.LeaveRequests.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (leaveRequest is null) return NotFound();
+        var staffCampusId = await db.StaffMembers.Where(x => x.Id == leaveRequest.StaffMemberId).Select(x => x.CampusId).SingleOrDefaultAsync(cancellationToken);
+        if (!await campusAccess.CanAccessCampusAsync(User, staffCampusId, cancellationToken)) return Forbid();
         leaveRequest.Status = request.Approved ? "Approved" : "Rejected";
         leaveRequest.ApprovedBy = request.ApprovedBy;
         leaveRequest.ApprovedAt = DateTimeOffset.UtcNow;
@@ -208,7 +233,7 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
     }
 }
 
-public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
+public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null);
 public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record ApproveLeaveRequest(Guid ApprovedBy, bool Approved);
