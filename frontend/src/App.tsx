@@ -440,8 +440,8 @@ return <main className="app-shell">
                         "group relative flex items-center w-full text-sm font-medium transition-all duration-300 ease-out active:scale-[0.98] text-left",
                         item.child ? "py-2 pr-3 pl-9 rounded-lg border-0" : "py-2.5 px-3 gap-3 rounded-xl",
                         isItemActive
-                          ? (item.child ? "border-0 bg-[#292821] text-[#f5efdf] font-semibold shadow-none" : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg shadow-blue-500/25")
-                          : (item.child ? "border-transparent text-slate-500 hover:bg-white/70 hover:text-blue-700 hover:translate-x-1" : "text-slate-600 hover:bg-white/70 hover:text-slate-900 hover:translate-x-1")
+                          ? "border-0 bg-[#292821] text-[#f5efdf] font-semibold shadow-none"
+                          : "border-0 text-[#d7cfbb] hover:bg-[#1e1e1a] hover:text-[#f5efdf]"
                       ].join(" ")}
                     >
                       {!item.child && !isItemActive && <span className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-indigo-400 rounded-r-full opacity-0 scale-y-0 group-hover:opacity-100 group-hover:scale-y-100 transition-all duration-300 origin-center"></span>}
