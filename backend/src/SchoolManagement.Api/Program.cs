@@ -42,6 +42,7 @@ if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
     throw new InvalidOperationException("AllowedOrigins must contain at least one trusted frontend origin in Production.");
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); else policy.AllowAnyOrigin(); policy.AllowAnyHeader().AllowAnyMethod(); }); });
 builder.Services.AddApplication();
+builder.Services.AddScoped<CampusAccessService>();
 builder.Services.AddSingleton<LocalDatabaseBackupService>();
 builder.Services.AddHostedService<ScheduledLocalBackupWorker>();
 var connectionString = builder.Configuration.GetConnectionString("SchoolManagement") ?? throw new InvalidOperationException("Connection string 'SchoolManagement' is not configured.");
