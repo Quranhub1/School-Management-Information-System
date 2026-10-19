@@ -4,7 +4,7 @@
 .timetable-hero h2{margin:0;font-size:clamp(1.35rem,2.2vw,1.8rem);letter-spacing:-.025em;color:#172033}
 .timetable-hero p:not(.timetable-eyebrow){margin:6px 0 0;color:#5d6675;font-size:.86rem}
 .timetable-actions,.timetable-form-footer{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-.timetable-action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 13px;border:1px solid #c8ced8;border-radius:4px;background:#fff;color:#273247;font:600 .82rem inherit;cursor:pointer}
+.timetable-action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 13px;border:1px solid #c8ced8;border-radius:4px;background:#fff;color:#273247;font-size:.82rem;font-weight:600;font-family:inherit;cursor:pointer}
 .timetable-action svg{width:16px;height:16px}
 .timetable-action:hover{background:#f2f4f7}
 .timetable-action.primary{background:#176b45;border-color:#176b45;color:#fff}
@@ -71,4 +71,26 @@
   .timetable-grid-scroll{overflow:visible!important}
   .timetable-formal-grid{min-width:0!important;font-size:9pt}
   .timetable-formal-grid th,.timetable-formal-grid td{padding:5px}
+}
+.timetable-generator-help{margin:10px 0 0;color:#596579;font-size:.82rem}
+.timetable-generated-list{display:flex;flex-direction:column;gap:12px}
+.timetable-generated-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.timetable-generated-heading h3{margin:0;font-size:1rem;color:#202b3b}
+.timetable-generated-heading>span{font-size:.8rem;color:#596579}
+.timetable-class-document{padding:16px;background:#fff;border:1px solid #cbd1d9;border-radius:3px;min-width:0}
+.timetable-class-document-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.timetable-class-document-heading h4{margin:0 0 4px;font-size:1rem;color:#172033}
+.timetable-class-document-heading span,.timetable-class-status{font-size:.78rem;color:#596579}
+.timetable-class-actions{display:flex;flex-wrap:wrap;gap:7px}
+.timetable-class-status{margin:0 0 10px}
+.timetable-class-warning{margin:7px 0;padding:8px 10px;background:#fff7e8;border:1px solid #f0d39b;color:#754c12;font-size:.8rem}
+@media(max-width:560px){.timetable-class-document-heading{align-items:flex-start;flex-direction:column}.timetable-generated-heading{align-items:flex-start;flex-direction:column}}
+@media print{
+  .timetable-class-document{display:none!important}
+  .timetable-class-document[data-print-target="true"]{display:block!important;position:absolute!important;inset:0 auto auto 0!important;width:100%!important;padding:0!important;border:0!important}
+  .timetable-class-document[data-print-target="true"] *{visibility:visible!important}
+  .timetable-class-document[data-print-target="true"] .timetable-class-actions{display:none!important}
+  body:has(.timetable-class-document[data-print-target="true"]) .timetable-print-area{display:none!important}
+  .timetable-class-document[data-print-target="true"] .timetable-table-wrap{overflow:visible!important}
+  .timetable-class-document[data-print-target="true"] table{min-width:0!important;white-space:normal!important}
 }
