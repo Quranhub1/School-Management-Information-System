@@ -22,7 +22,7 @@ export function GlobalNotificationViewport() {
       const detail = (event as CustomEvent<NotificationDetail>).detail
       if (!detail?.message?.trim()) return
       const notification: Toast = { ...detail, kind: detail.kind ?? 'success', id: ++nextId }
-      setNotifications(current => [...current, notification].slice(-5))
+      setNotifications([notification])
       timers.set(notification.id, window.setTimeout(() => {
         setNotifications(current => current.filter(item => item.id !== notification.id))
         timers.delete(notification.id)
