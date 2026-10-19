@@ -15,7 +15,39 @@ import { resolveAcademicAuthority, type AcademicAuthority } from '../utils/acade
 
 type Tab = 'full' | 'short'
 
-type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'UHPAB' | 'UVTAB'; family: string; review?: boolean }
+type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'School-based' | 'UHPAB' | 'UVTAB'; family: string; entryRequirements?: string; outcome?: string; review?: boolean }
+
+const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
+  { name: 'Certificate in Enrolled Nursing', award: 'Certificate', duration: 2.5, regulator: 'School-based', family: 'Nursing', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Enrolled Nurse' },
+  { name: 'Certificate in Enrolled Midwifery', award: 'Certificate', duration: 2.5, regulator: 'School-based', family: 'Midwifery', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Midwife' },
+  { name: 'Certificate in Pharmacy', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Pharmacy', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Pharmacy Assistant' },
+  { name: 'Certificate in Medical Laboratory Techniques', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Laboratory', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Medical Laboratory Technician' },
+  { name: 'Certificate in Public Health', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Public Health', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Public Health Officer' },
+  { name: 'Certificate in Medical Records and Health Informatics', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Health Informatics', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Medical Records Officer' },
+  { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Food Science & Nutrition', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Food Science Technician' },
+  { name: 'Certificate in Biomedical Engineering', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Biomedical Engineering', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Medical Engineer' },
+  { name: 'Certificate in Secretarial Studies and Office Management', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Administration', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Administrator / Office Manager' },
+  { name: 'Certificate in Guidance and Counselling', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Counselling', entryRequirements: "O'level with at least 5 passes including Mathematics and English", outcome: 'Counsellor' },
+  { name: 'Certificate in Records and Information Management', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Records Management', entryRequirements: "O'level with at least 5 passes in any subjects", outcome: 'Records Manager' },
+  { name: 'Diploma in Clinical Medicine and Community Health', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Clinical Medicine', entryRequirements: 'A-level with at least a principal pass in Biology and a subsidiary in Chemistry', outcome: 'Clinical Officer' },
+  { name: 'Diploma in Pharmacy', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Pharmacy', entryRequirements: 'A-level with at least a principal pass in Chemistry and a subsidiary in Biology', outcome: 'Pharmacist' },
+  { name: 'Diploma in Diagnostic Sonography', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Medical Imaging', entryRequirements: 'A-level with at least a principal pass in Biology and two subsidiaries', outcome: 'Medical Records Officer (as listed on the website)' },
+  { name: 'Diploma in Biomedical Engineering', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Biomedical Engineering', entryRequirements: 'A-level with at least one principal pass in Mathematics or Physics; or a certificate in an engineering field from a recognised institution', outcome: 'Biomedical Technician' },
+  { name: 'Diploma in Secretarial Studies and Office Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Administration', entryRequirements: 'A-level with at least one principal pass in any subject', outcome: 'Senior Administrator / Office Manager' },
+  { name: 'Diploma in Medical Records and Health Informatics', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Health Informatics', entryRequirements: 'A-level with at least one principal pass in any arts or science subject; or a certificate in Medical Records or a related field', outcome: 'Medical Records Officer' },
+  { name: 'Diploma in Public Health', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Public Health', entryRequirements: 'A-level with at least one principal pass in any arts or science subject; or a certificate in Public Health or a related field', outcome: 'Public Health Officer' },
+  { name: 'Diploma in Records and Information Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Records Management', entryRequirements: 'A-level with at least one principal pass in any arts or science subject', outcome: 'Records Manager' },
+  { name: 'Diploma in Health Counselling and Guidance', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Counselling', entryRequirements: 'A-level with at least one principal pass in an arts or science subject; or a certificate in a related field', outcome: 'Health Counsellor' },
+  { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Food Science & Nutrition', entryRequirements: 'A-level with at least one principal pass in any arts or science subject', outcome: 'Food Science Technician' },
+]
+
+const SCHOOL_BASED_SHORT_COURSES: CatalogueEntry[] = [
+  { name: 'Bridging Programme', award: 'Bridging programme', duration: 0.75, regulator: 'School-based', family: 'Access programme', entryRequirements: 'Not specified on the listed programme page', outcome: 'Access route to diploma courses' },
+  { name: 'Advanced Diploma in Diagnostic Sonography', award: 'Advanced Diploma', duration: 1, regulator: 'School-based', family: 'Medical Imaging', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
+  { name: 'Diploma in Human Nutrition and Dietetics', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Nutrition', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
+  { name: 'Diploma in Food Science and Technology', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Food Science & Technology', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
+  { name: 'Advanced Diploma in Health Promotion and Education', award: 'Advanced Diploma', duration: 2, regulator: 'School-based', family: 'Public Health', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
+]
 
 const UHPAB_LONG_COURSES: CatalogueEntry[] = [
   { name: 'Certificate in Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing' },
@@ -71,6 +103,9 @@ const UVTAB_SHORT_COURSES: CatalogueEntry[] = [
 
 export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<Tab>('full')
+  const [catalogueSearch, setCatalogueSearch] = useState('')
+  const [awardFilter, setAwardFilter] = useState('all')
+  const [verificationFilter, setVerificationFilter] = useState<'all' | 'review' | 'reference'>('all')
   const [curricula, setCurricula] = useState<Curriculum[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [programmes, setProgrammes] = useState<Programme[]>([])
@@ -184,8 +219,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   }
 
   function applyCourseTemplate(course: CatalogueEntry, type: 'FullProgramme' | 'ShortCourse') {
+    const matchingProgramme = programmes.find(programme => programme.isActive
+      && authorityOfProgramme(programme.id) === authority
+      && programme.name.trim().toLocaleLowerCase() === course.name.trim().toLocaleLowerCase())
     setCf({
-      programmeId: '',
+      programmeId: matchingProgramme?.id ?? '',
       version: '1.0',
       title: course.name,
       minimumCredits: '',
@@ -196,29 +234,61 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   }
 
   function renderCatalogue(entries: CatalogueEntry[], type: 'FullProgramme' | 'ShortCourse') {
+    const normalizedSearch = catalogueSearch.trim().toLocaleLowerCase()
+    const visibleEntries = entries.filter(course => {
+      const matchesSearch = !normalizedSearch || [course.name, course.award, course.family, course.regulator].some(value => value.toLocaleLowerCase().includes(normalizedSearch))
+      const matchesAward = awardFilter === 'all' || course.award === awardFilter
+      const matchesVerification = verificationFilter === 'all'
+        || (verificationFilter === 'review' && course.review)
+        || (verificationFilter === 'reference' && !course.review)
+      return matchesSearch && matchesAward && matchesVerification
+    })
+    const awardOptions = [...new Set(entries.map(course => course.award))].sort()
     return (
+      <>
+      <div className="catalogue-filters" aria-label="Filter catalogue">
+        <input
+          type="search"
+          aria-label="Search programme catalogue"
+          placeholder="Search programme, award or area"
+          value={catalogueSearch}
+          onChange={e => setCatalogueSearch(e.target.value)}
+        />
+        <select aria-label="Filter by qualification level" value={awardFilter} onChange={e => setAwardFilter(e.target.value)}>
+          <option value="all">All qualification levels</option>
+          {awardOptions.map(award => <option key={award} value={award}>{award}</option>)}
+        </select>
+        <select aria-label="Filter by verification status" value={verificationFilter} onChange={e => setVerificationFilter(e.target.value as typeof verificationFilter)}>
+          <option value="all">All reference statuses</option>
+          <option value="review">Needs verification</option>
+          <option value="reference">Website/reference listing</option>
+        </select>
+        <span className="catalogue-result-count">{visibleEntries.length} of {entries.length}</span>
+      </div>
       <div className="catalogue-table-wrap">
-        <table className="catalogue-table">
+        <table className={authority === 'School-based' ? 'catalogue-table catalogue-table-school' : 'catalogue-table'}>
           <thead>
             <tr>
               <th>Programme / course</th>
               <th>Award</th>
               <th>Duration</th>
               <th>Area</th>
-              <th>Review</th>
+              {authority === 'School-based' && <><th>Entry requirements (website listing)</th><th>Professional outcome</th></>}
+              <th>Source status</th>
               <th aria-label="Action"></th>
             </tr>
           </thead>
           <tbody>
-            {entries.map(course => (
+            {visibleEntries.map(course => (
               <tr key={course.name}>
                 <td className="catalogue-course-name">{course.name}</td>
                 <td>{course.award}</td>
-                <td>{course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
+                <td>{course.duration === 0.75 ? '9 months*' : course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
                 <td>{course.family}</td>
+                {authority === 'School-based' && <><td>{course.entryRequirements ?? 'Not listed'}</td><td>{course.outcome ?? 'Not listed'}</td></>}
                 <td>
                   <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
-                    {course.review ? 'Verify' : 'Reference'}
+                    {course.review ? 'Needs verification' : authority === 'School-based' ? 'KSHS website' : 'Reference listing'}
                   </span>
                 </td>
                 <td className="catalogue-action-cell">
@@ -226,10 +296,12 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 </td>
               </tr>
             ))}
+            {visibleEntries.length === 0 && <tr><td colSpan={authority === 'School-based' ? 8 : 6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
           </tbody>
         </table>
-        <p className="catalogue-footnote">* Indicative duration where listed. Confirm against the approved programme document before publishing.</p>
+        <p className="catalogue-footnote">* Indicative duration where listed. A reference listing is not confirmation of current accreditation or approval. Verify the programme and award against the awarding body's current documentation before publishing.</p>
       </div>
+      </>
     )
   }
 
@@ -248,21 +320,21 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       <div className="form-row academic-authority-picker">
         <label>Curriculum authority
-          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setCf(current => ({ ...current, programmeId: '' })) }}>
+          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })); setCatalogueSearch(''); setAwardFilter('all'); setVerificationFilter('all') }}>
             <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option><option value="UNMEB">UNMEB — Legacy records</option>
           </select>
         </label>
       </div>
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
-        <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => setTab('full')}>Full Programmes</button>
-        <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => setTab('short')}>Short Courses</button>
+        <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => { setTab('full'); setCf(current => ({ ...current, type: 'FullProgramme' })) }}>Full Programmes</button>
+        <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => { setTab('short'); setCf(current => ({ ...current, type: 'ShortCourse' })) }}>Short Courses</button>
       </div>
 
       {tab === 'full' && (
         <>
           <div className="catalogue-intro">
             <h3>Long-course catalogue</h3>
-            <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Verify need title or duration confirmation.</p>
+            <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Needs verification need title or duration confirmation.</p>
           </div>
           {authority === 'UHPAB' && <section className="catalogue-board" aria-labelledby="uhpab-long-title">
             <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
@@ -272,7 +344,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
           </section>}
-          {authority === 'School-based' && <p className="empty">School-based courses are taken from the curricula and courses you have created for the school.</p>}
+          {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-long-title"><h3 id="school-based-long-title">School-based · KSHS programme list</h3><p className="catalogue-footnote">Transcribed from the KSHS programmes page, which labels this list 2024/2025. These are school website references, not a statement of current external accreditation. Confirm current admissions requirements before publishing.</p>{renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}</section>}
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
@@ -310,7 +382,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </div>
 
           <div className="form-row">
-            <select value={selected} onChange={e => void refreshMappings(e.target.value)}>
+            <select value={selected} onChange={e => { setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
               <option value="">Select curriculum</option>
               {authorityCurricula.map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
@@ -370,7 +442,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>UVTAB · Modular and occupational skills</h3>
             {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
           </section>}
-          {authority === 'School-based' && <p className="empty">School-based short courses are managed in your saved curricula.</p>}
+          {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-short-title"><h3 id="school-based-short-title">KSHS · Other short and in-service listings</h3><p className="catalogue-footnote">These entries appear under “Other Short & In-Service Courses” on the school website. Their classification is preserved as listed; confirm current intake and entry details.</p>{renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}</section>}
           {authority === 'UHPAB' && <p className="empty">UHPAB health programmes are listed under Full Programmes.</p>}
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
 
