@@ -63,7 +63,7 @@ public sealed class CampusAccessService(SchoolManagementDbContext db)
         {
             if (requestedCampusId.HasValue)
                 return activeCampusIds.Contains(requestedCampusId.Value) ? requestedCampusId : null;
-            return activeCampusIds.OrderBy(x => x).FirstOrDefault();
+            return await db.Campuses.AsNoTracking().Where(x => activeCampusIds.Contains(x.Id)).OrderBy(x => x.Code).Select(x => (Guid?)x.Id).FirstOrDefaultAsync(cancellationToken);
         }
 
         var userId = GetUserId(principal);
