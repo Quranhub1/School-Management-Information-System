@@ -219,8 +219,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   }
 
   function applyCourseTemplate(course: CatalogueEntry, type: 'FullProgramme' | 'ShortCourse') {
+    const matchingProgramme = programmes.find(programme => programme.isActive
+      && authorityOfProgramme(programme.id) === authority
+      && programme.name.trim().toLocaleLowerCase() === course.name.trim().toLocaleLowerCase())
     setCf({
-      programmeId: '',
+      programmeId: matchingProgramme?.id ?? '',
       version: '1.0',
       title: course.name,
       minimumCredits: '',
@@ -263,7 +266,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <span className="catalogue-result-count">{visibleEntries.length} of {entries.length}</span>
       </div>
       <div className="catalogue-table-wrap">
-        <table className="catalogue-table">
+        <table className={authority === 'School-based' ? 'catalogue-table catalogue-table-school' : 'catalogue-table'}>
           <thead>
             <tr>
               <th>Programme / course</th>
