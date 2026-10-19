@@ -70,6 +70,31 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
         return Created($"api/staff/{staff.Id}", ToProfile(staff));
     }
 
+    [HttpPatch("{id:guid}/course-units")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> UpdateCourseUnits(Guid id, [FromBody] UpdateStaffCourseUnitsRequest request, CancellationToken cancellationToken)
+    {
+        var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (staff is null) return NotFound();
+        if (staff.StaffType != StaffType.Teaching)
+            return BadRequest(new { message = "Course units can only be assigned to teaching staff." });
+
+        var courseUnitIds = (request.CourseUnitIds ?? Array.Empty<Guid>())
+            .Where(courseUnitId => courseUnitId != Guid.Empty)
+            .Distinct()
+            .ToArray();
+        var activeCourseUnitIds = await db.Courses.AsNoTracking()
+            .Where(course => course.IsActive && courseUnitIds.Contains(course.Id))
+            .Select(course => course.Id)
+            .ToListAsync(cancellationToken);
+        if (activeCourseUnitIds.Count != courseUnitIds.Length)
+            return BadRequest(new { message = "One or more selected course units are unavailable or inactive. Refresh the course unit list and try again." });
+
+        staff.CourseUnitIdsJson = SerializeCourseIds(courseUnitIds);
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(ToProfile(staff));
+    }
+
     [HttpPatch("{id:guid}/deactivate")]
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
@@ -185,4 +210,5 @@ public sealed class StaffController(SchoolManagementDbContext db) : ControllerBa
 
 public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
 public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
+public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record ApproveLeaveRequest(Guid ApprovedBy, bool Approved);
