@@ -249,7 +249,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       <div className="form-row academic-authority-picker">
         <label>Curriculum authority
           <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setCf(current => ({ ...current, programmeId: '' })) }}>
-            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option><option value="UNMEB">UNMEB — Legacy records</option>
+            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
           </select>
         </label>
       </div>
@@ -273,7 +273,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
           </section>}
           {authority === 'School-based' && <p className="empty">School-based courses are taken from the curricula and courses you have created for the school.</p>}
-          {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
@@ -372,7 +371,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </section>}
           {authority === 'School-based' && <p className="empty">School-based short courses are managed in your saved curricula.</p>}
           {authority === 'UHPAB' && <p className="empty">UHPAB health programmes are listed under Full Programmes.</p>}
-          {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
