@@ -541,7 +541,10 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (accessible is null) return (requestedCampusId, null);
         if (accessible.Count == 0) return (null, Forbid());
         if (requestedCampusId.HasValue)
-            return accessible.Contains(requestedCampusId.Value) ? (requestedCampusId, null) : (null, Forbid());
+        {
+            if (accessible.Contains(requestedCampusId.Value)) return (requestedCampusId, null);
+            return (null, Forbid());
+        }
         if (accessible.Count == 1) return (accessible[0], null);
         return (null, BadRequest(new { message = "Select one of your assigned campuses to run this financial report." }));
     }
