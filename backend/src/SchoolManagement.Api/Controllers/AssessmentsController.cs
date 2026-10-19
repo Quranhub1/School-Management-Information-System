@@ -71,15 +71,51 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
         [FromBody] RecordAssessmentRequest request,
         CancellationToken cancellationToken)
     {
-        var assessment = await service.RecordAssessmentAsync(
-            request.StudentId,
-            request.CourseRegistrationId,
-            request.AssessmentPlanId,
-            request.Score,
-            request.MaximumScore,
-            request.CompetencyLevel,
+        if (request.StudentId == Guid.Empty || request.CourseRegistrationId == Guid.Empty || request.AssessmentPlanId == Guid.Empty)
+            return BadRequest(new { message = "Student, course registration and assessment plan are required." });
+
+        var registration = await db.CourseRegistrations.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == request.CourseRegistrationId, cancellationToken);
+        if (registration is null)
+            return NotFound(new { message = "The course registration does not exist." });
+        if (registration.StudentId != request.StudentId)
+            return BadRequest(new { message = "The selected student does not match the course registration." });
+
+        var plan = await db.AssessmentPlans.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == request.AssessmentPlanId && x.IsActive, cancellationToken);
+        if (plan is null)
+            return NotFound(new { message = "The selected assessment plan does not exist or is inactive." });
+        if (plan.CourseId != registration.CourseId)
+            return BadRequest(new { message = "The assessment plan belongs to a different course than this registration." });
+
+        var alreadyRecorded = await db.StudentAssessments.AnyAsync(
+            x => x.StudentId == request.StudentId
+                && x.CourseRegistrationId == request.CourseRegistrationId
+                && x.AssessmentPlanId == request.AssessmentPlanId,
             cancellationToken);
-        return Created($"/api/assessments/records/{assessment.Id}", assessment);
+        if (alreadyRecorded)
+            return Conflict(new { message = "A mark has already been recorded for this student, registration and assessment plan." });
+
+        try
+        {
+            var assessment = await service.RecordAssessmentAsync(
+                request.StudentId,
+                request.CourseRegistrationId,
+                request.AssessmentPlanId,
+                request.Score,
+                request.MaximumScore,
+                request.CompetencyLevel,
+                cancellationToken);
+            return Created($"/api/assessments/records/{assessment.Id}", assessment);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     public sealed record CreateAssessmentPlanRequest(Guid CourseId, string? Name, string? AssessmentType, decimal WeightPercentage, bool IsCompetencyBased);
