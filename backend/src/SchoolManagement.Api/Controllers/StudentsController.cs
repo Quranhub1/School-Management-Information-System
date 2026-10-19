@@ -173,8 +173,8 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         }
 
         var campusId = await campusAccess.ResolveCampusForWriteAsync(User, request.CampusId, cancellationToken);
-        var campusModeEnabled = await db.Campuses.AnyAsync(x => x.IsActive, cancellationToken);
-        if (campusModeEnabled && !campusId.HasValue) return Forbid();
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is not null && !campusId.HasValue) return Forbid();
         if (request.CampusId.HasValue && !campusId.HasValue) return Forbid();
 
         var student = await service.CreateAsync(request with { CampusId = campusId }, cancellationToken);
