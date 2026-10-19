@@ -14,6 +14,11 @@ public sealed class StaffMember
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
     public Guid? DepartmentId { get; set; }
+    public string? JobTitle { get; set; }
+    public string? HighestQualification { get; set; }
+    public string? Speciality { get; set; }
+    public string? ProfessionalRegistration { get; set; }
+    public string CourseUnitIdsJson { get; set; } = "[]";
     public required string EmploymentType { get; set; }
     public required SchoolManagement.Domain.Staff.StaffType StaffType { get; set; }
     public string EmploymentStatus { get; set; } = "Active";
