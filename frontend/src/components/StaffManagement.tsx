@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import { createStaff, updateStaff, deleteStaff, activateStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
+import { notify } from './GlobalNotifications'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
@@ -76,12 +77,14 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
         const updated = await updateStaff(editingStaffId, { id: editingStaffId, ...form })
         setStaff(current => current.map(item => item.id === updated.id ? updated : item))
         setSuccess(`${updated.firstName} ${updated.lastName} was updated successfully.`)
+        notify(`${updated.firstName} ${updated.lastName} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
         const created = await createStaff(form)
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
         setSuccess(`${created.firstName} ${created.lastName} was saved and added to the staff table.`)
+        notify(`${created.firstName} ${created.lastName} saved successfully.`, 'success', 'Staff saved')
         void listStaff(false).then(latest => {
           setStaff(latest.some(item => item.id === created.id) ? latest : [created, ...latest])
         }).catch(() => {
@@ -90,7 +93,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
       }
       setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
     } catch (e) {
-      setError(e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.')
+      const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
+      setError(message)
+      notify(message, 'error', editingStaffId ? 'Staff update failed' : 'Staff save failed')
       // A duplicate may be an inactive record, so refresh the complete staff list too.
       try { setStaff(await listStaff(false)) } catch { /* Preserve the original create error. */ }
     }
@@ -113,7 +118,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
       setStaff(current => current.map(person => person.id === id ? { ...person, isActive: false } : person))
       window.dispatchEvent(new Event(STAFF_CHANGED_EVENT))
       setSuccess('Staff member deactivated.')
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') }
+      notify('Staff member deactivated.', 'success', 'Staff deactivated')
+    } catch (e) { const message = e instanceof Error ? e.message : 'Unable to deactivate staff.'; setError(message); notify(message, 'error', 'Deactivation failed') }
   }
   async function activate(id: string) {
     try {
@@ -121,7 +127,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
       setStaff(current => current.map(person => person.id === id ? { ...person, isActive: true } : person))
       window.dispatchEvent(new Event(STAFF_CHANGED_EVENT))
       setSuccess('Staff member activated.')
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to activate staff.') }
+      notify('Staff member activated.', 'success', 'Staff activated')
+    } catch (e) { const message = e instanceof Error ? e.message : 'Unable to activate staff.'; setError(message); notify(message, 'error', 'Activation failed') }
   }
   async function removeStaff(person: StaffMember) {
     if (!window.confirm(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`)) return
@@ -131,12 +138,14 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
       if (editingStaffId === person.id) cancelEdit()
       window.dispatchEvent(new Event(STAFF_CHANGED_EVENT))
       setSuccess(`${person.firstName} ${person.lastName} was deleted.`)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to delete staff. They may be linked to other records.') }
+      notify(`${person.firstName} ${person.lastName} deleted successfully.`, 'success', 'Staff deleted')
+    } catch (e) { const message = e instanceof Error ? e.message : 'Unable to delete staff. They may be linked to other records.'; setError(message); notify(message, 'error', 'Staff deletion failed') }
   }
-  async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to request leave.') } }
-  async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, '', approved); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to approve leave.') } }
-  async function handleGeneratePayroll() { setError(''); setSuccess(''); try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll(); setSuccess(`Payroll generation completed for ${new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} ${payrollYear}. Existing entries for this period were retained.`) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to generate payroll.') } }
-  async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to mark payroll as paid.') } }
+  async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave(); notify('Leave request submitted successfully.', 'success', 'Leave request saved') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to request leave.'; setError(message); notify(message, 'error', 'Leave request failed') } }
+  async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, '', approved); await loadLeave(); notify(approved ? 'Leave request approved.' : 'Leave request declined.', 'success', 'Leave updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to approve leave.'; setError(message); notify(message, 'error', 'Leave update failed') } }
+  async function handleGeneratePayroll() { setError(''); setSuccess(''); try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll(); setSuccess(`Payroll generation completed for ${new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} ${payrollYear}. Existing entries for this period were retained.`)
+      notify('Payroll generation completed successfully.', 'success', 'Payroll generated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to generate payroll.'; setError(message); notify(message, 'error', 'Payroll generation failed') } }
+  async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll(); notify('Payroll payment status updated.', 'success', 'Payroll updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to mark payroll as paid.'; setError(message); notify(message, 'error', 'Payroll update failed') } }
 
   return (
     <section className="panel">
