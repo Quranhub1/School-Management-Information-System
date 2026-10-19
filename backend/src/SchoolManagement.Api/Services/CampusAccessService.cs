@@ -17,7 +17,8 @@ public sealed class CampusAccessService(SchoolManagementDbContext db)
     public async Task<IReadOnlyList<Guid>?> GetAccessibleCampusIdsAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
         var activeCampusIds = await GetActiveInstitutionCampusIdsAsync(cancellationToken);
-        if (activeCampusIds.Count == 0) return null;
+        if (activeCampusIds.Count == 0)
+            return await db.Campuses.AsNoTracking().AnyAsync(cancellationToken) ? [] : null;
         if (IsSystemAdministrator(principal)) return activeCampusIds;
 
         var userId = GetUserId(principal);
@@ -33,7 +34,8 @@ public sealed class CampusAccessService(SchoolManagementDbContext db)
     {
         if (IsSystemAdministrator(principal)) return true;
         var activeCampusIds = await GetActiveInstitutionCampusIdsAsync(cancellationToken);
-        if (activeCampusIds.Count == 0) return true;
+        if (activeCampusIds.Count == 0)
+            return !await db.Campuses.AsNoTracking().AnyAsync(cancellationToken);
         if (campusId is null || !activeCampusIds.Contains(campusId.Value)) return false;
 
         var userId = GetUserId(principal);
@@ -45,7 +47,8 @@ public sealed class CampusAccessService(SchoolManagementDbContext db)
     public async Task<bool> CanAccessStudentAsync(ClaimsPrincipal principal, Guid studentId, CancellationToken cancellationToken = default)
     {
         if (IsSystemAdministrator(principal)) return true;
-        if ((await GetActiveInstitutionCampusIdsAsync(cancellationToken)).Count == 0) return true;
+        if ((await GetActiveInstitutionCampusIdsAsync(cancellationToken)).Count == 0)
+            return !await db.Campuses.AsNoTracking().AnyAsync(cancellationToken);
 
         var campusId = await db.Students.AsNoTracking()
             .Where(x => x.Id == studentId)
