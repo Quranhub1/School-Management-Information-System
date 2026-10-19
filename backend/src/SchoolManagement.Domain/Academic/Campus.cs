@@ -7,9 +7,9 @@ public sealed class Campus
 {
     public Guid Id { get; init; } = Guid.NewGuid();
     public Guid InstitutionId { get; init; }
-    public required string Code { get; init; }
-    public required string Name { get; init; }
-    public string? Address { get; init; }
-    public string? District { get; init; }
+    public required string Code { get; set; }
+    public required string Name { get; set; }
+    public string? Address { get; set; }
+    public string? District { get; set; }
     public bool IsActive { get; set; } = true;
 }
