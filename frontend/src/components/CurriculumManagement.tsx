@@ -49,6 +49,7 @@ const UHPAB_LONG_COURSES: CatalogueEntry[] = [
   { name: 'Diploma in Medical Records and Health Informatics', award: 'Diploma', duration: 3, regulator: 'UHPAB', family: 'Health Informatics' },
   { name: 'Diploma in Diagnostic Sonography', award: 'Diploma', duration: 3, regulator: 'UHPAB', family: 'Medical Imaging', review: true },
   { name: 'Diploma in Human Nutrition and Dietetics', award: 'Diploma', duration: 2, regulator: 'UHPAB', family: 'Nutrition', review: true },
+  { name: 'Diploma in Clinical Medicine and Community Health', award: 'Diploma', duration: 3, regulator: 'UHPAB', family: 'Clinical Medicine', review: true },
   { name: 'Diploma in Comprehensive Nursing (legacy intake)', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing', review: true },
   { name: 'Advanced Diploma in Palliative Care Nursing', award: 'Advanced Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
 ]
@@ -56,6 +57,8 @@ const UHPAB_LONG_COURSES: CatalogueEntry[] = [
 const UVTAB_LONG_COURSES: CatalogueEntry[] = [
   { name: 'Certificate in Biomedical Engineering', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
   { name: 'Diploma in Biomedical Engineering', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
+  { name: 'Certificate in Secretarial Studies and Office Management', award: 'Certificate', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
+  { name: 'Diploma in Secretarial Studies and Office Management', award: 'Diploma', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
   { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
   { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
   { name: 'Certificate in Sonography', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Medical Imaging', review: true },
