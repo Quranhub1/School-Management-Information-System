@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Api.Helpers;
+using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Students;
 using SchoolManagement.Application.StudentRecords;
@@ -12,25 +13,39 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/students")]
 [Authorize(Policy = AuthorizationPolicies.StudentRead)]
-public sealed class StudentsController(StudentService service, SchoolManagementDbContext db, StudentRecordsWorkflowService studentRecords) : ControllerBase
+public sealed class StudentsController(StudentService service, SchoolManagementDbContext db, StudentRecordsWorkflowService studentRecords, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<object>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<object>>> GetAll([FromQuery] Guid? campusId, CancellationToken cancellationToken)
     {
-        var students = await service.GetAllAsync(cancellationToken);
-        return Ok(students);
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        var query = db.Students.AsNoTracking().AsQueryable();
+        if (campusId.HasValue)
+        {
+            if (accessibleCampuses is not null && !accessibleCampuses.Contains(campusId.Value)) return Forbid();
+            query = query.Where(x => x.CampusId == campusId.Value);
+        }
+        else if (accessibleCampuses is not null)
+        {
+            query = query.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
+        }
+        return Ok(await query.OrderBy(x => x.StudentNumber).ToListAsync(cancellationToken));
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var student = await service.GetByIdAsync(id, cancellationToken);
-        return student is null ? NotFound() : Ok(student);
+        if (student is null) return NotFound();
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
+        return Ok(student);
     }
 
     [HttpGet("{id:guid}/guardians")]
     public async Task<IActionResult> GetGuardians(Guid id, CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         try { return Ok(await studentRecords.GetGuardiansAsync(id, cancellationToken)); }
         catch (KeyNotFoundException) { return NotFound(new { message = "Student was not found." }); }
     }
@@ -39,6 +54,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> AddGuardian(Guid id, AddStudentGuardianRequest request, CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         try
         {
             var guardian = await studentRecords.AddGuardianAsync(id, request, cancellationToken);
@@ -53,6 +69,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> UpdateGuardian(Guid id, Guid guardianId, UpdateStudentGuardianRequest request, CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         try
         {
             var guardian = await studentRecords.UpdateGuardianAsync(id, guardianId, request, cancellationToken);
@@ -67,6 +84,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> DeleteGuardian(Guid id, Guid guardianId, CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         try { await studentRecords.RemoveGuardianAsync(id, guardianId, cancellationToken); return NoContent(); }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
@@ -75,6 +93,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [HttpGet("{id:guid}/application-form")]
     public async Task<IActionResult> GetApplicationForm(Guid id, CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         var record = await db.StudentApplicationRecords.AsNoTracking().SingleOrDefaultAsync(x => x.StudentId == id, cancellationToken);
         if (record is null) return NotFound();
         return Ok(new { record.Id, record.StudentId, application = System.Text.Json.JsonDocument.Parse(record.ApplicationDataJson).RootElement, record.PhotographContentType, record.PhotographFileName, record.SubmittedAt, record.Status });
@@ -85,6 +104,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [RequestSizeLimit(12_000_000)]
     public async Task<IActionResult> SaveApplicationForm(Guid id, SaveStudentApplicationFormRequest request, CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         if (!await db.Students.AnyAsync(x => x.Id == id, cancellationToken)) return NotFound(new { message = "Student was not found." });
         if (request.Application.ValueKind != System.Text.Json.JsonValueKind.Object) return BadRequest(new { message = "Application data must be a JSON object." });
         byte[]? photograph = null;
@@ -121,6 +141,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [HttpGet("{id:guid}/application-form/photograph")]
     public async Task<IActionResult> GetApplicationPhotograph(Guid id, CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         var record = await db.StudentApplicationRecords.AsNoTracking().SingleOrDefaultAsync(x => x.StudentId == id, cancellationToken);
         if (record?.PhotographData is null || string.IsNullOrWhiteSpace(record.PhotographContentType)) return NotFound();
         return File(record.PhotographData, record.PhotographContentType);
@@ -151,7 +172,12 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
             return BadRequest(new { message = "Student number, first name, and last name are required." });
         }
 
-        var student = await service.CreateAsync(request, cancellationToken);
+        var campusId = await campusAccess.ResolveCampusForWriteAsync(User, request.CampusId, cancellationToken);
+        var campusModeEnabled = await db.Campuses.AnyAsync(x => x.IsActive, cancellationToken);
+        if (campusModeEnabled && !campusId.HasValue) return Forbid();
+        if (request.CampusId.HasValue && !campusId.HasValue) return Forbid();
+
+        var student = await service.CreateAsync(request with { CampusId = campusId }, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = student.Id }, student);
     }
 
@@ -159,6 +185,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> Update(Guid id, UpdateStudentRequest request, CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         if (id != request.Id)
             return BadRequest(new { message = "Route ID and body ID must match." });
 
@@ -177,6 +204,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         var deleted = await service.DeleteAsync(id, cancellationToken);
         return deleted ? NoContent() : NotFound();
     }
