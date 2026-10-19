@@ -25,6 +25,12 @@ public sealed class AddCampusScopedAcademicRecords : Migration
             type: "uuid",
             nullable: true);
 
+        migrationBuilder.AddColumn<Guid>(
+            name: "CampusId",
+            table: "StaffMembers",
+            type: "uuid",
+            nullable: true);
+
         migrationBuilder.CreateTable(
             name: "UserCampusAssignments",
             columns: table => new
@@ -63,6 +69,11 @@ public sealed class AddCampusScopedAcademicRecords : Migration
             column: "CampusId");
 
         migrationBuilder.CreateIndex(
+            name: "IX_StaffMembers_CampusId",
+            table: "StaffMembers",
+            column: "CampusId");
+
+        migrationBuilder.CreateIndex(
             name: "IX_UserCampusAssignments_CampusId",
             table: "UserCampusAssignments",
             column: "CampusId");
@@ -96,6 +107,14 @@ public sealed class AddCampusScopedAcademicRecords : Migration
             principalColumn: "Id",
             onDelete: ReferentialAction.SetNull);
 
+        migrationBuilder.AddForeignKey(
+            name: "FK_StaffMembers_Campuses_CampusId",
+            table: "StaffMembers",
+            column: "CampusId",
+            principalTable: "Campuses",
+            principalColumn: "Id",
+            onDelete: ReferentialAction.SetNull);
+
         migrationBuilder.Sql("""
             WITH primary_campus AS (
                 SELECT "Id" FROM "Campuses" WHERE "IsActive" = TRUE ORDER BY "Code", "Id" LIMIT 1
@@ -114,6 +133,13 @@ public sealed class AddCampusScopedAcademicRecords : Migration
             WITH primary_campus AS (
                 SELECT "Id" FROM "Campuses" WHERE "IsActive" = TRUE ORDER BY "Code", "Id" LIMIT 1
             )
+            UPDATE "StaffMembers"
+            SET "CampusId" = (SELECT "Id" FROM primary_campus)
+            WHERE "CampusId" IS NULL AND EXISTS (SELECT 1 FROM primary_campus);
+
+            WITH primary_campus AS (
+                SELECT "Id" FROM "Campuses" WHERE "IsActive" = TRUE ORDER BY "Code", "Id" LIMIT 1
+            )
             INSERT INTO "UserCampusAssignments" ("Id", "UserId", "CampusId", "IsPrimary", "AssignedAt")
             SELECT gen_random_uuid(), u."Id", c."Id", TRUE, NOW()
             FROM "Users" u CROSS JOIN primary_campus c
@@ -126,10 +152,13 @@ public sealed class AddCampusScopedAcademicRecords : Migration
     {
         migrationBuilder.DropForeignKey(name: "FK_Students_Campuses_CampusId", table: "Students");
         migrationBuilder.DropForeignKey(name: "FK_CourseRegistrations_Campuses_CampusId", table: "CourseRegistrations");
+        migrationBuilder.DropForeignKey(name: "FK_StaffMembers_Campuses_CampusId", table: "StaffMembers");
         migrationBuilder.DropTable(name: "UserCampusAssignments");
         migrationBuilder.DropIndex(name: "IX_Students_CampusId", table: "Students");
         migrationBuilder.DropIndex(name: "IX_CourseRegistrations_CampusId", table: "CourseRegistrations");
+        migrationBuilder.DropIndex(name: "IX_StaffMembers_CampusId", table: "StaffMembers");
         migrationBuilder.DropColumn(name: "CampusId", table: "Students");
         migrationBuilder.DropColumn(name: "CampusId", table: "CourseRegistrations");
+        migrationBuilder.DropColumn(name: "CampusId", table: "StaffMembers");
     }
 }
