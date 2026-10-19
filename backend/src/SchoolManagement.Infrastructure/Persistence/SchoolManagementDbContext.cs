@@ -38,6 +38,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Institution> Institutions => Set<Institution>();
     public DbSet<Campus> Campuses => Set<Campus>();
+    public DbSet<UserCampusAssignment> UserCampusAssignments => Set<UserCampusAssignment>();
     public DbSet<InstitutionSettings> InstitutionSettings => Set<InstitutionSettings>();
     public DbSet<InstitutionGalleryImage> InstitutionGalleryImages => Set<InstitutionGalleryImage>();
     public DbSet<Applicant> Applicants => Set<Applicant>();
@@ -232,6 +233,16 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<StudentApplicationRecord>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.StudentId).IsUnique(); e.Property(x => x.ApplicationDataJson).HasColumnType("jsonb").IsRequired(); e.Property(x => x.PhotographData).HasColumnType("bytea"); e.Property(x => x.PhotographContentType).HasMaxLength(100); e.Property(x => x.PhotographFileName).HasMaxLength(255); e.Property(x => x.Status).HasMaxLength(30).IsRequired(); e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<Institution>(e => { e.HasKey(x => x.Id); e.HasIndex(x => x.Code).IsUnique(); e.Property(x => x.Code).HasMaxLength(50).IsRequired(); e.Property(x => x.Name).HasMaxLength(250).IsRequired(); e.Property(x => x.InstitutionType).HasMaxLength(100).IsRequired(); e.Property(x => x.RegistrationNumber).HasMaxLength(100); e.Property(x => x.Regulator).HasMaxLength(100); e.Property(x => x.Address).HasMaxLength(500); e.Property(x => x.District).HasMaxLength(100); e.Property(x => x.Region).HasMaxLength(100); e.Property(x => x.Phone).HasMaxLength(50); e.Property(x => x.Email).HasMaxLength(200); e.Property(x => x.Website).HasMaxLength(200); });
         m.Entity<Campus>(e => { e.HasKey(x => x.Id); e.HasIndex(x => new { x.InstitutionId, x.Code }).IsUnique(); e.Property(x => x.Code).HasMaxLength(50).IsRequired(); e.Property(x => x.Name).HasMaxLength(200).IsRequired(); e.Property(x => x.Address).HasMaxLength(500); e.Property(x => x.District).HasMaxLength(100); e.HasOne<Institution>().WithMany().HasForeignKey(x => x.InstitutionId).OnDelete(DeleteBehavior.Restrict); });
+        m.Entity<UserCampusAssignment>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.UserId, x.CampusId }).IsUnique();
+            e.HasIndex(x => x.UserId).IsUnique().HasFilter("\"IsPrimary\" = TRUE");
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Campus>().WithMany().HasForeignKey(x => x.CampusId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<Student>().HasOne<Campus>().WithMany().HasForeignKey(x => x.CampusId).OnDelete(DeleteBehavior.SetNull);
+        m.Entity<CourseRegistration>().HasOne<Campus>().WithMany().HasForeignKey(x => x.CampusId).OnDelete(DeleteBehavior.SetNull);
         m.Entity<InstitutionSettings>(e => { e.HasKey(x => x.Id); e.Property(x => x.InstitutionName).HasMaxLength(250).IsRequired(); e.Property(x => x.Abbreviation).HasMaxLength(50); e.Property(x => x.Motto).HasMaxLength(500); e.Property(x => x.Address).HasMaxLength(500); e.Property(x => x.Phone).HasMaxLength(50); e.Property(x => x.Email).HasMaxLength(200); e.Property(x => x.Website).HasMaxLength(200); e.Property(x => x.PostalAddress).HasMaxLength(200); e.Property(x => x.Country).HasMaxLength(100); e.Property(x => x.InstitutionType).HasMaxLength(100); e.Property(x => x.LogoPath).HasMaxLength(500); e.Property(x => x.LogoContentType).HasMaxLength(100); e.Property(x => x.PrimaryColor).HasMaxLength(20); e.Property(x => x.AccentColor).HasMaxLength(20); e.HasIndex(x => x.IsActive); });
     }
 }
