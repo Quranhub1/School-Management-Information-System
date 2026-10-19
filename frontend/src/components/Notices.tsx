@@ -33,6 +33,7 @@ export function Notices({ canManage }: { canManage?: boolean }) {
         priority: form.priority,
         audience: form.audience.trim() || 'All',
         expiresAt,
+        createdBy: '',
       });
       setForm({ title: '', body: '', priority: 'General', audience: 'All', expiresAt: '' });
       await load();
