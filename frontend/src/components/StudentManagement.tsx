@@ -7,11 +7,14 @@ import {
 } from '../api/students'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { notify } from './GlobalNotifications'
+import { getProgrammes, type Programme } from '../api/programmes'
+import { getCurricula, type Curriculum } from '../api/curriculumManagement'
+import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
 type ApplicationForm = {
-  academicYear: string; intake: string; course: string; entryStatus: string; programme: string;
+  academicYear: string; intake: string; course: string; authority: string; entryStatus: string; programme: string;
   firstName: string; otherNames: string; lastName: string; dateOfBirth: string; gender: string;
   village: string; subCounty: string; district: string; phone: string; email: string;
   nationality: string; religion: string; countryOfResidence: string;
@@ -23,7 +26,7 @@ type ApplicationForm = {
   applicationFee: string; feePaid: string; approvedBy: string; approvalSignature: string; approvalDate: string;
 }
 const emptyApplication: ApplicationForm = {
-  academicYear: '', intake: '', course: '', entryStatus: 'Direct', programme: 'Day',
+  academicYear: '', intake: '', course: '', authority: 'School-based', entryStatus: 'Direct', programme: 'Day',
   firstName: '', otherNames: '', lastName: '', dateOfBirth: '', gender: '', village: '', subCounty: '', district: '', phone: '', email: '',
   nationality: '', religion: '', countryOfResidence: '', seriousCondition: '', conditionDetails: '', regularMedication: '', medicationDetails: '', specialRequirements: '',
   fatherName: '', fatherAddress: '', fatherPhone: '', fatherOccupation: '', motherName: '', motherAddress: '', motherPhone: '', motherOccupation: '',
@@ -47,6 +50,9 @@ function Section({ number, title, children }: { number: string; title: string; c
 export function StudentManagement({ canManage = false, readOnly = false }: Props) {
   const { institution, loaded: institutionLoaded } = useInstitutionSettings()
   const [students, setStudents] = useState<Student[]>([])
+  const [academicProgrammes, setAcademicProgrammes] = useState<Programme[]>([])
+  const [academicCurricula, setAcademicCurricula] = useState<Curriculum[]>([])
+  const [courseOptionsError, setCourseOptionsError] = useState('')
   const [view, setView] = useState<'application' | 'registry'>('application')
   const [application, setApplication] = useState<ApplicationForm>(emptyApplication)
   const [education, setEducation] = useState<EducationRow[]>([emptyEducation()])
@@ -82,6 +88,20 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     finally { setGuardianLoading(false) }
   }
   useEffect(() => { if (canManage || readOnly) void load() }, [canManage, readOnly])
+  useEffect(() => {
+    if (!canManage && !readOnly) return
+    Promise.all([getProgrammes(), getCurricula()]).then(([programmeRows, curriculumRows]) => {
+      setAcademicProgrammes(programmeRows.filter(p => p.isActive))
+      setAcademicCurricula(curriculumRows.filter(c => c.isActive))
+    }).catch(e => setCourseOptionsError(e instanceof Error ? e.message : 'Unable to load academic programmes.'))
+  }, [canManage, readOnly])
+  const authorityOf = (programmeId: string) => resolveAcademicAuthority(academicProgrammes.find(p => p.id === programmeId)?.regulator)
+  const availableCurricula = academicCurricula.filter(c => authorityOf(c.programmeId) === application.authority)
+  const availableCourses = Array.from(new Set([
+    ...VERIFIED_ACADEMIC_COURSES.filter(course => course.authority === application.authority).map(course => course.name),
+    ...availableCurricula.map(c => c.title),
+    ...academicProgrammes.filter(p => authorityOf(p.id) === application.authority).map(p => p.name),
+  ])).sort((a, b) => a.localeCompare(b))
   useEffect(() => {
     if (!photo) { setPhotoPreview(''); return }
     const url = URL.createObjectURL(photo); setPhotoPreview(url)

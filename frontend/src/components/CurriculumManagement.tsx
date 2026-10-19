@@ -11,6 +11,7 @@ import {
   type CurriculumCourse,
 } from '../api/curriculumManagement'
 import { getProgrammes, type Programme } from '../api/programmes'
+import { resolveAcademicAuthority, type AcademicAuthority } from '../utils/academicAuthorities'
 
 type Tab = 'full' | 'short'
 
@@ -36,6 +37,14 @@ const UHPAB_LONG_COURSES: CatalogueEntry[] = [
 ]
 
 const UVTAB_LONG_COURSES: CatalogueEntry[] = [
+  { name: 'Certificate in Biomedical Engineering', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
+  { name: 'Diploma in Biomedical Engineering', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
+  { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
+  { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
+  { name: 'Certificate in Sonography', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Medical Imaging', review: true },
+  { name: 'Diploma in Sonography', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Medical Imaging', review: true },
+  { name: 'Certificate in Medical Records', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Health Informatics', review: true },
+  { name: 'Diploma in Medical Records', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Health Informatics', review: true },
   { name: 'National Certificate — Technology Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Technology', review: true },
   { name: 'Uganda Certificate in Practical Competencies (UCPC) — Technology', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Technology', review: true },
   { name: 'National Certificate — Agriculture Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Agriculture', review: true },
@@ -66,7 +75,17 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [courses, setCourses] = useState<Course[]>([])
   const [programmes, setProgrammes] = useState<Programme[]>([])
   const [selected, setSelected] = useState('')
+  const [authority, setAuthority] = useState<AcademicAuthority>('School-based')
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
+  const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
+  const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
+  const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === authority)
+  const authorityProgrammes = programmes.filter(p => p.isActive && authorityOfProgramme(p.id) === authority)
+  const authorityCurriculumIds = new Set(authorityCurricula.map(c => c.id))
+  const authorityCourses = courses.filter(course => {
+    const associations = allMappings.filter(mapping => mapping.courseId === course.id)
+    return associations.length === 0 || associations.some(mapping => authorityCurriculumIds.has(mapping.curriculumId))
+  })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -82,9 +101,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     try {
       setError('')
       const [a, b, c] = await Promise.all([getCurricula(), getCourses(), getProgrammes()])
+      const courseMappings = (await Promise.all(a.map(curriculum => getCurriculumCourses(curriculum.id).catch(() => [])))).flat()
       setCurricula(a)
       setCourses(b)
       setProgrammes(c)
+      setAllMappings(courseMappings)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load curriculum data.')
     }
@@ -225,6 +246,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       </div>
       {error && <div className="error">{error}</div>}
 
+      <div className="form-row academic-authority-picker">
+        <label>Curriculum authority
+          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setCf(current => ({ ...current, programmeId: '' })) }}>
+            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option><option value="UNMEB">UNMEB — Legacy records</option>
+          </select>
+        </label>
+      </div>
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
         <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => setTab('full')}>Full Programmes</button>
         <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => setTab('short')}>Short Courses</button>
@@ -236,18 +264,20 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>Long-course catalogue</h3>
             <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Verify need title or duration confirmation.</p>
           </div>
-          <section className="catalogue-board" aria-labelledby="uhpab-long-title">
+          {authority === 'UHPAB' && <section className="catalogue-board" aria-labelledby="uhpab-long-title">
             <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
             {renderCatalogue(UHPAB_LONG_COURSES, 'FullProgramme')}
-          </section>
-          <section className="catalogue-board uvtab-catalogue" aria-labelledby="uvtab-long-title">
+          </section>}
+          {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue" aria-labelledby="uvtab-long-title">
             <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
-          </section>
+          </section>}
+          {authority === 'School-based' && <p className="empty">School-based courses are taken from the curricula and courses you have created for the school.</p>}
+          {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
-              <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select programme</option>{programmes.filter(p => p.isActive).map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
+              <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select programme</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
               <div className="form-row">
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
                 <input required placeholder="Title" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
@@ -282,13 +312,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="form-row">
             <select value={selected} onChange={e => void refreshMappings(e.target.value)}>
               <option value="">Select curriculum</option>
-              {curricula.map(c => (
+              {authorityCurricula.map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
               ))}
             </select>
             <select value={mf.courseId} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
               <option value="">Select course</option>
-              {courses.map(c => (
+              {authorityCourses.map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
               ))}
             </select>
@@ -336,16 +366,19 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>Short and modular training</h3>
             <p>Select a row to prefill a draft. Confirm the approved title, award and duration before publishing.</p>
           </div>
-          <section className="catalogue-board uvtab-catalogue">
+          {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue">
             <h3>UVTAB · Modular and occupational skills</h3>
             {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
-          </section>
+          </section>}
+          {authority === 'School-based' && <p className="empty">School-based short courses are managed in your saved curricula.</p>}
+          {authority === 'UHPAB' && <p className="empty">UHPAB health programmes are listed under Full Programmes.</p>}
+          {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
             <form className="student-form" onSubmit={saveCurriculum}>
               <div className="form-row">
-                <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select the programme this short course belongs to</option>{programmes.filter(p => p.isActive).map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
+                <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select the programme this short course belongs to</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}</select>
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
               </div>
               <input required placeholder="Curriculum title (e.g. Certificate in Public Health)" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
