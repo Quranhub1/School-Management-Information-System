@@ -5,6 +5,7 @@ import {
   getStudents, saveStudentApplicationForm, updateStudentGuardian, type CreateStudentRequest, type GuardianInput, type Student, type StudentGuardian,
 } from '../api/students'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
+import { notify } from './GlobalNotifications'
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -137,8 +138,9 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       }
       setStudents(current => [created, ...current.filter(s => s.id !== created.id)])
       setNotice('Student application, photograph and student profile were saved successfully.')
+      notify('Student application and profile saved successfully.', 'success', 'Student saved')
       setView('registry')
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to save the application.') }
+    } catch (e) { const message = e instanceof Error ? e.message : 'Unable to save the application.'; setError(message); notify(message, 'error', 'Student save failed') }
     finally { setSaving(false) }
   }
   async function saveGuardian(event: FormEvent) {
@@ -147,8 +149,8 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     try {
       if (editingGuardianId) await updateStudentGuardian(guardianStudent.id, editingGuardianId, guardianForm)
       else await addStudentGuardian(guardianStudent.id, guardianForm)
-      setGuardianForm(emptyGuardian); setEditingGuardianId(null); await loadGuardians(guardianStudent.id); setNotice('Parent/guardian record saved.')
-    } catch (e) { setGuardianError(e instanceof Error ? e.message : 'Unable to save parent/guardian details.') }
+      setGuardianForm(emptyGuardian); setEditingGuardianId(null); await loadGuardians(guardianStudent.id); setNotice('Parent/guardian record saved.'); notify('Parent/guardian record saved successfully.', 'success', 'Guardian saved')
+    } catch (e) { const message = e instanceof Error ? e.message : 'Unable to save parent/guardian details.'; setGuardianError(message); notify(message, 'error', 'Guardian save failed') }
     finally { setGuardianSaving(false) }
   }
   function editGuardian(g: StudentGuardian) {
@@ -156,8 +158,8 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   }
   async function removeGuardian(g: StudentGuardian) {
     if (!guardianStudent || !window.confirm(`Remove ${g.fullName} from this student's records?`)) return
-    try { await deleteStudentGuardian(guardianStudent.id, g.id); await loadGuardians(guardianStudent.id) }
-    catch (e) { setGuardianError(e instanceof Error ? e.message : 'Unable to remove parent/guardian record.') }
+    try { await deleteStudentGuardian(guardianStudent.id, g.id); await loadGuardians(guardianStudent.id); notify('Parent/guardian record removed.', 'success', 'Record deleted') }
+    catch (e) { const message = e instanceof Error ? e.message : 'Unable to remove parent/guardian record.'; setGuardianError(message); notify(message, 'error', 'Delete failed') }
   }
   function openGuardians(s: Student) {
     setGuardianStudent(s); setGuardians([]); setGuardianForm(emptyGuardian); setEditingGuardianId(null); setGuardianError(''); void loadGuardians(s.id)
