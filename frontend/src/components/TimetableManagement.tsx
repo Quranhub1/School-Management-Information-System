@@ -159,6 +159,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
     const cells = Object.entries(templateCells)
     const populated = cells.filter(([, cell]) => cell.courseId || cell.teacherId)
+    if (templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)) { setError('Every period must have an end time later than its start time.'); return }
     if (populated.some(([, cell]) => !cell.courseId || !cell.teacherId)) { setError('Every filled timetable cell needs both a course and a teacher.'); return }
     setTemplateSaving(true)
     setError('')
@@ -257,13 +258,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <div className="timetable-template-editor-heading">
         <div><p className="timetable-eyebrow">Fillable timetable template</p><h3>Edit the timetable grid</h3><p>Select a class, then fill each period with a course, teacher and venue. Existing sessions for that class are loaded into the grid.</p></div>
         <div className="timetable-template-controls">
-          <label>Class / teaching group<select value={templateGroupId} onChange={event => setTemplateGroupId(event.target.value)}><option value="">Select class</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          <label>Class / teaching group<select value={templateGroupId} onChange={event => { setTemplateGroupId(event.target.value); setTemplateCells({}); setTemplateSlots(defaultTemplateSlots) }}><option value="">Select class</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
           <button className="timetable-action" type="button" onClick={loadTemplate} disabled={!templateGroupId}><Pencil size={15}/> Load class</button>
         </div>
       </div>
       {templateGroupId && <div className="timetable-grid-scroll">
         <table className="timetable-editable-grid">
-          <thead><tr><th>DAY</th>{templateSlots.map((slot, index) => <th key={slot.startTime}><span>PERIOD {index + 1}</span><label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map(item => item.startTime === slot.startTime ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map(item => item.startTime === slot.startTime ? { ...item, endTime: event.target.value } : item))}/></label></th>)}</tr></thead>
+          <thead><tr><th>DAY</th>{templateSlots.map((slot, index) => <th key={index}><span>PERIOD {index + 1}</span><label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label></th>)}</tr></thead>
           <tbody>{weekOrder.filter(day => day !== 0).map(day => <tr key={day}><th>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
             const key = day + '-' + slotIndex
             const cell = templateCells[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture' }
