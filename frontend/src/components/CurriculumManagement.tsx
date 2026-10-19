@@ -15,7 +15,39 @@ import { resolveAcademicAuthority, type AcademicAuthority } from '../utils/acade
 
 type Tab = 'full' | 'short'
 
-type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'UHPAB' | 'UVTAB'; family: string; review?: boolean }
+type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'School-based' | 'UHPAB' | 'UVTAB'; family: string; entryRequirements?: string; outcome?: string; review?: boolean }
+
+const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
+  { name: 'Certificate in Enrolled Nursing', award: 'Certificate', duration: 2.5, regulator: 'School-based', family: 'Nursing', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Enrolled Nurse' },
+  { name: 'Certificate in Enrolled Midwifery', award: 'Certificate', duration: 2.5, regulator: 'School-based', family: 'Midwifery', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Midwife' },
+  { name: 'Certificate in Pharmacy', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Pharmacy', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Pharmacy Assistant' },
+  { name: 'Certificate in Medical Laboratory Techniques', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Laboratory', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Medical Laboratory Technician' },
+  { name: 'Certificate in Public Health', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Public Health', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Public Health Officer' },
+  { name: 'Certificate in Medical Records and Health Informatics', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Health Informatics', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Medical Records Officer' },
+  { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Food Science & Nutrition', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Food Science Technician' },
+  { name: 'Certificate in Biomedical Engineering', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Biomedical Engineering', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Medical Engineer' },
+  { name: 'Certificate in Secretarial Studies and Office Management', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Administration', entryRequirements: "O'level with at least 5 passes including Mathematics, English, Chemistry and Physics", outcome: 'Administrator / Office Manager' },
+  { name: 'Certificate in Guidance and Counselling', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Counselling', entryRequirements: "O'level with at least 5 passes including Mathematics and English", outcome: 'Counsellor' },
+  { name: 'Certificate in Records and Information Management', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Records Management', entryRequirements: "O'level with at least 5 passes in any subjects", outcome: 'Records Manager' },
+  { name: 'Diploma in Clinical Medicine and Community Health', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Clinical Medicine', entryRequirements: 'A-level with at least a principal pass in Biology and a subsidiary in Chemistry', outcome: 'Clinical Officer' },
+  { name: 'Diploma in Pharmacy', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Pharmacy', entryRequirements: 'A-level with at least a principal pass in Chemistry and a subsidiary in Biology', outcome: 'Pharmacist' },
+  { name: 'Diploma in Diagnostic Sonography', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Medical Imaging', entryRequirements: 'A-level with at least a principal pass in Biology and two subsidiaries', outcome: 'Medical Records Officer (as listed on the website)' },
+  { name: 'Diploma in Biomedical Engineering', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Biomedical Engineering', entryRequirements: 'A-level with at least one principal pass in Mathematics or Physics; or a certificate in an engineering field from a recognised institution', outcome: 'Biomedical Technician' },
+  { name: 'Diploma in Secretarial Studies and Office Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Administration', entryRequirements: 'A-level with at least one principal pass in any subject', outcome: 'Senior Administrator / Office Manager' },
+  { name: 'Diploma in Medical Records and Health Informatics', award: 'Diploma', duration: 3, regulator: 'School-based', family: 'Health Informatics', entryRequirements: 'A-level with at least one principal pass in any arts or science subject; or a certificate in Medical Records or a related field', outcome: 'Medical Records Officer' },
+  { name: 'Diploma in Public Health', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Public Health', entryRequirements: 'A-level with at least one principal pass in any arts or science subject; or a certificate in Public Health or a related field', outcome: 'Public Health Officer' },
+  { name: 'Diploma in Records and Information Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Records Management', entryRequirements: 'A-level with at least one principal pass in any arts or science subject', outcome: 'Records Manager' },
+  { name: 'Diploma in Health Counselling and Guidance', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Counselling', entryRequirements: 'A-level with at least one principal pass in an arts or science subject; or a certificate in a related field', outcome: 'Health Counsellor' },
+  { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Food Science & Nutrition', entryRequirements: 'A-level with at least one principal pass in any arts or science subject', outcome: 'Food Science Technician' },
+]
+
+const SCHOOL_BASED_SHORT_COURSES: CatalogueEntry[] = [
+  { name: 'Bridging Programme', award: 'Bridging programme', duration: 0.75, regulator: 'School-based', family: 'Access programme', entryRequirements: 'Not specified on the listed programme page', outcome: 'Access route to diploma courses' },
+  { name: 'Advanced Diploma in Diagnostic Sonography', award: 'Advanced Diploma', duration: 1, regulator: 'School-based', family: 'Medical Imaging', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
+  { name: 'Diploma in Human Nutrition and Dietetics', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Nutrition', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
+  { name: 'Diploma in Food Science and Technology', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Food Science & Technology', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
+  { name: 'Advanced Diploma in Health Promotion and Education', award: 'Advanced Diploma', duration: 2, regulator: 'School-based', family: 'Public Health', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
+]
 
 const UHPAB_LONG_COURSES: CatalogueEntry[] = [
   { name: 'Certificate in Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing' },
@@ -238,7 +270,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <th>Award</th>
               <th>Duration</th>
               <th>Area</th>
-              <th>Review</th>
+              {authority === 'School-based' && <><th>Entry requirements (website listing)</th><th>Professional outcome</th></>}
+              <th>Source status</th>
               <th aria-label="Action"></th>
             </tr>
           </thead>
@@ -249,9 +282,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <td>{course.award}</td>
                 <td>{course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
                 <td>{course.family}</td>
+                {authority === 'School-based' && <><td>{course.entryRequirements ?? 'Not listed'}</td><td>{course.outcome ?? 'Not listed'}</td></>}
                 <td>
                   <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
-                    {course.review ? 'Needs verification' : 'Reference listing'}
+                    {course.review ? 'Needs verification' : 'Website reference'}
                   </span>
                 </td>
                 <td className="catalogue-action-cell">
@@ -307,7 +341,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
           </section>}
-          {authority === 'School-based' && <p className="empty">School-based courses are taken from the curricula and courses you have created for the school.</p>}
+          {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-long-title"><h3 id="school-based-long-title">School-based · KSHS programme list</h3><p className="catalogue-footnote">Transcribed from the KSHS programmes page, which labels this list 2024/2025. These are school website references, not a statement of current external accreditation. Confirm current admissions requirements before publishing.</p>{renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}</section>
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
