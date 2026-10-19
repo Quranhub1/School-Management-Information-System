@@ -59,7 +59,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboardCompatibility(CancellationToken cancellationToken)
     {
-        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(cancellationToken);
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
         var invoices = db.StudentInvoices.AsNoTracking().AsQueryable();
         var payments = db.Payments.AsNoTracking().AsQueryable();
@@ -98,7 +98,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             from invoice in invoices.DefaultIfEmpty()
             select new { payment, student, invoice };
 
-        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(cancellationToken);
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
         if (accessibleCampuses is not null)
             query = query.Where(x => x.student.CampusId.HasValue && accessibleCampuses.Contains(x.student.CampusId.Value));
@@ -123,7 +123,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     [HttpGet("reports/outstanding-balances")]
     public async Task<IActionResult> GetOutstandingBalancesCompatibility(CancellationToken cancellationToken)
     {
-        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(cancellationToken);
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
         var dataQuery = (
             from invoice in db.StudentInvoices.AsNoTracking()
