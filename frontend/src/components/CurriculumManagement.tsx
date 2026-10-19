@@ -176,17 +176,38 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
   function renderCatalogue(entries: CatalogueEntry[], type: 'FullProgramme' | 'ShortCourse') {
     return (
-      <div className="short-course-grid">
-        {entries.map(course => (
-          <button type="button" key={course.name} className="short-course-card" onClick={() => applyCourseTemplate(course, type)}>
-            <h4>{course.name}</h4>
-            <p>Award: {course.award}</p>
-            <p>Duration: {course.duration ? `${course.duration} year(s) (indicative)` : 'Confirm from official programme document'}</p>
-            <span className="badge">{course.family}</span>
-            {course.review && <p><strong>Needs official-title / duration verification</strong></p>}
-            <span className="catalogue-action">Use as draft</span>
-          </button>
-        ))}
+      <div className="catalogue-table-wrap">
+        <table className="catalogue-table">
+          <thead>
+            <tr>
+              <th>Programme / course</th>
+              <th>Award</th>
+              <th>Duration</th>
+              <th>Area</th>
+              <th>Review</th>
+              <th aria-label="Action"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map(course => (
+              <tr key={course.name}>
+                <td className="catalogue-course-name">{course.name}</td>
+                <td>{course.award}</td>
+                <td>{course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
+                <td>{course.family}</td>
+                <td>
+                  <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
+                    {course.review ? 'Verify' : 'Reference'}
+                  </span>
+                </td>
+                <td className="catalogue-action-cell">
+                  <button type="button" onClick={() => applyCourseTemplate(course, type)}>Use draft</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="catalogue-footnote">* Indicative duration where listed. Confirm against the approved programme document before publishing.</p>
       </div>
     )
   }
@@ -213,7 +234,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <>
           <div className="catalogue-intro">
             <h3>Long-course catalogue</h3>
-            <p>UHPAB health qualifications and UVTAB vocational/technical programmes are kept in separate sections. Select an entry to prefill a draft curriculum; it is not saved until you submit the form. UVTAB entries marked for review are programme families or working titles awaiting exact title and duration verification.</p>
+            <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Verify need title or duration confirmation.</p>
           </div>
           <section className="catalogue-board" aria-labelledby="uhpab-long-title">
             <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
@@ -313,7 +334,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <div className="short-course-section">
           <div className="catalogue-intro">
             <h3>Short and modular training</h3>
-            <p>Short-course entries are kept separate from full qualifications. Select an entry to prefill a draft; confirm the approved title, award and duration before saving it as an official course.</p>
+            <p>Select a row to prefill a draft. Confirm the approved title, award and duration before publishing.</p>
           </div>
           <section className="catalogue-board uvtab-catalogue">
             <h3>UVTAB · Modular and occupational skills</h3>
