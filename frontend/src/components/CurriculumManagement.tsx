@@ -283,12 +283,12 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <tr key={course.name}>
                 <td className="catalogue-course-name">{course.name}</td>
                 <td>{course.award}</td>
-                <td>{course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
+                <td>{course.duration === 0.75 ? '9 months*' : course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
                 <td>{course.family}</td>
                 {authority === 'School-based' && <><td>{course.entryRequirements ?? 'Not listed'}</td><td>{course.outcome ?? 'Not listed'}</td></>}
                 <td>
                   <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
-                    {course.review ? 'Needs verification' : 'Website reference'}
+                    {course.review ? 'Needs verification' : authority === 'School-based' ? 'KSHS website' : 'Reference listing'}
                   </span>
                 </td>
                 <td className="catalogue-action-cell">
@@ -334,7 +334,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <>
           <div className="catalogue-intro">
             <h3>Long-course catalogue</h3>
-            <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Verify need title or duration confirmation.</p>
+            <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Needs verification need title or duration confirmation.</p>
           </div>
           {authority === 'UHPAB' && <section className="catalogue-board" aria-labelledby="uhpab-long-title">
             <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
