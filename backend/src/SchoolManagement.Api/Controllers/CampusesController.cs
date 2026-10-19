@@ -28,6 +28,8 @@ public sealed class CampusesController(SchoolManagementDbContext db) : Controlle
    foreach(var student in unassignedStudents)student.CampusId=campus.Id;
    var unassignedRegistrations=await db.CourseRegistrations.Where(x=>x.CampusId==null).ToListAsync(ct);
    foreach(var registration in unassignedRegistrations)registration.CampusId=campus.Id;
+   var unassignedStaff=await db.StaffMembers.Where(x=>x.CampusId==null).ToListAsync(ct);
+   foreach(var staff in unassignedStaff)staff.CampusId=campus.Id;
    var users=await db.Users.Where(x=>x.IsActive).ToListAsync(ct);
    var userIds=users.Select(x=>x.Id).ToArray();
    var assignedUserIds=await db.UserCampusAssignments.Where(x=>userIds.Contains(x.UserId)).Select(x=>x.UserId).Distinct().ToListAsync(ct);
