@@ -82,7 +82,9 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
         return Created($"/api/assessments/records/{assessment.Id}", assessment);
     }
 
-    public sealed record CreateAssessmentPlanRequest(Guid CourseId, string? Name, string? AssessmentType, decimal WeightPercentage, bool IsCompetencyBased);\n\n    public sealed record RecordAssessmentRequest(
+    public sealed record CreateAssessmentPlanRequest(Guid CourseId, string? Name, string? AssessmentType, decimal WeightPercentage, bool IsCompetencyBased);
+
+    public sealed record RecordAssessmentRequest(
         Guid StudentId,
         Guid CourseRegistrationId,
         Guid AssessmentPlanId,
