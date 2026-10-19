@@ -436,3 +436,40 @@ h1, h2, h3, h4, h5, h6,
 .app-shell > aside nav button:focus-visible {
   outline-color: #c9bea5 !important;
 }
+
+
+/* Consistent rectangular action buttons across all application workspaces.
+   Navigation tabs, sidebar controls, text links, and secondary/danger actions
+   retain their distinct purpose and visual hierarchy. */
+.app-shell .content button:not(.secondary-button):not(.link-button):not(.sidebar-item):not(.library-tabs button):not(.library-workspace-tabs button):not(.admin-dashboard-tabs button):not(.inventory-register-tab):not([role="tab"]):not([aria-pressed]):not(.icon-button):not(.close-button):not(.btn-danger):not(.danger-button):not(.delete-button) {
+  border-radius: 3px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.app-shell .content button:not(.secondary-button):not(.link-button):not(.sidebar-item):not(.library-tabs button):not(.library-workspace-tabs button):not(.admin-dashboard-tabs button):not(.inventory-register-tab):not([role="tab"]):not([aria-pressed]):not(.icon-button):not(.close-button):not(.btn-danger):not(.danger-button):not(.delete-button) {
+  border: 1px solid #166534 !important;
+  background: #15803d !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  font-weight: 650;
+}
+.app-shell .content button:not(.secondary-button):not(.link-button):not(.sidebar-item):not(.library-tabs button):not(.library-workspace-tabs button):not(.admin-dashboard-tabs button):not(.inventory-register-tab):not([role="tab"]):not([aria-pressed]):not(.icon-button):not(.close-button):not(.btn-danger):not(.danger-button):not(.delete-button):hover:not(:disabled) {
+  border-color: #14532d !important;
+  background: #166534 !important;
+  color: #ffffff !important;
+}
+.app-shell .content button:not(.secondary-button):not(.link-button):not(.sidebar-item):not(.library-tabs button):not(.library-workspace-tabs button):not(.admin-dashboard-tabs button):not(.inventory-register-tab):not([role="tab"]):not([aria-pressed]):not(.icon-button):not(.close-button):not(.btn-danger):not(.danger-button):not(.delete-button):focus-visible {
+  outline: 3px solid rgba(22, 163, 74, .28) !important;
+  outline-offset: 2px;
+}
+.app-shell .content button:not(.secondary-button):not(.link-button):not(.sidebar-item):not(.library-tabs button):not(.library-workspace-tabs button):not(.admin-dashboard-tabs button):not(.inventory-register-tab):not([role="tab"]):not([aria-pressed]):not(.icon-button):not(.close-button):not(.btn-danger):not(.danger-button):not(.delete-button):disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+.app-shell .content .secondary-button {
+  border-radius: 3px !important;
+  box-shadow: none !important;
+}
+.app-shell .content :is(.btn-danger, .danger-button, .delete-button, button[class*="destructive"], button[class*="delete"]) {
+  border-radius: 3px !important;
+}
