@@ -5,13 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Inventory;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Api.Services;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/inventory/registers")]
 [Authorize(Policy = AuthorizationPolicies.InventoryManagement)]
-public sealed class InventoryRegistersController(SchoolManagementDbContext db) : ControllerBase
+public sealed class InventoryRegistersController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     private static readonly InventoryRegisterColumn[] DefaultColumns =
     [
@@ -28,8 +29,12 @@ public sealed class InventoryRegistersController(SchoolManagementDbContext db) :
         if (string.IsNullOrWhiteSpace(sectionId) || sectionId.Length > 100)
             return BadRequest(new { message = "A valid inventory section is required." });
 
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        var campusId = await campusAccess.ResolveCampusForWriteAsync(User, null, ct);
+        if (accessibleCampuses is not null && !campusId.HasValue) return Forbid();
         var saved = await db.InventoryRegisters.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.SectionId == sectionId, ct);
+            .SingleOrDefaultAsync(x => x.SectionId == sectionId && x.CampusId == campusId, ct);
         if (saved is null)
             return Ok(new InventoryRegisterDto(sectionId, DefaultColumns, Array.Empty<InventoryRegisterRow>(), DateTimeOffset.UtcNow));
 
@@ -54,7 +59,11 @@ public sealed class InventoryRegistersController(SchoolManagementDbContext db) :
         if (request.Rows.Any(x => string.IsNullOrWhiteSpace(x.Id) || x.Values is null))
             return BadRequest(new { message = "Every row requires an ID and cell values." });
 
-        var existing = await db.InventoryRegisters.SingleOrDefaultAsync(x => x.SectionId == sectionId, ct);
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        var campusId = await campusAccess.ResolveCampusForWriteAsync(User, null, ct);
+        if (accessibleCampuses is not null && !campusId.HasValue) return Forbid();
+        var existing = await db.InventoryRegisters.SingleOrDefaultAsync(x => x.SectionId == sectionId && x.CampusId == campusId, ct);
         if (!User.IsInRole(InstitutionalRoles.SystemAdministrator) && HasThresholdChanges(existing, request.Rows))
             return Forbid();
 
@@ -63,6 +72,7 @@ public sealed class InventoryRegistersController(SchoolManagementDbContext db) :
         {
             existing = new InventoryRegister
             {
+                CampusId = campusId,
                 SectionId = sectionId,
                 ColumnsJson = JsonSerializer.Serialize(request.Columns),
                 RowsJson = JsonSerializer.Serialize(request.Rows),
