@@ -5,13 +5,14 @@ using SchoolManagement.Application.Assessment;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Assessment;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Api.Services;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/assessments")]
 [Authorize(Policy = AuthorizationPolicies.ExaminationManagement)]
-public sealed class AssessmentsController(AssessmentService service, SchoolManagementDbContext db) : ControllerBase
+public sealed class AssessmentsController(AssessmentService service, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet("plans")]
     public async Task<ActionResult<IReadOnlyList<AssessmentPlan>>> GetPlans(
@@ -69,19 +70,30 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
     [HttpGet("registrations/{courseRegistrationId:guid}")]
     public async Task<ActionResult<IReadOnlyList<StudentAssessment>>> GetStudentAssessments(
         Guid courseRegistrationId,
-        CancellationToken cancellationToken) =>
-        Ok(await service.GetStudentAssessmentsAsync(courseRegistrationId, cancellationToken));
+        CancellationToken cancellationToken)
+    {
+        var registration = await db.CourseRegistrations.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == courseRegistrationId, cancellationToken);
+        if (registration is null) return NotFound(new { message = "Course registration was not found." });
+        if (!await campusAccess.CanAccessStudentAsync(User, registration.StudentId, cancellationToken)) return Forbid();
+        return Ok(await service.GetStudentAssessmentsAsync(courseRegistrationId, cancellationToken));
+    }
 
     [HttpGet("records/{id:guid}")]
     public async Task<ActionResult<StudentAssessment>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var assessment = await service.GetStudentAssessmentByIdAsync(id, cancellationToken);
-        return assessment is null ? NotFound() : Ok(assessment);
+        if (assessment is null) return NotFound();
+        if (!await campusAccess.CanAccessStudentAsync(User, assessment.StudentId, cancellationToken)) return Forbid();
+        return Ok(assessment);
     }
 
     [HttpPatch("records/{id:guid}/finalize")]
     public async Task<ActionResult<StudentAssessment>> Finalize(Guid id, CancellationToken cancellationToken)
     {
+        var existing = await service.GetStudentAssessmentByIdAsync(id, cancellationToken);
+        if (existing is null) return NotFound(new { message = "Assessment record was not found." });
+        if (!await campusAccess.CanAccessStudentAsync(User, existing.StudentId, cancellationToken)) return Forbid();
         try
         {
             var assessment = await service.FinalizeStudentAssessmentAsync(id, cancellationToken);
@@ -100,6 +112,7 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
     {
         if (request.StudentId == Guid.Empty || request.CourseRegistrationId == Guid.Empty || request.AssessmentPlanId == Guid.Empty)
             return BadRequest(new { message = "Student, course registration and assessment plan are required." });
+        if (!await campusAccess.CanAccessStudentAsync(User, request.StudentId, cancellationToken)) return Forbid();
 
         var registration = await db.CourseRegistrations.AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == request.CourseRegistrationId, cancellationToken);
