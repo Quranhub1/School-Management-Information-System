@@ -9,7 +9,7 @@ import {
 } from '../api/examinationResults';
 import type { TranscriptEntry } from '../types/academic';
 
-type View = 'sessions' | 'marks' | 'report-cards' | 'approvals' | 'reports';
+type View = 'sessions' | 'marks' | 'report-cards' | 'reports';
 
 export function ExaminationManagement({ canManage = false }: { canManage?: boolean }) {
   const [view, setView] = useState<View>('sessions');
@@ -120,7 +120,6 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
           ['sessions', 'Assessment plans'],
           ['marks', 'Marks entry'],
           ['report-cards', 'Student transcript'],
-          ['approvals', 'Finalization status'],
           ['reports', 'Assessment report'],
         ] as [View, string][]).map(([key, label]) => (
           <button key={key} type="button" role="tab" aria-selected={view === key} className={view === key ? 'active' : ''} onClick={() => setView(key)}>{label}</button>
@@ -181,18 +180,10 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
         </section>
       )}
 
-      {view === 'approvals' && (
-        <section className="academic-authority-workspace">
-          <h4>Finalization status</h4>
-          <p>Load marks for a course registration in Marks Entry to inspect whether each recorded assessment has been finalized.</p>
-          <p className="empty">Finalization is read-only here; the server currently exposes assessment recording and retrieval, not a mark-approval endpoint.</p>
-        </section>
-      )}
-
       {view === 'reports' && (
         <section className="academic-authority-workspace">
           <h4>Assessment report</h4>
-          <p>Use Marks Entry to retrieve the persisted assessment records for a course registration, or Student Transcript to retrieve the student's academic transcript.</p>
+          <p>Summary of the assessment records currently loaded for the selected course registration.</p>
           {registrationAssessments.length > 0 && <p>{registrationAssessments.length} assessment record(s) loaded. Total score: {registrationAssessments.reduce((sum, item) => sum + item.score, 0)} / {registrationAssessments.reduce((sum, item) => sum + item.maximumScore, 0)}.</p>}
         </section>
       )}
