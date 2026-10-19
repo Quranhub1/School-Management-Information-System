@@ -264,14 +264,16 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>Long-course catalogue</h3>
             <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Verify need title or duration confirmation.</p>
           </div>
-          <section className="catalogue-board" aria-labelledby="uhpab-long-title">
+          {authority === 'UHPAB' && <section className="catalogue-board" aria-labelledby="uhpab-long-title">
             <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
             {renderCatalogue(UHPAB_LONG_COURSES, 'FullProgramme')}
-          </section>
-          <section className="catalogue-board uvtab-catalogue" aria-labelledby="uvtab-long-title">
+          </section>}
+          {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue" aria-labelledby="uvtab-long-title">
             <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
-          </section>
+          </section>}
+          {authority === 'School-based' && <p className="empty">School-based courses are taken from the curricula and courses you have created for the school.</p>}
+          {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
@@ -364,10 +366,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>Short and modular training</h3>
             <p>Select a row to prefill a draft. Confirm the approved title, award and duration before publishing.</p>
           </div>
-          <section className="catalogue-board uvtab-catalogue">
+          {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue">
             <h3>UVTAB · Modular and occupational skills</h3>
             {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
-          </section>
+          </section>}
+          {authority === 'School-based' && <p className="empty">School-based short courses are managed in your saved curricula.</p>}
+          {authority === 'UHPAB' && <p className="empty">UHPAB health programmes are listed under Full Programmes.</p>}
+          {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
