@@ -14,18 +14,50 @@ import { getProgrammes, type Programme } from '../api/programmes'
 
 type Tab = 'full' | 'short'
 
-const UHPAB_SHORT_COURSES = [
-  { name: 'Certificate in Public Health', award: 'Certificate', duration: 1, regulator: 'UHPAB', authority: 'UHPAB', family: 'Health' as const },
-  { name: 'Diploma in Public Health', award: 'Diploma', duration: 2, regulator: 'UHPAB', authority: 'UHPAB', family: 'Health' as const },
-  { name: 'Certificate in Laboratory Technology', award: 'Certificate', duration: 1, regulator: 'UHPAB', authority: 'UHPAB', family: 'Health' as const },
-  { name: 'Certificate in Pharmacy Technician', award: 'Certificate', duration: 2, regulator: 'UHPAB', authority: 'UHPAB', family: 'Health' as const },
+type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'UHPAB' | 'UVTAB'; family: string; review?: boolean }
+
+const UHPAB_LONG_COURSES: CatalogueEntry[] = [
+  { name: 'Certificate in Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing' },
+  { name: 'Certificate in Midwifery', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Midwifery' },
+  { name: 'Certificate in Mental Health Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing' },
+  { name: 'Certificate in Emergency Care', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Allied Health' },
+  { name: 'Certificate in Environmental Health Sciences', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Allied Health' },
+  { name: 'Certificate in Medical Laboratory Techniques', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Laboratory' },
+  { name: 'Certificate in Medical Records and Health Informatics', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Health Informatics' },
+  { name: 'Certificate in Medical Theatre Techniques', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Allied Health' },
+  { name: 'Certificate in Pharmacy', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Pharmacy' },
+  { name: 'Diploma in Nursing', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
+  { name: 'Diploma in Midwifery', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Midwifery' },
+  { name: 'Diploma in Mental Health Nursing', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
+  { name: 'Diploma in Paediatrics and Child Health Nursing', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
+  { name: 'Diploma in Public Health Nursing', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
+  { name: 'Diploma in Comprehensive Nursing (legacy intake)', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing', review: true },
+  { name: 'Advanced Diploma in Palliative Care Nursing', award: 'Advanced Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
 ]
 
-const UVTAB_SHORT_COURSES = [
-  { name: 'Certificate in Automotive Engineering', award: 'Certificate', duration: 1, regulator: 'UVTAB', authority: 'UVTAB', family: 'Automotive' as const },
-  { name: 'Diploma in Electrical Installation', award: 'Diploma', duration: 2, regulator: 'UVTAB', authority: 'UVTAB', family: 'ElectricalElectronics' as const },
-  { name: 'Certificate in Plumbing', award: 'Certificate', duration: 1, regulator: 'UVTAB', authority: 'UVTAB', family: 'Construction' as const },
-  { name: 'Certificate in Building Construction', award: 'Certificate', duration: 1, regulator: 'UVTAB', authority: 'UVTAB', family: 'Construction' as const },
+const UVTAB_LONG_COURSES: CatalogueEntry[] = [
+  { name: 'National Certificate — Technology Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Technology', review: true },
+  { name: 'Uganda Certificate in Practical Competencies (UCPC) — Technology', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Technology', review: true },
+  { name: 'National Certificate — Agriculture Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Agriculture', review: true },
+  { name: 'Uganda Certificate in Practical Competencies (UCPC) — Agriculture', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Agriculture', review: true },
+  { name: 'National Certificate — Home Science Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Home Science', review: true },
+  { name: 'Uganda Certificate in Practical Competencies (UCPC) — Home Science', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Home Science', review: true },
+  { name: 'Hotel and Institutional Catering', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Hospitality', review: true },
+  { name: 'Cosmetology and Beauty', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Beauty', review: true },
+  { name: 'Fashion and Design', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Fashion', review: true },
+  { name: 'Leather Tanning', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Manufacturing', review: true },
+  { name: 'Building and Construction trades', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Construction', review: true },
+  { name: 'Electrical Installation trades', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Electrical', review: true },
+  { name: 'Mechanical Engineering trades', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Engineering', review: true },
+  { name: 'Business-related programmes', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Business', review: true },
+  { name: 'Animal Production, Fisheries and Agribusiness', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Agriculture', review: true },
+  { name: 'Forestry, Beekeeping and Agroforestry', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Natural Resources', review: true },
+]
+
+const UVTAB_SHORT_COURSES: CatalogueEntry[] = [
+  { name: 'Worker-acquired skills assessment', award: 'Modular / skills award', duration: null, regulator: 'UVTAB', family: 'Skills assessment', review: true },
+  { name: 'Occupational skills Levels I–IV', award: 'Occupational award', duration: null, regulator: 'UVTAB', family: 'Modular TVET', review: true },
+  { name: 'Short modular vocational training package', award: 'Modular award', duration: null, regulator: 'UVTAB', family: 'Vocational', review: true },
 ]
 
 export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
@@ -130,16 +162,33 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     }
   }
 
-  function applyShortCourseTemplate(course: typeof UHPAB_SHORT_COURSES[0] | typeof UVTAB_SHORT_COURSES[0]) {
+  function applyCourseTemplate(course: CatalogueEntry, type: 'FullProgramme' | 'ShortCourse') {
     setCf({
       programmeId: '',
       version: '1.0',
       title: course.name,
-      minimumCredits: String(course.duration * 30),
+      minimumCredits: course.duration ? String(course.duration * 30) : '',
       effectiveFrom: new Date().toISOString().slice(0, 10),
       effectiveTo: '',
-      type: 'ShortCourse',
+      type,
     })
+  }
+
+  function renderCatalogue(entries: CatalogueEntry[], type: 'FullProgramme' | 'ShortCourse') {
+    return (
+      <div className="short-course-grid">
+        {entries.map(course => (
+          <button type="button" key={course.name} className="short-course-card" onClick={() => applyCourseTemplate(course, type)}>
+            <h4>{course.name}</h4>
+            <p>Award: {course.award}</p>
+            <p>Duration: {course.duration ? `${course.duration} year(s) (indicative)` : 'Confirm from official programme document'}</p>
+            <span className="badge">{course.family}</span>
+            {course.review && <p><strong>Needs official-title / duration verification</strong></p>}
+            <span className="catalogue-action">Use as draft</span>
+          </button>
+        ))}
+      </div>
+    )
   }
 
   if (!canManage) return null
@@ -157,11 +206,23 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
         <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => setTab('full')}>Full Programmes</button>
-        <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => setTab('short')}>Short Courses (UHPAB/UVTAB)</button>
+        <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => setTab('short')}>Short Courses</button>
       </div>
 
       {tab === 'full' && (
         <>
+          <div className="catalogue-intro">
+            <h3>Long-course catalogue</h3>
+            <p>UHPAB health qualifications and UVTAB vocational/technical programmes are kept in separate sections. Select an entry to prefill a draft curriculum; it is not saved until you submit the form. UVTAB entries marked for review are programme families or working titles awaiting exact title and duration verification.</p>
+          </div>
+          <section className="catalogue-board" aria-labelledby="uhpab-long-title">
+            <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
+            {renderCatalogue(UHPAB_LONG_COURSES, 'FullProgramme')}
+          </section>
+          <section className="catalogue-board uvtab-catalogue" aria-labelledby="uvtab-long-title">
+            <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
+            {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
+          </section>
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
@@ -250,33 +311,18 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       {tab === 'short' && (
         <div className="short-course-section">
-          <h3>UHPAB Short Courses (Health)</h3>
-          
-          <div className="short-course-grid">
-            {UHPAB_SHORT_COURSES.map(course => (
-              <div key={course.name} className="short-course-card" onClick={() => applyShortCourseTemplate(course)}>
-                <h4>{course.name}</h4>
-                <p>Regulator: {course.regulator}</p>
-                <p>Award: {course.award}</p>
-                <p>Duration: {course.duration} year(s)</p>
-                <span className="badge">{course.family}</span>
-              </div>
-            ))}
+          <div className="catalogue-intro">
+            <h3>Short and modular training</h3>
+            <p>Short-course entries are kept separate from full qualifications. Select an entry to prefill a draft; confirm the approved title, award and duration before saving it as an official course.</p>
           </div>
-
-          <h3>UVTAB Short Courses (TVET)</h3>
-          
-          <div className="short-course-grid">
-            {UVTAB_SHORT_COURSES.map(course => (
-              <div key={course.name} className="short-course-card" onClick={() => applyShortCourseTemplate(course)}>
-                <h4>{course.name}</h4>
-                <p>Regulator: {course.regulator}</p>
-                <p>Award: {course.award}</p>
-                <p>Duration: {course.duration} year(s)</p>
-                <span className="badge">{course.family}</span>
-              </div>
-            ))}
-          </div>
+          <section className="catalogue-board uvtab-catalogue">
+            <h3>UVTAB · Modular and occupational skills</h3>
+            {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
+          </section>
+          <section className="catalogue-board">
+            <h3>UHPAB · Health short courses</h3>
+            <p>No standalone UHPAB short-course list has been verified in the reviewed catalogue. Add health short training here only after confirming the relevant authority, provider and award.</p>
+          </section>
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
