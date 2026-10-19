@@ -4,6 +4,7 @@ import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, typ
 import { type InstitutionSettings } from '../api/institutionSettings'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
+import { confirmAction } from './GlobalNotifications'
 
 const roles = ['SystemAdministrator', 'AcademicRegistrar', 'AssistantRegistrar', 'AdmissionsOfficer', 'Accountant', 'AssistantAccountant', 'Lecturer', 'ExaminationsOfficer', 'Student', 'SchoolWarden', 'Principal', 'Director', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'Receptionist', 'AssistantPrincipal', 'Admin Secretary', 'Records Officer', 'Librarian', 'HR Manager']
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['AcademicRegistrar'] }
@@ -189,7 +190,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
   }
 
   async function removeAccess(user: UserSummary) {
-    if (!user.isActive || !window.confirm(`Remove sign-in access for ${user.username}? Their records will be retained.`)) return
+    if (!user.isActive || !await confirmAction(`Remove sign-in access for ${user.username}? Their records will be retained.`, 'Remove sign-in access', 'Remove access')) return
     await toggle(user)
   }
 
