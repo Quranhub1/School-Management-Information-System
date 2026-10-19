@@ -542,3 +542,61 @@ h1, h2, h3, h4, h5, h6,
   outline: 3px solid rgba(22, 163, 74, .28) !important;
   outline-offset: 2px;
 }
+
+
+/* Final workspace-wide action-button pass.
+   Apply to every signed-in screen (not only descendants of .content) so controls
+   such as Load Leave and Retry actions receive the same treatment. Keep sidebar,
+   navigation tabs, icon-only controls and destructive buttons distinct. */
+.app-shell button:not(aside button):not(nav button):not([role="tab"]):not([aria-pressed]):not(.inventory-register-tab):not(.icon-button):not(.close-button):not(.link-button):not(.btn-danger):not(.danger-button):not(.delete-button):not([class*="danger"]):not([class*="delete"]):not([class*="destructive"]) {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 13px;
+  border: 1px solid #166534 !important;
+  border-radius: 3px !important;
+  background: #15803d !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-decoration: none;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.app-shell button:not(aside button):not(nav button):not([role="tab"]):not([aria-pressed]):not(.inventory-register-tab):not(.icon-button):not(.close-button):not(.link-button):not(.btn-danger):not(.danger-button):not(.delete-button):not([class*="danger"]):not([class*="delete"]):not([class*="destructive"]):hover:not(:disabled) {
+  border-color: #14532d !important;
+  background: #166534 !important;
+  color: #ffffff !important;
+}
+.app-shell button:not(aside button):not(nav button):not([role="tab"]):not([aria-pressed]):not(.inventory-register-tab):not(.icon-button):not(.close-button):not(.link-button):not(.btn-danger):not(.danger-button):not(.delete-button):not([class*="danger"]):not([class*="delete"]):not([class*="destructive"]):focus-visible {
+  outline: 3px solid rgba(22, 163, 74, .28) !important;
+  outline-offset: 2px;
+}
+.app-shell button:not(aside button):not(nav button):not([role="tab"]):not([aria-pressed]):not(.inventory-register-tab):not(.icon-button):not(.close-button):not(.link-button):disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+.app-shell button.secondary-button:not(aside button):not(nav button),
+.app-shell .secondary-button:not(aside button):not(nav button) {
+  border-color: #166534 !important;
+  background: #15803d !important;
+  color: #ffffff !important;
+}
+.app-shell button[class*="danger"],
+.app-shell button[class*="delete"],
+.app-shell button[class*="destructive"],
+.app-shell button.btn-danger,
+.app-shell button.danger-button,
+.app-shell button.delete-button {
+  border-radius: 3px !important;
+  box-shadow: none !important;
+}
