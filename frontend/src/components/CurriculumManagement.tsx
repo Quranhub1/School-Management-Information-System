@@ -340,10 +340,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>UVTAB · Modular and occupational skills</h3>
             {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
           </section>
-          <section className="catalogue-board">
-            <h3>UHPAB · Health short courses</h3>
-            <p>No standalone UHPAB short-course list has been verified in the reviewed catalogue. Add health short training here only after confirming the relevant authority, provider and award.</p>
-          </section>
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
