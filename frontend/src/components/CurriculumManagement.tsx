@@ -11,6 +11,7 @@ import {
   type CurriculumCourse,
 } from '../api/curriculumManagement'
 import { getProgrammes, type Programme } from '../api/programmes'
+import { resolveAcademicAuthority, type AcademicAuthority } from '../utils/academicAuthorities'
 
 type Tab = 'full' | 'short'
 
@@ -74,25 +75,17 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [courses, setCourses] = useState<Course[]>([])
   const [programmes, setProgrammes] = useState<Programme[]>([])
   const [selected, setSelected] = useState('')
-  const [authority, setAuthority] = useState<'School-based' | 'UHPAB' | 'UVTAB'>('School-based')
-  const authorityOfProgramme = (programmeId: string) => {
-    const regulator = programmes.find(p => p.id === programmeId)?.regulator?.toUpperCase() ?? ''
-    if (regulator.includes('UHPAB')) return 'UHPAB'
-    if (regulator.includes('UVTAB')) return 'UVTAB'
-    if (regulator.includes('UNMEB')) return 'UNMEB'
-    return 'School-based'
-  }
+  const [authority, setAuthority] = useState<AcademicAuthority>('School-based')
+  const [mappings, setMappings] = useState<CurriculumCourse[]>([])
+  const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
+  const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
   const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === authority)
   const authorityProgrammes = programmes.filter(p => p.isActive && authorityOfProgramme(p.id) === authority)
+  const authorityCurriculumIds = new Set(authorityCurricula.map(c => c.id))
   const authorityCourses = courses.filter(course => {
-    const curriculumIds = authorityCurricula.map(c => c.id)
-    return mappings.some(m => m.courseId === course.id && curriculumIds.includes(m.curriculumId)) ||
-      !curricula.some(c => getCourseIdsForCurriculum(c.id).includes(course.id))
+    const associations = allMappings.filter(mapping => mapping.courseId === course.id)
+    return associations.length === 0 || associations.some(mapping => authorityCurriculumIds.has(mapping.curriculumId))
   })
-  function getCourseIdsForCurriculum(curriculumId: string) {
-    return mappings.filter(m => m.curriculumId === curriculumId).map(m => m.courseId)
-  }
-  const [mappings, setMappings] = useState<CurriculumCourse[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -108,9 +101,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     try {
       setError('')
       const [a, b, c] = await Promise.all([getCurricula(), getCourses(), getProgrammes()])
+      const courseMappings = (await Promise.all(a.map(curriculum => getCurriculumCourses(curriculum.id).catch(() => [])))).flat()
       setCurricula(a)
       setCourses(b)
       setProgrammes(c)
+      setAllMappings(courseMappings)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load curriculum data.')
     }
@@ -321,7 +316,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             </select>
             <select value={mf.courseId} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
               <option value="">Select course</option>
-              {courses.filter(course => authorityCurricula.some(cur => authorityOfProgramme(cur.programmeId) === authority) || authority === 'School-based').map(c => (
+              {authorityCourses.map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
               ))}
             </select>
