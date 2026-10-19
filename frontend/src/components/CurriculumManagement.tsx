@@ -71,6 +71,9 @@ const UVTAB_SHORT_COURSES: CatalogueEntry[] = [
 
 export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<Tab>('full')
+  const [catalogueSearch, setCatalogueSearch] = useState('')
+  const [awardFilter, setAwardFilter] = useState('all')
+  const [verificationFilter, setVerificationFilter] = useState<'all' | 'review' | 'reference'>('all')
   const [curricula, setCurricula] = useState<Curriculum[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [programmes, setProgrammes] = useState<Programme[]>([])
@@ -196,7 +199,37 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   }
 
   function renderCatalogue(entries: CatalogueEntry[], type: 'FullProgramme' | 'ShortCourse') {
+    const normalizedSearch = catalogueSearch.trim().toLocaleLowerCase()
+    const visibleEntries = entries.filter(course => {
+      const matchesSearch = !normalizedSearch || [course.name, course.award, course.family, course.regulator].some(value => value.toLocaleLowerCase().includes(normalizedSearch))
+      const matchesAward = awardFilter === 'all' || course.award === awardFilter
+      const matchesVerification = verificationFilter === 'all'
+        || (verificationFilter === 'review' && course.review)
+        || (verificationFilter === 'reference' && !course.review)
+      return matchesSearch && matchesAward && matchesVerification
+    })
+    const awardOptions = [...new Set(entries.map(course => course.award))].sort()
     return (
+      <>
+      <div className="catalogue-filters" aria-label="Filter catalogue">
+        <input
+          type="search"
+          aria-label="Search programme catalogue"
+          placeholder="Search programme, award or area"
+          value={catalogueSearch}
+          onChange={e => setCatalogueSearch(e.target.value)}
+        />
+        <select aria-label="Filter by qualification level" value={awardFilter} onChange={e => setAwardFilter(e.target.value)}>
+          <option value="all">All qualification levels</option>
+          {awardOptions.map(award => <option key={award} value={award}>{award}</option>)}
+        </select>
+        <select aria-label="Filter by verification status" value={verificationFilter} onChange={e => setVerificationFilter(e.target.value as typeof verificationFilter)}>
+          <option value="all">All reference statuses</option>
+          <option value="review">Needs verification</option>
+          <option value="reference">Reference listing</option>
+        </select>
+        <span className="catalogue-result-count">{visibleEntries.length} of {entries.length}</span>
+      </div>
       <div className="catalogue-table-wrap">
         <table className="catalogue-table">
           <thead>
@@ -210,7 +243,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             </tr>
           </thead>
           <tbody>
-            {entries.map(course => (
+            {visibleEntries.map(course => (
               <tr key={course.name}>
                 <td className="catalogue-course-name">{course.name}</td>
                 <td>{course.award}</td>
@@ -218,7 +251,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <td>{course.family}</td>
                 <td>
                   <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
-                    {course.review ? 'Verify' : 'Reference'}
+                    {course.review ? 'Needs verification' : 'Reference listing'}
                   </span>
                 </td>
                 <td className="catalogue-action-cell">
@@ -226,10 +259,12 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 </td>
               </tr>
             ))}
+            {visibleEntries.length === 0 && <tr><td colSpan={6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
           </tbody>
         </table>
-        <p className="catalogue-footnote">* Indicative duration where listed. Confirm against the approved programme document before publishing.</p>
+        <p className="catalogue-footnote">* Indicative duration where listed. A reference listing is not confirmation of current accreditation or approval. Verify the programme and award against the awarding body's current documentation before publishing.</p>
       </div>
+      </>
     )
   }
 
@@ -248,14 +283,14 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       <div className="form-row academic-authority-picker">
         <label>Curriculum authority
-          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setCf(current => ({ ...current, programmeId: '' })) }}>
+          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })) }}>
             <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option><option value="UNMEB">UNMEB — Legacy records</option>
           </select>
         </label>
       </div>
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
-        <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => setTab('full')}>Full Programmes</button>
-        <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => setTab('short')}>Short Courses</button>
+        <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => { setTab('full'); setCf(current => ({ ...current, type: 'FullProgramme' })) }}>Full Programmes</button>
+        <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => { setTab('short'); setCf(current => ({ ...current, type: 'ShortCourse' })) }}>Short Courses</button>
       </div>
 
       {tab === 'full' && (
@@ -310,7 +345,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </div>
 
           <div className="form-row">
-            <select value={selected} onChange={e => void refreshMappings(e.target.value)}>
+            <select value={selected} onChange={e => { setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
               <option value="">Select curriculum</option>
               {authorityCurricula.map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
