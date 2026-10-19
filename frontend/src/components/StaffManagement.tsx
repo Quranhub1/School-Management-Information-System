@@ -1,7 +1,7 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, updateStaff, deleteStaff, activateStaff, deactivateStaff, listStaff, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest } from '../api/staff'
+import { createStaff, updateStaff, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 import { notify } from './GlobalNotifications'
 
@@ -9,6 +9,8 @@ type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
 export function StaffManagement({ canManage = false, canReadPayroll = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; activeSubsection?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
+  const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
+  const [departments, setDepartments] = useState<StaffDepartment[]>([])
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null)
@@ -35,7 +37,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
   async function loadLeave() { if (!leaveForm.staffMemberId.trim()) return; try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
   async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
 
-  const [form, setForm] = useState({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
+  const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', courseUnitIds: [] as string[] })
+  const [form, setForm] = useState(emptyStaffForm)
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
 
   useEffect(() => {
@@ -55,6 +58,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
 
   useEffect(() => {
     void loadStaff()
+    if (canManage) {
+      void listStaffCourseUnits().then(setCourseUnits).catch(e => setError(e instanceof Error ? e.message : 'Unable to load course units.'))
+      void listStaffDepartments().then(setDepartments).catch(e => setError(e instanceof Error ? e.message : 'Unable to load departments.'))
+    }
     const onStaffChanged = (event: Event) => {
       const detail = (event as CustomEvent<{ staff?: StaffMember }>).detail
       if (detail?.staff) {
@@ -65,7 +72,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
     }
     window.addEventListener(STAFF_CHANGED_EVENT, onStaffChanged)
     return () => window.removeEventListener(STAFF_CHANGED_EVENT, onStaffChanged)
-  }, [])
+  }, [canManage])
   useEffect(() => { if (canManage && tab === 'leave') void loadLeave() }, [tab, canManage])
   useEffect(() => { if (canReadPayroll && tab === 'payroll') void loadPayroll() }, [tab, canReadPayroll])
 
@@ -75,13 +82,15 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
     setSuccess('')
     try {
       if (editingStaffId) {
-        const updated = await updateStaff(editingStaffId, { id: editingStaffId, ...form })
+        const profile = { ...form, departmentId: form.departmentId || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
+        const updated = await updateStaff(editingStaffId, { id: editingStaffId, ...profile })
         setStaff(current => current.map(item => item.id === updated.id ? updated : item))
         setSuccess(`${updated.firstName} ${updated.lastName} was updated successfully.`)
         notify(`${updated.firstName} ${updated.lastName} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
-        const created = await createStaff(form)
+        const profile = { ...form, departmentId: form.departmentId || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
+      const created = await createStaff(profile)
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
         setSuccess(`${created.firstName} ${created.lastName} was saved and added to the staff table.`)
@@ -92,7 +101,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
           // Keep the confirmed create response visible even if the follow-up list refresh fails.
         })
       }
-      setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
+      setForm(emptyStaffForm())
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
       setError(message)
@@ -103,14 +112,14 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
   }
   function beginEdit(person: StaffMember) {
     setEditingStaffId(person.id)
-    setForm({ staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching' })
+    setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', courseUnitIds: person.courseUnitIds ?? [] })
     setError('')
     setSuccess('')
     setTab('staff')
   }
   function cancelEdit() {
     setEditingStaffId(null)
-    setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
+    setForm(emptyStaffForm())
   }
   async function deactivate(id: string) {
     if (!(await showConfirmDialog('Deactivate this staff member? They will remain in the records but will be marked inactive.', { title: 'Deactivate staff member', confirmLabel: 'Yes, deactivate' }))) return
@@ -213,25 +222,43 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
               <input placeholder="Staff number" value={form.staffNumber} onChange={e => setForm({ ...form, staffNumber: e.target.value })} required />
               <input placeholder="First name" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} required />
               <input placeholder="Last name" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} required />
-              <label className="field-label">Employment type
-                <select aria-label="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required>
-                  <option value="Permanent">Permanent</option>
-                  <option value="Temporary">Temporary</option>
-                  <option value="Part-time">Part-time</option>
+              <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
+              <label className="field-label">Staff category
+                <select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
+                  <option value="Teaching">Teaching</option><option value="NonTeaching">Non-teaching</option>
                 </select>
               </label>
+              <label className="field-label">Employment type
+                <select aria-label="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required>
+                  <option value="Permanent">Permanent</option><option value="Temporary">Temporary</option><option value="Part-time">Part-time</option>
+                </select>
+              </label>
+              <label className="field-label">Department
+                <select aria-label="Department" value={form.departmentId} onChange={e => setForm({ ...form, departmentId: e.target.value })}>
+                  <option value="">Select department</option>{departments.map(d => <option key={d.id} value={d.id}>{d.code} — {d.name}</option>)}
+                </select>
+              </label>
+              <input placeholder="Job title / designation" value={form.jobTitle} onChange={e => setForm({ ...form, jobTitle: e.target.value })} />
+              <input placeholder="Highest qualification" value={form.highestQualification} onChange={e => setForm({ ...form, highestQualification: e.target.value })} />
+              <input placeholder="Speciality / area of expertise" value={form.speciality} onChange={e => setForm({ ...form, speciality: e.target.value })} />
+              <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              {form.staffType === 'Teaching' && <label className="field-label staff-course-unit-field">Course units taught
+                <select aria-label="Course units taught" multiple size={5} value={form.courseUnitIds} onChange={e => setForm({ ...form, courseUnitIds: Array.from(e.target.selectedOptions, option => option.value) })}>
+                  {courseUnits.map(unit => <option key={unit.id} value={unit.id}>{unit.code} — {unit.name} ({unit.creditUnits} CU)</option>)}
+                </select>
+              </label>}
               <button type="submit" className={editingStaffId ? undefined : 'staff-add-button'} style={!editingStaffId ? { backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #166534', borderRadius: 2, padding: '10px 18px', fontWeight: 600, cursor: 'pointer' } : undefined}>{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
               {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
             </form>
           )}
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Staff No.</th><th>Name</th><th>Employment</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
+              <thead><tr><th>Staff No.</th><th>Name</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
-                {loading ? <tr><td colSpan={canManage ? 6 : 5}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 6 : 5} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.employmentType}</td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap gap-2"><button type="button" className="secondary-button" onClick={() => beginEdit(s)}>Edit</button>{s.isActive ? <button type="button" className="secondary-button" onClick={() => void deactivate(s.id)}>Deactivate</button> : <button type="button" className="secondary-button" onClick={() => void activate(s.id)}>Activate</button>}<button type="button" className="secondary-button" onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
+                {loading ? <tr><td colSpan={canManage ? 8 : 7}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 8 : 7} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td>{(s.courseUnitIds ?? []).map(id => courseUnits.find(unit => unit.id === id)?.code).filter(Boolean).join(', ') || '—'}</td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap gap-2"><button type="button" className="secondary-button" onClick={() => beginEdit(s)}>Edit</button>{s.isActive ? <button type="button" className="secondary-button" onClick={() => void deactivate(s.id)}>Deactivate</button> : <button type="button" className="secondary-button" onClick={() => void activate(s.id)}>Activate</button>}<button type="button" className="secondary-button" onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
                 ))}
               </tbody>
             </table>
