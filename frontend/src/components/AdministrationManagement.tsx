@@ -1,3 +1,4 @@
+import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ClipboardCheck, GraduationCap, HeartPulse, Landmark, Library, LockKeyhole, Megaphone, ShieldCheck, UserRound, UsersRound, WalletCards } from 'lucide-react'
 import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, type CreateUserRequest, type UpdateUserRequest, type UserSummary } from '../api/administration'
@@ -189,7 +190,7 @@ export function AdministrationManagement({ onInstitutionSaved, activeSubsection 
   }
 
   async function removeAccess(user: UserSummary) {
-    if (!user.isActive || !window.confirm(`Remove sign-in access for ${user.username}? Their records will be retained.`)) return
+    if (!user.isActive || !(await showConfirmDialog(`Remove sign-in access for ${user.username}? Their records will be retained.`, { title: 'Remove sign-in access', confirmLabel: 'Yes, remove access', destructive: true }))) return
     await toggle(user)
   }
 
