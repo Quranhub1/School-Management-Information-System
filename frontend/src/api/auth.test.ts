@@ -1,19 +1,27 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-// Mock sessionStorage
-const store: Record<string, string> = {}
-const mockStorage = {
-  getItem: vi.fn((key: string) => store[key] ?? null),
-  setItem: vi.fn((key: string, value: string) => { store[key] = value }),
-  removeItem: vi.fn((key: string) => { delete store[key] }),
+const sessionStore: Record<string, string> = {}
+const localStore: Record<string, string> = {}
+function storageFor(store: Record<string, string>) {
+  return {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value }),
+    removeItem: vi.fn((key: string) => { delete store[key] }),
+  }
 }
+const mockSessionStorage = storageFor(sessionStore)
+const mockLocalStorage = storageFor(localStore)
 
 beforeEach(() => {
-  vi.stubGlobal('sessionStorage', mockStorage)
-  Object.keys(store).forEach(k => delete store[k])
-  mockStorage.getItem.mockClear()
-  mockStorage.setItem.mockClear()
-  mockStorage.removeItem.mockClear()
+  Object.keys(sessionStore).forEach(k => delete sessionStore[k])
+  Object.keys(localStore).forEach(k => delete localStore[k])
+  for (const storage of [mockSessionStorage, mockLocalStorage]) {
+    storage.getItem.mockClear()
+    storage.setItem.mockClear()
+    storage.removeItem.mockClear()
+  }
+  vi.stubGlobal('sessionStorage', mockSessionStorage)
+  vi.stubGlobal('localStorage', mockLocalStorage)
 })
 
 afterEach(() => {
@@ -21,7 +29,7 @@ afterEach(() => {
 })
 
 describe('auth API — login', () => {
-  it('stores token and session on successful login', async () => {
+  it('stores token and session in durable and tab storage on successful login', async () => {
     const mockResponse = {
       accessToken: 'test-token',
       expiresAt: '2026-12-31T00:00:00Z',
@@ -37,10 +45,15 @@ describe('auth API — login', () => {
     const result = await login('admin', 'password')
 
     expect(result.accessToken).toBe('test-token')
-    expect(mockStorage.setItem).toHaveBeenCalledWith('smis.accessToken', 'test-token')
-    expect(mockStorage.setItem).toHaveBeenCalledWith(
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith('smis.accessToken', 'test-token')
+    expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
       'smis.session',
-      expect.stringContaining('SystemAdministrator')
+      expect.stringContaining('SystemAdministrator'),
+    )
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith('smis.accessToken', 'test-token')
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      'smis.session',
+      expect.stringContaining('SystemAdministrator'),
     )
   })
 
@@ -57,12 +70,14 @@ describe('auth API — login', () => {
 })
 
 describe('auth API — logout', () => {
-  it('removes token and session from storage', async () => {
+  it('removes token and session from both stores', async () => {
     const { logout } = await import('./auth')
     logout()
 
-    expect(mockStorage.removeItem).toHaveBeenCalledWith('smis.accessToken')
-    expect(mockStorage.removeItem).toHaveBeenCalledWith('smis.session')
+    for (const storage of [mockSessionStorage, mockLocalStorage]) {
+      expect(storage.removeItem).toHaveBeenCalledWith('smis.accessToken')
+      expect(storage.removeItem).toHaveBeenCalledWith('smis.session')
+    }
   })
 })
 
@@ -70,5 +85,20 @@ describe('auth API — getSession', () => {
   it('returns null when no session exists', async () => {
     const { getSession } = await import('./auth')
     expect(getSession()).toBeNull()
+  })
+
+  it('recovers session and token from durable storage when tab storage is empty', async () => {
+    localStore['smis.accessToken'] = 'durable-token'
+    localStore['smis.session'] = JSON.stringify({
+      expiresAt: '2026-12-31T00:00:00Z',
+      username: 'admin',
+      roles: ['SystemAdministrator'],
+    })
+
+    const { getSession, getAccessToken } = await import('./auth')
+    expect(getSession()?.username).toBe('admin')
+    expect(getAccessToken()).toBe('durable-token')
+    expect(sessionStore['smis.accessToken']).toBe('durable-token')
+    expect(sessionStore['smis.session']).toBe(localStore['smis.session'])
   })
 })
