@@ -83,12 +83,18 @@ export function getSession(): StoredSession | null {
 
   try {
     const session = JSON.parse(raw) as StoredSession
-    if (!session.username || !Array.isArray(session.roles) || !session.expiresAt) return null
+    const expiry = Date.parse(session.expiresAt ?? '')
+    const token = readStorage(sessionStorage, TOKEN_KEY) ?? readStorage(localStorage, TOKEN_KEY)
+
+    // Never show a user as signed in without a usable token or after expiry.
+    if (!session.username || !Array.isArray(session.roles) || !Number.isFinite(expiry) || expiry <= Date.now() || !token) {
+      if (Number.isFinite(expiry) && expiry <= Date.now()) logout()
+      return null
+    }
 
     // Rehydrate tab storage so existing API modules that read sessionStorage
     // directly continue to attach the saved access token after a session reset.
-    const token = readStorage(localStorage, TOKEN_KEY) ?? readStorage(sessionStorage, TOKEN_KEY)
-    if (token) writeStorage(sessionStorage, TOKEN_KEY, token)
+    writeStorage(sessionStorage, TOKEN_KEY, token)
     writeStorage(sessionStorage, SESSION_KEY, raw)
     return session
   } catch {
