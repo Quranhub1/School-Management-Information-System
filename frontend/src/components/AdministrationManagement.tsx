@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ClipboardCheck, GraduationCap, HeartPulse, Landmark, Library, LockKeyhole, Megaphone, ShieldCheck, UserRound, UsersRound, WalletCards } from 'lucide-react'
 import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, type CreateUserRequest, type UpdateUserRequest, type UserSummary } from '../api/administration'
 import { type InstitutionSettings } from '../api/institutionSettings'
-import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 
 const roles = ['SystemAdministrator', 'AcademicRegistrar', 'AssistantRegistrar', 'AdmissionsOfficer', 'Accountant', 'AssistantAccountant', 'Lecturer', 'ExaminationsOfficer', 'Student', 'SchoolWarden', 'Principal', 'Director', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'Receptionist', 'AssistantPrincipal', 'Admin Secretary', 'Records Officer', 'Librarian', 'HR Manager']
@@ -53,12 +52,12 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 interface AdministrationManagementProps {
+  institution: InstitutionSettings
   onInstitutionSaved?: (settings: InstitutionSettings) => void
   activeSubsection?: string | null
 }
 
-export function AdministrationManagement({ onInstitutionSaved, activeSubsection = null }: AdministrationManagementProps) {
-  const { institution } = useInstitutionSettings()
+export function AdministrationManagement({ institution, onInstitutionSaved, activeSubsection = null }: AdministrationManagementProps) {
   const [users, setUsers] = useState<UserSummary[]>([])
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(true)
