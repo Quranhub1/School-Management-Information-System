@@ -55,6 +55,7 @@ public sealed class CampusAssignmentsController(SchoolManagementDbContext db) : 
                 .ToListAsync(cancellationToken);
             foreach (var assignment in primaryAssignments)
                 assignment.IsPrimary = false;
+            await db.SaveChangesAsync(cancellationToken);
         }
 
         var target = await db.UserCampusAssignments
