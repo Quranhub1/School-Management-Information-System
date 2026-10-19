@@ -513,3 +513,32 @@ h1, h2, h3, h4, h5, h6,
   cursor: not-allowed;
   opacity: .58;
 }
+
+
+/* Secondary workflow controls (including Cancel / Cancel edit) use the same
+   rectangular green action treatment as the rest of the offline workspace. */
+.app-shell .content button.secondary-button,
+.app-shell .content .secondary-button,
+.app-shell .content button[class*="secondary"] {
+  border: 1px solid #166534 !important;
+  border-radius: 3px !important;
+  background: #15803d !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  font-weight: 650;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.app-shell .content button.secondary-button:hover:not(:disabled),
+.app-shell .content .secondary-button:hover:not(:disabled),
+.app-shell .content button[class*="secondary"]:hover:not(:disabled) {
+  border-color: #14532d !important;
+  background: #166534 !important;
+  color: #ffffff !important;
+}
+.app-shell .content button.secondary-button:focus-visible,
+.app-shell .content .secondary-button:focus-visible,
+.app-shell .content button[class*="secondary"]:focus-visible {
+  outline: 3px solid rgba(22, 163, 74, .28) !important;
+  outline-offset: 2px;
+}
