@@ -32,6 +32,31 @@ public sealed class CourseRegistrationsController(CourseRegistrationService serv
         if (await db.Campuses.AnyAsync(x => x.IsActive, cancellationToken) && !student.CampusId.HasValue)
             return Conflict(new { message = "Assign the student to a campus before registering courses." });
 
+        // An admitted student may only register for courses mapped into the curriculum
+        // of the programme recorded on their admission.
+        if (student.AdmissionId.HasValue)
+        {
+            var admission = await db.Admissions.AsNoTracking()
+                .SingleOrDefaultAsync(x => x.Id == student.AdmissionId.Value, cancellationToken);
+            if (admission is null)
+                return Conflict(new { message = "The student's admission record is missing; correct the admission link before course registration." });
+
+            var courseInProgramme = await (
+                from mapping in db.CurriculumCourses.AsNoTracking()
+                join curriculum in db.Curricula.AsNoTracking() on mapping.CurriculumId equals curriculum.Id
+                where curriculum.ProgrammeId == admission.ProgrammeId
+                    && curriculum.IsActive
+                    && mapping.CourseId == request.CourseId
+                select mapping.Id)
+                .AnyAsync(cancellationToken);
+
+            if (!courseInProgramme)
+                return Conflict(new
+                {
+                    message = "This course is not part of the student's admitted programme curriculum. Select a mapped course or update the programme curriculum first."
+                });
+        }
+
         try
         {
             var registration = await service.RegisterAsync(request.StudentId, request.CourseId, request.SemesterId, cancellationToken, student.CampusId);
