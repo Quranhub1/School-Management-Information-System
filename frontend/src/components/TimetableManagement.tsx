@@ -248,6 +248,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     </form>}
 
     {!readOnly && showTemplateEditor && <section className="timetable-template-editor" aria-label="Editable timetable template">
+      <div className="timetable-template-document-heading">
+        <p>REPUBLIC OF UGANDA</p>
+        <h3>KAMPALA SCHOOL OF HEALTH SCIENCES</h3>
+        <h4>CLASS TEACHING TIMETABLE</h4>
+        <span>{availableSemesters.find(item => item.id === semesterId)?.label ?? 'Academic period not selected'}{templateGroupId ? ' · ' + (groupLabels.get(templateGroupId) ?? 'Selected class') : ''}</span>
+      </div>
       <div className="timetable-template-editor-heading">
         <div><p className="timetable-eyebrow">Fillable timetable template</p><h3>Edit the timetable grid</h3><p>Select a class, then fill each period with a course, teacher and venue. Existing sessions for that class are loaded into the grid.</p></div>
         <div className="timetable-template-controls">
