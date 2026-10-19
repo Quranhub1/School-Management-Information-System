@@ -275,8 +275,8 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(180px, 230px)', gap: 18, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 14 }}>
-                  <label>Logo image URL
-                    <input type="url" value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://example.com/logo.png" />
+                  <label>Logo image URL or saved logo path
+                    <input type="text" inputMode="url" value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://example.com/logo.png or /api/public/institution-settings/logo" />
                   </label>
                   <label>Upload logo file
                     <input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo || !active} onChange={e => { const file=e.target.files?.[0]; if(file) void uploadLogo(file); e.currentTarget.value = '' }} />
