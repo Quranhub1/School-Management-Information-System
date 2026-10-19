@@ -375,3 +375,64 @@ h1, h2, h3, h4, h5, h6,
   background: #292821 !important;
   color: #f5efdf !important;
 }
+
+
+/* Sidebar navigation is institution-theme independent: matte black and cream only. */
+.app-shell > aside {
+  background: #11110f !important;
+  color: #f5efdf !important;
+  border-right-color: #292821 !important;
+}
+.app-shell > aside > div:first-of-type,
+.app-shell > aside nav,
+.app-shell > aside > div:last-child {
+  background: #11110f !important;
+  border-color: #292821 !important;
+}
+.app-shell > aside nav section > div > div > button,
+.app-shell > aside nav section > div > div > button:visited {
+  background: #11110f !important;
+  background-image: none !important;
+  color: #d7cfbb !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: background-color 160ms ease, color 160ms ease !important;
+}
+.app-shell > aside nav section > div > div > button:hover,
+.app-shell > aside nav section > div > div > button:hover:not([aria-current="page"]) {
+  background: #1e1e1a !important;
+  background-image: none !important;
+  color: #f5efdf !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.app-shell > aside nav section > div > div > button[aria-current="page"],
+.app-shell > aside nav section > div > div > button[aria-current="page"]:hover {
+  background: #292821 !important;
+  background-image: none !important;
+  color: #f5efdf !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.app-shell > aside nav section > div > div > button::before,
+.app-shell > aside nav section > div > div > button::after {
+  content: none !important;
+  display: none !important;
+}
+.app-shell > aside nav section > div > div > button svg {
+  color: currentColor !important;
+}
+.app-shell > aside nav section > button[aria-expanded] {
+  color: #bdb5a3 !important;
+}
+.app-shell > aside nav section > button[aria-expanded]:hover {
+  background: #1e1e1a !important;
+  color: #f5efdf !important;
+}
+.app-shell > aside nav button:focus-visible {
+  outline-color: #c9bea5 !important;
+}
