@@ -5,7 +5,7 @@ import {
   getStudents, saveStudentApplicationForm, updateStudentGuardian, type CreateStudentRequest, type GuardianInput, type Student, type StudentGuardian,
 } from '../api/students'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
-import { notify } from './GlobalNotifications'
+import { confirmAction, notify } from './GlobalNotifications'
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -157,7 +157,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     setEditingGuardianId(g.id); setGuardianForm({ fullName: g.fullName, relationship: g.relationship ?? '', address: g.address ?? '', phoneNumber: g.phoneNumber ?? '', email: g.email ?? '', isPrimary: g.isPrimary }); setGuardianError('')
   }
   async function removeGuardian(g: StudentGuardian) {
-    if (!guardianStudent || !window.confirm(`Remove ${g.fullName} from this student's records?`)) return
+    if (!guardianStudent || !await confirmAction(`Remove ${g.fullName} from this student's records?`, 'Remove parent or guardian', 'Remove record')) return
     try { await deleteStudentGuardian(guardianStudent.id, g.id); await loadGuardians(guardianStudent.id); notify('Parent/guardian record removed.', 'success', 'Record deleted') }
     catch (e) { const message = e instanceof Error ? e.message : 'Unable to remove parent/guardian record.'; setGuardianError(message); notify(message, 'error', 'Delete failed') }
   }
