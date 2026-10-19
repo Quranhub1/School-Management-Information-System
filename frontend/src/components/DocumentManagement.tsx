@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getStudentDocuments, uploadDocument, archiveDocument, deleteDocument, getDocumentDownloadUrl, type StudentDocument } from '../api/documents'
 import { getStudents, type Student } from '../api/students'
 import { getAccessToken } from '../api/auth'
+import { showConfirmDialog } from '../utils/confirmDialog'
 
 const DOCUMENT_TYPES = ['Birth Certificate', 'National ID', 'Passport', 'Academic Transcript', 'Medical Record', 'Immunization Record', 'Transfer Certificate', 'Other']
 
@@ -47,7 +48,7 @@ export function DocumentManagement({ canManage }: { canManage: boolean }) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Delete this document permanently?')) return
+    if (!(await showConfirmDialog('Delete this document permanently? This cannot be undone.', { title: 'Delete document', confirmLabel: 'Yes, delete document', destructive: true }))) return
     try { await deleteDocument(id); setDocuments((current) => current.filter((d) => d.id !== id)) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to delete document.') }
   }
 
