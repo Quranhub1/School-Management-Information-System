@@ -242,11 +242,24 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
               <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              {form.staffType === 'Teaching' && <label className="field-label staff-course-unit-field">Course units taught
-                <select aria-label="Course units taught" multiple size={5} value={form.courseUnitIds} onChange={e => setForm({ ...form, courseUnitIds: Array.from(e.target.selectedOptions, option => option.value) })}>
-                  {courseUnits.map(unit => <option key={unit.id} value={unit.id}>{unit.code} — {unit.name} ({unit.creditUnits} CU)</option>)}
-                </select>
-              </label>}
+              {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
+                <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, color: '#475569' }}>Select or deselect the units assigned to this staff member.</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{form.courseUnitIds.length} selected</span>
+                </div>
+                {courseUnits.length === 0
+                  ? <p role="status" style={{ margin: 0, padding: '8px 0', color: '#64748b', fontSize: 13 }}>No active course units are available. Check that the course catalogue is populated and the API lookup request succeeds.</p>
+                  : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 6, maxHeight: 220, overflowY: 'auto', padding: 2 }}>
+                    {courseUnits.map(unit => {
+                      const checked = form.courseUnitIds.includes(unit.id)
+                      return <label key={unit.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 9px', border: `1px solid ${checked ? '#86efac' : '#e2e8f0'}`, borderRadius: 4, background: checked ? '#f0fdf4' : '#fff', cursor: 'pointer', fontSize: 13 }}>
+                        <input type="checkbox" checked={checked} onChange={e => setForm(current => ({ ...current, courseUnitIds: e.target.checked ? [...current.courseUnitIds.filter(id => id !== unit.id), unit.id] : current.courseUnitIds.filter(id => id !== unit.id) }))} style={{ marginTop: 2, flexShrink: 0 }} />
+                        <span><strong>{unit.code}</strong> — {unit.name} <span style={{ color: '#64748b' }}>({unit.creditUnits} CU)</span></span>
+                      </label>
+                    })}
+                  </div>}
+              </fieldset>}
               <button type="submit" className={editingStaffId ? undefined : 'staff-add-button'} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #166534', borderRadius: 3, padding: '6px 12px', minHeight: 32, width: 'fit-content', maxWidth: '100%', alignSelf: 'start', fontSize: 13, lineHeight: 1.2, fontWeight: 600, cursor: 'pointer' }}>{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
               {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
             </form>
