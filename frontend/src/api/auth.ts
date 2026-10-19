@@ -9,13 +9,49 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.
 const TOKEN_KEY = 'smis.accessToken'
 const SESSION_KEY = 'smis.session'
 
+type StoredSession = Omit<AuthResponse, 'accessToken'>
+
+function readStorage(storage: Storage, key: string): string | null {
+  try {
+    return storage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function writeStorage(storage: Storage, key: string, value: string): void {
+  try {
+    storage.setItem(key, value)
+  } catch {
+    // Keep the app usable if browser storage is unavailable; the other store may still work.
+  }
+}
+
+function removeStorage(storage: Storage, key: string): void {
+  try {
+    storage.removeItem(key)
+  } catch {
+    // Ignore unavailable storage during sign-out.
+  }
+}
+
+/**
+ * Keep a durable copy in localStorage and a tab-scoped copy in sessionStorage.
+ * The session copy supports existing API modules; the durable copy lets the app
+ * recover after a tab/session storage reset or a normal browser restart.
+ */
 export function saveAuthSession(session: AuthResponse): void {
-  sessionStorage.setItem(TOKEN_KEY, session.accessToken)
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+  const storedSession: StoredSession = {
     expiresAt: session.expiresAt,
     username: session.username,
     roles: session.roles,
-  }))
+  }
+  const serialized = JSON.stringify(storedSession)
+
+  writeStorage(localStorage, TOKEN_KEY, session.accessToken)
+  writeStorage(localStorage, SESSION_KEY, serialized)
+  writeStorage(sessionStorage, TOKEN_KEY, session.accessToken)
+  writeStorage(sessionStorage, SESSION_KEY, serialized)
 }
 
 export async function login(username: string, password: string): Promise<AuthResponse> {
@@ -36,20 +72,33 @@ export async function login(username: string, password: string): Promise<AuthRes
 }
 
 export function getAccessToken(): string | null {
-  return sessionStorage.getItem(TOKEN_KEY)
+  const token = readStorage(sessionStorage, TOKEN_KEY) ?? readStorage(localStorage, TOKEN_KEY)
+  if (token) writeStorage(sessionStorage, TOKEN_KEY, token)
+  return token
 }
 
-export function getSession(): Omit<AuthResponse, 'accessToken'> | null {
-  const raw = sessionStorage.getItem(SESSION_KEY)
+export function getSession(): StoredSession | null {
+  const raw = readStorage(sessionStorage, SESSION_KEY) ?? readStorage(localStorage, SESSION_KEY)
   if (!raw) return null
+
   try {
-    return JSON.parse(raw) as Omit<AuthResponse, 'accessToken'>
+    const session = JSON.parse(raw) as StoredSession
+    if (!session.username || !Array.isArray(session.roles) || !session.expiresAt) return null
+
+    // Rehydrate tab storage so existing API modules that read sessionStorage
+    // directly continue to attach the saved access token after a session reset.
+    const token = readStorage(localStorage, TOKEN_KEY) ?? readStorage(sessionStorage, TOKEN_KEY)
+    if (token) writeStorage(sessionStorage, TOKEN_KEY, token)
+    writeStorage(sessionStorage, SESSION_KEY, raw)
+    return session
   } catch {
     return null
   }
 }
 
 export function logout(): void {
-  sessionStorage.removeItem(TOKEN_KEY)
-  sessionStorage.removeItem(SESSION_KEY)
+  removeStorage(sessionStorage, TOKEN_KEY)
+  removeStorage(sessionStorage, SESSION_KEY)
+  removeStorage(localStorage, TOKEN_KEY)
+  removeStorage(localStorage, SESSION_KEY)
 }
