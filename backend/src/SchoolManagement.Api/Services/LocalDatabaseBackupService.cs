@@ -38,12 +38,13 @@ public sealed class LocalDatabaseBackupService(IConfiguration configuration, IHo
         var destination = Path.Combine(BackupDirectory, $"smis-backup-{DateTime.UtcNow:yyyyMMdd-HHmmss-fff}Z.dump");
         var temporary = destination + ".partial";
         var connection = new NpgsqlConnectionStringBuilder(connectionString);
-        var start = CreateStartInfo("pg_dump", connection, connection.Password);
+        var database = RequireDatabaseName(connection);
+        var start = CreateStartInfo("pg_dump", connection, connection.Password ?? string.Empty);
         start.ArgumentList.Add("--format=custom");
         start.ArgumentList.Add("--no-owner");
         start.ArgumentList.Add("--no-privileges");
         start.ArgumentList.Add("--dbname");
-        start.ArgumentList.Add(connection.Database);
+        start.ArgumentList.Add(database);
         start.ArgumentList.Add("--file");
         start.ArgumentList.Add(temporary);
         try
@@ -77,11 +78,19 @@ public sealed class LocalDatabaseBackupService(IConfiguration configuration, IHo
         var connectionString = configuration.GetConnectionString("SchoolManagement");
         if (string.IsNullOrWhiteSpace(connectionString)) throw new InvalidOperationException("The SchoolManagement database connection string is not configured.");
         var connection = new NpgsqlConnectionStringBuilder(connectionString);
-        var start = CreateStartInfo("pg_restore", connection, connection.Password);
-        foreach (var arg in new[] { "--clean", "--if-exists", "--no-owner", "--no-privileges", "--exit-on-error", "--single-transaction", "--dbname", connection.Database, path })
+        var database = RequireDatabaseName(connection);
+        var start = CreateStartInfo("pg_restore", connection, connection.Password ?? string.Empty);
+        foreach (var arg in new[] { "--clean", "--if-exists", "--no-owner", "--no-privileges", "--exit-on-error", "--single-transaction", "--dbname", database, path })
             start.ArgumentList.Add(arg);
         await RunToolAsync(start, cancellationToken);
         logger.LogWarning("Restored SMIS database from local backup {BackupPath}", path);
+    }
+
+    private static string RequireDatabaseName(NpgsqlConnectionStringBuilder connection)
+    {
+        if (string.IsNullOrWhiteSpace(connection.Database))
+            throw new InvalidOperationException("The SchoolManagement database name is not configured.");
+        return connection.Database;
     }
 
     private ProcessStartInfo CreateStartInfo(string tool, NpgsqlConnectionStringBuilder connection, string password)
