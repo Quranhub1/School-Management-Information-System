@@ -1,7 +1,7 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, updateStaff, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
+import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 import { notify } from './GlobalNotifications'
 
@@ -14,6 +14,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null)
+  const [editingCourseUnitsStaffId, setEditingCourseUnitsStaffId] = useState<string | null>(null)
+  const [courseUnitDraftIds, setCourseUnitDraftIds] = useState<string[]>([])
+  const [savingCourseUnits, setSavingCourseUnits] = useState(false)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'staff' | 'payroll' | 'leave' | 'recruitment'>('staff')
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
@@ -118,6 +121,35 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
   function cancelEdit() {
     setEditingStaffId(null)
     setForm(emptyStaffForm())
+  }
+
+  function beginEditCourseUnits(person: StaffMember) {
+    setEditingCourseUnitsStaffId(person.id)
+    setCourseUnitDraftIds(person.courseUnitIds ?? [])
+    setError('')
+    setSuccess('')
+  }
+  function cancelEditCourseUnits() {
+    setEditingCourseUnitsStaffId(null)
+    setCourseUnitDraftIds([])
+  }
+  async function saveCourseUnits(person: StaffMember) {
+    setSavingCourseUnits(true)
+    setError('')
+    setSuccess('')
+    try {
+      const updated = await updateStaffCourseUnits(person.id, courseUnitDraftIds)
+      setStaff(current => current.map(item => item.id === updated.id ? updated : item))
+      cancelEditCourseUnits()
+      setSuccess(`Course unit assignments for ${updated.firstName} ${updated.lastName} were saved.`)
+      notify(`Course unit assignments for ${updated.firstName} ${updated.lastName} saved.`, 'success', 'Course units updated')
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unable to save course unit assignments.'
+      setError(message)
+      notify(message, 'error', 'Course unit update failed')
+    } finally {
+      setSavingCourseUnits(false)
+    }
   }
   async function deactivate(id: string) {
     if (!(await showConfirmDialog('Deactivate this staff member? They will remain in the records but will be marked inactive.', { title: 'Deactivate staff member', confirmLabel: 'Yes, deactivate' }))) return
@@ -269,7 +301,26 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
               <thead><tr><th>Staff No.</th><th>Name</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
                 {loading ? <tr><td colSpan={canManage ? 8 : 7}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 8 : 7} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td>{(s.courseUnitIds ?? []).map(id => courseUnits.find(unit => unit.id === id)?.code).filter(Boolean).join(', ') || '—'}</td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap items-center" style={{ gap: 4, minWidth: 0 }}><button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => beginEdit(s)}>Edit</button>{s.isActive ? <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void deactivate(s.id)}>Deactivate</button> : <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void activate(s.id)}>Activate</button>}<button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
+                    {editingCourseUnitsStaffId === s.id ? (
+                      <div style={{ display: 'grid', gap: 7, minWidth: 250 }}>
+                        {courseUnits.length === 0 ? <span className="text-muted">No active course units available.</span> : <div style={{ display: 'grid', gap: 5, maxHeight: 180, overflowY: 'auto', padding: 2 }}>
+                          {courseUnits.map(unit => <label key={unit.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, padding: '5px 6px', border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer', whiteSpace: 'normal' }}>
+                            <input type="checkbox" checked={courseUnitDraftIds.includes(unit.id)} onChange={event => setCourseUnitDraftIds(current => event.target.checked ? [...current.filter(id => id !== unit.id), unit.id] : current.filter(id => id !== unit.id))} />
+                            <span><strong>{unit.code}</strong> — {unit.name}</span>
+                          </label>)}
+                        </div>}
+                        <span style={{ fontSize: 11, color: '#475569' }}>{courseUnitDraftIds.length} selected</span>
+                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                          <button type="button" disabled={savingCourseUnits || courseUnits.length === 0} onClick={() => void saveCourseUnits(s)} style={{ padding: '4px 8px', minHeight: 26, borderRadius: 3, fontSize: 11 }}>{savingCourseUnits ? 'Saving…' : 'Save units'}</button>
+                          <button type="button" className="secondary-button" disabled={savingCourseUnits} onClick={cancelEditCourseUnits} style={{ padding: '4px 8px', minHeight: 26, borderRadius: 3, fontSize: 11 }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span>{(s.courseUnitIds ?? []).map(id => courseUnits.find(unit => unit.id === id)?.code).filter(Boolean).join(', ') || '—'}</span>
+                      {canManage && s.staffType === 'Teaching' && <button type="button" className="secondary-button" onClick={() => beginEditCourseUnits(s)} style={{ padding: '3px 6px', minHeight: 24, borderRadius: 3, fontSize: 10, lineHeight: 1.2 }}>Edit units</button>}
+                    </div>}
+                  </td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap items-center" style={{ gap: 4, minWidth: 0 }}><button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => beginEdit(s)}>Edit</button>{s.isActive ? <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void deactivate(s.id)}>Deactivate</button> : <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void activate(s.id)}>Activate</button>}<button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
                 ))}
               </tbody>
             </table>
