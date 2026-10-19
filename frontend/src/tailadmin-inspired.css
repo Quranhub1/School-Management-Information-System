@@ -600,3 +600,24 @@ h1, h2, h3, h4, h5, h6,
   border-radius: 3px !important;
   box-shadow: none !important;
 }
+
+/* Staff profile: keep the multi-select course catalogue usable in the dense HR form. */
+.staff-course-unit-field {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+}
+.staff-course-unit-field select[multiple] {
+  width: 100%;
+  min-height: 124px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  line-height: 1.45;
+}
+.staff-course-unit-field select[multiple] option {
+  padding: 5px 7px;
+}
