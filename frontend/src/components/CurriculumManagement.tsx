@@ -321,7 +321,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       <div className="form-row academic-authority-picker">
         <label>Curriculum authority
           <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })); setCatalogueSearch(''); setAwardFilter('all'); setVerificationFilter('all') }}>
-            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option><option value="UNMEB">UNMEB — Legacy records</option>
+            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
           </select>
         </label>
       </div>
@@ -345,7 +345,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
           </section>}
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}
-          {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
@@ -444,7 +443,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </section>}
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}
           {authority === 'UHPAB' && renderCatalogue(UHPAB_SHORT_COURSES, 'ShortCourse')}
-          {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
