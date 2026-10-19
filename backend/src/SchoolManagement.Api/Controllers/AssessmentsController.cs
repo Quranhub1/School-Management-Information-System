@@ -66,6 +66,20 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
         return assessment is null ? NotFound() : Ok(assessment);
     }
 
+    [HttpPatch("records/{id:guid}/finalize")]
+    public async Task<ActionResult<StudentAssessment>> Finalize(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var assessment = await service.FinalizeStudentAssessmentAsync(id, cancellationToken);
+            return assessment is null ? NotFound(new { message = "Assessment record was not found." }) : Ok(assessment);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
     [HttpPost]
     public async Task<ActionResult<StudentAssessment>> Record(
         [FromBody] RecordAssessmentRequest request,
