@@ -79,3 +79,57 @@
     overflow: visible;
   }
 }
+
+/* Final SMIS navigation treatment: TailAdmin geometry with a restrained, neutral active state.
+   Loaded after the theme styles so no earlier selector can reintroduce the marker. */
+.app-shell > aside nav section > div > div > button,
+.app-shell > aside nav section > div > div > button:hover,
+.app-shell > aside nav section > div > div > button:active,
+.app-shell > aside nav section > div > div > button[aria-current="page"],
+.app-shell > aside nav section > div > div > button[aria-current="page"]:hover,
+.app-shell > aside nav section > div > div > button[aria-current="page"]:focus {
+  border: 0 !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  border-left: 0 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  transform: none !important;
+  animation: none !important;
+  text-decoration: none !important;
+}
+
+.app-shell > aside nav section > div > div > button:not([aria-current="page"]) {
+  background: transparent !important;
+  color: #d7cfbb !important;
+  transition: background-color 160ms ease, color 160ms ease !important;
+}
+
+.app-shell > aside nav section > div > div > button:not([aria-current="page"]):hover {
+  background: #1e1e1a !important;
+  color: #f5efdf !important;
+}
+
+.app-shell > aside nav section > div > div > button[aria-current="page"],
+.app-shell > aside nav section > div > div > button[aria-current="page"]:hover {
+  background: #292821 !important;
+  color: #f5efdf !important;
+  font-weight: 650 !important;
+}
+
+/* No pseudo-element can create an underline or bracket-like selection marker. */
+.app-shell > aside nav section > div > div > button::before,
+.app-shell > aside nav section > div > div > button::after,
+.app-shell > aside nav section > div > div > button[aria-current="page"]::before,
+.app-shell > aside nav section > div > div > button[aria-current="page"]::after {
+  content: none !important;
+  display: none !important;
+}
+
+.app-shell > aside nav section > div > div > button:focus-visible {
+  outline: 2px solid #d7cfbb !important;
+  outline-offset: -2px !important;
+}
+
