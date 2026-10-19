@@ -353,3 +353,25 @@ h1, h2, h3, h4, h5, h6,
   .app-shell .content,
   .app-shell main.content { padding: 16px !important; }
 }
+
+
+/* Child/suboption tabs: remove the left-edge C-shaped active marker entirely. */
+.app-shell > aside nav section > div > div > button,
+.app-shell > aside nav section > div > div > button[aria-current="page"] {
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+.app-shell > aside nav section > div > div > button::before,
+.app-shell > aside nav section > div > div > button::after {
+  content: none !important;
+  display: none !important;
+}
+.app-shell > aside nav section > div > div > button[aria-current="page"] {
+  background: #292821 !important;
+  color: #f5efdf !important;
+}
