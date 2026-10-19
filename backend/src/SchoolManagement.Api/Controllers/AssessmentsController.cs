@@ -39,6 +39,12 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
         if (await db.AssessmentPlans.AnyAsync(x => x.CourseId == request.CourseId && x.Name.ToLower() == name.ToLower(), cancellationToken))
             return Conflict(new { message = "An assessment plan with this name already exists for the selected course." });
 
+        var currentWeight = await db.AssessmentPlans
+            .Where(x => x.CourseId == request.CourseId && x.IsActive)
+            .SumAsync(x => (decimal?)x.WeightPercentage, cancellationToken) ?? 0m;
+        if (currentWeight + request.WeightPercentage > 100m)
+            return BadRequest(new { message = $"Active assessment weights for this course total {currentWeight:0.##}%. The new plan would exceed 100%." });
+
         var plan = new AssessmentPlan
         {
             CourseId = request.CourseId,
@@ -49,7 +55,14 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
             IsActive = true
         };
         db.AssessmentPlans.Add(plan);
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { message = "An assessment plan with this name already exists for the selected course." });
+        }
         return Created($"/api/assessments/plans?courseId={plan.CourseId}", plan);
     }
 
