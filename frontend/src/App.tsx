@@ -328,7 +328,7 @@ const iconBySidebarLabel: Record<string, LucideIcon> = {
   Logs: ClipboardList,
   Backups: Database,
   Settings: SlidersHorizontal,
-  Registration: UserPlus,
+  Registration: ClipboardCheck,
   Records: FileText,
   Classes: GraduationCap,
   Courses: BookOpen,
