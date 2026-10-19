@@ -4,8 +4,10 @@ import { CheckCircle2, CircleAlert, Info, X } from 'lucide-react'
 export type NotificationKind = 'success' | 'error' | 'warning' | 'info'
 type NotificationDetail = { message: string; kind?: NotificationKind; title?: string }
 type Toast = NotificationDetail & { id: number }
+type ConfirmationDetail = { message: string; title: string; confirmLabel: string; resolve: (confirmed: boolean) => void }
 
 const EVENT_NAME = 'smis:notification'
+const CONFIRM_EVENT_NAME = 'smis:confirm-action'
 let nextId = 0
 
 export function notify(message: string, kind: NotificationKind = 'success', title?: string) {
@@ -13,8 +15,17 @@ export function notify(message: string, kind: NotificationKind = 'success', titl
   window.dispatchEvent(new CustomEvent<NotificationDetail>(EVENT_NAME, { detail: { message, kind, title } }))
 }
 
+/** Opens the shared centered confirmation dialog and resolves only after a user choice. */
+export function confirmAction(message: string, title = 'Confirm action', confirmLabel = 'Continue'): Promise<boolean> {
+  if (typeof window === 'undefined' || !message.trim()) return Promise.resolve(false)
+  return new Promise(resolve => {
+    window.dispatchEvent(new CustomEvent<ConfirmationDetail>(CONFIRM_EVENT_NAME, { detail: { message, title, confirmLabel, resolve } }))
+  })
+}
+
 export function GlobalNotificationViewport() {
   const [notifications, setNotifications] = useState<Toast[]>([])
+  const [confirmation, setConfirmation] = useState<ConfirmationDetail | null>(null)
 
   useEffect(() => {
     const timers = new Map<number, number>()
@@ -28,15 +39,31 @@ export function GlobalNotificationViewport() {
         timers.delete(notification.id)
       }, notification.kind === 'error' ? 6500 : 3500))
     }
+    const onConfirmation = (event: Event) => {
+      const detail = (event as CustomEvent<ConfirmationDetail>).detail
+      if (!detail?.message?.trim()) return
+      setConfirmation(current => {
+        current?.resolve(false)
+        return detail
+      })
+    }
     window.addEventListener(EVENT_NAME, onNotification)
+    window.addEventListener(CONFIRM_EVENT_NAME, onConfirmation)
     return () => {
       window.removeEventListener(EVENT_NAME, onNotification)
+      window.removeEventListener(CONFIRM_EVENT_NAME, onConfirmation)
       timers.forEach(timer => window.clearTimeout(timer))
     }
   }, [])
 
   function dismiss(id: number) {
     setNotifications(current => current.filter(item => item.id !== id))
+  }
+
+  function finishConfirmation(confirmed: boolean) {
+    const current = confirmation
+    setConfirmation(null)
+    current?.resolve(confirmed)
   }
 
   return <div className="smis-modal-notification-layer" aria-label="System notifications" aria-live="polite" aria-relevant="additions">
@@ -57,6 +84,21 @@ export function GlobalNotificationViewport() {
         </section>
       </div>
     })}
+    {confirmation && <div className="smis-modal-notification-backdrop smis-confirmation-backdrop" style={{ zIndex: 11000 }} onMouseDown={event => { if (event.target === event.currentTarget) finishConfirmation(false) }}>
+      <section className="smis-modal-notification smis-confirmation-modal" role="alertdialog" aria-modal="true" aria-labelledby="smis-confirmation-title" aria-describedby="smis-confirmation-message">
+        <button type="button" className="smis-modal-notification-close" aria-label="Cancel confirmation" onClick={() => finishConfirmation(false)}><X size={19} /></button>
+        <div className="smis-modal-notification-content">
+          <div className="smis-modal-notification-icon smis-confirmation-icon"><CircleAlert size={32} strokeWidth={1.8} aria-hidden="true" /></div>
+          <p className="smis-modal-notification-label">Please confirm</p>
+          <h2 id="smis-confirmation-title">{confirmation.title}</h2>
+          <p id="smis-confirmation-message" className="smis-modal-notification-message">{confirmation.message}</p>
+          <div className="smis-confirmation-actions">
+            <button type="button" className="smis-confirmation-cancel" onClick={() => finishConfirmation(false)}>Cancel</button>
+            <button type="button" className="smis-confirmation-delete" onClick={() => finishConfirmation(true)}>{confirmation.confirmLabel}</button>
+          </div>
+        </div>
+      </section>
+    </div>}
     <style>{`
       .smis-modal-notification-backdrop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.48);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);animation:smis-modal-fade-in .16s ease-out}
       .smis-modal-notification{position:relative;width:min(100%,440px);max-height:calc(100vh - 36px);overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.24);color:#1f2937;animation:smis-modal-rise-in .2s ease-out}
@@ -70,6 +112,7 @@ export function GlobalNotificationViewport() {
       .smis-modal-notification-message{margin:12px 0 24px;color:#4b5563;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
       .smis-modal-notification-confirm{min-width:120px;padding:10px 22px;border:1px solid transparent;border-radius:7px;background:#292821;color:#f5efdf;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s ease}
       .smis-modal-notification-confirm:hover{background:#11110f}.smis-modal-error .smis-modal-notification-confirm{background:#b91c1c}.smis-modal-error .smis-modal-notification-confirm:hover{background:#991b1b}
+      .smis-confirmation-icon{background:#fff1f2!important;color:#be123c!important}.smis-confirmation-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;width:100%}.smis-confirmation-actions button{min-width:112px;padding:10px 20px;border-radius:7px;font-size:13px;font-weight:650;cursor:pointer;transition:background .15s ease,border-color .15s ease}.smis-confirmation-cancel{border:1px solid #d1d5db;background:#fff;color:#374151}.smis-confirmation-cancel:hover{background:#f3f4f6}.smis-confirmation-delete{border:1px solid #b91c1c;background:#b91c1c;color:#fff}.smis-confirmation-delete:hover{background:#991b1b}.smis-confirmation-modal{width:min(100%,460px)}
       @keyframes smis-modal-fade-in{from{opacity:0}to{opacity:1}}@keyframes smis-modal-rise-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
       @media(max-width:480px){.smis-modal-notification-content{padding:28px 20px 22px}.smis-modal-notification-content h2{font-size:19px}}
       @media(prefers-reduced-motion:reduce){.smis-modal-notification-backdrop,.smis-modal-notification{animation:none}}
