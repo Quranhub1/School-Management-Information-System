@@ -418,7 +418,8 @@
   }
 }
 
-/* Curriculum catalogue controls: compact search, qualification and verification filters. */
+
+/* Keep the existing curriculum catalogue filters compact and aligned. */
 .app-shell .curriculum-management .catalogue-filters {
   display: grid;
   grid-template-columns: minmax(200px, 1.8fr) minmax(170px, 1fr) minmax(170px, 1fr) auto;
@@ -450,36 +451,11 @@
   color: #64748b;
   text-align: center;
 }
-.app-shell .curriculum-management .catalogue-status {
-  max-width: 160px;
-  white-space: normal;
-}
+.app-shell .curriculum-management .catalogue-status { max-width: 160px; white-space: normal; }
 @media (max-width: 760px) {
-  .app-shell .curriculum-management .catalogue-filters {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-  .app-shell .curriculum-management .catalogue-result-count {
-    text-align: left;
-  }
+  .app-shell .curriculum-management .catalogue-filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .app-shell .curriculum-management .catalogue-result-count { text-align: left; }
 }
 @media (max-width: 480px) {
-  .app-shell .curriculum-management .catalogue-filters {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.app-shell .curriculum-management .catalogue-table-school {
-  min-width: 1180px;
-}
-.app-shell .curriculum-management .catalogue-table-school th:nth-child(5),
-.app-shell .curriculum-management .catalogue-table-school td:nth-child(5) {
-  min-width: 290px;
-  max-width: 390px;
-  white-space: normal;
-}
-.app-shell .curriculum-management .catalogue-table-school th:nth-child(6),
-.app-shell .curriculum-management .catalogue-table-school td:nth-child(6) {
-  min-width: 170px;
-  max-width: 220px;
-  white-space: normal;
+  .app-shell .curriculum-management .catalogue-filters { grid-template-columns: minmax(0, 1fr); }
 }
