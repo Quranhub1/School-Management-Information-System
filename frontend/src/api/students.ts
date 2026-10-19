@@ -13,6 +13,7 @@ export interface Student {
   email?: string | null
   status: string
   admissionId?: string | null
+  campusId?: string | null
   createdAt: string
 }
 
@@ -46,6 +47,7 @@ export interface CreateStudentRequest {
   nationalId?: string
   phoneNumber?: string
   email?: string
+  campusId?: string
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
