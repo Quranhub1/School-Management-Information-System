@@ -21,7 +21,24 @@ public sealed class CampusesController(SchoolManagementDbContext db) : Controlle
   var institution=await FindInstitution(settings,ct);
   if(institution is null){institution=new Institution{Code=InstitutionCode(settings),Name=settings.InstitutionName.Trim(),InstitutionType=string.IsNullOrWhiteSpace(settings.InstitutionType)?"School":settings.InstitutionType.Trim(),Address=settings.Address,Phone=settings.Phone,Email=settings.Email,Website=settings.Website,IsActive=true};db.Institutions.Add(institution);await db.SaveChangesAsync(ct);}
   if(await db.Campuses.AnyAsync(x=>x.InstitutionId==institution.Id&&(x.Code==code||x.Name.ToLower()==name.ToLower()),ct))return Conflict(new{message="A campus with this name or code already exists."});
-  var campus=new Campus{InstitutionId=institution.Id,Code=code,Name=name,Address=request.Address?.Trim(),District=request.District?.Trim(),IsActive=true};db.Campuses.Add(campus);await db.SaveChangesAsync(ct);
+  var isFirstCampus=!await db.Campuses.AnyAsync(x=>x.InstitutionId==institution.Id,ct);
+  var campus=new Campus{InstitutionId=institution.Id,Code=code,Name=name,Address=request.Address?.Trim(),District=request.District?.Trim(),IsActive=true};db.Campuses.Add(campus);
+  if(isFirstCampus){
+   var unassignedStudents=await db.Students.Where(x=>x.CampusId==null).ToListAsync(ct);
+   foreach(var student in unassignedStudents)student.CampusId=campus.Id;
+   var unassignedRegistrations=await db.CourseRegistrations.Where(x=>x.CampusId==null).ToListAsync(ct);
+   foreach(var registration in unassignedRegistrations)registration.CampusId=campus.Id;
+   var unassignedStaff=await db.StaffMembers.Where(x=>x.CampusId==null).ToListAsync(ct);
+   foreach(var staff in unassignedStaff)staff.CampusId=campus.Id;
+   var unassignedInventory=await db.InventoryRegisters.Where(x=>x.CampusId==null).ToListAsync(ct);
+   foreach(var register in unassignedInventory)register.CampusId=campus.Id;
+   var users=await db.Users.Where(x=>x.IsActive).ToListAsync(ct);
+   var userIds=users.Select(x=>x.Id).ToArray();
+   var assignedUserIds=await db.UserCampusAssignments.Where(x=>userIds.Contains(x.UserId)).Select(x=>x.UserId).Distinct().ToListAsync(ct);
+   foreach(var user in users.Where(x=>!assignedUserIds.Contains(x.Id)))
+    db.UserCampusAssignments.Add(new UserCampusAssignment{UserId=user.Id,CampusId=campus.Id,IsPrimary=true});
+  }
+  await db.SaveChangesAsync(ct);
   return Created($"/api/campuses/{campus.Id}",new CampusResponse(campus.Id,campus.Code,campus.Name,campus.Address,campus.District,campus.IsActive));
  }
  [HttpPatch("{id:guid}")] public async Task<ActionResult<CampusResponse>> Update(Guid id,SaveCampusRequest request,CancellationToken ct) {

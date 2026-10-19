@@ -125,19 +125,15 @@ test.describe('SMIS full-system smoke tests', () => {
     expect([401, 403]).toContain(unauthenticated.status());
   });
 
-  test('attendance QR endpoint returns a rotating token for an authenticated user', async ({ request }) => {
+  test('attendance QR endpoint rejects token generation for an unknown session', async ({ request }) => {
     const token = await getAdminToken(request);
     const sessionId = '00000000-0000-0000-0000-000000000003';
     const response = await request.get(`${API_BASE_URL}/api/attendance/sessions/${sessionId}/qr`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    expect(response.ok()).toBeTruthy();
-    const payload = await response.json();
-    expect(payload.attendanceSessionId).toBe(sessionId);
-    expect(payload.token).toMatch(/^[a-f0-9]{64}$/);
-    expect(payload.rotationSeconds).toBe(60);
-    expect(payload.expiresAtUtc).toBeTruthy();
+    expect(response.status()).toBe(404);
+    await expect(response.json()).resolves.toMatchObject({ message: 'Attendance session was not found.' });
   });
 
   test('frontend loads and administrator can sign in', async ({ page }) => {

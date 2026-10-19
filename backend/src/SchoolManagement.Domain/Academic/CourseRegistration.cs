@@ -6,6 +6,7 @@ public sealed class CourseRegistration
     public Guid StudentId { get; init; }
     public Guid CourseId { get; init; }
     public Guid SemesterId { get; init; }
+    public Guid? CampusId { get; set; }
     public required string Status { get; set; }
     public DateTimeOffset RegisteredAt { get; init; } = DateTimeOffset.UtcNow;
 }

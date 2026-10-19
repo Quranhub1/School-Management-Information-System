@@ -12,7 +12,8 @@ public sealed record CreateStudentRequest(
     string? Gender = null,
     string? NationalId = null,
     string? PhoneNumber = null,
-    string? Email = null);
+    string? Email = null,
+    Guid? CampusId = null);
 
 public sealed record UpdateStudentRequest(
     Guid Id,
@@ -46,7 +47,8 @@ public sealed class StudentService(IStudentRepository students)
             Gender = request.Gender?.Trim(),
             NationalId = request.NationalId?.Trim(),
             PhoneNumber = request.PhoneNumber?.Trim(),
-            Email = request.Email?.Trim()
+            Email = request.Email?.Trim(),
+            CampusId = request.CampusId
         };
 
         await students.AddAsync(student, cancellationToken);

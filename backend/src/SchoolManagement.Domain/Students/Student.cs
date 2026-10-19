@@ -16,6 +16,7 @@ public sealed class Student
     public string? Email { get; set; }
     public string Status { get; set; } = "Active";
     public Guid? AdmissionId { get; set; }
+    public Guid? CampusId { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public ICollection<StudentCharge> FinanceCharges { get; set; } = new List<StudentCharge>();
 }

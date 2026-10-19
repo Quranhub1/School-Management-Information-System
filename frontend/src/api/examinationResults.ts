@@ -75,6 +75,17 @@ export function getAssessmentPlans(courseId?: string): Promise<AssessmentPlan[]>
   return getJson<AssessmentPlan[]>(`/api/assessments/plans${query}`)
 }
 
+
+export function createAssessmentPlan(input: {
+  courseId: string
+  name: string
+  assessmentType: string
+  weightPercentage: number
+  isCompetencyBased: boolean
+}): Promise<AssessmentPlan> {
+  return sendJson<AssessmentPlan>('/api/assessments/plans', input)
+}
+
 export function getStudentAssessments(courseRegistrationId: string): Promise<StudentAssessment[]> {
   return getJson<StudentAssessment[]>(`/api/assessments/registrations/${courseRegistrationId}`)
 }
@@ -88,4 +99,22 @@ export function recordAssessment(input: {
   competencyLevel?: string
 }): Promise<StudentAssessment> {
   return sendJson<StudentAssessment>('/api/assessments', input)
+}
+
+export async function finalizeAssessment(id: string): Promise<StudentAssessment> {
+  const token = getAccessToken()
+  const response = await fetch(`${API_BASE_URL}/api/assessments/records/${encodeURIComponent(id)}/finalize`, {
+    method: 'PATCH',
+    headers: {
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
+  if (response.status === 403) throw new Error('Your role is not authorized to finalize assessments.')
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(body || `Request failed with status ${response.status}`)
+  }
+  return response.json() as Promise<StudentAssessment>
 }

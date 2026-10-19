@@ -14,6 +14,7 @@ public sealed class StaffMember
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
     public Guid? DepartmentId { get; set; }
+    public Guid? CampusId { get; set; }
     public string? JobTitle { get; set; }
     public string? HighestQualification { get; set; }
     public string? Speciality { get; set; }

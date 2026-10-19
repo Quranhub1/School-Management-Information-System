@@ -8,4 +8,5 @@ public interface IAssessmentRepository
     Task<IReadOnlyList<StudentAssessment>> GetStudentAssessmentsAsync(Guid courseRegistrationId, CancellationToken cancellationToken = default);
     Task<StudentAssessment?> GetStudentAssessmentByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<StudentAssessment> AddStudentAssessmentAsync(StudentAssessment assessment, CancellationToken cancellationToken = default);
+    Task<bool> FinalizeStudentAssessmentAsync(Guid id, CancellationToken cancellationToken = default);
 }

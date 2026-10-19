@@ -36,6 +36,20 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Campuses");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.UserCampusAssignment", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<DateTimeOffset>("AssignedAt").HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("CampusId").HasColumnType("uuid");
+                    b.Property<bool>("IsPrimary").HasColumnType("boolean");
+                    b.Property<Guid>("UserId").HasColumnType("uuid");
+                    b.HasKey("Id");
+                    b.HasIndex("CampusId");
+                    b.HasIndex("UserId", "CampusId").IsUnique();
+                    b.HasIndex("UserId").IsUnique().HasFilter("\"IsPrimary\" = TRUE");
+                    b.ToTable("UserCampusAssignments");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Institution", b =>
                 {
                     b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
@@ -227,6 +241,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CampusId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CourseId")
                         .HasColumnType("uuid");
 
@@ -244,6 +261,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CampusId");
 
                     b.ToTable("CourseRegistrations");
                 });
@@ -3831,6 +3850,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CampusId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ColumnsJson")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -3854,7 +3876,7 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SectionId")
+                    b.HasIndex("CampusId", "SectionId")
                         .IsUnique();
 
                     b.ToTable("InventoryRegisters");
@@ -4227,6 +4249,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid?>("DepartmentId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CampusId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
@@ -4289,6 +4314,8 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("StaffNumber")
                         .IsUnique();
+
+                    b.HasIndex("CampusId");
 
                     b.ToTable("StaffMembers");
                 });
@@ -4362,6 +4389,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid?>("AdmissionId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CampusId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -4400,6 +4430,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CampusId");
 
                     b.ToTable("Students");
                 });
@@ -5161,6 +5193,53 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasForeignKey("WorkflowInstanceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Staff.StaffMember", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.UserCampusAssignment", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CourseRegistration", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Students.Student", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Inventory.InventoryRegister", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.Bill", b =>

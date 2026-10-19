@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { getStudentAcademicSummaries, getStudentTranscript } from '../api/academicRecords'
-import { ExaminationResults } from './ExaminationResults'
+import { ExaminationManagement } from './ExaminationManagement'
 import { createProgramme, getProgrammes, setProgrammeActive, type Programme } from '../api/programmes'
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
 
@@ -118,7 +118,7 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
       {error && <div className="error" role="alert">{error}</div>}
 
       {view === 'examinations' ? (
-        <div className="academic-examinations-workspace"><div className="panel-heading"><div><p className="eyebrow">ACADEMIC MANAGEMENT</p><h3>Examinations & Results</h3><p>Examination setup, marks, results processing and academic record approval are managed from the academic workspace.</p></div></div><ExaminationResults /></div>
+        <div className="academic-examinations-workspace"><ExaminationManagement canManage={canManage} /></div>
       ) : view === 'records' ? (
         <>
           <form className="student-form" onSubmit={loadRecords}>

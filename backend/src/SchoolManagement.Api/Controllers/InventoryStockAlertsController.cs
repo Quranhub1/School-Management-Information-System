@@ -5,13 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Inventory;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Api.Services;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/inventory/stock-alerts")]
 [Authorize(Roles = "SystemAdministrator,Records Officer,RecordsOfficer,School Warden,SchoolWarden,HostelWarden")]
-public sealed class InventoryStockAlertsController(SchoolManagementDbContext db) : ControllerBase
+public sealed class InventoryStockAlertsController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     private static readonly IReadOnlyDictionary<string, string> SectionNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -33,7 +34,12 @@ public sealed class InventoryStockAlertsController(SchoolManagementDbContext db)
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<InventoryStockAlertDto>>> Get(CancellationToken ct)
     {
-        var registers = await db.InventoryRegisters.AsNoTracking().ToListAsync(ct);
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        var registersQuery = db.InventoryRegisters.AsNoTracking();
+        if (accessibleCampuses is not null)
+            registersQuery = registersQuery.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
+        var registers = await registersQuery.ToListAsync(ct);
         var alerts = new List<InventoryStockAlertDto>();
 
         foreach (var register in registers)

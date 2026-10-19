@@ -3,23 +3,28 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Api.Services;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/attendance/chronic")]
 [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
-public sealed class ChronicAbsenteeController(SchoolManagementDbContext db) : ControllerBase
+public sealed class ChronicAbsenteeController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet("report")]
     public async Task<IActionResult> GetChronicAbsenteeReport([FromQuery] int thresholdDays = 10, [FromQuery] int periodDays = 30, CancellationToken cancellationToken = default)
     {
         if (thresholdDays < 1 || periodDays < 1) return BadRequest(new { message = "Threshold and period must be positive." });
         var fromDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-periodDays));
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
         var grouped = await (
             from attendance in db.StudentAttendances.AsNoTracking()
             join session in db.AttendanceSessions.AsNoTracking() on attendance.AttendanceSessionId equals session.Id
+            join student in db.Students.AsNoTracking() on attendance.StudentId equals student.Id
             where session.SessionDate >= fromDate
+                && (accessibleCampuses == null || (student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value)))
             group attendance by attendance.StudentId into g
             select new
             {
@@ -47,10 +52,14 @@ public sealed class ChronicAbsenteeController(SchoolManagementDbContext db) : Co
     {
         if (periodDays < 1) return BadRequest(new { message = "Period must be positive." });
         var fromDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-periodDays));
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
         var grouped = await (
             from attendance in db.StudentAttendances.AsNoTracking()
             join session in db.AttendanceSessions.AsNoTracking() on attendance.AttendanceSessionId equals session.Id
+            join student in db.Students.AsNoTracking() on attendance.StudentId equals student.Id
             where session.SessionDate >= fromDate
+                && (accessibleCampuses == null || (student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value)))
             group attendance by attendance.StudentId into g
             select new { StudentId = g.Key, AbsenceCount = g.Count(x => x.Status == "Absent"), TotalSessions = g.Count() }
         ).Where(x => x.AbsenceCount >= 5).ToListAsync(cancellationToken);
