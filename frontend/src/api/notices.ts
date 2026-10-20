@@ -9,4 +9,5 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export type Notice = { id:string; title:string; body:string; priority:string; audience:string; expiresAt?:string; createdBy:string; createdAt:string };
 export function listNotices(){ return request<Notice[]>('/api/notices/board'); }
-export function createNotice(input: Omit<Notice,'id'|'createdAt'|'createdBy'>){ return request<Notice>('/api/notices/board',{method:'POST',body:JSON.stringify(input)}); }
+export type CreateNoticeInput = Omit<Notice, 'id' | 'createdAt' | 'createdBy' | 'expiresAt'> & { expiresAt: string | null; createdBy: string; };
+export function createNotice(input: CreateNoticeInput){ return request<Notice>('/api/notices/board',{method:'POST',body:JSON.stringify(input)}); }
