@@ -51,6 +51,7 @@ PDFMake is a JavaScript library. The React/Tauri frontend can use it directly an
 - Guild election declaration preview: PDFMake output clearly marked as a non-authoritative preview because the current screen uses demonstration data.
 - System audit log: filtered PDF download and print, including user, action, entity, record ID, change details, IP address, user agent and timestamp.
 - Financial audit events: separate administrator-authorized PDF export of immutable finance audit events, including action, entity, performer, reason, journal reference and metadata.
+- Workflow state history: separate administrator-authorized PDF export of workflow instance state transitions, entity references, performer, comments and timestamp.
 - Every shared AG Grid table: a common PDF export action exports the currently visible columns and all rows after the active filter/sort, independently of pagination.
 - Standalone offline application template: PDFMake browser build and fonts are copied from local npm assets during dev/build; no CDN.
 
