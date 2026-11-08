@@ -576,6 +576,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue">
             <h3>UVTAB · Modular and occupational skills</h3>
             {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
+<<<<<<< HEAD
           </section>}
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -594,6 +595,9 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 >>>>>>> origin/fix/authority-course-catalogues
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
 >>>>>>> origin/feat/authority-separated-academic-workflows
+=======
+          </section>
+>>>>>>> origin/fix/remove-uhpab-short-course-disclaimer
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
