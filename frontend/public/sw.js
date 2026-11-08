@@ -10,16 +10,22 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/fix/vite-hmr-service-worker-provider
       Promise.all(
         keys
           .filter((key) => key.startsWith('smis-') && key !== CACHE_NAME)
           .map((key) => caches.delete(key)),
       ),
     ),
+<<<<<<< HEAD
 =======
       Promise.all(keys.filter((key) => key.startsWith('smis-') && key !== CACHE_NAME).map((key) => caches.delete(key)))
     )
 >>>>>>> origin/feat/dexie-offline-data-sync
+=======
+>>>>>>> origin/fix/vite-hmr-service-worker-provider
   );
   event.waitUntil(self.clients.claim());
 });
@@ -30,22 +36,31 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 <<<<<<< HEAD
+<<<<<<< HEAD
   if (url.origin !== self.location.origin) return;
 =======
   // API data is managed by Dexie in the authenticated page context, never by
   // the shared service-worker cache. This prevents cross-user cache leakage.
+=======
+  if (url.origin !== self.location.origin) return;
+
+  // Never cache API data, authentication endpoints, or the standalone login.
+>>>>>>> origin/fix/vite-hmr-service-worker-provider
   if (url.pathname.startsWith('/api/') || url.pathname === '/institution-login.html') {
     event.respondWith(fetch(new Request(request, { cache: 'no-store' })));
     return;
   }
 >>>>>>> origin/feat/dexie-offline-data-sync
 
+<<<<<<< HEAD
   // Never cache API data, authentication endpoints, or the standalone login.
   if (url.pathname.startsWith('/api/') || url.pathname === '/institution-login.html') {
     event.respondWith(fetch(new Request(request, { cache: 'no-store' })));
     return;
   }
 
+=======
+>>>>>>> origin/fix/vite-hmr-service-worker-provider
   // Dexie owns user-scoped API read caching; this worker only caches the app shell/assets.
   // Always prefer the current HTML shell; fall back to the cached shell offline.
   if (request.mode === 'navigate') {
@@ -79,9 +94,8 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// The service worker only wakes open clients. It never replays queued writes;
-// module-specific replay remains disabled until its server safety contract exists.
 self.addEventListener('sync', (event) => {
+<<<<<<< HEAD
 <<<<<<< HEAD
   if (event.tag === 'smis-sync') event.waitUntil(doBackgroundSync());
 =======
@@ -93,4 +107,12 @@ self.addEventListener('sync', (event) => {
     );
   }
 >>>>>>> origin/feat/dexie-offline-data-sync
+=======
+  if (event.tag === 'smis-sync') event.waitUntil(doBackgroundSync());
+>>>>>>> origin/fix/vite-hmr-service-worker-provider
 });
+
+async function doBackgroundSync() {
+  const clients = await self.clients.matchAll();
+  clients.forEach((client) => client.postMessage({ type: 'SYNC_REQUIRED' }));
+}

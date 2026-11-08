@@ -2,6 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/fix/vite-hmr-service-worker-provider
 import { InstitutionSettingsProvider } from './components/InstitutionSettingsContext'
 import { installGlobalErrorHandlers } from './lib/logging'
 import { QueryCacheProvider } from './lib/QueryCacheProvider'
@@ -42,6 +45,7 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+<<<<<<< HEAD
     <QueryCacheProvider>
 <<<<<<< HEAD
       <InstitutionSettingsProvider>
@@ -51,5 +55,10 @@ createRoot(document.getElementById('root')!).render(
       <App />
 >>>>>>> origin/feat/tanstack-query-offline-cache
     </QueryCacheProvider>
+=======
+    <InstitutionSettingsProvider>
+      <App />
+    </InstitutionSettingsProvider>
+>>>>>>> origin/fix/vite-hmr-service-worker-provider
   </StrictMode>,
 )
