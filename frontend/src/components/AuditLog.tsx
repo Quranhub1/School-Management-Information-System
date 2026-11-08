@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
-import { searchAuditLogs, type AuditLog } from '../api/auditLog';
+import { searchAuditLogs, searchFinanceAuditEvents, type AuditLog } from '../api/auditLog';
 import { AgGridTable } from './AgGridTable';
 import type { ColDef } from 'ag-grid-community';
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
@@ -23,6 +23,7 @@ export function AuditLogManagement() {
   const [action, setAction] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [financeAuditLoading, setFinanceAuditLoading] = useState(false);
   const { institution, loaded: institutionLoaded } = useInstitutionSettings();
 
   async function load() {
@@ -87,12 +88,56 @@ export function AuditLogManagement() {
     if (logs.length) printInstitutionalPdf(auditPdfOptions());
   }
 
+  async function exportFinanceAuditPdf() {
+    setFinanceAuditLoading(true);
+    setError('');
+    try {
+      const events = await searchFinanceAuditEvents(undefined, from || undefined, to || undefined);
+      if (!events.length) {
+        setError('No financial audit events match the selected period.');
+        return;
+      }
+      const rows = [
+        [{ text: 'Timestamp', style: 'tableHeader' }, { text: 'Action', style: 'tableHeader' }, { text: 'Entity', style: 'tableHeader' }, { text: 'Record ID', style: 'tableHeader' }, { text: 'Performed by', style: 'tableHeader' }, { text: 'Reason', style: 'tableHeader' }, { text: 'Journal reference', style: 'tableHeader' }, { text: 'Metadata', style: 'tableHeader' }],
+        ...events.map(event => [
+          new Date(event.occurredAt).toLocaleString('en-UG'),
+          event.action,
+          event.entityType,
+          event.entityId,
+          event.performedBy,
+          event.reason || '—',
+          event.sourceJournalEntryId || '—',
+          event.metadata || '—',
+        ]),
+      ];
+      downloadInstitutionalPdf({
+        title: 'Financial Audit Events',
+        filename: 'smis-financial-audit-events',
+        orientation: 'landscape',
+        institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+        motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+        contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+        accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+        content: [
+          { text: 'Financial audit events: ' + events.length, bold: true, margin: [0, 0, 0, 8] },
+          { text: 'Period: ' + (from || 'Beginning') + ' to ' + (to || 'Present'), style: 'muted', margin: [0, 0, 0, 10] },
+          { table: { headerRows: 1, widths: [78, 75, 68, 80, 70, '*', 80, '*'], body: rows }, layout: 'lightHorizontalLines' },
+          { text: 'Confidential — restricted finance audit record. This export does not modify the immutable source events.', style: 'muted', margin: [0, 12, 0, 0] },
+        ],
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to export financial audit events. Check Finance Operations access.');
+    } finally {
+      setFinanceAuditLoading(false);
+    }
+  }
+
   return <section className="panel" aria-label="Audit Log">
     <div className="panel-heading">
       <div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div>
       <div className="form-actions">
         <button type="button" className="secondary-button" onClick={printAuditPdf} disabled={loading || logs.length === 0}>Print PDF</button>
-        <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>
+        <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>\n        <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
       </div>
     </div>
     <div className="library-search" style={{ margin: '14px 0' }}>
