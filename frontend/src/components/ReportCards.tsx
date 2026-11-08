@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getStudentReportCard, type StudentReportCard } from '../api/reports'
 import { downloadPdf } from '../api/pdf'
+import { exportRowsToExcel } from '../lib/spreadsheets'
+import { downloadElementAsPng } from '../lib/printCapture'
 
 interface ReportCardsProps { canManage?: boolean }
 
@@ -40,6 +42,11 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
           <h3>Student Report Cards</h3>
         </div>
           <button className="secondary-button" onClick={printReport} disabled={!report}>Print Report Card</button>
+          <button className="secondary-button" onClick={() => report && exportRowsToExcel(report.results, `report-card-${report.studentNumber}`, 'Results')} disabled={!report}>Export Excel</button>
+          <button className="secondary-button" onClick={() => {
+            const element = document.getElementById('report-card-print')
+            if (element && report) void downloadElementAsPng(element, { filename: `report-card-${report.studentNumber}.png` })
+          }} disabled={!report}>Download Image</button>
           <button className="secondary-button" onClick={() => studentId.trim() && downloadPdf(`/api/reports/student/${studentId.trim()}/report-card/pdf`, `report-card-${studentId.trim()}.pdf`)} disabled={!studentId.trim() || !report}>Download PDF</button>
       </div>
 

@@ -222,34 +222,13 @@ SMIS is ready for production sign-off only when the remaining target-environment
 **Status:** central Zod foundation, active validation in selected departmental API services, direct React form validation in Admissions, HR staff, Library and Finance payment workflows, and an AG Grid row-validation hook wired into Inventory are committed on the feature branch. Remaining work includes additional departmental forms, complete API coverage, per-entity import-row validation, broader editable-grid adoption and clipboard regression tests. Automated TypeScript/test/build verification is still required after the Library import fix and subsequent Finance additions; corrected CI reruns are queued. Do not declare system-wide adoption until all checks and remaining rollout/regression work are complete.
 
 
-## Reproducible dependency setup — November 2026
+## Advanced printing and spreadsheet handling — 2026-11-08
 
-### Implemented on `chore/reproducible-one-command-setup`
-
-- [x] Add a Windows PowerShell setup script that checks Node.js/.NET prerequisites, runs frontend `npm ci`, and restores the backend .NET solution.
-- [x] Add a Linux setup script with equivalent prerequisite checks and dependency restoration.
-- [x] Add Windows and Linux update helpers that perform a fast-forward-only pull and then run dependency setup.
-- [x] Make update helpers refuse to run with a dirty working tree, protecting local edits.
-- [x] Document the one-command setup and update workflow in README and INSTALLATION.
-- [x] Keep exact frontend package versions reproducible through the committed npm lockfile; `npm ci` installs the complete dependency graph, including Zod, AG Grid, Chart.js and local font packages.
-- [ ] Execute both setup scripts on clean Windows and Ubuntu machines and record successful dependency restoration.
-- [ ] Verify backend NuGet restore and frontend npm clean-install/build in CI on the final branch head.
-- [ ] Decide and document the institution's offline-server package-cache/internal-mirror strategy; Git does not carry `node_modules` or NuGet caches.
-- [ ] Consider NuGet lock-file generation and pinning SDK versions after checking all project target frameworks and CI runners.
-
-**Important boundary:** a standard `git pull` does not run arbitrary setup scripts. Use `update.ps1` or `update.sh` for a pull-plus-restore operation. This avoids unsafe implicit code execution during Git operations while still making updates a single command.
-
-
-## Runtime diagnostics — React hooks and Vite HMR
-
-### Implemented on `chore/reproducible-one-command-setup`
-
-- [x] Confirm `ReportCards.tsx` declares `useState` and `useEffect` inside the `ReportCards` function; no hook-rule violation is visible in the current `main` source.
-- [x] Confirm the committed lockfile resolves `react` and `react-dom` to the same version (19.2.8) and has one top-level entry for each.
-- [x] Configure Vite `resolve.dedupe` for `react` and `react-dom` to guard against duplicate module instances in linked/hoisted dependency layouts.
-- [x] Remove the hard-coded HMR host so Vite derives the WebSocket host from the browser URL, supporting localhost and LAN access more reliably.
-- [ ] Verify the actual Windows `node_modules` tree with `npm ls react react-dom`; the browser error alone cannot establish whether a duplicate runtime is present.
-- [ ] Verify HMR after restarting Vite and confirming port 5173 is owned by the expected project process.
-- [ ] Run frontend CI and browser-level regression checks after these configuration changes.
-
-**Diagnostic note:** The Vite WebSocket error may also be caused by a stopped/failed Vite process, a port conflict, or browser/proxy network handling. Configuration changes alone do not prove the local server is reachable.
+- Added a locally bundled SheetJS-compatible spreadsheet engine via the maintained `@stackline/xlsx` fork, aliased as `xlsx`. This fork targets the SheetJS CE 0.20.3 API and reports regression coverage for prototype-pollution and ReDoS advisories affecting the stale npm `xlsx@0.18.5` package.
+- Added bounded browser-side workbook parsing (10 MB, 20 worksheets, 50,000 rows, 200 columns), dangerous-header rejection and formula-injection-safe spreadsheet export.
+- Added Excel export for student report-card results.
+- Added locally bundled html2canvas capture and PNG export for printable DOM layouts; report cards support image capture alongside native printing and the existing PDF endpoint.
+- Neither library loads a CDN or calls an external rendering service at runtime.
+- Added `importSpreadsheetData` to feed locally parsed workbook sheets through the existing schema-validated CSV import API; PostgreSQL/API validation remains authoritative.
+- Added formula-injection regression tests and ensured export sanitisation does not mutate source rows.
+- Remaining: wire file selection into the central bulk-import UI, add parser/capture tests, verify dependency lock via CI, and complete manual offline/print acceptance.

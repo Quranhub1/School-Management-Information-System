@@ -27,7 +27,9 @@
     "ag-grid-community": "36.3.0",
     "ag-grid-react": "36.3.0",
     "zod": "^4.6.7",
-    "dexie": "4.4.7"
+    "dexie": "4.4.7",
+    "xlsx": "npm:@stackline/xlsx@1.0.10",
+    "html2canvas": "1.4.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",

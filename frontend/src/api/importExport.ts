@@ -1,6 +1,7 @@
 import { getAccessToken } from './auth'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
 import { bulkImportRequestSchema, bulkImportResultSchema } from '../schemas'
+import { parseSpreadsheetFile } from '../lib/spreadsheets'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken()
@@ -53,4 +54,11 @@ export function exportData(entityType: string, filters?: Record<string, string>)
     a.remove()
     window.URL.revokeObjectURL(url)
   })
+}
+
+/** Parse a local workbook and submit its selected sheet through the existing validated CSV import API. */
+export async function importSpreadsheetData(entityType: string, file: File, sheetName?: string) {
+  const parsed = await parseSpreadsheetFile(file, sheetName)
+  const result = await importData({ entityType, csvData: parsed.csvData })
+  return { ...result, sheetName: parsed.sheetName, availableSheets: parsed.sheetNames }
 }
