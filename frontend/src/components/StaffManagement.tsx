@@ -300,6 +300,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
               <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+<<<<<<< HEAD
               {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
                 <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
@@ -318,6 +319,13 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                     })}
                   </div>}
               </fieldset>}
+=======
+              {form.staffType === 'Teaching' && <label className="field-label staff-course-unit-field">Course units taught
+                <select aria-label="Course units taught" multiple size={5} value={form.courseUnitIds} onChange={e => setForm({ ...form, courseUnitIds: Array.from(e.target.selectedOptions, option => option.value) })}>
+                  {courseUnits.map(unit => <option key={unit.id} value={unit.id}>{unit.code} — {unit.name} ({unit.creditUnits} CU)</option>)}
+                </select>
+              </label>}
+>>>>>>> origin/fix/compact-staff-management-buttons
               <button type="submit" className={editingStaffId ? undefined : 'staff-add-button'} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #166534', borderRadius: 3, padding: '6px 12px', minHeight: 32, width: 'fit-content', maxWidth: '100%', alignSelf: 'start', fontSize: 13, lineHeight: 1.2, fontWeight: 600, cursor: 'pointer' }}>{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
               {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
             </form>
@@ -327,6 +335,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
               <thead><tr><th>Staff No.</th><th>Name</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
                 {loading ? <tr><td colSpan={canManage ? 8 : 7}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 8 : 7} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
+<<<<<<< HEAD
                   <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
                     {editingCourseUnitsStaffId === s.id ? (
                       <div style={{ display: 'grid', gap: 7, minWidth: 250 }}>
@@ -347,6 +356,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                       {canManage && s.staffType === 'Teaching' && <button type="button" className="secondary-button" onClick={() => beginEditCourseUnits(s)} style={{ padding: '3px 6px', minHeight: 24, borderRadius: 3, fontSize: 10, lineHeight: 1.2 }}>Edit units</button>}
                     </div>}
                   </td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap items-center" style={{ gap: 4, minWidth: 0 }}><button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => beginEdit(s)}>Edit</button>{s.isActive ? <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void deactivate(s.id)}>Deactivate</button> : <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void activate(s.id)}>Activate</button>}<button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
+=======
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td>{(s.courseUnitIds ?? []).map(id => courseUnits.find(unit => unit.id === id)?.code).filter(Boolean).join(', ') || '—'}</td><td>{s.email || s.phoneNumber || '—'}</td><td><span className="badge" style={{ background: s.isActive ? '#d1fae5' : '#e5e7eb', color: s.isActive ? '#065f46' : '#374151' }}>{s.isActive ? 'Active' : 'Inactive'}</span></td>{canManage && <td><div className="flex flex-wrap items-center" style={{ gap: 4, minWidth: 0 }}><button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => beginEdit(s)}>Edit</button>{s.isActive ? <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void deactivate(s.id)}>Deactivate</button> : <button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void activate(s.id)}>Activate</button>}<button type="button" className="secondary-button" style={{ padding: '4px 8px', minHeight: 27, borderRadius: 3, fontSize: 11, lineHeight: 1.2, whiteSpace: 'nowrap' }} onClick={() => void removeStaff(s)}>Delete</button></div></td>}</tr>
+>>>>>>> origin/fix/compact-staff-management-buttons
                 ))}
               </tbody>
             </table>
