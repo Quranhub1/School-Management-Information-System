@@ -5,6 +5,7 @@ type PdfDocumentDefinition = Record<string, unknown>
 type PdfMakeEngine = {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   addVirtualFileSystem?: (fonts: unknown) => void
   vfs?: Record<string, string>
   createPdf?: (definition: PdfDocumentDefinition) => {
@@ -16,6 +17,11 @@ type PdfMakeEngine = {
   addVirtualFileSystem: (fonts: unknown) => void
   createPdf: (definition: PdfDocumentDefinition) => {
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+  addVirtualFileSystem?: (fonts: unknown) => void
+  vfs?: Record<string, string>
+  createPdf?: (definition: PdfDocumentDefinition) => {
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
     download: (filename?: string) => void
     print: () => void
     open: () => void
@@ -36,6 +42,9 @@ export interface InstitutionalPdfOptions {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
 const pdfMake = (((pdfMakeModule as unknown as { default?: unknown }).default ?? pdfMakeModule) as unknown) as PdfMakeEngine
 const fontBundle = ((pdfFonts as unknown as { default?: unknown }).default ?? pdfFonts) as unknown
 let fontsRegistered = false
@@ -57,6 +66,7 @@ function ensurePdfMakeReady() {
   if (typeof pdfMake.createPdf !== 'function') throw new Error('The bundled PDFMake document engine is unavailable.')
   fontsRegistered = true
 }
+<<<<<<< HEAD
 =======
 const pdfMake = pdfMakeModule as unknown as PdfMakeEngine
 
@@ -72,6 +82,8 @@ const pdfMake = pdfMakeModule as unknown as PdfMakeEngine
 // Generated PDFs therefore work without a CDN or an internet connection.
 pdfMake.addVirtualFileSystem(pdfFonts)
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
 
 function buildDefinition(options: InstitutionalPdfOptions): PdfDocumentDefinition {
   const accent = /^#[0-9a-f]{6}$/i.test(options.accentColor ?? '')
@@ -125,6 +137,9 @@ function safeFilename(filename: string | undefined, title: string): string {
 export function downloadInstitutionalPdf(options: InstitutionalPdfOptions): void {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
   ensurePdfMakeReady()
   pdfMake.createPdf!(buildDefinition(options)).download(safeFilename(options.filename, options.title))
 }
@@ -137,6 +152,7 @@ export function printInstitutionalPdf(options: InstitutionalPdfOptions): void {
 export function openInstitutionalPdf(options: InstitutionalPdfOptions): void {
   ensurePdfMakeReady()
   pdfMake.createPdf!(buildDefinition(options)).open()
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
@@ -153,4 +169,6 @@ export function openInstitutionalPdf(options: InstitutionalPdfOptions): void {
 >>>>>>> origin/feat/pdfmake-document-engine
 =======
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
 }

@@ -7,10 +7,15 @@ import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } fro
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 =======
 >>>>>>> origin/feat/central-zod-validation-v2
+=======
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
 =======
@@ -1465,6 +1470,7 @@ export function AccountsOfficeManagement() {
                     <div className="topbar-actions" style={{ marginTop: 20 }}>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                       <button type="button" onClick={printPayslip}>Print Payslip</button><button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
 =======
                       <button type="button" onClick={printPayslip}>Print Payslip</button>
@@ -1474,6 +1480,9 @@ export function AccountsOfficeManagement() {
                       <button type="button" onClick={printPayslip}>Print Payslip</button>
                       <button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+                      <button type="button" onClick={printPayslip}>Print Payslip</button><button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
                       <button type="button" className="secondary-button" onClick={() => setPayrollDetailId(null)}>Close</button>
                     </div>
                   </>

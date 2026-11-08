@@ -42,6 +42,7 @@
     "use-debounce": "10.1.1",
     "xlsx": "npm:@stackline/xlsx@1.0.10",
     "html2canvas": "1.4.1",
+<<<<<<< HEAD
     "pdfmake": "0.3.13",
     "cmdk": "^1.1.1"
 <<<<<<< HEAD
@@ -69,6 +70,9 @@
     "ag-grid-react": "36.3.0",
     "pdfmake": "0.3.13"
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+    "pdfmake": "0.3.13"
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",

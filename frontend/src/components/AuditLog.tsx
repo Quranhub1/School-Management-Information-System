@@ -3,6 +3,7 @@ import LoadingSpinner from './LoadingSpinner';
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
 import { AgGridTable } from './AgGridTable';
 import type { ColDef } from 'ag-grid-community';
@@ -27,10 +28,18 @@ import type { ColDef } from 'ag-grid-community';
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
 import { useInstitutionSettings } from './InstitutionSettingsContext';
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
+import { AgGridTable } from './AgGridTable';
+import type { ColDef } from 'ag-grid-community';
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
+import { useInstitutionSettings } from './InstitutionSettingsContext';
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
 
 const auditColumns: ColDef<AuditLog>[] = [
   { field: 'userId', headerName: 'User', valueFormatter: p => p.value || '—' },
   { field: 'action', headerName: 'Action' },
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -44,6 +53,9 @@ const auditColumns: ColDef<AuditLog>[] = [
 =======
   { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? p.data.entityType + ' (' + p.data.entityId + ')' : p.data.entityType : '—' },
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+  { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? p.data.entityType + ' (' + p.data.entityId + ')' : p.data.entityType : '—' },
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
   { field: 'changes', headerName: 'Changes', valueFormatter: p => p.value || '—', minWidth: 220 },
   { field: 'ipAddress', headerName: 'IP Address', valueFormatter: p => p.value || '—' },
   { field: 'timestamp', headerName: 'Timestamp', valueFormatter: p => p.value ? new Date(String(p.value)).toLocaleString('en-UG') : '—', minWidth: 180 },
@@ -218,6 +230,7 @@ export function AuditLogManagement() {
         <button type="button" className="secondary-button" onClick={printAuditPdf} disabled={loading || logs.length === 0}>Print PDF</button>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>
         <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
 =======
@@ -227,6 +240,10 @@ export function AuditLogManagement() {
         <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>
         <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+        <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>
+        <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
         <button type="button" className="secondary-button" onClick={() => void exportWorkflowHistoryPdf()} disabled={workflowAuditLoading}>{workflowAuditLoading ? "Preparing…" : "Download Workflow Audit PDF"}</button>
       </div>
     </div>
@@ -242,6 +259,7 @@ export function AuditLogManagement() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   </section>;
 =======
   </section>
@@ -252,4 +270,7 @@ export function AuditLogManagement() {
 =======
   </section>;
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+  </section>;
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
 }

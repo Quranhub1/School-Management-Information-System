@@ -7,6 +7,9 @@ import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
 import { downloadElementAsPng } from '../lib/printCapture'
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
@@ -198,14 +201,20 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
               <button type="button" onClick={downloadSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PDF</button>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
               <button type="button" className="secondary-button" onClick={() => {
                 const element = document.getElementById('print-queue-section')
                 if (element) void downloadElementAsPng(element, { filename: `student-${cardType}-id-cards.png` }).catch(error => setCardQueueError(error instanceof Error ? error.message : 'Unable to capture ID cards.'))
               }} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PNG</button>
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
 =======
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
             </div>
             {cardQueueLoading ? <p className="empty">Loading registered students…</p> : cardStudents.length === 0 ? <p className="empty">No registered students are available for ID card printing.</p> : (
               <div className="table-wrap no-print">

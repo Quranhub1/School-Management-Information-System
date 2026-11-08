@@ -91,6 +91,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   function printGeneratedTimetable(groupId: string) {
     const target = generatedTimetables.find(item => item.groupId === groupId)
@@ -112,13 +113,19 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 >>>>>>> origin/feat/pdfmake-document-engine
 =======
 
+=======
+
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
   function printGeneratedTimetable(groupId: string) {
     const target = generatedTimetables.find(item => item.groupId === groupId)
     if (target) printInstitutionalPdf(timetablePdfOptions(target.groupLabel + ' Teaching Timetable', target.result.entries, target.groupLabel + '-timetable'))
   }
 
   function printTimetableTemplate() {
+<<<<<<< HEAD
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
     const rows = weekOrder.filter(day => day !== 0).flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
       const cell = templateCells[day + '-' + slotIndex]
       if (!cell?.courseId && !cell?.teacherId && !cell?.room?.trim()) return []
@@ -139,6 +146,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     printInstitutionalPdf(timetablePdfOptions(groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template'))
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   }
 =======
     setPrintTemplate(false)
@@ -147,6 +155,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 =======
   }
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+  }
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
 
   async function handleGenerate(event: React.FormEvent) {
     event.preventDefault()
@@ -379,6 +390,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             <button className="timetable-action" type="button" onClick={() => downloadInstitutionalPdf(timetablePdfOptions(groupLabel + ' Teaching Timetable', result.entries, groupLabel + '-timetable'))}>Download PDF</button>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)}>Print</button>
 =======
             <button className="timetable-action" type="button" onClick={() => setPrintTargetGroupId(groupId)}>Print</button>
@@ -386,6 +398,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 =======
             <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)}>Print</button>
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+            <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)}>Print</button>
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
           </div>
         </div>
         <p className="timetable-class-status">Score: {result.optimizationScore.toFixed(1)}% · {result.isConflictFree ? 'No conflicts reported' : 'Conflicts detected'}</p>

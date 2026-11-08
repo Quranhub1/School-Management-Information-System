@@ -4,6 +4,9 @@ import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
 import { exportRowsToExcel } from '../lib/spreadsheets'
 import { downloadElementAsPng } from '../lib/printCapture'
 =======
@@ -80,15 +83,21 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
           <button className="secondary-button" onClick={downloadReport} disabled={!studentId.trim() || !report}>Download PDF</button>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
           <button className="secondary-button" onClick={() => { if (report?.results.length) exportRowsToExcel(report.results, `report-card-${report.studentNumber}`, 'Results') }} disabled={!report || report.results.length === 0}>Export Excel</button>
           <button className="secondary-button" onClick={() => {
             const element = document.getElementById('report-card-print')
             if (element && report) void downloadElementAsPng(element, { filename: `report-card-${report.studentNumber}.png` }).catch(error => window.alert(error instanceof Error ? error.message : 'Unable to capture report card.'))
           }} disabled={!report}>Download Image</button>
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
 =======
 >>>>>>> origin/feat/pdfmake-document-engine-latest-main
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-main-sync
       </div>
 
       <form className="student-form" onSubmit={e => { e.preventDefault(); void load() }} style={{ marginBottom: 22 }}>
