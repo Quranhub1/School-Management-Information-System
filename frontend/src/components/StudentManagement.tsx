@@ -8,49 +8,13 @@ import {
   getStudents, saveStudentApplicationForm, updateStudentGuardian, type CreateStudentRequest, type GuardianInput, type Student, type StudentGuardian,
 } from '../api/students'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/pdfmake-document-engine
-=======
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { notify } from './GlobalNotifications'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getCurricula, type Curriculum } from '../api/curriculumManagement'
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { validateForm } from '../lib/validation'
 import { studentApplicationSubmissionSchema } from '../schemas'
-=======
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
-import { validateForm } from '../lib/validation'
-import { studentApplicationSubmissionSchema } from '../schemas'
->>>>>>> origin/feat/central-zod-validation-v2
-=======
-import { ACADEMIC_AUTHORITY_OPTIONS, SCHOOL_BASED_PROGRAMME_REFERENCES, VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-=======
-import { notify } from './GlobalNotifications'
->>>>>>> origin/feat/global-toast-notifications
-=======
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
-import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
->>>>>>> origin/fix/authority-course-catalogues
-=======
-import { confirmAction, notify } from './GlobalNotifications'
->>>>>>> origin/fix/centered-delete-confirmation-modals
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -143,17 +107,6 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     ...availableCurricula.map(c => c.title),
     ...academicProgrammes.filter(p => authorityOf(p.id) === application.authority).map(p => p.name),
   ])).sort((a, b) => a.localeCompare(b))
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/pdfmake-document-engine
-=======
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
   function applicationPdfOptions() {
     const label = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, value => value.toUpperCase())
     const values = Object.entries(application).map(([key, value]) => [
@@ -185,19 +138,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
 
   function printApplicationPdf() { printInstitutionalPdf(applicationPdfOptions()) }
   function downloadApplicationPdf() { downloadInstitutionalPdf(applicationPdfOptions()) }
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/feat/ag-grid-table-migration
-=======
->>>>>>> origin/feat/pdfmake-document-engine
-=======
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
-
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
   const studentColumns = useMemo<ColDef<Student>[]>(() => [
     { headerName: 'Student number', field: 'studentNumber', minWidth: 150 },
     { headerName: 'Name', colId: 'fullName', valueGetter: params => params.data ? [params.data.firstName, params.data.otherNames, params.data.lastName].filter(Boolean).join(' ') : '' },
@@ -209,8 +150,6 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     { headerName: 'QR code', colId: 'qr', sortable: false, filter: false, minWidth: 110, cellRenderer: (params: { data?: Student }) => params.data && <button className="secondary-button" type="button" onClick={() => setQrStudentId(params.data!.id)}>View QR</button> },
   ], []);
 
-=======
->>>>>>> origin/feat/authority-separated-academic-workflows
   useEffect(() => {
     if (!photo) { setPhotoPreview(''); return }
     const url = URL.createObjectURL(photo); setPhotoPreview(url)
@@ -287,15 +226,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     setEditingGuardianId(g.id); setGuardianForm({ fullName: g.fullName, relationship: g.relationship ?? '', address: g.address ?? '', phoneNumber: g.phoneNumber ?? '', email: g.email ?? '', isPrimary: g.isPrimary }); setGuardianError('')
   }
   async function removeGuardian(g: StudentGuardian) {
-<<<<<<< HEAD
-<<<<<<< HEAD
     if (!guardianStudent || !(await showConfirmDialog(`Remove ${g.fullName} from this student's records?`, { title: 'Remove parent / guardian', confirmLabel: 'Yes, remove', destructive: true }))) return
-=======
-    if (!guardianStudent || !window.confirm(`Remove ${g.fullName} from this student's records?`)) return
->>>>>>> origin/feat/global-toast-notifications
-=======
-    if (!guardianStudent || !await confirmAction(`Remove ${g.fullName} from this student's records?`, 'Remove parent or guardian', 'Remove record')) return
->>>>>>> origin/fix/centered-delete-confirmation-modals
     try { await deleteStudentGuardian(guardianStudent.id, g.id); await loadGuardians(guardianStudent.id); notify('Parent/guardian record removed.', 'success', 'Record deleted') }
     catch (e) { const message = e instanceof Error ? e.message : 'Unable to remove parent/guardian record.'; setGuardianError(message); notify(message, 'error', 'Delete failed') }
   }
@@ -323,26 +254,9 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       <div className="application-form-intro"><p>Complete every relevant section in clear BLOCK letters. Fields marked * are required.</p><label>Student / application number *<input value={studentNumber} onChange={e => setStudentNumber(e.target.value)} required /></label></div>
       <Section number="01" title="Admission information">
         <div className="application-grid">
-<<<<<<< HEAD
-<<<<<<< HEAD
           <Field label="Academic year *"><input value={application.academicYear} aria-invalid={Boolean(validationErrors.academicYear)} onChange={e => setApp('academicYear', e.target.value)} placeholder="e.g. 2027" required /></Field>
           <Field label="Intake *"><input value={application.intake} aria-invalid={Boolean(validationErrors.intake)} onChange={e => setApp('intake', e.target.value)} placeholder="e.g. January / August" required /></Field>
           <Field label="Course / programme applied for *"><input value={application.course} aria-invalid={Boolean(validationErrors.course)} onChange={e => setApp('course', e.target.value)} required /></Field>
-=======
-          <Field label="Academic year *"><input value={application.academicYear} onChange={e => setApp('academicYear', e.target.value)} placeholder="e.g. 2027" required /></Field>
-          <Field label="Intake *"><input value={application.intake} onChange={e => setApp('intake', e.target.value)} placeholder="e.g. January / August" required /></Field>
-<<<<<<< HEAD
-          <Field label="Awarding authority *"><select value={application.authority} onChange={e => setApplication(current => ({ ...current, authority: e.target.value, course: '' }))} required>{ACADEMIC_AUTHORITY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
-          <Field label="Course / programme applied for *"><input list="admission-course-options" value={application.course} onChange={e => setApp('course', e.target.value)} placeholder="Choose or enter a programme" required /><datalist id="admission-course-options">{availableCourses.map(course => <option key={course} value={course} />)}</datalist></Field>
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-=======
-          <Field label="Academic year *"><input value={application.academicYear} onChange={e => setApp('academicYear', e.target.value)} placeholder="e.g. 2027" required /></Field>
-          <Field label="Intake *"><input value={application.intake} onChange={e => setApp('intake', e.target.value)} placeholder="e.g. January / August" required /></Field>
-          <Field label="Course / programme applied for *"><input value={application.course} onChange={e => setApp('course', e.target.value)} required /></Field>
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
-          <Field label="Course / programme applied for *"><input value={application.course} onChange={e => setApp('course', e.target.value)} required /></Field>
->>>>>>> origin/fix/authority-course-catalogues
           <Field label="Entry status"><select value={application.entryStatus} onChange={e => setApp('entryStatus', e.target.value)}><option>Direct</option><option>Mature</option></select></Field>
           <Field label="Study programme"><select value={application.programme} onChange={e => setApp('programme', e.target.value)}><option>Day</option><option>Evening</option><option>Weekend</option></select></Field>
         </div>
