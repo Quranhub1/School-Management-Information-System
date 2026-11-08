@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, cancelMobileMoneyTransaction, getMobileMoneyTransactions, getStudentFinanceProfile, getInvoices, type MobileMoneyTransaction } from '../api/finance';
 
-interface StudentSearchResult {
-  studentId: string;
-  studentName: string;
-}
-
 interface Invoice {
   id: string;
   description: string;
@@ -48,6 +43,8 @@ export default function MobileMoneyPayments() {
     setStudentCode(code);
     if (!code.trim()) {
       setStudentName('');
+      setStudentId('');
+      setInvoices([]);
       return;
     }
     try {
