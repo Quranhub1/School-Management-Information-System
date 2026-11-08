@@ -28,6 +28,7 @@
     "chart.js": "4.6.1",
     "ag-grid-community": "36.3.0",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "ag-grid-react": "36.3.0",
     "zod": "^4.6.7",
     "dexie": "4.4.7",
@@ -43,6 +44,10 @@
 =======
     "zod": "^4.6.7"
 >>>>>>> origin/feat/central-zod-validation
+=======
+    "ag-grid-react": "36.3.0",
+    "zod": "^4.6.7"
+>>>>>>> origin/feat/central-zod-validation-v2
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",

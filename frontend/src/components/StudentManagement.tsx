@@ -14,10 +14,15 @@ import { getProgrammes, type Programme } from '../api/programmes'
 import { getCurricula, type Curriculum } from '../api/curriculumManagement'
 import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { validateForm } from '../lib/validation'
 import { studentApplicationSubmissionSchema } from '../schemas'
 =======
 >>>>>>> origin/feat/authority-separated-academic-workflows
+=======
+import { validateForm } from '../lib/validation'
+import { studentApplicationSubmissionSchema } from '../schemas'
+>>>>>>> origin/feat/central-zod-validation-v2
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }

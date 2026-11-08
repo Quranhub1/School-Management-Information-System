@@ -3,9 +3,13 @@ import LoadingSpinner from './LoadingSpinner';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridTable } from './AgGridTable';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { inventoryGridRowSchema } from '../schemas';
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+import { inventoryGridRowSchema } from '../schemas';
+>>>>>>> origin/feat/central-zod-validation-v2
 import { getInventoryRegister, saveInventoryRegister, type InventoryColumn, type InventoryRow } from '../api/inventoryRegisters'
 
 type InventorySection = { id: string; name: string; group: string }
@@ -256,10 +260,15 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         exportFileName={`inventory-${section.id}`}
         editable={canEdit}
 <<<<<<< HEAD
+<<<<<<< HEAD
         rowValidationSchema={inventoryGridRowSchema}
         getRowId={params => params.data.id}
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+        rowValidationSchema={inventoryGridRowSchema}
+        getRowId={params => params.data.id}
+>>>>>>> origin/feat/central-zod-validation-v2
         toolbar
       />}
       <div className="inventory-spreadsheet-footer">

@@ -176,6 +176,9 @@ export const leaveRequestSchema = z.object({
 });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/central-zod-validation-v2
 export const inventoryGridRowSchema = z.object({
   id: identifierSchema,
   values: z.record(z.string(), z.string()),
@@ -194,19 +197,26 @@ export const inventoryGridRowSchema = z.object({
 export const inventoryRegisterSaveRequestSchema = z.object({
   columns: z.array(z.object({ id: identifierSchema, label: requiredTextSchema })),
   rows: z.array(inventoryGridRowSchema),
+<<<<<<< HEAD
 =======
 export const inventoryRegisterSaveRequestSchema = z.object({
   columns: z.array(z.object({ id: identifierSchema, label: requiredTextSchema })),
   rows: z.array(z.object({ id: identifierSchema, values: z.record(z.string(), z.string()) })),
 >>>>>>> origin/feat/central-zod-validation
+=======
+>>>>>>> origin/feat/central-zod-validation-v2
 });
 export const inventoryRegisterResponseSchema = z.looseObject({
   sectionId: identifierSchema,
   columns: z.array(z.object({ id: identifierSchema, label: requiredTextSchema })),
 <<<<<<< HEAD
+<<<<<<< HEAD
   // Read contracts stay shape-only so legacy/incomplete records remain viewable.
 =======
 >>>>>>> origin/feat/central-zod-validation
+=======
+  // Read contracts stay shape-only so legacy/incomplete records remain viewable.
+>>>>>>> origin/feat/central-zod-validation-v2
   rows: z.array(z.object({ id: identifierSchema, values: z.record(z.string(), z.string()) })),
   updatedAtUtc: z.string(),
 });
@@ -236,6 +246,9 @@ export const bulkImportResultSchema = z.looseObject({
   warnings: z.array(z.string()),
 });
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/central-zod-validation-v2
 
 export const studentApplicationSubmissionSchema = z.object({
   studentNumber: identifierSchema,
@@ -312,5 +325,8 @@ export const invoiceNoteRequestSchema = z.object({
   note: requiredTextSchema.min(3),
   createdBy: z.string().trim().optional(),
 });
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/central-zod-validation
+=======
+>>>>>>> origin/feat/central-zod-validation-v2

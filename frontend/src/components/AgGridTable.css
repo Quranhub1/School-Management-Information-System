@@ -9,6 +9,7 @@
 }
 .smis-ag-grid-validation strong { display: block; margin-bottom: 4px; }
 .smis-ag-grid-validation ul { margin: 0; padding-left: 18px; }
+<<<<<<< HEAD
 
 .smis-ag-grid-overlay {
   display: flex;
@@ -35,3 +36,5 @@
 @keyframes smis-grid-spin {
   to { transform: rotate(360deg); }
 }
+=======
+>>>>>>> origin/feat/central-zod-validation-v2

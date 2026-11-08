@@ -1,5 +1,17 @@
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from 'react';
 import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, cancelMobileMoneyTransaction, getMobileMoneyTransactions, getStudentFinanceProfile, getInvoices, type MobileMoneyTransaction } from '../api/finance';
+=======
+import { useState, useEffect } from 'react';
+import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, getMobileMoneyTransactions, type MobileMoneyTransaction } from '../api/finance';
+import { validateForm } from '../lib/validation';
+import { mobileMoneyCreateRequestSchema } from '../schemas';
+
+interface StudentSearchResult {
+  studentId: string;
+  studentName: string;
+}
+>>>>>>> origin/feat/central-zod-validation-v2
 
 interface Invoice {
   id: string;
@@ -21,7 +33,11 @@ export default function MobileMoneyPayments() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [externalRef, setExternalRef] = useState('');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+<<<<<<< HEAD
   const studentSearchSequence = useRef(0);
+=======
+  const [requestErrors, setRequestErrors] = useState<Record<string, string>>({});
+>>>>>>> origin/feat/central-zod-validation-v2
 
   useEffect(() => {
     loadTransactions();
@@ -70,9 +86,21 @@ export default function MobileMoneyPayments() {
 
   const handleRequestPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studentCode || !phoneNumber || !amount || parseFloat(amount) <= 0) return;
+    const validation = validateForm(mobileMoneyCreateRequestSchema, {
+      studentId: studentCode,
+      studentInvoiceId: selectedInvoice || undefined,
+      provider,
+      phoneNumber,
+      amount: Number(amount),
+    });
+    if (!validation.success) {
+      setRequestErrors(validation.errors);
+      return;
+    }
+    setRequestErrors({});
     setLoading(true);
     try {
+<<<<<<< HEAD
       const tx = await createMobileMoneyTransaction({
         studentId,
         studentInvoiceId: selectedInvoice || undefined,
@@ -80,6 +108,9 @@ export default function MobileMoneyPayments() {
         phoneNumber,
         amount: parseFloat(amount),
       });
+=======
+      const tx = await createMobileMoneyTransaction(validation.data);
+>>>>>>> origin/feat/central-zod-validation-v2
       setSubmitted(tx);
       setShowConfirm(false);
       setExternalRef('');
@@ -190,6 +221,7 @@ export default function MobileMoneyPayments() {
           <h3>New Mobile Money Payment</h3>
         </div>
         <form onSubmit={handleRequestPayment}>
+          {Object.keys(requestErrors).length > 0 && <div className="error" role="alert"><strong>Payment details require attention</strong><ul>{Object.entries(requestErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
           <div className="form-row">
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Student ID / Code</label>
@@ -219,6 +251,7 @@ export default function MobileMoneyPayments() {
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Phone Number</label>
               <input
                 type="tel"
+                aria-invalid={Boolean(requestErrors.phoneNumber)}
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="2567XXXXXXXX"
@@ -242,10 +275,11 @@ export default function MobileMoneyPayments() {
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Amount (UGX)</label>
               <input
                 type="number"
+                aria-invalid={Boolean(requestErrors.amount)}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
-                min="0"
+                min="1"
                 step="1"
                 required
                 style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}

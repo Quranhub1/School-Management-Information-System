@@ -1,12 +1,19 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { ZodType } from 'zod'
 import type { CellValueChangedEvent } from 'ag-grid-community'
 =======
 import { useCallback, useMemo, useState } from 'react'
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+import { useCallback, useMemo, useRef, useState } from 'react'
+import type { ZodType } from 'zod'
+import './AgGridTable.css'
+>>>>>>> origin/feat/central-zod-validation-v2
 import {
   AllCommunityModule,
+  type CellValueChangedEvent,
   type ColDef,
   type GridApi,
   type GridOptions,
@@ -44,10 +51,15 @@ export type AgGridTableProps<TData extends object> = {
   onSelectionChanged?: GridOptions<TData>['onSelectionChanged']
   onCellValueChanged?: GridOptions<TData>['onCellValueChanged']
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** Optional Zod contract enforced before edited rows reach persistence handlers. */
   rowValidationSchema?: ZodType
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+  /** Optional Zod contract enforced for edited rows before caller persistence handlers run. */
+  rowValidationSchema?: ZodType
+>>>>>>> origin/feat/central-zod-validation-v2
   getRowId?: GridOptions<TData>['getRowId']
   className?: string
 }
@@ -68,14 +80,19 @@ export function AgGridTable<TData extends object>({
   onSelectionChanged,
   onCellValueChanged,
 <<<<<<< HEAD
+<<<<<<< HEAD
   rowValidationSchema,
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+  rowValidationSchema,
+>>>>>>> origin/feat/central-zod-validation-v2
   getRowId,
   className,
 }: AgGridTableProps<TData>) {
   const [api, setApi] = useState<GridApi<TData> | null>(null)
   const [filter, setFilter] = useState(quickFilterText ?? '')
+<<<<<<< HEAD
 <<<<<<< HEAD
   // Keep typing immediate; debounce the expensive grid quick-filter pass.
   const [debouncedFilter] = useDebounce(quickFilterText ?? filter, 300)
@@ -86,6 +103,10 @@ export function AgGridTable<TData extends object>({
   const institutionLoaded = institutionContext?.loaded ?? false
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+  const [rowValidationErrors, setRowValidationErrors] = useState<Record<string, string[]>>({})
+  const revertingCell = useRef(false)
+>>>>>>> origin/feat/central-zod-validation-v2
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
     sortable: true,
     filter: true,
@@ -113,6 +134,9 @@ export function AgGridTable<TData extends object>({
     api?.setColumnsVisible([colId], visible)
   }, [api])
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/central-zod-validation-v2
   const handleCellValueChanged = useCallback((event: CellValueChangedEvent<TData>) => {
     if (revertingCell.current) return
     const rowKey = event.node.id ?? String(event.rowIndex ?? 'unknown-row')
@@ -135,6 +159,7 @@ export function AgGridTable<TData extends object>({
     })
     onCellValueChanged?.(event)
   }, [onCellValueChanged, rowValidationSchema])
+<<<<<<< HEAD
 
   const tablePdfOptions = useCallback(() => {
     if (!api) return null
@@ -179,6 +204,8 @@ export function AgGridTable<TData extends object>({
   }, [tablePdfOptions])
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+>>>>>>> origin/feat/central-zod-validation-v2
 
   return (
     <div className={['smis-ag-grid-shell', className].filter(Boolean).join(' ')}>
@@ -209,14 +236,20 @@ export function AgGridTable<TData extends object>({
         </details>
       </div>}
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/central-zod-validation-v2
       {Object.entries(rowValidationErrors).map(([rowKey, messages]) => (
         <div key={rowKey} className="smis-ag-grid-validation" role="alert" aria-live="polite">
           <strong>Row {rowKey} was not saved because its data is invalid.</strong>
           <ul>{messages.map((message, index) => <li key={`${rowKey}-${index}`}>{message}</li>)}</ul>
         </div>
       ))}
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+>>>>>>> origin/feat/central-zod-validation-v2
       <div className="smis-ag-grid" style={{ height, width: '100%' }}>
         <AgGridProvider modules={[AllCommunityModule]}>
           <AgGridReact<TData>
@@ -248,8 +281,12 @@ export function AgGridTable<TData extends object>({
             onGridReady={event => setApi(event.api)}
             onRowClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
+<<<<<<< HEAD
             onCellValueChanged={onCellValueChanged}
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+            onCellValueChanged={handleCellValueChanged}
+>>>>>>> origin/feat/central-zod-validation-v2
             getRowId={getRowId}
             suppressCellFocus={false}
           />
