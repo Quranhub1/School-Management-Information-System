@@ -133,25 +133,30 @@ app.MapPost("/api/diagnostics/client-errors", (
 {
     if (string.IsNullOrWhiteSpace(report.Message) || report.Message.Length > 500
         || (report.Stack?.Length ?? 0) > 3000
-        || (report.Source?.Length ?? 0) > 120)
+        || (report.Source?.Length ?? 0) > 120
+        || (report.Path?.Length ?? 0) > 256
+        || (report.CorrelationId?.Length ?? 0) > 64)
         return Results.BadRequest();
 
-    static string Redact(string value) =>
-        Regex.Replace(
+    static string Sanitize(string value)
+    {
+        var redacted = Regex.Replace(
             Regex.Replace(value, @"(?i)(bearer\s+)[a-z0-9._~+/=-]+", "$1[REDACTED]"),
             @"(?i)(password|token|authorization|secret)(\s*[:=]\s*)[^&\s,;]+",
             "$1$2[REDACTED]");
+        return Regex.Replace(redacted, @"[\u0000-\u001F\u007F]", " ");
+    }
 
     var correlationId = httpContext.Items[SchoolManagement.Api.Middleware.CorrelationIdMiddleware.ItemKey] as string
         ?? httpContext.TraceIdentifier;
     logger.LogWarning(
         "Frontend client error reported. Source={ClientSource}; Message={ClientMessage}; ClientCorrelationId={ClientCorrelationId}; RequestCorrelationId={CorrelationId}; Path={ClientPath}; Stack={ClientStack}",
-        Redact(report.Source ?? "unknown"),
-        Redact(report.Message),
-        Redact(report.CorrelationId ?? string.Empty),
+        Sanitize(report.Source ?? "unknown"),
+        Sanitize(report.Message),
+        Sanitize(report.CorrelationId ?? string.Empty),
         correlationId,
-        Redact(report.Path ?? string.Empty),
-        Redact(report.Stack ?? string.Empty));
+        Sanitize(report.Path ?? string.Empty),
+        Sanitize(report.Stack ?? string.Empty));
     return Results.Accepted();
 }).RequireAuthorization().RequireRateLimiting("client-diagnostics");
 app.MapControllers();
