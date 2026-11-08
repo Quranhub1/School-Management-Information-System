@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { ColDef } from 'ag-grid-community'
 import { getSession } from '../api/auth'
 import { getDashboard, getOutstandingBalances, getPayments, type FinanceDashboard, type OutstandingBalance } from '../api/finance'
 import { formatCurrency } from '../lib/currency'
@@ -9,6 +10,7 @@ import { FinanceControlCenter } from './FinanceControlCenter'
 import { FeeTypesManager } from './FeeTypesManager'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
 import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
+import { AgGridTable } from './AgGridTable'
 
 type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
 
@@ -66,6 +68,22 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     void loadOverview()
   }, [])
 
+  const outstandingColumns = useMemo<ColDef<OutstandingBalance>[]>(() => [
+    { field: 'studentName', headerName: 'Student', minWidth: 180 },
+    { field: 'studentNumber', headerName: 'Student No.', minWidth: 140 },
+    { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
+    { field: 'balance', headerName: 'Balance (UGX)', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
+    { field: 'status', headerName: 'Status', minWidth: 130 },
+  ], [])
+
+  const recentPaymentColumns = useMemo<ColDef<Payment>[]>(() => [
+    { field: 'receiptNumber', headerName: 'Receipt', minWidth: 150, valueFormatter: params => params.value || '—' },
+    { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
+    { field: 'amount', headerName: 'Amount (UGX)', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
+    { field: 'paymentMethod', headerName: 'Method', minWidth: 130, valueFormatter: params => params.value || '—' },
+    { field: 'paidAt', headerName: 'Date', minWidth: 150, valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('en-UG') : '—' },
+  ], [])
+
   const filteredOutstanding = useMemo(() => {
     const value = query.trim().toLowerCase()
     if (!value) return outstanding
@@ -113,18 +131,14 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
             </div>
             <div className="panel" style={{ marginTop: 20, padding: 20 }}>
               <h3>Outstanding Balances</h3>
-              <div className="table-wrap" style={{ marginTop: 12 }}>
-                <table className="table"><thead><tr><th>Student</th><th>Student No.</th><th>Programme</th><th>Balance</th><th>Status</th></tr></thead>
-                  <tbody>{outstanding.length === 0 ? <tr><td colSpan={5} className="empty">No outstanding balances</td></tr> : outstanding.map((item, index) => <tr key={item.studentId ?? index}><td>{item.studentName}</td><td>{item.studentNumber}</td><td>{item.programmeName}</td><td>{money(item.balance)}</td><td>{item.status}</td></tr>)}</tbody>
-                </table>
+              <div style={{ marginTop: 12 }}>
+                <AgGridTable rows={outstanding} columns={outstandingColumns} height={360} pageSize={10} />
               </div>
             </div>
             <div className="panel" style={{ marginTop: 20, padding: 20 }}>
               <h3>Recent Payments</h3>
-              <div className="table-wrap" style={{ marginTop: 12 }}>
-                <table className="table"><thead><tr><th>Receipt</th><th>Student</th><th>Amount</th><th>Method</th><th>Date</th></tr></thead>
-                  <tbody>{payments.length === 0 ? <tr><td colSpan={5} className="empty">No recent payments</td></tr> : payments.map((payment, index) => <tr key={payment.id ?? index}><td>{payment.receiptNumber ?? '—'}</td><td>{payment.studentName ?? '—'}</td><td>{money(payment.amount)}</td><td>{payment.paymentMethod ?? '—'}</td><td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td></tr>)}</tbody>
-                </table>
+              <div style={{ marginTop: 12 }}>
+                <AgGridTable rows={payments} columns={recentPaymentColumns} height={360} pageSize={10} />
               </div>
             </div>
           </>
