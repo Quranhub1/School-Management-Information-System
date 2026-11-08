@@ -132,6 +132,51 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export async function getInvoices(studentId?: string) { const rows = await request<unknown>(`/api/finance/invoices${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`); return parseApiResponse(z.array(invoiceResponseSchema), rows, 'invoices') as Invoice[] }
 export interface StudentFinanceProfile { id: string; studentNumber: string; name: string; phoneNumber?: string; email?: string; status: string }
 export const getStudentFinanceProfile = (studentIdOrNumber: string) => request<StudentFinanceProfile>(`/api/finance/students/profile?studentIdOrNumber=${encodeURIComponent(studentIdOrNumber)}`)
+export interface StudentFinancialStatementLine {
+  id: string
+  code: string
+  description: string
+  amount: number
+  currency: string
+  incomeAccountId?: string
+  sortOrder: number
+}
+export interface StudentFinancialStatementInvoice {
+  id: string
+  invoiceNumber: string
+  feeType: string
+  amount: number
+  discountAmount: number
+  netAmount: number
+  paidAmount: number
+  balance: number
+  currency: string
+  status: string
+  issuedAt: string
+  lines: StudentFinancialStatementLine[]
+}
+export interface StudentFinancialStatementPayment {
+  id: string
+  receiptNumber: string
+  amount: number
+  currency: string
+  paymentMethod: string
+  reference?: string
+  paidAt: string
+  studentInvoiceId?: string
+  invoiceNumber?: string
+}
+export interface StudentFinancialStatement {
+  studentId: string
+  currency: string
+  totalsByCurrency: { currency: string; billed: number; paid: number; balance: number }[]
+  invoices: StudentFinancialStatementInvoice[]
+  payments: StudentFinancialStatementPayment[]
+  paymentAllocationGranularity: 'INVOICE' | string
+  itemAllocationNote: string
+}
+export const getStudentFinancialStatement = (studentId: string) =>
+  request<StudentFinancialStatement>(`/api/finance/students/${encodeURIComponent(studentId)}/statement`)
 export async function createInvoice(body: CreateInvoiceRequest) { const input = parseApiInput(createInvoiceRequestSchema, body, 'create invoice'); return parseApiResponse(invoiceResponseSchema, await request<unknown>('/api/finance/invoices', { method: 'POST', body: JSON.stringify(input) }), 'created invoice') as Invoice }
 export function recordPayment(invoiceId: string, body: RecordPaymentRequest) { if (!invoiceId.trim()) throw new Error('Invoice ID is required.'); const input = parseApiInput(recordPaymentRequestSchema, body, 'record payment'); return request('/api/finance/invoices/' + encodeURIComponent(invoiceId) + '/payments', { method: 'POST', body: JSON.stringify(input) }) }
 
@@ -201,10 +246,44 @@ export async function getPayments(studentId?: string) {
   return request<any[]>(`/api/accounts-overview/payments${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`)
 }
 
-export interface MobileMoneyTransaction { id: string; studentId: string; studentInvoiceId?: string; amount: number; currency: string; provider: string; status: string; reference: string; transactionRef?: string; phoneNumber?: string; requestedAt: string; createdAt: string }
-export async function createMobileMoneyTransaction(body: Partial<MobileMoneyTransaction>) { const input = parseApiInput(mobileMoneyCreateRequestSchema, body, 'mobile money payment'); return request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(input) }) }
-export async function confirmMobileMoneyTransaction(transactionId: string, ref?: string) { return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ ref }) }) }
-export async function getMobileMoneyTransactions(status?: string) { return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
+export interface MobileMoneyTransaction {
+  id: string
+  studentId: string
+  studentInvoiceId?: string
+  amount: number
+  currency: string
+  provider: 'MTN' | 'Airtel' | string
+  status: 'Pending' | 'Completed' | 'Cancelled' | 'Failed' | string
+  transactionRef: string
+  externalRef?: string
+  phoneNumber: string
+  requestedAt: string
+  completedAt?: string
+  errorMessage?: string
+  reference?: string
+  createdAt?: string
+}
+export interface CreateMobileMoneyTransactionRequest {
+  studentId: string
+  studentInvoiceId?: string
+  provider: 'MTN' | 'Airtel'
+  phoneNumber: string
+  amount: number
+  currency?: string
+}
+export async function createMobileMoneyTransaction(body: CreateMobileMoneyTransactionRequest) {
+  const input = parseApiInput(mobileMoneyCreateRequestSchema, body, 'mobile money payment')
+  return request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(input) })
+}
+export async function confirmMobileMoneyTransaction(transactionId: string, externalRef: string) {
+  return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ externalRef }) })
+}
+export async function cancelMobileMoneyTransaction(transactionId: string) {
+  return request<void>(`/api/finance/mobile-money/${transactionId}`, { method: 'DELETE' })
+}
+export async function getMobileMoneyTransactions(status?: string) {
+  return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`)
+}
 
 export async function createBulkPayment(body: { payments: { studentId: string; invoiceId?: string; amount: number; paymentMethod: string; receiptNumber: string; reference?: string }[] }) { const input = parseApiInput(bulkPaymentRequestSchema, body, 'bulk payment'); return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(input) }) }
 export async function issueCreditNote(invoiceId: string, body: { amount: number; reason: string }) { if (!invoiceId.trim()) throw new Error('Invoice ID is required.'); const input = parseApiInput(creditNoteRequestSchema, body, 'issue credit note'); return request<any>('/api/finance/invoices/' + encodeURIComponent(invoiceId) + '/credit-notes', { method: 'POST', body: JSON.stringify(input) }) }
