@@ -3556,6 +3556,7 @@ table { font-variant-numeric: tabular-nums; }
   cursor: not-allowed;
   opacity: 0.65;
 }
+<<<<<<< HEAD
 
 
 /* Leadership & Offices — self-contained palette, intentionally independent of institution branding */
@@ -4047,3 +4048,5 @@ table { font-variant-numeric: tabular-nums; }
   .smis-ag-grid-count { align-self: center; }
   .smis-ag-grid-toolbar > button { min-height: 36px; }
 }
+=======
+>>>>>>> origin/design/green-create-account-button
