@@ -286,7 +286,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       </div>
     </form>}
 
-    {!readOnly && showTemplateEditor && <section className="timetable-template-editor" data-print-target={printTemplate ? 'true' : 'false'} aria-label="Editable timetable template">
+    {!readOnly && showTemplateEditor && <section className="timetable-template-editor" aria-label="Editable timetable template">
       <div className="timetable-template-document-heading">
         <p>REPUBLIC OF UGANDA</p>
         <h3>KAMPALA SCHOOL OF HEALTH SCIENCES</h3>
