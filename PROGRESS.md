@@ -35,7 +35,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Replace the Guild Electoral Commission's browser print with a PDFMake preview. It is explicitly watermarked as non-authoritative while the screen still uses demonstration data.
 - [x] Add a shared PDF export action to every AG Grid table; export respects visible columns, filters and sorting and includes all filtered rows, not only the current page.
 - [x] Add filtered system audit-log PDF export with timestamps, user, action, entity, record ID, change details, IP address and user-agent information.
-- [x] Add an administrator-authorized financial audit-event endpoint and a separate PDF export for immutable finance audit events.
+- [x] Add administrator-authorized PDF exports for system audit logs, immutable financial audit events and workflow state-transition history.
 - [x] Add date-range filters for system audit searches and exports.
 - [x] Document the PDFMake standard, offline asset handling, confidentiality, source-data integrity and remaining backend boundary in `docs/PDFMAKE-DOCUMENT-STANDARD.md`.
 - [ ] Run frontend type-check/build, frontend tests, backend build/tests and relevant CI workflows; resolve all failures before merge.
