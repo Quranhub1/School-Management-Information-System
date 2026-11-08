@@ -125,3 +125,31 @@ Expected published assets:
 ## Definition of done
 
 SMIS is ready for production sign-off only when the remaining target-environment acceptance gates above are completed, CI remains green, deployment health is verified, critical workflows are exercised successfully, backups/restores are validated, and repository administration has configured branch protection where permitted.
+
+
+## Zod validation integration — November 2026
+
+### Implemented in this change
+
+- [x] Add Zod 4 as a direct frontend runtime dependency and record it in the npm lockfile.
+- [x] Establish a central schema directory at `frontend/src/schemas/` with shared primitives and domain schemas.
+- [x] Add reusable validation helpers for safe parsing, field-level error mapping, and API contract assertions.
+- [x] Add initial request/form schemas for student admissions, finance payments/expenses, staff records, inventory movements/items, academic timetable entries, examination results, and library catalogue/loans.
+- [x] Infer TypeScript types from schemas so validation and static types share a single source of truth.
+- [x] Add unit tests for representative valid and invalid inputs, including UGX integer amounts, non-negative stock, required identifiers and date/time constraints.
+- [x] Keep backend validation, authorization, database constraints and financial posting rules authoritative; frontend validation is an additional boundary, not a replacement.
+
+### Not yet tackled — remaining rollout
+
+- [ ] Install dependencies from the updated lockfile and run `npm ci` in the frontend environment.
+- [ ] Run TypeScript build, full Vitest suite and production Vite build; resolve any failures introduced by the integration.
+- [ ] Wire schemas into every existing create/edit form across Admissions, Students, Finance, HR, Inventory, Library, Academics, Examinations and Administration.
+- [ ] Integrate schema validation into AG Grid cell editing, bulk paste, CSV/Excel imports and row-level error reporting.
+- [ ] Apply response schemas at the shared API client boundary after identifying and standardising the repository's API service layer; reject malformed payloads without exposing sensitive response data.
+- [ ] Add backend-aligned contract tests for DTOs, enums, nullable fields, IDs, pagination and date/time formats.
+- [ ] Verify schemas against actual .NET request/response DTOs and EF/database constraints; adjust assumptions before enabling strict validation on production flows.
+- [ ] Add module-by-module validation coverage and regression tests for all role-specific workflows.
+- [ ] Add validation for SchoolPay integration contracts once provider-approved request/response payloads are available.
+- [ ] Confirm offline desktop packaging includes Zod in the bundled frontend and run clean-machine Windows/Linux smoke tests.
+
+**Status:** central Zod foundation and representative domain schemas are committed on the feature branch. This is not yet a claim that every live form, API endpoint, AG Grid editor or import workflow has been migrated. The remaining rollout items above must be completed and verified before declaring system-wide Zod adoption.
