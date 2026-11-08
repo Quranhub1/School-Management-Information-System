@@ -2,16 +2,25 @@
    Original SMIS functionality and permissions remain in their existing components.
    This stylesheet is local and has no CDN/font/network dependency. */
 :root {
+<<<<<<< HEAD
   --smis-ui-bg: #f5efdf;
   --smis-ui-surface: #fffdf7;
   --smis-ui-border: #e5dcc8;
   --smis-ui-text: #29271f;
   --smis-ui-muted: #766f60;
+=======
+  --smis-ui-bg: #f5f7fb;
+  --smis-ui-surface: #ffffff;
+  --smis-ui-border: #e5eaf2;
+  --smis-ui-text: #172033;
+  --smis-ui-muted: #64748b;
+>>>>>>> origin/feat/tailadmin-inspired-smis-ui
   --smis-ui-primary: #465fff;
   --smis-ui-primary-soft: #eef2ff;
   --smis-ui-radius: 16px;
   --smis-ui-shadow: 0 2px 8px rgba(15, 23, 42, .035), 0 12px 28px rgba(15, 23, 42, .025);
 }
+<<<<<<< HEAD
 body { background: var(--smis-ui-bg); color: var(--smis-ui-text); font-family: "Inter Variable"; }
 h1, h2, h3, h4, h5, h6,
 .admin-dashboard-heading h2,
@@ -34,10 +43,28 @@ h1, h2, h3, h4, h5, h6,
   box-shadow: 3px 0 20px rgba(0, 0, 0, .18) !important;
   backdrop-filter: none !important;
   z-index: 40;
+=======
+body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
+.app-shell { background: var(--smis-ui-bg); gap: 0; }
+.app-shell > aside {
+  width: 272px !important;
+  min-width: 272px;
+  height: 100vh !important;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  background: var(--smis-ui-surface) !important;
+  color: #334155 !important;
+  border-right: 1px solid var(--smis-ui-border) !important;
+  box-shadow: 5px 0 24px rgba(15, 23, 42, .025) !important;
+  backdrop-filter: none !important;
+  z-index: 20;
+>>>>>>> origin/feat/tailadmin-inspired-smis-ui
 }
 .app-shell > aside > div:first-of-type {
   min-height: 92px;
   padding: 20px 18px !important;
+<<<<<<< HEAD
   border-bottom: 1px solid rgba(20, 184, 166, .48) !important;
   background: #11110f !important;
   color: #f5efdf !important;
@@ -54,11 +81,21 @@ h1, h2, h3, h4, h5, h6,
 .app-shell > aside nav section > button[aria-expanded] {
   padding: 8px 10px !important;
   color: #bdb5a3 !important;
+=======
+  border-bottom: 1px solid var(--smis-ui-border) !important;
+  background: #fff;
+}
+.app-shell > aside nav { padding: 18px 12px !important; gap: 22px !important; }
+.app-shell > aside nav section > button[aria-expanded] {
+  padding: 8px 10px !important;
+  color: #94a3b8 !important;
+>>>>>>> origin/feat/tailadmin-inspired-smis-ui
   font-size: 10px !important;
   letter-spacing: .11em !important;
 }
 .app-shell > aside nav section > div > div > button {
   min-height: 40px;
+<<<<<<< HEAD
   border-radius: 0 !important;
   border-bottom: 1px solid rgba(20, 184, 166, .38) !important;
   background: #11110f !important;
@@ -107,12 +144,43 @@ h1, h2, h3, h4, h5, h6,
 @media (prefers-reduced-motion: reduce) {
   .app-shell > aside nav section > div > div > button { transition: none !important; }
 }
+=======
+  border-radius: 10px !important;
+  font-size: 13px !important;
+}
+.app-shell > aside nav section > div > div > button[aria-current="page"] {
+  background: var(--smis-ui-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 5px 12px rgba(70, 95, 255, .2) !important;
+}
+.app-shell > aside nav section > div > div > button:not([aria-current="page"]):hover {
+  background: #f4f6fb !important;
+  color: #26334d !important;
+}
+.app-shell > aside nav button:focus-visible,
+.admin-dashboard button:focus-visible {
+  outline: 3px solid rgba(70, 95, 255, .28);
+  outline-offset: 2px;
+}
+.app-shell > aside > div:last-child {
+  background: #fff !important;
+  color: #64748b !important;
+  border-top: 1px solid var(--smis-ui-border) !important;
+}
+.app-shell > aside > div:last-child strong,
+.app-shell > aside > div:last-child a { color: #334155 !important; }
+.app-shell > aside + div { min-width: 0; }
+>>>>>>> origin/feat/tailadmin-inspired-smis-ui
 .app-shell .content,
 .app-shell main.content { padding: 26px !important; }
 .app-shell .topbar {
   min-height: 76px;
   padding: 16px 28px !important;
+<<<<<<< HEAD
   background: #fffaf0 !important;
+=======
+  background: #fff !important;
+>>>>>>> origin/feat/tailadmin-inspired-smis-ui
   color: var(--smis-ui-text) !important;
   border-bottom: 1px solid var(--smis-ui-border) !important;
   box-shadow: 0 2px 6px rgba(15, 23, 42, .018);
@@ -242,11 +310,17 @@ h1, h2, h3, h4, h5, h6,
 .admin-chart-heading p { margin: 5px 0 0; color: #94a3b8; font-size: 11px; }
 .admin-chart-body { gap: 20px !important; }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
 
 =======
 >>>>>>> origin/feat/chartjs-visualisation-foundation
+=======
+.admin-donut-wrap { width: 138px !important; min-width: 138px; height: 138px !important; }
+.admin-donut-center strong { color: #172033 !important; font-size: 17px !important; }
+.admin-donut-center span { color: #94a3b8 !important; font-size: 10px !important; }
+>>>>>>> origin/feat/tailadmin-inspired-smis-ui
 .admin-chart-legend { gap: 12px !important; }
 .admin-chart-legend li { color: #64748b; font-size: 11px; }
 .admin-chart-legend li strong { color: #334155; font-size: 11px; }
@@ -287,6 +361,10 @@ h1, h2, h3, h4, h5, h6,
 [data-theme="dark"] .admin-section-title h3,
 [data-theme="dark"] .admin-dashboard-action-card h3,
 [data-theme="dark"] .admin-chart-heading h3,
+<<<<<<< HEAD
+=======
+[data-theme="dark"] .admin-donut-center strong,
+>>>>>>> origin/feat/tailadmin-inspired-smis-ui
 [data-theme="dark"] .admin-attention-list strong { color: #e2e8f0 !important; }
 [data-theme="dark"] .admin-kpi-card,
 [data-theme="dark"] .admin-chart-card,
@@ -319,6 +397,7 @@ h1, h2, h3, h4, h5, h6,
   .admin-kpi-card { transition: none; }
   .admin-kpi-card:hover { transform: none; }
 }
+<<<<<<< HEAD
 
 
 /* Unified warm-cream workspace canvas. Keep the dark sidebar and login page intact. */
@@ -626,3 +705,5 @@ h1, h2, h3, h4, h5, h6,
 }
 =======
 >>>>>>> origin/design/cream-workspace-theme
+=======
+>>>>>>> origin/feat/tailadmin-inspired-smis-ui

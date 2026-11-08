@@ -9,7 +9,10 @@ import { QueryCacheProvider } from './lib/QueryCacheProvider'
 import { installGlobalErrorHandlers } from './lib/logging'
 >>>>>>> origin/feat/structured-logging-observability
 import './styles.css'
+<<<<<<< HEAD
 import './institution-theme.css'
+=======
+>>>>>>> origin/feat/tailadmin-inspired-smis-ui
 import './tailadmin-inspired.css'
 import './sidebar-fixed.css'
 import './table-font.css'
