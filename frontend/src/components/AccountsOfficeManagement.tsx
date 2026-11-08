@@ -169,7 +169,7 @@ export function AccountsOfficeManagement() {
     let cancelled = false
     async function loadYears() {
       try {
-        const token = localStorage.getItem('accessToken')
+        const token = getAccessToken()
         const response = await fetch('/api/academic-structure/years', {
           headers: {
             Accept: 'application/json',
