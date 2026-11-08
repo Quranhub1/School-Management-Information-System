@@ -248,7 +248,7 @@ export const mobileMoneyCreateRequestSchema = z.object({
   amount: z.number().int().positive(),
   currency: z.string().trim().min(3).max(3).optional(),
   provider: requiredTextSchema,
-  phoneNumber: z.string().trim().regex(/^\\+?[0-9\\s()-]{7,20}$/, "Enter a valid mobile money phone number."),
+  phoneNumber: z.string().trim().regex(/^\+?[0-9\s()-]{7,20}$/, "Enter a valid mobile money phone number."),
 });
 export const bulkPaymentRequestSchema = z.object({
   payments: z.array(z.object({
