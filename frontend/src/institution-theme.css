@@ -443,6 +443,7 @@
   outline: 2px solid #d7cfbb !important;
   outline-offset: -2px !important;
 }
+<<<<<<< HEAD
 
 
 /* Compact Courses & Curriculum workspace: reduce oversized boxes while preserving
@@ -668,3 +669,5 @@
 >>>>>>> origin/fix/remove-sidebar-selected-tab-c-shape
 =======
 >>>>>>> origin/fix/sidebar-rounding-remove-button-motion
+=======
+>>>>>>> origin/fix/sidebar-tabs-black-only-highlight
