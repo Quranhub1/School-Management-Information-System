@@ -373,6 +373,7 @@ export default function MobileMoneyPayments() {
         </div>
       </div>
 
-      <p className="finance-muted">Manual verification only. Automatic MTN/Airtel STK prompts, callbacks and API synchronization are not connected.</p>    </div>
+      <p className="finance-muted">Manual verification only. Automatic MTN/Airtel STK prompts, callbacks and API synchronization are not connected.</p>
+    </div>
   );
 }
