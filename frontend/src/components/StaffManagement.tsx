@@ -4,6 +4,8 @@ import LoadingSpinner from './LoadingSpinner';
 import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 import { notify } from './GlobalNotifications'
+import { validateForm } from '../lib/validation'
+import { staffCreateRequestSchema } from '../schemas'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
@@ -12,6 +14,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
   const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
   const [error, setError] = useState('')
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState('')
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null)
   const [editingCourseUnitsStaffId, setEditingCourseUnitsStaffId] = useState<string | null>(null)
@@ -82,15 +85,21 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
     setError('')
     setSuccess('')
     try {
+      const profile = { ...form, departmentId: form.departmentId || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
+      const validation = validateForm(staffCreateRequestSchema, profile)
+      if (!validation.success) {
+        setValidationErrors(validation.errors)
+        setError('Staff record was not saved. Correct the validation errors shown below.')
+        return
+      }
+      setValidationErrors({})
       if (editingStaffId) {
-        const profile = { ...form, departmentId: form.departmentId || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
         const updated = await updateStaff(editingStaffId, { id: editingStaffId, ...profile })
         setStaff(current => current.map(item => item.id === updated.id ? updated : item))
         setSuccess(`${updated.firstName} ${updated.lastName} was updated successfully.`)
         notify(`${updated.firstName} ${updated.lastName} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
-        const profile = { ...form, departmentId: form.departmentId || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
         const created = await createStaff(profile)
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
@@ -245,13 +254,15 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
         </div>
       )}
 
+      {Object.keys(validationErrors).length > 0 && <div className="error" role="alert"><strong>Staff fields requiring attention</strong><ul>{Object.entries(validationErrors).map(([field, message]) => <li key={field}><strong>{field}:</strong> {message}</li>)}</ul></div>}
+
       {tab === 'staff' && (
         <>
           {canManage && (
             <form className="grid-form" onSubmit={submit}>
-              <input placeholder="Staff number" value={form.staffNumber} onChange={e => setForm({ ...form, staffNumber: e.target.value })} required />
-              <input placeholder="First name" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} required />
-              <input placeholder="Last name" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} required />
+              <input placeholder="Staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
+              <input placeholder="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
+              <input placeholder="Last name" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
               <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
               <label className="field-label">Staff category
                 <select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
