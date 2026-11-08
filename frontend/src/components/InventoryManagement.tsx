@@ -250,7 +250,6 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         height={560}
         pageSize={25}
         exportFileName={`inventory-${section.id}`}
-        rowSelection="multiple"
         editable={canEdit}
         toolbar
       />}
