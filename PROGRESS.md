@@ -287,3 +287,13 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - Reuse the existing Framer Motion dependency for reduced-motion-aware workspace and sidebar transitions.
 - Keep navigation, forms, validation, keyboard interaction and login behavior functional when motion is disabled.
 - Avoid animating large data grids or expensive paint properties; profile on representative low-powered devices.
+
+
+## Global command palette — November 2026
+
+- [x] Add locally bundled `cmdk` for an accessible global command palette opened with Ctrl+K / Cmd+K.
+- [x] Add role-filtered module navigation using the same sidebar visibility rules as the application shell.
+- [x] Search students, applicants, alumni, staff, courses, programmes, academic years, semesters and teaching groups through the existing authenticated `/api/search` endpoint.
+- [x] Add sign-out command and keyboard navigation; search is on-demand and does not preload full directories.
+- [ ] Run frontend type-check, tests and production build on the rebased PR head; verify the palette with representative roles.
+- [ ] Add direct record-detail navigation only where the destination modules expose a supported record-opening route.

@@ -33,7 +33,8 @@
     "use-debounce": "10.1.1",
     "xlsx": "npm:@stackline/xlsx@1.0.10",
     "html2canvas": "1.4.1",
-    "pdfmake": "0.3.13"
+    "pdfmake": "0.3.13",
+    "cmdk": "^1.1.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",
