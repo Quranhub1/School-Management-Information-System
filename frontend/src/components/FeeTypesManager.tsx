@@ -5,7 +5,6 @@ import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { AgGridTable } from './AgGridTable'
 import type { ColDef } from 'ag-grid-community'
 
-type AcademicYear = { id: string; name: string; isCurrent: boolean; isActive: boolean }
 type ItemDraft = { code: string; name: string; amount: string; incomeAccountId: string }
 
 export function FeeTypesManager() {
