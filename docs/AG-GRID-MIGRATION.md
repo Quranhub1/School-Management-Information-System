@@ -20,7 +20,10 @@ AG Grid Community is MIT-licensed. This implementation does not import Enterpris
 - CSV export
 - Column visibility controls
 - Multi-row selection
-- Optional editable cells, with mutations delegated to the owning screen/API
+- Optional editable cells, with mutations delegated to the owning screen/API; Inventory is permission-gated and Zod-validated, while finance balances remain read-only and must use audited finance workflows
+- Shift-click multi-column sorting and draggable/reorderable column headers
+- Shared loading and empty-state overlays for asynchronous and zero-row grids
+- Existing custom React cell renderers for finance statuses/amounts, payroll statuses, and row actions
 - Compact, square-cornered Quartz theme consistent with SMIS density
 
 ## Migrated screens
@@ -59,7 +62,9 @@ Then manually verify:
 - Finance, accounts overview, inventory and stock alerts, payroll, student registry, fee defaulters, fee structures, audit log and notices at desktop and narrow viewport widths
 - Sorting, floating filters, quick search, pagination, column drag/reorder and column visibility
 - CSV export contents and filenames
-- Inventory edits autosave to the database and remain blocked for read-only roles
+- Inventory edits autosave to the database, pass the row Zod contract, and remain blocked for read-only roles
+- Loading and empty overlays render correctly when the grid is fetching data or has no rows
+- Shift-click multi-column sorting and drag-to-reorder work without breaking column visibility or filters
 - Payroll edit and mark-paid actions still use the existing protected API
 - Student guardian and QR actions still open the correct records
 

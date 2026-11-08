@@ -10,6 +10,14 @@ import {
   themeQuartz,
 } from 'ag-grid-community'
 import { AgGridProvider, AgGridReact } from 'ag-grid-react'
+
+function GridLoadingOverlay() {
+  return <div className="smis-ag-grid-overlay" role="status" aria-live="polite">Loading records…</div>
+}
+
+function GridNoRowsOverlay() {
+  return <div className="smis-ag-grid-overlay" role="status">No records to display.</div>
+}
 import { useDebounce } from 'use-debounce'
 
 export type AgGridTableProps<TData extends object> = {
@@ -152,6 +160,11 @@ export function AgGridTable<TData extends object>({
             loading={loading}
             quickFilterText={debouncedFilter}
             rowSelection={rowSelection}
+            // Shift-click column headers to build a multi-column sort; dragging headers reorders columns.
+            suppressMultiSort={false}
+            suppressMovableColumns={false}
+            loadingOverlayComponent={GridLoadingOverlay}
+            noRowsOverlayComponent={GridNoRowsOverlay}
             onGridReady={event => setApi(event.api)}
             onRowClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
