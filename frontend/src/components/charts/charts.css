@@ -1,12 +1,12 @@
 .smis-chart-card { min-width: 0; }
-.smis-doughnut-body { align-items: center; }
-.smis-doughnut-plot { position: relative; width: min(100%, 230px); min-width: 150px; height: 190px; flex: 0 1 230px; }
+.smis-doughnut-body { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.smis-doughnut-plot { position: relative; width: min(100%, 190px); min-width: 150px; height: 180px; flex: 0 1 190px; }
 .smis-chart-canvas { position: relative; width: 100%; height: 100%; min-width: 0; }
 .smis-chart-canvas canvas { display: block; width: 100% !important; height: 100% !important; }
 .smis-doughnut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; pointer-events: none; text-align: center; }
 .smis-doughnut-center strong { max-width: 88%; overflow: hidden; color: var(--smis-text, #172033); font-size: clamp(.8rem, 1.2vw, 1.05rem); font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .smis-doughnut-center span { color: var(--smis-text-muted, #64748b); font-size: .68rem; font-weight: 650; }
-@media (max-width: 560px) { .smis-doughnut-body { flex-wrap: wrap; } .smis-doughnut-plot { width: 100%; flex-basis: 100%; max-width: 220px; margin-inline: auto; } }
+@media (max-width: 560px) { .smis-doughnut-body { justify-content: center; } .smis-doughnut-plot { width: 100%; flex-basis: 100%; max-width: 220px; margin-inline: auto; } .admin-chart-legend { width: 100%; } }
 [data-theme="dark"] .smis-doughnut-center strong { color: #f1f5f9; }
 [data-theme="dark"] .smis-doughnut-center span { color: #9aabc2; }
 
