@@ -176,7 +176,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 x.FeeType,
                 x.Amount,
                 x.DiscountAmount,
-                netAmount = x.Amount - x.DiscountAmount,
+                NetAmount = x.Amount - x.DiscountAmount,
                 x.PaidAmount,
                 balance = x.Amount - x.DiscountAmount - x.PaidAmount,
                 x.Currency,
