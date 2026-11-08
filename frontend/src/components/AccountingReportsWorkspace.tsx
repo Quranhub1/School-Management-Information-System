@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+import { readApiErrorMessage } from '../api/errors'
 import { formatCurrency } from '../lib/currency'
 
 type Account = { id: string; code: string; name: string; accountType: string }
@@ -16,7 +17,7 @@ const money = (n: number) => formatCurrency(Number(n) || 0)
 async function request<T>(path: string): Promise<T> {
   const token = getAccessToken()
   const response = await fetch(apiBase + path, { headers: { Accept: 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) } })
-  if (!response.ok) throw new Error((await response.text()) || `Request failed (${response.status})`)
+  if (!response.ok) throw new Error(await readApiErrorMessage(response))
   return response.json() as Promise<T>
 }
 
