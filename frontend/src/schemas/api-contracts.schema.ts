@@ -83,3 +83,18 @@ export const smsSendResponseSchema = z.looseObject({
   message: z.string(),
   count: z.number().int().nonnegative(),
 });
+
+export const payrollRecordResponseSchema = z.looseObject({
+  id: identifierSchema,
+  staffMemberId: identifierSchema,
+  month: z.number().int().min(1).max(12),
+  year: z.number().int(),
+  basicSalary: z.number().finite(),
+  allowances: z.number().finite(),
+  deductions: z.number().finite(),
+  netPay: z.number().finite(),
+  paymentDate: z.string().nullable(),
+  status: requiredTextSchema,
+  paymentMethod: z.string().optional(),
+  reference: z.string().optional(),
+});
