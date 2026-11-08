@@ -9,13 +9,6 @@ import { readQueryCache, writeQueryCache, removeQueryCache } from './offline/db'
 import { getSession } from '../api/auth'
 import { isPersistableQuery, queryClient, QUERY_CACHE_MAX_AGE } from './queryClient'
 
-type PersistedQueryRecord = {
-  key: string
-  savedAt: number
-  buster: string
-  state: DehydratedState
-}
-
 const CACHE_PREFIX = 'query-cache:'
 const CACHE_BUSTER = 'smis-query-cache-v1'
 const AUTH_CHANGED_EVENT = 'smis:auth-changed'
