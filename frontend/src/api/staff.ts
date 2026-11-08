@@ -1,4 +1,7 @@
 import { readApiErrorMessage } from './errors'
+import { z } from 'zod'
+import { parseApiInput } from '../lib/validation'
+import { leaveRequestSchema, staffCreateRequestSchema } from '../schemas'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? '';
 
@@ -28,16 +31,17 @@ export function listStaff(activeOnly=true){ return request<StaffMember[]>(`/api/
 export function listStaffCourseUnits(){ return request<StaffCourseUnit[]>('/api/staff/course-units'); }
 export function listStaffDepartments(){ return request<StaffDepartment[]>('/api/staff/departments'); }
 export async function createStaff(input: StaffProfileInput) {
-  const created = await request<StaffMember>('/api/staff',{method:'POST',body:JSON.stringify(input)})
+  const validated = parseApiInput(staffCreateRequestSchema, input, 'create staff record')
+  const created = await request<StaffMember>('/api/staff',{method:'POST',body:JSON.stringify(validated)})
   notifyStaffChanged(created)
   return created
 }
 export function deactivateStaff(id:string){ return request<void>(`/api/staff/${id}/deactivate`,{method:'PATCH'}); }
 export function activateStaff(id:string){ return request<void>(`/api/staff/${id}/activate`,{method:'PATCH'}); }
 export function listLeave(staffId:string){ return request<LeaveRequest[]>(`/api/staff/${staffId}/leave`); }
-export function requestLeave(staffId:string,input: Omit<LeaveRequest,'id'|'status'|'approvedBy'|'approvedAt'>){ return request<LeaveRequest>(`/api/staff/${staffId}/leave`,{method:'POST',body:JSON.stringify(input)}); }
+export function requestLeave(staffId:string,input: Omit<LeaveRequest,'id'|'status'|'approvedBy'|'approvedAt'>){ const validated = parseApiInput(leaveRequestSchema, input, 'staff leave request'); return request<LeaveRequest>(`/api/staff/${encodeURIComponent(staffId)}/leave`,{method:'POST',body:JSON.stringify(validated)}); }
 export function approveLeave(id:string,approvedBy:string,approved:boolean){ return request<void>(`/api/staff/leave/${id}/approve`,{method:'PATCH',body:JSON.stringify({approvedBy,approved})}); }
 export type UpdateStaffRequest = StaffProfileInput & { id:string }
-export function updateStaff(id:string, input: UpdateStaffRequest){ return request<StaffMember>(`/api/staff/${id}`,{method:'PUT',body:JSON.stringify(input)}); }
+export function updateStaff(id:string, input: UpdateStaffRequest){ if (!id.trim()) throw new Error('Staff ID is required.'); const validated = parseApiInput(staffCreateRequestSchema.extend({ id: z.string().optional() }), input, 'update staff record'); return request<StaffMember>(`/api/staff/${encodeURIComponent(id)}`,{method:'PUT',body:JSON.stringify(validated)}); }
 export function updateStaffCourseUnits(id:string, courseUnitIds:string[]){ return request<StaffMember>(`/api/staff/${id}/course-units`,{method:'PATCH',body:JSON.stringify({ courseUnitIds })}); }
 export function deleteStaff(id:string){ return request<void>(`/api/staff/${id}`,{method:'DELETE'}); }
