@@ -1,10 +1,9 @@
 import { getAccessToken } from './auth'
 import { readApiErrorMessage } from './errors'
+import { parseApiInput, parseApiResponse } from '../lib/validation'
+import { sendBulkSmsRequestSchema, sendSmsRequestSchema, smsSendResponseSchema } from '../schemas'
 
-export interface SmsTemplate {
-  name: string
-}
-
+export interface SmsTemplate { name: string }
 export interface SmsHistoryItem {
   id: string
   title: string
@@ -16,7 +15,6 @@ export interface SmsHistoryItem {
   createdAtUtc: string
   sentAtUtc: string | null
 }
-
 export interface SendSmsRequest {
   subject?: string
   message: string
@@ -24,7 +22,6 @@ export interface SendSmsRequest {
   recipientIds: string[]
   templateName?: string
 }
-
 export interface SendBulkSmsRequest {
   subject?: string
   message: string
@@ -52,11 +49,13 @@ export const getSmsHistory = (recipientType?: string, status?: string) => {
   const qs = params.toString()
   return request<SmsHistoryItem[]>(`/api/sms/history${qs ? `?${qs}` : ''}`)
 }
-export const sendSms = (data: SendSmsRequest) => request<{ success: boolean; message: string; count: number }>('/api/sms/send', {
-  method: 'POST',
-  body: JSON.stringify(data),
-})
-export const sendBulkSms = (data: SendBulkSmsRequest) => request<{ success: boolean; message: string; count: number }>('/api/sms/send-bulk', {
-  method: 'POST',
-  body: JSON.stringify(data),
-})
+export async function sendSms(data: SendSmsRequest) {
+  const input = parseApiInput(sendSmsRequestSchema, data, 'send SMS')
+  const result = await request<unknown>('/api/sms/send', { method: 'POST', body: JSON.stringify(input) })
+  return parseApiResponse(smsSendResponseSchema, result, 'SMS send result')
+}
+export async function sendBulkSms(data: SendBulkSmsRequest) {
+  const input = parseApiInput(sendBulkSmsRequestSchema, data, 'send bulk SMS')
+  const result = await request<unknown>('/api/sms/send-bulk', { method: 'POST', body: JSON.stringify(input) })
+  return parseApiResponse(smsSendResponseSchema, result, 'bulk SMS send result')
+}
