@@ -1,34 +1,41 @@
 # SMIS Chart.js visualisation standard
 
-## Library
+## Single chart-rendering engine
 
-SMIS uses **Chart.js 4.5.1** as its shared chart-rendering engine. The package is a normal frontend dependency and is bundled by Vite with the application. Charts must not load scripts, stylesheets, fonts, or plugins from a CDN; the application must continue to work on the school LAN without internet access.
+**Chart.js 4.5.1 is the only chart-rendering engine used by the SMIS frontend.** It is installed as a frontend dependency and bundled locally by Vite. No chart may load scripts, stylesheets, fonts, or plugins from a CDN; the application must continue to work on the school LAN without internet access.
 
-Shared components live in `frontend/src/components/charts/`:
+All charts in the SMIS interface must be implemented through the shared components in `frontend/src/components/charts/`:
 
-- `ChartCanvas` — lifecycle-safe Chart.js canvas renderer. It destroys chart instances when the component unmounts or its configuration changes.
-- `DoughnutChart` — standard SMIS doughnut card with a centre metric, accessible chart label, tooltip, and data legend.
-- `charts.css` — responsive and dark-theme chart presentation.
-- `index.ts` — public exports for chart components and types.
+- `ChartCanvas` — lifecycle-safe Chart.js canvas renderer for all supported Chart.js chart types.
+- `DoughnutChart` — standard doughnut card with centre metric, accessible chart label, tooltip, legend and optional value formatting.
+- `BarChart` — reusable bar/column chart with horizontal mode, multiple datasets, configurable value formatting and empty state.
+- `charts.css` — shared responsive chart presentation and dark-theme support.
+- `index.ts` — public component and type exports.
 
-Use `ChartCanvas` for other Chart.js chart types (bar, line, pie, area via line fill, and mixed datasets). Add domain-specific wrappers in this folder when a chart pattern is reused by more than one module.
+Do not add a second chart library, custom SVG chart, CSS-drawn data plot, or embedded third-party dashboard renderer to the SMIS frontend. Build any future line, pie, area, mixed, radar or other visualisations with `ChartCanvas` or a reusable wrapper in this folder.
+
+## Current migration
+
+- Administrator dashboard: student status, staff status, user accounts, fee collection and payroll status use the shared Chart.js doughnut component, including the finance-tab fee chart.
+- Modern institutional dashboard: academic assessment and clinical placement rates use the shared Chart.js bar component; fee collection uses the shared doughnut component.
+- Finance workspace: recent daily collections use the shared Chart.js bar component. Values are aggregated from the existing payment records.
+- Analytics screen: the embedded Superset renderer and its frontend API client have been removed. Institutional analytics now use the same Chart.js-powered command centre.
+- Existing API data sources, calculations, refresh behavior and authorization boundaries are preserved. Apache Superset infrastructure and backend configuration may remain available for separately managed external BI, but it is not an embedded SMIS chart renderer.
 
 ## Implementation rules
 
 1. Chart values must come from the module's existing API/database response. Never introduce demonstration, random, or hard-coded business figures.
 2. Keep aggregation and permission checks in the existing API/service layer. A chart is a presentation layer, not an authorization boundary.
-3. Format monetary values using Uganda Shillings (UGX) and the existing `en-UG` conventions.
-4. Every chart must have a descriptive title, an accessible text label, and an understandable empty state.
+3. Format monetary values in Uganda Shillings (UGX) using the existing `en-UG` conventions.
+4. Every chart must have a descriptive title, an accessible text label, useful tooltips and an understandable empty state.
 5. Tooltips and legends must identify the series/category and value. Do not rely on colour alone.
-6. Charts must resize with their parent container and remain usable at desktop, tablet, and phone widths.
+6. Charts must resize with their parent container and remain usable at desktop, tablet and phone widths.
 7. Keep chart dependencies local so built desktop and LAN deployments do not need internet connectivity.
+8. New charts in Finance, Human Resources/Payroll, Inventory, Admissions, Academics and every role dashboard must use this shared Chart.js layer.
 
-## Current migration
+## Verification required before merging
 
-- Administrator dashboard: student status, staff status, user accounts, fee collection, payroll status, and the finance-tab fee collection chart now use the shared Chart.js doughnut component.
-- Existing metric loading, calculations, refresh behavior, and API calls are unchanged.
-- Apache Superset remains the separate advanced BI option; it is not replaced by this embedded chart layer.
-
-## Next module integrations
-
-Adopt the shared renderer incrementally in Finance, Human Resources/Payroll, Inventory, Admissions, and Academic dashboards. For each chart, confirm the source endpoint, role permissions, date/term filters, aggregation rules, and empty/loading/error states before replacing existing visualisations.
+- Run `npm ci` and `npm run build` from `frontend/`.
+- Run the existing frontend unit tests and relevant role-authorization tests.
+- Check chart rendering with populated, empty and zero-valued API responses, narrow viewports, dark mode and offline operation.
+- Confirm each role only receives the API data it is already authorized to view.
