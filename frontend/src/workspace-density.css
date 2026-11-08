@@ -284,6 +284,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+<<<<<<< HEAD
 
 
 /* Curriculum catalogue: dense, scannable rows instead of oversized programme cards. */
@@ -507,3 +508,5 @@
   .app-shell .curriculum-management .catalogue-filters { grid-template-columns: minmax(0, 1fr); }
 >>>>>>> origin/fix/authority-course-catalogues
 }
+=======
+>>>>>>> origin/fix/curriculum-course-compact-fields
