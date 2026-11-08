@@ -2,5 +2,5 @@ namespace SchoolManagement.Application.Administration;
 
 public sealed record BackupSettings
 {
-    public string BackupPath { get; init } = "/workspace/app/backups";
+    public string BackupPath { get; set; } = "/workspace/app/backups";
 }
