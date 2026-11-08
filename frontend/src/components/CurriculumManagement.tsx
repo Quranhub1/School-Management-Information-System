@@ -291,6 +291,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     })
     const awardOptions = [...new Set(entries.map(course => course.award))].sort()
     return (
+<<<<<<< HEAD
       <>
       <div className="catalogue-filters" aria-label="Filter catalogue">
         <input
@@ -310,6 +311,40 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <option value="reference">Website/reference listing</option>
         </select>
         <span className="catalogue-result-count">{visibleEntries.length} of {entries.length}</span>
+=======
+      <div className="catalogue-table-wrap">
+        <table className="catalogue-table">
+          <thead>
+            <tr>
+              <th>Programme / course</th>
+              <th>Award</th>
+              <th>Duration</th>
+              <th>Area</th>
+              <th>Review</th>
+              <th aria-label="Action"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map(course => (
+              <tr key={course.name}>
+                <td className="catalogue-course-name">{course.name}</td>
+                <td>{course.award}</td>
+                <td>{course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
+                <td>{course.family}</td>
+                <td>
+                  <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
+                    {course.review ? 'Verify' : 'Reference'}
+                  </span>
+                </td>
+                <td className="catalogue-action-cell">
+                  <button type="button" onClick={() => applyCourseTemplate(course, type)}>Use draft</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="catalogue-footnote">* Indicative duration where listed. Confirm against the approved programme document before publishing.</p>
+>>>>>>> origin/fix/curriculum-screen-density
       </div>
       <div className="catalogue-table-wrap">
         <table className="catalogue-table">
@@ -411,10 +446,14 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="catalogue-intro">
             <h3>Long-course catalogue</h3>
 <<<<<<< HEAD
+<<<<<<< HEAD
             
 =======
             <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Needs verification need title or duration confirmation.</p>
 >>>>>>> origin/feat/curriculum-catalogue-workflow-polish
+=======
+            <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Verify need title or duration confirmation.</p>
+>>>>>>> origin/fix/curriculum-screen-density
           </div>
           {authority === 'UHPAB' && <section className="catalogue-board" aria-labelledby="uhpab-long-title">
             <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
@@ -528,7 +567,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <div className="short-course-section">
           <div className="catalogue-intro">
             <h3>Short and modular training</h3>
+<<<<<<< HEAD
             
+=======
+            <p>Select a row to prefill a draft. Confirm the approved title, award and duration before publishing.</p>
+>>>>>>> origin/fix/curriculum-screen-density
           </div>
           {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue">
             <h3>UVTAB · Modular and occupational skills</h3>
