@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { applyFeeStructure, createFeeStructure, getFeeStructures, getFinanceAccounts, type FeeStructure, type FinanceAccountOption } from '../api/finance'
-import { getAcademicYears } from '../api/academicStructure'
+import { getAcademicYears, type AcademicYear } from '../api/academicStructure'
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { AgGridTable } from './AgGridTable'
 import type { ColDef } from 'ag-grid-community'
