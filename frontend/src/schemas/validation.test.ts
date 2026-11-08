@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bulkImportRequestSchema, createInvoiceRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryRegisterSaveRequestSchema, libraryLoanSchema, paymentEntrySchema, sendSmsRequestSchema, studentAdmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { bulkImportRequestSchema, createInvoiceRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, libraryLoanSchema, paymentEntrySchema, sendSmsRequestSchema, studentAdmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -56,6 +56,13 @@ describe("SMIS Zod domain schemas", () => {
       studentId: "s1", invoiceNumber: "", feeType: "Tuition", amount: -100, currency: "UGX",
     }).success).toBe(false);
     expect(bulkImportRequestSchema.safeParse({ entityType: "students", csvData: "" }).success).toBe(false);
+  });
+
+  it("rejects incomplete inventory grid rows and non-numeric or negative quantities", () => {
+    expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { name: "Gloves", quantity: "8" } }).success).toBe(true);
+    expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { name: "Gloves", quantity: "-2" } }).success).toBe(false);
+    expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { quantity: "2" } }).success).toBe(false);
+    expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { name: "", quantity: "" } }).success).toBe(true);
   });
 
   it("rejects empty SMS recipients and malformed inventory row values", () => {
