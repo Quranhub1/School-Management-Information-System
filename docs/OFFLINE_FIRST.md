@@ -36,11 +36,8 @@ IndexedDB is not encrypted by Dexie. Do not cache sensitive student identity, cl
 3. Add optimistic concurrency/version checks and explicit conflict resolution.
 4. Implement financial idempotency and atomic posting before considering any finance queue.
 5. Add device data protection, retention controls, and multi-user/offline acceptance tests.
-<<<<<<< HEAD
 
 
 ## Asynchronous key-value state
 
 The Dexie v4 schema exposes `getAppState`, `setAppState`, `deleteAppState` and `clearAppStateForScope` for small structured-clone-compatible preferences and offline drafts. This reuses the existing Dexie database and preserves the dedicated TanStack Query cache. Always supply an explicit user/role namespace as `scope`. Do not store access tokens, secrets, sensitive personal data, financial transactions or authoritative server records. IndexedDB writes are asynchronous and callers must await them; storage quota or browser restrictions should be handled by the caller.
-=======
->>>>>>> origin/feat/dexie-offline-data-sync
