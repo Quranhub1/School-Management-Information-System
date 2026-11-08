@@ -93,6 +93,7 @@
   body:has(.timetable-class-document[data-print-target="true"]) .timetable-print-area{display:none!important}
   .timetable-class-document[data-print-target="true"] .timetable-table-wrap{overflow:visible!important}
   .timetable-class-document[data-print-target="true"] table{min-width:0!important;white-space:normal!important}
+<<<<<<< HEAD
 }
 
  .timetable-template-editor{padding:16px;background:#fff;border:1px solid #cbd2dc;border-radius:3px;min-width:0}
@@ -132,3 +133,6 @@
   .timetable-editable-grid th,.timetable-editable-grid td{padding:4px;height:70px}
   .timetable-editable-grid td:before{content:"";display:block}
 }
+=======
+}
+>>>>>>> origin/feat/timetable-reference-grid

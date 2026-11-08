@@ -33,6 +33,10 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [timetableCount, setTimetableCount] = useState('1')
   const [generatedTimetables, setGeneratedTimetables] = useState<Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }>>([])
+<<<<<<< HEAD
+=======
+  const [printTargetGroupId, setPrintTargetGroupId] = useState('')
+>>>>>>> origin/feat/timetable-reference-grid
   const [view, setView] = useState<'week' | 'list'>('week')
   const [showTemplateEditor, setShowTemplateEditor] = useState(false)
   const [templateGroupId, setTemplateGroupId] = useState('')
@@ -70,6 +74,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const orderedEntries = useMemo(() => [...activeEntries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)), [activeEntries])
   const timeSlots = useMemo(() => [...new Set(activeEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b)), [activeEntries])
 
+<<<<<<< HEAD
   function timetablePdfOptions(title: string, rows: TimetableEntry[], filename: string) {
     const sorted = [...rows].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
     return {
@@ -158,13 +163,26 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 =======
   }
 >>>>>>> origin/feat/pdfmake-document-engine-main-sync
+=======
+  useEffect(() => {
+    if (!printTargetGroupId) return
+    const finishPrint = () => setPrintTargetGroupId('')
+    window.addEventListener('afterprint', finishPrint)
+    window.print()
+    return () => window.removeEventListener('afterprint', finishPrint)
+  }, [printTargetGroupId])
+>>>>>>> origin/feat/timetable-reference-grid
 
   async function handleGenerate(event: React.FormEvent) {
     event.preventDefault()
     setError('')
     setGeneratedResult(null)
     setGeneratedTimetables([])
+<<<<<<< HEAD
     if (!semesterId) { setError('Select an academic period before generating a timetable.'); return }
+=======
+    if (!semesterId) { setError('Select an active academic period before generating a timetable.'); return }
+>>>>>>> origin/feat/timetable-reference-grid
     const selectedGroups = teachingGroupId
       ? options.teachingGroups.filter(group => group.id === teachingGroupId)
       : options.teachingGroups.slice(0, Math.max(1, Math.min(options.teachingGroups.length, Number(timetableCount) || 1)))
@@ -318,7 +336,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     {!readOnly && showGenerator && <form className="timetable-form-panel" onSubmit={handleGenerate}>
       <h3>Generate a timetable</h3>
       <div className="timetable-form-grid">
+<<<<<<< HEAD
         <label>Academic period<select value={semesterId} onChange={event => setSemesterId(event.target.value)} required><option value="">Select period</option>{availableSemesters.map(item => <option key={item.id} value={item.id}>{item.label}{item.isCurrent ? ' (Current)' : ''}{!item.isActive ? ' (Inactive)' : ''}</option>)}</select></label>
+=======
+        <label>Academic period<select value={semesterId} onChange={event => setSemesterId(event.target.value)} required><option value="">Select period</option>{activeSemesters.map(item => <option key={item.id} value={item.id}>{item.label}{item.isCurrent ? ' (Current)' : ''}</option>)}</select></label>
+>>>>>>> origin/feat/timetable-reference-grid
         <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         {!teachingGroupId && <label>Number of timetables<input type="number" min="1" max={Math.max(1, options.teachingGroups.length)} value={timetableCount} onChange={event => setTimetableCount(event.target.value)} required /></label>}
       </div>
@@ -384,6 +406,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
     {generatedTimetables.length > 0 && <section className="timetable-generated-list" aria-live="polite">
       <div className="timetable-generated-heading"><h3>Generated class timetables</h3><span>{generatedTimetables.length} timetable{generatedTimetables.length === 1 ? '' : 's'}</span></div>
+<<<<<<< HEAD
       {generatedTimetables.map(({ groupId, groupLabel, result }) => <article className="timetable-class-document" key={groupId}>
         <div className="timetable-class-document-heading"><div><h4>{groupLabel}</h4><span>Teaching timetable · {availableSemesters.find(item => item.id === semesterId)?.label ?? 'Selected academic period'}</span></div>
           <div className="timetable-class-actions">
@@ -401,6 +424,20 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 =======
             <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)}>Print</button>
 >>>>>>> origin/feat/pdfmake-document-engine-main-sync
+=======
+      {generatedTimetables.map(({ groupId, groupLabel, result }) => <article className="timetable-class-document" data-print-target={printTargetGroupId === groupId ? 'true' : 'false'} key={groupId}>
+        <div className="timetable-class-document-heading"><div><h4>{groupLabel}</h4><span>Teaching timetable · {activeSemesters.find(item => item.id === semesterId)?.label ?? 'Selected academic period'}</span></div>
+          <div className="timetable-class-actions">
+            <button className="timetable-action" type="button" onClick={() => {
+              const rows = activeEntries.filter(entry => entry.teachingGroupId === groupId).sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
+              const escape = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+              const body = rows.map(entry => '<tr><td>' + escape(days[entry.dayOfWeek] ?? '') + '</td><td>' + escape(timeRange(entry)) + '</td><td>' + escape(courseLabels.get(entry.courseId) ?? 'Course not found') + '</td><td>' + escape(teacherLabels.get(entry.teacherId) ?? 'Teacher not found') + '</td><td>' + escape(entry.room ?? '') + '</td><td>' + escape(entry.sessionType ?? '') + '</td></tr>').join('')
+              const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + escape(groupLabel) + ' timetable</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#111}h1,h2,p{text-align:center}table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:8px;text-align:center}th{background:#eee}@media print{@page{size:landscape;margin:10mm}}</style></head><body><p>REPUBLIC OF UGANDA</p><h1>KAMPALA SCHOOL OF HEALTH SCIENCES</h1><h2>' + escape(groupLabel) + ' — TEACHING TIMETABLE</h2><p>' + escape(activeSemesters.find(item => item.id === semesterId)?.label ?? '') + '</p><table><thead><tr><th>Day</th><th>Time</th><th>Course</th><th>Teacher</th><th>Venue</th><th>Type</th></tr></thead><tbody>' + body + '</tbody></table><p style="margin-top:48px;text-align:right">Academic Registrar: ____________________</p></body></html>'
+              const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }))
+              const anchor = document.createElement('a'); anchor.href = url; anchor.download = groupLabel.replace(/[^a-z0-9-_]+/gi, '-').replace(/^-|-$/g, '') + '-timetable.html'; anchor.click(); URL.revokeObjectURL(url)
+            }}>Download</button>
+            <button className="timetable-action" type="button" onClick={() => setPrintTargetGroupId(groupId)}>Print</button>
+>>>>>>> origin/feat/timetable-reference-grid
           </div>
         </div>
         <p className="timetable-class-status">Score: {result.optimizationScore.toFixed(1)}% · {result.isConflictFree ? 'No conflicts reported' : 'Conflicts detected'}</p>
@@ -460,7 +497,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         </table>
       </div>
       <div className="timetable-document-footer"><span>Prepared for academic use</span><span>Academic Registrar: ____________________</span></div>
+<<<<<<< HEAD
       <div className="timetable-document-print-actions"><button type="button" className="timetable-action" onClick={() => printInstitutionalPdf(timetablePdfOptions((availableSemesters.find(item => item.id === semesterId)?.label ?? 'Academic') + ' Timetable', orderedEntries, 'school-timetable'))}>Print timetable</button></div>
+=======
+      <div className="timetable-document-print-actions"><button type="button" className="timetable-action" onClick={() => window.print()}>Print timetable</button></div>
+>>>>>>> origin/feat/timetable-reference-grid
     </div> : <div className="timetable-table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Room</th><th>Type</th><th>Teaching group</th><th>Course</th><th>Teacher</th>{!readOnly && <th>Actions</th>}</tr></thead><tbody>
       {orderedEntries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{timeRange(entry)}</td><td>{entry.room || '—'}</td><td>{entry.sessionType || '—'}</td><td>{groupLabels.get(entry.teachingGroupId) ?? 'Group not found'}</td><td>{courseLabels.get(entry.courseId) ?? 'Course not found'}</td><td>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</td>{!readOnly && <td><button className="timetable-action" type="button" onClick={() => void remove(entry.id)}><Trash2 /> Remove</button></td>}</tr>)}
     </tbody></table></div>}
