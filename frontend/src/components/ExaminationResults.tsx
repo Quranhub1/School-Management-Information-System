@@ -101,7 +101,7 @@ export function ExaminationResults() {
         <label htmlFor="exam-student-id">Student ID</label>
         <div className="form-row">
           <input id="exam-student-id" value={studentId} onChange={(event) => setStudentId(event.target.value)} placeholder="Enter student UUID" />
-          <FancyButton type="submit" disabled={loading || !studentId.trim()}>{loading ? 'Loading…' : 'Retrieve results'}</FancyButton>
+          <button type="submit" disabled={loading || !studentId.trim()}>{loading ? 'Loading…' : 'Retrieve results'}</button>
         </div>
       </form>
 

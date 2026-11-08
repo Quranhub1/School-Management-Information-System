@@ -61,7 +61,7 @@ export default function StreamsPage() {
     <form onSubmit={createStreamEvent}>
       <label>Name <input value={name} onChange={e => setName(e.target.value)} placeholder="Stream A" required /></label>
       <label>Code <input value={code} onChange={e => setCode(e.target.value)} placeholder="A" required /></label>
-      <FancyButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add Stream'}</FancyButton>
+      <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add Stream'}</button>
     </form>
     {message && <p role="status">{message}</p>}
     {loading ? <LoadingSpinner label="Loading streams…" /> : <table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Action</th></tr></thead><tbody>

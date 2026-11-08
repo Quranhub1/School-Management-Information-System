@@ -1,9 +1,5 @@
 import { getAccessToken } from './auth'
 import { createCorrelationId } from '../lib/logging'
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/tanstack-query-offline-cache
 import { useQuery } from '@tanstack/react-query'
 
 export class ApiError extends Error {
@@ -12,11 +8,6 @@ export class ApiError extends Error {
     this.name = 'ApiError'
   }
 }
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/structured-logging-observability
-=======
->>>>>>> origin/feat/tanstack-query-offline-cache
 
 const api = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const token = getAccessToken()

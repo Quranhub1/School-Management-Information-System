@@ -1,13 +1,5 @@
 import { describe, expect, it } from "vitest";
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { applyFeeStructureRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
-=======
-import { bulkImportRequestSchema, createInvoiceRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryRegisterSaveRequestSchema, libraryLoanSchema, paymentEntrySchema, sendSmsRequestSchema, studentAdmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
->>>>>>> origin/feat/central-zod-validation
-=======
-import { applyFeeStructureRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
->>>>>>> origin/feat/central-zod-validation-v2
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -48,10 +40,6 @@ describe("SMIS Zod domain schemas", () => {
     expect(libraryLoanSchema.safeParse({ bookId: "b1", borrowerId: "s1", borrowedAt: "2026-04-02", dueAt: "2026-04-01" }).success).toBe(false);
   });
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/central-zod-validation-v2
   it("requires a complete student application and declaration before submit", () => {
     const base = {
       studentNumber: "KSHS/2026/001", academicYear: "2026", intake: "August",
@@ -64,11 +52,6 @@ describe("SMIS Zod domain schemas", () => {
     expect(studentApplicationSubmissionSchema.safeParse({ ...base, phone: "bad" }).success).toBe(false);
   });
 
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/central-zod-validation
-=======
->>>>>>> origin/feat/central-zod-validation-v2
   it("validates actual student API create payloads", () => {
     expect(studentCreateRequestSchema.safeParse({
       studentNumber: "KSHS/2026/001", firstName: "Amina", lastName: "Nabirye",
@@ -87,10 +70,6 @@ describe("SMIS Zod domain schemas", () => {
     expect(bulkImportRequestSchema.safeParse({ entityType: "students", csvData: "" }).success).toBe(false);
   });
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/central-zod-validation-v2
   it("rejects incomplete inventory grid rows and non-numeric or negative quantities", () => {
     expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { name: "Gloves", quantity: "8" } }).success).toBe(true);
     expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { name: "Gloves", quantity: "-2" } }).success).toBe(false);
@@ -126,11 +105,6 @@ describe("SMIS Zod domain schemas", () => {
     }).success).toBe(true);
   });
 
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/central-zod-validation
-=======
->>>>>>> origin/feat/central-zod-validation-v2
   it("rejects empty SMS recipients and malformed inventory row values", () => {
     expect(sendSmsRequestSchema.safeParse({ message: "Notice", recipientIds: [] }).success).toBe(false);
     expect(inventoryRegisterSaveRequestSchema.safeParse({

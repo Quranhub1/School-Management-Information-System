@@ -2,15 +2,7 @@ import { getAccessToken } from './auth'
 import { readApiErrorMessage } from './errors'
 import { z } from 'zod'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { approveStaffAdvanceRequestSchema, applyFeeStructureRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, feeStructureCreateRequestSchema, invoiceNoteRequestSchema, invoiceResponseSchema, mobileMoneyCreateRequestSchema, recordPaymentRequestSchema, recoverStaffAdvanceRequestSchema, staffAdvanceRequestSchema } from '../schemas'
-=======
-import { createInvoiceRequestSchema, invoiceResponseSchema, recordPaymentRequestSchema } from '../schemas'
->>>>>>> origin/feat/central-zod-validation
-=======
-import { approveStaffAdvanceRequestSchema, applyFeeStructureRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, feeStructureCreateRequestSchema, invoiceNoteRequestSchema, invoiceResponseSchema, mobileMoneyCreateRequestSchema, recordPaymentRequestSchema, recoverStaffAdvanceRequestSchema, staffAdvanceRequestSchema } from '../schemas'
->>>>>>> origin/feat/central-zod-validation-v2
 
 export interface Invoice {
   id: string
@@ -140,8 +132,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export async function getInvoices(studentId?: string) { const rows = await request<unknown>(`/api/finance/invoices${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`); return parseApiResponse(z.array(invoiceResponseSchema), rows, 'invoices') as Invoice[] }
 export interface StudentFinanceProfile { id: string; studentNumber: string; name: string; phoneNumber?: string; email?: string; status: string }
 export const getStudentFinanceProfile = (studentIdOrNumber: string) => request<StudentFinanceProfile>(`/api/finance/students/profile?studentIdOrNumber=${encodeURIComponent(studentIdOrNumber)}`)
-<<<<<<< HEAD
-<<<<<<< HEAD
 export interface StudentFinancialStatementLine {
   id: string
   code: string
@@ -187,10 +177,6 @@ export interface StudentFinancialStatement {
 }
 export const getStudentFinancialStatement = (studentId: string) =>
   request<StudentFinancialStatement>(`/api/finance/students/${encodeURIComponent(studentId)}/statement`)
-=======
->>>>>>> origin/feat/central-zod-validation
-=======
->>>>>>> origin/feat/central-zod-validation-v2
 export async function createInvoice(body: CreateInvoiceRequest) { const input = parseApiInput(createInvoiceRequestSchema, body, 'create invoice'); return parseApiResponse(invoiceResponseSchema, await request<unknown>('/api/finance/invoices', { method: 'POST', body: JSON.stringify(input) }), 'created invoice') as Invoice }
 export function recordPayment(invoiceId: string, body: RecordPaymentRequest) { if (!invoiceId.trim()) throw new Error('Invoice ID is required.'); const input = parseApiInput(recordPaymentRequestSchema, body, 'record payment'); return request('/api/finance/invoices/' + encodeURIComponent(invoiceId) + '/payments', { method: 'POST', body: JSON.stringify(input) }) }
 
@@ -260,7 +246,6 @@ export async function getPayments(studentId?: string) {
   return request<any[]>(`/api/accounts-overview/payments${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`)
 }
 
-<<<<<<< HEAD
 export interface MobileMoneyTransaction {
   id: string
   studentId: string
@@ -299,12 +284,6 @@ export async function cancelMobileMoneyTransaction(transactionId: string) {
 export async function getMobileMoneyTransactions(status?: string) {
   return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`)
 }
-=======
-export interface MobileMoneyTransaction { id: string; studentId: string; studentInvoiceId?: string; amount: number; currency: string; provider: string; status: string; reference: string; transactionRef?: string; phoneNumber?: string; requestedAt: string; createdAt: string }
-export async function createMobileMoneyTransaction(body: Partial<MobileMoneyTransaction>) { const input = parseApiInput(mobileMoneyCreateRequestSchema, body, 'mobile money payment'); return request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(input) }) }
-export async function confirmMobileMoneyTransaction(transactionId: string, ref?: string) { return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ ref }) }) }
-export async function getMobileMoneyTransactions(status?: string) { return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
->>>>>>> origin/feat/central-zod-validation-v2
 
 export async function createBulkPayment(body: { payments: { studentId: string; invoiceId?: string; amount: number; paymentMethod: string; receiptNumber: string; reference?: string }[] }) { const input = parseApiInput(bulkPaymentRequestSchema, body, 'bulk payment'); return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(input) }) }
 export async function issueCreditNote(invoiceId: string, body: { amount: number; reason: string }) { if (!invoiceId.trim()) throw new Error('Invoice ID is required.'); const input = parseApiInput(creditNoteRequestSchema, body, 'issue credit note'); return request<any>('/api/finance/invoices/' + encodeURIComponent(invoiceId) + '/credit-notes', { method: 'POST', body: JSON.stringify(input) }) }

@@ -23,20 +23,11 @@ export function Notices({ canManage }: { canManage?: boolean }) {
     e.preventDefault();
     setError('');
 
-<<<<<<< HEAD
-=======
-    // A blank optional date must be JSON null, not an empty string. Normalize
-    // selected dates to ISO 8601 so ASP.NET can deserialize DateTimeOffset?.
->>>>>>> origin/fix/notices-expiry-payload
     const parsedExpiry = form.expiresAt.trim() ? new Date(form.expiresAt) : null;
     if (parsedExpiry && Number.isNaN(parsedExpiry.getTime())) {
       setError('Enter a valid notice expiry date and time.');
       return;
     }
-<<<<<<< HEAD
-=======
-    const expiresAt = parsedExpiry ? parsedExpiry.toISOString() : null;
->>>>>>> origin/fix/notices-expiry-payload
 
     try {
       await createNotice({
@@ -44,11 +35,7 @@ export function Notices({ canManage }: { canManage?: boolean }) {
         body: form.body.trim(),
         priority: form.priority,
         audience: form.audience.trim() || 'All',
-<<<<<<< HEAD
         expiresAt: parsedExpiry ? parsedExpiry.toISOString() : null,
-=======
-        expiresAt,
->>>>>>> origin/fix/notices-expiry-payload
         createdBy: '',
       });
       setForm({ title: '', body: '', priority: 'General', audience: 'All', expiresAt: '' });

@@ -63,11 +63,8 @@ npm test
 ```
 
 Then verify offline read fallback, online refresh, role/user cache isolation, logout cleanup, schema upgrade from existing IndexedDB v1, blocked mutation behaviour, and that no finance operation is replayed.
-<<<<<<< HEAD
 
 
 ## Asynchronous local key-value state
 
 The Dexie v4 `appState` store supports asynchronous namespaced key-value persistence for UI preferences and offline drafts. Use `getAppState`, `setAppState`, `deleteAppState` and `clearAppStateForScope` from `frontend/src/lib/offline/db.ts`. Namespace entries by signed-in user/role or another explicit owner scope. Do not persist credentials, sensitive personal data, financial records or authoritative server state. This reuses IndexedDB already bundled with SMIS; a separate `idb-keyval` dependency is intentionally not added.
-=======
->>>>>>> origin/feat/dexie-offline-data-sync

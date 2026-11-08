@@ -19,11 +19,7 @@ The application-wide QueryClient is configured with:
 
 ## Persistent query cache
 
-<<<<<<< HEAD
 The existing `smis-offline` database remains managed by Dexie. Its schema is upgraded from version 2 to version 3, adding a dedicated `queryCache` table alongside the existing cache and synchronization stores. This avoids opening a second raw IndexedDB connection with a competing version-2 schema. Persisted query state is:
-=======
-The existing smis-offline IndexedDB database is upgraded from schema version 1 to 2 and receives a queryCache object store. Persisted query state is:
->>>>>>> origin/feat/tanstack-query-offline-cache
 
 - Partitioned by authenticated username.
 - Restored before the authenticated workspace mounts.

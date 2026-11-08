@@ -99,16 +99,8 @@ export function StudentPortal() {
   return (
     <section className="panel" aria-label="Student Portal">
       <div className="panel-heading">
-<<<<<<< HEAD
-<<<<<<< HEAD
         <div><span className="eyebrow">STUDENT</span><h2>Student Portal</h2><p className="section-copy">A deliberately limited learner view. Administrative records, staff tools, finance controls and sensitive personal records remain outside this portal.</p></div>
         <div className="form-actions"><button type="button" className="secondary-button" onClick={printTranscriptPdf} disabled={!profile || entries.length === 0 || loading}>Print Transcript</button><button type="button" onClick={downloadTranscriptPdf} disabled={!profile || entries.length === 0 || loading}>Download PDF</button></div>
-=======
-        <div><span className="eyebrow">STUDENT</span><h2>Student Portal</h2></div>
->>>>>>> origin/fix/ui-finance-cleanup-current-main
-=======
-        <div><span className="eyebrow">STUDENT</span><h2>Student Portal</h2></div>
->>>>>>> origin/ui/remove-inventory-helper-copy
       </div>
       {error && <div className="error" role="alert">{error}</div>}
       {loading ? <LoadingSpinner label="Loading student portal…" /> : (
