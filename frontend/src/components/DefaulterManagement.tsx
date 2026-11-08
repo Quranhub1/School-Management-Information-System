@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
+import { AgGridTable } from './AgGridTable'
+import type { ColDef } from 'ag-grid-community'
 import {
   getDefaulterOverview,
   getDefaulters,
@@ -22,6 +24,32 @@ export function DefaulterManagement() {
   const [actions, setActions] = useState<FollowUpAction[]>([])
   const [selectedStudent, setSelectedStudent] = useState<DefaulterDetail | null>(null)
   const [filterSeverity, setFilterSeverity] = useState('')
+  const defaulterColumns: ColDef<Defaulter>[] = [
+    { field: 'studentNumber', headerName: 'Student number', minWidth: 150 },
+    { field: 'studentName', headerName: 'Student name', minWidth: 200 },
+    { field: 'totalBalance', headerName: 'Outstanding balance', minWidth: 170, valueFormatter: p => `${p.data?.currency ?? ''} ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
+    { field: 'severity', headerName: 'Severity', minWidth: 130 },
+    { field: 'invoiceCount', headerName: 'Invoices', minWidth: 110 },
+    { field: 'oldestInvoice', headerName: 'Oldest invoice', minWidth: 150, valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-UG') : '' },
+    { colId: 'view', headerName: 'Actions', minWidth: 110, sortable: false, filter: false, floatingFilter: false, cellRenderer: (p: { data?: Defaulter }) => p.data ? <button className="secondary-button" onClick={() => void viewStudent(p.data!.studentId)}>View</button> : null },
+  ]
+  const actionColumns: ColDef<FollowUpAction>[] = [
+    { field: 'studentName', headerName: 'Student', minWidth: 200 },
+    { field: 'totalBalance', headerName: 'Outstanding balance', minWidth: 180, valueFormatter: p => `UGX ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
+    { field: 'severity', headerName: 'Severity', minWidth: 130 },
+    { field: 'suggestedActions', headerName: 'Suggested actions', minWidth: 300, valueFormatter: p => Array.isArray(p.value) ? p.value.join(' • ') : '' },
+  ]
+  type InvoiceRow = DefaulterDetail['invoices'][number]
+  const invoiceColumns: ColDef<InvoiceRow>[] = [
+    { field: 'invoiceNumber', headerName: 'Invoice', minWidth: 150 },
+    { field: 'feeType', headerName: 'Fee type', minWidth: 160 },
+    { field: 'amount', headerName: 'Amount', valueFormatter: p => `${p.data?.currency ?? ''} ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
+    { field: 'paidAmount', headerName: 'Paid', valueFormatter: p => `${p.data?.currency ?? ''} ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
+    { field: 'balance', headerName: 'Balance', valueFormatter: p => `${p.data?.currency ?? ''} ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
+    { field: 'status', headerName: 'Status' },
+    { field: 'issuedAt', headerName: 'Issued', valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-UG') : '' },
+    { field: 'daysOverdue', headerName: 'Days overdue', minWidth: 140 },
+  ]
 
   async function loadOverview() {
     setLoading(true)
@@ -138,80 +166,10 @@ export function DefaulterManagement() {
               </select>
             </label>
           </div>
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Student</th>
-                  <th>Balance</th>
-                  <th>Severity</th>
-                  <th>Invoices</th>
-                  <th>Oldest Invoice</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {defaulters.length === 0 ? (
-                  <tr><td colSpan={6} className="empty">No defaulters found</td></tr>
-                ) : (
-                  defaulters.map(d => (
-                    <tr key={d.studentId}>
-                      <td><strong>{d.studentNumber}</strong> {d.studentName}</td>
-                      <td style={{ color: '#dc2626', fontWeight: 700 }}>{d.currency} {d.totalBalance.toLocaleString()}</td>
-                      <td>
-                        <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getSeverityColor(d.severity), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
-                          {d.severity}
-                        </span>
-                      </td>
-                      <td>{d.invoiceCount}</td>
-                      <td>{new Date(d.oldestInvoice).toLocaleDateString('en-UG')}</td>
-                      <td>
-                        <button className="secondary-button" onClick={() => viewStudent(d.studentId)}>View</button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <AgGridTable rows={defaulters} columns={defaulterColumns} height={440} exportFileName="fee-defaulters" getRowId={p => p.data.studentId} />
         </>
       ) : tab === 'actions' ? (
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Student</th>
-                <th>Balance</th>
-                <th>Severity</th>
-                <th>Suggested Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {actions.length === 0 ? (
-                <tr><td colSpan={4} className="empty">No follow-up actions required</td></tr>
-              ) : (
-                actions.map(a => (
-                  <tr key={a.studentId}>
-                    <td><strong>{a.studentName}</strong></td>
-                    <td style={{ color: '#dc2626', fontWeight: 700 }}>UGX {a.totalBalance.toLocaleString()}</td>
-                    <td>
-                      <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getSeverityColor(a.severity), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
-                        {a.severity}
-                      </span>
-                    </td>
-                    <td>
-                      <ul style={{ margin: 0, paddingLeft: 18 }}>
-                        {a.suggestedActions.map((action, idx) => (
-                          <li key={idx}>{action}</li>
-                        ))}
-                      </ul>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <AgGridTable rows={actions} columns={actionColumns} height={420} exportFileName="defaulter-follow-up-actions" getRowId={p => p.data.studentId} />
       ) : null}
 
       {selectedStudent && (
@@ -229,38 +187,7 @@ export function DefaulterManagement() {
               <strong style={{ color: '#dc2626' }}>UGX {selectedStudent.totalBalance.toLocaleString()}</strong>
             </div>
           </div>
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Invoice</th>
-                  <th>Fee Type</th>
-                  <th>Amount</th>
-                  <th>Paid</th>
-                  <th>Balance</th>
-                  <th>Status</th>
-                  <th>Issued</th>
-                  <th>Days Overdue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedStudent.invoices.map(inv => (
-                  <tr key={inv.id}>
-                    <td><strong>{inv.invoiceNumber}</strong></td>
-                    <td>{inv.feeType}</td>
-                    <td>{inv.currency} {inv.amount.toLocaleString()}</td>
-                    <td>{inv.currency} {inv.paidAmount.toLocaleString()}</td>
-                    <td style={{ color: '#dc2626', fontWeight: 700 }}>{inv.currency} {inv.balance.toLocaleString()}</td>
-                    <td>{inv.status}</td>
-                    <td>{new Date(inv.issuedAt).toLocaleDateString('en-UG')}</td>
-                    <td style={{ color: inv.daysOverdue > 60 ? '#dc2626' : inv.daysOverdue > 30 ? '#d97706' : 'inherit', fontWeight: inv.daysOverdue > 30 ? 700 : 400 }}>
-                      {inv.daysOverdue}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <AgGridTable rows={selectedStudent.invoices} columns={invoiceColumns} height={380} exportFileName={`defaulter-invoices-${selectedStudent.studentNumber}`} getRowId={p => p.data.id} />
         </div>
       )}
     </section>
