@@ -352,6 +352,7 @@ h1, h2, h3, h4, h5, h6,
   .app-shell .content,
   .app-shell main.content { padding: 16px !important; }
 }
+<<<<<<< HEAD
 
 
 /* Child/suboption tabs: remove the left-edge C-shaped active marker entirely. */
@@ -620,3 +621,5 @@ h1, h2, h3, h4, h5, h6,
 .staff-course-unit-field select[multiple] option {
   padding: 5px 7px;
 }
+=======
+>>>>>>> origin/design/cream-workspace-theme
