@@ -1,15 +1,25 @@
 import { useEffect, useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
+<<<<<<< HEAD
 import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
 import { AgGridTable } from './AgGridTable';
 import type { ColDef } from 'ag-grid-community';
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
 import { useInstitutionSettings } from './InstitutionSettingsContext';
+=======
+import { searchAuditLogs, type AuditLog } from '../api/auditLog';
+import { AgGridTable } from './AgGridTable';
+import type { ColDef } from 'ag-grid-community';
+>>>>>>> origin/feat/ag-grid-table-migration
 
 const auditColumns: ColDef<AuditLog>[] = [
   { field: 'userId', headerName: 'User', valueFormatter: p => p.value || '—' },
   { field: 'action', headerName: 'Action' },
+<<<<<<< HEAD
   { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? p.data.entityType + ' (' + p.data.entityId + ')' : p.data.entityType : '—' },
+=======
+  { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? `${p.data.entityType} (${p.data.entityId})` : p.data.entityType : '—' },
+>>>>>>> origin/feat/ag-grid-table-migration
   { field: 'changes', headerName: 'Changes', valueFormatter: p => p.value || '—', minWidth: 220 },
   { field: 'ipAddress', headerName: 'IP Address', valueFormatter: p => p.value || '—' },
   { field: 'timestamp', headerName: 'Timestamp', valueFormatter: p => p.value ? new Date(String(p.value)).toLocaleString('en-UG') : '—', minWidth: 180 },
@@ -196,5 +206,9 @@ export function AuditLogManagement() {
     </div>
     {error && <div className="error" role="alert">{error}</div>}
     {loading ? <LoadingSpinner label="Loading audit logs…" /> : <AgGridTable rows={logs} columns={auditColumns} getRowId={p => p.data.id} exportFileName="smis-audit-log" height={560} />}
+<<<<<<< HEAD
   </section>;
+=======
+  </section>
+>>>>>>> origin/feat/ag-grid-table-migration
 }

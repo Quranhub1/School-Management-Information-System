@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { ZodType } from 'zod'
 import type { CellValueChangedEvent } from 'ag-grid-community'
+=======
+import { useCallback, useMemo, useState } from 'react'
+>>>>>>> origin/feat/ag-grid-table-migration
 import {
   AllCommunityModule,
   type ColDef,
@@ -10,6 +14,7 @@ import {
 } from 'ag-grid-community'
 import { AgGridProvider, AgGridReact } from 'ag-grid-react'
 
+<<<<<<< HEAD
 function GridLoadingOverlay() {
   return <div className="smis-ag-grid-overlay" role="status" aria-live="polite">Loading records…</div>
 }
@@ -22,6 +27,8 @@ import { useDebounce } from 'use-debounce'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
 export type AgGridTableProps<TData extends object> = {
   rows: TData[]
   columns: ColDef<TData>[]
@@ -36,8 +43,11 @@ export type AgGridTableProps<TData extends object> = {
   onRowClicked?: GridOptions<TData>['onRowClicked']
   onSelectionChanged?: GridOptions<TData>['onSelectionChanged']
   onCellValueChanged?: GridOptions<TData>['onCellValueChanged']
+<<<<<<< HEAD
   /** Optional Zod contract enforced before edited rows reach persistence handlers. */
   rowValidationSchema?: ZodType
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
   getRowId?: GridOptions<TData>['getRowId']
   className?: string
 }
@@ -57,12 +67,16 @@ export function AgGridTable<TData extends object>({
   onRowClicked,
   onSelectionChanged,
   onCellValueChanged,
+<<<<<<< HEAD
   rowValidationSchema,
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
   getRowId,
   className,
 }: AgGridTableProps<TData>) {
   const [api, setApi] = useState<GridApi<TData> | null>(null)
   const [filter, setFilter] = useState(quickFilterText ?? '')
+<<<<<<< HEAD
   // Keep typing immediate; debounce the expensive grid quick-filter pass.
   const [debouncedFilter] = useDebounce(quickFilterText ?? filter, 300)
   const [rowValidationErrors, setRowValidationErrors] = useState<Record<string, string[]>>({})
@@ -70,6 +84,8 @@ export function AgGridTable<TData extends object>({
   const institutionContext = useOptionalInstitutionSettings()
   const institution = institutionContext?.institution
   const institutionLoaded = institutionContext?.loaded ?? false
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
     sortable: true,
     filter: true,
@@ -96,6 +112,7 @@ export function AgGridTable<TData extends object>({
   const toggleColumn = useCallback((colId: string, visible: boolean) => {
     api?.setColumnsVisible([colId], visible)
   }, [api])
+<<<<<<< HEAD
   const handleCellValueChanged = useCallback((event: CellValueChangedEvent<TData>) => {
     if (revertingCell.current) return
     const rowKey = event.node.id ?? String(event.rowIndex ?? 'unknown-row')
@@ -160,6 +177,8 @@ export function AgGridTable<TData extends object>({
     const options = tablePdfOptions()
     if (options) printInstitutionalPdf(options)
   }, [tablePdfOptions])
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
 
   return (
     <div className={['smis-ag-grid-shell', className].filter(Boolean).join(' ')}>
@@ -170,8 +189,11 @@ export function AgGridTable<TData extends object>({
         </label>
         <span className="smis-ag-grid-count">{rows.length.toLocaleString('en-UG')} records</span>
         <button type="button" className="secondary-button" onClick={exportCsv} disabled={!api || rows.length === 0}>Export CSV</button>
+<<<<<<< HEAD
         <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
         <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
         <details className="smis-ag-grid-columns">
           <summary>Columns</summary>
           <div className="smis-ag-grid-column-menu">
@@ -186,12 +208,15 @@ export function AgGridTable<TData extends object>({
           </div>
         </details>
       </div>}
+<<<<<<< HEAD
       {Object.entries(rowValidationErrors).map(([rowKey, messages]) => (
         <div key={rowKey} className="smis-ag-grid-validation" role="alert" aria-live="polite">
           <strong>Row {rowKey} was not saved because its data is invalid.</strong>
           <ul>{messages.map((message, index) => <li key={`${rowKey}-${index}`}>{message}</li>)}</ul>
         </div>
       ))}
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
       <div className="smis-ag-grid" style={{ height, width: '100%' }}>
         <AgGridProvider modules={[AllCommunityModule]}>
           <AgGridReact<TData>
@@ -206,6 +231,7 @@ export function AgGridTable<TData extends object>({
             paginationPageSizeSelector={[10, 25, 50, 100]}
             animateRows={false}
             loading={loading}
+<<<<<<< HEAD
             quickFilterText={debouncedFilter}
             rowSelection={rowSelection}
             suppressMultiSort={false}
@@ -216,6 +242,14 @@ export function AgGridTable<TData extends object>({
             onRowClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
             onCellValueChanged={handleCellValueChanged}
+=======
+            quickFilterText={quickFilterText ?? filter}
+            rowSelection={rowSelection}
+            onGridReady={event => setApi(event.api)}
+            onRowClicked={onRowClicked}
+            onSelectionChanged={onSelectionChanged}
+            onCellValueChanged={onCellValueChanged}
+>>>>>>> origin/feat/ag-grid-table-migration
             getRowId={getRowId}
             suppressCellFocus={false}
           />

@@ -108,6 +108,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     ...availableCurricula.map(c => c.title),
     ...academicProgrammes.filter(p => authorityOf(p.id) === application.authority).map(p => p.name),
   ])).sort((a, b) => a.localeCompare(b))
+<<<<<<< HEAD
   function applicationPdfOptions() {
     const label = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, value => value.toUpperCase())
     const values = Object.entries(application).map(([key, value]) => [
@@ -140,6 +141,8 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   function printApplicationPdf() { printInstitutionalPdf(applicationPdfOptions()) }
   function downloadApplicationPdf() { downloadInstitutionalPdf(applicationPdfOptions()) }
 
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
   const studentColumns = useMemo<ColDef<Student>[]>(() => [
     { headerName: 'Student number', field: 'studentNumber', minWidth: 150 },
     { headerName: 'Name', colId: 'fullName', valueGetter: params => params.data ? [params.data.firstName, params.data.otherNames, params.data.lastName].filter(Boolean).join(' ') : '' },

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import Chart from 'chart.js/auto'
 import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
 import { getUsers } from '../api/administration'
@@ -8,7 +9,10 @@ import { getInvoices } from '../api/finance'
 import { listPayroll } from '../api/payroll'
 import { InventoryStockSettings } from './InventoryStockSettings'
 import { AgGridTable } from './AgGridTable'
+<<<<<<< HEAD
 import { DoughnutChart } from './charts'
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
 import type { ColDef } from 'ag-grid-community'
 
 type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring' | 'stock-settings'
@@ -41,7 +45,91 @@ const staffSearchColumns: ColDef<StaffSearchResult>[] = [
   { field: 'department', headerName: 'Department' },
   { field: 'status', headerName: 'Status' },
 ]
+<<<<<<< HEAD
 
+=======
+
+function DonutChart({
+  title,
+  description,
+  segments,
+  centerValue,
+  centerCaption,
+}: {
+  title: string
+  description: string
+  segments: ChartSegment[]
+  centerValue: string
+  centerCaption: string
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const safeSegments = useMemo(() => segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) })), [segments])
+  const total = safeSegments.reduce((sum, segment) => sum + segment.value, 0)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const chart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: safeSegments.map(segment => segment.label),
+        datasets: [{
+          data: safeSegments.map(segment => segment.value),
+          backgroundColor: safeSegments.map(segment => segment.color),
+          borderWidth: 0,
+          hoverOffset: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: context => {
+                const segment = safeSegments[context.dataIndex]
+                return segment ? `${segment.label}: ${segment.displayValue ?? numberFormat.format(Number(context.raw) || 0)}` : ''
+              },
+            },
+          },
+        },
+      },
+    })
+    return () => chart.destroy()
+  }, [safeSegments])
+
+  return (
+    <article className="admin-chart-card">
+      <div className="admin-chart-heading">
+        <div>
+          <h3>{title}</h3>
+          {description && <p>{description}</p>}
+        </div>
+      </div>
+      <div className="admin-chart-body">
+        <div className="admin-donut-wrap" role="img" aria-label={`${title}: ${safeSegments.map(s => `${s.label} ${s.displayValue ?? numberFormat.format(s.value)}`).join(', ')}`}>
+          {total > 0 ? <canvas ref={canvasRef} className="admin-donut-canvas" aria-hidden="true" /> : <div className="admin-donut-empty" aria-hidden="true" />}
+          <div className="admin-donut-center">
+            <strong>{centerValue}</strong>
+            <span>{centerCaption}</span>
+          </div>
+        </div>
+        <ul className="admin-chart-legend">
+          {safeSegments.map(segment => (
+            <li key={segment.label}>
+              <span className="admin-legend-label"><i style={{ background: segment.color }} />{segment.label}</span>
+              <strong>{segment.displayValue ?? numberFormat.format(segment.value)}</strong>
+            </li>
+          ))}
+          {total === 0 && <li className="admin-chart-empty">No records to display</li>}
+        </ul>
+      </div>
+    </article>
+  )
+}
+>>>>>>> origin/feat/ag-grid-table-migration
 
 export function AdminDashboard() {
   const session = getSession()

@@ -11,7 +11,10 @@ import { FeeTypesManager } from './FeeTypesManager'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
 import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
 import { AgGridTable } from './AgGridTable'
+<<<<<<< HEAD
 import { BarChart } from './charts'
+=======
+>>>>>>> origin/feat/ag-grid-table-migration
 
 type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
 
