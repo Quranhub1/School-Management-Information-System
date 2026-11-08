@@ -15,26 +15,14 @@ import { resolveAcademicAuthority, type AcademicAuthority } from '../utils/acade
 
 type Tab = 'full' | 'short'
 
-type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'School-based' | 'UHPAB' | 'UVTAB'; family: string; review?: boolean }
+type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'School-based' | 'UHPAB' | 'UVTAB'; family: string; review?: boolean; entryRequirements?: string; outcome?: string }
 
 const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
   { name: 'Certificate in Public Health', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Public Health' },
   { name: 'Certificate in Records and Information Management', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Records Management' },
   { name: 'Certificate in Guidance and Counselling', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Counselling', review: true },
-  { name: 'Diploma in Public Health', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Public Health' },
-  { name: 'Diploma in Records and Information Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Records Management' },
-  { name: 'Diploma in Health Counselling and Guidance', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Counselling', review: true },
-]
-
-const SCHOOL_BASED_SHORT_COURSES: CatalogueEntry[] = [
-  { name: 'Bridging Programme', award: 'Bridging programme', duration: 0.75, regulator: 'School-based', family: 'Access programme', review: true },
-
-const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
-  { name: 'Certificate in Public Health', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Public Health' },
-  { name: 'Certificate in Records and Information Management', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Records Management' },
-  { name: 'Certificate in Guidance and Counselling', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Counselling', review: true },
-  { name: 'Diploma in Public Health', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Public Health' },
-  { name: 'Diploma in Records and Information Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Records Management' },
+  { name: 'Diploma in Public Health', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Public Health', entryRequirements: 'A-level with at least one principal pass', outcome: 'Public Health Officer' },
+  { name: 'Diploma in Records and Information Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Records Management', entryRequirements: 'A-level with at least one principal pass', outcome: 'Records Manager' },
   { name: 'Diploma in Health Counselling and Guidance', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Counselling', review: true },
 ]
 
