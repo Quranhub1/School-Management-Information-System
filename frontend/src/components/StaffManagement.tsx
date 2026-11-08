@@ -545,10 +545,14 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         <div className="card">
           <h3>Recruitment & Onboarding</h3>
 <<<<<<< HEAD
+<<<<<<< HEAD
             </div>
 =======
         </div>
 >>>>>>> origin/kilo/golden-circuit-3yz
+=======
+            </div>
+>>>>>>> origin/ui/remove-inventory-helper-copy
       )}
     </section>
   )

@@ -455,6 +455,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             
 =======
             <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Needs verification need title or duration confirmation.</p>
@@ -465,6 +466,9 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 =======
             
 >>>>>>> origin/fix/ui-finance-cleanup-current-main
+=======
+            
+>>>>>>> origin/ui/remove-inventory-helper-copy
           </div>
           {authority === 'UHPAB' && <section className="catalogue-board" aria-labelledby="uhpab-long-title">
             <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
@@ -586,6 +590,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>Short and modular training</h3>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             
 =======
             <p>Select a row to prefill a draft. Confirm the approved title, award and duration before publishing.</p>
@@ -593,6 +598,9 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 =======
             
 >>>>>>> origin/fix/ui-finance-cleanup-current-main
+=======
+            
+>>>>>>> origin/ui/remove-inventory-helper-copy
           </div>
           {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue">
             <h3>UVTAB · Modular and occupational skills</h3>

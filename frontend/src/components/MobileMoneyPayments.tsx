@@ -87,6 +87,7 @@ export default function MobileMoneyPayments() {
 
     try {
 <<<<<<< HEAD
+<<<<<<< HEAD
       const student = await getStudentFinanceProfile(code.trim());
       if (sequence !== studentSearchSequence.current) return;
       setStudentId(student.id);
@@ -99,6 +100,8 @@ export default function MobileMoneyPayments() {
         amount: invoice.balance
       })));
 =======
+=======
+>>>>>>> origin/ui/remove-inventory-helper-copy
       const token = getAccessToken();
       const res = await fetch(`/api/finance/students/${studentId}/invoices`, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
       if (res.ok) {
@@ -167,12 +170,18 @@ export default function MobileMoneyPayments() {
   const handleCancel = async (id: string) => {
     try {
 <<<<<<< HEAD
+<<<<<<< HEAD
       await cancelMobileMoneyTransaction(id);
 =======
       const token = getAccessToken();
       const response = await fetch(`/api/finance/mobile-money/${id}`, { method: 'DELETE', headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
       if (!response.ok) throw new Error(`Unable to cancel transaction (${response.status}).`);
 >>>>>>> origin/fix/ui-finance-cleanup-current-main
+=======
+      const token = getAccessToken();
+      const response = await fetch(`/api/finance/mobile-money/${id}`, { method: 'DELETE', headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+      if (!response.ok) throw new Error(`Unable to cancel transaction (${response.status}).`);
+>>>>>>> origin/ui/remove-inventory-helper-copy
       await loadTransactions();
       if (submitted && submitted.id === id) {
         setSubmitted(null);

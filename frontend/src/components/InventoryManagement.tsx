@@ -229,6 +229,9 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>
       </form>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/ui/remove-inventory-helper-copy
     </div>}
 =======
     </div>

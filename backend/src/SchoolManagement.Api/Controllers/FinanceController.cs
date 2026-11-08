@@ -721,6 +721,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         {
             return BadRequest(new { message = ex.Message });
         }
+<<<<<<< HEAD
     }
 
     [HttpGet("reports/student-receivables")]
@@ -832,6 +833,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         {
             return BadRequest(new { message = ex.Message });
         }
+=======
+>>>>>>> origin/ui/remove-inventory-helper-copy
     }
 
     [HttpGet("reports/student-receivables")]

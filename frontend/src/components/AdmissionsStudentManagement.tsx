@@ -202,8 +202,11 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 <<<<<<< HEAD
             <div className="feature-card full-width"><strong>Regulatory identity</strong><span>For UHPAB, new health trainees are tracked with HTIN while applicable earlier cohorts retain their existing registration/NSIN identifiers. UVTAB learners use their assessment registration number for the candidate/results journey.</span></div>
             <div className="info-banner full-width">External UHPAB/UVTAB integration is not configured.</div>
+<<<<<<< HEAD
 =======
 >>>>>>> origin/kilo/golden-circuit-3yz
+=======
+>>>>>>> origin/ui/remove-inventory-helper-copy
           </div>
         )}
 
