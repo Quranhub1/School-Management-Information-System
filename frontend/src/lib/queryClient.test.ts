@@ -28,6 +28,17 @@ describe('TanStack Query persistence policy', () => {
     client.clear()
   })
 
+  it('does not retry client errors but retries transient network failures twice', () => {
+    const retry = new QueryClient().getDefaultOptions().queries?.retry
+    expect(typeof retry).toBe('function')
+    if (typeof retry !== 'function') return
+
+    expect(retry(0, Object.assign(new Error('Unauthorized'), { status: 401 }))).toBe(false)
+    expect(retry(0, new TypeError('Network unavailable'))).toBe(true)
+    expect(retry(1, new TypeError('Network unavailable'))).toBe(true)
+    expect(retry(2, new TypeError('Network unavailable'))).toBe(false)
+  })
+
   it('keeps persisted cache lifetime bounded to 24 hours', () => {
     expect(QUERY_CACHE_MAX_AGE).toBe(24 * 60 * 60 * 1000)
   })
