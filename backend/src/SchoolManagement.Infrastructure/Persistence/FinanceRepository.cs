@@ -66,8 +66,8 @@ public sealed class FinanceRepository(SchoolManagementDbContext db) :
         return await query.OrderByDescending(x => x.PaidAt).ToListAsync(cancellationToken);
     }
     public Task<SchoolPaymentNotification?> GetSchoolPaymentNotificationAsync(string externalReference, CancellationToken cancellationToken) => db.SchoolPaymentNotifications.AsNoTracking().SingleOrDefaultAsync(x => x.ExternalReference == externalReference, cancellationToken);
-    public Task AddSchoolPaymentNotificationAsync(SchoolPaymentNotification notification, CancellationToken cancellationToken) => db.SchoolPaymentNotifications.AddAsync(notification, cancellationToken);
-    public Task<IReadOnlyList<SchoolPaymentNotification>> GetSchoolPaymentNotificationsAsync(CancellationToken cancellationToken) => db.SchoolPaymentNotifications.AsNoTracking().OrderByDescending(x => x.ReceivedAt).ToListAsync(cancellationToken);
+    public async Task AddSchoolPaymentNotificationAsync(SchoolPaymentNotification notification, CancellationToken cancellationToken) => await db.SchoolPaymentNotifications.AddAsync(notification, cancellationToken);
+    public async Task<IReadOnlyList<SchoolPaymentNotification>> GetSchoolPaymentNotificationsAsync(CancellationToken cancellationToken) => await db.SchoolPaymentNotifications.AsNoTracking().OrderByDescending(x => x.ReceivedAt).ToListAsync(cancellationToken);
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
 }
