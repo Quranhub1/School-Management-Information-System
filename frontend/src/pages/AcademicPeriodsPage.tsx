@@ -41,7 +41,7 @@ export default function AcademicPeriodsPage() {
     if (new Date(startDate) >= new Date(endDate)) { setMessage('The period start date must be before its end date.'); return; }
     try {
       const response = await fetch(`/api/academic-structure/years/${yearId}/periods`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}) },
         body: JSON.stringify({ name: name.trim(), sequence, startDate, endDate, isCurrent: false }),
       });
       if (!response.ok) throw new Error(await response.text() || `Unable to create period (${response.status}).`);
