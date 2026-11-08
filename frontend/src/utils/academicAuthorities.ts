@@ -1,17 +1,24 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB'
 =======
 export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB' | 'UNMEB'
 >>>>>>> origin/feat/authority-separated-academic-workflows
+=======
+export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB'
+>>>>>>> origin/fix/remove-unmeb-curriculum-authority
 
 export const ACADEMIC_AUTHORITY_OPTIONS: { value: AcademicAuthority; label: string }[] = [
   { value: 'School-based', label: 'School-based curriculum' },
   { value: 'UHPAB', label: 'UHPAB — Health programmes' },
   { value: 'UVTAB', label: 'UVTAB — Vocational & technical' },
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   { value: 'UNMEB', label: 'UNMEB — Legacy records' },
 >>>>>>> origin/feat/authority-separated-academic-workflows
+=======
+>>>>>>> origin/fix/remove-unmeb-curriculum-authority
 ]
 
 export function resolveAcademicAuthority(regulator?: string | null): AcademicAuthority {
@@ -19,9 +26,12 @@ export function resolveAcademicAuthority(regulator?: string | null): AcademicAut
   if (value.includes('UHPAB')) return 'UHPAB'
   if (value.includes('UVTAB')) return 'UVTAB'
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   if (value.includes('UNMEB')) return 'UNMEB'
 >>>>>>> origin/feat/authority-separated-academic-workflows
+=======
+>>>>>>> origin/fix/remove-unmeb-curriculum-authority
   return 'School-based'
 }
 

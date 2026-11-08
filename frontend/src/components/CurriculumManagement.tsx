@@ -428,11 +428,15 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
 =======
           <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setCf(current => ({ ...current, programmeId: '' })) }}>
+<<<<<<< HEAD
 =======
           <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })); setCatalogueSearch(''); setAwardFilter('all'); setVerificationFilter('all') }}>
 >>>>>>> origin/feat/curriculum-catalogue-workflow-polish
             <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option><option value="UNMEB">UNMEB — Legacy records</option>
 >>>>>>> origin/feat/authority-separated-academic-workflows
+=======
+            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
+>>>>>>> origin/fix/remove-unmeb-curriculum-authority
           </select>
         </label>
       </div>
@@ -469,6 +473,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}
 =======
           {authority === 'School-based' && <p className="empty">School-based courses are taken from the curricula and courses you have created for the school.</p>}
+<<<<<<< HEAD
 =======
           {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-long-title"><h3 id="school-based-long-title">School-based · KSHS programme list</h3><p className="catalogue-footnote">Transcribed from the KSHS programmes page, which labels this list 2024/2025. These are school website references, not a statement of current external accreditation. Confirm current admissions requirements before publishing.</p>{renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}</section>}
 >>>>>>> origin/feat/curriculum-catalogue-workflow-polish
@@ -477,6 +482,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 >>>>>>> origin/fix/authority-course-catalogues
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
 >>>>>>> origin/feat/authority-separated-academic-workflows
+=======
+>>>>>>> origin/fix/remove-unmeb-curriculum-authority
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
@@ -589,6 +596,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-short-title"><h3 id="school-based-short-title">KSHS · Other short and in-service listings</h3><p className="catalogue-footnote">These entries appear under “Other Short & In-Service Courses” on the school website. Their classification is preserved as listed; confirm current intake and entry details.</p>{renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}</section>}
 >>>>>>> origin/feat/curriculum-catalogue-workflow-polish
           {authority === 'UHPAB' && <p className="empty">UHPAB health programmes are listed under Full Programmes.</p>}
+<<<<<<< HEAD
 =======
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}
           {authority === 'UHPAB' && renderCatalogue(UHPAB_SHORT_COURSES, 'ShortCourse')}
@@ -598,6 +606,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 =======
           </section>
 >>>>>>> origin/fix/remove-uhpab-short-course-disclaimer
+=======
+>>>>>>> origin/fix/remove-unmeb-curriculum-authority
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
