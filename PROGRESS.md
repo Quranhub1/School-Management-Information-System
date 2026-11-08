@@ -253,3 +253,15 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Run frontend CI and browser-level regression checks after these configuration changes.
 
 **Diagnostic note:** The Vite WebSocket error may also be caused by a stopped/failed Vite process, a port conflict, or browser/proxy network handling. Configuration changes alone do not prove the local server is reachable.
+
+
+## Framer Motion workspace transitions — November 2026
+
+- [x] Reuse the already-installed Framer Motion 12 dependency; no duplicate animation package added.
+- [x] Add short, reduced-motion-aware transitions when switching authenticated workspace modules.
+- [x] Animate sidebar accordion expansion/collapse with opacity and height; collapsed groups are hidden from assistive technology and made non-interactive.
+- [x] Keep the institutional login iframe, login styles, login assets and authentication flow outside the animation changes.
+- [x] Document animation, accessibility and low-powered-device performance constraints.
+- [ ] Run TypeScript, frontend tests, production build and native desktop smoke tests on the final PR head.
+
+**Performance note:** transforms and opacity are preferred for compositing efficiency, but GPU acceleration and 60 FPS are not guaranteed across hardware. Avoid animating large data grids or expensive paint properties; profile on representative low-powered devices.
