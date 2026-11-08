@@ -3,7 +3,6 @@ import { searchPayments, getPaymentReceipt, type PaymentSearchResult, type FeeRe
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 
-import { SearchBar } from '@/components/ui/search-bar';
 interface ReceiptsProps { canManage?: boolean }
 
 export function Receipts({ canManage }: ReceiptsProps) {
@@ -90,11 +89,7 @@ export function Receipts({ canManage }: ReceiptsProps) {
 
       <form className="student-form" onSubmit={e => { e.preventDefault(); void search() }} style={{ marginBottom: 22 }}>
         <div className="form-row">
-          <label>Receipt Number<SearchBar
-          value={searchReceiptNumber}
-          onChange={e => setSearchReceiptNumber(e.target.value)}
-          placeholder="Search receipt number"
-        /></label>
+          <label>Receipt Number<input value={searchReceiptNumber} onChange={e => setSearchReceiptNumber(e.target.value)} placeholder="Search receipt number" /></label>
           <label>
             Payment Method
             <select value={searchPaymentMethod} onChange={e => setSearchPaymentMethod(e.target.value)}>

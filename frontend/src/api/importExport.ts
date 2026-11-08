@@ -1,13 +1,7 @@
 import { getAccessToken } from './auth'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
 import { bulkImportRequestSchema, bulkImportResultSchema } from '../schemas'
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { exportRowsToExcel, parseSpreadsheetFile } from '../lib/spreadsheets'
-=======
->>>>>>> origin/feat/central-zod-validation
-=======
->>>>>>> origin/feat/central-zod-validation-v2
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken()

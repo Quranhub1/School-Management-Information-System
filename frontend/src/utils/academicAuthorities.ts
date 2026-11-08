@@ -1,47 +1,15 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB'
-=======
-export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB' | 'UNMEB'
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
-export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB'
->>>>>>> origin/fix/remove-unmeb-curriculum-authority
-=======
-export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB'
->>>>>>> origin/fix/remove-unmeb-dropdown-main
 
 export const ACADEMIC_AUTHORITY_OPTIONS: { value: AcademicAuthority; label: string }[] = [
   { value: 'School-based', label: 'School-based curriculum' },
   { value: 'UHPAB', label: 'UHPAB — Health programmes' },
   { value: 'UVTAB', label: 'UVTAB — Vocational & technical' },
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  { value: 'UNMEB', label: 'UNMEB — Legacy records' },
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
->>>>>>> origin/fix/remove-unmeb-curriculum-authority
-=======
->>>>>>> origin/fix/remove-unmeb-dropdown-main
 ]
 
 export function resolveAcademicAuthority(regulator?: string | null): AcademicAuthority {
   const value = (regulator ?? '').toUpperCase()
   if (value.includes('UHPAB')) return 'UHPAB'
   if (value.includes('UVTAB')) return 'UVTAB'
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  if (value.includes('UNMEB')) return 'UNMEB'
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
->>>>>>> origin/fix/remove-unmeb-curriculum-authority
-=======
->>>>>>> origin/fix/remove-unmeb-dropdown-main
   return 'School-based'
 }
 
@@ -84,44 +52,4 @@ export const VERIFIED_ACADEMIC_COURSES: { authority: AcademicAuthority; name: st
     'Leather Tanning',
   ].map(name => ({ authority: 'UVTAB' as const, name })),
 ]
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
-
-<<<<<<< HEAD
-
-/** KSHS website-listed school-based programmes. These are reference suggestions, not accreditation claims. */
-export const SCHOOL_BASED_PROGRAMME_REFERENCES: string[] = [
-  'Certificate in Enrolled Nursing',
-  'Certificate in Enrolled Midwifery',
-  'Certificate in Pharmacy',
-  'Certificate in Medical Laboratory Techniques',
-  'Certificate in Public Health',
-  'Certificate in Medical Records and Health Informatics',
-  'Certificate in Food Science and Nutrition',
-  'Certificate in Biomedical Engineering',
-  'Certificate in Secretarial Studies and Office Management',
-  'Certificate in Guidance and Counselling',
-  'Certificate in Records and Information Management',
-  'Diploma in Clinical Medicine and Community Health',
-  'Diploma in Pharmacy',
-  'Diploma in Diagnostic Sonography',
-  'Diploma in Biomedical Engineering',
-  'Diploma in Secretarial Studies and Office Management',
-  'Diploma in Medical Records and Health Informatics',
-  'Diploma in Public Health',
-  'Diploma in Records and Information Management',
-  'Diploma in Health Counselling and Guidance',
-  'Diploma in Food Science and Nutrition',
-  'Bridging Programme',
-  'Advanced Diploma in Diagnostic Sonography',
-  'Diploma in Human Nutrition and Dietetics',
-  'Diploma in Food Science and Technology',
-  'Advanced Diploma in Health Promotion and Education',
-]
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-=======
->>>>>>> origin/fix/authority-course-catalogues

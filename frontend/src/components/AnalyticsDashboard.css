@@ -1,20 +1,3 @@
-<<<<<<< HEAD
 .analytics-panel { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .analytics-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-=======
-.analytics-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-.analytics-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
->>>>>>> origin/feat/chartjs-visualisation-foundation
 .analytics-heading h2 { margin: 0; }

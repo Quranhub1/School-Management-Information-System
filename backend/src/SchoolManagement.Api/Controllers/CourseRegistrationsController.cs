@@ -32,10 +32,6 @@ public sealed class CourseRegistrationsController(CourseRegistrationService serv
         if (await db.Campuses.AnyAsync(x => x.IsActive, cancellationToken) && !student.CampusId.HasValue)
             return Conflict(new { message = "Assign the student to a campus before registering courses." });
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/fix/validate-course-registration-against-admission
         // An admitted student may only register for courses mapped into the curriculum
         // of the programme recorded on their admission.
         if (student.AdmissionId.HasValue)
@@ -61,11 +57,6 @@ public sealed class CourseRegistrationsController(CourseRegistrationService serv
                 });
         }
 
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/persisted-examination-workflows
-=======
->>>>>>> origin/fix/validate-course-registration-against-admission
         try
         {
             var registration = await service.RegisterAsync(request.StudentId, request.CourseId, request.SemesterId, cancellationToken, student.CampusId);

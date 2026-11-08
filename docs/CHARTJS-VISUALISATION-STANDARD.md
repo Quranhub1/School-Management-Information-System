@@ -2,15 +2,9 @@
 
 ## Single chart-rendering engine
 
-<<<<<<< HEAD
 **Chart.js 4.6.1 is the only chart-rendering engine used by the SMIS frontend.** It is installed as a frontend dependency and bundled locally by Vite. No chart may load scripts, stylesheets, fonts, or plugins from a CDN; the application must continue to work on the school LAN without internet access.
 
 Shared components live in `frontend/src/components/charts/`:
-=======
-**Chart.js 4.5.1 is the only chart-rendering engine used by the SMIS frontend.** It is installed as a frontend dependency and bundled locally by Vite. No chart may load scripts, stylesheets, fonts, or plugins from a CDN; the application must continue to work on the school LAN without internet access.
-
-All charts in the SMIS interface must be implemented through the shared components in `frontend/src/components/charts/`:
->>>>>>> origin/feat/chartjs-visualisation-foundation
 
 - `ChartCanvas` — lifecycle-safe Chart.js canvas renderer for all supported Chart.js chart types.
 - `DoughnutChart` — standard doughnut card with centre metric, accessible chart label, tooltip, legend and optional value formatting.
@@ -18,7 +12,6 @@ All charts in the SMIS interface must be implemented through the shared componen
 - `charts.css` — shared responsive chart presentation and dark-theme support.
 - `index.ts` — public component and type exports.
 
-<<<<<<< HEAD
 Do not add a second chart library, custom SVG chart, CSS-drawn data plot, or embedded third-party dashboard renderer to the SMIS frontend. Build future line, pie, area, mixed, radar or other visualisations with `ChartCanvas` or a reusable wrapper in this folder.
 
 ## Current migration
@@ -27,16 +20,6 @@ Do not add a second chart library, custom SVG chart, CSS-drawn data plot, or emb
 - Modern institutional dashboard: academic assessment and clinical placement rates use the shared Chart.js bar component; fee collection uses the shared doughnut component.
 - Finance workspace: recent daily collections use the shared Chart.js bar component. Values are aggregated from existing payment records. AG Grid register and collection tables are preserved.
 - Analytics screen: the embedded Superset renderer and its unused frontend API client/dependency have been removed. Institutional analytics use the same Chart.js-powered command centre.
-=======
-Do not add a second chart library, custom SVG chart, CSS-drawn data plot, or embedded third-party dashboard renderer to the SMIS frontend. Build any future line, pie, area, mixed, radar or other visualisations with `ChartCanvas` or a reusable wrapper in this folder.
-
-## Current migration
-
-- Administrator dashboard: student status, staff status, user accounts, fee collection and payroll status use the shared Chart.js doughnut component, including the finance-tab fee chart.
-- Modern institutional dashboard: academic assessment and clinical placement rates use the shared Chart.js bar component; fee collection uses the shared doughnut component.
-- Finance workspace: recent daily collections use the shared Chart.js bar component. Values are aggregated from the existing payment records.
-- Analytics screen: the embedded Superset renderer and its frontend API client have been removed. Institutional analytics now use the same Chart.js-powered command centre.
->>>>>>> origin/feat/chartjs-visualisation-foundation
 - Existing API data sources, calculations, refresh behavior and authorization boundaries are preserved. Apache Superset infrastructure and backend configuration may remain available for separately managed external BI, but it is not an embedded SMIS chart renderer.
 
 ## Implementation rules
@@ -52,11 +35,7 @@ Do not add a second chart library, custom SVG chart, CSS-drawn data plot, or emb
 
 ## Verification required before merging
 
-<<<<<<< HEAD
 - Run `npm install` and `npm run build` from `frontend/`.
-=======
-- Run `npm ci` and `npm run build` from `frontend/`.
->>>>>>> origin/feat/chartjs-visualisation-foundation
 - Run the existing frontend unit tests and relevant role-authorization tests.
 - Check chart rendering with populated, empty and zero-valued API responses, narrow viewports, dark mode and offline operation.
 - Confirm each role only receives the API data it is already authorized to view.

@@ -682,8 +682,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (scope.Error is not null) return scope.Error;
         return Ok(await reports.GetGeneralLedgerAsync(from, to, accountId, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
     }
-<<<<<<< HEAD
-=======
 
     [HttpGet("reports/trial-balance")]
     public async Task<IActionResult> TrialBalance([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken)
@@ -721,120 +719,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         {
             return BadRequest(new { message = ex.Message });
         }
-<<<<<<< HEAD
-    }
-
-    [HttpGet("reports/student-receivables")]
-    public async Task<IActionResult> StudentReceivables(CancellationToken cancellationToken)
-    {
-        if (!await CanViewUnscopedFinancialReportAsync(cancellationToken)) return Forbid();
-        return Ok(await reports.GetStudentReceivablesAsync(cancellationToken));
-    }
-
-
-    private async Task<bool> CanAccessInvoiceAsync(Guid invoiceId, CancellationToken ct)
-    {
-        var studentId = await db.StudentInvoices.AsNoTracking()
-            .Where(x => x.Id == invoiceId).Select(x => (Guid?)x.StudentId).SingleOrDefaultAsync(ct);
-        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
-    }
-
-    private async Task<bool> CanAccessChargeAsync(Guid chargeId, CancellationToken ct)
-    {
-        var studentId = await db.Set<SchoolManagement.Domain.Finance.StudentCharge>().AsNoTracking()
-            .Where(x => x.Id == chargeId).Select(x => (Guid?)x.StudentId).SingleOrDefaultAsync(ct);
-        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
-    }
-
-    private async Task<bool> CanAccessPaymentAsync(Guid paymentId, CancellationToken ct)
-    {
-        var studentId = await db.Payments.AsNoTracking()
-            .Where(x => x.Id == paymentId).Select(x => (Guid?)x.StudentId).SingleOrDefaultAsync(ct);
-        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
-    }
-
-    private async Task<bool> CanAccessCreditNoteAsync(Guid creditNoteId, CancellationToken ct)
-    {
-        var studentId = await (
-            from note in db.CreditNotes.AsNoTracking()
-            join invoice in db.StudentInvoices.AsNoTracking() on note.StudentInvoiceId equals invoice.Id
-            where note.Id == creditNoteId
-            select (Guid?)invoice.StudentId).SingleOrDefaultAsync(ct);
-        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
-    }
-
-    private async Task<bool> CanAccessDiscountAsync(Guid discountId, CancellationToken ct)
-    {
-        var studentId = await (
-            from discount in db.Set<SchoolManagement.Domain.Finance.InvoiceDiscount>().AsNoTracking()
-            join invoice in db.StudentInvoices.AsNoTracking() on discount.StudentInvoiceId equals invoice.Id
-            where discount.Id == discountId
-            select (Guid?)invoice.StudentId).SingleOrDefaultAsync(ct);
-        return studentId.HasValue && await campusAccess.CanAccessStudentAsync(User, studentId.Value, ct);
-    }
-
-    private async Task<(Guid? CampusId, IActionResult? Error)> ResolveReportCampusAsync(Guid? requestedCampusId, CancellationToken ct)
-    {
-        if (campusAccess.IsSystemAdministrator(User))
-            return (requestedCampusId, null);
-
-        var accessible = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
-        if (accessible is null) return (requestedCampusId, null);
-        if (accessible.Count == 0) return (null, Forbid());
-        if (requestedCampusId.HasValue)
-        {
-            if (accessible.Contains(requestedCampusId.Value)) return (requestedCampusId, null);
-            return (null, Forbid());
-        }
-        if (accessible.Count == 1) return (accessible[0], null);
-        return (null, BadRequest(new { message = "Select one of your assigned campuses to run this financial report." }));
-    }
-
-    private async Task<bool> CanViewUnscopedFinancialReportAsync(CancellationToken ct)
-    {
-        if (campusAccess.IsSystemAdministrator(User)) return true;
-        return await campusAccess.GetAccessibleCampusIdsAsync(User, ct) is null;
-    }
->>>>>>> origin/fix/enforce-campus-scope-in-finance
-
-    [HttpGet("reports/trial-balance")]
-    public async Task<IActionResult> TrialBalance([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken)
-    {
-        var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
-        if (scope.Error is not null) return scope.Error;
-        return Ok(await reports.GetTrialBalanceAsync(from, to, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
-    }
-
-    [HttpGet("reports/income-statement")]
-    public async Task<IActionResult> IncomeStatement([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken)
-    {
-        var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
-        if (scope.Error is not null) return scope.Error;
-        try
-        {
-            return Ok(await reports.GetIncomeStatementAsync(from, to, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    [HttpGet("reports/balance-sheet")]
-    public async Task<IActionResult> BalanceSheet([FromQuery] DateOnly? asOf, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken)
-    {
-        var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
-        if (scope.Error is not null) return scope.Error;
-        try
-        {
-            return Ok(await reports.GetBalanceSheetAsync(asOf, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-=======
->>>>>>> origin/ui/remove-inventory-helper-copy
     }
 
     [HttpGet("reports/student-receivables")]

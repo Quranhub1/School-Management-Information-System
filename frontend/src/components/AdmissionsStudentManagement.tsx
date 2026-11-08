@@ -5,16 +5,7 @@ import { AlumniManagement } from './AlumniManagement'
 import { getStudents, type Student } from '../api/students'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
 import { downloadElementAsPng } from '../lib/printCapture'
-=======
->>>>>>> origin/feat/pdfmake-document-engine
-=======
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
 
 type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'alumni'
 type AccessProfile = 'receptionist' | 'records' | 'department' | 'general'
@@ -141,10 +132,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         <div>
           <p className="eyebrow">Student Lifecycle</p>
           <h2>{readOnly ? 'Student Records · Read-only' : 'Admissions & Student Management'}</h2>
-<<<<<<< HEAD
           
-=======
->>>>>>> origin/kilo/golden-circuit-3yz
         </div>
       </header>
 
@@ -161,34 +149,12 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
         {section === 'biodata' && (
           <div>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-            <div className="feature-grid">
-              <article className="feature-card"><strong>Bio-Data</strong></article>
-              <article className="feature-card"><strong>National ID / NIN</strong></article>
-              <article className="feature-card"><strong>Next of Kin</strong></article>
-              <article className="feature-card"><strong>UNEB Records</strong></article>
-            </div>
->>>>>>> origin/kilo/golden-circuit-3yz
-=======
->>>>>>> origin/polish/remove-redundant-copy-across-screens
             <StudentManagement canManage={canManage} readOnly={readOnly} />
           </div>
         )}
 
         {section === 'admissions' && (
           <div>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-            <div className="feature-grid compact">
-              <article className="feature-card"><strong>Eligibility checks</strong></article>
-              <article className="feature-card"><strong>Admission letters</strong></article>
-            </div>
->>>>>>> origin/kilo/golden-circuit-3yz
-=======
->>>>>>> origin/polish/remove-redundant-copy-across-screens
             <AdmissionsManagement readOnly={readOnly} />
           </div>
         )}
@@ -199,32 +165,19 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
             <label>Indexing Status<select value={indexingStatus} onChange={e => setIndexingStatus(e.target.value)}><option>Not Indexed</option><option>Pending</option><option>Indexed</option><option>Rejected</option></select></label>
             <label>Legacy UHPAB Registration / NSIN<input value={legacyRegistrationNumber} onChange={e => setLegacyRegistrationNumber(e.target.value)} placeholder="For trainees covered by earlier registration arrangements" /></label>
             <label>UVTAB Registration Number<input value={uvtabRegistrationNumber} onChange={e => setUvtabRegistrationNumber(e.target.value)} placeholder="TVET assessment registration number" /></label>
-<<<<<<< HEAD
             <div className="feature-card full-width"><strong>Regulatory identity</strong><span>For UHPAB, new health trainees are tracked with HTIN while applicable earlier cohorts retain their existing registration/NSIN identifiers. UVTAB learners use their assessment registration number for the candidate/results journey.</span></div>
-            <div className="info-banner full-width">External UHPAB/UVTAB integration is not configured.</div>
-<<<<<<< HEAD
-=======
->>>>>>> origin/kilo/golden-circuit-3yz
-=======
->>>>>>> origin/ui/remove-inventory-helper-copy
+            <div className="info-banner full-width">National submission and synchronisation remain integration-ready placeholders until the institution supplies authorised UHPAB/UVTAB integration credentials and approved endpoints.</div>
           </div>
         )}
 
         {section === 'status' && (
           <div className="lifecycle-form-grid">
             <label>Enrollment / Student Status<select value={studentStatus} onChange={e => setStudentStatus(e.target.value)}>{statuses.map(status => <option key={status}>{status}</option>)}</select></label>
-<<<<<<< HEAD
             <div className="feature-card"><strong>Current status</strong><span>{studentStatus}</span></div>
-<<<<<<< HEAD
-=======
->>>>>>> origin/kilo/golden-circuit-3yz
-=======
->>>>>>> origin/polish/remove-redundant-copy-across-screens
           </div>
         )}
 
         {section === 'cards' && (
-<<<<<<< HEAD
           <section className="panel" aria-label="Student ID card queue">
             <div className="panel-heading">
               <div><p className="eyebrow">STUDENT SERVICES</p><h3>ID Card Queue</h3></div>
@@ -237,22 +190,10 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
               <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds([])} disabled={selectedCardStudentIds.length === 0}>Clear selection</button>
               <button type="button" className="secondary-button" onClick={printSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Print selected cards ({selectedCardStudentIds.length})</button>
               <button type="button" onClick={downloadSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PDF</button>
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
               <button type="button" className="secondary-button" onClick={() => {
                 const element = document.getElementById('print-queue-section')
                 if (element) void downloadElementAsPng(element, { filename: `student-${cardType}-id-cards.png` }).catch(error => setCardQueueError(error instanceof Error ? error.message : 'Unable to capture ID cards.'))
               }} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PNG</button>
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/pdfmake-document-engine
-=======
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
             </div>
             {cardQueueLoading ? <p className="empty">Loading registered students…</p> : cardStudents.length === 0 ? <p className="empty">No registered students are available for ID card printing.</p> : (
               <div className="table-wrap no-print">
@@ -288,14 +229,6 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
               @media print { .student-id-card-print-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .student-id-card { box-shadow: none; } }
             `}</style>
           </section>
-=======
-          <div className="feature-grid">
-            <article className="feature-card"><strong>Library ID Cards</strong><button className="secondary-button" type="button">Open Card Queue</button></article>
-            <article className="feature-card"><strong>Campus ID Cards</strong><button className="secondary-button" type="button">Open Card Queue</button></article>
-            <article className="feature-card"><strong>Barcode / QR</strong></article>
-            <article className="feature-card"><strong>Batch Printing</strong></article>
-          </div>
->>>>>>> origin/kilo/golden-circuit-3yz
         )}
 
         {section === 'alumni' && (
@@ -306,7 +239,6 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
         {section === 'national-results' && (
           <div className="feature-grid">
-<<<<<<< HEAD
             <article className="feature-card">
               <strong>UHPAB Results</strong>
               <button className="secondary-button" type="button" disabled>UHPAB Results Integration — Coming Soon</button>
@@ -315,10 +247,6 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
               <strong>UVTAB Results</strong>
               <button className="secondary-button" type="button" disabled>UVTAB Results Integration — Coming Soon</button>
             </article>
-=======
-            <article className="feature-card"><strong>UHPAB Results</strong></article>
-            <article className="feature-card"><strong>UVTAB Results</strong></article>
->>>>>>> origin/kilo/golden-circuit-3yz
           </div>
         )}
       </div>

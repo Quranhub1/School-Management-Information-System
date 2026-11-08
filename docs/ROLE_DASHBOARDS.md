@@ -34,23 +34,9 @@ The table is a content standard, not a claim that all listed dashboards have alr
 
 ## Visualization rules
 
-<<<<<<< HEAD
 - Use **Chart.js** as the shared charting engine for dashboard visualisations. It is installed as a local npm dependency and bundled with the frontend; never load it from a CDN.
-<<<<<<< HEAD
-<<<<<<< HEAD
 - Use **line charts** for trends over time, **bar charts** for comparisons between classes/departments/periods, and **doughnut charts** only for meaningful parts of a whole.
 - All frontend charts must use the shared Chart.js layer in `frontend/src/components/charts/`; do not add custom SVG/CSS plots, another charting library, or embedded third-party dashboard charts. See [the Chart.js visualisation standard](CHARTJS-VISUALISATION-STANDARD.md).
-=======
-- Use **line charts** for trends over time, **bar charts** for comparisons between classes/departments/periods, and **donut charts** only for meaningful parts of a whole.
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-- Use **line charts** for trends over time, **bar charts** for comparisons between classes/departments/periods, and **doughnut charts** only for meaningful parts of a whole.
-- All frontend charts must use the shared Chart.js layer in `frontend/src/components/charts/`; do not add custom SVG/CSS plots, another charting library, or embedded third-party dashboard charts. See [the Chart.js visualisation standard](CHARTJS-VISUALISATION-STANDARD.md).
->>>>>>> origin/feat/chartjs-centralized-visualisation
-=======
-- Use **line charts** for trends over time, **bar charts** for comparisons between classes/departments/periods, and **doughnut charts** only for meaningful parts of a whole.
-- All frontend charts must use the shared Chart.js layer in `frontend/src/components/charts/`; do not add custom SVG/CSS plots, another charting library, or embedded third-party dashboard charts. See [the Chart.js visualisation standard](CHARTJS-VISUALISATION-STANDARD.md).
->>>>>>> origin/feat/chartjs-visualisation-foundation
 - Use KPI cards for concise totals and status counts; use tables for actionable detail and drill-down.
 - Prefer institution-configured academic periods, dates and eligibility thresholds instead of hardcoded assumptions.
 - Use Uganda's institutional context and UGX formatting where finance is shown.
