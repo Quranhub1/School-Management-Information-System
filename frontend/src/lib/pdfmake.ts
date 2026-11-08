@@ -63,7 +63,7 @@ function buildDefinition(options: InstitutionalPdfOptions): PdfDocumentDefinitio
       muted: { fontSize: 8, color: '#6b7280' },
     },
     footer: (currentPage: number, pageCount: number) => ({
-      text: `KSHS · Page ${currentPage} of ${pageCount}`,
+      text: `${options.institutionName?.trim() || 'School Management Information System'} · Page ${currentPage} of ${pageCount}`,
       alignment: 'center',
       fontSize: 8,
       color: '#6b7280',
