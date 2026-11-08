@@ -11,6 +11,15 @@ import {
 } from 'ag-grid-community'
 import { AgGridProvider, AgGridReact } from 'ag-grid-react'
 
+function GridLoadingOverlay() {
+  return <div className="smis-ag-grid-overlay" role="status" aria-live="polite">Loading records…</div>
+}
+
+function GridNoRowsOverlay() {
+  return <div className="smis-ag-grid-overlay" role="status">No records to display.</div>
+}
+import { useDebounce } from 'use-debounce'
+
 export type AgGridTableProps<TData extends object> = {
   rows: TData[]
   columns: ColDef<TData>[]
@@ -52,6 +61,9 @@ export function AgGridTable<TData extends object>({
 }: AgGridTableProps<TData>) {
   const [api, setApi] = useState<GridApi<TData> | null>(null)
   const [filter, setFilter] = useState(quickFilterText ?? '')
+  // Keep keystrokes responsive; apply AG Grid's potentially expensive quick filter
+  // only after the user has paused typing for 300 ms.
+  const [debouncedFilter] = useDebounce(quickFilterText ?? filter, 300)
   const [rowValidationErrors, setRowValidationErrors] = useState<Record<string, string[]>>({})
   const revertingCell = useRef(false)
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
@@ -146,8 +158,13 @@ export function AgGridTable<TData extends object>({
             paginationPageSizeSelector={[10, 25, 50, 100]}
             animateRows={false}
             loading={loading}
-            quickFilterText={quickFilterText ?? filter}
+            quickFilterText={debouncedFilter}
             rowSelection={rowSelection}
+            // Shift-click column headers to build a multi-column sort; dragging headers reorders columns.
+            suppressMultiSort={false}
+            suppressMovableColumns={false}
+            loadingOverlayComponent={GridLoadingOverlay}
+            noRowsOverlayComponent={GridNoRowsOverlay}
             onGridReady={event => setApi(event.api)}
             onRowClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
