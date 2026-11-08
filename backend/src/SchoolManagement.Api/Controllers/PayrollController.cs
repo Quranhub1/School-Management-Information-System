@@ -9,7 +9,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/staff/payroll")]
-[Authorize(Policy = StaffPolicies.Read)]
+[Authorize(Policy = AuthorizationPolicies.FinanceRead)]
 public sealed class PayrollController(SchoolManagementDbContext db, IConfiguration configuration) : ControllerBase
 {
     [HttpGet]
@@ -28,7 +28,7 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
     }
 
     [HttpPost("generate")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     public async Task<IActionResult> Generate([FromBody] GeneratePayrollRequest request, CancellationToken cancellationToken)
     {
         if (request.Month is < 1 or > 12) return BadRequest(new { message = "Month must be between 1 and 12." });
@@ -68,7 +68,7 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
     }
 
     [HttpPatch("{id:guid}/pay")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     public async Task<IActionResult> MarkAsPaid(Guid id, [FromBody] MarkPayrollPaidRequest request, CancellationToken cancellationToken)
     {
         var record = await db.PayrollRecords.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -82,7 +82,7 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
     }
 
     [HttpPatch("{id:guid}/allowances")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     public async Task<IActionResult> UpdateAllowances(Guid id, [FromBody] UpdateAllowancesRequest request, CancellationToken cancellationToken)
     {
         if (request.Allowances < 0 || request.Deductions < 0) return BadRequest(new { message = "Allowances and deductions cannot be negative." });
