@@ -144,7 +144,7 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Enforce Student API create/update payload validation and validate student list/detail responses.
 - [x] Enforce Finance API invoice creation/list response validation and payment request validation.
 - [x] Enforce mobile-money payment initiation and bulk-payment request validation.
-- [x] Add direct Zod form validation and field-error summaries to the Finance quick-payment, Accounts Office payment and Student Finance payment forms.
+- [x] Add direct Zod form validation and field-error summaries to the Finance quick-payment, Accounts Office payment, Student Finance payment, bulk payment and mobile-money initiation forms.
 - [x] Enforce HR staff creation/update and leave-request validation at the API service boundary.
 - [x] Enforce Inventory register save payload and read/write response validation.
 - [x] Enforce Library book creation and loan issue request validation.
