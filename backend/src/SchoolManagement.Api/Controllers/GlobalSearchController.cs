@@ -82,7 +82,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
                     .FirstOrDefault()
             })
             .OrderByDescending(x => x.Student.StudentNumber.ToLower() == normalized)
-            .ThenByDescending(x => ($"{x.Student.FirstName} {x.Student.OtherNames} {x.Student.LastName}").Trim().ToLower() == normalized)
+            .ThenByDescending(x => (x.Student.FirstName + " " + (x.Student.OtherNames ?? string.Empty) + " " + x.Student.LastName).Trim().ToLower() == normalized)
             .ThenByDescending(x => x.Student.LastName.ToLower().StartsWith(normalized))
             .ThenBy(x => x.Student.LastName)
             .ThenBy(x => x.Student.FirstName)
