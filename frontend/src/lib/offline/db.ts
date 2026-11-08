@@ -1,5 +1,5 @@
 export const DB_NAME = 'smis-offline';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -24,6 +24,9 @@ function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings', { keyPath: 'key' });
+      }
+      if (!db.objectStoreNames.contains('queryCache')) {
+        db.createObjectStore('queryCache', { keyPath: 'key' });
       }
     };
   });
