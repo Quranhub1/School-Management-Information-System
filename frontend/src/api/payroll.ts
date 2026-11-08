@@ -17,7 +17,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
-export type PayrollRecord = { id:string; staffMemberId:string; month:number; year:number; basicSalary:number; allowances:number; deductions:number; netPay:number; paymentDate:string | null; status:string; paymentMethod?: string; reference?: string }
+export type PayrollRecord = { id:string; staffMemberId:string; month:number; year:number; basicSalary:number; allowances:number; deductions:number; netPay:number; paymentDate:string | null; status:string; paymentMethod?: string | null; reference?: string | null }
 export async function listPayroll(staffMemberId?:string) {
   const result = await request<unknown>(`/api/accounts-overview/payroll${staffMemberId ? `?staffMemberId=${encodeURIComponent(staffMemberId)}` : ''}`);
   return parseApiResponse(z.array(payrollRecordResponseSchema), result, 'payroll list') as PayrollRecord[];
