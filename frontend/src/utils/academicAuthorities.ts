@@ -71,6 +71,7 @@ export const VERIFIED_ACADEMIC_COURSES: { authority: AcademicAuthority; name: st
 >>>>>>> origin/feat/authority-separated-academic-workflows
 =======
 
+<<<<<<< HEAD
 
 /** KSHS website-listed school-based programmes. These are reference suggestions, not accreditation claims. */
 export const SCHOOL_BASED_PROGRAMME_REFERENCES: string[] = [
@@ -102,3 +103,5 @@ export const SCHOOL_BASED_PROGRAMME_REFERENCES: string[] = [
   'Advanced Diploma in Health Promotion and Education',
 ]
 >>>>>>> origin/feat/curriculum-catalogue-workflow-polish
+=======
+>>>>>>> origin/fix/authority-course-catalogues
