@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, ArrowUpRight, BellRing, BookOpenCheck, BrainCircuit, CalendarClock, CheckCircle2, CircleDollarSign, GraduationCap, RefreshCw, Search, ShieldAlert, UsersRound, Wallet, X } from 'lucide-react'
 import { getModernDashboard, getStudentRisk, getStudent360, getWorkflowSummary, type ModernDashboard, type StudentRisk, type Student360, type WorkflowSummary } from '../api/modern'
 import { getAccessToken } from '../api/auth'
-import { ChartCanvas } from './charts/ChartCanvas'
 import { DoughnutChart } from './charts/DoughnutChart'
+import { BarChart } from './charts/BarChart'
 import type { ChartData, ChartOptions } from 'chart.js'
 import './ModernInformationHub.css'
 
@@ -53,15 +53,7 @@ export function ModernInformationHub() {
     finally { setAssistantLoading(false) }
   }
 
-  const performanceData: ChartData<'bar', number[], string> = {
-    labels: ['Assessment average', 'Clinical placement'],
-    datasets: [{ label: 'Rate', data: [dashboard?.averageAssessment ?? 0, dashboard?.placementCompletionRate ?? 0].map(value => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0))), backgroundColor: ['#4569f5', '#16a477'], borderRadius: 4, barThickness: 18 }],
-  }
-  const performanceOptions: ChartOptions<'bar'> = {
-    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => ` ${number(context.parsed.x)}%` } } },
-    scales: { x: { min: 0, max: 100, grid: { display: false }, ticks: { callback: value => `${value}%` } }, y: { grid: { display: false } } },
-  }
+
 
   const metrics = dashboard ? [
     { label: 'Active students', value: number(dashboard.activeStudents), note: `${number(dashboard.totalStudents)} total records`, icon: UsersRound, tone: 'blue' },
@@ -89,7 +81,7 @@ export function ModernInformationHub() {
     <div className="dashboard-secondary-grid">
       <article className="dashboard-panel dashboard-performance">
         <div className="dashboard-panel-heading"><div><span className="dashboard-section-kicker">ACADEMIC OUTCOMES</span><h3>Learning & clinical progress</h3></div><BookOpenCheck size={19}/></div>
-        {dashboard ? <div className="dashboard-performance-chart"><ChartCanvas type="bar" data={performanceData} options={performanceOptions} ariaLabel={`Assessment average ${number(dashboard.averageAssessment)} percent; clinical placement completion ${number(dashboard.placementCompletionRate)} percent`} /></div> : <div className="dashboard-empty-state">Performance figures will appear when dashboard data loads.</div>}
+        {dashboard ? <div className="dashboard-performance-chart"><BarChart labels={['Assessment average', 'Clinical placement']} datasets={[{ label: 'Completion rate', data: [dashboard.averageAssessment, dashboard.placementCompletionRate].map(value => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0))), color: '#4569f5' }]} horizontal maxValue={100} valueFormatter={value => `${number(value)}%`} ariaLabel={`Assessment average ${number(dashboard.averageAssessment)} percent; clinical placement completion ${number(dashboard.placementCompletionRate)} percent`} /></div> : <div className="dashboard-empty-state">Performance figures will appear when dashboard data loads.</div>}
         <div className="dashboard-panel-footnote"><CheckCircle2 size={15}/> Figures reflect data currently recorded in SMIS.</div>
       </article>
       <article className="dashboard-panel dashboard-work-queue">
