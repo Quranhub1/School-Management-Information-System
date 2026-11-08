@@ -152,7 +152,8 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
       minWidth: column.id === 'description' ? 220 : 140,
       editable: canEdit,
       valueGetter: (params: { data?: InventoryRow }) => params.data?.values[column.id] ?? '',
-      valueSetter: (params: { data: InventoryRow; newValue: unknown }) => {
+      valueSetter: (params: { data?: InventoryRow; newValue: unknown }) => {
+        if (!params.data) return false;
         updateCell(params.data.id, column.id, String(params.newValue ?? ''));
         return true;
       },
