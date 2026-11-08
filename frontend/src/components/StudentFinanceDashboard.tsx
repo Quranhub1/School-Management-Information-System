@@ -97,7 +97,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
 
   return <section className="finance-student-dashboard" aria-label="Student finance dashboard">
     <div className="finance-search-card">
-      <div><p className="eyebrow">STUDENT ACCOUNT</p><h3>Fee account & payment status</h3><p className="finance-muted">Search by student number or internal student ID.</p></div>
+      <div><p className="eyebrow">STUDENT ACCOUNT</p><h3>Fee account & payment status</h3></div>
       <form onSubmit={e => { e.preventDefault(); void loadStudent() }} className="finance-search-form">
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="e.g. 9912001842" aria-label="Student number or ID" />
         <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Open Account'}</button>
