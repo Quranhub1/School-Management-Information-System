@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bulkImportRequestSchema, createInvoiceRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, libraryLoanSchema, paymentEntrySchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { bulkImportRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -75,6 +75,19 @@ describe("SMIS Zod domain schemas", () => {
     expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { name: "Gloves", quantity: "-2" } }).success).toBe(false);
     expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { quantity: "2" } }).success).toBe(false);
     expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { name: "", quantity: "" } }).success).toBe(true);
+  });
+
+  it("validates mobile money and bulk finance payment payloads", () => {
+    expect(mobileMoneyCreateRequestSchema.safeParse({
+      studentId: "student-1", amount: 50000, provider: "MTN", phoneNumber: "+256 700 123456",
+    }).success).toBe(true);
+    expect(mobileMoneyCreateRequestSchema.safeParse({
+      studentId: "student-1", amount: 50000.5, provider: "MTN", phoneNumber: "invalid",
+    }).success).toBe(false);
+    expect(bulkPaymentRequestSchema.safeParse({ payments: [] }).success).toBe(false);
+    expect(bulkPaymentRequestSchema.safeParse({
+      payments: [{ studentId: "student-1", amount: 10000, paymentMethod: "Cash" }],
+    }).success).toBe(true);
   });
 
   it("rejects empty SMS recipients and malformed inventory row values", () => {
