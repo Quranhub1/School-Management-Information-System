@@ -7,6 +7,8 @@ import { listStaff, STAFF_CHANGED_EVENT } from '../api/staff'
 import { getInvoices } from '../api/finance'
 import { listPayroll } from '../api/payroll'
 import { InventoryStockSettings } from './InventoryStockSettings'
+import { AgGridTable } from './AgGridTable'
+import type { ColDef } from 'ag-grid-community'
 
 type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring' | 'stock-settings'
 type ChartSegment = { label: string; value: number; color: string; displayValue?: string }
@@ -23,6 +25,21 @@ const chartColors = {
 
 const numberFormat = new Intl.NumberFormat('en-UG')
 const moneyFormat = (value: number) => `UGX ${numberFormat.format(Math.round(value || 0))}`
+
+type StudentSearchResult = { id: string; studentNumber: string; name: string; status: string }
+type StaffSearchResult = { id: string; staffNumber: string; name: string; department: string; status: string }
+
+const studentSearchColumns: ColDef<StudentSearchResult>[] = [
+  { field: 'studentNumber', headerName: 'Student Number' },
+  { field: 'name', headerName: 'Name', minWidth: 200 },
+  { field: 'status', headerName: 'Status' },
+]
+const staffSearchColumns: ColDef<StaffSearchResult>[] = [
+  { field: 'staffNumber', headerName: 'Staff Number' },
+  { field: 'name', headerName: 'Name', minWidth: 200 },
+  { field: 'department', headerName: 'Department' },
+  { field: 'status', headerName: 'Status' },
+]
 
 function DonutChart({
   title,
@@ -108,9 +125,9 @@ export function AdminDashboard() {
   const [payroll, setPayroll] = useState<{ totalPaid: number; paid: number; pending: number; other: number }>({ totalPaid: 0, paid: 0, pending: 0, other: 0 })
 
   const [studentSearch, setStudentSearch] = useState('')
-  const [studentResults, setStudentResults] = useState<{ id: string; studentNumber: string; name: string; status: string }[]>([])
+  const [studentResults, setStudentResults] = useState<StudentSearchResult[]>([])
   const [staffSearch, setStaffSearch] = useState('')
-  const [staffResults, setStaffResults] = useState<{ id: string; staffNumber: string; name: string; department: string; status: string }[]>([])
+  const [staffResults, setStaffResults] = useState<StaffSearchResult[]>([])
 
   async function loadMetrics() {
     setLoading(true)
@@ -294,16 +311,7 @@ export function AdminDashboard() {
               <button type="submit">Search</button>
             </div>
           </form>
-          {studentResults.length > 0 && (
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Student Number</th><th>Name</th><th>Status</th></tr></thead>
-                <tbody>
-                  {studentResults.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{s.name}</td><td><span className="badge" style={{ background: s.status === 'Active' ? '#d1fae5' : '#fee2e2', color: s.status === 'Active' ? '#065f46' : '#991b1b' }}>{s.status}</span></td></tr>)}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {studentResults.length > 0 && <AgGridTable rows={studentResults} columns={studentSearchColumns} getRowId={p => p.data.id} exportFileName="admin-student-search" height={420} />}
         </div>
       )}
 
@@ -316,16 +324,7 @@ export function AdminDashboard() {
               <button type="submit">Search</button>
             </div>
           </form>
-          {staffResults.length > 0 && (
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Staff Number</th><th>Name</th><th>Department</th><th>Status</th></tr></thead>
-                <tbody>
-                  {staffResults.map(s => <tr key={s.id}><td>{s.staffNumber}</td><td>{s.name}</td><td>{s.department}</td><td><span className="badge" style={{ background: s.status === 'Active' ? '#d1fae5' : '#fee2e2', color: s.status === 'Active' ? '#065f46' : '#991b1b' }}>{s.status}</span></td></tr>)}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {staffResults.length > 0 && <AgGridTable rows={staffResults} columns={staffSearchColumns} getRowId={p => p.data.id} exportFileName="admin-staff-search" height={420} />}
         </div>
       )}
 
