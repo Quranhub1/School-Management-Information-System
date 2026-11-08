@@ -11,7 +11,7 @@ export function mapZodIssues(error: z.ZodError): FieldValidationErrors {
   return errors;
 }
 
-/** Validate form values without throwing; use in React submit handlers. */
+/** Safe validation result for React form submit handlers and service boundaries. */
 export function validateForm<TSchema extends z.ZodType>(
   schema: TSchema,
   values: unknown,
@@ -20,6 +20,27 @@ export function validateForm<TSchema extends z.ZodType>(
   return result.success
     ? { success: true, data: result.data, errors: {} }
     : { success: false, errors: mapZodIssues(result.error) };
+}
+
+export class InputValidationError extends Error {
+  readonly fieldErrors: FieldValidationErrors;
+
+  constructor(readonly contractName: string, error: z.ZodError) {
+    super(`Invalid ${contractName} input: ${Object.keys(mapZodIssues(error)).length} field(s) need attention.`);
+    this.name = "InputValidationError";
+    this.fieldErrors = mapZodIssues(error);
+  }
+}
+
+/** Enforce a request schema before serializing/sending user-controlled data. */
+export function parseApiInput<TSchema extends z.ZodType>(
+  schema: TSchema,
+  input: unknown,
+  contractName: string,
+): z.output<TSchema> {
+  const result = schema.safeParse(input);
+  if (!result.success) throw new InputValidationError(contractName, result.error);
+  return result.data;
 }
 
 export class ApiContractError extends Error {
