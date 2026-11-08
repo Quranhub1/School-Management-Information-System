@@ -280,3 +280,10 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Continue a screen-by-screen visual review of all remaining authenticated modules and tabs. This change removes the identified redundant copy and stub paragraphs; it does not remove required labels, validation messages, warnings, empty states or operational instructions.
 
 **Status:** targeted UI copy and identified request/report defects are corrected in source. CI and runtime verification remain pending. Do not mark the repository-wide screen review complete until each remaining screen and tab has been inspected and its regression checks passed.
+
+
+## Framer Motion workspace transitions — November 2026
+
+- Reuse the existing Framer Motion dependency for reduced-motion-aware workspace and sidebar transitions.
+- Keep navigation, forms, validation, keyboard interaction and login behavior functional when motion is disabled.
+- Avoid animating large data grids or expensive paint properties; profile on representative low-powered devices.
