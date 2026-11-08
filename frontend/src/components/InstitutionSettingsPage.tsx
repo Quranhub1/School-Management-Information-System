@@ -273,11 +273,20 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
             <section aria-label="Institution logo" style={{ border: '1px solid #e7e5e4', borderRadius: 10, padding: 18, background: '#fffdf8' }}>
               <div style={{ marginBottom: 14 }}>
                 <h3 style={{ margin: '0 0 5px', color: '#292524', fontSize: 16 }}>Institution logo</h3>
+<<<<<<< HEAD
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(180px, 230px)', gap: 18, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 14 }}>
                   <label>Logo image URL or saved logo path
                     <input type="text" inputMode="url" value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://example.com/logo.png or /api/public/institution-settings/logo" />
+=======
+                <p style={{ margin: 0, color: '#78716c', fontSize: 13 }}>Upload a logo or provide an image URL. Uploaded logos are stored with the institution settings.</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(180px, 230px)', gap: 18, alignItems: 'start' }}>
+                <div style={{ display: 'grid', gap: 14 }}>
+                  <label>Logo image URL
+                    <input type="url" value={form.logoPath} onChange={e => updateField('logoPath', e.target.value)} placeholder="https://example.com/logo.png" />
+>>>>>>> origin/ui/polish-settings-reset-and-branding
                   </label>
                   <label>Upload logo file
                     <input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo || !active} onChange={e => { const file=e.target.files?.[0]; if(file) void uploadLogo(file); e.currentTarget.value = '' }} />
@@ -293,18 +302,30 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
             <section aria-label="Institution brand colours" style={{ border: '1px solid #e7e5e4', borderRadius: 10, padding: 18, background: '#fffdf8' }}>
               <div style={{ marginBottom: 14 }}>
                 <h3 style={{ margin: '0 0 5px', color: '#292524', fontSize: 16 }}>Brand colours</h3>
+<<<<<<< HEAD
+=======
+                <p style={{ margin: 0, color: '#78716c', fontSize: 13 }}>Choose the main institutional colour and the accent used for highlights.</p>
+>>>>>>> origin/ui/polish-settings-reset-and-branding
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14 }}>
                 <label style={{ display: 'grid', gap: 8 }}>Primary colour
                   <span style={{ display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e7e5e4', borderRadius: 8, padding: 10, background: '#ffffff' }}>
                     <input aria-label="Primary brand colour" type="color" value={form.primaryColor} onChange={e => updateField('primaryColor', e.target.value)} style={{ width: 42, height: 34, padding: 2, border: 0, background: 'transparent', cursor: 'pointer' }} />
+<<<<<<< HEAD
                     <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{(form.primaryColor ?? '#1e40af').toUpperCase()}</span>
+=======
+                    <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{form.primaryColor.toUpperCase()}</span>
+>>>>>>> origin/ui/polish-settings-reset-and-branding
                   </span>
                 </label>
                 <label style={{ display: 'grid', gap: 8 }}>Accent colour
                   <span style={{ display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e7e5e4', borderRadius: 8, padding: 10, background: '#ffffff' }}>
                     <input aria-label="Accent brand colour" type="color" value={form.accentColor} onChange={e => updateField('accentColor', e.target.value)} style={{ width: 42, height: 34, padding: 2, border: 0, background: 'transparent', cursor: 'pointer' }} />
+<<<<<<< HEAD
                     <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{(form.accentColor ?? '#f97316').toUpperCase()}</span>
+=======
+                    <span style={{ color: '#44403c', fontSize: 13, fontFamily: 'monospace' }}>{form.accentColor.toUpperCase()}</span>
+>>>>>>> origin/ui/polish-settings-reset-and-branding
                   </span>
                 </label>
               </div>
@@ -430,10 +451,13 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
 <<<<<<< HEAD
           <button type="submit" disabled={saving} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #15803d', borderRadius: 6, minHeight: 42, padding: '10px 20px', fontWeight: 600, boxShadow: 'none' }}>{saving ? 'Saving…' : 'Save Settings'}</button>
           <button type="button" onClick={() => void load()} disabled={saving || uploadingLogo || uploadingGallery} style={{ background: '#ffffff', color: '#44403c', border: '1px solid #d6d3d1', borderRadius: 6, minHeight: 42, padding: '10px 18px', fontWeight: 600, boxShadow: 'none', cursor: saving || uploadingLogo || uploadingGallery ? 'not-allowed' : 'pointer', opacity: saving || uploadingLogo || uploadingGallery ? 0.65 : 1 }}>Reset</button>
+<<<<<<< HEAD
 =======
           <FancyButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Settings'}</FancyButton>
           <button type="button" className="secondary-button" onClick={() => void load()}>Reset</button>
 >>>>>>> origin/kilo/golden-circuit-3yz
+=======
+>>>>>>> origin/ui/polish-settings-reset-and-branding
         </div>
       </form>
     </section>
