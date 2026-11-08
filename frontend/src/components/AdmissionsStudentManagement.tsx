@@ -175,7 +175,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
             <label>Legacy UHPAB Registration / NSIN<input value={legacyRegistrationNumber} onChange={e => setLegacyRegistrationNumber(e.target.value)} placeholder="For trainees covered by earlier registration arrangements" /></label>
             <label>UVTAB Registration Number<input value={uvtabRegistrationNumber} onChange={e => setUvtabRegistrationNumber(e.target.value)} placeholder="TVET assessment registration number" /></label>
             <div className="feature-card full-width"><strong>Regulatory identity</strong><span>For UHPAB, new health trainees are tracked with HTIN while applicable earlier cohorts retain their existing registration/NSIN identifiers. UVTAB learners use their assessment registration number for the candidate/results journey.</span></div>
-            <div className="info-banner full-width">National submission and synchronisation remain integration-ready placeholders until the institution supplies authorised UHPAB/UVTAB integration credentials and approved endpoints.</div>
+            <div className="info-banner full-width">External UHPAB/UVTAB integration is not configured.</div>
           </div>
         )}
 

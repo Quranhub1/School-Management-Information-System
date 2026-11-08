@@ -4,6 +4,7 @@ import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, cancelMobi
 =======
 import { useState, useEffect } from 'react';
 import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, getMobileMoneyTransactions, type MobileMoneyTransaction } from '../api/finance';
+import { getAccessToken } from '../api/auth';
 import { validateForm } from '../lib/validation';
 import { mobileMoneyCreateRequestSchema } from '../schemas';
 
@@ -57,14 +58,35 @@ export default function MobileMoneyPayments() {
 
   const handleStudentSearch = async (code: string) => {
     setStudentCode(code);
+<<<<<<< HEAD
     const sequence = ++studentSearchSequence.current;
     setStudentId('');
     setStudentName('');
     setInvoices([]);
     setSelectedInvoice('');
     if (!code.trim()) return;
+=======
+    if (!code.trim()) {
+      setStudentName('');
+      return;
+    }
+    try {
+      const token = getAccessToken();
+      const res = await fetch(`/api/finance/students/search?code=${encodeURIComponent(code)}`, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+      if (res.ok) {
+        const data: StudentSearchResult = await res.json();
+        setStudentName(data.studentName);
+      } else {
+        setStudentName('');
+      }
+    } catch {
+      setStudentName('');
+    }
+  };
+>>>>>>> origin/fix/ui-finance-cleanup-current-main
 
     try {
+<<<<<<< HEAD
       const student = await getStudentFinanceProfile(code.trim());
       if (sequence !== studentSearchSequence.current) return;
       setStudentId(student.id);
@@ -76,6 +98,14 @@ export default function MobileMoneyPayments() {
         description: invoice.invoiceNumber + ' · ' + invoice.feeType,
         amount: invoice.balance
       })));
+=======
+      const token = getAccessToken();
+      const res = await fetch(`/api/finance/students/${studentId}/invoices`, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+      if (res.ok) {
+        const data: Invoice[] = await res.json();
+        setInvoices(data);
+      }
+>>>>>>> origin/fix/ui-finance-cleanup-current-main
     } catch {
       if (sequence !== studentSearchSequence.current) return;
       setStudentId('');
@@ -136,7 +166,13 @@ export default function MobileMoneyPayments() {
 
   const handleCancel = async (id: string) => {
     try {
+<<<<<<< HEAD
       await cancelMobileMoneyTransaction(id);
+=======
+      const token = getAccessToken();
+      const response = await fetch(`/api/finance/mobile-money/${id}`, { method: 'DELETE', headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+      if (!response.ok) throw new Error(`Unable to cancel transaction (${response.status}).`);
+>>>>>>> origin/fix/ui-finance-cleanup-current-main
       await loadTransactions();
       if (submitted && submitted.id === id) {
         setSubmitted(null);
@@ -408,7 +444,36 @@ export default function MobileMoneyPayments() {
         </div>
       </div>
 
+<<<<<<< HEAD
       <p className="finance-muted">Manual verification only. Automatic MTN/Airtel STK prompts, callbacks and API synchronization are not connected.</p>
+=======
+      <div className="panel" style={{ marginBottom: '24px' }}>
+        <div className="panel-heading">
+          <h3>Payment Provider Integration</h3>
+        </div>
+        <div style={{ padding: '20px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
+            <button
+              className="secondary-button"
+              onClick={() => setShowPaymentProviderMsg('Payment Provider integration is not configured. Contact your system administrator to set up Payment Provider API credentials.')}
+            >
+              Configure Payment Provider
+            </button>
+            <button
+              className="secondary-button"
+              onClick={() => setShowPaymentProviderMsg('Payment Provider sync is not available. This feature will be enabled when Payment Provider is configured.')}
+            >
+              Sync with Payment Provider
+            </button>
+          </div>
+          {showPaymentProviderMsg && (
+            <div style={{ marginTop: '16px', padding: '12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '6px', color: '#92400e' }}>
+              {showPaymentProviderMsg}
+            </div>
+          )}
+        </div>
+      </div>
+>>>>>>> origin/fix/ui-finance-cleanup-current-main
     </div>
   );
 }
