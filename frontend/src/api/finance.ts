@@ -206,7 +206,7 @@ export async function createMobileMoneyTransaction(body: Partial<MobileMoneyTran
 export async function confirmMobileMoneyTransaction(transactionId: string, ref?: string) { return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ ref }) }) }
 export async function getMobileMoneyTransactions(status?: string) { return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
 
-export async function createBulkPayment(body: { payments: { studentId: string; amount: number; paymentMethod: string; receiptNumber?: string; reference?: string }[] }) { const input = parseApiInput(bulkPaymentRequestSchema, body, 'bulk payment'); return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(input) }) }
+export async function createBulkPayment(body: { payments: { studentId: string; invoiceId?: string; amount: number; paymentMethod: string; receiptNumber: string; reference?: string }[] }) { const input = parseApiInput(bulkPaymentRequestSchema, body, 'bulk payment'); return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(input) }) }
 export async function issueCreditNote(invoiceId: string, body: { amount: number; reason: string }) { return request<any>('/api/finance/invoices/' + invoiceId + '/credit-notes', { method: 'POST', body: JSON.stringify(body) }) }
 export async function getCreditNotes(invoiceId?: string) { return request<any[]>(`/api/finance/credit-notes${invoiceId ? `?invoiceId=${encodeURIComponent(invoiceId)}` : ''}`) }
 
