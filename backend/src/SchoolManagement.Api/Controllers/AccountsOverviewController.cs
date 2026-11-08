@@ -3,25 +3,37 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Api.Services;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/accounts-overview")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
-public sealed class AccountsOverviewController(SchoolManagementDbContext db) : ControllerBase
+public sealed class AccountsOverviewController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
     {
-        var totalBilled = await db.StudentInvoices.AsNoTracking()
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
+        var invoices = db.StudentInvoices.AsNoTracking().AsQueryable();
+        var payments = db.Payments.AsNoTracking().AsQueryable();
+        if (accessibleCampuses is not null)
+        {
+            invoices = invoices.Where(x => db.Students.Any(student => student.Id == x.StudentId && student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value)));
+            payments = payments.Where(x => db.Students.Any(student => student.Id == x.StudentId && student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value)));
+        }
+
+        var totalBilled = await invoices
             .SumAsync(x => (decimal?)(x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m), cancellationToken) ?? 0m;
-        var totalPaid = await db.StudentInvoices.AsNoTracking()
+        var totalPaid = await invoices
             .SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
 
         var todayUtc = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
         var tomorrowUtc = todayUtc.AddDays(1);
-        var todayPayments = await db.Payments.AsNoTracking()
+        var todayPayments = await payments
             .Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
             .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
 
@@ -31,9 +43,9 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
             totalPaid,
             totalOutstanding = Math.Max(0m, totalBilled - totalPaid),
             todayCollection = todayPayments,
-            invoiceCount = await db.StudentInvoices.LongCountAsync(cancellationToken),
-            paymentCount = await db.Payments.LongCountAsync(cancellationToken),
-            outstandingCount = await db.StudentInvoices.LongCountAsync(
+            invoiceCount = await invoices.LongCountAsync(cancellationToken),
+            paymentCount = await payments.LongCountAsync(cancellationToken),
+            outstandingCount = await invoices.LongCountAsync(
                 x => x.Amount - x.DiscountAmount - x.PaidAmount > 0,
                 cancellationToken)
         });
@@ -42,7 +54,10 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
     [HttpGet("outstanding")]
     public async Task<IActionResult> GetOutstanding(CancellationToken cancellationToken)
     {
-        var data = await (
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
+        var outstandingQuery = (
             from invoice in db.StudentInvoices.AsNoTracking()
             join student in db.Students.AsNoTracking()
                 on invoice.StudentId equals student.Id
@@ -59,8 +74,10 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
                 balance = invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount,
                 invoice.Currency,
                 invoice.Status
-            })
-            .ToListAsync(cancellationToken);
+            });
+        if (accessibleCampuses is not null)
+            outstandingQuery = outstandingQuery.Where(x => db.Students.Any(student => student.Id == x.studentId && student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value)));
+        var data = await outstandingQuery.ToListAsync(cancellationToken);
 
         return Ok(data);
     }
@@ -74,6 +91,9 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
         [FromQuery] DateOnly? to,
         CancellationToken cancellationToken)
     {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
         var query =
             from payment in db.Payments.AsNoTracking()
             join student in db.Students.AsNoTracking()
@@ -82,6 +102,9 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
                 on payment.StudentInvoiceId equals invoice.Id into invoices
             from invoice in invoices.DefaultIfEmpty()
             select new { payment, student, invoice };
+
+        if (accessibleCampuses is not null)
+            query = query.Where(x => x.student.CampusId.HasValue && accessibleCampuses.Contains(x.student.CampusId.Value));
 
         if (studentId.HasValue)
             query = query.Where(x => x.payment.StudentId == studentId.Value);
@@ -132,11 +155,17 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
         [FromQuery] int? year,
         CancellationToken cancellationToken)
     {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
         var query =
             from payroll in db.PayrollRecords.AsNoTracking()
             join staff in db.StaffMembers.AsNoTracking()
                 on payroll.StaffMemberId equals staff.Id
             select new { payroll, staff };
+
+        if (accessibleCampuses is not null)
+            query = query.Where(x => x.staff.CampusId.HasValue && accessibleCampuses.Contains(x.staff.CampusId.Value));
 
         if (staffMemberId.HasValue)
             query = query.Where(x => x.payroll.StaffMemberId == staffMemberId.Value);
@@ -175,6 +204,8 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
         Guid studentId,
         CancellationToken cancellationToken)
     {
+        if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
+
         var invoices = await db.StudentInvoices.AsNoTracking()
             .Where(x => x.StudentId == studentId)
             .OrderByDescending(x => x.IssuedAt)
