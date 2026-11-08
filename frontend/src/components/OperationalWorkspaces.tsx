@@ -1,6 +1,7 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+import { AuditLogManagement } from './AuditLog'
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -104,22 +105,5 @@ export function GateLogWorkspace() {
 }
 
 export function AuditLogWorkspace() {
-  const [logs, setLogs] = useState<any[]>([])
-  const [action, setAction] = useState('')
-  const [entityType, setEntityType] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  async function load() {
-    setLoading(true); setError('')
-    try { const qs = new URLSearchParams(); if (action.trim()) qs.set('action', action.trim()); if (entityType.trim()) qs.set('entityType', entityType.trim()); setLogs(await request<any[]>(`/api/audit${qs.toString() ? `?${qs}` : ''}`)) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load audit log.') } finally { setLoading(false) }
-  }
-  useEffect(() => { void load() }, [])
-
-  return <section className="panel">
-    <div className="panel-heading"><div><p className="eyebrow">System Governance</p><h2>Audit Log</h2></div><button className="secondary-button" onClick={() => void load()}>Search</button></div>
-    <ErrorBox message={error} />
-    <div className="form-grid"><label>Action<input value={action} onChange={e => setAction(e.target.value)} placeholder="e.g. Create, Update" /></label><label>Entity type<input value={entityType} onChange={e => setEntityType(e.target.value)} placeholder="e.g. Student" /></label></div>
-    {loading ? <p className="empty">Loading audit records…</p> : logs.length === 0 ? <p className="empty">No audit records match the current filters.</p> : <div className="table-wrap"><table><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Record</th><th>Details</th></tr></thead><tbody>{logs.map(x => <tr key={x.id}><td>{x.timestamp ? new Date(x.timestamp).toLocaleString() : '—'}</td><td>{x.userId || 'System'}</td><td>{x.action}</td><td>{x.entityType}</td><td>{x.entityId || '—'}</td><td>{x.details || x.description || '—'}</td></tr>)}</tbody></table></div>}
-  </section>
+  return <AuditLogManagement />
 }
