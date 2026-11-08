@@ -42,7 +42,7 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
         }
     }
 
-    public Task<bool> IsProcessedAsync(string externalReference, CancellationToken cancellationToken)
+    public async Task<bool> IsProcessedAsync(string externalReference, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(externalReference)) throw new ArgumentException("External reference is required.");
         var receiptNumber = $"SP-{externalReference.Trim().Substring(0, Math.Min(externalReference.Trim().Length, 12))}";
