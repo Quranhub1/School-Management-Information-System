@@ -147,6 +147,7 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Enforce Inventory register save payload and read/write response validation.
 - [x] Enforce Library book creation and loan issue request validation.
 - [x] Enforce bulk import request and result validation before/after the import API call.
+- [x] Wire direct React form validation and visible field-error summaries into Student Admission, Staff create/edit, and Library book/loan forms; prevent submission until required data passes Zod.
 - [x] Add optional Zod row-contract enforcement to the shared AG Grid component; invalid edits are reverted and field-level row errors are shown before caller persistence handlers run.
 - [x] Attach row validation to the editable Inventory AG Grid and enforce item-name plus whole-number/non-negative quantity rules on inventory register reads and saves.
 - [x] Add reusable `parseApiInput` and field-addressable `InputValidationError` so invalid requests are rejected before network submission.
@@ -156,7 +157,7 @@ SMIS is ready for production sign-off only when the remaining target-environment
 
 - [ ] Install dependencies from the updated lockfile and run `npm ci` in the frontend environment.
 - [ ] Run TypeScript build, full Vitest suite and production Vite build; resolve any failures introduced by the integration.
-- [ ] Add direct React form integration (React Hook Form resolver or shared form adapter) so field errors render inline before submit; API services currently provide the final frontend enforcement boundary for the migrated operations.
+- [ ] Extend direct React form validation to the remaining create/edit workflows in Finance, HR leave/recruitment, Inventory, Library member management, Academics, Examinations and Administration. Current direct form wiring covers student admissions, staff records and library book/loan workflows; API guards protect additional service operations.
 - [ ] Extend AG Grid Zod validation to other editable grids and explicitly test clipboard/bulk-paste behaviour; the shared grid guard and Inventory grid are now wired, but broader grid coverage remains.
 - [ ] Validate each CSV/Excel imported row against the matching entity schema and return row/column-specific import errors; only the bulk-import request envelope and API result are currently validated.
 - [ ] Extend runtime response schemas to all remaining API services and endpoints. The current response validation is enabled for admissions, payroll, streams, students, invoices, inventory registers, SMS send results and bulk-import results; other APIs remain typed-only.
