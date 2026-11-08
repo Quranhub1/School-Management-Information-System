@@ -153,6 +153,11 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Add reusable `parseApiInput` and field-addressable `InputValidationError` so invalid requests are rejected before network submission.
 - [x] Keep backend validation, authorization, database constraints and financial posting rules authoritative; frontend validation is an additional boundary, not a replacement.
 
+### Verification notes
+
+- [x] The first Frontend CI compile exposed missing imports for the new Library form validation helpers; the imports were added in a follow-up commit.
+- [ ] Re-run Frontend CI against the corrected branch head and resolve any further TypeScript/test/build failures.
+
 ### Not yet tackled — remaining rollout
 
 - [ ] Install dependencies from the updated lockfile and run `npm ci` in the frontend environment.
@@ -167,4 +172,4 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Add validation for SchoolPay integration contracts once provider-approved request/response payloads are available.
 - [ ] Confirm offline desktop packaging includes Zod in the bundled frontend and run clean-machine Windows/Linux smoke tests.
 
-**Status:** central Zod foundation, active validation in selected departmental API services, and an AG Grid row-validation hook wired into Inventory are committed on the feature branch. Direct inline React form error rendering, complete API coverage, per-entity import-row validation, broader editable-grid adoption and clipboard regression tests remain outstanding. Automated build/test verification is still required; do not declare system-wide adoption until the remaining rollout and regression checks are complete.
+**Status:** central Zod foundation, active validation in selected departmental API services, and an AG Grid row-validation hook wired into Inventory are committed on the feature branch. Direct inline React form error rendering, complete API coverage, per-entity import-row validation, broader editable-grid adoption and clipboard regression tests remain outstanding. Automated build/test verification is still required after the Library import fix; the corrected branch has a fresh CI wave queued. Do not declare system-wide adoption until all checks and remaining rollout/regression work are complete.
