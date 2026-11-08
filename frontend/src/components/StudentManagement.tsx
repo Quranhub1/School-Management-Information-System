@@ -8,6 +8,7 @@ import {
   getStudents, saveStudentApplicationForm, updateStudentGuardian, type CreateStudentRequest, type GuardianInput, type Student, type StudentGuardian,
 } from '../api/students'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { notify } from './GlobalNotifications'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getCurricula, type Curriculum } from '../api/curriculumManagement'
@@ -107,6 +108,38 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     ...availableCurricula.map(c => c.title),
     ...academicProgrammes.filter(p => authorityOf(p.id) === application.authority).map(p => p.name),
   ])).sort((a, b) => a.localeCompare(b))
+  function applicationPdfOptions() {
+    const label = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, value => value.toUpperCase())
+    const values = Object.entries(application).map(([key, value]) => [
+      { text: label(key), bold: true },
+      typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value || '—'),
+    ])
+    const educationRows = [
+      [{ text: 'School / Institution', style: 'tableHeader' }, { text: 'Location', style: 'tableHeader' }, { text: 'From', style: 'tableHeader' }, { text: 'To', style: 'tableHeader' }, { text: 'Qualification', style: 'tableHeader' }, { text: 'Grade', style: 'tableHeader' }, { text: 'Language', style: 'tableHeader' }],
+      ...education.map(item => [item.school || '—', item.location || '—', item.from || '—', item.to || '—', item.qualification || '—', item.grade || '—', item.language || '—']),
+    ]
+    return {
+      title: 'Student Admission Application Form',
+      filename: 'student-application-' + (studentNumber.trim() || 'draft'),
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: 'Application / Student Number: ' + (studentNumber.trim() || 'Not assigned'), bold: true, margin: [0, 0, 0, 10] },
+        ...(photoPreview.startsWith('data:image/') ? [{ image: photoPreview, width: 76, alignment: 'right', margin: [0, 0, 0, 8] }] : []),
+        { text: 'Applicant information and declarations', style: 'sectionHeading' },
+        { table: { widths: ['35%', '*'], body: values }, layout: 'lightHorizontalLines' },
+        { text: 'Education history', style: 'sectionHeading', pageBreak: 'before' },
+        { table: { headerRows: 1, widths: ['*', '*', 'auto', 'auto', '*', 'auto', '*'], body: educationRows }, layout: 'lightHorizontalLines' },
+        { text: 'Confidential — contains applicant and potentially sensitive health information. Handle according to institutional privacy rules.', style: 'muted', margin: [0, 14, 0, 0] },
+      ],
+    }
+  }
+
+  function printApplicationPdf() { printInstitutionalPdf(applicationPdfOptions()) }
+  function downloadApplicationPdf() { downloadInstitutionalPdf(applicationPdfOptions()) }
+
   const studentColumns = useMemo<ColDef<Student>[]>(() => [
     { headerName: 'Student number', field: 'studentNumber', minWidth: 150 },
     { headerName: 'Name', colId: 'fullName', valueGetter: params => params.data ? [params.data.firstName, params.data.otherNames, params.data.lastName].filter(Boolean).join(' ') : '' },
@@ -309,7 +342,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
           <Field label="Approved / reviewed by"><input value={application.approvedBy} readOnly aria-readonly="true" /></Field><Field label="Official signature"><input value={application.approvalSignature} readOnly aria-readonly="true" /></Field><Field label="Date"><input type="date" value={application.approvalDate} readOnly aria-readonly="true" /></Field>
         </div></div>
       </Section>
-      <div className="application-actions no-print"><button type="button" className="secondary-button" onClick={() => window.print()}>Print application</button><button type="button" className="secondary-button" onClick={() => { setApplication(emptyApplication); setEducation([emptyEducation()]); setPhoto(null); setStudentNumber(''); }}>Clear form</button><button type="submit" disabled={saving || !institutionLoaded || !institution.isActive}>{saving ? 'Saving…' : 'Submit application'}</button></div>
+      <div className="application-actions no-print"><button type="button" className="secondary-button" onClick={printApplicationPdf}>Print application</button><button type="button" className="secondary-button" onClick={downloadApplicationPdf}>Download PDF</button><button type="button" className="secondary-button" onClick={() => { setApplication(emptyApplication); setEducation([emptyEducation()]); setPhoto(null); setStudentNumber(''); }}>Clear form</button><button type="submit" disabled={saving || !institutionLoaded || !institution.isActive}>{saving ? 'Saving…' : 'Submit application'}</button></div>
 
     </form>}
     {view === 'registry' && <section className="panel student-registry-panel"><div className="panel-heading"><div><p className="eyebrow">Student Management</p><h3>{readOnly ? 'Student registry · Read-only' : 'Student registry'}</h3></div><span>{students.length} students</span></div>

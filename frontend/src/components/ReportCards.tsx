@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getStudentReportCard, type StudentReportCard } from '../api/reports'
-import { downloadPdf } from '../api/pdf'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { exportRowsToExcel } from '../lib/spreadsheets'
 import { downloadElementAsPng } from '../lib/printCapture'
 
@@ -11,6 +12,7 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
   const [report, setReport] = useState<StudentReportCard | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
 
   async function load() {
     if (!studentId.trim()) return
@@ -30,8 +32,35 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
     if (studentId.trim()) void load()
   }, [studentId])
 
+  function reportPdfOptions() {
+    if (!report) return null
+    const rows = [
+      [{ text: 'Code', style: 'tableHeader' }, { text: 'Course', style: 'tableHeader' }, { text: 'Score', style: 'tableHeader' }, { text: 'Grade', style: 'tableHeader' }, { text: 'Grade Point', style: 'tableHeader' }, { text: 'Status', style: 'tableHeader' }, { text: 'Final', style: 'tableHeader' }],
+      ...report.results.map(item => [item.courseCode, item.courseName, item.score ?? '—', item.grade ?? '—', item.gradePoint ?? '—', item.status, item.isFinal ? 'Yes' : 'No']),
+    ]
+    return {
+      title: 'Student Report Card',
+      filename: 'report-card-' + report.studentNumber + '.pdf',
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { columns: [{ text: [{ text: 'Student: ', bold: true }, report.studentName] }, { text: [{ text: 'Student No: ', bold: true }, report.studentNumber], alignment: 'right' }] },
+        { columns: [{ text: [{ text: 'GPA: ', bold: true }, report.gpa.toFixed(2)] }, { text: [{ text: 'Class position: ', bold: true }, report.classRank + ' / ' + report.totalInCohort], alignment: 'right' }], margin: [0, 8, 0, 12] },
+        { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto'], body: rows }, layout: 'lightHorizontalLines' },
+      ],
+    }
+  }
+
   function printReport() {
-    window.print()
+    const options = reportPdfOptions()
+    if (options) printInstitutionalPdf(options)
+  }
+
+  function downloadReport() {
+    const options = reportPdfOptions()
+    if (options) downloadInstitutionalPdf(options)
   }
 
   return (
@@ -42,7 +71,12 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
           <h3>Student Report Cards</h3>
         </div>
           <button className="secondary-button" onClick={printReport} disabled={!report}>Print Report Card</button>
-          <button className="secondary-button" onClick={() => studentId.trim() && downloadPdf(`/api/reports/student/${studentId.trim()}/report-card/pdf`, `report-card-${studentId.trim()}.pdf`)} disabled={!studentId.trim() || !report}>Download PDF</button>
+          <button className="secondary-button" onClick={downloadReport} disabled={!studentId.trim() || !report}>Download PDF</button>
+          <button className="secondary-button" onClick={() => { if (report?.results.length) exportRowsToExcel(report.results, `report-card-${report.studentNumber}`, 'Results') }} disabled={!report || report.results.length === 0}>Export Excel</button>
+          <button className="secondary-button" onClick={() => {
+            const element = document.getElementById('report-card-print')
+            if (element && report) void downloadElementAsPng(element, { filename: `report-card-${report.studentNumber}.png` }).catch(error => window.alert(error instanceof Error ? error.message : 'Unable to capture report card.'))
+          }} disabled={!report}>Download Image</button>
       </div>
 
       <form className="student-form" onSubmit={e => { e.preventDefault(); void load() }} style={{ marginBottom: 22 }}>

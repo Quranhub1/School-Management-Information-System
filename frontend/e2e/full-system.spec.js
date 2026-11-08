@@ -5,11 +5,34 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:4173';
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'admin123';
 
 async function signIn(page) {
+  page.on('pageerror', error => console.log('SMIS E2E pageerror', error.message));
+  page.on('console', message => { if (message.type() === 'error') console.log('SMIS E2E browser console error', message.text()); });
   const loginFrame = page.frameLocator('iframe[title="Institutional Sign In"]');
   await expect(loginFrame.locator('#username')).toBeVisible({ timeout: 15000 });
   await loginFrame.locator('#username').fill('admin');
   await loginFrame.locator('#password').fill(ADMIN_PASSWORD);
   await loginFrame.getByRole('button', { name: /sign in/i }).click();
+  await page.waitForTimeout(500);
+  const authNavDiagnostics = await page.evaluate(() => {
+    const raw = sessionStorage.getItem('smis.session') || localStorage.getItem('smis.session');
+    let session = null;
+    try { session = raw ? JSON.parse(raw) : null; } catch { /* diagnostic only */ }
+    return {
+      username: session?.username ?? null,
+      roles: Array.isArray(session?.roles) ? session.roles : [],
+      expiresAt: session?.expiresAt ?? null,
+      sessionValid: Boolean(session?.accessToken && Number.isFinite(Date.parse(session.expiresAt)) && Date.parse(session.expiresAt) > Date.now()),
+      hasAccessToken: Boolean(sessionStorage.getItem('smis.accessToken') || localStorage.getItem('smis.accessToken')),
+      allButtons: Array.from(document.querySelectorAll('button')).map(button => button.innerText.trim()).filter(Boolean).slice(0, 40),
+      navButtons: Array.from(document.querySelectorAll('nav button, aside button, .sidebar button')).map(button => ({
+        text: button.innerText.trim(),
+        expanded: button.getAttribute('aria-expanded'),
+        hidden: button.getAttribute('aria-hidden'),
+      })),
+      bodyText: document.body.innerText.slice(0, 900),
+    };
+  });
+  console.log('SMIS E2E auth/nav diagnostics', JSON.stringify(authNavDiagnostics));
 }
 
 async function getAdminToken(request) {

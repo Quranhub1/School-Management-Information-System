@@ -28,7 +28,7 @@ h2{text-align:center;text-decoration:underline;font-size:16px;margin:13px 0 15px
 <div class="toolbar">
 <label class="upload-label" for="badgeUpload">Change school badge</label><input class="no-print" id="badgeUpload" type="file" accept="image/*" hidden>
 <button class="secondary" type="button" id="photoButton">Add passport photo</button><input class="no-print" id="photoUpload" type="file" accept="image/*" hidden>
-<button type="button" onclick="window.print()">Print / Save as PDF</button>
+<button type="button" onclick="downloadPdf()">Download PDF</button><button type="button" class="secondary" onclick="printPdf()">Print PDF</button>
 <button class="secondary" type="button" onclick="resetForm()">Clear form</button>
 </div>
 <main class="page" id="applicationForm">
@@ -82,7 +82,29 @@ h2{text-align:center;text-decoration:underline;font-size:16px;margin:13px 0 15px
 </div>
 <p class="note no-print">Independent fillable template only. Entries are not submitted to or saved in the School Management System. Use Print / Save as PDF to keep a completed copy. Avoid leaving sensitive health information on a shared computer.</p>
 </main>
+<script src="./assets/pdfmake/pdfmake.min.js"></script>
+<script src="./assets/pdfmake/vfs_fonts.js"></script>
 <script>
+function buildApplicationPdf(){
+  const page=document.getElementById("applicationForm");
+  const institution=page.querySelector("header h1")?.textContent?.trim()||"Institution";
+  const motto=page.querySelector("header > div:nth-child(2) p")?.textContent?.trim()||"";
+  const contact=page.querySelector(".contact")?.innerText?.trim()||"";
+  const title=page.querySelector("main h2")?.textContent?.trim()||"Student Application Form";
+  const rows=[];
+  page.querySelectorAll("input,select,textarea").forEach(field=>{
+    if(field.type==="file"||field.type==="button"||field.type==="submit")return;
+    const label=field.closest(".field")?.querySelector("label")?.textContent?.trim()||field.name||field.id||"Field";
+    let value=field.type==="checkbox"||field.type==="radio"?(field.checked?field.value:""):(field.value||"");
+    if(value)rows.push([{text:label,bold:true},String(value)]);
+  });
+  const images=[];
+  ["badgeBox","photoBox"].forEach(id=>{const img=document.querySelector("#"+id+" img");if(img?.src?.startsWith("data:image/"))images.push({image:img.src,width:72,alignment:"center",margin:[4,4,4,10]})});
+  const content=[{text:institution,alignment:"center",bold:true,fontSize:16,color:"#174b66"},{text:motto,alignment:"center",italics:true,fontSize:9,margin:[0,3,0,2]},{text:contact,alignment:"center",fontSize:8,margin:[0,0,0,12]},{text:title,alignment:"center",bold:true,fontSize:13,margin:[0,4,0,12]},...images,{table:{widths:["35%","*"],body:rows.length?rows:[[{text:"No application details entered.",colSpan:2,alignment:"center"},{}]]},layout:"lightHorizontalLines"},{text:"Confidential application document. Handle personal and health information according to institutional privacy rules.",fontSize:8,color:"#666666",margin:[0,14,0,0]}];
+  return {pageSize:"A4",pageMargins:[36,36,36,42],content,defaultStyle:{font:"Roboto",fontSize:9},footer:(pageNo,total)=>({text:institution+" · Page "+pageNo+" of "+total,alignment:"center",fontSize:8,color:"#777777"}),info:{title:"Student Application Form",author:institution}};
+}
+function downloadPdf(){if(!window.pdfMake){alert("Local PDFMake assets are unavailable. Rebuild the SMIS frontend assets.");return}window.pdfMake.createPdf(buildApplicationPdf()).download("student-application-form.pdf")}
+function printPdf(){if(!window.pdfMake){alert("Local PDFMake assets are unavailable. Rebuild the SMIS frontend assets.");return}window.pdfMake.createPdf(buildApplicationPdf()).print()}
 const badgeUpload=document.getElementById('badgeUpload');
 const photoUpload=document.getElementById('photoUpload');
 badgeUpload.addEventListener('change',()=>showImage(badgeUpload.files[0],'badgeBox','School badge'));
