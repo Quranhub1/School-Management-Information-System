@@ -364,8 +364,6 @@
 
 ### Finance Services
 - `CreditNoteRefundService`
-- `FeeService`
-- `FeeWorkflowService`
 - `FinanceAdministrationService`
 - `FinanceReportService`
 - `FinanceService`
