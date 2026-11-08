@@ -461,6 +461,9 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
   color: #f5efdf !important;
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/fix/sidebar-option-theme-colors
 
 
 /* Sidebar navigation is institution-theme independent: matte black and cream only. */
@@ -522,6 +525,7 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
 .app-shell > aside nav button:focus-visible {
   outline-color: #c9bea5 !important;
 }
+<<<<<<< HEAD
 
 
 /* Consistent rectangular action buttons across all application workspaces.
@@ -713,3 +717,5 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
 >>>>>>> origin/feat/tailadmin-inspired-smis-ui
 =======
 >>>>>>> origin/fix/remove-suboption-c-shaped-marker
+=======
+>>>>>>> origin/fix/sidebar-option-theme-colors
