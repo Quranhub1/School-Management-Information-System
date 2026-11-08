@@ -19,10 +19,16 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context)
     {
         var suppliedId = context.Request.Headers[HeaderName].FirstOrDefault();
+        var fallbackId = Activity.Current?.TraceId.ToString();
+        if (string.IsNullOrWhiteSpace(fallbackId))
+            fallbackId = string.IsNullOrWhiteSpace(context.TraceIdentifier)
+                ? Guid.NewGuid().ToString("N")
+                : context.TraceIdentifier;
+
         var correlationId = !string.IsNullOrWhiteSpace(suppliedId)
             && SafeCorrelationId.IsMatch(suppliedId)
                 ? suppliedId
-                : Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
+                : fallbackId;
 
         context.Items[ItemKey] = correlationId;
         context.Response.Headers[HeaderName] = correlationId;
