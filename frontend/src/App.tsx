@@ -108,6 +108,7 @@ function LoginScreen({ institution }: { institution: InstitutionSettings }) {
 }
 function GlobalTableLayoutEditor() {
   useEffect(() => {
+<<<<<<< HEAD
     // Row resize handles are created only for the row under the pointer.
     // Large registers no longer pay the DOM/layout cost of an extra element per row.
     let activeResizeRow: HTMLTableRowElement | null = null;
@@ -135,6 +136,8 @@ function GlobalTableLayoutEditor() {
       row.appendChild(handle);
     };
 
+=======
+>>>>>>> origin/perf/limit-table-resize-observer-work
     const decorateTables = (tables: Iterable<HTMLTableElement>) => {
       for (const table of tables) {
         if (table.dataset.fixedLayout === 'true') continue;
@@ -159,6 +162,26 @@ function GlobalTableLayoutEditor() {
           });
           cell.appendChild(handle);
         });
+<<<<<<< HEAD
+=======
+        table.querySelectorAll<HTMLTableRowElement>('thead tr, tbody tr').forEach(row => {
+          if (row.querySelector(':scope > .smis-row-resize-handle')) return;
+          row.classList.add('smis-resizable-row');
+          const handle = document.createElement('span');
+          handle.className = 'smis-row-resize-handle';
+          handle.title = 'Drag to resize this row';
+          handle.setAttribute('aria-label', 'Resize row');
+          handle.setAttribute('role', 'separator');
+          handle.setAttribute('tabindex', '0');
+          handle.addEventListener('keydown', event => {
+            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+            event.preventDefault();
+            const delta = event.key === 'ArrowDown' ? 8 : -8;
+            row.style.height = Math.max(24, row.getBoundingClientRect().height + delta) + 'px';
+          });
+          row.appendChild(handle);
+        });
+>>>>>>> origin/perf/limit-table-resize-observer-work
       }
     };
 
@@ -276,9 +299,13 @@ function GlobalTableLayoutEditor() {
   }, []);
   return null;
 }
+<<<<<<< HEAD
 function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) {
   const prefersReducedMotion = useReducedMotion()
   const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canAccessFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),hostel=canManageHostel(r),attManage=canManageAttendance(r)||r.includes('SystemAdministrator'),att=canReadAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Student'); const isAdminSecretary=r.includes('Admin Secretary')||r.includes('AdminSecretary'); const studentRead=r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('Director')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer')||isAdminSecretary; const admissionRead=ad||r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Principal')||r.includes('Director')||r.includes('AssistantPrincipal')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer')||isAdminSecretary; const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const moduleAllowed=(module:ModuleKey):boolean=>{switch(module){
+=======
+function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: { onLogout: () => void; institution: InstitutionSettings; onInstitutionSaved: (settings: InstitutionSettings) => void }) { const s=getSession(); const r=s?.roles??[]; const a=canManageAdministration(r),ad=canManageAdmissions(r),ac=canManageAcademics(r),st=canManageStudents(r),fi=canAccessFinance(r),sr=canReadStaff(r),sm=canManageStaff(r),lr=canReadLibrary(r),lm=canManageLibrary(r),cm=canManageCommunication(r),rp=canManageReporting(r),inv=canManageInventory(r),hostel=canManageHostel(r),attManage=canManageAttendance(r)||r.includes('SystemAdministrator'),att=canReadAttendance(r)||r.includes('SystemAdministrator'); const s360=r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Student'); const isAdminSecretary=r.includes('Admin Secretary')||r.includes('AdminSecretary'); const studentRead=r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('Principal')||r.includes('AssistantPrincipal')||r.includes('Director')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer')||isAdminSecretary; const admissionRead=ad||r.includes('SystemAdministrator')||r.includes('AcademicRegistrar')||r.includes('AdmissionsOfficer')||r.includes('Principal')||r.includes('Director')||r.includes('AssistantPrincipal')||r.includes('ResidentDirector')||r.includes('Secretary')||r.includes('HeadOfDepartment')||r.includes('Receptionist')||r.includes('HR Manager')||r.includes('Records Officer')||isAdminSecretary; const analytics=canViewAnalytics(r); const lecturer=r.includes('Lecturer'); const sessionUsername=s?.username?.trim()||'anonymous'; const stateKey=`smis.workspace.${sessionUsername}`; const moduleAllowed=(module:ModuleKey):boolean=>{switch(module){
+>>>>>>> origin/perf/limit-table-resize-observer-work
   case 'dashboard': return true;
   case 'administration': return a && !isAdminSecretary;
   case 'students': return st || ad || s360 || studentRead || admissionRead || r.includes('HR Manager') || r.includes('Records Officer');
