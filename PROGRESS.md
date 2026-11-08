@@ -186,7 +186,8 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Remove explanatory fee-configuration copy and the non-functional “module is available” placeholder paragraphs from the Academic Reports, Subject Management, Teacher Assignments, Assessment Configuration and Student Notifications panels.
 - [x] Remove the Student Portal explanatory paragraph while retaining authorization and role-based access boundaries.
 - [x] Remove redundant instructional/placeholder copy from Mobile Money Payments, Staff recruitment, Student Finance lookup, and Curriculum draft-selection panels.
-- [x] Correct academic-year/period and staff-allowance bearer-token retrieval to use the shared `getAccessToken()` helper and canonical `smis.accessToken` key.
+- [x] Correct academic-year/period, Streams, staff-allowance and Mobile Money bearer-token retrieval to use the shared `getAccessToken()` helper and canonical `smis.accessToken` key.
+- [x] Add bearer-token headers and non-success handling to Mobile Money student-search, invoice-list and transaction-cancel requests.
 - [x] Correct FeeTypesManager to load academic years through the shared authenticated academic-structure API.
 - [x] Correct the balance-sheet fiscal-period failure: reject an as-of date outside configured fiscal periods with a clear validation error rather than silently assuming a calendar fiscal year or triggering an unhandled exception.
 - [x] Return HTTP 400 with a useful validation message for invalid income-statement/balance-sheet date ranges instead of allowing `ArgumentException` to surface as HTTP 500.
