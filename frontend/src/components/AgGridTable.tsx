@@ -95,7 +95,7 @@ export function AgGridTable<TData extends object>({
       }))
     })
     if (body.length === 1) return null
-    const title = exportFileName.replace(/[-_]+/g, ' ').replace(/\\b\\w/g, letter => letter.toUpperCase())
+    const title = exportFileName.replace(/[-_]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())
     return {
       title,
       filename: exportFileName,
