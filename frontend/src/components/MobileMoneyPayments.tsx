@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, getMobileMoneyTransactions, type MobileMoneyTransaction } from '../api/finance';
+import { getAccessToken } from '../api/auth';
 import { validateForm } from '../lib/validation';
 import { mobileMoneyCreateRequestSchema } from '../schemas';
 
@@ -53,7 +54,8 @@ export default function MobileMoneyPayments() {
       return;
     }
     try {
-      const res = await fetch(`/api/finance/students/search?code=${encodeURIComponent(code)}`);
+      const token = getAccessToken();
+      const res = await fetch(`/api/finance/students/search?code=${encodeURIComponent(code)}`, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
       if (res.ok) {
         const data: StudentSearchResult = await res.json();
         setStudentName(data.studentName);
@@ -67,7 +69,8 @@ export default function MobileMoneyPayments() {
 
   const loadInvoices = async (studentId: string) => {
     try {
-      const res = await fetch(`/api/finance/students/${studentId}/invoices`);
+      const token = getAccessToken();
+      const res = await fetch(`/api/finance/students/${studentId}/invoices`, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
       if (res.ok) {
         const data: Invoice[] = await res.json();
         setInvoices(data);
@@ -119,7 +122,9 @@ export default function MobileMoneyPayments() {
 
   const handleCancel = async (id: string) => {
     try {
-      await fetch(`/api/finance/mobile-money/${id}`, { method: 'DELETE' });
+      const token = getAccessToken();
+      const response = await fetch(`/api/finance/mobile-money/${id}`, { method: 'DELETE', headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+      if (!response.ok) throw new Error(`Unable to cancel transaction (${response.status}).`);
       await loadTransactions();
       if (submitted && submitted.id === id) {
         setSubmitted(null);
