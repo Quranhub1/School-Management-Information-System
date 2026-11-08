@@ -1,61 +1,15 @@
 import { useEffect, useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
 import { AgGridTable } from './AgGridTable';
 import type { ColDef } from 'ag-grid-community';
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
 import { useInstitutionSettings } from './InstitutionSettingsContext';
-=======
-import { searchAuditLogs, type AuditLog } from '../api/auditLog';
-import { AgGridTable } from './AgGridTable';
-import type { ColDef } from 'ag-grid-community';
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
-import { AgGridTable } from './AgGridTable';
-import type { ColDef } from 'ag-grid-community';
-import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
-import { useInstitutionSettings } from './InstitutionSettingsContext';
->>>>>>> origin/feat/pdfmake-document-engine
-=======
-import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
-import { AgGridTable } from './AgGridTable';
-import type { ColDef } from 'ag-grid-community';
-import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
-import { useInstitutionSettings } from './InstitutionSettingsContext';
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
-import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
-import { AgGridTable } from './AgGridTable';
-import type { ColDef } from 'ag-grid-community';
-import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
-import { useInstitutionSettings } from './InstitutionSettingsContext';
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
 
 const auditColumns: ColDef<AuditLog>[] = [
   { field: 'userId', headerName: 'User', valueFormatter: p => p.value || '—' },
   { field: 'action', headerName: 'Action' },
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? p.data.entityType + ' (' + p.data.entityId + ')' : p.data.entityType : '—' },
-=======
-  { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? `${p.data.entityType} (${p.data.entityId})` : p.data.entityType : '—' },
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-  { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? p.data.entityType + ' (' + p.data.entityId + ')' : p.data.entityType : '—' },
->>>>>>> origin/feat/pdfmake-document-engine
-=======
-  { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? p.data.entityType + ' (' + p.data.entityId + ')' : p.data.entityType : '—' },
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
-  { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? p.data.entityType + ' (' + p.data.entityId + ')' : p.data.entityType : '—' },
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
   { field: 'changes', headerName: 'Changes', valueFormatter: p => p.value || '—', minWidth: 220 },
   { field: 'ipAddress', headerName: 'IP Address', valueFormatter: p => p.value || '—' },
   { field: 'timestamp', headerName: 'Timestamp', valueFormatter: p => p.value ? new Date(String(p.value)).toLocaleString('en-UG') : '—', minWidth: 180 },
@@ -225,27 +179,12 @@ export function AuditLogManagement() {
   }
 
   return <section className="panel" aria-label="Audit Log">
-<<<<<<< HEAD
     <div className="panel-heading">
       <div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div>
       <div className="form-actions">
         <button type="button" className="secondary-button" onClick={printAuditPdf} disabled={loading || logs.length === 0}>Print PDF</button>
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>
         <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
-=======
-        <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>\n        <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
->>>>>>> origin/feat/pdfmake-document-engine
-=======
-        <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>
-        <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
-        <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>
-        <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
         <button type="button" className="secondary-button" onClick={() => void exportWorkflowHistoryPdf()} disabled={workflowAuditLoading}>{workflowAuditLoading ? "Preparing…" : "Download Workflow Audit PDF"}</button>
       </div>
     </div>
@@ -256,35 +195,7 @@ export function AuditLogManagement() {
       <label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
       <button onClick={() => void load()}>Search</button>
     </div>
-=======
-    <div className="panel-heading"><div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div></div>
-    <div className="library-search" style={{ margin: '14px 0' }}><SearchBar
-          placeholder="User ID"
-          value={userId}
-          onChange={e => setUserId(e.target.value)}
-        /><SearchBar
-          placeholder="Action"
-          value={action}
-          onChange={e => setAction(e.target.value)}
-        /><button onClick={() => void load()}>Search</button></div>
->>>>>>> origin/kilo/golden-circuit-3yz
     {error && <div className="error" role="alert">{error}</div>}
     {loading ? <LoadingSpinner label="Loading audit logs…" /> : <AgGridTable rows={logs} columns={auditColumns} getRowId={p => p.data.id} exportFileName="smis-audit-log" height={560} />}
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
   </section>;
-=======
-  </section>
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-  </section>;
->>>>>>> origin/feat/pdfmake-document-engine
-=======
-  </section>;
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
-  </section>;
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
 }
