@@ -8,6 +8,14 @@ export type CacheEntry<T = unknown> = {
   expiresAt: number
 }
 
+/** Durable, asynchronous key-value state stored in IndexedDB via Dexie. */
+export type AppStateEntry<T = unknown> = {
+  key: string
+  scope: string
+  value: T
+  updatedAt: number
+}
+
 export type SyncDomain = 'students' | 'attendance' | 'library' | 'messaging' | 'other'
 export type SyncStatus = 'pending' | 'processing' | 'synced' | 'conflict' | 'failed' | 'blocked'
 
@@ -41,6 +49,7 @@ export type SyncConflict = {
 
 class SmisOfflineDatabase extends Dexie {
   cacheEntries!: Table<CacheEntry, string>
+  appState!: Table<AppStateEntry, [string, string]>
   syncOperations!: Table<SyncOperation, string>
   syncConflicts!: Table<SyncConflict, string>
 
@@ -65,6 +74,17 @@ class SmisOfflineDatabase extends Dexie {
       syncOperations: '&id, scope, domain, status, createdAt, updatedAt, idempotencyKey, [scope+status]',
       syncConflicts: '&id, operationId, scope, detectedAt, resolutionStatus',
     })
+    this.version(3).stores({
+      queue: '++id, createdAt',
+      students: '&id, studentCode',
+      attendance: '&id, sessionId',
+      finance: '&id',
+      settings: '&key',
+      cacheEntries: '&key, scope, expiresAt, updatedAt',
+      syncOperations: '&id, scope, domain, status, createdAt, updatedAt, idempotencyKey, [scope+status]',
+      syncConflicts: '&id, operationId, scope, detectedAt, resolutionStatus',
+      appState: '[scope+key], scope, updatedAt',
+    })
   }
 }
 
@@ -72,6 +92,25 @@ export const offlineDb = new SmisOfflineDatabase()
 
 export function offlineScopeFor(username: string, roles: string[] = []): string {
   return [username.trim().toLowerCase(), [...roles].sort().join(',')].join('|')
+}
+
+/** Read a structured-clone-compatible value without blocking the UI thread. */
+export async function getAppState<T>(key: string, scope: string): Promise<T | undefined> {
+  const entry = await offlineDb.appState.get([scope, key])
+  return entry?.value as T | undefined
+}
+
+/** Persist local preferences or drafts. Never store credentials or authoritative records here. */
+export async function setAppState<T>(key: string, scope: string, value: T): Promise<void> {
+  await offlineDb.appState.put({ key, scope, value, updatedAt: Date.now() })
+}
+
+export async function deleteAppState(key: string, scope: string): Promise<void> {
+  await offlineDb.appState.delete([scope, key])
+}
+
+export async function clearAppStateForScope(scope: string): Promise<void> {
+  await offlineDb.appState.where('scope').equals(scope).delete()
 }
 
 export async function readCached<T>(key: string, scope: string): Promise<CacheEntry<T> | undefined> {
