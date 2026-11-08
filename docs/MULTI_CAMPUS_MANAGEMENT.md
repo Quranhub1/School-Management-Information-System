@@ -1,7 +1,5 @@
 # Multi-campus management
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 SMIS supports multiple campuses under one institution on a shared server and PostgreSQL database. Campus ownership and user access are enforced by authenticated backend endpoints.
 
 ## Operational workflows
@@ -18,11 +16,6 @@ Finance journal lines and report services support campus dimensions and campus-f
 
 ## Database changes
 The EF Core migrations create institution and campus tables, user-to-campus assignments, campus ownership columns, indexes and foreign keys. Existing records are preserved and backfilled where a first campus is established.
-=======
-SMIS campus administration supports multiple sites under the active institution settings, using one server and one database.
-=======
-SMIS supports multiple campuses under one institution on a shared server and PostgreSQL database. Campus ownership and user access are enforced by authenticated backend endpoints.
->>>>>>> origin/feat/persisted-examination-workflows
 
 ## Operational workflows
 - System Administrators can create, edit, activate and deactivate campuses. Campus codes and names are unique within the institution.
@@ -36,10 +29,4 @@ SMIS supports multiple campuses under one institution on a shared server and Pos
 ## Finance data semantics
 Finance journal lines and report services support campus dimensions and campus-filtered reporting. Transactions that do not carry a campus dimension remain institution-wide and must not be interpreted as campus-isolated financial records.
 
-<<<<<<< HEAD
 The migration creates institution/campus tables and does not delete existing school records.
->>>>>>> origin/feat/multi-campus-management
-=======
-## Database changes
-The EF Core migrations create institution and campus tables, user-to-campus assignments, campus ownership columns, indexes and foreign keys. Existing records are preserved and backfilled where a first campus is established.
->>>>>>> origin/feat/persisted-examination-workflows
