@@ -24,11 +24,16 @@ export function listNotices() {
   return readThroughCache('notices:board', () => request<Notice[]>('/api/notices/board'), { ttlMs: 30 * 60 * 1000 });
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 export type CreateNoticeInput = Omit<Notice, 'id' | 'createdAt' | 'createdBy' | 'expiresAt'> & { expiresAt: string | null; createdBy: string };
 export async function createNotice(input: CreateNoticeInput) {
 =======
 export async function createNotice(input: Omit<Notice,'id'|'createdAt'|'createdBy'>) {
 >>>>>>> origin/feat/dexie-offline-data-sync
+=======
+export type CreateNoticeInput = Omit<Notice, 'id' | 'createdAt' | 'createdBy' | 'expiresAt'> & { expiresAt: string | null; createdBy: string };
+export async function createNotice(input: CreateNoticeInput) {
+>>>>>>> origin/fix/notices-expiry-on-current-main
   const created = await request<Notice>('/api/notices/board',{method:'POST',body:JSON.stringify(input)});
   await invalidateCachedRead('notices:board');
   return created;
