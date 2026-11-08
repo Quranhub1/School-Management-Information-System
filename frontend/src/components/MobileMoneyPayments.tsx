@@ -1,13 +1,5 @@
-import { useState, useEffect } from 'react';
-import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, getMobileMoneyTransactions, type MobileMoneyTransaction } from '../api/finance';
-import { getAccessToken } from '../api/auth';
-import { validateForm } from '../lib/validation';
-import { mobileMoneyCreateRequestSchema } from '../schemas';
-
-interface StudentSearchResult {
-  studentId: string;
-  studentName: string;
-}
+import { useState, useEffect, useRef } from 'react';
+import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, cancelMobileMoneyTransaction, getMobileMoneyTransactions, getStudentFinanceProfile, getInvoices, type MobileMoneyTransaction } from '../api/finance';
 
 interface Invoice {
   id: string;
@@ -18,6 +10,7 @@ interface Invoice {
 export default function MobileMoneyPayments() {
   const [studentCode, setStudentCode] = useState('');
   const [studentName, setStudentName] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [provider, setProvider] = useState<'MTN' | 'Airtel'>('MTN');
   const [amount, setAmount] = useState('');
@@ -27,9 +20,8 @@ export default function MobileMoneyPayments() {
   const [submitted, setSubmitted] = useState<MobileMoneyTransaction | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [externalRef, setExternalRef] = useState('');
-  const [showPaymentProviderMsg, setShowPaymentProviderMsg] = useState('');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [requestErrors, setRequestErrors] = useState<Record<string, string>>({});
+  const studentSearchSequence = useRef(0);
 
   useEffect(() => {
     loadTransactions();
@@ -49,54 +41,45 @@ export default function MobileMoneyPayments() {
 
   const handleStudentSearch = async (code: string) => {
     setStudentCode(code);
-    if (!code.trim()) {
-      setStudentName('');
-      return;
-    }
-    try {
-      const token = getAccessToken();
-      const res = await fetch(`/api/finance/students/search?code=${encodeURIComponent(code)}`, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
-      if (res.ok) {
-        const data: StudentSearchResult = await res.json();
-        setStudentName(data.studentName);
-      } else {
-        setStudentName('');
-      }
-    } catch {
-      setStudentName('');
-    }
-  };
+    const sequence = ++studentSearchSequence.current;
+    setStudentId('');
+    setStudentName('');
+    setInvoices([]);
+    setSelectedInvoice('');
+    if (!code.trim()) return;
 
-  const loadInvoices = async (studentId: string) => {
     try {
-      const token = getAccessToken();
-      const res = await fetch(`/api/finance/students/${studentId}/invoices`, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
-      if (res.ok) {
-        const data: Invoice[] = await res.json();
-        setInvoices(data);
-      }
+      const student = await getStudentFinanceProfile(code.trim());
+      if (sequence !== studentSearchSequence.current) return;
+      setStudentId(student.id);
+      setStudentName(student.name);
+      const invoiceRows = await getInvoices(student.id);
+      if (sequence !== studentSearchSequence.current) return;
+      setInvoices(invoiceRows.map(invoice => ({
+        id: invoice.id,
+        description: invoice.invoiceNumber + ' · ' + invoice.feeType,
+        amount: invoice.balance
+      })));
     } catch {
+      if (sequence !== studentSearchSequence.current) return;
+      setStudentId('');
+      setStudentName('');
       setInvoices([]);
     }
   };
 
   const handleRequestPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validation = validateForm(mobileMoneyCreateRequestSchema, {
-      studentId: studentCode,
-      studentInvoiceId: selectedInvoice || undefined,
-      provider,
-      phoneNumber,
-      amount: Number(amount),
-    });
-    if (!validation.success) {
-      setRequestErrors(validation.errors);
-      return;
-    }
-    setRequestErrors({});
+    if (!studentCode || !phoneNumber || !amount || parseFloat(amount) <= 0) return;
     setLoading(true);
     try {
-      const tx = await createMobileMoneyTransaction(validation.data);
+      const tx = await createMobileMoneyTransaction({
+        studentId,
+        studentInvoiceId: selectedInvoice || undefined,
+        provider,
+        phoneNumber,
+        amount: parseFloat(amount),
+      });
       setSubmitted(tx);
       setShowConfirm(false);
       setExternalRef('');
@@ -110,7 +93,7 @@ export default function MobileMoneyPayments() {
 
   const handleConfirm = async (id: string, ref: string) => {
     try {
-      await confirmMobileMoneyTransaction(id, ref);
+      await confirmMobileMoneyTransaction(id, ref.trim());
       await loadTransactions();
       setSubmitted(null);
       setShowConfirm(false);
@@ -122,9 +105,7 @@ export default function MobileMoneyPayments() {
 
   const handleCancel = async (id: string) => {
     try {
-      const token = getAccessToken();
-      const response = await fetch(`/api/finance/mobile-money/${id}`, { method: 'DELETE', headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
-      if (!response.ok) throw new Error(`Unable to cancel transaction (${response.status}).`);
+      await cancelMobileMoneyTransaction(id);
       await loadTransactions();
       if (submitted && submitted.id === id) {
         setSubmitted(null);
@@ -164,13 +145,13 @@ export default function MobileMoneyPayments() {
 
       {submitted && (
         <div className="panel" style={{ marginBottom: '24px', padding: '20px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-          <h3 style={{ marginTop: 0, color: '#166534' }}>Transaction Initiated</h3>
+          <h3 style={{ marginTop: 0, color: '#166534' }}>Payment Awaiting Verification</h3>
           <p><strong>Reference:</strong> {submitted.transactionRef}</p>
           <p><strong>Student:</strong> {submitted.studentId}</p>
           <p><strong>Amount:</strong> {formatAmount(submitted.amount)}</p>
           <p><strong>Provider:</strong> {submitted.provider} Mobile Money</p>
           <p><strong>Phone:</strong> {submitted.phoneNumber}</p>
-          <p style={{ fontWeight: 600, color: '#166534' }}>Waiting for confirmation...</p>
+          <p style={{ fontWeight: 600, color: '#92400e' }}>No MTN/Airtel payment prompt has been sent. Verify receipt in the operator portal before confirming here.</p>
 
           {!showConfirm ? (
             <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
@@ -194,7 +175,7 @@ export default function MobileMoneyPayments() {
                 <button
                   className="secondary-button"
                   onClick={() => handleConfirm(submitted.id, externalRef)}
-                  disabled={!externalRef.trim()}
+                  disabled={!externalRef.trim() || loading}
                 >
                   Submit Confirmation
                 </button>
@@ -209,7 +190,6 @@ export default function MobileMoneyPayments() {
           <h3>New Mobile Money Payment</h3>
         </div>
         <form onSubmit={handleRequestPayment}>
-          {Object.keys(requestErrors).length > 0 && <div className="error" role="alert"><strong>Payment details require attention</strong><ul>{Object.entries(requestErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
           <div className="form-row">
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Student ID / Code</label>
@@ -239,7 +219,6 @@ export default function MobileMoneyPayments() {
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Phone Number</label>
               <input
                 type="tel"
-                aria-invalid={Boolean(requestErrors.phoneNumber)}
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="2567XXXXXXXX"
@@ -263,11 +242,10 @@ export default function MobileMoneyPayments() {
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Amount (UGX)</label>
               <input
                 type="number"
-                aria-invalid={Boolean(requestErrors.amount)}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
-                min="1"
+                min="0"
                 step="1"
                 required
                 style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
@@ -294,7 +272,7 @@ export default function MobileMoneyPayments() {
           </div>
 
           <div style={{ marginTop: '16px' }}>
-            <button type="submit" className="secondary-button" disabled={loading || !studentCode || !amount}>
+            <button type="submit" className="secondary-button" disabled={loading || !studentId || !amount}>
               {loading ? 'Processing...' : 'Request Payment'}
             </button>
           </div>
@@ -396,32 +374,7 @@ export default function MobileMoneyPayments() {
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '24px' }}>
-        <div className="panel-heading">
-          <h3>Payment Provider Integration</h3>
-        </div>
-        <div style={{ padding: '20px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}>
-          <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
-            <button
-              className="secondary-button"
-              onClick={() => setShowPaymentProviderMsg('Payment Provider integration is not configured. Contact your system administrator to set up Payment Provider API credentials.')}
-            >
-              Configure Payment Provider
-            </button>
-            <button
-              className="secondary-button"
-              onClick={() => setShowPaymentProviderMsg('Payment Provider sync is not available. This feature will be enabled when Payment Provider is configured.')}
-            >
-              Sync with Payment Provider
-            </button>
-          </div>
-          {showPaymentProviderMsg && (
-            <div style={{ marginTop: '16px', padding: '12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '6px', color: '#92400e' }}>
-              {showPaymentProviderMsg}
-            </div>
-          )}
-        </div>
-      </div>
+      <p className="finance-muted">Manual verification only. Automatic MTN/Airtel STK prompts, callbacks and API synchronization are not connected.</p>
     </div>
   );
 }
