@@ -8,6 +8,7 @@ import { CashBankPositionReport } from './CashBankPositionReport'
 import { FinanceControlCenter } from './FinanceControlCenter'
 import { FeeTypesManager } from './FeeTypesManager'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
+import { BarChart } from './charts/BarChart'
 import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
 
 type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
@@ -84,7 +85,6 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     return [...map.entries()].slice(-7)
   }, [payments])
 
-  const maxCollection = Math.max(...collectionByDate.map(([, amount]) => amount), 1)
   const collectionRate = dashboard && dashboard.totalBilled > 0
     ? Math.min(100, Math.max(0, dashboard.totalPaid / dashboard.totalBilled * 100))
     : 0
@@ -177,7 +177,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
               <div className="finance-progress-track"><div style={{ width: collectionRate + '%' }} /></div>
               <div className="finance-mini-stats"><span>Paid <strong>{dashboard ? money(dashboard.totalPaid) : '—'}</strong></span><span>Balance <strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong></span><span>Invoices <strong>{dashboard?.invoiceCount.toLocaleString() ?? '—'}</strong></span></div>
               <div className="finance-bar-chart" aria-label="Recent daily collection activity">
-                {collectionByDate.length === 0 ? <div className="empty">No recent collection activity.</div> : collectionByDate.map(([day, amount]) => <div className="finance-bar-item" key={day}><div className="finance-bar-value">{money(amount)}</div><div className="finance-bar-track"><span style={{ height: Math.max(8, amount / maxCollection * 100) + '%' }} /></div><small>{day}</small></div>)}
+                {collectionByDate.length === 0 ? <div className="empty">No recent collection activity.</div> : <BarChart labels={collectionByDate.map(([day]) => day)} datasets={[{ label: 'Collections', data: collectionByDate.map(([, amount]) => amount), color: '#0d9488' }]} ariaLabel="Daily fee collections for the most recent seven payment dates" valueFormatter={money} />}
               </div>
             </section>
 
