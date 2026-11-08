@@ -161,6 +161,79 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.FirstName, student.OtherNames, student.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
     }
 
+    [HttpGet("students/{studentId:guid}/statement")]
+    public async Task<IActionResult> GetStudentFinancialStatement(Guid studentId, CancellationToken cancellationToken)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
+
+        var invoices = await db.StudentInvoices.AsNoTracking()
+            .Where(x => x.StudentId == studentId)
+            .OrderByDescending(x => x.IssuedAt)
+            .Select(x => new
+            {
+                x.Id,
+                x.InvoiceNumber,
+                x.FeeType,
+                x.Amount,
+                x.DiscountAmount,
+                netAmount = x.Amount - x.DiscountAmount,
+                x.PaidAmount,
+                balance = x.Amount - x.DiscountAmount - x.PaidAmount,
+                x.Currency,
+                x.Status,
+                x.IssuedAt,
+                lines = x.Lines.OrderBy(line => line.SortOrder).Select(line => new
+                {
+                    line.Id,
+                    line.Code,
+                    line.Description,
+                    line.Amount,
+                    line.Currency,
+                    line.IncomeAccountId,
+                    line.SortOrder
+                }).ToList()
+            })
+            .ToListAsync(cancellationToken);
+
+        var payments = await (
+            from payment in db.Payments.AsNoTracking()
+            join invoice in db.StudentInvoices.AsNoTracking()
+                on payment.StudentInvoiceId equals invoice.Id into invoiceGroup
+            from invoice in invoiceGroup.DefaultIfEmpty()
+            where payment.StudentId == studentId
+            orderby payment.PaidAt descending
+            select new
+            {
+                payment.Id,
+                payment.ReceiptNumber,
+                payment.Amount,
+                payment.Currency,
+                payment.PaymentMethod,
+                payment.Reference,
+                payment.PaidAt,
+                studentInvoiceId = payment.StudentInvoiceId,
+                invoiceNumber = invoice == null ? null : invoice.InvoiceNumber
+            })
+            .ToListAsync(cancellationToken);
+
+        var billed = invoices.Sum(x => x.NetAmount);
+        var paid = invoices.Sum(x => x.PaidAmount);
+        var balance = invoices.Sum(x => x.balance);
+
+        return Ok(new
+        {
+            studentId,
+            currency = invoices.Select(x => x.Currency).Distinct().Count() == 1
+                ? invoices.Select(x => x.Currency).FirstOrDefault() ?? "UGX"
+                : "MULTI",
+            totals = new { billed, paid, balance },
+            invoices,
+            payments,
+            paymentAllocationGranularity = "INVOICE",
+            itemAllocationNote = "Payments are recorded against invoices, not individual invoice lines. Item-level paid amounts are therefore not calculated or apportioned."
+        });
+    }
+
     [HttpGet("administration/accounts")]
     public async Task<IActionResult> GetFinanceAccounts(CancellationToken cancellationToken)
     {
