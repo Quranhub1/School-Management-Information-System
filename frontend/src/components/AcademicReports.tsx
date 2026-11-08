@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 export function AcademicReports({ canManage }: { canManage?: boolean }) {
   return (
     <section className="panel" aria-label="Academic reports">
