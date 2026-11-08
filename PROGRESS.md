@@ -19,29 +19,31 @@ This tracker distinguishes code delivered on feature branches from changes merge
 
 ### Completed in code; awaiting merge
 
-- [x] **FIN-CAP-01 — Consolidate student payment posting onto the accounting-aware workflow.** Removed the legacy `FeeService`/`FeeWorkflowService` path and its repository/DI registrations so payment posting follows `FinanceController → FinanceWorkflowService → FinanceService`. This avoids retaining a second payment path that did not perform the same journal and student-ledger workflow.
+- [x] **FIN-CAP-01 — Consolidate student payment posting onto the accounting-aware workflow.** Removed the legacy `FeeService`/`FeeWorkflowService` path and its repository/DI registrations so payment posting follows `FinanceController → FinanceWorkflowService → FinanceService`.
   - Branch: `fix/finance-canonical-payment-workflow`
   - PR: [#220](https://github.com/Quranhub1/School-Management-Information-System/pull/220) (draft; not merged)
-  - Validation: Backend CI, Foundation CI and Full System CI succeeded on head `ac022e6814ceeb5876754423e2712c617845a52c`.
+  - Validation: Backend CI, Foundation CI and Full System CI succeeded on the recorded PR head.
   - No database migration or live payment integration was introduced.
 
-### In progress
+- [x] **FIN-CAP-02 — Student financial statement and invoice-item detail.** Added a student-scoped statement endpoint and frontend itemized invoice display.
+  - Includes invoice totals, discounts, paid amounts, balances, invoice lines and receipt/payment history.
+  - **Model limitation:** payments are allocated to invoices, not individual invoice lines. The UI shows billed amounts per line and paid/balance amounts per invoice; it does not invent line-level payment allocations.
+  - Branch: `feat/student-financial-statement`; PR: [#221](https://github.com/Quranhub1/School-Management-Information-System/pull/221) (draft; depends on PR #220).
+  - Validation: pending automated CI and review.
 
-- [ ] **FIN-CAP-02 — Student financial statement and invoice-item detail.** Added a student-scoped statement endpoint and frontend itemized invoice display on `feat/student-financial-statement`. This capability is still in progress pending CI, review and merge.
-  - Statement includes invoice totals, discounts, paid amounts, balances, invoice lines and receipt/payment history.
-  - **Known model limitation:** payments are allocated to invoices, not individual invoice lines. The UI therefore shows billed amounts per line and paid/balance totals per invoice; it does not invent or proportionally assign line-level payments.
-  - Branch: `feat/student-financial-statement` (depends on FIN-CAP-01 branch/PR).
-  - Validation: pending GitHub Actions and review.
+- [x] **FIN-CAP-03 — Mobile-money transaction workflow (manual verification stage).** Added scoped transaction listing, FinanceOperations-protected initiation/confirmation/cancellation endpoints, Uganda phone validation, MTN/Airtel provider validation, pending-only cancellation, duplicate-reference checks and atomic posting through the canonical finance service. Confirmation records the payment, journal and student ledger entry before marking the mobile-money transaction completed, within one database transaction.
+  - Frontend now resolves student codes through the existing student finance profile API and uses the implemented mobile-money endpoints.
+  - Branch: `feat/student-financial-statement`; included in draft PR #221.
+  - **Not a live gateway:** no STK/USSD prompt is sent. Finance staff must independently verify the operator receipt and enter its external reference. The UI now states this explicitly.
+  - Validation: pending automated CI, review and target-environment tests.
 
 ### Not yet implemented in this sequence
 
-- [x] **FIN-CAP-03 — Mobile-money transaction workflow (manual verification stage).** Added scoped transaction listing, FinanceOperations-protected initiation/confirmation/cancellation endpoints, Uganda phone validation, MTN/Airtel provider validation, pending-only cancellation, duplicate-reference checks, and atomic posting through the canonical finance service. Confirmation records the payment/journal/ledger and marks the transaction completed in the same database transaction. The frontend now resolves student codes through the existing student finance profile API and uses the implemented mobile-money endpoints.
-- [ ] **FIN-CAP-03 acceptance — Real MTN/Airtel provider integration.** The current workflow deliberately requires Finance staff to verify the provider transaction in the operator portal and enter its external reference. Automated collection prompts, callbacks/webhooks, provider API credentials and reconciliation polling are not implemented; do not treat this as a live gateway integration.
+- [ ] **FIN-CAP-03 acceptance — Automated MTN/Airtel integration.** Provider credentials, STK/USSD initiation, callbacks/webhooks and reconciliation polling are not implemented.
+- [ ] **FIN-CAP-04 — SchoolPay provider adapter.** Implement secure provider configuration, Sync/Adhoc clients and provider response handling only after KSHS obtains credentials and UAT access.
 - [ ] **FIN-CAP-05 — School Main Account and Guild Account reporting.** Establish approved account/category mappings and reports that reconcile to the general ledger.
 - [ ] **FIN-CAP-06 — Finance approvals, role boundaries and audit verification.** Test read, post, approve, reverse and reconciliation permissions with representative roles.
 - [ ] **FIN-CAP-07 — Finance regression and accounting acceptance tests.** Verify idempotency, concurrency, transaction atomicity, receipt uniqueness, journal balancing and reconciliation before production use.
-
-- [ ] **FIN-CAP-04 — SchoolPay provider adapter.** Implement secure provider configuration, Sync/Adhoc clients and provider response handling only after KSHS obtains credentials and UAT access.
 
 ### Merge and release rule
 
