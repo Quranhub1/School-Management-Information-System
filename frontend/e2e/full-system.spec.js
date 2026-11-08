@@ -5,6 +5,8 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:4173';
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'admin123';
 
 async function signIn(page) {
+  page.on('pageerror', error => console.log('SMIS E2E pageerror', error.message));
+  page.on('console', message => { if (message.type() === 'error') console.log('SMIS E2E browser console error', message.text()); });
   const loginFrame = page.frameLocator('iframe[title="Institutional Sign In"]');
   await expect(loginFrame.locator('#username')).toBeVisible({ timeout: 15000 });
   await loginFrame.locator('#username').fill('admin');
