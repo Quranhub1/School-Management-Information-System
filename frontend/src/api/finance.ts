@@ -2,7 +2,7 @@ import { getAccessToken } from './auth'
 import { readApiErrorMessage } from './errors'
 import { z } from 'zod'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
-import { bulkPaymentRequestSchema, createInvoiceRequestSchema, invoiceResponseSchema, mobileMoneyCreateRequestSchema, recordPaymentRequestSchema } from '../schemas'
+import { approveStaffAdvanceRequestSchema, applyFeeStructureRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, feeStructureCreateRequestSchema, invoiceNoteRequestSchema, invoiceResponseSchema, mobileMoneyCreateRequestSchema, recordPaymentRequestSchema, recoverStaffAdvanceRequestSchema, staffAdvanceRequestSchema } from '../schemas'
 
 export interface Invoice {
   id: string
@@ -172,9 +172,9 @@ export const getCashBankPosition = (params?: { from?: string; to?: string; curre
 
 export async function addInvoiceNote(invoiceId: string, note: string, createdBy?: string) { return request<void>('/api/finance/invoices/' + invoiceId + '/notes', { method: 'POST', body: JSON.stringify({ note, createdBy }) }) }
 export async function getInvoiceNotes(invoiceId: string) { return request<any[]>(`/api/finance/invoices/${invoiceId}/notes`) }
-export async function requestStaffAdvance(staffMemberId: string, amount: number, reason: string) { return request<any>(`/api/finance/staff/${staffMemberId}/advances`, { method: 'POST', body: JSON.stringify({ amount, reason }) }) }
-export async function approveStaffAdvance(advanceId: string, approvedBy: string, approved: boolean) { return request<void>(`/api/finance/staff/advances/${advanceId}/approve`, { method: 'PATCH', body: JSON.stringify({ approvedBy, approved }) }) }
-export async function recoverStaffAdvance(advanceId: string, amount: number) { return request<void>(`/api/finance/staff/advances/${advanceId}/recover`, { method: 'POST', body: JSON.stringify({ amount }) }) }
+export async function requestStaffAdvance(staffMemberId: string, amount: number, reason: string) { if (!staffMemberId.trim()) throw new Error('Staff member ID is required.'); const input = parseApiInput(staffAdvanceRequestSchema, { amount, reason }, 'request staff advance'); return request<any>(`/api/finance/staff/${encodeURIComponent(staffMemberId)}/advances`, { method: 'POST', body: JSON.stringify(input) }) }
+export async function approveStaffAdvance(advanceId: string, approvedBy: string, approved: boolean) { if (!advanceId.trim()) throw new Error('Staff advance ID is required.'); const input = parseApiInput(approveStaffAdvanceRequestSchema, { approvedBy, approved }, 'approve staff advance'); return request<void>(`/api/finance/staff/advances/${encodeURIComponent(advanceId)}/approve`, { method: 'PATCH', body: JSON.stringify(input) }) }
+export async function recoverStaffAdvance(advanceId: string, amount: number) { if (!advanceId.trim()) throw new Error('Staff advance ID is required.'); const input = parseApiInput(recoverStaffAdvanceRequestSchema, { amount }, 'recover staff advance'); return request<void>(`/api/finance/staff/advances/${encodeURIComponent(advanceId)}/recover`, { method: 'POST', body: JSON.stringify(input) }) }
 export async function getStaffAdvances(staffMemberId?: string) { return request<any[]>(`/api/finance/staff/advances${staffMemberId ? `?staffMemberId=${encodeURIComponent(staffMemberId)}` : ''}`) }
 export async function getInvoiceFeeItems(invoiceId: string) { return request<any[]>(`/api/finance/invoices/${invoiceId}/fee-items`) }
 
@@ -207,7 +207,7 @@ export async function confirmMobileMoneyTransaction(transactionId: string, ref?:
 export async function getMobileMoneyTransactions(status?: string) { return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
 
 export async function createBulkPayment(body: { payments: { studentId: string; invoiceId?: string; amount: number; paymentMethod: string; receiptNumber: string; reference?: string }[] }) { const input = parseApiInput(bulkPaymentRequestSchema, body, 'bulk payment'); return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(input) }) }
-export async function issueCreditNote(invoiceId: string, body: { amount: number; reason: string }) { return request<any>('/api/finance/invoices/' + invoiceId + '/credit-notes', { method: 'POST', body: JSON.stringify(body) }) }
+export async function issueCreditNote(invoiceId: string, body: { amount: number; reason: string }) { if (!invoiceId.trim()) throw new Error('Invoice ID is required.'); const input = parseApiInput(creditNoteRequestSchema, body, 'issue credit note'); return request<any>('/api/finance/invoices/' + encodeURIComponent(invoiceId) + '/credit-notes', { method: 'POST', body: JSON.stringify(input) }) }
 export async function getCreditNotes(invoiceId?: string) { return request<any[]>(`/api/finance/credit-notes${invoiceId ? `?invoiceId=${encodeURIComponent(invoiceId)}` : ''}`) }
 
 export interface FeeStructureItemRequest {
@@ -232,10 +232,15 @@ export interface FeeStructure {
 }
 export const getFeeStructures = (academicYearId?: string) =>
   request<FeeStructure[]>(`/api/finance/administration/fee-structures${academicYearId ? `?academicYearId=${encodeURIComponent(academicYearId)}` : ''}`)
-export const createFeeStructure = (body: { name: string; feeType: string; currency?: string; programmeId?: string; academicYearId?: string; items: FeeStructureItemRequest[] }) =>
-  request<FeeStructure>('/api/finance/administration/fee-structures', { method: 'POST', body: JSON.stringify(body) })
-export const applyFeeStructure = (feeStructureId: string, body: { studentIds?: string[]; allActiveStudents?: boolean }) =>
-  request<{ feeStructureId: string; applied: number; skipped: number; totalRequested: number }>(`/api/finance/administration/fee-structures/${feeStructureId}/apply`, { method: 'POST', body: JSON.stringify(body) })
+export const createFeeStructure = (body: { name: string; feeType: string; currency?: string; programmeId?: string; academicYearId?: string; items: FeeStructureItemRequest[] }) => {
+  const input = parseApiInput(feeStructureCreateRequestSchema, body, 'create fee structure')
+  return request<FeeStructure>('/api/finance/administration/fee-structures', { method: 'POST', body: JSON.stringify(input) })
+}
+export const applyFeeStructure = (feeStructureId: string, body: { studentIds?: string[]; allActiveStudents?: boolean }) => {
+  if (!feeStructureId.trim()) throw new Error('Fee structure ID is required.')
+  const input = parseApiInput(applyFeeStructureRequestSchema, body, 'apply fee structure')
+  return request<{ feeStructureId: string; applied: number; skipped: number; totalRequested: number }>(`/api/finance/administration/fee-structures/${encodeURIComponent(feeStructureId)}/apply`, { method: 'POST', body: JSON.stringify(input) })
+}
 
 export interface FinanceAccountOption { id: string; code: string; name: string; accountType: string }
 export const getFinanceAccounts = () => request<FinanceAccountOption[]>('/api/finance/administration/accounts')
