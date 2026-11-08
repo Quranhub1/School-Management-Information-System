@@ -254,6 +254,7 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         exportFileName={`inventory-${section.id}`}
         editable={canEdit}
         rowValidationSchema={inventoryGridRowSchema}
+        getRowId={params => params.data.id}
         toolbar
       />}
       <div className="inventory-spreadsheet-footer">
