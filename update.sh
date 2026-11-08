@@ -8,4 +8,4 @@ if [[ -n "$(git -C "$ROOT_DIR" status --porcelain)" ]]; then
 fi
 
 git -C "$ROOT_DIR" pull --ff-only
-"$ROOT_DIR/setup.sh" "$@"
+bash "$ROOT_DIR/setup.sh" "$@"
