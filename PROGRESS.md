@@ -253,3 +253,8 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Run frontend CI and browser-level regression checks after these configuration changes.
 
 **Diagnostic note:** The Vite WebSocket error may also be caused by a stopped/failed Vite process, a port conflict, or browser/proxy network handling. Configuration changes alone do not prove the local server is reachable.
+
+
+## UI copy cleanup
+- Removed redundant explanatory paragraphs from curriculum, timetable, campus, inventory, and staff screens while retaining labels, validation, operational status, and required warnings.
+- Kept field labels, empty-state messages, safety notices, and actionable error feedback intact.

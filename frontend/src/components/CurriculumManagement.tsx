@@ -334,7 +334,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <>
           <div className="catalogue-intro">
             <h3>Long-course catalogue</h3>
-            <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Needs verification need title or duration confirmation.</p>
+            
           </div>
           {authority === 'UHPAB' && <section className="catalogue-board" aria-labelledby="uhpab-long-title">
             <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
@@ -435,7 +435,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <div className="short-course-section">
           <div className="catalogue-intro">
             <h3>Short and modular training</h3>
-            <p>Select a row to prefill a draft. Confirm the approved title, award and duration before publishing.</p>
+            
           </div>
           {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue">
             <h3>UVTAB · Modular and occupational skills</h3>

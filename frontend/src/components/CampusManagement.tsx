@@ -145,7 +145,7 @@ export function CampusManagement() {
   return (
     <section className="space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="text-xl font-semibold">Campus management</h1><p className="mt-1 text-sm text-slate-600">Manage campuses and assign staff accounts to the sites they serve.</p></div>
+        <div><h1 className="text-xl font-semibold">Campus management</h1></div>
         <button onClick={() => void load()} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"><RefreshCw size={15} /> Refresh</button>
       </header>
       <div className="grid gap-3 sm:grid-cols-3">
@@ -157,7 +157,7 @@ export function CampusManagement() {
       <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
         <div className="overflow-x-auto rounded-lg border bg-white">
           <h2 className="border-b p-4 font-semibold">Registered campuses</h2>
-          {loading ? <p className="flex items-center gap-2 p-5 text-sm"><LoaderCircle size={16} className="animate-spin" /> Loading…</p> : !items.length ? <div className="p-8 text-center"><Building2 className="mx-auto text-slate-400" /><p className="mt-2 font-medium">No campuses registered</p><p className="text-sm text-slate-500">Add the main campus first, then the other sites.</p></div> :
+          {loading ? <p className="flex items-center gap-2 p-5 text-sm"><LoaderCircle size={16} className="animate-spin" /> Loading…</p> : !items.length ? <div className="p-8 text-center"><Building2 className="mx-auto text-slate-400" /><p className="mt-2 font-medium">No campuses registered</p></div> :
             <table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="p-3">Campus</th><th className="p-3">Location</th><th className="p-3">Status</th><th className="p-3">Actions</th></tr></thead><tbody className="divide-y">
               {items.map(campus => <tr key={campus.id} className={selectedCampusId === campus.id ? 'bg-slate-50' : ''}>
                 <td className="p-3"><button type="button" onClick={() => setSelectedCampusId(campus.id)} className="text-left"><strong>{campus.name}</strong><div className="text-xs text-slate-500">{campus.code}</div></button></td>
@@ -175,7 +175,7 @@ export function CampusManagement() {
       </div>
 
       <section className="overflow-hidden rounded-lg border bg-white">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b p-4"><div><h2 className="font-semibold">Campus user access</h2><p className="text-sm text-slate-500">Choose a campus to manage which user accounts can access its student records.</p></div>
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b p-4"><div><h2 className="font-semibold">Campus user access</h2></div>
           <select aria-label="Campus to manage access for" value={selectedCampusId} onChange={e => setSelectedCampusId(e.target.value)} className="rounded-md border px-3 py-2 text-sm"><option value="">Select campus</option>{items.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}</select>
         </header>
         <form onSubmit={assignUser} className="grid gap-3 border-b p-4 md:grid-cols-[1fr_auto_auto] md:items-end">
