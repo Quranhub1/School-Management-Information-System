@@ -115,6 +115,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         return Ok(updated);
     }
 
+<<<<<<< HEAD
 
     [HttpPut("template/{teachingGroupId:guid}")]
     [Authorize(Policy = TimetablePolicies.Management)]
@@ -202,6 +203,8 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         return sameClass || sameTeacher || sameRoom;
     }
 
+=======
+>>>>>>> origin/fix/timetable-periods-editable-template
     [HttpPost("generate")]
     [Authorize(Policy = TimetablePolicies.Management)]
     public async Task<IActionResult> Generate(GenerateTimetableRequest request, CancellationToken cancellationToken)
