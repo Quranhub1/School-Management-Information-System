@@ -45,33 +45,6 @@ public sealed class StaffAllowancesController(SchoolManagementDbContext db) : Co
         return Ok(await query.OrderByDescending(x => x.EffectiveFrom).ThenBy(x => x.staffName).ToListAsync(cancellationToken));
     }
 
-    [HttpGet("audit-events")]
-    public async Task<IActionResult> GetAuditEvents([FromQuery] string? action, [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? to, CancellationToken cancellationToken)
-    {
-        var query = db.FinanceAuditEvents.AsNoTracking().AsQueryable();
-        if (!string.IsNullOrWhiteSpace(action)) query = query.Where(x => x.Action == action.Trim());
-        if (from.HasValue) query = query.Where(x => x.OccurredAt >= from.Value);
-        if (to.HasValue) query = query.Where(x => x.OccurredAt <= to.Value);
-
-        var events = await query
-            .OrderByDescending(x => x.OccurredAt)
-            .Select(x => new
-            {
-                x.Id,
-                x.OccurredAt,
-                x.Action,
-                x.EntityType,
-                x.EntityId,
-                x.PerformedBy,
-                x.Reason,
-                x.SourceJournalEntryId,
-                x.Metadata
-            })
-            .ToListAsync(cancellationToken);
-
-        return Ok(events);
-    }
-
     [HttpPost("authorize")]
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     public async Task<IActionResult> AuthorizeAllowance(CreateAllowanceRequest request, CancellationToken cancellationToken)
