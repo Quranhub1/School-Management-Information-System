@@ -20,14 +20,10 @@ AG Grid Community is MIT-licensed. This implementation does not import Enterpris
 - CSV export
 - Column visibility controls
 - Multi-row selection
-<<<<<<< HEAD
 - Optional editable cells, with mutations delegated to the owning screen/API; Inventory is permission-gated and Zod-validated, while finance balances remain read-only and must use audited finance workflows
 - Shift-click multi-column sorting and draggable/reorderable column headers
 - Shared loading and empty-state overlays for asynchronous and zero-row grids
 - Existing custom React cell renderers for finance statuses/amounts, payroll statuses, and row actions
-=======
-- Optional editable cells, with mutations delegated to the owning screen/API
->>>>>>> origin/feat/ag-grid-table-migration
 - Compact, square-cornered Quartz theme consistent with SMIS density
 
 ## Migrated screens
@@ -66,22 +62,15 @@ Then manually verify:
 - Finance, accounts overview, inventory and stock alerts, payroll, student registry, fee defaulters, fee structures, audit log and notices at desktop and narrow viewport widths
 - Sorting, floating filters, quick search, pagination, column drag/reorder and column visibility
 - CSV export contents and filenames
-<<<<<<< HEAD
 - Inventory edits autosave to the database, pass the row Zod contract, and remain blocked for read-only roles
 - Loading and empty overlays render correctly when the grid is fetching data or has no rows
 - Shift-click multi-column sorting and drag-to-reorder work without breaking column visibility or filters
-=======
-- Inventory edits autosave to the database and remain blocked for read-only roles
->>>>>>> origin/feat/ag-grid-table-migration
 - Payroll edit and mark-paid actions still use the existing protected API
 - Student guardian and QR actions still open the correct records
 
 Do not merge to `main` until dependency installation, build, tests and manual checks pass.
-<<<<<<< HEAD
 
 
 ## Search responsiveness
 
 The shared grid toolbar keeps the text input controlled and responsive while `use-debounce` 10.1.1 delays the value passed to AG Grid by 300 ms. This optimization applies to client-side quick filtering in every screen using `AgGridTable`; it does not delay unrelated form inputs or financial submissions, and it does not debounce server API calls outside this shared grid. The debounce value is centralized so the delay can be tuned consistently. Clearing the search is subject to the same short debounce window.
-=======
->>>>>>> origin/feat/ag-grid-table-migration
