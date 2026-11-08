@@ -11,9 +11,41 @@ using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+var logDirectory = Environment.GetEnvironmentVariable("SMIS_LOG_DIRECTORY");
+if (string.IsNullOrWhiteSpace(logDirectory))
+{
+    var localDataDirectory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    logDirectory = string.IsNullOrWhiteSpace(localDataDirectory)
+        ? Path.Combine(AppContext.BaseDirectory, "logs")
+        : Path.Combine(localDataDirectory, "SMIS", "logs");
+}
+Directory.CreateDirectory(logDirectory);
+builder.Host.UseSerilog((context, _, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .MinimumLevel.Is(context.HostingEnvironment.IsDevelopment()
+            ? Serilog.Events.LogEventLevel.Debug
+            : Serilog.Events.LogEventLevel.Information)
+        .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Application", "SMIS.Api")
+        .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
+        .WriteTo.Console()
+        .WriteTo.File(
+            Path.Combine(logDirectory, "smis-.log"),
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 14,
+            fileSizeLimitBytes: 10 * 1024 * 1024,
+            rollOnFileSizeLimit: true,
+            shared: true,
+            flushToDiskInterval: TimeSpan.FromSeconds(2));
+});
 builder.Services.AddControllers().AddJsonOptions(o =>
 {
     o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -36,6 +68,16 @@ builder.Services.AddRateLimiter(options =>
         limiterOptions.QueueLimit = 0;
         limiterOptions.AutoReplenishment = true;
     });
+    options.AddPolicy("client-diagnostics", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(5),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
 });
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
 if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
@@ -64,6 +106,19 @@ using (var scope = app.Services.CreateScope())
     await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
     await scope.ServiceProvider.GetRequiredService<FinanceAccountSeeder>().SeedAsync();
 }
+app.UseMiddleware<SchoolManagement.Api.Middleware.CorrelationIdMiddleware>();
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("CorrelationId",
+            httpContext.Items[SchoolManagement.Api.Middleware.CorrelationIdMiddleware.ItemKey] as string
+            ?? httpContext.TraceIdentifier);
+        diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
+        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+    };
+});
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.UseHttpsRedirection();
 app.UseCors();
@@ -71,6 +126,42 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapHealthChecks("/health").AllowAnonymous();
+app.MapPost("/api/diagnostics/client-errors", (
+    ClientErrorReport report,
+    HttpContext httpContext,
+    ILogger<Program> logger) =>
+{
+    if (string.IsNullOrWhiteSpace(report.Message) || report.Message.Length > 500
+        || (report.Stack?.Length ?? 0) > 3000
+        || (report.Source?.Length ?? 0) > 120)
+        return Results.BadRequest();
+
+    static string Redact(string value) =>
+        Regex.Replace(
+            Regex.Replace(value, @"(?i)(bearer\\s+)[a-z0-9._~+/=-]+", "$1[REDACTED]"),
+            @"(?i)(password|token|authorization|secret)([\""''\\s:=]+)[^&\\s,;]+",
+            "$1$2[REDACTED]");
+
+    var correlationId = httpContext.Items[SchoolManagement.Api.Middleware.CorrelationIdMiddleware.ItemKey] as string
+        ?? httpContext.TraceIdentifier;
+    logger.LogWarning(
+        "Frontend client error reported. Source={ClientSource}; Message={ClientMessage}; ClientCorrelationId={ClientCorrelationId}; RequestCorrelationId={CorrelationId}; Path={ClientPath}; Stack={ClientStack}",
+        Redact(report.Source ?? "unknown"),
+        Redact(report.Message),
+        Redact(report.CorrelationId ?? string.Empty),
+        correlationId,
+        Redact(report.Path ?? string.Empty),
+        Redact(report.Stack ?? string.Empty));
+    return Results.Accepted();
+}).RequireAuthorization().RequireRateLimiting("client-diagnostics");
 app.MapControllers();
 app.Run();
 public partial class Program { }
+
+
+public sealed record ClientErrorReport(
+    string Message,
+    string? Stack,
+    string? Source,
+    string? Path,
+    string? CorrelationId);
