@@ -31,7 +31,7 @@ public sealed class CorrelationIdMiddlewareTests
         var correlationId = Assert.IsType<string>(context.Items[CorrelationIdMiddleware.ItemKey]);
         Assert.DoesNotContain(" ", correlationId);
         Assert.DoesNotContain("\r", correlationId);
-        Assert.Equal(correlationId, context.Response.Headers[CorrelationIdMiddleware.HeaderName]);
+        Assert.Equal(correlationId, context.Response.Headers[CorrelationIdMiddleware.HeaderName].ToString());
     }
 
     [Fact]
@@ -44,6 +44,6 @@ public sealed class CorrelationIdMiddlewareTests
 
         var correlationId = Assert.IsType<string>(context.Items[CorrelationIdMiddleware.ItemKey]);
         Assert.False(string.IsNullOrWhiteSpace(correlationId));
-        Assert.Equal(correlationId, context.Response.Headers[CorrelationIdMiddleware.HeaderName]);
+        Assert.Equal(correlationId, context.Response.Headers[CorrelationIdMiddleware.HeaderName].ToString());
     }
 }
