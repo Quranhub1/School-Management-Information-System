@@ -191,11 +191,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
   }
 
   async function removeAccess(user: UserSummary) {
-<<<<<<< HEAD
     if (!user.isActive || !(await showConfirmDialog(`Remove sign-in access for ${user.username}? Their records will be retained.`, { title: 'Remove sign-in access', confirmLabel: 'Yes, remove access', destructive: true }))) return
-=======
-    if (!user.isActive || !await confirmAction(`Remove sign-in access for ${user.username}? Their records will be retained.`, 'Remove sign-in access', 'Remove access')) return
->>>>>>> origin/fix/centered-delete-confirmation-modals
     await toggle(user)
   }
 
@@ -250,11 +246,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
               </select>
             </label>
           </div>
-<<<<<<< HEAD
           <button type="submit" className="create-account-button" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
-=======
-          <FancyButton type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</FancyButton>
->>>>>>> origin/kilo/golden-circuit-3yz
         </form>
         {editingUserId && (
           <form className="student-form" onSubmit={saveEdit} aria-label="Edit user account">
