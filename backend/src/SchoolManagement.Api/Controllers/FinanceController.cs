@@ -249,7 +249,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (!string.IsNullOrWhiteSpace(status))
         {
             var normalizedStatus = status.Trim();
-            if (normalizedStatus is not ("Pending" or "Completed" or "Cancelled" or "Failed"))
+            if (normalizedStatus is not ("Pending" or "Completed" or "Cancelled"))
                 return BadRequest(new { message = "Unsupported mobile-money status filter." });
             query = query.Where(x => x.Status == normalizedStatus);
         }
@@ -336,7 +336,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         await using var dbTransaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         try
         {
-            if (await db.MobileMoneyTransactions.AnyAsync(x => x.Id != transaction.Id && x.ExternalRef == externalRef, cancellationToken))
+            if (await db.MobileMoneyTransactions.AnyAsync(x => x.Id != transaction.Id && x.Provider == transaction.Provider && x.ExternalRef != null && x.ExternalRef.ToUpper() == externalRef.ToUpper(), cancellationToken))
             {
                 await dbTransaction.RollbackAsync(cancellationToken);
                 return Conflict(new { message = "This provider transaction reference has already been used." });
