@@ -185,7 +185,7 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Remove the Inventory helper paragraph without changing automatic S/N or custom-column behavior.
 - [x] Remove explanatory fee-configuration copy and the non-functional “module is available” placeholder paragraphs from the Academic Reports, Subject Management, Teacher Assignments, Assessment Configuration and Student Notifications panels.
 - [x] Remove the Student Portal explanatory paragraph while retaining authorization and role-based access boundaries.
-- [x] Remove redundant instructional/placeholder copy from Mobile Money Payments, Staff recruitment, Student Finance lookup, and Curriculum draft-selection panels.
+- [x] Remove redundant instructional/placeholder copy from Mobile Money Payments, Staff recruitment, Student Finance lookup, Curriculum draft-selection, Alumni document requests and Admissions external-board status panels.
 - [x] Correct academic-year/period, Streams, staff-allowance and Mobile Money bearer-token retrieval to use the shared `getAccessToken()` helper and canonical `smis.accessToken` key.
 - [x] Add bearer-token headers and non-success handling to Mobile Money student-search, invoice-list and transaction-cancel requests.
 - [x] Correct FeeTypesManager to load academic years through the shared authenticated academic-structure API.
