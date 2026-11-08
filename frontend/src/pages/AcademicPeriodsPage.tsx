@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getAccessToken } from '../api/auth';
 
 type AcademicYear = { id: string; name: string };
 type AcademicPeriod = { id: string; name: string; sequence: number; startDate: string; endDate: string; isCurrent: boolean };
@@ -16,7 +17,8 @@ export default function AcademicPeriodsPage() {
   const [loading, setLoading] = useState(false);
 
   async function loadYears() {
-    const response = await fetch('/api/academic-structure/years', { headers: { Accept: 'application/json' } });
+    const token = getAccessToken();
+    const response = await fetch('/api/academic-structure/years', { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
     if (!response.ok) throw new Error(`Unable to load academic years (${response.status}).`);
     const data = await response.json() as AcademicYear[];
     setYears(data); if (!yearId && data.length) setYearId(data[0].id);
@@ -25,7 +27,8 @@ export default function AcademicPeriodsPage() {
     if (!id) { setPeriods([]); return; }
     setLoading(true);
     try {
-      const response = await fetch(`/api/academic-structure/years/${id}/periods`, { headers: { Accept: 'application/json' } });
+      const token = getAccessToken();
+      const response = await fetch(`/api/academic-structure/years/${id}/periods`, { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
       if (!response.ok) throw new Error(`Unable to load academic periods (${response.status}).`);
       setPeriods(await response.json() as AcademicPeriod[]);
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to load academic periods.'); }
@@ -41,7 +44,7 @@ export default function AcademicPeriodsPage() {
     if (new Date(startDate) >= new Date(endDate)) { setMessage('The period start date must be before its end date.'); return; }
     try {
       const response = await fetch(`/api/academic-structure/years/${yearId}/periods`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}) },
         body: JSON.stringify({ name: name.trim(), sequence, startDate, endDate, isCurrent: false }),
       });
       if (!response.ok) throw new Error(await response.text() || `Unable to create period (${response.status}).`);

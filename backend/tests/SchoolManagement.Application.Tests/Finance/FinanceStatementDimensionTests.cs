@@ -35,6 +35,30 @@ public sealed class FinanceStatementDimensionTests
     }
 
     [Fact]
+    public void IncomeStatementReport_CalculatesNetIncomeFromRevenueAndExpenses()
+    {
+        var revenue = new Account { Code = "4000", Name = "Tuition Revenue", AccountType = "Revenue" };
+        var expense = new Account { Code = "5000", Name = "Operating Expenses", AccountType = "Expense" };
+        var entry = new JournalEntry
+        {
+            EntryNumber = "JE-YTD-001",
+            EntryDate = new DateTime(2026, 11, 8),
+            Status = "Posted",
+            Lines = new List<JournalEntryLine>
+            {
+                new() { AccountId = revenue.Id, Account = revenue, Credit = 125000m },
+                new() { AccountId = expense.Id, Account = expense, Debit = 25000m }
+            }
+        };
+
+        var report = FinanceReportService.BuildIncomeStatementReport(new[] { entry });
+
+        Assert.Equal(125000m, report.TotalRevenue);
+        Assert.Equal(25000m, report.TotalExpenses);
+        Assert.Equal(100000m, report.NetIncome);
+    }
+
+    [Fact]
     public void IncomeStatementRows_DoNotMergeDifferentDimensions()
     {
         var revenue = new Account { Code = "4000", Name = "Tuition Revenue", AccountType = "Revenue" };

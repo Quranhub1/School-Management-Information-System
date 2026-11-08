@@ -288,7 +288,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
               {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
                 <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                  <span style={{ fontSize: 12, color: '#475569' }}>Select or deselect the units assigned to this staff member.</span>
+                  
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{form.courseUnitIds.length} selected</span>
                 </div>
                 {courseUnits.length === 0
@@ -425,8 +425,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
       {tab === 'recruitment' && (
         <div className="card">
           <h3>Recruitment & Onboarding</h3>
-          <p className="empty">Staff recruitment workflow will be available here. Post vacancies, receive applications, shortlist, interview, and onboard new staff.</p>
-        </div>
+            </div>
       )}
     </section>
   )

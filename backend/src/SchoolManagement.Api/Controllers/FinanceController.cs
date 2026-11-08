@@ -472,7 +472,14 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     {
         var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
         if (scope.Error is not null) return scope.Error;
-        return Ok(await reports.GetIncomeStatementAsync(from, to, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
+        try
+        {
+            return Ok(await reports.GetIncomeStatementAsync(from, to, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet("reports/balance-sheet")]
@@ -480,7 +487,14 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     {
         var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
         if (scope.Error is not null) return scope.Error;
-        return Ok(await reports.GetBalanceSheetAsync(asOf, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
+        try
+        {
+            return Ok(await reports.GetBalanceSheetAsync(asOf, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet("reports/student-receivables")]
