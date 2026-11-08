@@ -411,10 +411,14 @@ export function AdminDashboard() {
             <div className="admin-kpi-card"><span className="admin-kpi-icon purple">IN</span><div><span>Invoices</span><strong>{numberFormat.format(finance.invoices)}</strong></div></div>
           </div>
 <<<<<<< HEAD
+<<<<<<< HEAD
           <DoughnutChart title="Fee collection overview" description="" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
 =======
           <DonutChart title="Fee collection overview" description="" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
 >>>>>>> origin/polish/remove-four-more-explanatory-strings
+=======
+          <DonutChart title="Fee collection overview" description="Based on invoice totals loaded from the finance API" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
+>>>>>>> origin/polish/remove-redundant-copy-across-screens
         </div>
       )}
 

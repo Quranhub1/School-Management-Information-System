@@ -162,6 +162,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         {section === 'biodata' && (
           <div>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             <div className="feature-grid">
               <article className="feature-card"><strong>Bio-Data</strong></article>
@@ -170,6 +171,8 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
               <article className="feature-card"><strong>UNEB Records</strong></article>
             </div>
 >>>>>>> origin/kilo/golden-circuit-3yz
+=======
+>>>>>>> origin/polish/remove-redundant-copy-across-screens
             <StudentManagement canManage={canManage} readOnly={readOnly} />
           </div>
         )}
@@ -177,12 +180,15 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         {section === 'admissions' && (
           <div>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             <div className="feature-grid compact">
               <article className="feature-card"><strong>Eligibility checks</strong></article>
               <article className="feature-card"><strong>Admission letters</strong></article>
             </div>
 >>>>>>> origin/kilo/golden-circuit-3yz
+=======
+>>>>>>> origin/polish/remove-redundant-copy-across-screens
             <AdmissionsManagement readOnly={readOnly} />
           </div>
         )}
@@ -206,8 +212,11 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
             <label>Enrollment / Student Status<select value={studentStatus} onChange={e => setStudentStatus(e.target.value)}>{statuses.map(status => <option key={status}>{status}</option>)}</select></label>
 <<<<<<< HEAD
             <div className="feature-card"><strong>Current status</strong><span>{studentStatus}</span></div>
+<<<<<<< HEAD
 =======
 >>>>>>> origin/kilo/golden-circuit-3yz
+=======
+>>>>>>> origin/polish/remove-redundant-copy-across-screens
           </div>
         )}
 
