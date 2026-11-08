@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Chart from 'chart.js/auto'
 import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
@@ -56,9 +56,8 @@ function DonutChart({
   centerCaption: string
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const safeSegments = segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) }))
+  const safeSegments = useMemo(() => segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) })), [segments])
   const total = safeSegments.reduce((sum, segment) => sum + segment.value, 0)
-  const chartSignature = safeSegments.map(segment => `${segment.label}:${segment.value}:${segment.color}:${segment.displayValue ?? ''}`).join('|')
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -92,7 +91,7 @@ function DonutChart({
       },
     })
     return () => chart.destroy()
-  }, [chartSignature])
+  }, [safeSegments])
 
   return (
     <article className="admin-chart-card">
