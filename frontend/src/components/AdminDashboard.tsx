@@ -7,6 +7,7 @@ import { listStaff, STAFF_CHANGED_EVENT } from '../api/staff'
 import { getInvoices } from '../api/finance'
 import { listPayroll } from '../api/payroll'
 import { InventoryStockSettings } from './InventoryStockSettings'
+import { DoughnutChart } from './charts'
 
 type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring' | 'stock-settings'
 type ChartSegment = { label: string; value: number; color: string; displayValue?: string }
@@ -23,77 +24,6 @@ const chartColors = {
 
 const numberFormat = new Intl.NumberFormat('en-UG')
 const moneyFormat = (value: number) => `UGX ${numberFormat.format(Math.round(value || 0))}`
-
-function DonutChart({
-  title,
-  description,
-  segments,
-  centerValue,
-  centerCaption,
-}: {
-  title: string
-  description: string
-  segments: ChartSegment[]
-  centerValue: string
-  centerCaption: string
-}) {
-  const radius = 39
-  const circumference = 2 * Math.PI * radius
-  const safeSegments = segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) }))
-  const total = safeSegments.reduce((sum, segment) => sum + segment.value, 0)
-  let offset = 0
-
-  return (
-    <article className="admin-chart-card">
-      <div className="admin-chart-heading">
-        <div>
-          <h3>{title}</h3>
-          {description && <p>{description}</p>}
-        </div>
-      </div>
-      <div className="admin-chart-body">
-        <div className="admin-donut-wrap" role="img" aria-label={`${title}: ${safeSegments.map(s => `${s.label} ${s.value}`).join(', ')}`}>
-          <svg className="admin-donut" viewBox="0 0 100 100" aria-hidden="true">
-            <circle className="admin-donut-track" cx="50" cy="50" r={radius} />
-            {total > 0 ? safeSegments.filter(segment => segment.value > 0).map(segment => {
-              const length = (segment.value / total) * circumference
-              const dashOffset = offset
-              offset += length
-              return (
-                <circle
-                  key={segment.label}
-                  cx="50"
-                  cy="50"
-                  r={radius}
-                  fill="none"
-                  stroke={segment.color}
-                  strokeWidth="12"
-                  strokeDasharray={`${length} ${circumference - length}`}
-                  strokeDashoffset={-dashOffset}
-                  transform="rotate(-90 50 50)"
-                  strokeLinecap="butt"
-                />
-              )
-            }) : null}
-          </svg>
-          <div className="admin-donut-center">
-            <strong>{centerValue}</strong>
-            <span>{centerCaption}</span>
-          </div>
-        </div>
-        <ul className="admin-chart-legend">
-          {safeSegments.map(segment => (
-            <li key={segment.label}>
-              <span className="admin-legend-label"><i style={{ background: segment.color }} />{segment.label}</span>
-              <strong>{segment.displayValue ?? numberFormat.format(segment.value)}</strong>
-            </li>
-          ))}
-          {total === 0 && <li className="admin-chart-empty">No records to display</li>}
-        </ul>
-      </div>
-    </article>
-  )
-}
 
 export function AdminDashboard() {
   const session = getSession()
@@ -249,11 +179,11 @@ export function AdminDashboard() {
             <span className="admin-data-note"><i /> Based on loaded records</span>
           </div>
           <div className="admin-charts-grid">
-            <DonutChart title="Student status" description="Active compared with other statuses" segments={studentSegments} centerValue={numberFormat.format(students.total)} centerCaption="students" />
-            <DonutChart title="Staff status" description="Current active staff records" segments={staffSegments} centerValue={numberFormat.format(staff.total)} centerCaption="staff" />
-            <DonutChart title="User accounts" description="Active and inactive accounts" segments={userSegments} centerValue={numberFormat.format(users.total)} centerCaption="accounts" />
-            <DonutChart title="Fee collection" description="Collected fees compared with outstanding" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
-            <DonutChart title="Payroll records" description="Paid, pending, and other statuses" segments={payrollSegments} centerValue={numberFormat.format(payroll.paid + payroll.pending + payroll.other)} centerCaption="records" />
+            <DoughnutChart title="Student status" description="Active compared with other statuses" segments={studentSegments} centerValue={numberFormat.format(students.total)} centerCaption="students" />
+            <DoughnutChart title="Staff status" description="Current active staff records" segments={staffSegments} centerValue={numberFormat.format(staff.total)} centerCaption="staff" />
+            <DoughnutChart title="User accounts" description="Active and inactive accounts" segments={userSegments} centerValue={numberFormat.format(users.total)} centerCaption="accounts" />
+            <DoughnutChart title="Fee collection" description="Collected fees compared with outstanding" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
+            <DoughnutChart title="Payroll records" description="Paid, pending, and other statuses" segments={payrollSegments} centerValue={numberFormat.format(payroll.paid + payroll.pending + payroll.other)} centerCaption="records" />
           </div>
 
           <div className="admin-dashboard-bottom-grid">
@@ -337,7 +267,7 @@ export function AdminDashboard() {
             <div className="admin-kpi-card"><span className="admin-kpi-icon amber">OS</span><div><span>Outstanding</span><strong>{moneyFormat(finance.outstanding)}</strong></div></div>
             <div className="admin-kpi-card"><span className="admin-kpi-icon purple">IN</span><div><span>Invoices</span><strong>{numberFormat.format(finance.invoices)}</strong></div></div>
           </div>
-          <DonutChart title="Fee collection overview" description="" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
+          <DoughnutChart title="Fee collection overview" description="" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
         </div>
       )}
 
