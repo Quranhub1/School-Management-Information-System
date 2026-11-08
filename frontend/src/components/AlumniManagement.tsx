@@ -180,7 +180,7 @@ export function AlumniManagement() {
       </div>}
 
       {activeTab === 'services' && <div className="alumni-services-grid">
-        <div className="alumni-request-builder"><h4>Online Document Request</h4><p>Submit a request for employment or further-study documentation.</p><select id="alumni-request-type"><option>Official Transcript</option><option>Certificate</option><option>Letter of Good Standing</option></select><input id="alumni-request-purpose" placeholder="Purpose / destination institution or employer" /><button className="primary-button" onClick={submitRequest}>Submit Request</button></div>
+        <div className="alumni-request-builder"><h4>Online Document Request</h4><select id="alumni-request-type"><option>Official Transcript</option><option>Certificate</option><option>Letter of Good Standing</option></select><input id="alumni-request-purpose" placeholder="Purpose / destination institution or employer" /><button className="primary-button" onClick={submitRequest}>Submit Request</button></div>
         <div><h4>Request History</h4>{extension.requests.length === 0 ? <p className="empty">No requests submitted.</p> : <div className="alumni-request-list">{extension.requests.map(r => <div className="alumni-request-item" key={r.id}><div><strong>{r.type}</strong><span>{r.purpose}</span><small>{new Date(r.submittedAt).toLocaleString()}</small></div><span className="finance-status-badge" style={{ background: '#dbeafe', color: '#1d4ed8' }}>{r.status}</span></div>)}</div>}</div>
       </div>}
 
