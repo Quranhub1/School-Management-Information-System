@@ -147,6 +147,8 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Enforce Inventory register save payload and read/write response validation.
 - [x] Enforce Library book creation and loan issue request validation.
 - [x] Enforce bulk import request and result validation before/after the import API call.
+- [x] Add optional Zod row-contract enforcement to the shared AG Grid component; invalid edits are reverted and field-level row errors are shown before caller persistence handlers run.
+- [x] Attach row validation to the editable Inventory AG Grid and enforce item-name plus whole-number/non-negative quantity rules on inventory register reads and saves.
 - [x] Add reusable `parseApiInput` and field-addressable `InputValidationError` so invalid requests are rejected before network submission.
 - [x] Keep backend validation, authorization, database constraints and financial posting rules authoritative; frontend validation is an additional boundary, not a replacement.
 
@@ -155,7 +157,8 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Install dependencies from the updated lockfile and run `npm ci` in the frontend environment.
 - [ ] Run TypeScript build, full Vitest suite and production Vite build; resolve any failures introduced by the integration.
 - [ ] Add direct React form integration (React Hook Form resolver or shared form adapter) so field errors render inline before submit; API services currently provide the final frontend enforcement boundary for the migrated operations.
-- [ ] Integrate schema validation into AG Grid cell editing, bulk paste, CSV/Excel imports and row-level error reporting. The bulk-import HTTP request/result is validated, but individual imported rows are not yet validated against per-entity schemas.
+- [ ] Extend AG Grid Zod validation to other editable grids and explicitly test clipboard/bulk-paste behaviour; the shared grid guard and Inventory grid are now wired, but broader grid coverage remains.
+- [ ] Validate each CSV/Excel imported row against the matching entity schema and return row/column-specific import errors; only the bulk-import request envelope and API result are currently validated.
 - [ ] Extend runtime response schemas to all remaining API services and endpoints. The current response validation is enabled for admissions, payroll, streams, students, invoices, inventory registers, SMS send results and bulk-import results; other APIs remain typed-only.
 - [ ] Add backend-aligned contract tests for DTOs, enums, nullable fields, IDs, pagination and date/time formats.
 - [ ] Verify schemas against actual .NET request/response DTOs and EF/database constraints; adjust assumptions before enabling strict validation on production flows.
@@ -163,4 +166,4 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Add validation for SchoolPay integration contracts once provider-approved request/response payloads are available.
 - [ ] Confirm offline desktop packaging includes Zod in the bundled frontend and run clean-machine Windows/Linux smoke tests.
 
-**Status:** central Zod foundation plus active request/response enforcement in selected departmental API services are committed on the feature branch. Direct inline React form wiring, complete API coverage, per-row import validation and AG Grid editor/paste integration remain outstanding. Automated build/test verification is still required; do not declare system-wide adoption until the remaining rollout and regression checks are complete.
+**Status:** central Zod foundation, active validation in selected departmental API services, and an AG Grid row-validation hook wired into Inventory are committed on the feature branch. Direct inline React form error rendering, complete API coverage, per-entity import-row validation, broader editable-grid adoption and clipboard regression tests remain outstanding. Automated build/test verification is still required; do not declare system-wide adoption until the remaining rollout and regression checks are complete.
