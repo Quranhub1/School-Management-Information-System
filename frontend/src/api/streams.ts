@@ -1,5 +1,8 @@
+import { z } from 'zod'
 import { getAccessToken } from './auth'
 import { readApiErrorMessage } from './errors'
+import { parseApiInput, parseApiResponse } from '../lib/validation'
+import { streamCreateRequestSchema, streamResponseSchema } from '../schemas'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -21,7 +24,6 @@ export interface Stream {
   capacity?: number | null
   isActive: boolean
 }
-
 export interface CreateStreamRequest {
   academicClassId: string
   code: string
@@ -29,13 +31,13 @@ export interface CreateStreamRequest {
   capacity?: number
 }
 
-export const getStreamsByClass = (classId: string) => {
+export async function getStreamsByClass(classId: string) {
   if (!classId.trim()) throw new Error('Class ID is required.')
-  return request<Stream[]>(`/api/streams/by-class/${encodeURIComponent(classId)}`)
+  const rows = await request<unknown>(`/api/streams/by-class/${encodeURIComponent(classId)}`)
+  return parseApiResponse(z.array(streamResponseSchema), rows, 'streams by class') as Stream[]
 }
-
-export const createStream = (input: CreateStreamRequest) => {
-  if (!input.code.trim()) throw new Error('Stream code is required.')
-  if (!input.academicClassId.trim()) throw new Error('Class ID is required.')
-  return request<Stream>('/api/streams', { method: 'POST', body: JSON.stringify(input) })
+export async function createStream(input: CreateStreamRequest) {
+  const data = parseApiInput(streamCreateRequestSchema, input, 'create stream')
+  const created = await request<unknown>('/api/streams', { method: 'POST', body: JSON.stringify(data) })
+  return parseApiResponse(streamResponseSchema, created, 'created stream') as Stream
 }
