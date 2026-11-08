@@ -59,10 +59,19 @@ const UHPAB_LONG_COURSES: CatalogueEntry[] = [
 const UVTAB_LONG_COURSES: CatalogueEntry[] = [
   { name: 'Certificate in Biomedical Engineering', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
   { name: 'Diploma in Biomedical Engineering', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
+<<<<<<< HEAD
   { name: 'Certificate in Secretarial Studies and Office Management', award: 'Certificate', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
   { name: 'Diploma in Secretarial Studies and Office Management', award: 'Diploma', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
   { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
   { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
+=======
+  { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
+  { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
+  { name: 'Certificate in Sonography', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Medical Imaging', review: true },
+  { name: 'Diploma in Sonography', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Medical Imaging', review: true },
+  { name: 'Certificate in Medical Records', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Health Informatics', review: true },
+  { name: 'Diploma in Medical Records', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Health Informatics', review: true },
+>>>>>>> origin/feat/authority-separated-academic-workflows
   { name: 'National Certificate — Technology Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Technology', review: true },
   { name: 'Uganda Certificate in Practical Competencies (UCPC) — Technology', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Technology', review: true },
   { name: 'National Certificate — Agriculture Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Agriculture', review: true },
@@ -320,8 +329,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       <div className="form-row academic-authority-picker">
         <label>Curriculum authority
+<<<<<<< HEAD
           <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })); setCatalogueSearch(''); setAwardFilter('all'); setVerificationFilter('all') }}>
             <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
+=======
+          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setCf(current => ({ ...current, programmeId: '' })) }}>
+            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option><option value="UNMEB">UNMEB — Legacy records</option>
+>>>>>>> origin/feat/authority-separated-academic-workflows
           </select>
         </label>
       </div>
@@ -344,7 +358,12 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
           </section>}
+<<<<<<< HEAD
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}
+=======
+          {authority === 'School-based' && <p className="empty">School-based courses are taken from the curricula and courses you have created for the school.</p>}
+          {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
+>>>>>>> origin/feat/authority-separated-academic-workflows
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
@@ -441,8 +460,14 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3>UVTAB · Modular and occupational skills</h3>
             {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
           </section>}
+<<<<<<< HEAD
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}
           {authority === 'UHPAB' && renderCatalogue(UHPAB_SHORT_COURSES, 'ShortCourse')}
+=======
+          {authority === 'School-based' && <p className="empty">School-based short courses are managed in your saved curricula.</p>}
+          {authority === 'UHPAB' && <p className="empty">UHPAB health programmes are listed under Full Programmes.</p>}
+          {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
+>>>>>>> origin/feat/authority-separated-academic-workflows
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>

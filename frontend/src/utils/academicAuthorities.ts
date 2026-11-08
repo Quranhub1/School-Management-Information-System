@@ -1,15 +1,27 @@
+<<<<<<< HEAD
 export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB'
+=======
+export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB' | 'UNMEB'
+>>>>>>> origin/feat/authority-separated-academic-workflows
 
 export const ACADEMIC_AUTHORITY_OPTIONS: { value: AcademicAuthority; label: string }[] = [
   { value: 'School-based', label: 'School-based curriculum' },
   { value: 'UHPAB', label: 'UHPAB — Health programmes' },
   { value: 'UVTAB', label: 'UVTAB — Vocational & technical' },
+<<<<<<< HEAD
+=======
+  { value: 'UNMEB', label: 'UNMEB — Legacy records' },
+>>>>>>> origin/feat/authority-separated-academic-workflows
 ]
 
 export function resolveAcademicAuthority(regulator?: string | null): AcademicAuthority {
   const value = (regulator ?? '').toUpperCase()
   if (value.includes('UHPAB')) return 'UHPAB'
   if (value.includes('UVTAB')) return 'UVTAB'
+<<<<<<< HEAD
+=======
+  if (value.includes('UNMEB')) return 'UNMEB'
+>>>>>>> origin/feat/authority-separated-academic-workflows
   return 'School-based'
 }
 
@@ -52,4 +64,7 @@ export const VERIFIED_ACADEMIC_COURSES: { authority: AcademicAuthority; name: st
     'Leather Tanning',
   ].map(name => ({ authority: 'UVTAB' as const, name })),
 ]
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/feat/authority-separated-academic-workflows

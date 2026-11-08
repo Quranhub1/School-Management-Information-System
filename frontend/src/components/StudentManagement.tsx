@@ -13,8 +13,11 @@ import { notify } from './GlobalNotifications'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getCurricula, type Curriculum } from '../api/curriculumManagement'
 import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
+<<<<<<< HEAD
 import { validateForm } from '../lib/validation'
 import { studentApplicationSubmissionSchema } from '../schemas'
+=======
+>>>>>>> origin/feat/authority-separated-academic-workflows
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -109,6 +112,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     ...academicProgrammes.filter(p => authorityOf(p.id) === application.authority).map(p => p.name),
   ])).sort((a, b) => a.localeCompare(b))
 <<<<<<< HEAD
+<<<<<<< HEAD
   function applicationPdfOptions() {
     const label = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, value => value.toUpperCase())
     const values = Object.entries(application).map(([key, value]) => [
@@ -154,6 +158,8 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     { headerName: 'QR code', colId: 'qr', sortable: false, filter: false, minWidth: 110, cellRenderer: (params: { data?: Student }) => params.data && <button className="secondary-button" type="button" onClick={() => setQrStudentId(params.data!.id)}>View QR</button> },
   ], []);
 
+=======
+>>>>>>> origin/feat/authority-separated-academic-workflows
   useEffect(() => {
     if (!photo) { setPhotoPreview(''); return }
     const url = URL.createObjectURL(photo); setPhotoPreview(url)
