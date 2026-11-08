@@ -133,18 +133,16 @@ export function AlumniManagement() {
           <button className="secondary-button" onClick={() => void load()}>Refresh</button>
         </div>
         <div className="alumni-filters">
-          <SearchBar
-          placeholder="Search name or student number"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          onKeyDown={e => e.key == 'Enter' onKeyDown={e => e.key == 'Enter' == 'Enter' == 'Enter')== 'Enter')== 'Enter') void load()} }onKeyDown={e => e.key == 'Enter' == 'Enter' == 'Enter')== 'Enter')== 'Enter') void load()} } void load()} }
-        />
-          <input placeholder="Programme" value={programme} onChange={e => setProgramme(e.target.value)} onKeyDown={e => e.key == 'Enter') void load()}
-          /> } }
+          <input placeholder="Search name or student number" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void load(); } }} />
+          <input placeholder="Programme" value={programme} onChange={e => setProgramme(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void load(); } }} />
           <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} title="Graduation from" />
           <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} title="Graduation to" />
+          <button type="button" className="secondary-button" onClick={() => void load()}>Apply filters</button>
+        </div>
+        {alumni.length === 0 ? <p className="empty">No alumni records match the current filters.</p> : <div className="alumni-table-wrap"><table><thead><tr><th>Student</th><th>Programme</th><th>Graduation date</th><th>Occupation</th><th>Employer</th><th>Profile</th></tr></thead><tbody>
+          {alumni.map(person => <tr key={person.id}><td>{(person as Alumni & { studentName?: string }).studentName || person.studentId}</td><td>{person.programme}</td><td>{person.graduationDate}</td><td>{person.currentOccupation || '—'}</td><td>{person.employer || '—'}</td><td><button type="button" className="link-button" onClick={() => { setSelectedId(person.id); setActiveTab('profile'); }}>Open profile</button></td></tr>)}
+        </tbody></table></div>}
       </div>
-
       <aside className="alumni-summary-card">
         <h3>Alumni Services</h3>
         <div className="alumni-stat"><strong>{alumni.length}</strong><span>Graduates in directory</span></div>
