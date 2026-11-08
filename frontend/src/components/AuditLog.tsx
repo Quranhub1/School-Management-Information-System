@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
-import { searchAuditLogs, searchFinanceAuditEvents, type AuditLog } from '../api/auditLog';
+import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
 import { AgGridTable } from './AgGridTable';
 import type { ColDef } from 'ag-grid-community';
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
@@ -24,6 +24,7 @@ export function AuditLogManagement() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [financeAuditLoading, setFinanceAuditLoading] = useState(false);
+  const [workflowAuditLoading, setWorkflowAuditLoading] = useState(false);
   const { institution, loaded: institutionLoaded } = useInstitutionSettings();
 
   async function load() {
@@ -132,12 +133,57 @@ export function AuditLogManagement() {
     }
   }
 
+  async function exportWorkflowHistoryPdf() {
+    setWorkflowAuditLoading(true);
+    setError('');
+    try {
+      const events = await searchWorkflowHistory(from || undefined, to || undefined);
+      if (!events.length) {
+        setError('No workflow history records match the selected period.');
+        return;
+      }
+      const rows = [
+        [{ text: 'Timestamp', style: 'tableHeader' }, { text: 'Workflow', style: 'tableHeader' }, { text: 'Entity', style: 'tableHeader' }, { text: 'Record ID', style: 'tableHeader' }, { text: 'From state', style: 'tableHeader' }, { text: 'To state', style: 'tableHeader' }, { text: 'Performed by', style: 'tableHeader' }, { text: 'Comments', style: 'tableHeader' }],
+        ...events.map(event => [
+          new Date(event.performedAt).toLocaleString('en-UG'),
+          event.workflowType,
+          event.entityType,
+          event.entityId,
+          event.fromState,
+          event.toState,
+          event.performedByUserId || 'System',
+          event.comments || '—',
+        ]),
+      ];
+      downloadInstitutionalPdf({
+        title: 'Workflow State History',
+        filename: 'smis-workflow-history-audit',
+        orientation: 'landscape',
+        institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+        motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+        contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+        accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+        content: [
+          { text: 'Workflow history records: ' + events.length, bold: true, margin: [0, 0, 0, 8] },
+          { text: 'Period: ' + (from || 'Beginning') + ' to ' + (to || 'Present'), style: 'muted', margin: [0, 0, 0, 10] },
+          { table: { headerRows: 1, widths: [78, 70, 65, 82, 60, 60, 78, '*'], body: rows }, layout: 'lightHorizontalLines' },
+          { text: 'Confidential — restricted workflow audit record.', style: 'muted', margin: [0, 12, 0, 0] },
+        ],
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to export workflow history.');
+    } finally {
+      setWorkflowAuditLoading(false);
+    }
+  }
+
   return <section className="panel" aria-label="Audit Log">
     <div className="panel-heading">
       <div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div>
       <div className="form-actions">
         <button type="button" className="secondary-button" onClick={printAuditPdf} disabled={loading || logs.length === 0}>Print PDF</button>
         <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>\n        <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
+        <button type="button" className="secondary-button" onClick={() => void exportWorkflowHistoryPdf()} disabled={workflowAuditLoading}>{workflowAuditLoading ? "Preparing…" : "Download Workflow Audit PDF"}</button>
       </div>
     </div>
     <div className="library-search" style={{ margin: '14px 0' }}>
