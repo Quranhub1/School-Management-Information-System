@@ -10,6 +10,7 @@ import {
   themeQuartz,
 } from 'ag-grid-community'
 import { AgGridProvider, AgGridReact } from 'ag-grid-react'
+import { useDebounce } from 'use-debounce'
 
 export type AgGridTableProps<TData extends object> = {
   rows: TData[]
@@ -52,6 +53,9 @@ export function AgGridTable<TData extends object>({
 }: AgGridTableProps<TData>) {
   const [api, setApi] = useState<GridApi<TData> | null>(null)
   const [filter, setFilter] = useState(quickFilterText ?? '')
+  // Keep keystrokes responsive; apply AG Grid's potentially expensive quick filter
+  // only after the user has paused typing for 300 ms.
+  const [debouncedFilter] = useDebounce(quickFilterText ?? filter, 300)
   const [rowValidationErrors, setRowValidationErrors] = useState<Record<string, string[]>>({})
   const revertingCell = useRef(false)
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
@@ -146,7 +150,7 @@ export function AgGridTable<TData extends object>({
             paginationPageSizeSelector={[10, 25, 50, 100]}
             animateRows={false}
             loading={loading}
-            quickFilterText={quickFilterText ?? filter}
+            quickFilterText={debouncedFilter}
             rowSelection={rowSelection}
             onGridReady={event => setApi(event.api)}
             onRowClicked={onRowClicked}

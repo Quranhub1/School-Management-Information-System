@@ -280,3 +280,11 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Continue a screen-by-screen visual review of all remaining authenticated modules and tabs. This change removes the identified redundant copy and stub paragraphs; it does not remove required labels, validation messages, warnings, empty states or operational instructions.
 
 **Status:** targeted UI copy and identified request/report defects are corrected in source. CI and runtime verification remain pending. Do not mark the repository-wide screen review complete until each remaining screen and tab has been inspected and its regression checks passed.
+
+
+## AG Grid search debouncing — November 2026
+
+- Add `use-debounce@10.1.1` to the frontend dependencies and lockfile.
+- Debounce the shared AG Grid quick-filter value by 300 ms while keeping the search input immediately responsive.
+- Apply the optimization centrally to all operational screens using `AgGridTable`; do not debounce API calls, finance posting or unrelated form controls.
+- Run clean `npm ci`, TypeScript build, frontend tests and production build on the reconciled branch; validate responsiveness on a large dataset before marking performance acceptance complete.
