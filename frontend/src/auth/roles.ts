@@ -13,6 +13,7 @@ export const ACADEMIC_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.acade
 export const FINANCE_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.accountant] as const
 export const FINANCE_OPERATIONS_ROLES = [ROLES.systemAdministrator, ROLES.accountant, ROLES.assistantAccountant] as const
 export const FINANCE_READ_ROLES = [ROLES.systemAdministrator, ROLES.accountant, ROLES.assistantAccountant, ROLES.principal, ROLES.director, ROLES.assistantPrincipal, ROLES.headOfDepartment, ROLES.residentDirector, ROLES.secretary, ROLES.hrManager] as const
+export const PAYROLL_READ_ROLES = [ROLES.systemAdministrator, ROLES.accountant, ROLES.assistantAccountant, ROLES.hrManager] as const
 export const EXAMINATION_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.examinationsOfficer, ROLES.hrManager] as const
 export const STUDENT_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.hrManager] as const
 export const INVENTORY_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.recordsOfficer, ROLES.hrManager] as const
