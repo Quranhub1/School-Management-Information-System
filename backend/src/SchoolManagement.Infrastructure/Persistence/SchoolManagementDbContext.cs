@@ -140,6 +140,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<FinanceAuditEvent> FinanceAuditEvents => Set<FinanceAuditEvent>();
     public DbSet<OpeningBalance> OpeningBalances => Set<OpeningBalance>();
     public DbSet<AdjustmentCancellation> AdjustmentCancellations => Set<AdjustmentCancellation>();
+    public DbSet<SchoolPaymentNotification> SchoolPaymentNotifications => Set<SchoolPaymentNotification>();
     public DbSet<TransportVehicle> TransportVehicles => Set<TransportVehicle>();
     public DbSet<TransportRoute> TransportRoutes => Set<TransportRoute>();
     public DbSet<TransportAssignment> TransportAssignments => Set<TransportAssignment>();

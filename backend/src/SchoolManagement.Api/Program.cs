@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure;
 using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Infrastructure.Identity;
@@ -84,6 +85,7 @@ if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
     throw new InvalidOperationException("AllowedOrigins must contain at least one trusted frontend origin in Production.");
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); else policy.AllowAnyOrigin(); policy.AllowAnyHeader().AllowAnyMethod().WithExposedHeaders(SchoolManagement.Api.Middleware.CorrelationIdMiddleware.HeaderName); }); });
 builder.Services.AddApplication();
+builder.Services.Configure<SchoolPayOptions>(builder.Configuration.GetSection(SchoolPayOptions.SectionName));
 builder.Services.AddScoped<CampusAccessService>();
 builder.Services.AddSingleton<LocalDatabaseBackupService>();
 builder.Services.AddHostedService<ScheduledLocalBackupWorker>();
