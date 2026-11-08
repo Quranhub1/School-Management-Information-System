@@ -253,3 +253,15 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Run frontend CI and browser-level regression checks after these configuration changes.
 
 **Diagnostic note:** The Vite WebSocket error may also be caused by a stopped/failed Vite process, a port conflict, or browser/proxy network handling. Configuration changes alone do not prove the local server is reachable.
+
+
+## AG Grid search debouncing — November 2026
+
+- [x] Add `use-debounce@10.1.1` as a direct frontend dependency and lock it for reproducible `npm ci` installs.
+- [x] Debounce the shared `AgGridTable` quick-filter value by 300 ms while keeping the search input itself immediately responsive.
+- [x] Apply the optimization centrally to all operational screens that use the shared AG Grid wrapper; no per-screen rewrites are required.
+- [x] Keep API requests, finance posting, and unrelated form controls unchanged; this change only debounces client-side AG Grid quick filtering.
+- [ ] Run clean `npm ci`, TypeScript build, full Vitest suite and production Vite build; resolve any CI failures before merging.
+- [ ] Verify on a large student/inventory dataset that rapid typing remains responsive and the final query is applied after 300 ms.
+
+**Status:** source and lockfile changes are committed on `perf/debounce-ag-grid-search`; automated verification is pending. Do not mark performance acceptance complete until CI and a large-data browser check pass.
