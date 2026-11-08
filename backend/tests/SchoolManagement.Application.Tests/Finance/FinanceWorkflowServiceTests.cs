@@ -45,6 +45,8 @@ public sealed class FinanceWorkflowServiceTests
         public Task<bool> NameExistsAsync(string name, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task<bool> HasOverlappingPeriodAsync(DateOnly startDate, DateOnly endDate, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task AddAsync(FiscalPeriod period, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>([]);
+
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
