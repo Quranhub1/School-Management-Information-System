@@ -12,9 +12,13 @@ import { StudentFinanceDashboard } from './StudentFinanceDashboard'
 import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
 import { AgGridTable } from './AgGridTable'
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { BarChart } from './charts'
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+import { BarChart } from './charts'
+>>>>>>> origin/feat/chartjs-centralized-visualisation
 
 type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
 

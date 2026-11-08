@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Chart from 'chart.js/auto'
+=======
+import { useEffect, useState } from 'react'
+>>>>>>> origin/feat/chartjs-centralized-visualisation
 import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
 import { getUsers } from '../api/administration'
@@ -10,9 +14,13 @@ import { listPayroll } from '../api/payroll'
 import { InventoryStockSettings } from './InventoryStockSettings'
 import { AgGridTable } from './AgGridTable'
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { DoughnutChart } from './charts'
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+import { DoughnutChart } from './charts'
+>>>>>>> origin/feat/chartjs-centralized-visualisation
 import type { ColDef } from 'ag-grid-community'
 
 type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring' | 'stock-settings'
@@ -49,6 +57,7 @@ const staffSearchColumns: ColDef<StaffSearchResult>[] = [
 
 =======
 
+<<<<<<< HEAD
 function DonutChart({
   title,
   description,
@@ -130,6 +139,8 @@ function DonutChart({
   )
 }
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+>>>>>>> origin/feat/chartjs-centralized-visualisation
 
 export function AdminDashboard() {
   const session = getSession()
