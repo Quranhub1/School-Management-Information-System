@@ -5267,6 +5267,89 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Navigation("Allocations");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.SchoolPaymentNotification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExternalReference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SchoolPayReference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StudentInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("PayerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("RawPayload")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalReference")
+                        .IsUnique();
+
+                    b.HasIndex("SchoolPayReference");
+
+                    b.HasIndex("StudentInvoiceId");
+
+                    b.HasIndex("StudentId", "Status");
+
+                    b.ToTable("SchoolPaymentNotifications");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.SchoolPaymentNotification", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SchoolManagement.Domain.Finance.StudentInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("StudentInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentInvoice", b =>
                 {
                     b.Navigation("Discounts");
