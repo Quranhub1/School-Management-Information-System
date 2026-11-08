@@ -9,7 +9,7 @@ namespace SchoolManagement.Infrastructure.Migrations;
 
 [DbContext(typeof(SchoolManagementDbContext))]
 [Migration("20261108170000_AddSchoolPayNotifications")]
-public sealed class AddSchoolPayNotifications : Migration
+public sealed partial class AddSchoolPayNotifications : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
