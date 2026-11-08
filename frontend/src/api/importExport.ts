@@ -1,4 +1,6 @@
 import { getAccessToken } from './auth'
+import { parseApiInput, parseApiResponse } from '../lib/validation'
+import { bulkImportRequestSchema, bulkImportResultSchema } from '../schemas'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken()
@@ -25,8 +27,10 @@ export interface ImportExportRequest {
   csvData: string
 }
 
-export function importData(input: ImportExportRequest) {
-  return request<BulkImportResult>('/api/import-export/import', { method: 'POST', body: JSON.stringify(input) })
+export async function importData(input: ImportExportRequest) {
+  const validated = parseApiInput(bulkImportRequestSchema, input, 'bulk import')
+  const result = await request<unknown>('/api/import-export/import', { method: 'POST', body: JSON.stringify(validated) })
+  return parseApiResponse(bulkImportResultSchema, result, 'bulk import result') as BulkImportResult
 }
 
 export function exportData(entityType: string, filters?: Record<string, string>) {
