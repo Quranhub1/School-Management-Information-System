@@ -1,51 +1,10 @@
-<<<<<<< HEAD
 import Dexie, { type Table } from 'dexie'
 
-<<<<<<< HEAD
 export type QueryCacheRecord<T = unknown> = {
   key: string
   savedAt: number
   buster: string
   state: T
-=======
-export const DB_NAME = 'smis-offline';
-export const DB_VERSION = 2;
-
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onerror = () => reject(request.error);
-    request.onblocked = () => reject(new Error('SMIS offline database upgrade is blocked by another open tab. Close older SMIS tabs and retry.'));
-    request.onsuccess = () => {
-      const db = request.result;
-      db.onversionchange = () => db.close();
-      resolve(db);
-    };
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains('queue')) {
-        db.createObjectStore('queue', { keyPath: 'id', autoIncrement: true });
-      }
-      if (!db.objectStoreNames.contains('students')) {
-        const store = db.createObjectStore('students', { keyPath: 'id' });
-        store.createIndex('studentCode', 'studentCode', { unique: false });
-      }
-      if (!db.objectStoreNames.contains('attendance')) {
-        const store = db.createObjectStore('attendance', { keyPath: 'id' });
-        store.createIndex('sessionId', 'sessionId', { unique: false });
-      }
-      if (!db.objectStoreNames.contains('finance')) {
-        db.createObjectStore('finance', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('settings')) {
-        db.createObjectStore('settings', { keyPath: 'key' });
-      }
-      if (!db.objectStoreNames.contains('queryCache')) {
-        db.createObjectStore('queryCache', { keyPath: 'key' });
-      }
-    };
-  });
->>>>>>> origin/feat/tanstack-query-offline-cache
 }
 
 export type CacheEntry<T = unknown> = {
@@ -176,82 +135,6 @@ export async function clearAppStateForScope(scope: string): Promise<void> {
   await offlineDb.appState.where('scope').equals(scope).delete()
 }
 
-=======
-export type CacheEntry<T = unknown> = {
-  key: string
-  scope: string
-  value: T
-  updatedAt: number
-  expiresAt: number
-}
-
-export type SyncDomain = 'students' | 'attendance' | 'library' | 'messaging' | 'other'
-export type SyncStatus = 'pending' | 'processing' | 'synced' | 'conflict' | 'failed' | 'blocked'
-
-export type SyncOperation = {
-  id: string
-  scope: string
-  domain: SyncDomain
-  operation: string
-  resourceKey: string
-  payload: unknown
-  idempotencyKey: string
-  status: SyncStatus
-  attempts: number
-  createdAt: number
-  updatedAt: number
-  lastError?: string
-  serverRecordVersion?: string
-}
-
-export type SyncConflict = {
-  id: string
-  operationId: string
-  scope: string
-  detectedAt: number
-  reason: string
-  localVersion?: unknown
-  serverVersion?: unknown
-  resolutionStatus: 'unresolved' | 'resolved' | 'discarded'
-  resolvedAt?: number
-}
-
-class SmisOfflineDatabase extends Dexie {
-  cacheEntries!: Table<CacheEntry, string>
-  syncOperations!: Table<SyncOperation, string>
-  syncConflicts!: Table<SyncConflict, string>
-
-  // Retain the v1 stores during the upgrade so existing browser data is not
-  // dropped. The legacy queue is deliberately no longer replayed.
-  constructor() {
-    super('smis-offline')
-    this.version(1).stores({
-      queue: '++id',
-      students: '&id, studentCode',
-      attendance: '&id, sessionId',
-      finance: '&id',
-      settings: '&key',
-    })
-    this.version(2).stores({
-      queue: '++id, createdAt',
-      students: '&id, studentCode',
-      attendance: '&id, sessionId',
-      finance: '&id',
-      settings: '&key',
-      cacheEntries: '&key, scope, expiresAt, updatedAt',
-      syncOperations: '&id, scope, domain, status, createdAt, updatedAt, idempotencyKey, [scope+status]',
-      syncConflicts: '&id, operationId, scope, detectedAt, resolutionStatus',
-    })
-  }
-}
-
-export const offlineDb = new SmisOfflineDatabase()
-
-export function offlineScopeFor(username: string, roles: string[] = []): string {
-  return [username.trim().toLowerCase(), [...roles].sort().join(',')].join('|')
-}
-
->>>>>>> origin/feat/dexie-offline-data-sync
 export async function readCached<T>(key: string, scope: string): Promise<CacheEntry<T> | undefined> {
   return offlineDb.cacheEntries.get(`${scope}::${key}`) as Promise<CacheEntry<T> | undefined>
 }
@@ -275,7 +158,6 @@ export async function invalidateCachedRead(key: string, scope?: string): Promise
   await offlineDb.cacheEntries.filter(entry => entry.key.endsWith(`::${key}`)).delete()
 }
 
-<<<<<<< HEAD
 export async function readQueryCache<T = unknown>(key: string): Promise<QueryCacheRecord<T> | undefined> {
   return offlineDb.queryCache.get(key) as Promise<QueryCacheRecord<T> | undefined>
 }
@@ -296,11 +178,6 @@ export async function clearCacheForUser(username: string): Promise<void> {
     offlineDb.appState.where('scope').startsWith(prefix).delete(),
     offlineDb.queryCache.delete(`query-cache:${username}`),
   ])
-=======
-export async function clearCacheForUser(username: string): Promise<void> {
-  const prefix = `${username.trim().toLowerCase()}|`
-  await offlineDb.cacheEntries.where('scope').startsWith(prefix).delete()
->>>>>>> origin/feat/dexie-offline-data-sync
 }
 
 function containsFinancialPayload(value: unknown, depth = 0): boolean {
