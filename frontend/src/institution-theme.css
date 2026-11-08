@@ -627,6 +627,7 @@
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+<<<<<<< HEAD
 
 
 /* Final override: remove any selected-tab C-shaped edge, inset, or pseudo-marker.
@@ -656,3 +657,5 @@
 }
 =======
 >>>>>>> origin/fix/branding-copy-sidebar-navigation
+=======
+>>>>>>> origin/fix/compact-course-mapping-select
