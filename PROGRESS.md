@@ -137,19 +137,30 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Add initial request/form schemas for student admissions, finance payments/expenses, staff records, inventory movements/items, academic timetable entries, examination results, and library catalogue/loans.
 - [x] Infer TypeScript types from schemas so validation and static types share a single source of truth.
 - [x] Add unit tests for representative valid and invalid inputs, including UGX integer amounts, non-negative stock, required identifiers and date/time constraints.
+- [x] Enforce request validation and response-contract parsing in Admissions API services (list/detail/create/update/decision).
+- [x] Enforce payroll request validation for generation, payment and allowance/deduction updates; validate payroll list responses.
+- [x] Enforce stream create/list validation in the Academics API service.
+- [x] Enforce individual and bulk SMS request validation and validate send-result responses.
+- [x] Enforce Student API create/update payload validation and validate student list/detail responses.
+- [x] Enforce Finance API invoice creation/list response validation and payment request validation.
+- [x] Enforce HR staff creation/update and leave-request validation at the API service boundary.
+- [x] Enforce Inventory register save payload and read/write response validation.
+- [x] Enforce Library book creation and loan issue request validation.
+- [x] Enforce bulk import request and result validation before/after the import API call.
+- [x] Add reusable `parseApiInput` and field-addressable `InputValidationError` so invalid requests are rejected before network submission.
 - [x] Keep backend validation, authorization, database constraints and financial posting rules authoritative; frontend validation is an additional boundary, not a replacement.
 
 ### Not yet tackled — remaining rollout
 
 - [ ] Install dependencies from the updated lockfile and run `npm ci` in the frontend environment.
 - [ ] Run TypeScript build, full Vitest suite and production Vite build; resolve any failures introduced by the integration.
-- [ ] Wire schemas into every existing create/edit form across Admissions, Students, Finance, HR, Inventory, Library, Academics, Examinations and Administration.
-- [ ] Integrate schema validation into AG Grid cell editing, bulk paste, CSV/Excel imports and row-level error reporting.
-- [ ] Apply response schemas at the shared API client boundary after identifying and standardising the repository's API service layer; reject malformed payloads without exposing sensitive response data.
+- [ ] Add direct React form integration (React Hook Form resolver or shared form adapter) so field errors render inline before submit; API services currently provide the final frontend enforcement boundary for the migrated operations.
+- [ ] Integrate schema validation into AG Grid cell editing, bulk paste, CSV/Excel imports and row-level error reporting. The bulk-import HTTP request/result is validated, but individual imported rows are not yet validated against per-entity schemas.
+- [ ] Extend runtime response schemas to all remaining API services and endpoints. The current response validation is enabled for admissions, payroll, streams, students, invoices, inventory registers, SMS send results and bulk-import results; other APIs remain typed-only.
 - [ ] Add backend-aligned contract tests for DTOs, enums, nullable fields, IDs, pagination and date/time formats.
 - [ ] Verify schemas against actual .NET request/response DTOs and EF/database constraints; adjust assumptions before enabling strict validation on production flows.
 - [ ] Add module-by-module validation coverage and regression tests for all role-specific workflows.
 - [ ] Add validation for SchoolPay integration contracts once provider-approved request/response payloads are available.
 - [ ] Confirm offline desktop packaging includes Zod in the bundled frontend and run clean-machine Windows/Linux smoke tests.
 
-**Status:** central Zod foundation and representative domain schemas are committed on the feature branch. This is not yet a claim that every live form, API endpoint, AG Grid editor or import workflow has been migrated. The remaining rollout items above must be completed and verified before declaring system-wide Zod adoption.
+**Status:** central Zod foundation plus active request/response enforcement in selected departmental API services are committed on the feature branch. Direct inline React form wiring, complete API coverage, per-row import validation and AG Grid editor/paste integration remain outstanding. Automated build/test verification is still required; do not declare system-wide adoption until the remaining rollout and regression checks are complete.
