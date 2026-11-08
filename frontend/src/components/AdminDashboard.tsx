@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
 import { getUsers } from '../api/administration'
+import { SearchBar } from '@/components/ui/search-bar';
 import { getStudents } from '../api/students'
 import { listStaff, STAFF_CHANGED_EVENT } from '../api/staff'
 import { getInvoices } from '../api/finance'
@@ -344,7 +345,12 @@ export function AdminDashboard() {
           <form className="student-form" onSubmit={searchStudent} style={{ marginBottom: 22 }}>
             <h3>Student Search</h3>
             <div className="form-row">
-              <input aria-label="Student search" placeholder="Search by student number or name..." value={studentSearch} onChange={e => setStudentSearch(e.target.value)} />
+              <SearchBar
+          placeholder="Search by student number or name..."
+          value={studentSearch}
+          onChange={e => setStudentSearch(e.target.value)}
+          aria-label="Student search"
+        />
               <button type="submit">Search</button>
             </div>
           </form>
@@ -357,7 +363,12 @@ export function AdminDashboard() {
           <form className="student-form" onSubmit={searchStaff} style={{ marginBottom: 22 }}>
             <h3>Staff Search</h3>
             <div className="form-row">
-              <input aria-label="Staff search" placeholder="Search by staff number or name..." value={staffSearch} onChange={e => setStaffSearch(e.target.value)} />
+              <SearchBar
+          placeholder="Search by staff number or name..."
+          value={staffSearch}
+          onChange={e => setStaffSearch(e.target.value)}
+          aria-label="Staff search"
+        />
               <button type="submit">Search</button>
             </div>
           </form>

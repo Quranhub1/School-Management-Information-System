@@ -133,14 +133,16 @@ export function AlumniManagement() {
           <button className="secondary-button" onClick={() => void load()}>Refresh</button>
         </div>
         <div className="alumni-filters">
-          <input placeholder="Search name or student number" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && void load()} />
-          <input placeholder="Programme" value={programme} onChange={e => setProgramme(e.target.value)} onKeyDown={e => e.key === 'Enter' && void load()} />
+          <SearchBar
+          placeholder="Search name or student number"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => e.key == 'Enter' onKeyDown={e => e.key == 'Enter' == 'Enter' == 'Enter')== 'Enter')== 'Enter') void load()} }onKeyDown={e => e.key == 'Enter' == 'Enter' == 'Enter')== 'Enter')== 'Enter') void load()} } void load()} }
+        />
+          <input placeholder="Programme" value={programme} onChange={e => setProgramme(e.target.value)} onKeyDown={e => e.key == 'Enter') void load()}
+          /> } }
           <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} title="Graduation from" />
           <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} title="Graduation to" />
-        </div>
-        {loading ? <p className="empty">Loading alumni…</p> : <div className="table-wrap"><table><thead><tr><th>Student</th><th>Graduation</th><th>Programme</th><th>Occupation</th><th>Actions</th></tr></thead><tbody>
-          {alumni.map(a => <tr key={a.id}><td><strong>{(a as Alumni & { studentName?: string }).studentName || a.studentId}</strong><span className="table-subtitle">{(a as Alumni & { studentNumber?: string }).studentNumber || a.studentId}</span></td><td>{a.graduationDate}</td><td>{a.programme}</td><td>{a.currentOccupation || '—'}</td><td><button className="secondary-button" onClick={() => selectAlumnus(a.id)}>Open Profile</button>{editingId === a.id ? <><button className="secondary-button" onClick={() => void saveEdit()}>Save</button><button className="secondary-button" onClick={() => setEditingId(null)}>Cancel</button></> : <button className="secondary-button" onClick={() => startEdit(a)}>Edit</button>}</td></tr>)}
-        </tbody></table></div>}
       </div>
 
       <aside className="alumni-summary-card">

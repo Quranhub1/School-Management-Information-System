@@ -35,6 +35,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [payrollYear, setPayrollYear] = useState(new Date().getFullYear())
   const selectedPayroll = payroll.filter(p => p.month === payrollMonth && p.year === payrollYear)
 
+<<<<<<< HEAD
   useEffect(() => {
     const nextTab: Tab | undefined = activeSubsection === 'staff' ? 'staff'
       : activeSubsection === 'payroll' ? 'payroll'
@@ -52,6 +53,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
 
   const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', courseUnitIds: [] as string[] })
   const [form, setForm] = useState(emptyStaffForm)
+=======
+  const [form, setForm] = useState({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' })
+>>>>>>> origin/kilo/golden-circuit-3yz
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
 
   useEffect(() => {
@@ -69,6 +73,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     return () => window.removeEventListener('smis:navigate-subsection', handler)
   }, [canManage, canReadPayroll])
 
+<<<<<<< HEAD
   useEffect(() => {
     void loadStaff()
     void listStaffCourseUnits().then(setCourseUnits).catch(e => setError(e instanceof Error ? e.message : 'Unable to load course units.'))
@@ -212,9 +217,28 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       notify('Payroll generation completed successfully.', 'success', 'Payroll generated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to generate payroll.'; setError(message); notify(message, 'error', 'Payroll generation failed') } }
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll(); notify('Payroll payment status updated.', 'success', 'Payroll updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to mark payroll as paid.'; setError(message); notify(message, 'error', 'Payroll update failed') } }
 =======
+=======
+  useEffect(() => { void loadStaff() }, [])
+
+  useEffect(() => { if (tab === 'leave') void loadLeave() }, [tab])
+
+  useEffect(() => { if (tab === 'payroll') void loadPayroll() }, [tab])
+
+  async function deactivate(id: string) { try { await deactivateStaff(id); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate staff.') } }
+
+>>>>>>> origin/kilo/golden-circuit-3yz
   async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to request leave.') } }
+
   async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, '', approved); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to approve leave.') } }
+<<<<<<< HEAD
   async function handleGeneratePayroll() { setError(''); setSuccess(''); try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll(); setSuccess(`Payroll generation completed for ${new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} ${payrollYear}. Existing entries for this period were retained.`) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to generate payroll.') } }
+=======
+
+  async function submit(e: React.FormEvent) { e.preventDefault(); setError(''); try { await createStaff(form); console.log("Creating staff with form:", form); setForm({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching' }); await loadStaff() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to create staff.') } }
+
+  async function handleGeneratePayroll() { try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to generate payroll.') } }
+
+>>>>>>> origin/kilo/golden-circuit-3yz
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to mark payroll as paid.') } }
 >>>>>>> origin/fix/hr-payroll-staff-names-period-totals
 
@@ -282,6 +306,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         <>
           {canManage && (
             <form className="grid-form" onSubmit={submit}>
+<<<<<<< HEAD
               <input placeholder="Staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
               <input placeholder="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
               <input placeholder="Last name" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
@@ -335,6 +360,22 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
 >>>>>>> origin/fix/compact-staff-management-buttons
               <button type="submit" className={editingStaffId ? undefined : 'staff-add-button'} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #166534', borderRadius: 3, padding: '6px 12px', minHeight: 32, width: 'fit-content', maxWidth: '100%', alignSelf: 'start', fontSize: 13, lineHeight: 1.2, fontWeight: 600, cursor: 'pointer' }}>{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
               {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
+=======
+              <input placeholder="Staff number" value={form.staffNumber} onChange={e => setForm({ ...form, staffNumber: e.target.value })} required />
+              <input placeholder="First name" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} required />
+              <input placeholder="Last name" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} required />
+              <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
+              <input placeholder="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required />
+              <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
+              <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              <select placeholder="Staff type" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value })} required >
+                <option value="">Select staff type</option>
+                <option value="Teaching">Teaching</option>
+                <option value="NonTeaching">Non-Teaching</option>
+                <option value="Administrative">Administrative</option>
+                <option value="Support">Support</option>
+              </select>
+>>>>>>> origin/kilo/golden-circuit-3yz
             </form>
           )}
           <div className="table-wrap">
@@ -503,7 +544,11 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       {tab === 'recruitment' && (
         <div className="card">
           <h3>Recruitment & Onboarding</h3>
+<<<<<<< HEAD
             </div>
+=======
+        </div>
+>>>>>>> origin/kilo/golden-circuit-3yz
       )}
     </section>
   )

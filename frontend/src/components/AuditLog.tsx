@@ -61,6 +61,7 @@ const auditColumns: ColDef<AuditLog>[] = [
   { field: 'timestamp', headerName: 'Timestamp', valueFormatter: p => p.value ? new Date(String(p.value)).toLocaleString('en-UG') : '—', minWidth: 180 },
 ];
 
+import { SearchBar } from '@/components/ui/search-bar';
 export function AuditLogManagement() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [error, setError] = useState('');
@@ -224,6 +225,7 @@ export function AuditLogManagement() {
   }
 
   return <section className="panel" aria-label="Audit Log">
+<<<<<<< HEAD
     <div className="panel-heading">
       <div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div>
       <div className="form-actions">
@@ -254,6 +256,18 @@ export function AuditLogManagement() {
       <label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
       <button onClick={() => void load()}>Search</button>
     </div>
+=======
+    <div className="panel-heading"><div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div></div>
+    <div className="library-search" style={{ margin: '14px 0' }}><SearchBar
+          placeholder="User ID"
+          value={userId}
+          onChange={e => setUserId(e.target.value)}
+        /><SearchBar
+          placeholder="Action"
+          value={action}
+          onChange={e => setAction(e.target.value)}
+        /><button onClick={() => void load()}>Search</button></div>
+>>>>>>> origin/kilo/golden-circuit-3yz
     {error && <div className="error" role="alert">{error}</div>}
     {loading ? <LoadingSpinner label="Loading audit logs…" /> : <AgGridTable rows={logs} columns={auditColumns} getRowId={p => p.data.id} exportFileName="smis-audit-log" height={560} />}
 <<<<<<< HEAD

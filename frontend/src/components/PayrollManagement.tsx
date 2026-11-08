@@ -3,12 +3,16 @@ import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { AgGridTable } from './AgGridTable';
 import LoadingSpinner from './LoadingSpinner';
 import { listPayroll, markPayrollPaid, updatePayrollAllowances, type PayrollRecord } from '../api/payroll';
+<<<<<<< HEAD
 import './PayrollManagement.css';
 
 const money = (amount: number) => `UGX ${amount.toLocaleString('en-UG', { maximumFractionDigits: 0 })}`;
 const periodLabel = (month: number, year: number) =>
   new Date(year, month - 1, 1).toLocaleDateString('en-UG', { month: 'short', year: 'numeric' });
 const payrollCode = (id: string) => `PAY-${id.replace(/-/g, '').toUpperCase()}`;
+=======
+import { FancyButton } from "@/components/ui/fancy-button";
+>>>>>>> origin/kilo/golden-circuit-3yz
 
 export function PayrollManagement() {
   const [records, setRecords] = useState<PayrollRecord[]>([]);
@@ -50,6 +54,7 @@ export function PayrollManagement() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update allowances.'); }
   }
 
+<<<<<<< HEAD
   const pendingCount = records.filter(record => record.status.toLowerCase() === 'pending').length;
   const totalNetPay = records.reduce((sum, record) => sum + record.netPay, 0);
   const totalPaid = records.filter(record => record.status.toLowerCase() === 'paid')
@@ -158,4 +163,11 @@ export function PayrollManagement() {
       {records.length === 0 && <div className="payroll-empty"><strong>No payroll records yet</strong><span>Generate payroll for a month to see staff salary records here.</span></div>}
     </div>}
   </section>;
+=======
+  return <section className="panel" aria-label="Payroll">
+    <div className="panel-heading"><div><span className="eyebrow">HR</span><h2>Payroll Management</h2></div></div>
+    {error && <div className="error" role="alert">{error}</div>}
+    {loading ? <p className="empty">Loading payroll…</p> : <div className="table-wrap"><table><thead><tr><th>Staff</th><th>Period</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net Pay</th><th>Status</th><th>Action</th></tr></thead><tbody>{records.map(r => <tr key={r.id}><td>{r.staffMemberId}</td><td>{r.month}/{r.year}</td><td>{r.basicSalary.toFixed(2)}</td>{editingId === r.id ? <><td><input type="number" value={editAllowances} onChange={e => setEditAllowances(e.target.value)} /></td><td><input type="number" value={editDeductions} onChange={e => setEditDeductions(e.target.value)} /></td><td>{(Number(editAllowances) - Number(editDeductions)).toFixed(2)}</td></> : <><td>{r.allowances.toFixed(2)}</td><td>{r.deductions.toFixed(2)}</td><td>{r.netPay.toFixed(2)}</td></>}<td>{r.status}</td><td>{r.status === 'Pending' && <button className="secondary-button" onClick={() => void markPaid(r.id)}>Mark Paid</button>}{editingId === r.id ? <><FancyButton onClick={() => void saveEdit(r.id)}>Save</FancyButton><button className="secondary-button" onClick={() => setEditingId(null)}>Cancel</button></> : <button className="secondary-button" onClick={() => startEdit(r)}>Edit</button>}</td></tr>)}</tbody></table></div>}
+  </section>
+>>>>>>> origin/kilo/golden-circuit-3yz
 }

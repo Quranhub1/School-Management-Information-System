@@ -5,6 +5,7 @@ import { createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSetti
 type SettingsTab = 'general' | 'branding' | 'gallery'
 type GalleryFilter = 'all' | 'recent' | 'captioned'
 
+import { FancyButton } from "@/components/ui/fancy-button";
 interface InstitutionSettingsPageProps {
   onSaved: (settings: InstitutionSettings) => void
 }
@@ -426,8 +427,13 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         )}
 
         <div className="topbar-actions" style={{ marginTop: 22 }}>
+<<<<<<< HEAD
           <button type="submit" disabled={saving} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #15803d', borderRadius: 6, minHeight: 42, padding: '10px 20px', fontWeight: 600, boxShadow: 'none' }}>{saving ? 'Saving…' : 'Save Settings'}</button>
           <button type="button" onClick={() => void load()} disabled={saving || uploadingLogo || uploadingGallery} style={{ background: '#ffffff', color: '#44403c', border: '1px solid #d6d3d1', borderRadius: 6, minHeight: 42, padding: '10px 18px', fontWeight: 600, boxShadow: 'none', cursor: saving || uploadingLogo || uploadingGallery ? 'not-allowed' : 'pointer', opacity: saving || uploadingLogo || uploadingGallery ? 0.65 : 1 }}>Reset</button>
+=======
+          <FancyButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Settings'}</FancyButton>
+          <button type="button" className="secondary-button" onClick={() => void load()}>Reset</button>
+>>>>>>> origin/kilo/golden-circuit-3yz
         </div>
       </form>
     </section>

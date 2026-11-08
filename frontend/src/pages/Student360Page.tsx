@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getStudent360Profile, type Student360ProfileDto } from '../api/student360'
 
+import { FancyButton } from "@/components/ui/fancy-button";
 export function Student360Page() {
   const [studentId, setStudentId] = useState('')
   const [profile, setProfile] = useState<Student360ProfileDto | null>(null)
@@ -21,7 +22,11 @@ export function Student360Page() {
       <div className="panel-heading"><div><p className="eyebrow">STUDENT</p><h2>Student 360° Profile</h2></div></div>
       <form className="student-form" onSubmit={e => { e.preventDefault(); void load() }} style={{ marginBottom: 18 }}>
         <label>Student ID<input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="Enter student GUID" required /></label>
+<<<<<<< HEAD
         <button type="submit" disabled={loading}>{loading ? <><span className="spinner spinner--small" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} />)}</span> Loading…</> : 'Load Profile'}</button>
+=======
+        <FancyButton type="submit" disabled={loading}>{loading ? 'Loading…' : 'Load Profile'}</FancyButton>
+>>>>>>> origin/kilo/golden-circuit-3yz
       </form>
       {error && <div className="error" role="alert">{error}</div>}
       {profile && (

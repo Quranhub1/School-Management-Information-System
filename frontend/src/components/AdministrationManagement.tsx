@@ -1,5 +1,6 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
+import { FancyButton } from "@/components/ui/fancy-button";
 import { ArrowLeft, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ClipboardCheck, GraduationCap, HeartPulse, Landmark, Library, LockKeyhole, Megaphone, ShieldCheck, UserRound, UsersRound, WalletCards } from 'lucide-react'
 import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, type CreateUserRequest, type UpdateUserRequest, type UserSummary } from '../api/administration'
 import { type InstitutionSettings } from '../api/institutionSettings'
@@ -249,7 +250,11 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
               </select>
             </label>
           </div>
+<<<<<<< HEAD
           <button type="submit" className="create-account-button" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</button>
+=======
+          <FancyButton type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create account'}</FancyButton>
+>>>>>>> origin/kilo/golden-circuit-3yz
         </form>
         {editingUserId && (
           <form className="student-form" onSubmit={saveEdit} aria-label="Edit user account">
@@ -275,7 +280,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
           <form className="student-form" onSubmit={resetPassword} aria-label="Reset user password">
             <div className="panel-heading"><div><p className="eyebrow">CREDENTIALS</p><h3>Reset password for {users.find(user => user.id === passwordResetUserId)?.username ?? 'user'}</h3></div><button type="button" className="secondary-button" onClick={() => { setPasswordResetUserId(null); setPasswordResetValue(''); setSuccessMessage('') }}>Cancel</button></div>
             <label>New temporary password<input type="password" autoComplete="new-password" minLength={8} value={passwordResetValue} onChange={e => setPasswordResetValue(e.target.value)} required /></label>
-            <button type="submit" disabled={actionBusy || passwordResetValue.length < 8}>{actionBusy ? 'Resetting…' : 'Reset password'}</button>
+            <FancyButton type="submit" disabled={actionBusy || passwordResetValue.length < 8}>{actionBusy ? 'Resetting…' : 'Reset password'}</FancyButton>
           </form>
         )}
         <div className="table-wrap">

@@ -12,6 +12,7 @@ import { confirmAction } from './GlobalNotifications'
 import { showConfirmDialog } from '../utils/confirmDialog'
 >>>>>>> origin/fix/document-delete-centered-confirmation
 
+import { FancyButton } from "@/components/ui/fancy-button";
 const DOCUMENT_TYPES = ['Birth Certificate', 'National ID', 'Passport', 'Academic Transcript', 'Medical Record', 'Immunization Record', 'Transfer Certificate', 'Other']
 
 export function DocumentManagement({ canManage }: { canManage: boolean }) {
@@ -120,7 +121,7 @@ export function DocumentManagement({ canManage }: { canManage: boolean }) {
             <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional" />
           </label>
         </div>
-        <button type="submit" disabled={saving}>{saving ? 'Uploading…' : 'Upload document'}</button>
+        <FancyButton type="submit" disabled={saving}>{saving ? 'Uploading…' : 'Upload document'}</FancyButton>
       </form>
     )}
     {error && <div className="error" role="alert">{error}</div>}

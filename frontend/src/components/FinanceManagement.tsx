@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { getSession } from '../api/auth'
 import { getDashboard, getOutstandingBalances, getPayments, type FinanceDashboard, type OutstandingBalance } from '../api/finance'
+import { SearchBar } from '@/components/ui/search-bar';
 import { formatCurrency } from '../lib/currency'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
 import { AccountingReportsWorkspace } from './AccountingReportsWorkspace'
@@ -234,8 +235,21 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
 
           <section className="finance-surface" style={{ marginTop: 18 }}>
             <div className="finance-surface-heading"><div><span className="eyebrow">SCHOOL FEES WORKSPACE</span><h3>Payment Provider-style collection view</h3><p>Searchable student accounts, payment status, collection indicators and transaction tables, adapted to SMIS finance data.</p></div><button type="button" className="secondary-button" onClick={() => setTab('collections')}>Open collections</button></div>
+<<<<<<< HEAD
             <div className="finance-table-toolbar"><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search student name / code / programme" aria-label="Search finance accounts" /><span>{filteredOutstanding.length.toLocaleString()} outstanding accounts</span></div>
             <AgGridTable rows={filteredOutstanding.slice(0, 8)} columns={accountColumns} height={360} pageSize={8} />
+=======
+            <div className="finance-table-toolbar"><SearchBar
+          placeholder="Search student name / code / programme"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          aria-label="Search finance accounts"
+        /><span>{filteredOutstanding.length.toLocaleString()} outstanding accounts</span></div>
+            <div className="table-wrap"><table className="finance-table"><thead><tr><th>Student</th><th>Programme</th><th>Balance</th><th>Status</th><th>Collection indicator</th></tr></thead><tbody>
+              {filteredOutstanding.slice(0, 8).map(item => { const s = statusFor(item.balance, item.amount, item.paidAmount); const progress = item.amount > 0 ? Math.min(100, item.paidAmount / item.amount * 100) : 0; return <tr key={item.studentId}><td><strong>{item.studentName}</strong><small>{item.studentNumber}</small></td><td>{item.programmeName}</td><td><strong className={s.tone === 'danger' ? 'finance-value-danger' : 'finance-value-success'}>{money(item.balance)}</strong></td><td><span className={'finance-status ' + s.tone}>{s.label}</span></td><td><div className="finance-row-progress"><span style={{ width: progress + '%' }} /></div><small>{progress.toFixed(0)}% collected</small></td></tr> })}
+              {filteredOutstanding.length === 0 && <tr><td colSpan={5} className="empty">No matching outstanding accounts.</td></tr>}
+            </tbody></table></div>
+>>>>>>> origin/kilo/golden-circuit-3yz
           </section>
         </>
       )}
@@ -245,8 +259,21 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
       {tab === 'collections' && (
         <section className="finance-surface">
           <div className="finance-surface-heading"><div><span className="eyebrow">COLLECTIONS</span><h3>Payments & receipts</h3><p>Real-time-style transaction table for posted finance payments. Payment channels are deliberately not used to drive the interface.</p></div></div>
+<<<<<<< HEAD
           <div className="finance-table-toolbar"><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search receipt / student / reference" aria-label="Search payments" /><span>{payments.length.toLocaleString()} transactions loaded</span></div>
           <AgGridTable rows={payments.filter(p => !query.trim() || [p.receiptNumber,p.studentName,p.invoiceNumber,p.reference].some(v => String(v ?? '').toLowerCase().includes(query.trim().toLowerCase())))} columns={collectionColumns} height={520} pageSize={25} />
+=======
+          <div className="finance-table-toolbar"><SearchBar
+          placeholder="Search receipt / student / reference"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          aria-label="Search payments"
+        /><span>{payments.length.toLocaleString()} transactions loaded</span></div>
+          <div className="table-wrap"><table className="finance-table"><thead><tr><th>Date</th><th>Receipt</th><th>Student</th><th>Invoice</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+            {payments.filter(p => !query.trim() || [p.receiptNumber,p.studentName,p.invoiceNumber,p.reference].some(v => String(v ?? '').toLowerCase().includes(query.trim().toLowerCase()))).map((payment, index) => <tr key={payment.id ?? index}><td>{new Date(payment.paidAt).toLocaleString('en-UG')}</td><td><strong>{payment.receiptNumber ?? '—'}</strong><small>{payment.reference ?? 'No reference'}</small></td><td>{payment.studentName ?? '—'}</td><td>{payment.invoiceNumber ?? '—'}</td><td><strong className="finance-value-success">{money(payment.amount)}</strong></td><td><span className="finance-status success">Posted</span></td></tr>)}
+            {payments.length === 0 && <tr><td colSpan={6} className="empty">No payment transactions found.</td></tr>}
+          </tbody></table></div>
+>>>>>>> origin/kilo/golden-circuit-3yz
         </section>
       )}
 

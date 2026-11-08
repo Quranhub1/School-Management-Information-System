@@ -71,6 +71,7 @@ public sealed class AdministrationController(
         return user is null ? NotFound() : Ok(user);
     }
 
+<<<<<<< HEAD
     [HttpGet("backups")]
     public ActionResult<IReadOnlyList<LocalBackupInfo>> ListBackups() => Ok(backupService.ListBackups());
 
@@ -90,11 +91,36 @@ public sealed class AdministrationController(
         catch (InvalidOperationException ex) { return Problem(ex.Message, statusCode: 500, title: "Database backup failed"); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         { return Problem($"Could not save the backup locally: {ex.Message}", statusCode: 500, title: "Local backup failed"); }
+=======
+    [HttpGet("backup")]
+    public async Task<IActionResult> Backup(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var backupFilePath = await service.BackupDatabaseAsync(cancellationToken);
+            var fileName = Path.GetFileName(backupFilePath);
+            
+            // Return the backup file as a download
+            var memory = new MemoryStream();
+            await using (var stream = new FileStream(backupFilePath, FileMode.Open))
+            {
+                await stream.CopyToAsync(memory);
+            }
+            memory.Position = 0;
+            
+            return File(memory, "application/octet-stream", fileName);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Backup failed: {ex.Message}" });
+        }
+>>>>>>> origin/kilo/golden-circuit-3yz
     }
 
     public sealed record RestoreLocalBackupRequest(string FileName, string Confirmation);
 
     [HttpPost("restore")]
+<<<<<<< HEAD
     public async Task<IActionResult> Restore([FromBody] RestoreLocalBackupRequest request, CancellationToken cancellationToken)
     {
         if (!string.Equals(request.Confirmation, "RESTORE DATABASE", StringComparison.Ordinal))
@@ -107,8 +133,39 @@ public sealed class AdministrationController(
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (FileNotFoundException ex) { return NotFound(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Problem(ex.Message, statusCode: 500, title: "Database restore failed"); }
+=======
+    public async Task<IActionResult> Restore([FromBody] RestoreRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.BackupData))
+            {
+                return BadRequest(new { message = "Backup data is required." });
+            }
+
+            // In a real implementation, we would save the uploaded backup data to a file first
+            // For simplicity, we're assuming BackupData contains the file path
+            // A better approach would be to accept file upload via multipart/form-data
+            
+            await service.RestoreDatabaseAsync(request.BackupData, cancellationToken);
+            return Ok(new { message = "Database restore completed successfully." });
+        }
+        catch (FileNotFoundException ex)
+        {
+            return NotFound(new { message = $"Backup file not found: {ex.Message}" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Restore failed: {ex.Message}" });
+        }
+>>>>>>> origin/kilo/golden-circuit-3yz
     }
 
     public sealed record SetActiveRequest(bool Active);
     public sealed record ResetPasswordRequest(string NewPassword);
+<<<<<<< HEAD
 }
+=======
+    public sealed record RestoreRequest(string BackupData);
+}
+>>>>>>> origin/kilo/golden-circuit-3yz
