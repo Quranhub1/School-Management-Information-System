@@ -1,4 +1,5 @@
 import LoadingSpinner from '../components/LoadingSpinner'
+import { getAccessToken } from '../api/auth'
 import React, { useEffect, useState } from 'react'
 
 type Stream = { id: string; name: string; code: string; classFormId?: string; isActive: boolean }
@@ -14,7 +15,7 @@ export default function StreamsPage() {
   async function load() {
     setLoading(true)
     try {
-      const response = await fetch('/api/academic-structure/streams', { headers: { Accept: 'application/json', ...(sessionStorage.getItem('smis.accessToken') ? { Authorization: `Bearer ${sessionStorage.getItem('smis.accessToken')}` } : {}) } })
+      const response = await fetch('/api/academic-structure/streams', { headers: { Accept: 'application/json', ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}) } })
       if (!response.ok) throw new Error(`Unable to load streams (${response.status}).`)
       setStreams(await response.json() as Stream[])
       setMessage('')
