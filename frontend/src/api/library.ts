@@ -1,3 +1,6 @@
+import { parseApiInput } from '../lib/validation';
+import { libraryBookCreateRequestSchema, libraryLoanCreateRequestSchema } from '../schemas';
+
 const BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -31,14 +34,13 @@ export const listMembers = (search = '') => request<LibraryMember[]>(`/api/libra
 export const listLoans = (activeOnly = true) => request<LibraryLoan[]>(`/api/library/loans?activeOnly=${activeOnly}`);
 
 export const addBook = (input: Omit<LibraryBook,'id'|'availableCopies'|'isActive'>) => {
-  if (!input.isbn.trim() || !input.title.trim() || !input.author.trim()) throw new Error('ISBN, title and author are required.');
-  if (!Number.isInteger(input.totalCopies) || input.totalCopies < 1) throw new Error('Total copies must be at least 1.');
-  return request<LibraryBook>('/api/library/books', { method:'POST', body:JSON.stringify({ ...input, isbn:input.isbn.trim(), title:input.title.trim(), author:input.author.trim(), publisher:input.publisher?.trim() }) });
+  const validated = parseApiInput(libraryBookCreateRequestSchema, input, 'add library book');
+  return request<LibraryBook>('/api/library/books', { method:'POST', body:JSON.stringify(validated) });
 };
 
 export const issueBook = (input:{bookId:string;studentId:string;dueAtUtc:string}) => {
-  if (!input.bookId || !input.studentId || !input.dueAtUtc) throw new Error('Book, student and due date are required.');
-  return request<LibraryLoan>('/api/library/loans', { method:'POST', body:JSON.stringify(input) });
+  const validated = parseApiInput(libraryLoanCreateRequestSchema, input, 'issue library book');
+  return request<LibraryLoan>('/api/library/loans', { method:'POST', body:JSON.stringify(validated) });
 };
 
 export const returnBook = (id:string) => {
