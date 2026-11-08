@@ -10,6 +10,23 @@ async function signIn(page) {
   await loginFrame.locator('#username').fill('admin');
   await loginFrame.locator('#password').fill(ADMIN_PASSWORD);
   await loginFrame.getByRole('button', { name: /sign in/i }).click();
+  await page.waitForTimeout(500);
+  const authNavDiagnostics = await page.evaluate(() => {
+    const raw = sessionStorage.getItem('smis.session') || localStorage.getItem('smis.session');
+    let session = null;
+    try { session = raw ? JSON.parse(raw) : null; } catch { /* diagnostic only */ }
+    return {
+      username: session?.username ?? null,
+      roles: Array.isArray(session?.roles) ? session.roles : [],
+      hasAccessToken: Boolean(sessionStorage.getItem('smis.accessToken') || localStorage.getItem('smis.accessToken')),
+      sidebarButtons: Array.from(document.querySelectorAll('aside button')).map(button => ({
+        text: button.innerText.trim(),
+        expanded: button.getAttribute('aria-expanded'),
+        hidden: button.closest('section')?.querySelector('[aria-hidden]')?.getAttribute('aria-hidden') ?? null,
+      })),
+    };
+  });
+  console.log('SMIS E2E auth/nav diagnostics', JSON.stringify(authNavDiagnostics));
 }
 
 async function getAdminToken(request) {
