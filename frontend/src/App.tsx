@@ -1,9 +1,12 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 =======
 import { AnimatePresence, motion } from 'framer-motion'
 >>>>>>> origin/perf/lazy-load-workspaces
+=======
+>>>>>>> origin/perf/reduce-workspace-render-lag
 import type { LucideIcon } from 'lucide-react'
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -109,6 +112,9 @@ function LoginScreen({ institution }: { institution: InstitutionSettings }) {
 function GlobalTableLayoutEditor() {
   useEffect(() => {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/perf/reduce-workspace-render-lag
     // Row resize handles are created only for the row under the pointer.
     // Large registers no longer pay the DOM/layout cost of an extra element per row.
     let activeResizeRow: HTMLTableRowElement | null = null;
@@ -136,8 +142,11 @@ function GlobalTableLayoutEditor() {
       row.appendChild(handle);
     };
 
+<<<<<<< HEAD
 =======
 >>>>>>> origin/perf/limit-table-resize-observer-work
+=======
+>>>>>>> origin/perf/reduce-workspace-render-lag
     const decorateTables = (tables: Iterable<HTMLTableElement>) => {
       for (const table of tables) {
         if (table.dataset.fixedLayout === 'true') continue;
@@ -163,6 +172,7 @@ function GlobalTableLayoutEditor() {
           cell.appendChild(handle);
         });
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         table.querySelectorAll<HTMLTableRowElement>('thead tr, tbody tr').forEach(row => {
           if (row.querySelector(':scope > .smis-row-resize-handle')) return;
@@ -182,6 +192,8 @@ function GlobalTableLayoutEditor() {
           row.appendChild(handle);
         });
 >>>>>>> origin/perf/limit-table-resize-observer-work
+=======
+>>>>>>> origin/perf/reduce-workspace-render-lag
       }
     };
 
@@ -596,6 +608,7 @@ return <main className="app-shell">
   </aside>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(activeModule === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden')) ? 'School Warden' : (moduleLabels[activeModule]||'Dashboard')).toUpperCase()}</strong></div></div><CommandPalette items={visibleSidebarGroups.flatMap(group => group.items.map(item => ({ label: item.label, module: item.module, subsection: item.subsection })))} onNavigate={(module, subsection) => navigate(module as ModuleKey, subsection)} onSignOut={signOut}/></header><Suspense fallback={<div className="workspace-loading" role="status" aria-live="polite"><span className="workspace-loading-spinner" aria-hidden="true" /><span className="workspace-loading-copy">Loading workspace…</span><span className="workspace-loading-skeleton" aria-hidden="true"><i /><i /><i /></span></div>}><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} className="content" initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -4 }} transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: "easeOut" }}>{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('Admin Secretary')||r.includes('AdminSecretary'))?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:r.includes('SystemAdministrator')?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 =======
   <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(activeModule === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden')) ? 'School Warden' : (moduleLabels[activeModule]||'Dashboard')).toUpperCase()}</strong></div></div><GlobalSearch/></header><Suspense fallback={<div className="workspace-loading" role="status" aria-live="polite"><span className="workspace-loading-spinner" aria-hidden="true" /><span className="workspace-loading-copy">Loading workspace…</span><span className="workspace-loading-skeleton" aria-hidden="true"><i /><i /><i /></span></div>}><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('Admin Secretary')||r.includes('AdminSecretary'))?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:r.includes('SystemAdministrator')?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
@@ -603,6 +616,9 @@ return <main className="app-shell">
 =======
   <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(activeModule === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden')) ? 'School Warden' : (moduleLabels[activeModule]||'Dashboard')).toUpperCase()}</strong></div></div><GlobalSearch/></header><Suspense fallback={<div className="workspace-loading" role="status" aria-live="polite">Loading workspace…</div>}><AnimatePresence mode="wait" initial={false}><motion.div key={activeModule} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18, ease: 'easeOut' }} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('Admin Secretary')||r.includes('AdminSecretary'))?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:r.includes('SystemAdministrator')?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
 >>>>>>> origin/perf/lazy-load-workspaces
+=======
+  <div className="main-content"><header className="topbar"><div className="topbar-context"><div className="topbar-context-label"><strong>{(activeModule === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden')) ? 'School Warden' : (moduleLabels[activeModule]||'Dashboard')).toUpperCase()}</strong></div></div><GlobalSearch/></header><Suspense fallback={<div className="workspace-loading" role="status" aria-live="polite"><span className="workspace-loading-spinner" aria-hidden="true" /><span className="workspace-loading-copy">Loading workspace…</span><span className="workspace-loading-skeleton" aria-hidden="true"><i /><i /><i /></span></div>}><div key={activeModule} className="content">{activeModule==='dashboard'&&<>{r.includes('Director')?<DirectorExecutiveDashboard onNavigate={m=>navigate(m)}/>:r.includes('ResidentDirector')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('Admin Secretary')||r.includes('AdminSecretary'))?<RoleSpecificDashboard role="AdminSecretary" onNavigate={m=>navigate(m)}/>:r.includes('Secretary')?<RoleSpecificDashboard role="Secretary" onNavigate={m=>navigate(m)}/>:r.includes('Receptionist')?<RoleSpecificDashboard role="Receptionist" onNavigate={m=>navigate(m)}/>:r.includes('HeadOfDepartment')?<RoleSpecificDashboard role="HeadOfDepartment" onNavigate={m=>navigate(m)}/>:r.includes('Principal')||r.includes('AssistantPrincipal')?<PrincipalDashboard/>:r.includes('HR Manager')?<ResidentDirectorHRDashboard onNavigate={m=>navigate(m)}/>:(r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:r.includes('SystemAdministrator')?<AdminDashboard/>:<AnalyticsDashboard/>}</>}
+>>>>>>> origin/perf/reduce-workspace-render-lag
 {activeModule==='dashboard'&&(r.includes('Records Officer')||r.includes('RecordsOfficer')||r.includes('School Warden')||r.includes('SchoolWarden')||r.includes('SchoolWarden'))&&<InventoryStockAlerts/>}
 {activeModule==='administration'&&a&&<AdministrationManagement institution={institution} onInstitutionSaved={onInstitutionSaved} activeSubsection={activeSubsection}/>} 
 {activeModule==='students'&&(st||ad||s360||studentRead||admissionRead)&&<AdmissionsStudentManagement canManage={st||ad} readOnly={!st&&!ad} activeSubsection={activeSubsection} accessProfile={r.includes('Receptionist')?'receptionist':r.includes('Records Officer')?'records':r.includes('HeadOfDepartment')?'department':'general'} />} 
@@ -621,9 +637,13 @@ return <main className="app-shell">
 {activeModule==='system-administration'&&r.includes('SystemAdministrator')&&<SystemAdministrationManagement activeSubsection={activeSubsection} onNavigate={navigate}/>}
 <<<<<<< HEAD
  {activeModule==='campuses'&&r.includes('SystemAdministrator')&&<CampusManagement/>}
+<<<<<<< HEAD
 =======
 >>>>>>> origin/perf/lazy-load-workspaces
  </motion.div></AnimatePresence></Suspense></div></main> }
+=======
+ </div></Suspense></div></main> }
+>>>>>>> origin/perf/reduce-workspace-render-lag
 function App(){
   return <AppContent />
 }
