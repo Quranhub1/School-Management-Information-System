@@ -365,6 +365,9 @@
   outline-offset: -2px !important;
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/fix/sidebar-tabs-no-borders
 
 
 /* Sidebar tabs: rounded corners, but no solid borders or teal accents. */
@@ -395,6 +398,7 @@
   color: #f5efdf !important;
   box-shadow: inset 3px 0 0 #f5efdf !important;
 }
+<<<<<<< HEAD
 
 
 /* Final sidebar tab treatment: the background shade alone indicates hover/selection.
@@ -671,3 +675,5 @@
 >>>>>>> origin/fix/sidebar-rounding-remove-button-motion
 =======
 >>>>>>> origin/fix/sidebar-tabs-black-only-highlight
+=======
+>>>>>>> origin/fix/sidebar-tabs-no-borders
