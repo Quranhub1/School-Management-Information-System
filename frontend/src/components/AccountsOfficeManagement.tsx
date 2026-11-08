@@ -3,6 +3,8 @@ import type { Invoice } from '../api/finance'
 import { getInvoices, recordPayment, getPayments, issueCreditNote, getCreditNotes, addInvoiceNote, getInvoiceNotes, requestStaffAdvance, approveStaffAdvance, recoverStaffAdvance, getStaffAdvances, getInvoiceFeeItems } from '../api/finance'
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
 import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } from '../api/payroll'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 
 type MainTab = 'student-fees' | 'staff-salaries'
 
@@ -83,6 +85,7 @@ const MOCK_INVOICES: Invoice[] = [
 ]
 
 export function AccountsOfficeManagement() {
+  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
   const [mainTab, setMainTab] = useState<MainTab>('student-fees')
 
   const [years, setYears] = useState<AcademicYear[]>([])
@@ -180,7 +183,50 @@ export function AccountsOfficeManagement() {
       }
     }
     void loadYears()
-    return () => { cancelled = true }
+    function payrollPdfOptions() {
+    if (!payrollDetailData) return null
+    const staff = staffMap[payrollDetailData.staffMemberId]
+    const staffName = staff ? staff.firstName + ' ' + staff.lastName : 'Staff Member'
+    return {
+      title: 'Staff Payslip',
+      filename: 'payslip-' + staffName.replace(/[^a-z0-9-_]+/gi, '-') + '-' + payrollDetailData.year + '-' + payrollDetailData.month + '.pdf',
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: staffName, bold: true, fontSize: 13, margin: [0, 4, 0, 4] },
+        { text: 'Payroll period: ' + monthNames[payrollDetailData.month - 1] + ' ' + payrollDetailData.year, margin: [0, 0, 0, 12] },
+        { table: { widths: ['*', 'auto'], body: [
+          [{ text: 'Basic salary', bold: true }, 'UGX ' + payrollDetailData.basicSalary.toLocaleString('en-UG')],
+          [{ text: 'Allowances', bold: true }, 'UGX ' + payrollDetailData.allowances.toLocaleString('en-UG')],
+          [{ text: 'Deductions', bold: true }, 'UGX ' + payrollDetailData.deductions.toLocaleString('en-UG')],
+          [{ text: 'Net pay', bold: true }, { text: 'UGX ' + payrollDetailData.netPay.toLocaleString('en-UG'), bold: true }],
+          [{ text: 'Status', bold: true }, payrollDetailData.status],
+          [{ text: 'Payment method', bold: true }, payrollDetailData.paymentMethod || '—'],
+          [{ text: 'Reference', bold: true }, payrollDetailData.reference || '—'],
+          [{ text: 'Payment date', bold: true }, payrollDetailData.paymentDate ? new Date(payrollDetailData.paymentDate).toLocaleDateString('en-UG') : '—'],
+        ] }, layout: 'lightHorizontalLines' },
+        { text: 'Staff advances', style: 'sectionHeading', margin: [0, 16, 0, 6] },
+        { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto'], body: [
+          [{ text: 'Amount', style: 'tableHeader' }, { text: 'Reason', style: 'tableHeader' }, { text: 'Status', style: 'tableHeader' }, { text: 'Requested', style: 'tableHeader' }],
+          ...payrollDetailAdvances.map(advance => ['UGX ' + advance.amount.toLocaleString('en-UG'), advance.reason, advance.status, new Date(advance.requestedAt).toLocaleDateString('en-UG')]),
+        ] }, layout: 'lightHorizontalLines' },
+      ],
+    }
+  }
+
+  function printPayslip() {
+    const options = payrollPdfOptions()
+    if (options) printInstitutionalPdf(options)
+  }
+
+  function downloadPayslip() {
+    const options = payrollPdfOptions()
+    if (options) downloadInstitutionalPdf(options)
+  }
+
+  return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
@@ -1309,7 +1355,8 @@ export function AccountsOfficeManagement() {
                       </div>
                     )}
                     <div className="topbar-actions" style={{ marginTop: 20 }}>
-                      <button type="button" onClick={() => window.print()}>Print Payslip</button>
+                      <button type="button" onClick={printPayslip}>Print Payslip</button>
+                      <button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
                       <button type="button" className="secondary-button" onClick={() => setPayrollDetailId(null)}>Close</button>
                     </div>
                   </>
