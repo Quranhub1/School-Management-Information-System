@@ -36,6 +36,7 @@
 <<<<<<< HEAD
     "ag-grid-react": "36.3.0",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "zod": "^4.6.7",
     "dexie": "4.4.7",
     "@tanstack/react-query": "5.107.1",
@@ -73,6 +74,10 @@
 =======
     "pdfmake": "0.3.13"
 >>>>>>> origin/feat/pdfmake-document-engine-main-sync
+=======
+    "zod": "^4.6.7",
+    "@tanstack/react-query": "5.107.1"
+>>>>>>> origin/feat/tanstack-query-offline-cache
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",

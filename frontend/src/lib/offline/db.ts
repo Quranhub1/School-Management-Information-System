@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import Dexie, { type Table } from 'dexie'
 
 <<<<<<< HEAD
@@ -6,6 +7,45 @@ export type QueryCacheRecord<T = unknown> = {
   savedAt: number
   buster: string
   state: T
+=======
+export const DB_NAME = 'smis-offline';
+export const DB_VERSION = 2;
+
+function openDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error('SMIS offline database upgrade is blocked by another open tab. Close older SMIS tabs and retry.'));
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => db.close();
+      resolve(db);
+    };
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('queue')) {
+        db.createObjectStore('queue', { keyPath: 'id', autoIncrement: true });
+      }
+      if (!db.objectStoreNames.contains('students')) {
+        const store = db.createObjectStore('students', { keyPath: 'id' });
+        store.createIndex('studentCode', 'studentCode', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('attendance')) {
+        const store = db.createObjectStore('attendance', { keyPath: 'id' });
+        store.createIndex('sessionId', 'sessionId', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('finance')) {
+        db.createObjectStore('finance', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings', { keyPath: 'key' });
+      }
+      if (!db.objectStoreNames.contains('queryCache')) {
+        db.createObjectStore('queryCache', { keyPath: 'key' });
+      }
+    };
+  });
+>>>>>>> origin/feat/tanstack-query-offline-cache
 }
 
 export type CacheEntry<T = unknown> = {
