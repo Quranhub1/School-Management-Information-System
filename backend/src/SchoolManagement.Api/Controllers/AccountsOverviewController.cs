@@ -125,6 +125,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db) : C
     }
 
     [HttpGet("payroll")]
+    [Authorize(Policy = AuthorizationPolicies.PayrollRead)]
     public async Task<IActionResult> GetPayroll(
         [FromQuery] Guid? staffMemberId,
         [FromQuery] int? month,

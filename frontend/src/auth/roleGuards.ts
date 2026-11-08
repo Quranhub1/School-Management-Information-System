@@ -5,6 +5,7 @@ import {
   FINANCE_MANAGEMENT_ROLES,
   FINANCE_OPERATIONS_ROLES,
   FINANCE_READ_ROLES,
+  PAYROLL_READ_ROLES,
   STAFF_READ_ROLES,
   STAFF_MANAGE_ROLES,
   EXAMINATION_MANAGEMENT_ROLES,
@@ -31,6 +32,9 @@ export function canManageFinance(roles: string[]) {
 }
 export function canAccessFinance(roles: string[]) {
   return hasAnyRole(roles, [...FINANCE_OPERATIONS_ROLES, ...FINANCE_READ_ROLES])
+}
+export function canReadPayroll(roles: string[]) {
+  return hasAnyRole(roles, PAYROLL_READ_ROLES)
 }
 export function canReadOnlyFinance(roles: string[]) {
   return hasAnyRole(roles, FINANCE_READ_ROLES) && !hasAnyRole(roles, FINANCE_OPERATIONS_ROLES)

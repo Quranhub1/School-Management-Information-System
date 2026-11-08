@@ -9,7 +9,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/staff/payroll")]
-[Authorize(Policy = AuthorizationPolicies.FinanceRead)]
+[Authorize(Policy = AuthorizationPolicies.PayrollRead)]
 public sealed class PayrollController(SchoolManagementDbContext db, IConfiguration configuration) : ControllerBase
 {
     [HttpGet]
