@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { applyFeeStructure, createFeeStructure, getFeeStructures, getFinanceAccounts, type FeeStructure, type FinanceAccountOption } from '../api/finance'
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
+import { AgGridTable } from './AgGridTable'
+import type { ColDef } from 'ag-grid-community'
 
 type AcademicYear = { id: string; name: string; isCurrent: boolean; isActive: boolean }
 type ItemDraft = { code: string; name: string; amount: string; incomeAccountId: string }
@@ -17,6 +19,14 @@ export function FeeTypesManager() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const structureColumns: ColDef<FeeStructure>[] = [
+    { field: 'name', headerName: 'Fee', minWidth: 180 },
+    { field: 'feeType', headerName: 'Type', minWidth: 150 },
+    { colId: 'items', headerName: 'Items', minWidth: 240, valueGetter: p => p.data?.items.map(item => item.name).join(', ') ?? '' },
+    { field: 'totalAmount', headerName: 'Total', minWidth: 150, valueFormatter: p => formatCurrency(Number(p.value ?? 0)) },
+    { field: 'isActive', headerName: 'Status', minWidth: 110, valueFormatter: p => p.value ? 'Active' : 'Inactive' },
+    { colId: 'apply', headerName: 'Actions', minWidth: 210, sortable: false, filter: false, floatingFilter: false, cellRenderer: (p: { data?: FeeStructure }) => p.data ? <button className="secondary-button" onClick={() => void apply(p.data!.id, p.data!.name)}>Apply to Active Students</button> : null },
+  ]
 
   async function load() {
     try { setStructures(await getFeeStructures(academicYearId || undefined)) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load fee types.') }
@@ -66,6 +76,6 @@ export function FeeTypesManager() {
       <label className="fee-apply-toggle"><input type="checkbox" checked={applyAll} onChange={e=>setApplyAll(e.target.checked)} /><span><strong>Post to all active students immediately</strong><small>This creates real student invoices and double-entry receivable/revenue postings. Existing applications of the same fee are skipped.</small></span></label>
       <button disabled={saving||!name.trim()||items.some(x=>!x.name.trim()||Number(x.amount)<=0)} onClick={()=>void createAndMaybeApply()}>{saving?'Saving…':'Create Fee & Post to Student Accounts'}</button>
     </div>
-    <div className="panel" style={{marginTop:22}}><div className="panel-heading"><div><p className="eyebrow">ACTIVE STRUCTURES</p><h3>Configured fee types</h3></div><button className="secondary-button" onClick={()=>void load()}>Refresh</button></div><div className="table-wrap"><table><thead><tr><th>Fee</th><th>Type</th><th>Items</th><th>Total</th><th>Status</th><th /></tr></thead><tbody>{structures.map(s=><tr key={s.id}><td><strong>{s.name}</strong></td><td>{s.feeType}</td><td>{s.items.map(i=>i.name).join(', ')}</td><td>{formatCurrency(s.totalAmount)}</td><td>{s.isActive?'Active':'Inactive'}</td><td><button className="secondary-button" onClick={()=>void apply(s.id,s.name)}>Apply to Active Students</button></td></tr>)}{structures.length===0&&<tr><td colSpan={6}>No fee structures configured yet.</td></tr>}</tbody></table></div></div>
+    <div className="panel" style={{marginTop:22}}><div className="panel-heading"><div><p className="eyebrow">ACTIVE STRUCTURES</p><h3>Configured fee types</h3></div><button className="secondary-button" onClick={()=>void load()}>Refresh</button></div><AgGridTable rows={structures} columns={structureColumns} height={420} pageSize={25} exportFileName="configured-fee-structures" getRowId={p => p.data.id} /></div>
   </section>
 }
