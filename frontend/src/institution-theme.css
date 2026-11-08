@@ -448,6 +448,9 @@
   outline-offset: -2px !important;
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/ui/compact-courses-curriculum
 
 
 /* Compact Courses & Curriculum workspace: reduce oversized boxes while preserving
@@ -585,6 +588,7 @@
     flex: 1 1 145px !important;
   }
 }
+<<<<<<< HEAD
 
  
 /* Prevent the curriculum's course-mapping controls from colliding with the next row.
@@ -677,3 +681,5 @@
 >>>>>>> origin/fix/sidebar-tabs-black-only-highlight
 =======
 >>>>>>> origin/fix/sidebar-tabs-no-borders
+=======
+>>>>>>> origin/ui/compact-courses-curriculum
