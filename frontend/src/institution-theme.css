@@ -325,7 +325,6 @@
 .app-shell > aside nav section button:not([aria-expanded]) {
   border-radius: 10px !important;
 }
-<<<<<<< HEAD
 
 
 /* Sidebar navigation: remove the rounded teal/green treatment. Keep a restrained,
@@ -364,10 +363,6 @@
   outline: 2px solid #d7cfbb !important;
   outline-offset: -2px !important;
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/fix/sidebar-tabs-no-borders
 
 
 /* Sidebar tabs: rounded corners, but no solid borders or teal accents. */
@@ -398,7 +393,6 @@
   color: #f5efdf !important;
   box-shadow: inset 3px 0 0 #f5efdf !important;
 }
-<<<<<<< HEAD
 
 
 /* Final sidebar tab treatment: the background shade alone indicates hover/selection.
@@ -447,10 +441,6 @@
   outline: 2px solid #d7cfbb !important;
   outline-offset: -2px !important;
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/ui/compact-courses-curriculum
 
 
 /* Compact Courses & Curriculum workspace: reduce oversized boxes while preserving
@@ -588,7 +578,6 @@
     flex: 1 1 145px !important;
   }
 }
-<<<<<<< HEAD
 
  
 /* Prevent the curriculum's course-mapping controls from colliding with the next row.
@@ -637,10 +626,6 @@
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/fix/remove-sidebar-selected-tab-c-shape
 
 
 /* Final override: remove any selected-tab C-shaped edge, inset, or pseudo-marker.
@@ -668,18 +653,3 @@
   outline: 2px solid #d7cfbb !important;
   outline-offset: -2px !important;
 }
-<<<<<<< HEAD
-=======
->>>>>>> origin/fix/branding-copy-sidebar-navigation
-=======
->>>>>>> origin/fix/compact-course-mapping-select
-=======
->>>>>>> origin/fix/remove-sidebar-selected-tab-c-shape
-=======
->>>>>>> origin/fix/sidebar-rounding-remove-button-motion
-=======
->>>>>>> origin/fix/sidebar-tabs-black-only-highlight
-=======
->>>>>>> origin/fix/sidebar-tabs-no-borders
-=======
->>>>>>> origin/ui/compact-courses-curriculum
