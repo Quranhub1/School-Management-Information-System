@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Chart from 'chart.js/auto'
 import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
 import { getUsers } from '../api/administration'
@@ -54,11 +55,43 @@ function DonutChart({
   centerValue: string
   centerCaption: string
 }) {
-  const radius = 39
-  const circumference = 2 * Math.PI * radius
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const safeSegments = segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) }))
   const total = safeSegments.reduce((sum, segment) => sum + segment.value, 0)
-  let offset = 0
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const chart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: safeSegments.map(segment => segment.label),
+        datasets: [{
+          data: safeSegments.map(segment => segment.value),
+          backgroundColor: safeSegments.map(segment => segment.color),
+          borderWidth: 0,
+          hoverOffset: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: context => {
+                const segment = safeSegments[context.dataIndex]
+                return segment ? `${segment.label}: ${segment.displayValue ?? numberFormat.format(Number(context.raw) || 0)}` : ''
+              },
+            },
+          },
+        },
+      },
+    })
+    return () => chart.destroy()
+  }, [safeSegments.map(segment => `${segment.label}:${segment.value}:${segment.color}:${segment.displayValue ?? ''}`).join('|')])
 
   return (
     <article className="admin-chart-card">
@@ -69,30 +102,8 @@ function DonutChart({
         </div>
       </div>
       <div className="admin-chart-body">
-        <div className="admin-donut-wrap" role="img" aria-label={`${title}: ${safeSegments.map(s => `${s.label} ${s.value}`).join(', ')}`}>
-          <svg className="admin-donut" viewBox="0 0 100 100" aria-hidden="true">
-            <circle className="admin-donut-track" cx="50" cy="50" r={radius} />
-            {total > 0 ? safeSegments.filter(segment => segment.value > 0).map(segment => {
-              const length = (segment.value / total) * circumference
-              const dashOffset = offset
-              offset += length
-              return (
-                <circle
-                  key={segment.label}
-                  cx="50"
-                  cy="50"
-                  r={radius}
-                  fill="none"
-                  stroke={segment.color}
-                  strokeWidth="12"
-                  strokeDasharray={`${length} ${circumference - length}`}
-                  strokeDashoffset={-dashOffset}
-                  transform="rotate(-90 50 50)"
-                  strokeLinecap="butt"
-                />
-              )
-            }) : null}
-          </svg>
+        <div className="admin-donut-wrap" role="img" aria-label={`${title}: ${safeSegments.map(s => `${s.label} ${s.displayValue ?? numberFormat.format(s.value)}`).join(', ')}`}>
+          {total > 0 ? <canvas ref={canvasRef} className="admin-donut-canvas" aria-hidden="true" /> : <div className="admin-donut-empty" aria-hidden="true" />}
           <div className="admin-donut-center">
             <strong>{centerValue}</strong>
             <span>{centerCaption}</span>
