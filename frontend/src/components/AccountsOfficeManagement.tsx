@@ -183,7 +183,10 @@ export function AccountsOfficeManagement() {
       }
     }
     void loadYears()
-    function payrollPdfOptions() {
+    return () => { cancelled = true }
+  }, [])
+
+  function payrollPdfOptions() {
     if (!payrollDetailData) return null
     const staff = staffMap[payrollDetailData.staffMemberId]
     const staffName = staff ? staff.firstName + ' ' + staff.lastName : 'Staff Member'
@@ -226,8 +229,9 @@ export function AccountsOfficeManagement() {
     if (options) downloadInstitutionalPdf(options)
   }
 
-  return () => { cancelled = true }
-  }, [])
+
+
+
 
   useEffect(() => {
     let cancelled = false
