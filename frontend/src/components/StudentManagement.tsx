@@ -8,6 +8,7 @@ import {
   getStudents, saveStudentApplicationForm, updateStudentGuardian, type CreateStudentRequest, type GuardianInput, type Student, type StudentGuardian,
 } from '../api/students'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
+<<<<<<< HEAD
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { notify } from './GlobalNotifications'
 import { getProgrammes, type Programme } from '../api/programmes'
@@ -27,6 +28,9 @@ import { studentApplicationSubmissionSchema } from '../schemas'
 =======
 import { ACADEMIC_AUTHORITY_OPTIONS, SCHOOL_BASED_PROGRAMME_REFERENCES, VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
 >>>>>>> origin/feat/curriculum-catalogue-workflow-polish
+=======
+import { notify } from './GlobalNotifications'
+>>>>>>> origin/feat/global-toast-notifications
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -267,7 +271,11 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     setEditingGuardianId(g.id); setGuardianForm({ fullName: g.fullName, relationship: g.relationship ?? '', address: g.address ?? '', phoneNumber: g.phoneNumber ?? '', email: g.email ?? '', isPrimary: g.isPrimary }); setGuardianError('')
   }
   async function removeGuardian(g: StudentGuardian) {
+<<<<<<< HEAD
     if (!guardianStudent || !(await showConfirmDialog(`Remove ${g.fullName} from this student's records?`, { title: 'Remove parent / guardian', confirmLabel: 'Yes, remove', destructive: true }))) return
+=======
+    if (!guardianStudent || !window.confirm(`Remove ${g.fullName} from this student's records?`)) return
+>>>>>>> origin/feat/global-toast-notifications
     try { await deleteStudentGuardian(guardianStudent.id, g.id); await loadGuardians(guardianStudent.id); notify('Parent/guardian record removed.', 'success', 'Record deleted') }
     catch (e) { const message = e instanceof Error ? e.message : 'Unable to remove parent/guardian record.'; setGuardianError(message); notify(message, 'error', 'Delete failed') }
   }

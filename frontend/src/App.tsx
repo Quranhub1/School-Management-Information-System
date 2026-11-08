@@ -4,8 +4,13 @@ import type { LucideIcon } from 'lucide-react'
 import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, ClipboardList, Database, FileText, GraduationCap, HeartPulse, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, Shield, ShieldCheck, SlidersHorizontal, Stethoscope, UserPlus, UserRound, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
+<<<<<<< HEAD
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canManageHostel, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable, canReadPayroll, canProcessPayroll } from './auth/roleGuards'
 import { CommandPalette } from './components/CommandPalette'
+=======
+import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canManageHostel, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable } from './auth/roleGuards'
+import { GlobalSearch } from './components/GlobalSearch'
+>>>>>>> origin/feat/global-toast-notifications
 import { GlobalNotificationViewport } from './components/GlobalNotifications'
 import type { InstitutionSettings } from './api/institutionSettings'
 import { useInstitutionSettings } from './components/InstitutionSettingsContext'
