@@ -7,37 +7,51 @@ SMIS uses **AG Grid Community** for operational data tables. The selected packag
 - `ag-grid-react@36.3.0`
 - `ag-grid-community@36.3.0`
 
-AG Grid Community is MIT-licensed. The implementation must not import `ag-grid-enterprise`, register Enterprise modules, or require a licence key.
+AG Grid Community is MIT-licensed. This implementation does not import Enterprise packages, register Enterprise modules, or require a licence key.
 
 ## Shared implementation
 
-- `frontend/src/components/AgGridTable.tsx` is the shared React wrapper.
-- It standardises sorting, filtering, column resizing, pagination, compact row sizing and the Inter font.
-- Feature screens provide typed column definitions and row data; API contracts and backend data models remain unchanged.
+`frontend/src/components/AgGridTable.tsx` is the shared React wrapper. It provides:
 
-## Migrated in this change
+- Column sorting, per-column filtering and floating filters
+- Column resizing and drag-to-reorder
+- Pagination with 10, 25, 50 and 100 row page sizes
+- Quick search across the grid
+- CSV export
+- Column visibility controls
+- Multi-row selection
+- Optional editable cells, with mutations delegated to the owning screen/API
+- Compact, square-cornered Quartz theme consistent with SMIS density
 
-The Finance & Accounting workspace's four main data tables now use the shared AG Grid wrapper:
+## Migrated screens
 
-- Read-only outstanding balances
-- Read-only recent payments
-- Student account collection overview
-- Posted payment collections
+- **FinanceManagement**: outstanding balances, recent payments, account collection and posted payment collections
+- **InventoryManagement**: inventory registers, with permission-gated cell editing, custom columns, row deletion and existing database autosave
+- **PayrollManagement**: payroll register, preserving payroll edit, mark-paid and refresh actions
+- **StudentManagement**: student registry, preserving guardian management and QR-code actions
 
-Existing search inputs continue to filter the same data before it reaches the grid. Currency remains formatted as UGX.
+The grid is a presentation layer. Existing API routes, backend validation, permission checks, and UGX formatting remain owned by the original feature screens.
 
-## Remaining migration
+## Deliberately not converted
 
-This is a staged migration, not a blanket replacement of every HTML table. Remaining operational registers and lists should be migrated screen-by-screen, preserving row actions, inline editing, access controls, exports and print behaviour. Tables used as form layouts, timetable matrices, receipt/print documents, or other fixed document layouts should remain semantic HTML unless they are intentionally redesigned as interactive data grids.
+This is not a blanket replacement of every HTML table. Keep semantic tables for admission-form layouts, education-history forms, timetable matrices, receipts/print documents, report-card layouts, and other fixed document structures. Additional operational lists should be migrated incrementally after their row actions and permission rules are mapped.
 
-## Verification required
+## Verification still required
 
-Run from `frontend/` after installing dependencies:
+The GitHub connector can commit source changes but cannot run the repository's local npm toolchain. Before merging, run from `frontend/`:
 
 ```bash
-npm ci
+npm install
 npm run build
 npm test
 ```
 
-Check the Finance workspace in browser and desktop builds at narrow and wide widths, including empty/loading states and sorting/filtering/pagination. Do not merge to `main` until CI and manual checks pass.
+Then manually verify:
+- Finance, inventory, payroll and student registry at desktop and narrow viewport widths
+- Sorting, floating filters, quick search, pagination, column drag/reorder and column visibility
+- CSV export contents and filenames
+- Inventory edits autosave to the database and remain blocked for read-only roles
+- Payroll edit and mark-paid actions still use the existing protected API
+- Student guardian and QR actions still open the correct records
+
+Do not merge to `main` until dependency installation, build, tests and manual checks pass.
