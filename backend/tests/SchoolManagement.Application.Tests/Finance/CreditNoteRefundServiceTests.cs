@@ -195,10 +195,6 @@ public sealed class CreditNoteRefundServiceTests
         public Task AddCreditNoteAsync(CreditNote x, CancellationToken ct) { creditNotes.Add(x); return Task.CompletedTask; }
         public Task AddJournalEntryAsync(JournalEntry x, CancellationToken ct) { JournalEntries.Add(x); return Task.CompletedTask; }
         public Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken ct) => Task.FromResult<IReadOnlyList<JournalEntry>>(JournalEntries.Where(x => x.Status == "Posted").ToArray());
-        public Task<SchoolPaymentNotification?> GetSchoolPaymentNotificationAsync(string externalReference, CancellationToken cancellationToken) => Task.FromResult<SchoolPaymentNotification?>(null);
-        public Task AddSchoolPaymentNotificationAsync(SchoolPaymentNotification notification, CancellationToken cancellationToken) => Task.CompletedTask;
-        public Task<IReadOnlyList<SchoolPaymentNotification>> GetSchoolPaymentNotificationsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<SchoolPaymentNotification>>([]);
-        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>(payment is null ? [] : [payment]);
         public Task SaveChangesAsync(CancellationToken ct = default) => Task.CompletedTask;
     }
 }

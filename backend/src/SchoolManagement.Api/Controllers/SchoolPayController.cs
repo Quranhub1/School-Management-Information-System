@@ -27,7 +27,7 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay) : Controlle
 
         try
         {
-            var notification = await schoolPay.ProcessNotificationAsync(
+            var result = await schoolPay.ProcessNotificationAsync(
                 request.ExternalReference,
                 request.SchoolPayReference,
                 studentId,
@@ -38,32 +38,12 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay) : Controlle
                 request.PayerName,
                 request.RawPayload,
                 cancellationToken);
-            return Ok(new { notification.ExternalReference, notification.Status, notification.ProcessedAt });
-        }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) || ex.Message.Contains("already fully paid", StringComparison.OrdinalIgnoreCase))
-        {
-            return Conflict(ex.Message);
+            return Ok(new { result.ExternalReference, result.Status, result.ProcessedAt, result.ErrorMessage });
         }
         catch (ArgumentException ex)
         {
             return BadRequest(ex.Message);
         }
-    }
-
-    [HttpGet("notifications/{externalReference}")]
-    public async Task<IActionResult> GetNotification(string externalReference, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(externalReference)) return BadRequest("External reference is required.");
-        var notification = await schoolPay.GetNotificationAsync(externalReference, cancellationToken);
-        if (notification is null) return NotFound();
-        return Ok(new { notification.ExternalReference, notification.SchoolPayReference, notification.StudentId, notification.StudentInvoiceId, notification.Amount, notification.Currency, notification.Status, notification.ReceivedAt, notification.ProcessedAt, notification.ErrorMessage });
-    }
-
-    [HttpGet("notifications")]
-    public async Task<IActionResult> GetNotifications(CancellationToken cancellationToken)
-    {
-        var notifications = await schoolPay.GetNotificationsAsync(cancellationToken);
-        return Ok(notifications.Select(n => new { n.ExternalReference, n.SchoolPayReference, n.StudentId, n.StudentInvoiceId, n.Amount, n.Currency, n.Status, n.ReceivedAt, n.ProcessedAt, n.ErrorMessage }));
     }
 }
 

@@ -199,26 +199,6 @@ public sealed class InvoiceNoteConfiguration : IEntityTypeConfiguration<InvoiceN
     }
 }
 
-public sealed class SchoolPaymentNotificationConfiguration : IEntityTypeConfiguration<SchoolPaymentNotification>
-{
-    public void Configure(EntityTypeBuilder<SchoolPaymentNotification> builder)
-    {
-        builder.HasKey(x => x.Id);
-        builder.Property(x => x.ExternalReference).HasMaxLength(100).IsRequired();
-        builder.Property(x => x.SchoolPayReference).HasMaxLength(100).IsRequired();
-        builder.Property(x => x.PhoneNumber).HasMaxLength(30);
-        builder.Property(x => x.PayerName).HasMaxLength(200);
-        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
-        builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
-        builder.Property(x => x.ErrorMessage).HasMaxLength(1000);
-        builder.HasIndex(x => x.ExternalReference).IsUnique();
-        builder.HasIndex(x => x.SchoolPayReference);
-        builder.HasIndex(x => new { x.StudentId, x.Status });
-        builder.HasOne<SchoolManagement.Domain.Students.Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne<StudentInvoice>().WithMany().HasForeignKey(x => x.StudentInvoiceId).OnDelete(DeleteBehavior.Restrict);
-    }
-}
-
 public sealed class StaffAdvanceConfiguration : IEntityTypeConfiguration<StaffAdvance>
 {
     public void Configure(EntityTypeBuilder<StaffAdvance> builder)
