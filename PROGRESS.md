@@ -253,3 +253,19 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Run frontend CI and browser-level regression checks after these configuration changes.
 
 **Diagnostic note:** The Vite WebSocket error may also be caused by a stopped/failed Vite process, a port conflict, or browser/proxy network handling. Configuration changes alone do not prove the local server is reachable.
+
+
+## AG Grid interaction and state overlays — November 2026
+
+### Implemented on `feat/ag-grid-interaction-overlays`
+
+- [x] Add shared React loading and no-rows overlays to the AG Grid wrapper, with a compact local CSS loading indicator.
+- [x] Explicitly retain native multi-column sorting (Shift-click headers) and draggable column reordering in the shared grid.
+- [x] Confirm existing custom React cell renderers are already used in finance balances/statuses, payroll status/amount cells, fee-structure actions, student actions and inventory actions.
+- [x] Confirm Inventory already supports permission-gated in-cell editing, row-level Zod validation, and the existing database autosave path.
+- [x] Keep finance balances and posted payment records read-only in grids; changes must use audited payment, credit-note or adjustment workflows rather than direct cell mutation.
+- [x] Update `docs/AG-GRID-MIGRATION.md` with the actual feature coverage and acceptance checks.
+- [ ] Run frontend `npm ci`, TypeScript build, production Vite build and full Vitest suite on the branch.
+- [ ] Manually verify overlays, Shift-click sorting, header dragging, custom renderers and Inventory autosave with representative authorized and read-only roles.
+
+**Status:** repository inspection found most requested AG Grid capabilities were already present. This change adds consistent shared loading/empty overlays and makes multi-sort/column movement intent explicit. It does not enable unsafe inline editing of financial ledger balances. Automated and browser verification remain pending; do not merge until CI is green.
