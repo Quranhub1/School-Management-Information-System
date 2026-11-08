@@ -1,8 +1,8 @@
-import { QueryClient, type Query } from '@tanstack/react-query'
+import { QueryClient, type Query, type QueryKey } from '@tanstack/react-query'
 
 export const QUERY_CACHE_MAX_AGE = 24 * 60 * 60 * 1000
 
-export function isPersistableQuery(query: Query): boolean {
+export function isPersistableQuery<TQueryKey extends QueryKey>(query: Query<unknown, Error, unknown, TQueryKey>): boolean {
   return query.meta?.persist === true && query.state.status === 'success'
 }
 
