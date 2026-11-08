@@ -20,7 +20,7 @@ export function GlobalSearch() {
   const [to, setTo] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const searchQuery = useGlobalSearchQuery(debouncedQuery, from || undefined, to || undefined)
-  const results: GlobalSearchResponse = searchQuery.data ?? EMPTY
+  const results: GlobalSearchResponse = debouncedQuery === query.trim() ? searchQuery.data ?? EMPTY : EMPTY
   const loading = query.trim().length >= 2 && (debouncedQuery !== query.trim() || searchQuery.isFetching || searchQuery.isPending)
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
