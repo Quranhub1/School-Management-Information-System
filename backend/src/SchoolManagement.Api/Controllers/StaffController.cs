@@ -127,6 +127,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (staff is null) return NotFound();
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         staff.IsActive = true;
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
