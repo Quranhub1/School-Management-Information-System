@@ -93,6 +93,7 @@ public sealed class BudgetServiceBehaviorTests
         public Task AddInvoiceDiscountAsync(InvoiceDiscount discount, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 }
