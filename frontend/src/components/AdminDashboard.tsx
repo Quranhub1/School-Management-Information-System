@@ -58,6 +58,7 @@ function DonutChart({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const safeSegments = segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) }))
   const total = safeSegments.reduce((sum, segment) => sum + segment.value, 0)
+  const chartSignature = safeSegments.map(segment => `${segment.label}:${segment.value}:${segment.color}:${segment.displayValue ?? ''}`).join('|')
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -91,7 +92,7 @@ function DonutChart({
       },
     })
     return () => chart.destroy()
-  }, [safeSegments.map(segment => `${segment.label}:${segment.value}:${segment.color}:${segment.displayValue ?? ''}`).join('|')])
+  }, [chartSignature])
 
   return (
     <article className="admin-chart-card">
