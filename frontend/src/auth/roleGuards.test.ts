@@ -4,6 +4,7 @@ import {
   canManageAcademics,
   canManageFinance,
   canReadPayroll,
+  canProcessPayroll,
   canManageExaminations,
   canManageStudents,
   canManageAdmissions,
@@ -57,6 +58,8 @@ describe('role guards — payroll', () => {
     expect(canReadPayroll(['Accountant'])).toBe(true)
     expect(canReadPayroll(['AssistantAccountant'])).toBe(true)
     expect(canReadPayroll(['SystemAdministrator'])).toBe(true)
+    expect(canProcessPayroll(['AssistantAccountant'])).toBe(true)
+    expect(canProcessPayroll(['HR Manager'])).toBe(false)
   })
 
   it('does not expose individual payroll to general finance-read leadership or staff roles', () => {

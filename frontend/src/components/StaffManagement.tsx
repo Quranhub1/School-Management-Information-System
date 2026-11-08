@@ -9,7 +9,7 @@ import { staffCreateRequestSchema } from '../schemas'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
-export function StaffManagement({ canManage = false, canReadPayroll = false, canManagePayroll = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; activeSubsection?: string | null }) {
+export function StaffManagement({ canManage = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; activeSubsection?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
@@ -358,7 +358,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
             <span style={{ marginLeft: 'auto', color: '#64748b', fontSize: 12 }}>{selectedPayroll.length} record{selectedPayroll.length === 1 ? '' : 's'} in period</span>
           </div>}
           <div style={{ overflowX: 'auto', border: '1px solid #dbe3ed', borderRadius: 7, background: '#fff', boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)' }}>
-            <table style={{ width: '100%', minWidth: canManagePayroll ? 1120 : 1020, borderCollapse: 'separate', borderSpacing: 0, fontSize: 13 }}>
+            <table style={{ width: '100%', minWidth: canProcessPayroll ? 1120 : 1020, borderCollapse: 'separate', borderSpacing: 0, fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#f1f5f9', color: '#334155' }}>
                   <th scope="col" style={{ width: 112, padding: '13px 14px', textAlign: 'left', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Payroll ID</th>
@@ -369,11 +369,11 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Deductions</th>
                   <th scope="col" style={{ padding: '13px 14px', textAlign: 'right', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Net pay</th>
                   <th scope="col" style={{ padding: '13px 14px', textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Status</th>
-                  {canManagePayroll && <th scope="col" style={{ padding: '13px 14px', textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Action</th>}
+                  {canProcessPayroll && <th scope="col" style={{ padding: '13px 14px', textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Action</th>}
                 </tr>
               </thead>
               <tbody>
-                {selectedPayroll.length === 0 ? <tr><td colSpan={canManagePayroll ? 9 : 8} className="empty" style={{ padding: 28, textAlign: 'center' }}>No payroll records found for {new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}.</td></tr> : selectedPayroll.map((p, index) => {
+                {selectedPayroll.length === 0 ? <tr><td colSpan={canProcessPayroll ? 9 : 8} className="empty" style={{ padding: 28, textAlign: 'center' }}>No payroll records found for {new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}.</td></tr> : selectedPayroll.map((p, index) => {
                   const person = staff.find(s => s.id === p.staffMemberId)
                   const cellStyle: React.CSSProperties = { padding: '14px', borderBottom: '1px solid #e8edf3', verticalAlign: 'middle', color: '#334155', whiteSpace: 'nowrap' }
                   return (
@@ -386,7 +386,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                       <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>UGX {p.deductions.toLocaleString()}</td>
                       <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}><strong style={{ color: '#0f172a', fontSize: 13 }}>UGX {p.netPay.toLocaleString()}</strong></td>
                       <td style={{ ...cellStyle, textAlign: 'center' }}><span className="badge" style={{ display: 'inline-block', minWidth: 72, padding: '5px 9px', borderRadius: 4, background: p.status === 'Paid' ? '#d1fae5' : '#fef3c7', color: p.status === 'Paid' ? '#065f46' : '#92400e', fontSize: 11, fontWeight: 800, textAlign: 'center' }}>{p.status}</span></td>
-                      {canManagePayroll && <td style={{ ...cellStyle, textAlign: 'center' }}>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)} style={{ whiteSpace: 'nowrap', borderRadius: 4, padding: '7px 11px', fontWeight: 700 }}>Mark Paid</button>}{p.status === 'Paid' && <span style={{ color: '#047857', fontSize: 12, fontWeight: 700 }}>Completed</span>}</td>}
+                      {canProcessPayroll && <td style={{ ...cellStyle, textAlign: 'center' }}>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)} style={{ whiteSpace: 'nowrap', borderRadius: 4, padding: '7px 11px', fontWeight: 700 }}>Mark Paid</button>}{p.status === 'Paid' && <span style={{ color: '#047857', fontSize: 12, fontWeight: 700 }}>Completed</span>}</td>}
                     </tr>
                   )
                 })}

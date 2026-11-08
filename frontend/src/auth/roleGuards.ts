@@ -36,6 +36,9 @@ export function canAccessFinance(roles: string[]) {
 export function canReadPayroll(roles: string[]) {
   return hasAnyRole(roles, PAYROLL_READ_ROLES)
 }
+export function canProcessPayroll(roles: string[]) {
+  return hasAnyRole(roles, FINANCE_OPERATIONS_ROLES)
+}
 export function canReadOnlyFinance(roles: string[]) {
   return hasAnyRole(roles, FINANCE_READ_ROLES) && !hasAnyRole(roles, FINANCE_OPERATIONS_ROLES)
 }
