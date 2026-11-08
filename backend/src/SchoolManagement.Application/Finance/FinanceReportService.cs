@@ -55,12 +55,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
     {
         (from, to) = await ResolveIncomeStatementRangeAsync(from, to, cancellationToken);
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
-        var rows = BuildIncomeStatementRows(entries, campusId, facultyId, departmentId, programmeId);
-        var revenue = rows.Where(x => IsRevenue(x.AccountType)).ToList();
-        var expenses = rows.Where(x => IsExpense(x.AccountType)).ToList();
-        var totalRevenue = revenue.Sum(x => x.Amount);
-        var totalExpenses = expenses.Sum(x => x.Amount);
-        return new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
+        return BuildIncomeStatementReport(entries, campusId, facultyId, departmentId, programmeId);
     }
 
     public async Task<BalanceSheetReport> GetBalanceSheetAsync(DateOnly? asOf = null, CancellationToken cancellationToken = default, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
@@ -80,12 +75,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
             // remains authoritative whenever one contains the requested as-of date.
             var calendarYearStart = new DateOnly(effectiveAsOf.Year, 1, 1);
             var yearToDateEntries = await finance.GetPostedJournalEntriesAsync(calendarYearStart, effectiveAsOf, null, cancellationToken);
-            var yearToDateRows = BuildIncomeStatementRows(yearToDateEntries, campusId, facultyId, departmentId, programmeId);
-            var revenue = yearToDateRows.Where(x => IsRevenue(x.AccountType)).ToList();
-            var expenses = yearToDateRows.Where(x => IsExpense(x.AccountType)).ToList();
-            var totalRevenue = revenue.Sum(x => x.Amount);
-            var totalExpenses = expenses.Sum(x => x.Amount);
-            netIncome = new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
+            netIncome = BuildIncomeStatementReport(yearToDateEntries, campusId, facultyId, departmentId, programmeId);
         }
         else
         {
@@ -108,6 +98,16 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
                 g.Sum(x => x.OutstandingAmount)))
             .OrderByDescending(x => x.Outstanding)
             .ToList();
+    }
+
+    public static IncomeStatementReport BuildIncomeStatementReport(IEnumerable<JournalEntry> entries, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
+    {
+        var rows = BuildIncomeStatementRows(entries, campusId, facultyId, departmentId, programmeId);
+        var revenue = rows.Where(x => IsRevenue(x.AccountType)).ToList();
+        var expenses = rows.Where(x => IsExpense(x.AccountType)).ToList();
+        var totalRevenue = revenue.Sum(x => x.Amount);
+        var totalExpenses = expenses.Sum(x => x.Amount);
+        return new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
     }
 
     public static IReadOnlyList<IncomeStatementRow> BuildIncomeStatementRows(IEnumerable<JournalEntry> entries, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null) =>
