@@ -186,7 +186,7 @@ export const inventoryGridRowSchema = z.object({
     context.addIssue({ code: "custom", path: ["values", "name"], message: "Item name is required." });
   }
   const quantity = row.values.quantity?.trim();
-  if (quantity && !/^\\d+$/.test(quantity)) {
+  if (quantity && !/^\d+$/.test(quantity)) {
     context.addIssue({ code: "custom", path: ["values", "quantity"], message: "Quantity must be a whole number of zero or greater." });
   }
 });
@@ -235,7 +235,7 @@ export const studentApplicationSubmissionSchema = z.object({
   firstName: requiredTextSchema.min(2),
   lastName: requiredTextSchema.min(2),
   dateOfBirth: z.iso.date().optional().or(z.literal("")),
-  phone: z.string().trim().regex(/^\\+?[0-9\\s()-]{7,20}$/, "Enter a valid telephone number."),
+  phone: z.string().trim().regex(/^\+?[0-9\s()-]{7,20}$/, "Enter a valid telephone number."),
   email: z.email().optional().or(z.literal("")),
   declaration: z.literal(true, { error: "The applicant must accept the declaration before submitting." }),
   applicantSignature: requiredTextSchema,
