@@ -227,6 +227,7 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - Added a locally bundled SheetJS-compatible spreadsheet engine via the maintained `@stackline/xlsx` fork, aliased as `xlsx`. This fork targets the SheetJS CE 0.20.3 API and reports regression coverage for prototype-pollution and ReDoS advisories affecting the stale npm `xlsx@0.18.5` package.
 - Added bounded browser-side workbook parsing (10 MB, 20 worksheets, 50,000 rows, 200 columns), dangerous-header rejection and formula-injection-safe spreadsheet export.
 - Added Excel export for student report-card results.
+- Added PNG capture/download for the selected campus and library ID card layouts.
 - Added locally bundled html2canvas capture and PNG export for printable DOM layouts; report cards support image capture alongside native printing and the existing PDF endpoint.
 - Neither library loads a CDN or calls an external rendering service at runtime.
 - Added `importSpreadsheetData` to feed locally parsed workbook sheets through the existing schema-validated CSV import API; PostgreSQL/API validation remains authoritative.

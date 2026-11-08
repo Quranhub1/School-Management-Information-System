@@ -3,6 +3,7 @@ import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
 import { AlumniManagement } from './AlumniManagement'
 import { getStudents, type Student } from '../api/students'
+import { downloadElementAsPng } from '../lib/printCapture'
 
 type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'alumni'
 type AccessProfile = 'receptionist' | 'records' | 'department' | 'general'
@@ -155,6 +156,10 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
               <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds(cardStudents.map(student => student.id))} disabled={cardQueueLoading || cardStudents.length === 0}>Select all</button>
               <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds([])} disabled={selectedCardStudentIds.length === 0}>Clear selection</button>
               <button type="button" onClick={printSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Print selected cards ({selectedCardStudentIds.length})</button>
+              <button type="button" className="secondary-button" onClick={() => {
+                const element = document.getElementById('print-queue-section')
+                if (element) void downloadElementAsPng(element, { filename: `student-${cardType}-id-cards.png` }).catch(error => setCardQueueError(error instanceof Error ? error.message : 'Unable to capture ID cards.'))
+              }} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download cards (PNG)</button>
             </div>
             {cardQueueLoading ? <p className="empty">Loading registered students…</p> : cardStudents.length === 0 ? <p className="empty">No registered students are available for ID card printing.</p> : (
               <div className="table-wrap no-print">
