@@ -361,8 +361,8 @@ export function FinanceDashboard() {
               aria-label="Payment amount"
               aria-invalid={Boolean(paymentErrors.amount)}
               type="number"
-              min="0.01"
-              step="0.01"
+              min="1"
+              step="1"
               placeholder="Amount"
               value={paymentModal.amount}
               onChange={e => setPaymentModal(prev => prev ? { ...prev, amount: e.target.value } : null)}
