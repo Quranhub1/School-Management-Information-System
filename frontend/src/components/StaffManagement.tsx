@@ -205,11 +205,18 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       notify(`${person.firstName} ${person.lastName} deleted successfully.`, 'success', 'Staff deleted')
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to delete staff. They may be linked to other records.'; setError(message); notify(message, 'error', 'Staff deletion failed') }
   }
+<<<<<<< HEAD
   async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave(); notify('Leave request submitted successfully.', 'success', 'Leave request saved') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to request leave.'; setError(message); notify(message, 'error', 'Leave request failed') } }
   async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, '', approved); await loadLeave(); notify(approved ? 'Leave request approved.' : 'Leave request declined.', 'success', 'Leave updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to approve leave.'; setError(message); notify(message, 'error', 'Leave update failed') } }
   async function handleGeneratePayroll() { setError(''); setSuccess(''); try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll(); setSuccess(`Payroll generation completed for ${new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} ${payrollYear}. Existing entries for this period were retained.`)
       notify('Payroll generation completed successfully.', 'success', 'Payroll generated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to generate payroll.'; setError(message); notify(message, 'error', 'Payroll generation failed') } }
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll(); notify('Payroll payment status updated.', 'success', 'Payroll updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to mark payroll as paid.'; setError(message); notify(message, 'error', 'Payroll update failed') } }
+=======
+  async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to request leave.') } }
+  async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, '', approved); await loadLeave() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to approve leave.') } }
+  async function handleGeneratePayroll() { setError(''); setSuccess(''); try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll(); setSuccess(`Payroll generation completed for ${new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} ${payrollYear}. Existing entries for this period were retained.`) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to generate payroll.') } }
+  async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to mark payroll as paid.') } }
+>>>>>>> origin/fix/hr-payroll-staff-names-period-totals
 
   return (
     <section className="panel">
@@ -369,10 +376,17 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       {tab === 'payroll' && (
         <div className="payroll-workspace">
           <div className="summary-grid" style={{ marginBottom: 22 }}>
+<<<<<<< HEAD
             <div className="summary-card"><span>Payroll period</span><strong>{new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}</strong></div>
             <div className="summary-card"><span>Total net payroll</span><strong>UGX {selectedPayroll.reduce((sum, p) => sum + p.netPay, 0).toLocaleString()}</strong></div>
             <div className="summary-card"><span>Paid records</span><strong style={{ color: '#047857' }}>{selectedPayroll.filter(p => p.status === 'Paid').length}</strong></div>
             <div className="summary-card"><span>Pending records</span><strong style={{ color: '#b45309' }}>{selectedPayroll.filter(p => p.status === 'Pending').length}</strong></div>
+=======
+            <div className="summary-card"><span>Month</span><strong>{new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}</strong></div>
+            <div className="summary-card"><span>Total Payroll</span><strong>UGX {selectedPayroll.reduce((sum, p) => sum + p.netPay, 0).toLocaleString()}</strong></div>
+            <div className="summary-card"><span>Paid</span><strong style={{ color: '#059669' }}>{selectedPayroll.filter(p => p.status === 'Paid').length}</strong></div>
+            <div className="summary-card"><span>Pending</span><strong style={{ color: '#d97706' }}>{selectedPayroll.filter(p => p.status === 'Pending').length}</strong></div>
+>>>>>>> origin/fix/hr-payroll-staff-names-period-totals
           </div>
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -420,6 +434,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                 </tr>
               </thead>
               <tbody>
+<<<<<<< HEAD
                 {selectedPayroll.length === 0 ? <tr><td colSpan={canProcessPayroll ? 9 : 8} className="empty" style={{ padding: 28, textAlign: 'center' }}>No payroll records found for {new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}.</td></tr> : selectedPayroll.map((p, index) => {
 =======
                   {canManage && <th scope="col" style={{ padding: '13px 14px', textAlign: 'center', fontSize: 11, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid #cbd5e1' }}>Action</th>}
@@ -448,6 +463,11 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                     </tr>
                   )
                 })}
+=======
+                {selectedPayroll.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No payroll records found for {new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}.</td></tr> : selectedPayroll.map(p => (
+                  <tr key={p.id}><td>{(() => { const person = staff.find(s => s.id === p.staffMemberId); return person ? <><strong>{person.firstName} {person.lastName}</strong><div style={{ fontSize: 12, color: 'var(--muted-text, #64748b)' }}>{person.staffNumber}</div></> : 'Staff record unavailable' })()}</td><td>{new Date(2000, p.month - 1).toLocaleString('default', { month: 'long' })}</td><td>{p.year}</td><td>UGX {p.basicSalary.toLocaleString()}</td><td>UGX {p.allowances.toLocaleString()}</td><td>UGX {p.deductions.toLocaleString()}</td><td><strong>UGX {p.netPay.toLocaleString()}</strong></td><td><span className="badge" style={{ background: p.status === 'Paid' ? '#d1fae5' : '#fef3c7', color: p.status === 'Paid' ? '#065f46' : '#92400e' }}>{p.status}</span></td>{canManage && <td>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)}>Mark Paid</button>}</td>}</tr>
+                ))}
+>>>>>>> origin/fix/hr-payroll-staff-names-period-totals
               </tbody>
             </table>
           </div>
