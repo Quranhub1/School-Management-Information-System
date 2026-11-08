@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ColDef } from 'ag-grid-community';
+import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { AgGridTable } from './AgGridTable';
 import LoadingSpinner from './LoadingSpinner';
 import { listPayroll, markPayrollPaid, updatePayrollAllowances, type PayrollRecord } from '../api/payroll';
@@ -61,11 +61,11 @@ export function PayrollManagement() {
     { headerName: 'Staff member ID', field: 'staffMemberId', minWidth: 150 },
     { headerName: 'Pay period', colId: 'period', valueGetter: params => params.data ? periodLabel(params.data.month, params.data.year) : '' },
     { headerName: 'Basic salary', field: 'basicSalary', valueFormatter: params => money(Number(params.value ?? 0)), cellClass: 'payroll-amount' },
-    { headerName: 'Allowances', field: 'allowances', valueFormatter: params => money(Number(params.value ?? 0)), cellRenderer: (params: { data?: PayrollRecord }) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Allowances" type="number" min="0" step="1" value={editAllowances} onChange={event => setEditAllowances(event.target.value)} /> : money(Number(params.value ?? 0)) },
-    { headerName: 'Deductions', field: 'deductions', valueFormatter: params => money(Number(params.value ?? 0)), cellRenderer: (params: { data?: PayrollRecord }) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Deductions" type="number" min="0" step="1" value={editDeductions} onChange={event => setEditDeductions(event.target.value)} /> : money(Number(params.value ?? 0)) },
+    { headerName: 'Allowances', field: 'allowances', valueFormatter: params => money(Number(params.value ?? 0)), cellRenderer: (params: ICellRendererParams<PayrollRecord>) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Allowances" type="number" min="0" step="1" value={editAllowances} onChange={event => setEditAllowances(event.target.value)} /> : money(Number(params.value ?? 0)) },
+    { headerName: 'Deductions', field: 'deductions', valueFormatter: params => money(Number(params.value ?? 0)), cellRenderer: (params: ICellRendererParams<PayrollRecord>) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Deductions" type="number" min="0" step="1" value={editDeductions} onChange={event => setEditDeductions(event.target.value)} /> : money(Number(params.value ?? 0)) },
     { headerName: 'Net pay', field: 'netPay', valueFormatter: params => money(Number(params.value ?? 0)), cellClass: 'payroll-net-pay' },
-    { headerName: 'Status', field: 'status', minWidth: 120, cellRenderer: (params: { value?: string }) => { const status = params.value || 'Pending'; return <span className={`payroll-status payroll-status--${status.toLowerCase().replace(/[^a-z]+/g, '-')}`}>{status}</span> } },
-    { headerName: 'Actions', colId: 'actions', minWidth: 190, sortable: false, filter: false, cellRenderer: (params: { data?: PayrollRecord }) => {
+    { headerName: 'Status', field: 'status', minWidth: 120, cellRenderer: (params: ICellRendererParams<PayrollRecord>) => { const status = params.value || 'Pending'; return <span className={`payroll-status payroll-status--${status.toLowerCase().replace(/[^a-z]+/g, '-')}`}>{status}</span> } },
+    { headerName: 'Actions', colId: 'actions', minWidth: 190, sortable: false, filter: false, cellRenderer: (params: ICellRendererParams<PayrollRecord>) => {
       const record = params.data;
       if (!record) return null;
       const isEditing = editingId === record.id;
