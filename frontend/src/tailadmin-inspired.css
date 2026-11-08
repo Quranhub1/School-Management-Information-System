@@ -241,9 +241,6 @@ h1, h2, h3, h4, h5, h6,
 .admin-chart-heading h3 { margin: 0; color: #172033; font-size: 14px; font-weight: 750; }
 .admin-chart-heading p { margin: 5px 0 0; color: #94a3b8; font-size: 11px; }
 .admin-chart-body { gap: 20px !important; }
-.admin-donut-wrap { width: 138px !important; min-width: 138px; height: 138px !important; }
-.admin-donut-center strong { color: #172033 !important; font-size: 17px !important; }
-.admin-donut-center span { color: #94a3b8 !important; font-size: 10px !important; }
 .admin-chart-legend { gap: 12px !important; }
 .admin-chart-legend li { color: #64748b; font-size: 11px; }
 .admin-chart-legend li strong { color: #334155; font-size: 11px; }
@@ -284,7 +281,6 @@ h1, h2, h3, h4, h5, h6,
 [data-theme="dark"] .admin-section-title h3,
 [data-theme="dark"] .admin-dashboard-action-card h3,
 [data-theme="dark"] .admin-chart-heading h3,
-[data-theme="dark"] .admin-donut-center strong,
 [data-theme="dark"] .admin-attention-list strong { color: #e2e8f0 !important; }
 [data-theme="dark"] .admin-kpi-card,
 [data-theme="dark"] .admin-chart-card,
