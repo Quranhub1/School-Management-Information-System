@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ColDef } from 'ag-grid-community';
+import { AgGridTable } from './AgGridTable';
 import LoadingSpinner from './LoadingSpinner';
 import { listPayroll, markPayrollPaid, updatePayrollAllowances, type PayrollRecord } from '../api/payroll';
 import './PayrollManagement.css';
@@ -53,6 +55,30 @@ export function PayrollManagement() {
   const totalPaid = records.filter(record => record.status.toLowerCase() === 'paid')
     .reduce((sum, record) => sum + record.netPay, 0);
 
+  const columns = useMemo<ColDef<PayrollRecord>[]>(() => [
+    { headerName: 'No.', colId: 'rowNumber', width: 76, sortable: false, filter: false, valueGetter: params => params.node?.rowIndex == null ? '' : String(params.node.rowIndex + 1).padStart(2, '0') },
+    { headerName: 'Payroll ID', field: 'id', minWidth: 160, valueFormatter: params => payrollCode(String(params.value ?? '')), tooltipField: 'id' },
+    { headerName: 'Staff member ID', field: 'staffMemberId', minWidth: 150 },
+    { headerName: 'Pay period', colId: 'period', valueGetter: params => params.data ? periodLabel(params.data.month, params.data.year) : '' },
+    { headerName: 'Basic salary', field: 'basicSalary', valueFormatter: params => money(Number(params.value ?? 0)), cellClass: 'payroll-amount' },
+    { headerName: 'Allowances', field: 'allowances', valueFormatter: params => money(Number(params.value ?? 0)), cellRenderer: (params: { data?: PayrollRecord }) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Allowances" type="number" min="0" step="1" value={editAllowances} onChange={event => setEditAllowances(event.target.value)} /> : money(Number(params.value ?? 0)) },
+    { headerName: 'Deductions', field: 'deductions', valueFormatter: params => money(Number(params.value ?? 0)), cellRenderer: (params: { data?: PayrollRecord }) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Deductions" type="number" min="0" step="1" value={editDeductions} onChange={event => setEditDeductions(event.target.value)} /> : money(Number(params.value ?? 0)) },
+    { headerName: 'Net pay', field: 'netPay', valueFormatter: params => money(Number(params.value ?? 0)), cellClass: 'payroll-net-pay' },
+    { headerName: 'Status', field: 'status', minWidth: 120, cellRenderer: (params: { value?: string }) => { const status = params.value || 'Pending'; return <span className={`payroll-status payroll-status--${status.toLowerCase().replace(/[^a-z]+/g, '-')}`}>{status}</span> } },
+    { headerName: 'Actions', colId: 'actions', minWidth: 190, sortable: false, filter: false, cellRenderer: (params: { data?: PayrollRecord }) => {
+      const record = params.data;
+      if (!record) return null;
+      const isEditing = editingId === record.id;
+      return <div className="payroll-actions">{isEditing ? <>
+        <button type="button" className="payroll-action payroll-action--save" onClick={() => void saveEdit(record.id)}>Save</button>
+        <button type="button" className="payroll-action payroll-action--cancel" onClick={() => setEditingId(null)}>Cancel</button>
+      </> : <>
+        {record.status.toLowerCase() === 'pending' && <button type="button" className="payroll-action payroll-action--paid" onClick={() => void markPaid(record.id)}>Mark paid</button>}
+        <button type="button" className="payroll-action payroll-action--edit" onClick={() => startEdit(record)}>Edit</button>
+      </>}</div>;
+    } },
+  ], [editingId, editAllowances, editDeductions]);
+
   return <section className="panel payroll-panel" aria-label="Payroll">
     <div className="payroll-heading">
       <div>
@@ -75,53 +101,7 @@ export function PayrollManagement() {
     </div>}
 
     {loading ? <div className="payroll-loading"><LoadingSpinner label="Loading payroll…" /></div> : <div className="payroll-table-wrap">
-      <table className="payroll-table">
-        <thead><tr>
-          <th className="payroll-number-col">No.</th>
-          <th>Payroll ID</th>
-          <th>Staff member ID</th>
-          <th>Pay period</th>
-          <th className="payroll-amount">Basic salary</th>
-          <th className="payroll-amount">Allowances</th>
-          <th className="payroll-amount">Deductions</th>
-          <th className="payroll-amount">Net pay</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr></thead>
-        <tbody>
-          {records.map((record, index) => {
-            const isEditing = editingId === record.id;
-            const netPay = record.basicSalary + Number(editAllowances) - Number(editDeductions);
-            const status = record.status || 'Pending';
-            return <tr key={record.id}>
-              <td className="payroll-row-number">{(index + 1).toString().padStart(2, '0')}</td>
-              <td><span className="payroll-code" title={record.id}>{payrollCode(record.id)}</span></td>
-              <td className="payroll-staff-id">{record.staffMemberId}</td>
-              <td>{periodLabel(record.month, record.year)}</td>
-              <td className="payroll-amount">{money(record.basicSalary)}</td>
-              {isEditing ? <>
-                <td><input className="payroll-edit-input" aria-label="Allowances" type="number" min="0" step="1" value={editAllowances} onChange={event => setEditAllowances(event.target.value)} /></td>
-                <td><input className="payroll-edit-input" aria-label="Deductions" type="number" min="0" step="1" value={editDeductions} onChange={event => setEditDeductions(event.target.value)} /></td>
-                <td className="payroll-amount payroll-net-pay">{money(Number.isFinite(netPay) ? netPay : record.netPay)}</td>
-              </> : <>
-                <td className="payroll-amount">{money(record.allowances)}</td>
-                <td className="payroll-amount">{money(record.deductions)}</td>
-                <td className="payroll-amount payroll-net-pay">{money(record.netPay)}</td>
-              </>}
-              <td><span className={`payroll-status payroll-status--${status.toLowerCase().replace(/[^a-z]+/g, '-')}`}>{status}</span></td>
-              <td><div className="payroll-actions">
-                {isEditing ? <>
-                  <button type="button" className="payroll-action payroll-action--save" onClick={() => void saveEdit(record.id)}>Save</button>
-                  <button type="button" className="payroll-action payroll-action--cancel" onClick={() => setEditingId(null)}>Cancel</button>
-                </> : <>
-                  {status.toLowerCase() === 'pending' && <button type="button" className="payroll-action payroll-action--paid" onClick={() => void markPaid(record.id)}>Mark paid</button>}
-                  <button type="button" className="payroll-action payroll-action--edit" onClick={() => startEdit(record)}>Edit</button>
-                </>}
-              </div></td>
-            </tr>;
-          })}
-        </tbody>
-      </table>
+      <AgGridTable rows={records} columns={columns} height={560} pageSize={25} exportFileName="kshs-payroll" rowSelection="multiple" />
       {records.length === 0 && <div className="payroll-empty"><strong>No payroll records yet</strong><span>Generate payroll for a month to see staff salary records here.</span></div>}
     </div>}
   </section>;
