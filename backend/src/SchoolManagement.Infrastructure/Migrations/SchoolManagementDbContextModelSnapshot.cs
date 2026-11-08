@@ -5330,6 +5330,8 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("SchoolPayReference");
 
+                    b.HasIndex("StudentInvoiceId");
+
                     b.HasIndex("StudentId", "Status");
 
                     b.ToTable("SchoolPaymentNotifications");
