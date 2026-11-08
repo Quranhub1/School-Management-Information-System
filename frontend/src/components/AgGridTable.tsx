@@ -7,6 +7,8 @@ import {
   themeQuartz,
 } from 'ag-grid-community'
 import { AgGridProvider, AgGridReact } from 'ag-grid-react'
+import { downloadInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 
 export type AgGridTableProps<TData extends object> = {
   rows: TData[]
@@ -46,6 +48,7 @@ export function AgGridTable<TData extends object>({
 }: AgGridTableProps<TData>) {
   const [api, setApi] = useState<GridApi<TData> | null>(null)
   const [filter, setFilter] = useState(quickFilterText ?? '')
+  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
     sortable: true,
     filter: true,
@@ -72,6 +75,39 @@ export function AgGridTable<TData extends object>({
   const toggleColumn = useCallback((colId: string, visible: boolean) => {
     api?.setColumnsVisible([colId], visible)
   }, [api])
+  const exportPdf = useCallback(() => {
+    if (!api) return
+    const displayedColumns = api.getAllDisplayedColumns()
+    const headers = displayedColumns.map(column => ({
+      text: String(column.getColDef().headerName ?? column.getColDef().field ?? column.getColId()),
+      style: 'tableHeader',
+    }))
+    const body: unknown[][] = [headers]
+    api.forEachNodeAfterFilterAndSort(node => {
+      if (!node.data) return
+      body.push(displayedColumns.map(column => {
+        const value = api.getCellValue({ rowNode: node, colKey: column.getColId(), useFormatter: true })
+        if (value === null || value === undefined || value === '') return '—'
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value)
+        try { return JSON.stringify(value) } catch { return String(value) }
+      }))
+    })
+    if (body.length === 1) return
+    const title = exportFileName.replace(/[-_]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())
+    downloadInstitutionalPdf({
+      title,
+      filename: exportFileName,
+      orientation: displayedColumns.length > 7 ? 'landscape' : 'portrait',
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: 'Records: ' + (body.length - 1).toLocaleString('en-UG'), style: 'muted', margin: [0, 0, 0, 8] },
+        { table: { headerRows: 1, widths: displayedColumns.map(() => '*'), body }, layout: 'lightHorizontalLines' },
+      ],
+    })
+  }, [api, exportFileName, institution, institutionLoaded])
 
   return (
     <div className={['smis-ag-grid-shell', className].filter(Boolean).join(' ')}>
@@ -82,6 +118,7 @@ export function AgGridTable<TData extends object>({
         </label>
         <span className="smis-ag-grid-count">{rows.length.toLocaleString('en-UG')} records</span>
         <button type="button" className="secondary-button" onClick={exportCsv} disabled={!api || rows.length === 0}>Export CSV</button>
+        <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
         <details className="smis-ag-grid-columns">
           <summary>Columns</summary>
           <div className="smis-ag-grid-column-menu">
