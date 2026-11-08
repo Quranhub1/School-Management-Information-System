@@ -323,6 +323,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         var transaction = await db.MobileMoneyTransactions.SingleOrDefaultAsync(x => x.Id == transactionId, cancellationToken);
         if (transaction is null) return NotFound(new { message = "Mobile-money transaction was not found." });
         if (!await campusAccess.CanAccessStudentAsync(User, transaction.StudentId, cancellationToken)) return Forbid();
+        if (string.IsNullOrWhiteSpace(request.ExternalRef)) return BadRequest(new { message = "The provider transaction reference is required for manual confirmation." });
         if (transaction.Status == "Completed")
         {
             if (string.Equals(transaction.ExternalRef, request.ExternalRef.Trim(), StringComparison.OrdinalIgnoreCase))
@@ -331,7 +332,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         }
         if (transaction.Status != "Pending") return Conflict(new { message = $"Only pending transactions can be confirmed. Current status: {transaction.Status}." });
         var externalRef = request.ExternalRef.Trim();
-        if (string.IsNullOrWhiteSpace(request.ExternalRef)) return BadRequest(new { message = "The provider transaction reference is required for manual confirmation." });
 
         await using var dbTransaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         try
