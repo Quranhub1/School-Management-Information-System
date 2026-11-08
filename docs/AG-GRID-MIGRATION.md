@@ -32,6 +32,9 @@ AG Grid Community is MIT-licensed. This implementation does not import Enterpris
 - **AccountsOverviewWorkspace**: outstanding balances, payment history and payroll summary
 - **AuditLog**: searchable audit events with timestamp, entity, user and change details
 - **Notices**: notice register
+- **AdminDashboard**: student and staff search results use the shared grid; all five administrator donut visualisations now render through Chart.js 4.6.1
+
+Chart.js is bundled through npm and rendered locally; no CDN, remote font, or runtime network request is needed for chart rendering.
 
 The grid is a presentation layer. Existing API routes, backend validation, permission checks, and UGX formatting remain owned by the original feature screens.
 
