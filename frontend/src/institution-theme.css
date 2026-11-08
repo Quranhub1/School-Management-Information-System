@@ -628,6 +628,9 @@
   }
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/fix/remove-sidebar-selected-tab-c-shape
 
 
 /* Final override: remove any selected-tab C-shaped edge, inset, or pseudo-marker.
@@ -655,7 +658,10 @@
   outline: 2px solid #d7cfbb !important;
   outline-offset: -2px !important;
 }
+<<<<<<< HEAD
 =======
 >>>>>>> origin/fix/branding-copy-sidebar-navigation
 =======
 >>>>>>> origin/fix/compact-course-mapping-select
+=======
+>>>>>>> origin/fix/remove-sidebar-selected-tab-c-shape
