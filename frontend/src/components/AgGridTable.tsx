@@ -8,7 +8,7 @@ import {
 } from 'ag-grid-community'
 import { AgGridProvider, AgGridReact } from 'ag-grid-react'
 import { downloadInstitutionalPdf } from '../lib/pdfmake'
-import { useInstitutionSettings } from './InstitutionSettingsContext'
+import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 
 export type AgGridTableProps<TData extends object> = {
   rows: TData[]
@@ -48,7 +48,9 @@ export function AgGridTable<TData extends object>({
 }: AgGridTableProps<TData>) {
   const [api, setApi] = useState<GridApi<TData> | null>(null)
   const [filter, setFilter] = useState(quickFilterText ?? '')
-  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
+  const institutionContext = useOptionalInstitutionSettings()
+  const institution = institutionContext?.institution
+  const institutionLoaded = institutionContext?.loaded ?? false
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
     sortable: true,
     filter: true,
@@ -98,10 +100,10 @@ export function AgGridTable<TData extends object>({
       title,
       filename: exportFileName,
       orientation: displayedColumns.length > 7 ? 'landscape' : 'portrait',
-      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
-      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
-      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
-      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      institutionName: institutionLoaded && institution?.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution?.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution?.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution?.isActive ? institution.primaryColor : undefined,
       content: [
         { text: 'Records: ' + (body.length - 1).toLocaleString('en-UG'), style: 'muted', margin: [0, 0, 0, 8] },
         { table: { headerRows: 1, widths: displayedColumns.map(() => '*'), body }, layout: 'lightHorizontalLines' },
