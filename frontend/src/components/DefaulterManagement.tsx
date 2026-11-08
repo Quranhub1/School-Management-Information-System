@@ -109,12 +109,6 @@ export function DefaulterManagement() {
     else if (tab === 'actions') void loadActions()
   }, [tab, filterSeverity])
 
-  function getSeverityColor(severity: string): string {
-    if (severity === 'Critical') return '#dc2626'
-    if (severity === 'Warning') return '#d97706'
-    return '#2563eb'
-  }
-
   return (
     <section className="panel" aria-label="Defaulter management">
       <div className="panel-heading">
