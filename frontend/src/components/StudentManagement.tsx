@@ -288,7 +288,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
 
     </form>}
     {view === 'registry' && <section className="panel student-registry-panel"><div className="panel-heading"><div><p className="eyebrow">Student Management</p><h3>{readOnly ? 'Student registry · Read-only' : 'Student registry'}</h3></div><span>{students.length} students</span></div>
-      {loading ? <LoadingSpinner label="Loading students…" /> : students.length === 0 ? <p className="empty">No students registered.</p> : <AgGridTable rows={students} columns={studentColumns} height={560} pageSize={25} exportFileName="kshs-student-registry" rowSelection="multiple" getRowId={params => params.data.id} />}
+      {loading ? <LoadingSpinner label="Loading students…" /> : students.length === 0 ? <p className="empty">No students registered.</p> : <AgGridTable rows={students} columns={studentColumns} height={560} pageSize={25} exportFileName="kshs-student-registry" getRowId={params => params.data.id} />}
     </section>}
     {qrStudentId && <div className="modal-backdrop" onClick={() => setQrStudentId(null)}><div className="auth-card" onClick={e => e.stopPropagation()}><p className="eyebrow">Student QR code</p><h3>{qrStudentId}</h3><img src={getStudentQrCode(qrStudentId)} alt="Student QR code" style={{ width: '100%', height: 'auto' }} /><button type="button" className="secondary-button" style={{ marginTop: 12 }} onClick={() => setQrStudentId(null)}>Close</button></div></div>}
     {guardianStudent && <div className="modal-backdrop" onClick={() => setGuardianStudent(null)}><div className="auth-card" style={{ width: 'min(900px, 96vw)', maxHeight: '90vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
