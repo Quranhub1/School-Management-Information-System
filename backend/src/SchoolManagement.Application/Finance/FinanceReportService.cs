@@ -67,20 +67,10 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         var assets = totals.Where(x => IsAsset(x.AccountType)).ToList();
         var liabilities = totals.Where(x => IsLiability(x.AccountType)).ToList();
         var equity = totals.Where(x => IsEquity(x.AccountType)).ToList();
-        IncomeStatementReport netIncome;
         if (containingPeriod is null)
-        {
-            // Without a configured containing fiscal period, use calendar-year-to-date
-            // for the balance sheet's net-income component. A configured fiscal period
-            // remains authoritative whenever one contains the requested as-of date.
-            var calendarYearStart = new DateOnly(effectiveAsOf.Year, 1, 1);
-            var yearToDateEntries = await finance.GetPostedJournalEntriesAsync(calendarYearStart, effectiveAsOf, null, cancellationToken);
-            netIncome = BuildIncomeStatementReport(yearToDateEntries, campusId, facultyId, departmentId, programmeId);
-        }
-        else
-        {
-            netIncome = await GetIncomeStatementAsync(containingPeriod.StartDate, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId);
-        }
+            throw new ArgumentException($"No fiscal period contains report date {effectiveAsOf:yyyy-MM-dd}. Configure a fiscal period covering this date before running the balance sheet.");
+
+        var netIncome = await GetIncomeStatementAsync(containingPeriod.StartDate, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId);
         var totalAssets = assets.Sum(x => x.Balance);
         var totalLiabilities = liabilities.Sum(x => x.Balance);
         var totalEquity = equity.Sum(x => x.Balance);
