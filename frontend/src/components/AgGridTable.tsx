@@ -1,15 +1,14 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
-import type { ZodType } from 'zod'
-import './AgGridTable.css'
+import { useCallback, useMemo, useState } from 'react'
 import {
   AllCommunityModule,
-  type CellValueChangedEvent,
   type ColDef,
   type GridApi,
   type GridOptions,
   themeQuartz,
 } from 'ag-grid-community'
 import { AgGridProvider, AgGridReact } from 'ag-grid-react'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 
 export type AgGridTableProps<TData extends object> = {
   rows: TData[]
@@ -25,8 +24,6 @@ export type AgGridTableProps<TData extends object> = {
   onRowClicked?: GridOptions<TData>['onRowClicked']
   onSelectionChanged?: GridOptions<TData>['onSelectionChanged']
   onCellValueChanged?: GridOptions<TData>['onCellValueChanged']
-  /** Optional Zod contract enforced for edited rows before caller persistence handlers run. */
-  rowValidationSchema?: ZodType
   getRowId?: GridOptions<TData>['getRowId']
   className?: string
 }
@@ -46,14 +43,14 @@ export function AgGridTable<TData extends object>({
   onRowClicked,
   onSelectionChanged,
   onCellValueChanged,
-  rowValidationSchema,
   getRowId,
   className,
 }: AgGridTableProps<TData>) {
   const [api, setApi] = useState<GridApi<TData> | null>(null)
   const [filter, setFilter] = useState(quickFilterText ?? '')
-  const [rowValidationErrors, setRowValidationErrors] = useState<Record<string, string[]>>({})
-  const revertingCell = useRef(false)
+  const institutionContext = useOptionalInstitutionSettings()
+  const institution = institutionContext?.institution
+  const institutionLoaded = institutionContext?.loaded ?? false
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
     sortable: true,
     filter: true,
@@ -80,28 +77,47 @@ export function AgGridTable<TData extends object>({
   const toggleColumn = useCallback((colId: string, visible: boolean) => {
     api?.setColumnsVisible([colId], visible)
   }, [api])
-  const handleCellValueChanged = useCallback((event: CellValueChangedEvent<TData>) => {
-    if (revertingCell.current) return
-    const rowKey = event.node.id ?? String(event.rowIndex ?? 'unknown-row')
-    if (rowValidationSchema) {
-      const result = rowValidationSchema.safeParse(event.data)
-      if (!result.success) {
-        const messages = result.error.issues.map(issue => `${issue.path.join('.') || 'Row'}: ${issue.message}`)
-        setRowValidationErrors(current => ({ ...current, [rowKey]: messages }))
-        revertingCell.current = true
-        event.node.setDataValue(event.column.getColId(), event.oldValue)
-        Promise.resolve().then(() => { revertingCell.current = false })
-        return
-      }
-    }
-    setRowValidationErrors(current => {
-      if (!(rowKey in current)) return current
-      const next = { ...current }
-      delete next[rowKey]
-      return next
+  const tablePdfOptions = useCallback(() => {
+    if (!api) return null
+    const displayedColumns = api.getAllDisplayedColumns()
+    const headers = displayedColumns.map(column => ({
+      text: String(column.getColDef().headerName ?? column.getColDef().field ?? column.getColId()),
+      style: 'tableHeader',
+    }))
+    const body: unknown[][] = [headers]
+    api.forEachNodeAfterFilterAndSort(node => {
+      if (!node.data) return
+      body.push(displayedColumns.map(column => {
+        const value = api.getCellValue({ rowNode: node, colKey: column.getColId(), useFormatter: true })
+        if (value === null || value === undefined || value === '') return '—'
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value)
+        try { return JSON.stringify(value) } catch { return String(value) }
+      }))
     })
-    onCellValueChanged?.(event)
-  }, [onCellValueChanged, rowValidationSchema])
+    if (body.length === 1) return null
+    const title = exportFileName.replace(/[-_]+/g, ' ').replace(/\\b\\w/g, letter => letter.toUpperCase())
+    return {
+      title,
+      filename: exportFileName,
+      orientation: displayedColumns.length > 7 ? 'landscape' as const : 'portrait' as const,
+      institutionName: institutionLoaded && institution?.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution?.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution?.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution?.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: 'Records: ' + (body.length - 1).toLocaleString('en-UG'), style: 'muted', margin: [0, 0, 0, 8] },
+        { table: { headerRows: 1, widths: displayedColumns.map(() => '*'), body }, layout: 'lightHorizontalLines', fontSize: displayedColumns.length > 10 ? 6 : 8 },
+      ],
+    }
+  }, [api, exportFileName, institution, institutionLoaded])
+  const exportPdf = useCallback(() => {
+    const options = tablePdfOptions()
+    if (options) downloadInstitutionalPdf(options)
+  }, [tablePdfOptions])
+  const printPdf = useCallback(() => {
+    const options = tablePdfOptions()
+    if (options) printInstitutionalPdf(options)
+  }, [tablePdfOptions])
 
   return (
     <div className={['smis-ag-grid-shell', className].filter(Boolean).join(' ')}>
@@ -112,6 +128,8 @@ export function AgGridTable<TData extends object>({
         </label>
         <span className="smis-ag-grid-count">{rows.length.toLocaleString('en-UG')} records</span>
         <button type="button" className="secondary-button" onClick={exportCsv} disabled={!api || rows.length === 0}>Export CSV</button>
+        <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
+        <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
         <details className="smis-ag-grid-columns">
           <summary>Columns</summary>
           <div className="smis-ag-grid-column-menu">
@@ -126,12 +144,6 @@ export function AgGridTable<TData extends object>({
           </div>
         </details>
       </div>}
-      {Object.entries(rowValidationErrors).map(([rowKey, messages]) => (
-        <div key={rowKey} className="smis-ag-grid-validation" role="alert" aria-live="polite">
-          <strong>Row {rowKey} was not saved because its data is invalid.</strong>
-          <ul>{messages.map((message, index) => <li key={`${rowKey}-${index}`}>{message}</li>)}</ul>
-        </div>
-      ))}
       <div className="smis-ag-grid" style={{ height, width: '100%' }}>
         <AgGridProvider modules={[AllCommunityModule]}>
           <AgGridReact<TData>
@@ -151,7 +163,7 @@ export function AgGridTable<TData extends object>({
             onGridReady={event => setApi(event.api)}
             onRowClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
-            onCellValueChanged={handleCellValueChanged}
+            onCellValueChanged={onCellValueChanged}
             getRowId={getRowId}
             suppressCellFocus={false}
           />
