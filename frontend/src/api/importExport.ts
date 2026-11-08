@@ -34,6 +34,13 @@ export async function importData(input: ImportExportRequest) {
   return parseApiResponse(bulkImportResultSchema, result, 'bulk import result') as BulkImportResult
 }
 
+/** Parse a selected local workbook sheet, then submit it through the existing validated import endpoint. */
+export async function importSpreadsheetData(entityType: string, file: File, sheetName?: string) {
+  const parsed = await parseSpreadsheetFile(file, sheetName)
+  const result = await importData({ entityType, csvData: parsed.csvData })
+  return { ...result, sheetName: parsed.sheetName, availableSheets: parsed.sheetNames }
+}
+
 async function fetchExportBlob(entityType: string, filters?: Record<string, string>): Promise<Blob> {
   const qs = filters ? '?' + new URLSearchParams(filters).toString() : ''
   const token = getAccessToken()
