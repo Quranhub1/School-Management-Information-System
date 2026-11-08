@@ -176,3 +176,21 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Confirm offline desktop packaging includes Zod in the bundled frontend and run clean-machine Windows/Linux smoke tests.
 
 **Status:** central Zod foundation, active validation in selected departmental API services, direct React form validation in Admissions, HR staff, Library and Finance payment workflows, and an AG Grid row-validation hook wired into Inventory are committed on the feature branch. Remaining work includes additional departmental forms, complete API coverage, per-entity import-row validation, broader editable-grid adoption and clipboard regression tests. Automated TypeScript/test/build verification is still required after the Library import fix and subsequent Finance additions; corrected CI reruns are queued. Do not declare system-wide adoption until all checks and remaining rollout/regression work are complete.
+
+
+## Reproducible dependency setup — November 2026
+
+### Implemented on `chore/reproducible-one-command-setup`
+
+- [x] Add a Windows PowerShell setup script that checks Node.js/.NET prerequisites, runs frontend `npm ci`, and restores the backend .NET solution.
+- [x] Add a Linux setup script with equivalent prerequisite checks and dependency restoration.
+- [x] Add Windows and Linux update helpers that perform a fast-forward-only pull and then run dependency setup.
+- [x] Make update helpers refuse to run with a dirty working tree, protecting local edits.
+- [x] Document the one-command setup and update workflow in README and INSTALLATION.
+- [x] Keep exact frontend package versions reproducible through the committed npm lockfile; `npm ci` installs the complete dependency graph, including Zod, AG Grid, Chart.js and local font packages.
+- [ ] Execute both setup scripts on clean Windows and Ubuntu machines and record successful dependency restoration.
+- [ ] Verify backend NuGet restore and frontend npm clean-install/build in CI on the final branch head.
+- [ ] Decide and document the institution's offline-server package-cache/internal-mirror strategy; Git does not carry `node_modules` or NuGet caches.
+- [ ] Consider NuGet lock-file generation and pinning SDK versions after checking all project target frameworks and CI runners.
+
+**Important boundary:** a standard `git pull` does not run arbitrary setup scripts. Use `update.ps1` or `update.sh` for a pull-plus-restore operation. This avoids unsafe implicit code execution during Git operations while still making updates a single command.
