@@ -38,5 +38,8 @@ public interface IFinanceRepository
     Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken);
     Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken cancellationToken);
     Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
+    Task<SchoolPaymentNotification?> GetSchoolPaymentNotificationAsync(string externalReference, CancellationToken cancellationToken);
+    Task AddSchoolPaymentNotificationAsync(SchoolPaymentNotification notification, CancellationToken cancellationToken);
+    Task<IReadOnlyList<SchoolPaymentNotification>> GetSchoolPaymentNotificationsAsync(CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
