@@ -1,7 +1,11 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+<<<<<<< HEAD
 import { AuditLogManagement } from './AuditLog'
+=======
+import { confirmAction } from './GlobalNotifications'
+>>>>>>> origin/fix/centered-delete-confirmation-modals
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -51,7 +55,11 @@ export function CalendarWorkspace() {
   }
 
   async function deactivate(id: string) {
+<<<<<<< HEAD
     if (!(await showConfirmDialog('Deactivate this calendar event?', { title: 'Deactivate calendar event', confirmLabel: 'Yes, deactivate', destructive: true }))) return
+=======
+    if (!await confirmAction('This calendar event will be deactivated.', 'Deactivate calendar event', 'Deactivate')) return
+>>>>>>> origin/fix/centered-delete-confirmation-modals
     try { await request(`/api/calendar/${id}`, { method: 'DELETE' }); await load() } catch (e) { setError(e instanceof Error ? e.message : 'Unable to deactivate event.') }
   }
 

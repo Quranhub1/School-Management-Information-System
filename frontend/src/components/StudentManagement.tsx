@@ -12,6 +12,7 @@ import { useInstitutionSettings } from './InstitutionSettingsContext'
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
 =======
@@ -47,6 +48,9 @@ import { notify } from './GlobalNotifications'
 =======
 import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
 >>>>>>> origin/fix/authority-course-catalogues
+=======
+import { confirmAction, notify } from './GlobalNotifications'
+>>>>>>> origin/fix/centered-delete-confirmation-modals
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -284,10 +288,14 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   }
   async function removeGuardian(g: StudentGuardian) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (!guardianStudent || !(await showConfirmDialog(`Remove ${g.fullName} from this student's records?`, { title: 'Remove parent / guardian', confirmLabel: 'Yes, remove', destructive: true }))) return
 =======
     if (!guardianStudent || !window.confirm(`Remove ${g.fullName} from this student's records?`)) return
 >>>>>>> origin/feat/global-toast-notifications
+=======
+    if (!guardianStudent || !await confirmAction(`Remove ${g.fullName} from this student's records?`, 'Remove parent or guardian', 'Remove record')) return
+>>>>>>> origin/fix/centered-delete-confirmation-modals
     try { await deleteStudentGuardian(guardianStudent.id, g.id); await loadGuardians(guardianStudent.id); notify('Parent/guardian record removed.', 'success', 'Record deleted') }
     catch (e) { const message = e instanceof Error ? e.message : 'Unable to remove parent/guardian record.'; setGuardianError(message); notify(message, 'error', 'Delete failed') }
   }

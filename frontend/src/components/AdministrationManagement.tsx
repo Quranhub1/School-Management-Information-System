@@ -4,6 +4,7 @@ import { ArrowLeft, BookOpen, BriefcaseBusiness, Building2, CalendarDays, Clipbo
 import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, type CreateUserRequest, type UpdateUserRequest, type UserSummary } from '../api/administration'
 import { type InstitutionSettings } from '../api/institutionSettings'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
+import { confirmAction } from './GlobalNotifications'
 
 const roles = ['SystemAdministrator', 'AcademicRegistrar', 'AssistantRegistrar', 'AdmissionsOfficer', 'Accountant', 'AssistantAccountant', 'Lecturer', 'ExaminationsOfficer', 'Student', 'SchoolWarden', 'Principal', 'Director', 'Secretary', 'ResidentDirector', 'HeadOfDepartment', 'Receptionist', 'AssistantPrincipal', 'Admin Secretary', 'Records Officer', 'Librarian', 'HR Manager']
 const emptyForm: CreateUserRequest = { username: '', password: '', firstName: '', lastName: '', email: '', roles: ['AcademicRegistrar'] }
@@ -189,7 +190,11 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
   }
 
   async function removeAccess(user: UserSummary) {
+<<<<<<< HEAD
     if (!user.isActive || !(await showConfirmDialog(`Remove sign-in access for ${user.username}? Their records will be retained.`, { title: 'Remove sign-in access', confirmLabel: 'Yes, remove access', destructive: true }))) return
+=======
+    if (!user.isActive || !await confirmAction(`Remove sign-in access for ${user.username}? Their records will be retained.`, 'Remove sign-in access', 'Remove access')) return
+>>>>>>> origin/fix/centered-delete-confirmation-modals
     await toggle(user)
   }
 

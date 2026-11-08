@@ -3,12 +3,16 @@ import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
+<<<<<<< HEAD
 import { notify } from './GlobalNotifications'
 <<<<<<< HEAD
 import { validateForm } from '../lib/validation'
 import { staffCreateRequestSchema } from '../schemas'
 =======
 >>>>>>> origin/feat/global-toast-notifications
+=======
+import { confirmAction, notify } from './GlobalNotifications'
+>>>>>>> origin/fix/centered-delete-confirmation-modals
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
@@ -164,7 +168,11 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     }
   }
   async function deactivate(id: string) {
+<<<<<<< HEAD
     if (!(await showConfirmDialog('Deactivate this staff member? They will remain in the records but will be marked inactive.', { title: 'Deactivate staff member', confirmLabel: 'Yes, deactivate' }))) return
+=======
+    if (!await confirmAction('This staff member will remain in the records but will be marked inactive.', 'Deactivate staff member', 'Deactivate')) return
+>>>>>>> origin/fix/centered-delete-confirmation-modals
     try {
       await deactivateStaff(id)
       setStaff(current => current.map(person => person.id === id ? { ...person, isActive: false } : person))
@@ -183,7 +191,11 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to activate staff.'; setError(message); notify(message, 'error', 'Activation failed') }
   }
   async function removeStaff(person: StaffMember) {
+<<<<<<< HEAD
     if (!(await showConfirmDialog(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`, { title: 'Delete staff member', confirmLabel: "Yes, I'm sure", destructive: true }))) return
+=======
+    if (!await confirmAction(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`, 'Delete staff member', 'Delete staff member')) return
+>>>>>>> origin/fix/centered-delete-confirmation-modals
     try {
       await deleteStaff(person.id)
       setStaff(current => current.filter(item => item.id !== person.id))
