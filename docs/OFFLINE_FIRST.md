@@ -1,50 +1,38 @@
 # Offline-First Architecture
 
-## Goals
+## Authority and consistency
 
-- The system must remain usable when the server is temporarily unreachable.
-- Writes performed offline are preserved locally and synced automatically when the LAN/connection returns.
-- No loss of attendance entries, finance records, or messaging during outages.
+PostgreSQL on the SMIS server is the only authoritative database. Dexie.js provides a local IndexedDB cache and a durable client-side operation journal. A cached record is never treated as a committed server record.
 
-## Strategy
+## Current implementation
 
-The system uses a **hybrid offline model**:
+- Dexie.js 4.4.7 is bundled locally through npm; no CDN or runtime internet dependency is introduced.
+- The Dexie schema is versioned and upgrades the existing `smis-offline` IndexedDB database without dropping its legacy stores.
+- Read-through caching is scoped to the signed-in username and role set.
+- The notices board is the first explicitly opted-in read endpoint, with a 30-minute TTL.
+- Cached reads are returned only when a network failure prevents a live response. Authorization failures and other HTTP errors are surfaced.
+- User-scoped cached reads are cleared on logout.
+- The sync journal records operation identity, user scope, module, resource, idempotency key, timestamps, attempts, status and error details.
+- Conflict records retain the reason and local/server version payloads for later review.
 
-1. **Server-authoritative source of truth**
-   - PostgreSQL on the Ubuntu server remains the primary database.
-   - All final records, reports, and audits are server-based.
+## Mutation policy
 
-2. **Client-side local cache + write queue**
-   - Frontend stores recent reads in IndexedDB for instant UI rendering.
-   - Mutations performed while offline are queued in IndexedDB.
-   - Background sync replays queued mutations when connectivity returns.
+Automatic queue replay is disabled. The previous generic replay path could send arbitrary queued HTTP mutations without module-specific validation, idempotency or conflict semantics. It has been replaced with a blocked-by-default journal. Offline mutations currently fail clearly and are not represented as successfully saved.
 
-3. **Service Worker**
-   - Caches app shell, JS/CSS bundles, and read-only API responses.
-   - Serves cached UI when the API is unreachable.
+Modules must be enabled individually only after their server-side API contract, authorization, idempotency, validation, retry and conflict tests are complete.
 
-## Offline-capable modules
+## Financial exclusion
 
-| Module | Offline behavior |
-|--------|-----------------|
-| Login | Cached session + token; login itself requires server |
-| Dashboard | Loads from cache; live numbers require server |
-| Students | Search/create/update offline; syncs on reconnect |
-| Attendance | Mark offline; syncs on reconnect |
-| Finance | New invoices/payments offline; syncs on reconnect |
-| Exams | Read-only offline; marks entry requires server |
-| Library | Search offline; issue/return offline; syncs on reconnect |
-| Messaging | Send offline; syncs on reconnect |
-| Reports | Cached history; regenerate requires server |
+No finance operation can be queued for offline replay. This includes payments, invoices, refunds, payroll and related ledger-affecting actions. Before financial synchronisation can be enabled, the backend must enforce a unique idempotency key, validate the complete transaction against current PostgreSQL state, atomically post all ledger effects, return the original result for exact retries, reject key/payload mismatches, and expose explicit 409 conflict handling. Financial conflicts require staff review; last-write-wins is prohibited.
 
-## Conflict handling
+## Data protection
 
-- Last-write-wins for non-critical fields.
-- Server rejects conflicts with `409 Conflict`; frontend prompts the user.
-- Attendance, finance, and exam results use server-assigned timestamps.
+IndexedDB is not encrypted by Dexie. Do not cache sensitive student identity, clinical, staff, or financial records without an approved device-protection and retention policy. All cache entries are isolated by user and role scope. Server-side authorization remains mandatory for every live API request.
 
-## Data safety
+## Planned rollout
 
-- IndexedDB is persisted by the browser and survives restarts.
-- Queue is processed in order.
-- Failed sync items remain queued and are retried on next online event.
+1. Expand read caching only to approved low-sensitivity endpoints.
+2. Introduce offline writes one module at a time, beginning with low-risk workflows.
+3. Add optimistic concurrency/version checks and explicit conflict resolution.
+4. Implement financial idempotency and atomic posting before considering any finance queue.
+5. Add device data protection, retention controls, and multi-user/offline acceptance tests.

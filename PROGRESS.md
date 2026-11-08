@@ -28,6 +28,35 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [ ] Extend correlation header propagation to remaining legacy frontend API modules as they are consolidated.
 - [ ] Configure production log-directory permissions and retention/collection during target-environment acceptance.
 
+## Dexie.js offline data and synchronisation — 2026-11-08
+
+- [x] Add Dexie.js 4.4.7 as a locally bundled frontend dependency.
+- [x] Upgrade the existing `smis-offline` IndexedDB database to a versioned Dexie schema while retaining legacy stores.
+- [x] Add a role/user-scoped read-through cache with network-failure fallback; HTTP authorization/server errors are not masked.
+- [x] Enable the first read cache for the authenticated notices board (30-minute TTL).
+- [x] Clear the signed-out user's cached reads on logout.
+- [x] Replace the unsafe generic offline mutation replay path with a blocked-by-default, auditable operation journal and explicit conflict records.
+- [x] Reject offline mutations until a module-specific synchronisation contract is implemented; financial operations are explicitly excluded from the journal.
+- [x] Document PostgreSQL authority, cache isolation, migration, and financial idempotency/validation/conflict gates in `docs/OFFLINE_MODE.md` and `docs/OFFLINE_FIRST.md`.
+- [ ] Add visible staff-facing sync queue/conflict review UI and operational audit export.
+- [ ] Add automated IndexedDB migration, cache isolation, logout cleanup, offline fallback and conflict tests.
+- [ ] Expand read caching only to approved low-sensitivity datasets; sensitive student, clinical, staff and finance records remain excluded pending device data-protection controls.
+- [ ] Implement low-risk offline writes one module at a time with API authorization, idempotency, server validation and explicit 409 conflict handling.
+- [ ] Implement financial idempotency keys with a PostgreSQL unique constraint, atomic ledger posting, request-payload matching and staff-reviewed conflict resolution before enabling any finance replay.
+- [ ] Run frontend build/tests, backend tests, and Windows/Linux desktop CI on the Dexie branch; perform target-device offline acceptance testing.
+
+
+**Last updated:** 2026-10-11  
+**Tracking branch:** `main`  
+**Current release:** `v0.2.0`  
+**Currency:** UGX
+
+
+**Last updated:** 2026-10-11  
+**Tracking branch:** `main`  
+**Current release:** `v0.2.0`  
+**Currency:** UGX
+
 ## Current work — October 2026
 
 - [x] Replaced the institution login page with the approved glassmorphism login design in `frontend/public/institution-login.html`

@@ -103,6 +103,14 @@ export function getSession(): StoredSession | null {
 }
 
 export function logout(): void {
+  const serialized = readStorage(sessionStorage, SESSION_KEY) ?? readStorage(localStorage, SESSION_KEY)
+  let username: string | undefined
+  try { username = serialized ? (JSON.parse(serialized) as StoredSession).username : undefined } catch { /* ignore invalid session metadata */ }
+  if (username) {
+    void import('../lib/offline/db').then(({ clearCacheForUser }) => clearCacheForUser(username!)).catch(() => {
+      // Offline cache cleanup must never prevent sign-out.
+    })
+  }
   removeStorage(sessionStorage, TOKEN_KEY)
   removeStorage(sessionStorage, SESSION_KEY)
   removeStorage(localStorage, TOKEN_KEY)

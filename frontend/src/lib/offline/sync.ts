@@ -1,65 +1,42 @@
-import { get as idbGet, put as idbPut, remove as idbRemove, clear as idbClear } from './db';
+import { countPendingSyncOperations, listSyncConflicts, listSyncOperations, recordSyncConflict, recordSyncOperation, resolveSyncConflict, type SyncConflict, type SyncDomain, type SyncOperation } from './db'
 
-const SYNC_TAG = 'smis-sync';
+export type { SyncConflict, SyncDomain, SyncOperation }
 
-export type QueueItem = {
-  id?: number;
-  url: string;
-  method: string;
-  body?: unknown;
-  headers?: Record<string, string>;
-  createdAt: string;
-};
-
-export async function enqueue(item: Omit<QueueItem, 'id' | 'createdAt'>): Promise<void> {
-  await idbPut<QueueItem>('queue', { ...item, createdAt: new Date().toISOString() });
+export function enqueueAuditedOperation(input: {
+  scope: string
+  domain: SyncDomain
+  operation: string
+  resourceKey: string
+  payload: unknown
+  idempotencyKey?: string
+}): Promise<SyncOperation> {
+  return recordSyncOperation(input)
 }
 
-export async function dequeue(): Promise<QueueItem | undefined> {
-  const items = await idbGet<QueueItem>('queue');
-  const next = items[0];
-  if (!next) return undefined;
-  if (next.id) await idbRemove('queue', next.id);
-  return next;
+export async function getSyncQueue(scope: string): Promise<SyncOperation[]> {
+  return listSyncOperations(scope)
 }
 
-export async function queueSize(): Promise<number> {
-  const items = await idbGet<QueueItem>('queue');
-  return items.length;
+export async function queueSize(scope?: string): Promise<number> {
+  return countPendingSyncOperations(scope)
 }
 
-export async function processQueue(token: string): Promise<{ processed: number; failed: number }> {
-  let processed = 0;
-  let failed = 0;
-  while (true) {
-    const item = await dequeue();
-    if (!item) break;
-    try {
-      const response = await fetch(item.url, {
-        method: item.method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-          ...(item.headers ?? {})
-        },
-        body: item.body ? JSON.stringify(item.body) : undefined
-      });
-      if (!response.ok) {
-        throw new Error(`Sync failed (${response.status})`);
-      }
-      processed++;
-    } catch {
-      failed++;
-      await idbPut('queue', item);
-      break;
-    }
-  }
-  return { processed, failed };
+export { recordSyncConflict, resolveSyncConflict }
+
+export async function getSyncConflicts(scope: string): Promise<SyncConflict[]> {
+  return listSyncConflicts(scope)
+}
+
+// Deliberately no automatic replay yet. Each module must register and pass its
+// own server validation, idempotency, permission and conflict tests before its
+// queued operations can be promoted from "blocked" to "pending".
+export async function processQueue(): Promise<{ processed: number; blocked: number }> {
+  return { processed: 0, blocked: await queueSize() }
 }
 
 export async function requestBackgroundSync(): Promise<void> {
-  if ('serviceWorker' in navigator && 'SyncManager' in window) {
-    const registration = await navigator.serviceWorker.ready;
-    await (registration as ServiceWorkerRegistration & { sync: { register(tag: string): Promise<void> } }).sync.register(SYNC_TAG);
-  }
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return
+  const registration = await navigator.serviceWorker.ready
+  const syncRegistration = registration as ServiceWorkerRegistration & { sync?: { register(tag: string): Promise<void> } }
+  if (syncRegistration.sync) await syncRegistration.sync.register('smis-sync')
 }
