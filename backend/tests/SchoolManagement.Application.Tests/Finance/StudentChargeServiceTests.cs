@@ -62,7 +62,6 @@ public sealed class StudentChargeServiceTests
         public Task<bool> NameExistsAsync(string name, Guid? excludingId = null, CancellationToken cancellationToken = default) => Task.FromResult(false);
         public Task<bool> HasOverlappingPeriodAsync(DateOnly startDate, DateOnly endDate, Guid? excludingId = null, CancellationToken cancellationToken = default) => Task.FromResult(false);
         public Task AddAsync(FiscalPeriod fiscalPeriod, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>([]);
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
@@ -107,6 +106,7 @@ public sealed class StudentChargeServiceTests
         public Task AddCreditNoteAsync(CreditNote x, CancellationToken ct) { creditNotes.Add(x); return Task.CompletedTask; }
         public Task AddJournalEntryAsync(JournalEntry x, CancellationToken ct) { JournalEntries.Add(x); return Task.CompletedTask; }
         public Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken ct) => Task.FromResult<IReadOnlyList<JournalEntry>>(JournalEntries);
+        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>([]);
         public Task SaveChangesAsync(CancellationToken ct = default) => Task.CompletedTask;
     }
 }
