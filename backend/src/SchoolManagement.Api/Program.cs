@@ -40,8 +40,8 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
         .WriteTo.File(
             Path.Combine(logDirectory, "smis-.log"),
             rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 14,
-            fileSizeLimitBytes: 10 * 1024 * 1024,
+            retainedFileCountLimit: context.Configuration.GetValue<int?>("Logging:FileRetentionDays") ?? 14,
+            fileSizeLimitBytes: context.Configuration.GetValue<long?>("Logging:FileSizeLimitBytes") ?? 10L * 1024 * 1024,
             rollOnFileSizeLimit: true,
             shared: true,
             flushToDiskInterval: TimeSpan.FromSeconds(2));
