@@ -1,0 +1,11 @@
+.smis-ag-grid-validation {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid #dc6b6b;
+  border-left-width: 4px;
+  background: #fff5f5;
+  color: #842029;
+  font-size: 12px;
+}
+.smis-ag-grid-validation strong { display: block; margin-bottom: 4px; }
+.smis-ag-grid-validation ul { margin: 0; padding-left: 18px; }
