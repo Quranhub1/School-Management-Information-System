@@ -12,10 +12,12 @@ import { isPersistableQuery, queryClient, QUERY_CACHE_MAX_AGE } from './queryCli
 type PersistedQueryRecord = {
   key: string
   savedAt: number
+  buster: string
   state: DehydratedState
 }
 
 const CACHE_PREFIX = 'query-cache:'
+const CACHE_BUSTER = 'smis-query-cache-v1'
 const AUTH_CHANGED_EVENT = 'smis:auth-changed'
 
 export function QueryCacheProvider({ children }: { children: ReactNode }) {
@@ -57,9 +59,9 @@ export function QueryCacheProvider({ children }: { children: ReactNode }) {
       try {
         const records = await getRecords<PersistedQueryRecord>('queryCache')
         const record = records.find(item => item.key === storageKey)
-        if (record && Date.now() - record.savedAt <= QUERY_CACHE_MAX_AGE && !cancelled) {
+        if (record && record.buster === CACHE_BUSTER && Date.now() - record.savedAt <= QUERY_CACHE_MAX_AGE && !cancelled) {
           hydrate(queryClient, record.state)
-        } else if (record && Date.now() - record.savedAt > QUERY_CACHE_MAX_AGE) {
+        } else if (record) {
           await remove('queryCache', storageKey)
         }
       } catch {
@@ -80,6 +82,7 @@ export function QueryCacheProvider({ children }: { children: ReactNode }) {
           void put<PersistedQueryRecord>('queryCache', {
             key: storageKey,
             savedAt: Date.now(),
+            buster: CACHE_BUSTER,
             state,
           }).catch(() => undefined)
         }, 300)
