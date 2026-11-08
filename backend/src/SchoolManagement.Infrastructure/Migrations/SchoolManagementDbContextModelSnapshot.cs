@@ -37,6 +37,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                 });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/persisted-examination-workflows
             modelBuilder.Entity("SchoolManagement.Domain.Academic.UserCampusAssignment", b =>
                 {
                     b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
@@ -51,8 +54,11 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("UserCampusAssignments");
                 });
 
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/multi-campus-management
+=======
+>>>>>>> origin/feat/persisted-examination-workflows
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Institution", b =>
                 {
                     b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");

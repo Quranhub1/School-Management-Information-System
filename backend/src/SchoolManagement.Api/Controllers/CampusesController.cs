@@ -22,6 +22,9 @@ public sealed class CampusesController(SchoolManagementDbContext db) : Controlle
   if(institution is null){institution=new Institution{Code=InstitutionCode(settings),Name=settings.InstitutionName.Trim(),InstitutionType=string.IsNullOrWhiteSpace(settings.InstitutionType)?"School":settings.InstitutionType.Trim(),Address=settings.Address,Phone=settings.Phone,Email=settings.Email,Website=settings.Website,IsActive=true};db.Institutions.Add(institution);await db.SaveChangesAsync(ct);}
   if(await db.Campuses.AnyAsync(x=>x.InstitutionId==institution.Id&&(x.Code==code||x.Name.ToLower()==name.ToLower()),ct))return Conflict(new{message="A campus with this name or code already exists."});
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/persisted-examination-workflows
   var isFirstCampus=!await db.Campuses.AnyAsync(x=>x.InstitutionId==institution.Id,ct);
   var campus=new Campus{InstitutionId=institution.Id,Code=code,Name=name,Address=request.Address?.Trim(),District=request.District?.Trim(),IsActive=true};db.Campuses.Add(campus);
   if(isFirstCampus){
@@ -40,9 +43,12 @@ public sealed class CampusesController(SchoolManagementDbContext db) : Controlle
     db.UserCampusAssignments.Add(new UserCampusAssignment{UserId=user.Id,CampusId=campus.Id,IsPrimary=true});
   }
   await db.SaveChangesAsync(ct);
+<<<<<<< HEAD
 =======
   var campus=new Campus{InstitutionId=institution.Id,Code=code,Name=name,Address=request.Address?.Trim(),District=request.District?.Trim(),IsActive=true};db.Campuses.Add(campus);await db.SaveChangesAsync(ct);
 >>>>>>> origin/feat/multi-campus-management
+=======
+>>>>>>> origin/feat/persisted-examination-workflows
   return Created($"/api/campuses/{campus.Id}",new CampusResponse(campus.Id,campus.Code,campus.Name,campus.Address,campus.District,campus.IsActive));
  }
  [HttpPatch("{id:guid}")] public async Task<ActionResult<CampusResponse>> Update(Guid id,SaveCampusRequest request,CancellationToken ct) {
