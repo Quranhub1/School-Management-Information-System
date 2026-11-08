@@ -176,3 +176,26 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Confirm offline desktop packaging includes Zod in the bundled frontend and run clean-machine Windows/Linux smoke tests.
 
 **Status:** central Zod foundation, active validation in selected departmental API services, direct React form validation in Admissions, HR staff, Library and Finance payment workflows, and an AG Grid row-validation hook wired into Inventory are committed on the feature branch. Remaining work includes additional departmental forms, complete API coverage, per-entity import-row validation, broader editable-grid adoption and clipboard regression tests. Automated TypeScript/test/build verification is still required after the Library import fix and subsequent Finance additions; corrected CI reruns are queued. Do not declare system-wide adoption until all checks and remaining rollout/regression work are complete.
+
+
+## UI copy and network-error cleanup — November 2026
+
+### Implemented in this change
+
+- [x] Remove the Inventory helper paragraph without changing automatic S/N or custom-column behavior.
+- [x] Remove explanatory fee-configuration copy and the non-functional “module is available” placeholder paragraphs from the Academic Reports, Subject Management, Teacher Assignments, Assessment Configuration and Student Notifications panels.
+- [x] Remove the Student Portal explanatory paragraph while retaining authorization and role-based access boundaries.
+- [x] Correct academic-year/period and staff-allowance bearer-token retrieval to use the shared `getAccessToken()` helper and canonical `smis.accessToken` key.
+- [x] Correct FeeTypesManager to load academic years through the shared authenticated academic-structure API.
+- [x] Correct the balance-sheet net-income fallback: when no fiscal period contains the requested as-of date, calculate calendar-year-to-date net income instead of calling an income-statement resolver that requires a containing fiscal period.
+- [x] Return HTTP 400 with a useful validation message for invalid income-statement/balance-sheet date ranges instead of allowing `ArgumentException` to surface as HTTP 500.
+
+### Verification still required
+
+- [ ] Run frontend TypeScript, Vitest and production build after the authentication and copy cleanup.
+- [ ] Run backend Finance application/API tests and add regression coverage for a balance-sheet date outside configured fiscal periods.
+- [ ] Verify Fee Types, Academic Years and Academic Periods with a real authenticated account; confirm no 401 requests remain.
+- [ ] Verify the balance sheet for 2026-11-08 both with and without a containing fiscal period; compare the calendar-year fallback with the institution's configured fiscal-year policy before production sign-off.
+- [ ] Continue a screen-by-screen visual review of all remaining authenticated modules and tabs. This change removes the identified redundant copy and stub paragraphs; it does not remove required labels, validation messages, warnings, empty states or operational instructions.
+
+**Status:** targeted UI copy and identified request/report defects are corrected in source. CI and runtime verification remain pending. Do not mark the repository-wide screen review complete until each remaining screen and tab has been inspected and its regression checks passed.
