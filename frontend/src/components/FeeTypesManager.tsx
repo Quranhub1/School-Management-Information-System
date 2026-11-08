@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { applyFeeStructure, createFeeStructure, getFeeStructures, getFinanceAccounts, type FeeStructure, type FinanceAccountOption } from '../api/finance'
+import { getAcademicYears } from '../api/academicStructure'
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { AgGridTable } from './AgGridTable'
 import type { ColDef } from 'ag-grid-community'
@@ -33,10 +34,9 @@ export function FeeTypesManager() {
   }
   useEffect(() => { void load() }, [academicYearId])
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
-    fetch('/api/academic-structure/years', { headers: { Accept: 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) } })
-      .then(r => r.ok ? r.json() as Promise<AcademicYear[]> : Promise.reject(new Error('Unable to load academic years.')))
-      .then(setYears).catch(() => setYears([]))
+    let cancelled = false
+    getAcademicYears().then(data => { if (!cancelled) setYears(data) }).catch(() => { if (!cancelled) setYears([]) })
+    return () => { cancelled = true }
   }, [])
 
   function updateItem(index:number,key:keyof ItemDraft,value:string) { setItems(current=>current.map((item,i)=>i===index?{...item,[key]:value}:item)) }
@@ -64,7 +64,7 @@ export function FeeTypesManager() {
   }
 
   return <section className="fee-types-manager">
-    <div className="panel-heading"><div><p className="eyebrow">FEE CONFIGURATION</p><h3>Add other fees to student accounts</h3><p className="finance-muted">Create a reusable fee type such as Bus Fee, Medical Insurance, Examination Fee or Development Fund, then post it to every active student account.</p></div></div>
+    <div className="panel-heading"><div><p className="eyebrow">FEE CONFIGURATION</p><h3>Add other fees to student accounts</h3></div></div>
     {error&&<div className="error" role="alert">{error}</div>}{message&&<div className="success-banner" role="status">{message}</div>}
     <div className="fee-builder">
       <div className="fee-builder-grid">
