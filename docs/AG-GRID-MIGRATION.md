@@ -16,7 +16,7 @@ AG Grid Community is MIT-licensed. This implementation does not import Enterpris
 - Column sorting, per-column filtering and floating filters
 - Column resizing and drag-to-reorder
 - Pagination with 10, 25, 50 and 100 row page sizes
-- Quick search across the grid
+- Quick search across the grid, with a 300 ms debounce so rapid typing does not trigger a full quick-filter pass on every keystroke
 - CSV export
 - Column visibility controls
 - Multi-row selection
@@ -40,6 +40,10 @@ AG Grid Community is MIT-licensed. This implementation does not import Enterpris
 Chart.js is bundled through npm and rendered locally; no CDN, remote font, or runtime network request is needed for chart rendering.
 
 The grid is a presentation layer. Existing API routes, backend validation, permission checks, and UGX formatting remain owned by the original feature screens.
+
+## Search responsiveness
+
+The shared grid toolbar keeps the text input controlled and responsive while `use-debounce` 10.1.1 delays the value passed to AG Grid by 300 ms. This optimization applies to client-side quick filtering in every screen using `AgGridTable`; it does not delay unrelated form inputs or financial submissions, and it does not debounce server API calls outside this shared grid. The debounce value is centralized so the delay can be tuned consistently. Clearing the search is subject to the same short debounce window.
 
 ## Deliberately not converted
 
