@@ -12,6 +12,7 @@ import { listStaff, STAFF_CHANGED_EVENT } from '../api/staff'
 import { getInvoices } from '../api/finance'
 import { listPayroll } from '../api/payroll'
 import { InventoryStockSettings } from './InventoryStockSettings'
+<<<<<<< HEAD
 import { AgGridTable } from './AgGridTable'
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -22,6 +23,9 @@ import { DoughnutChart } from './charts'
 import { DoughnutChart } from './charts'
 >>>>>>> origin/feat/chartjs-centralized-visualisation
 import type { ColDef } from 'ag-grid-community'
+=======
+import { DoughnutChart } from './charts'
+>>>>>>> origin/feat/chartjs-visualisation-foundation
 
 type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring' | 'stock-settings'
 type ChartSegment = { label: string; value: number; color: string; displayValue?: string }
@@ -39,6 +43,7 @@ const chartColors = {
 const numberFormat = new Intl.NumberFormat('en-UG')
 const moneyFormat = (value: number) => `UGX ${numberFormat.format(Math.round(value || 0))}`
 
+<<<<<<< HEAD
 type StudentSearchResult = { id: string; studentNumber: string; name: string; status: string }
 type StaffSearchResult = { id: string; staffNumber: string; name: string; department: string; status: string }
 
@@ -142,6 +147,8 @@ function DonutChart({
 =======
 >>>>>>> origin/feat/chartjs-centralized-visualisation
 
+=======
+>>>>>>> origin/feat/chartjs-visualisation-foundation
 export function AdminDashboard() {
   const session = getSession()
   const [tab, setTab] = useState<Tab>('overview')

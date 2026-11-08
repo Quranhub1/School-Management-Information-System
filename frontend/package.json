@@ -15,6 +15,10 @@
     "copy-pdfmake-assets": "node scripts/copy-pdfmake-assets.mjs"
   },
   "dependencies": {
+<<<<<<< HEAD
+=======
+    "chart.js": "^4.5.1",
+>>>>>>> origin/feat/chartjs-visualisation-foundation
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "class-variance-authority": "^0.7.1",

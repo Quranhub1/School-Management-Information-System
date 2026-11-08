@@ -3,7 +3,12 @@ import { ArrowRight, ArrowUpRight, BellRing, BookOpenCheck, BrainCircuit, Calend
 import { modernQueryKeys, useModernDashboardQuery, useStudentRiskQuery, useStudent360Query, useWorkflowSummaryQuery } from '../api/modern'
 import { useQueryClient } from '@tanstack/react-query'
 import { getAccessToken } from '../api/auth'
+<<<<<<< HEAD
 import { DoughnutChart, BarChart } from './charts'
+=======
+import { DoughnutChart } from './charts/DoughnutChart'
+import { BarChart } from './charts/BarChart'
+>>>>>>> origin/feat/chartjs-visualisation-foundation
 import './ModernInformationHub.css'
 
 const number = (n: number) => new Intl.NumberFormat('en-UG', { maximumFractionDigits: 0 }).format(Number.isFinite(n) ? n : 0)
@@ -51,6 +56,8 @@ export function ModernInformationHub() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Assistant unavailable.') }
     finally { setAssistantLoading(false) }
   }
+
+
 
   const metrics = dashboard ? [
     { label: 'Active students', value: number(dashboard.activeStudents), note: `${number(dashboard.totalStudents)} total records`, icon: UsersRound, tone: 'blue' },

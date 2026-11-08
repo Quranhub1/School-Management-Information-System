@@ -2667,14 +2667,18 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
 .admin-chart-body { display:grid; grid-template-columns:minmax(105px,.85fr) minmax(0,1.15fr); align-items:center; gap:12px; padding-top:16px; }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/chartjs-centralized-visualisation
+=======
+>>>>>>> origin/feat/chartjs-visualisation-foundation
 
 
 
 
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 .admin-donut-wrap { position:relative; width:min(100%,164px); aspect-ratio:1; margin:0 auto; }
@@ -2686,6 +2690,8 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
 >>>>>>> origin/feat/ag-grid-table-migration
 =======
 >>>>>>> origin/feat/chartjs-centralized-visualisation
+=======
+>>>>>>> origin/feat/chartjs-visualisation-foundation
 .admin-chart-legend { display:grid; gap:11px; min-width:0; margin:0; padding:0; list-style:none; }
 .admin-chart-legend li { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; color:var(--smis-muted,#64748b); font-size:.75rem; }
 .admin-chart-legend li strong { flex:0 0 auto; color:var(--smis-text,#0f172a); font-size:.75rem; font-weight:750; text-align:right; overflow-wrap:anywhere; }
@@ -2734,7 +2740,10 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
   .admin-section-title { align-items:flex-start; flex-direction:column; gap:9px; }
   .admin-chart-card { padding:16px; }
   .admin-chart-body { grid-template-columns:1fr; gap:10px; }
+<<<<<<< HEAD
   
+=======
+>>>>>>> origin/feat/chartjs-visualisation-foundation
   .admin-chart-legend { gap:9px; }
   .admin-quick-actions { grid-template-columns:1fr; }
 }

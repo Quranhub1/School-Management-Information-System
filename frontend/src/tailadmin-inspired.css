@@ -241,9 +241,12 @@ h1, h2, h3, h4, h5, h6,
 .admin-chart-heading h3 { margin: 0; color: #172033; font-size: 14px; font-weight: 750; }
 .admin-chart-heading p { margin: 5px 0 0; color: #94a3b8; font-size: 11px; }
 .admin-chart-body { gap: 20px !important; }
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> origin/feat/chartjs-visualisation-foundation
 .admin-chart-legend { gap: 12px !important; }
 .admin-chart-legend li { color: #64748b; font-size: 11px; }
 .admin-chart-legend li strong { color: #334155; font-size: 11px; }

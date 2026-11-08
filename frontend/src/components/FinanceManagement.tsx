@@ -9,6 +9,7 @@ import { CashBankPositionReport } from './CashBankPositionReport'
 import { FinanceControlCenter } from './FinanceControlCenter'
 import { FeeTypesManager } from './FeeTypesManager'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
+import { BarChart } from './charts/BarChart'
 import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
 import { AgGridTable } from './AgGridTable'
 <<<<<<< HEAD
