@@ -30,6 +30,9 @@ AG Grid Community is MIT-licensed. This implementation does not import Enterpris
 - **PayrollManagement**: payroll register, preserving payroll edit, mark-paid and refresh actions
 - **StudentManagement**: student registry, preserving guardian management and QR-code actions
 - **AccountsOverviewWorkspace**: outstanding balances, payment history and payroll summary
+- **DefaulterManagement**: fee-defaulter list, follow-up actions and student invoice details
+- **FeeTypesManager**: configured fee structures and application actions
+- **InventoryStockAlerts**: low-stock and out-of-stock alerts
 - **AuditLog**: searchable audit events with timestamp, entity, user and change details
 - **Notices**: notice register
 - **AdminDashboard**: student and staff search results use the shared grid; all five administrator donut visualisations now render through Chart.js 4.6.1
@@ -53,7 +56,7 @@ npm test
 ```
 
 Then manually verify:
-- Finance, accounts overview, inventory, payroll, student registry, audit log and notices at desktop and narrow viewport widths
+- Finance, accounts overview, inventory and stock alerts, payroll, student registry, fee defaulters, fee structures, audit log and notices at desktop and narrow viewport widths
 - Sorting, floating filters, quick search, pagination, column drag/reorder and column visibility
 - CSV export contents and filenames
 - Inventory edits autosave to the database and remain blocked for read-only roles
