@@ -2,7 +2,7 @@ import { getAccessToken } from './auth'
 import { readApiErrorMessage } from './errors'
 import { z } from 'zod'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
-import { createInvoiceRequestSchema, invoiceResponseSchema, recordPaymentRequestSchema } from '../schemas'
+import { bulkPaymentRequestSchema, createInvoiceRequestSchema, invoiceResponseSchema, mobileMoneyCreateRequestSchema, recordPaymentRequestSchema } from '../schemas'
 
 export interface Invoice {
   id: string
@@ -202,11 +202,11 @@ export async function getPayments(studentId?: string) {
 }
 
 export interface MobileMoneyTransaction { id: string; studentId: string; studentInvoiceId?: string; amount: number; currency: string; provider: string; status: string; reference: string; transactionRef?: string; phoneNumber?: string; requestedAt: string; createdAt: string }
-export async function createMobileMoneyTransaction(body: Partial<MobileMoneyTransaction>) { return request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(body) }) }
+export async function createMobileMoneyTransaction(body: Partial<MobileMoneyTransaction>) { const input = parseApiInput(mobileMoneyCreateRequestSchema, body, 'mobile money payment'); return request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(input) }) }
 export async function confirmMobileMoneyTransaction(transactionId: string, ref?: string) { return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ ref }) }) }
 export async function getMobileMoneyTransactions(status?: string) { return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
 
-export async function createBulkPayment(body: { payments: { studentId: string; amount: number; paymentMethod: string; reference?: string }[] }) { return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(body) }) }
+export async function createBulkPayment(body: { payments: { studentId: string; amount: number; paymentMethod: string; receiptNumber?: string; reference?: string }[] }) { const input = parseApiInput(bulkPaymentRequestSchema, body, 'bulk payment'); return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(input) }) }
 export async function issueCreditNote(invoiceId: string, body: { amount: number; reason: string }) { return request<any>('/api/finance/invoices/' + invoiceId + '/credit-notes', { method: 'POST', body: JSON.stringify(body) }) }
 export async function getCreditNotes(invoiceId?: string) { return request<any[]>(`/api/finance/credit-notes${invoiceId ? `?invoiceId=${encodeURIComponent(invoiceId)}` : ''}`) }
 
