@@ -12,6 +12,7 @@ import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { notify } from './GlobalNotifications'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getCurricula, type Curriculum } from '../api/curriculumManagement'
+<<<<<<< HEAD
 import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -23,6 +24,9 @@ import { studentApplicationSubmissionSchema } from '../schemas'
 import { validateForm } from '../lib/validation'
 import { studentApplicationSubmissionSchema } from '../schemas'
 >>>>>>> origin/feat/central-zod-validation-v2
+=======
+import { ACADEMIC_AUTHORITY_OPTIONS, SCHOOL_BASED_PROGRAMME_REFERENCES, VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
+>>>>>>> origin/feat/curriculum-catalogue-workflow-polish
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -112,6 +116,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   const authorityOf = (programmeId: string) => resolveAcademicAuthority(academicProgrammes.find(p => p.id === programmeId)?.regulator)
   const availableCurricula = academicCurricula.filter(c => authorityOf(c.programmeId) === application.authority)
   const availableCourses = Array.from(new Set([
+    ...(application.authority === 'School-based' ? SCHOOL_BASED_PROGRAMME_REFERENCES : []),
     ...VERIFIED_ACADEMIC_COURSES.filter(course => course.authority === application.authority).map(course => course.name),
     ...availableCurricula.map(c => c.title),
     ...academicProgrammes.filter(p => authorityOf(p.id) === application.authority).map(p => p.name),
@@ -291,9 +296,16 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       <div className="application-form-intro"><p>Complete every relevant section in clear BLOCK letters. Fields marked * are required.</p><label>Student / application number *<input value={studentNumber} aria-invalid={Boolean(validationErrors.studentNumber)} onChange={e => { setStudentNumber(e.target.value); setValidationErrors(current => { const next = { ...current }; delete next.studentNumber; return next }) }} required /></label></div>
       <Section number="01" title="Admission information">
         <div className="application-grid">
+<<<<<<< HEAD
           <Field label="Academic year *"><input value={application.academicYear} aria-invalid={Boolean(validationErrors.academicYear)} onChange={e => setApp('academicYear', e.target.value)} placeholder="e.g. 2027" required /></Field>
           <Field label="Intake *"><input value={application.intake} aria-invalid={Boolean(validationErrors.intake)} onChange={e => setApp('intake', e.target.value)} placeholder="e.g. January / August" required /></Field>
           <Field label="Course / programme applied for *"><input value={application.course} aria-invalid={Boolean(validationErrors.course)} onChange={e => setApp('course', e.target.value)} required /></Field>
+=======
+          <Field label="Academic year *"><input value={application.academicYear} onChange={e => setApp('academicYear', e.target.value)} placeholder="e.g. 2027" required /></Field>
+          <Field label="Intake *"><input value={application.intake} onChange={e => setApp('intake', e.target.value)} placeholder="e.g. January / August" required /></Field>
+          <Field label="Awarding authority *"><select value={application.authority} onChange={e => setApplication(current => ({ ...current, authority: e.target.value, course: '' }))} required>{ACADEMIC_AUTHORITY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
+          <Field label="Course / programme applied for *"><input list="admission-course-options" value={application.course} onChange={e => setApp('course', e.target.value)} placeholder="Choose or enter a programme" required /><datalist id="admission-course-options">{availableCourses.map(course => <option key={course} value={course} />)}</datalist></Field>
+>>>>>>> origin/feat/curriculum-catalogue-workflow-polish
           <Field label="Entry status"><select value={application.entryStatus} onChange={e => setApp('entryStatus', e.target.value)}><option>Direct</option><option>Mature</option></select></Field>
           <Field label="Study programme"><select value={application.programme} onChange={e => setApp('programme', e.target.value)}><option>Day</option><option>Evening</option><option>Weekend</option></select></Field>
         </div>
