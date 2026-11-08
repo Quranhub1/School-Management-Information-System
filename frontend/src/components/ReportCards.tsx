@@ -42,10 +42,10 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
           <h3>Student Report Cards</h3>
         </div>
           <button className="secondary-button" onClick={printReport} disabled={!report}>Print Report Card</button>
-          <button className="secondary-button" onClick={() => report && exportRowsToExcel(report.results, `report-card-${report.studentNumber}`, 'Results')} disabled={!report}>Export Excel</button>
+          <button className="secondary-button" onClick={() => { if (report?.results.length) exportRowsToExcel(report.results, `report-card-${report.studentNumber}`, 'Results') }} disabled={!report || report.results.length === 0}>Export Excel</button>
           <button className="secondary-button" onClick={() => {
             const element = document.getElementById('report-card-print')
-            if (element && report) void downloadElementAsPng(element, { filename: `report-card-${report.studentNumber}.png` })
+            if (element && report) void downloadElementAsPng(element, { filename: `report-card-${report.studentNumber}.png` }).catch(error => window.alert(error instanceof Error ? error.message : 'Unable to capture report card.'))
           }} disabled={!report}>Download Image</button>
           <button className="secondary-button" onClick={() => studentId.trim() && downloadPdf(`/api/reports/student/${studentId.trim()}/report-card/pdf`, `report-card-${studentId.trim()}.pdf`)} disabled={!studentId.trim() || !report}>Download PDF</button>
       </div>

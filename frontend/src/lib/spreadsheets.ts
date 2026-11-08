@@ -34,7 +34,7 @@ export function sanitizeSpreadsheetRows<T extends object>(rows: T[]): T[] {
       if (typeof value === 'string' && /^\s*[=+@-]/.test(value)) return [key, "'" + value]
       return [key, value]
     }),
-  ) as T)
+  ) as unknown as T)
 }
 
 /** Parse a locally selected workbook with strict resource bounds. */
