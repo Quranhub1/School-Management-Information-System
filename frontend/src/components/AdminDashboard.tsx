@@ -182,7 +182,7 @@ export function AdminDashboard() {
             <DoughnutChart title="Student status" description="Active compared with other statuses" segments={studentSegments} centerValue={numberFormat.format(students.total)} centerCaption="students" />
             <DoughnutChart title="Staff status" description="Current active staff records" segments={staffSegments} centerValue={numberFormat.format(staff.total)} centerCaption="staff" />
             <DoughnutChart title="User accounts" description="Active and inactive accounts" segments={userSegments} centerValue={numberFormat.format(users.total)} centerCaption="accounts" />
-            <DoughnutChart title="Fee collection" description="Collected fees compared with outstanding" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
+            <DoughnutChart title="Fee collection" description="Collected fees compared with outstanding" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" valueFormatter={moneyFormat} />
             <DoughnutChart title="Payroll records" description="Paid, pending, and other statuses" segments={payrollSegments} centerValue={numberFormat.format(payroll.paid + payroll.pending + payroll.other)} centerCaption="records" />
           </div>
 
