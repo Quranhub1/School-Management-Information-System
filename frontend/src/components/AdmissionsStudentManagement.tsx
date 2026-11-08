@@ -3,6 +3,8 @@ import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
 import { AlumniManagement } from './AlumniManagement'
 import { getStudents, type Student } from '../api/students'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 
 type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'alumni'
 type AccessProfile = 'receptionist' | 'records' | 'department' | 'general'
@@ -20,6 +22,7 @@ const sections: { key: Section; label: string }[] = [
 const statuses = ['Active', 'On Clinical Attachment', 'Retake/Repeat Year', 'Discontinued', 'Deferred', 'Graduated']
 
 export function AdmissionsStudentManagement({ canManage = false, readOnly = false, accessProfile = 'general', activeSubsection = null }: { canManage?: boolean; readOnly?: boolean; accessProfile?: AccessProfile; activeSubsection?: string | null }) {
+  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
   const [section, setSection] = useState<Section>('biodata')
   const [uhpabNumber, setUhpabNumber] = useState('')
   const [legacyRegistrationNumber, setLegacyRegistrationNumber] = useState('')
@@ -84,7 +87,37 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
     }
     setCardQueueError('')
     setCardQueueNotice(`Preparing ${selectedCardStudentIds.length} ${cardType === 'campus' ? 'campus' : 'library'} ID card(s) for printing.`)
-    window.setTimeout(() => window.print(), 0)
+    printInstitutionalPdf(cardPdfOptions())
+  }
+
+  function cardPdfOptions() {
+    const selectedStudents = cardStudents.filter(student => selectedCardStudentIds.includes(student.id))
+    const cards = selectedStudents.map(student => ({
+      stack: [
+        { text: cardType === 'campus' ? 'STUDENT ID CARD' : 'LIBRARY ID CARD', bold: true, color: institutionLoaded && institution.isActive ? institution.primaryColor : '#166534', fontSize: 11, margin: [0, 0, 0, 12] },
+        { text: institutionLoaded && institution.isActive ? institution.institutionName : 'Institutional identification', bold: true, fontSize: 12, margin: [0, 0, 0, 8] },
+        { text: [student.firstName, student.otherNames, student.lastName].filter(Boolean).join(' '), bold: true, fontSize: 15, margin: [0, 0, 0, 8] },
+        { columns: [{ text: [{ text: 'Student number: ', bold: true }, student.studentNumber] }, { text: [{ text: 'Status: ', bold: true }, student.status || 'Active'], alignment: 'right' }] },
+        { text: 'Keep this card for institutional identification.', fontSize: 8, color: '#64748b', margin: [0, 10, 0, 0] },
+      ],
+      margin: [8, 8, 8, 8],
+      fillColor: '#ffffff',
+    }))
+    const body = []
+    for (let index = 0; index < cards.length; index += 2) body.push([cards[index], cards[index + 1] || { text: '' }])
+    return {
+      title: cardType === 'campus' ? 'Campus ID Cards' : 'Library ID Cards',
+      filename: 'smis-' + cardType + '-id-cards',
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [{ table: { widths: ['*', '*'], body }, layout: { hLineWidth: () => 1, vLineWidth: () => 1, hLineColor: () => '#cbd5e1', vLineColor: () => '#cbd5e1', paddingLeft: () => 10, paddingRight: () => 10, paddingTop: () => 10, paddingBottom: () => 10 } }],
+    }
+  }
+
+  function downloadSelectedCards() {
+    if (selectedCardStudentIds.length) downloadInstitutionalPdf(cardPdfOptions())
   }
 
   const visibleSections = readOnly
@@ -154,7 +187,8 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
             <div className="form-actions no-print" style={{ marginBottom: 12 }}>
               <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds(cardStudents.map(student => student.id))} disabled={cardQueueLoading || cardStudents.length === 0}>Select all</button>
               <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds([])} disabled={selectedCardStudentIds.length === 0}>Clear selection</button>
-              <button type="button" onClick={printSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Print selected cards ({selectedCardStudentIds.length})</button>
+              <button type="button" className="secondary-button" onClick={printSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Print selected cards ({selectedCardStudentIds.length})</button>
+              <button type="button" onClick={downloadSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PDF</button>
             </div>
             {cardQueueLoading ? <p className="empty">Loading registered students…</p> : cardStudents.length === 0 ? <p className="empty">No registered students are available for ID card printing.</p> : (
               <div className="table-wrap no-print">
