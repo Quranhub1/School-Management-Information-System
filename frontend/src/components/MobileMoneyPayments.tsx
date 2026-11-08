@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, getMobileMoneyTransactions, type MobileMoneyTransaction } from '../api/finance';
+import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, cancelMobileMoneyTransaction, getMobileMoneyTransactions, getStudentFinanceProfile, getInvoices, type MobileMoneyTransaction } from '../api/finance';
 
 interface StudentSearchResult {
   studentId: string;
@@ -15,6 +15,7 @@ interface Invoice {
 export default function MobileMoneyPayments() {
   const [studentCode, setStudentCode] = useState('');
   const [studentName, setStudentName] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [provider, setProvider] = useState<'MTN' | 'Airtel'>('MTN');
   const [amount, setAmount] = useState('');
@@ -50,25 +51,21 @@ export default function MobileMoneyPayments() {
       return;
     }
     try {
-      const res = await fetch(`/api/finance/students/search?code=${encodeURIComponent(code)}`);
-      if (res.ok) {
-        const data: StudentSearchResult = await res.json();
-        setStudentName(data.studentName);
-      } else {
-        setStudentName('');
-      }
+      const data = await getStudentFinanceProfile(code.trim());
+      setStudentId(data.id);
+      setStudentName(data.name);
+      await loadInvoices(data.id);
     } catch {
       setStudentName('');
+      setStudentId('');
+      setInvoices([]);
     }
   };
 
   const loadInvoices = async (studentId: string) => {
     try {
-      const res = await fetch(`/api/finance/students/${studentId}/invoices`);
-      if (res.ok) {
-        const data: Invoice[] = await res.json();
-        setInvoices(data);
-      }
+      const data = await getInvoices(studentId);
+      setInvoices(data.map(invoice => ({ id: invoice.id, description: invoice.invoiceNumber + ' · ' + invoice.feeType, amount: invoice.balance })));
     } catch {
       setInvoices([]);
     }
@@ -80,7 +77,7 @@ export default function MobileMoneyPayments() {
     setLoading(true);
     try {
       const tx = await createMobileMoneyTransaction({
-        studentId: studentCode,
+        studentId,
         studentInvoiceId: selectedInvoice || undefined,
         provider,
         phoneNumber,
@@ -99,7 +96,7 @@ export default function MobileMoneyPayments() {
 
   const handleConfirm = async (id: string, ref: string) => {
     try {
-      await confirmMobileMoneyTransaction(id, ref);
+      await confirmMobileMoneyTransaction(id, ref.trim());
       await loadTransactions();
       setSubmitted(null);
       setShowConfirm(false);
@@ -111,7 +108,7 @@ export default function MobileMoneyPayments() {
 
   const handleCancel = async (id: string) => {
     try {
-      await fetch(`/api/finance/mobile-money/${id}`, { method: 'DELETE' });
+      await cancelMobileMoneyTransaction(id);
       await loadTransactions();
       if (submitted && submitted.id === id) {
         setSubmitted(null);
@@ -181,7 +178,7 @@ export default function MobileMoneyPayments() {
                 <button
                   className="secondary-button"
                   onClick={() => handleConfirm(submitted.id, externalRef)}
-                  disabled={!externalRef.trim()}
+                  disabled={!externalRef.trim() || loading}
                 >
                   Submit Confirmation
                 </button>
@@ -278,7 +275,7 @@ export default function MobileMoneyPayments() {
           </div>
 
           <div style={{ marginTop: '16px' }}>
-            <button type="submit" className="secondary-button" disabled={loading || !studentCode || !amount}>
+            <button type="submit" className="secondary-button" disabled={loading || !studentId || !amount}>
               {loading ? 'Processing...' : 'Request Payment'}
             </button>
           </div>
@@ -382,20 +379,20 @@ export default function MobileMoneyPayments() {
 
       <div className="panel" style={{ marginBottom: '24px' }}>
         <div className="panel-heading">
-          <h3>Payment Provider Integration (Placeholder)</h3>
+          <h3>Provider Integration Status</h3>
         </div>
         <div style={{ padding: '20px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}>
-          <p style={{ marginTop: 0, fontWeight: 600, color: '#92400e' }}>This section is a placeholder for Payment Provider API integration.</p>
+          <p style={{ marginTop: 0, fontWeight: 600, color: '#92400e' }}>Automatic MTN and Airtel provider API credentials are not configured. Transactions are recorded as pending and must only be confirmed after Finance staff verify the provider receipt in the operator portal.</p>
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
             <button
               className="secondary-button"
-              onClick={() => setShowPaymentProviderMsg('Payment Provider integration is not configured. Contact your system administrator to set up Payment Provider API credentials.')}
+              onClick={() => setShowPaymentProviderMsg('Automatic provider API integration is not connected. Do not treat a pending request as money received.')}
             >
               Configure Payment Provider
             </button>
             <button
               className="secondary-button"
-              onClick={() => setShowPaymentProviderMsg('Payment Provider sync is not available. This feature will be enabled when Payment Provider is configured.')}
+              onClick={() => setShowPaymentProviderMsg('Provider transaction synchronization is not enabled. Verify the payment directly with MTN or Airtel before confirming it here.')}
             >
               Sync with Payment Provider
             </button>
