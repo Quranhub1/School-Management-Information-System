@@ -280,17 +280,3 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Continue a screen-by-screen visual review of all remaining authenticated modules and tabs. This change removes the identified redundant copy and stub paragraphs; it does not remove required labels, validation messages, warnings, empty states or operational instructions.
 
 **Status:** targeted UI copy and identified request/report defects are corrected in source. CI and runtime verification remain pending. Do not mark the repository-wide screen review complete until each remaining screen and tab has been inspected and its regression checks passed.
-
-
-## TanStack Query server-state and offline cache — November 2026
-
-- [x] Add TanStack Query v5 and an application-wide QueryClient.
-- [x] Configure freshness, bounded network/server retries, no retries for HTTP 4xx, reconnect/focus refetch and online network mode.
-- [x] Upgrade the existing Dexie database to version 3 and add a dedicated queryCache table alongside existing offline cache and sync stores.
-- [x] Restore persisted query state before mounting the workspace, partitioned by authenticated username and limited to 24 hours.
-- [x] Persist only successful allowlisted queries; keep student risk and Student 360 personal/financial details memory-only.
-- [x] Clear in-memory query state and remove the previous user's persisted cache on logout/account switch.
-- [x] Migrate ModernInformationHub dashboard, risk, workflow and Student 360 reads to TanStack Query hooks.
-- [x] Add cache-policy tests and document the offline query/write boundaries in docs/TANSTACK-QUERY-OFFLINE-CACHE.md.
-- [ ] Run frontend build/tests, full-system smoke tests and desktop CI; fix failures before merging.
-- [ ] Continue module-by-module migration of existing API reads and invalidate affected query keys after writes.
