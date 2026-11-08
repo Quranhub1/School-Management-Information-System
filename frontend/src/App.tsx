@@ -7,7 +7,7 @@ import { canManageAcademics, canManageAdministration, canManageAdmissions, canMa
 import { GlobalSearch } from './components/GlobalSearch'
 import { GlobalNotificationViewport } from './components/GlobalNotifications'
 import type { InstitutionSettings } from './api/institutionSettings'
-import { InstitutionSettingsProvider, useInstitutionSettings } from './components/InstitutionSettingsContext'
+import { useInstitutionSettings } from './components/InstitutionSettingsContext'
 import './components/PrintStyles.css'
 import './workspace-loading.css'
 
@@ -538,7 +538,7 @@ return <main className="app-shell">
  {activeModule==='campuses'&&r.includes('SystemAdministrator')&&<CampusManagement/>}
  </div></Suspense></div></main> }
 function App(){
-  return <InstitutionSettingsProvider><AppContent/></InstitutionSettingsProvider>
+  return <AppContent />
 }
 
 function AppContent(){
