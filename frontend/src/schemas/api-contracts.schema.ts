@@ -197,7 +197,8 @@ export const inventoryRegisterSaveRequestSchema = z.object({
 export const inventoryRegisterResponseSchema = z.looseObject({
   sectionId: identifierSchema,
   columns: z.array(z.object({ id: identifierSchema, label: requiredTextSchema })),
-  rows: z.array(inventoryGridRowSchema),
+  // Read contracts stay shape-only so legacy/incomplete records remain viewable.
+  rows: z.array(z.object({ id: identifierSchema, values: z.record(z.string(), z.string()) })),
   updatedAtUtc: z.string(),
 });
 
