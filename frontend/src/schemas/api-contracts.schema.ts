@@ -253,9 +253,10 @@ export const mobileMoneyCreateRequestSchema = z.object({
 export const bulkPaymentRequestSchema = z.object({
   payments: z.array(z.object({
     studentId: identifierSchema,
+    invoiceId: z.string().trim().optional(),
     amount: z.number().int().positive(),
     paymentMethod: requiredTextSchema,
-    receiptNumber: requiredTextSchema.optional(),
+    receiptNumber: requiredTextSchema,
     reference: z.string().trim().optional(),
   })).min(1, "Select at least one student payment."),
 });
