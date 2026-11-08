@@ -239,6 +239,148 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         });
     }
 
+    [HttpGet("mobile-money")]
+    public async Task<IActionResult> GetMobileMoneyTransactions([FromQuery] string? status, CancellationToken cancellationToken)
+    {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
+        var query = db.MobileMoneyTransactions.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var normalizedStatus = status.Trim();
+            if (normalizedStatus is not ("Pending" or "Completed" or "Cancelled" or "Failed"))
+                return BadRequest(new { message = "Unsupported mobile-money status filter." });
+            query = query.Where(x => x.Status == normalizedStatus);
+        }
+
+        if (accessibleCampuses is not null)
+            query = query.Where(x => db.Students.Any(student => student.Id == x.StudentId &&
+                student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value)));
+
+        var transactions = await query.OrderByDescending(x => x.RequestedAt)
+            .Take(100)
+            .Select(x => new
+            {
+                x.Id, studentId = x.StudentId, x.StudentInvoiceId, x.TransactionRef,
+                x.Provider, x.PhoneNumber, x.Amount, x.Currency, x.Status,
+                x.ExternalRef, x.ErrorMessage, x.RequestedAt, x.CompletedAt
+            })
+            .ToListAsync(cancellationToken);
+        return Ok(transactions);
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
+    [HttpPost("mobile-money")]
+    public async Task<IActionResult> CreateMobileMoneyTransaction(CreateMobileMoneyTransactionRequest request, CancellationToken cancellationToken)
+    {
+        if (request.Amount <= 0) return BadRequest(new { message = "Amount must be greater than zero." });
+        if (request.Currency.Trim().ToUpperInvariant() != "UGX") return BadRequest(new { message = "Mobile-money collection currently supports UGX only." });
+        var provider = request.Provider.Trim();
+        if (provider is not ("MTN" or "Airtel")) return BadRequest(new { message = "Provider must be MTN or Airtel." });
+        var phone = request.PhoneNumber.Trim();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^256[0-9]{9}$"))
+            return BadRequest(new { message = "Phone number must use Uganda international format: 256 followed by nine digits." });
+        if (!await campusAccess.CanAccessStudentAsync(User, request.StudentId, cancellationToken)) return Forbid();
+        if (!await db.Students.AnyAsync(x => x.Id == request.StudentId, cancellationToken))
+            return NotFound(new { message = "Student was not found." });
+
+        if (request.StudentInvoiceId.HasValue)
+        {
+            var invoice = await db.StudentInvoices.AsNoTracking()
+                .SingleOrDefaultAsync(x => x.Id == request.StudentInvoiceId.Value, cancellationToken);
+            if (invoice is null || invoice.StudentId != request.StudentId)
+                return BadRequest(new { message = "The selected invoice does not belong to this student." });
+            if (invoice.Currency != "UGX" || request.Amount > invoice.OutstandingAmount)
+                return BadRequest(new { message = "Amount or currency is invalid for the selected invoice balance." });
+        }
+
+        var transaction = new SchoolManagement.Domain.Finance.MobileMoneyTransaction
+        {
+            StudentId = request.StudentId,
+            StudentInvoiceId = request.StudentInvoiceId,
+            TransactionRef = $"MM-{Guid.NewGuid():N}",
+            Provider = provider,
+            PhoneNumber = phone,
+            Amount = request.Amount,
+            Currency = "UGX"
+        };
+        db.MobileMoneyTransactions.Add(transaction);
+        await db.SaveChangesAsync(cancellationToken);
+        return Created($"/api/finance/mobile-money/{transaction.Id}", new
+        {
+            transaction.Id, studentId = transaction.StudentId, transaction.StudentInvoiceId,
+            transaction.TransactionRef, transaction.Provider, transaction.PhoneNumber,
+            transaction.Amount, transaction.Currency, transaction.Status,
+            transaction.ExternalRef, transaction.RequestedAt, transaction.CompletedAt
+        });
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
+    [HttpPost("mobile-money/{transactionId:guid}/confirm")]
+    public async Task<IActionResult> ConfirmMobileMoneyTransaction(Guid transactionId, ConfirmMobileMoneyTransactionRequest request, CancellationToken cancellationToken)
+    {
+        var transaction = await db.MobileMoneyTransactions.SingleOrDefaultAsync(x => x.Id == transactionId, cancellationToken);
+        if (transaction is null) return NotFound(new { message = "Mobile-money transaction was not found." });
+        if (!await campusAccess.CanAccessStudentAsync(User, transaction.StudentId, cancellationToken)) return Forbid();
+        if (transaction.Status == "Completed")
+        {
+            if (string.Equals(transaction.ExternalRef, request.ExternalRef.Trim(), StringComparison.OrdinalIgnoreCase))
+                return Ok(new { transaction.Id, studentId = transaction.StudentId, transaction.StudentInvoiceId, transaction.TransactionRef, transaction.Provider, transaction.PhoneNumber, transaction.Amount, transaction.Currency, transaction.Status, transaction.ExternalRef, transaction.RequestedAt, transaction.CompletedAt });
+            return Conflict(new { message = "This transaction has already been completed with a different external reference." });
+        }
+        if (transaction.Status != "Pending") return Conflict(new { message = $"Only pending transactions can be confirmed. Current status: {transaction.Status}." });
+        var externalRef = request.ExternalRef.Trim();
+        if (await db.MobileMoneyTransactions.AnyAsync(x => x.Id != transaction.Id && x.ExternalRef == externalRef, cancellationToken))
+            return Conflict(new { message = "This provider transaction reference has already been used." });
+
+        await using var dbTransaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var receiptNumber = transaction.TransactionRef;
+            if (transaction.StudentInvoiceId.HasValue)
+                await finance.RecordPaymentAsync(transaction.StudentInvoiceId.Value, receiptNumber, transaction.Amount, "Mobile Money", externalRef, cancellationToken);
+            else
+                await finance.RecordUnallocatedPaymentAsync(transaction.StudentId, receiptNumber, transaction.Amount, "Mobile Money", transaction.Currency, externalRef, cancellationToken);
+
+            transaction.Status = "Completed";
+            transaction.ExternalRef = externalRef;
+            transaction.CompletedAt = DateTimeOffset.UtcNow;
+            transaction.ErrorMessage = null;
+            await db.SaveChangesAsync(cancellationToken);
+            await dbTransaction.CommitAsync(cancellationToken);
+            return Ok(new { transaction.Id, studentId = transaction.StudentId, transaction.StudentInvoiceId, transaction.TransactionRef, transaction.Provider, transaction.PhoneNumber, transaction.Amount, transaction.Currency, transaction.Status, transaction.ExternalRef, transaction.RequestedAt, transaction.CompletedAt });
+        }
+        catch (ArgumentException ex)
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            return Conflict(new { message = ex.Message });
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
+    [HttpDelete("mobile-money/{transactionId:guid}")]
+    public async Task<IActionResult> CancelMobileMoneyTransaction(Guid transactionId, CancellationToken cancellationToken)
+    {
+        var transaction = await db.MobileMoneyTransactions.SingleOrDefaultAsync(x => x.Id == transactionId, cancellationToken);
+        if (transaction is null) return NotFound(new { message = "Mobile-money transaction was not found." });
+        if (!await campusAccess.CanAccessStudentAsync(User, transaction.StudentId, cancellationToken)) return Forbid();
+        if (transaction.Status != "Pending") return Conflict(new { message = "Only pending mobile-money transactions can be cancelled." });
+        transaction.Status = "Cancelled";
+        await db.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     [HttpGet("administration/accounts")]
     public async Task<IActionResult> GetFinanceAccounts(CancellationToken cancellationToken)
     {
@@ -633,6 +775,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         return await campusAccess.GetAccessibleCampusIdsAsync(User, ct) is null;
     }
 
+    public sealed record CreateMobileMoneyTransactionRequest(Guid StudentId, Guid? StudentInvoiceId, string Provider, string PhoneNumber, decimal Amount, string Currency = "UGX");
+    public sealed record ConfirmMobileMoneyTransactionRequest(string ExternalRef);
     public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
     public sealed record FeeStructureItemRequest(string Code, string Name, decimal Amount, Guid? IncomeAccountId = null, int SortOrder = 0, bool IsOptional = false);
     public sealed record CreateFeeStructureRequest(string Name, string FeeType, string? Currency, Guid? ProgrammeId, Guid? AcademicYearId, IReadOnlyCollection<FeeStructureItemRequest> Items);
