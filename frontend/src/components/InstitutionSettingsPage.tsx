@@ -449,11 +449,15 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
 
         <div className="topbar-actions" style={{ marginTop: 22 }}>
 <<<<<<< HEAD
+<<<<<<< HEAD
           <button type="submit" disabled={saving} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #15803d', borderRadius: 6, minHeight: 42, padding: '10px 20px', fontWeight: 600, boxShadow: 'none' }}>{saving ? 'Saving…' : 'Save Settings'}</button>
           <button type="button" onClick={() => void load()} disabled={saving || uploadingLogo || uploadingGallery} style={{ background: '#ffffff', color: '#44403c', border: '1px solid #d6d3d1', borderRadius: 6, minHeight: 42, padding: '10px 18px', fontWeight: 600, boxShadow: 'none', cursor: saving || uploadingLogo || uploadingGallery ? 'not-allowed' : 'pointer', opacity: saving || uploadingLogo || uploadingGallery ? 0.65 : 1 }}>Reset</button>
 <<<<<<< HEAD
 =======
           <FancyButton type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Settings'}</FancyButton>
+=======
+          <button type="submit" disabled={saving} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #15803d', borderRadius: 6, minHeight: 42, padding: '10px 20px', fontWeight: 600, boxShadow: 'none' }}>{saving ? 'Saving…' : 'Save Settings'}</button>
+>>>>>>> origin/ui/remove-office-copy-green-save-settings
           <button type="button" className="secondary-button" onClick={() => void load()}>Reset</button>
 >>>>>>> origin/kilo/golden-circuit-3yz
 =======
