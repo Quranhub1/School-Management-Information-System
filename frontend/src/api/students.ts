@@ -1,4 +1,7 @@
 import { getAccessToken } from './auth'
+import { z } from 'zod'
+import { parseApiInput, parseApiResponse } from '../lib/validation'
+import { studentCreateRequestSchema, studentResponseSchema } from '../schemas'
 
 export interface Student {
   id: string
@@ -75,10 +78,10 @@ export interface UpdateStudentRequest {
   email?: string
 }
 
-export const getStudents = () => request<Student[]>('/api/students')
-export const getStudent = (id: string) => request<Student>(`/api/students/${id}`)
-export const createStudent = (requestBody: CreateStudentRequest) => request<Student>('/api/students', { method: 'POST', body: JSON.stringify(requestBody) })
-export const updateStudent = (id: string, requestBody: UpdateStudentRequest) => request<Student>(`/api/students/${id}`, { method: 'PUT', body: JSON.stringify(requestBody) })
+export async function getStudents() { return parseApiResponse(z.array(studentResponseSchema), await request<unknown>('/api/students'), 'students list') as Student[] }
+export async function getStudent(id: string) { if (!id.trim()) throw new Error('Student ID is required.'); return parseApiResponse(studentResponseSchema, await request<unknown>(`/api/students/${encodeURIComponent(id)}`), 'student record') as Student }
+export async function createStudent(requestBody: CreateStudentRequest) { const input = parseApiInput(studentCreateRequestSchema, requestBody, 'create student'); return parseApiResponse(studentResponseSchema, await request<unknown>('/api/students', { method: 'POST', body: JSON.stringify(input) }), 'created student') as Student }
+export async function updateStudent(id: string, requestBody: UpdateStudentRequest) { if (!id.trim()) throw new Error('Student ID is required.'); const input = parseApiInput(studentCreateRequestSchema.extend({ id: z.string().optional() }), requestBody, 'update student'); return parseApiResponse(studentResponseSchema, await request<unknown>(`/api/students/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) }), 'updated student') as Student }
 export const deleteStudent = (id: string) => request<void>(`/api/students/${id}`, { method: 'DELETE' })
 export const getStudentGuardians = (studentId: string) => request<StudentGuardian[]>(`/api/students/${studentId}/guardians`)
 export const addStudentGuardian = (studentId: string, input: GuardianInput) => request<StudentGuardian>(`/api/students/${studentId}/guardians`, { method: 'POST', body: JSON.stringify(input) })
