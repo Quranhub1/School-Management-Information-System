@@ -15,8 +15,6 @@ import { resolveAcademicAuthority, type AcademicAuthority } from '../utils/acade
 
 type Tab = 'full' | 'short'
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'School-based' | 'UHPAB' | 'UVTAB'; family: string; review?: boolean }
 
 const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
@@ -30,11 +28,6 @@ const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
 
 const SCHOOL_BASED_SHORT_COURSES: CatalogueEntry[] = [
   { name: 'Bridging Programme', award: 'Bridging programme', duration: 0.75, regulator: 'School-based', family: 'Access programme', review: true },
-=======
-type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'School-based' | 'UHPAB' | 'UVTAB'; family: string; entryRequirements?: string; outcome?: string; review?: boolean }
-=======
-type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'School-based' | 'UHPAB' | 'UVTAB'; family: string; review?: boolean }
->>>>>>> origin/fix/authority-course-catalogues
 
 const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
   { name: 'Certificate in Public Health', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Public Health' },
@@ -46,16 +39,11 @@ const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
 ]
 
 const SCHOOL_BASED_SHORT_COURSES: CatalogueEntry[] = [
-<<<<<<< HEAD
   { name: 'Bridging Programme', award: 'Bridging programme', duration: 0.75, regulator: 'School-based', family: 'Access programme', entryRequirements: 'Not specified on the listed programme page', outcome: 'Access route to diploma courses' },
   { name: 'Advanced Diploma in Diagnostic Sonography', award: 'Advanced Diploma', duration: 1, regulator: 'School-based', family: 'Medical Imaging', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
   { name: 'Diploma in Human Nutrition and Dietetics', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Nutrition', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
   { name: 'Diploma in Food Science and Technology', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Food Science & Technology', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
   { name: 'Advanced Diploma in Health Promotion and Education', award: 'Advanced Diploma', duration: 2, regulator: 'School-based', family: 'Public Health', entryRequirements: 'Not specified on the listed programme page', outcome: 'Not specified' },
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-=======
-  { name: 'Bridging Programme', award: 'Bridging programme', duration: 0.75, regulator: 'School-based', family: 'Access programme', review: true },
->>>>>>> origin/fix/authority-course-catalogues
 ]
 
 const UHPAB_LONG_COURSES: CatalogueEntry[] = [
@@ -87,26 +75,10 @@ const UHPAB_LONG_COURSES: CatalogueEntry[] = [
 const UVTAB_LONG_COURSES: CatalogueEntry[] = [
   { name: 'Certificate in Biomedical Engineering', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
   { name: 'Diploma in Biomedical Engineering', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
-<<<<<<< HEAD
-<<<<<<< HEAD
   { name: 'Certificate in Secretarial Studies and Office Management', award: 'Certificate', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
   { name: 'Diploma in Secretarial Studies and Office Management', award: 'Diploma', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
   { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
   { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
-=======
-  { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
-  { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
-  { name: 'Certificate in Sonography', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Medical Imaging', review: true },
-  { name: 'Diploma in Sonography', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Medical Imaging', review: true },
-  { name: 'Certificate in Medical Records', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Health Informatics', review: true },
-  { name: 'Diploma in Medical Records', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Health Informatics', review: true },
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
-  { name: 'Certificate in Secretarial Studies and Office Management', award: 'Certificate', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
-  { name: 'Diploma in Secretarial Studies and Office Management', award: 'Diploma', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
-  { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
-  { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
->>>>>>> origin/fix/authority-course-catalogues
   { name: 'National Certificate — Technology Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Technology', review: true },
   { name: 'Uganda Certificate in Practical Competencies (UCPC) — Technology', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Technology', review: true },
   { name: 'National Certificate — Agriculture Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Agriculture', review: true },
@@ -291,7 +263,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     })
     const awardOptions = [...new Set(entries.map(course => course.award))].sort()
     return (
-<<<<<<< HEAD
       <>
       <div className="catalogue-filters" aria-label="Filter catalogue">
         <input
@@ -311,40 +282,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <option value="reference">Website/reference listing</option>
         </select>
         <span className="catalogue-result-count">{visibleEntries.length} of {entries.length}</span>
-=======
-      <div className="catalogue-table-wrap">
-        <table className="catalogue-table">
-          <thead>
-            <tr>
-              <th>Programme / course</th>
-              <th>Award</th>
-              <th>Duration</th>
-              <th>Area</th>
-              <th>Review</th>
-              <th aria-label="Action"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map(course => (
-              <tr key={course.name}>
-                <td className="catalogue-course-name">{course.name}</td>
-                <td>{course.award}</td>
-                <td>{course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
-                <td>{course.family}</td>
-                <td>
-                  <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
-                    {course.review ? 'Verify' : 'Reference'}
-                  </span>
-                </td>
-                <td className="catalogue-action-cell">
-                  <button type="button" onClick={() => applyCourseTemplate(course, type)}>Use draft</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="catalogue-footnote">* Indicative duration where listed. Confirm against the approved programme document before publishing.</p>
->>>>>>> origin/fix/curriculum-screen-density
       </div>
       <div className="catalogue-table-wrap">
         <table className="catalogue-table">
@@ -354,13 +291,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <th>Award</th>
               <th>Duration</th>
               <th>Area</th>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-              {authority === 'School-based' && <><th>Entry requirements (website listing)</th><th>Professional outcome</th></>}
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-=======
->>>>>>> origin/fix/authority-course-catalogues
               <th>Source status</th>
               <th aria-label="Action"></th>
             </tr>
@@ -374,15 +304,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <td>{course.family}</td>
                 <td>
                   <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
-<<<<<<< HEAD
-<<<<<<< HEAD
                     {course.review ? 'Needs verification' : 'Reference listing'}
-=======
-                    {course.review ? 'Needs verification' : authority === 'School-based' ? 'KSHS website' : 'Reference listing'}
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-=======
-                    {course.review ? 'Needs verification' : 'Reference listing'}
->>>>>>> origin/fix/authority-course-catalogues
                   </span>
                 </td>
                 <td className="catalogue-action-cell">
@@ -390,15 +312,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 </td>
               </tr>
             ))}
-<<<<<<< HEAD
-<<<<<<< HEAD
             {visibleEntries.length === 0 && <tr><td colSpan={6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
-=======
-            {visibleEntries.length === 0 && <tr><td colSpan={authority === 'School-based' ? 8 : 6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-=======
-            {visibleEntries.length === 0 && <tr><td colSpan={6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
->>>>>>> origin/fix/authority-course-catalogues
           </tbody>
         </table>
         <p className="catalogue-footnote">* Indicative duration where listed. A reference listing is not confirmation of current accreditation or approval. Verify the programme and award against the awarding body's current documentation before publishing.</p>
@@ -422,24 +336,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       <div className="form-row academic-authority-picker">
         <label>Curriculum authority
-<<<<<<< HEAD
-<<<<<<< HEAD
           <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })); setCatalogueSearch(''); setAwardFilter('all'); setVerificationFilter('all') }}>
             <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
-<<<<<<< HEAD
-=======
-          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setCf(current => ({ ...current, programmeId: '' })) }}>
-<<<<<<< HEAD
-=======
-          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })); setCatalogueSearch(''); setAwardFilter('all'); setVerificationFilter('all') }}>
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option><option value="UNMEB">UNMEB — Legacy records</option>
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
-            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
->>>>>>> origin/fix/remove-unmeb-curriculum-authority
-=======
->>>>>>> origin/fix/remove-unmeb-dropdown-main
           </select>
         </label>
       </div>
@@ -452,23 +350,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <>
           <div className="catalogue-intro">
             <h3>Long-course catalogue</h3>
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
             
-=======
-            <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Needs verification need title or duration confirmation.</p>
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-=======
-            <p>Select a row to prefill a draft. Nothing is saved until you submit the form; entries marked Verify need title or duration confirmation.</p>
->>>>>>> origin/fix/curriculum-screen-density
-=======
-            
->>>>>>> origin/fix/ui-finance-cleanup-current-main
-=======
-            
->>>>>>> origin/ui/remove-inventory-helper-copy
           </div>
           {authority === 'UHPAB' && <section className="catalogue-board" aria-labelledby="uhpab-long-title">
             <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
@@ -478,26 +360,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
             {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
           </section>}
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}
-<<<<<<< HEAD
-=======
-          {authority === 'School-based' && <p className="empty">School-based courses are taken from the curricula and courses you have created for the school.</p>}
-<<<<<<< HEAD
-=======
-          {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-long-title"><h3 id="school-based-long-title">School-based · KSHS programme list</h3><p className="catalogue-footnote">Transcribed from the KSHS programmes page, which labels this list 2024/2025. These are school website references, not a statement of current external accreditation. Confirm current admissions requirements before publishing.</p>{renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}</section>}
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
-=======
-          {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}
->>>>>>> origin/fix/authority-course-catalogues
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy curricula are shown from saved records. Add or map legacy records as needed.</p>}
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
->>>>>>> origin/fix/remove-unmeb-curriculum-authority
-=======
->>>>>>> origin/fix/remove-unmeb-dropdown-main
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
@@ -588,51 +452,16 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <div className="short-course-section">
           <div className="catalogue-intro">
             <h3>Short and modular training</h3>
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
             
-=======
-            <p>Select a row to prefill a draft. Confirm the approved title, award and duration before publishing.</p>
->>>>>>> origin/fix/curriculum-screen-density
-=======
-            
->>>>>>> origin/fix/ui-finance-cleanup-current-main
-=======
-            
->>>>>>> origin/ui/remove-inventory-helper-copy
           </div>
           {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue">
             <h3>UVTAB · Modular and occupational skills</h3>
             {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
-<<<<<<< HEAD
           </section>}
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}
           {authority === 'UHPAB' && renderCatalogue(UHPAB_SHORT_COURSES, 'ShortCourse')}
-<<<<<<< HEAD
-=======
-          {authority === 'School-based' && <p className="empty">School-based short courses are managed in your saved curricula.</p>}
-=======
-          {authority === 'School-based' && <section className="catalogue-board" aria-labelledby="school-based-short-title"><h3 id="school-based-short-title">KSHS · Other short and in-service listings</h3><p className="catalogue-footnote">These entries appear under “Other Short & In-Service Courses” on the school website. Their classification is preserved as listed; confirm current intake and entry details.</p>{renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}</section>}
->>>>>>> origin/feat/curriculum-catalogue-workflow-polish
           {authority === 'UHPAB' && <p className="empty">UHPAB health programmes are listed under Full Programmes.</p>}
-<<<<<<< HEAD
-=======
-          {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}
-          {authority === 'UHPAB' && renderCatalogue(UHPAB_SHORT_COURSES, 'ShortCourse')}
->>>>>>> origin/fix/authority-course-catalogues
           {authority === 'UNMEB' && <p className="empty">UNMEB legacy short-course records are managed from saved curricula.</p>}
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
-          </section>
->>>>>>> origin/fix/remove-uhpab-short-course-disclaimer
-=======
->>>>>>> origin/fix/remove-unmeb-curriculum-authority
-=======
->>>>>>> origin/fix/remove-unmeb-dropdown-main
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
