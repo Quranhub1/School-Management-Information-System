@@ -138,8 +138,8 @@ app.MapPost("/api/diagnostics/client-errors", (
 
     static string Redact(string value) =>
         Regex.Replace(
-            Regex.Replace(value, @"(?i)(bearer\\s+)[a-z0-9._~+/=-]+", "$1[REDACTED]"),
-            @"(?i)(password|token|authorization|secret)([\""''\\s:=]+)[^&\\s,;]+",
+            Regex.Replace(value, @"(?i)(bearer\s+)[a-z0-9._~+/=-]+", "$1[REDACTED]"),
+            @"(?i)(password|token|authorization|secret)(\s*[:=]\s*)[^&\s,;]+",
             "$1$2[REDACTED]");
 
     var correlationId = httpContext.Items[SchoolManagement.Api.Middleware.CorrelationIdMiddleware.ItemKey] as string
