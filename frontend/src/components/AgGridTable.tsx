@@ -11,6 +11,14 @@ import {
 } from 'ag-grid-community'
 import { AgGridProvider, AgGridReact } from 'ag-grid-react'
 
+function GridLoadingOverlay() {
+  return <div className="smis-ag-grid-overlay" role="status" aria-live="polite">Loading records…</div>
+}
+
+function GridNoRowsOverlay() {
+  return <div className="smis-ag-grid-overlay" role="status">No records to display.</div>
+}
+
 export type AgGridTableProps<TData extends object> = {
   rows: TData[]
   columns: ColDef<TData>[]
@@ -148,6 +156,11 @@ export function AgGridTable<TData extends object>({
             loading={loading}
             quickFilterText={quickFilterText ?? filter}
             rowSelection={rowSelection}
+            // Shift-click column headers to build a multi-column sort; dragging headers reorders columns.
+            suppressMultiSort={false}
+            suppressMovableColumns={false}
+            loadingOverlayComponent={GridLoadingOverlay}
+            noRowsOverlayComponent={GridNoRowsOverlay}
             onGridReady={event => setApi(event.api)}
             onRowClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
