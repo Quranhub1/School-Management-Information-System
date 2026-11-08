@@ -53,11 +53,7 @@ export function LibrarianManagement() {
   }
 
   async function remove(librarian: Librarian) {
-<<<<<<< HEAD
     if (!(await showConfirmDialog(`Remove ${librarian.firstName} ${librarian.lastName} from the librarian assignments? Their staff record will be retained.`, { title: 'Remove librarian assignment', confirmLabel: 'Yes, remove', destructive: true }))) return;
-=======
-    if (!await confirmAction(`Remove ${librarian.firstName} ${librarian.lastName} from the librarian assignments? Their staff record will be retained.`, 'Delete librarian assignment', 'Delete assignment')) return;
->>>>>>> origin/fix/centered-delete-confirmation-modals
     setMessage('');
     try {
       await deleteLibrarian(librarian.id);
