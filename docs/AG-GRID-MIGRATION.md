@@ -30,6 +30,8 @@ AG Grid Community is MIT-licensed. This implementation does not import Enterpris
 - **PayrollManagement**: payroll register, preserving payroll edit, mark-paid and refresh actions
 - **StudentManagement**: student registry, preserving guardian management and QR-code actions
 - **AccountsOverviewWorkspace**: outstanding balances, payment history and payroll summary
+- **AuditLog**: searchable audit events with timestamp, entity, user and change details
+- **Notices**: notice register
 
 The grid is a presentation layer. Existing API routes, backend validation, permission checks, and UGX formatting remain owned by the original feature screens.
 
@@ -48,7 +50,7 @@ npm test
 ```
 
 Then manually verify:
-- Finance, accounts overview, inventory, payroll and student registry at desktop and narrow viewport widths
+- Finance, accounts overview, inventory, payroll, student registry, audit log and notices at desktop and narrow viewport widths
 - Sorting, floating filters, quick search, pagination, column drag/reorder and column visibility
 - CSV export contents and filenames
 - Inventory edits autosave to the database and remain blocked for read-only roles
