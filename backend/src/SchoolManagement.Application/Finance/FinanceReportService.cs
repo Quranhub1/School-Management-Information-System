@@ -55,12 +55,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
     {
         (from, to) = await ResolveIncomeStatementRangeAsync(from, to, cancellationToken);
         var entries = await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken);
-        var rows = BuildIncomeStatementRows(entries, campusId, facultyId, departmentId, programmeId);
-        var revenue = rows.Where(x => IsRevenue(x.AccountType)).ToList();
-        var expenses = rows.Where(x => IsExpense(x.AccountType)).ToList();
-        var totalRevenue = revenue.Sum(x => x.Amount);
-        var totalExpenses = expenses.Sum(x => x.Amount);
-        return new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
+        return BuildIncomeStatementReport(entries, campusId, facultyId, departmentId, programmeId);
     }
 
     public async Task<BalanceSheetReport> GetBalanceSheetAsync(DateOnly? asOf = null, CancellationToken cancellationToken = default, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
@@ -72,9 +67,10 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         var assets = totals.Where(x => IsAsset(x.AccountType)).ToList();
         var liabilities = totals.Where(x => IsLiability(x.AccountType)).ToList();
         var equity = totals.Where(x => IsEquity(x.AccountType)).ToList();
-        var netIncome = containingPeriod is null
-            ? await GetIncomeStatementAsync(null, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId)
-            : await GetIncomeStatementAsync(containingPeriod.StartDate, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId);
+        if (containingPeriod is null)
+            throw new ArgumentException($"No fiscal period contains report date {effectiveAsOf:yyyy-MM-dd}. Configure a fiscal period covering this date before running the balance sheet.");
+
+        var netIncome = await GetIncomeStatementAsync(containingPeriod.StartDate, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId);
         var totalAssets = assets.Sum(x => x.Balance);
         var totalLiabilities = liabilities.Sum(x => x.Balance);
         var totalEquity = equity.Sum(x => x.Balance);
@@ -92,6 +88,16 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
                 g.Sum(x => x.OutstandingAmount)))
             .OrderByDescending(x => x.Outstanding)
             .ToList();
+    }
+
+    public static IncomeStatementReport BuildIncomeStatementReport(IEnumerable<JournalEntry> entries, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
+    {
+        var rows = BuildIncomeStatementRows(entries, campusId, facultyId, departmentId, programmeId);
+        var revenue = rows.Where(x => IsRevenue(x.AccountType)).ToList();
+        var expenses = rows.Where(x => IsExpense(x.AccountType)).ToList();
+        var totalRevenue = revenue.Sum(x => x.Amount);
+        var totalExpenses = expenses.Sum(x => x.Amount);
+        return new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
     }
 
     public static IReadOnlyList<IncomeStatementRow> BuildIncomeStatementRows(IEnumerable<JournalEntry> entries, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null) =>

@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 export function SubjectManagement({ canManage }: { canManage?: boolean }) {
   return (
     <section className="panel" aria-label="Subject management">
@@ -9,7 +7,6 @@ export function SubjectManagement({ canManage }: { canManage?: boolean }) {
           <h3>Subject Management</h3>
         </div>
       </div>
-      <p className="empty">Subject management module is available.</p>
     </section>
   );
 }

@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react'
 import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, ClipboardList, Database, FileText, GraduationCap, HeartPulse, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, Shield, ShieldCheck, SlidersHorizontal, Stethoscope, UserPlus, UserRound, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
-import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canManageHostel, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable } from './auth/roleGuards'
+import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canManageHostel, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable, canReadPayroll, canProcessPayroll } from './auth/roleGuards'
 import { GlobalSearch } from './components/GlobalSearch'
 import { GlobalNotificationViewport } from './components/GlobalNotifications'
 import type { InstitutionSettings } from './api/institutionSettings'
@@ -525,7 +525,7 @@ return <main className="app-shell">
 {activeModule==='academics'&&activeSubsection==='classes'&&ac&&<AcademicStructures canManage={ac}/>} {activeModule==='academics'&&activeSubsection!=='classes'&&(ac||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/>} {activeModule==='curriculum'&&ac&&<CurriculumManagement canManage={ac}/>} 
 {activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}
 {activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
-{activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={fi} activeSubsection={activeSubsection}/>}
+{activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={canReadPayroll(r)} canManagePayroll={canManageFinance(r)} canProcessPayroll={canProcessPayroll(r)} activeSubsection={activeSubsection}/>}
 {activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} />}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&(attManage||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement activeSubsection={activeSubsection}/>}

@@ -255,6 +255,28 @@ SMIS is ready for production sign-off only when the remaining target-environment
 **Diagnostic note:** The Vite WebSocket error may also be caused by a stopped/failed Vite process, a port conflict, or browser/proxy network handling. Configuration changes alone do not prove the local server is reachable.
 
 
-## UI copy cleanup
-- Removed redundant explanatory paragraphs from curriculum, timetable, campus, inventory, and staff screens while retaining labels, validation, operational status, and required warnings.
-- Kept field labels, empty-state messages, safety notices, and actionable error feedback intact.
+## UI copy and network-error cleanup — November 2026
+
+### Implemented in this change
+
+- [x] Remove the Inventory helper paragraph without changing automatic S/N or custom-column behavior.
+- [x] Remove explanatory fee-configuration copy and the non-functional “module is available” placeholder paragraphs from the Academic Reports, Subject Management, Teacher Assignments, Assessment Configuration and Student Notifications panels.
+- [x] Remove the Student Portal explanatory paragraph while retaining authorization and role-based access boundaries.
+- [x] Remove redundant instructional/placeholder copy from Mobile Money Payments, Staff recruitment, Student Finance lookup, Curriculum draft-selection, Alumni document requests and Admissions external-board status panels.
+- [x] Correct academic-year/period, Streams, staff-allowance and Mobile Money bearer-token retrieval to use the shared `getAccessToken()` helper and canonical `smis.accessToken` key.
+- [x] Add bearer-token headers and non-success handling to Mobile Money student-search, invoice-list and transaction-cancel requests.
+- [x] Correct FeeTypesManager to load academic years through the shared authenticated academic-structure API.
+- [x] Correct the balance-sheet fiscal-period failure: reject an as-of date outside configured fiscal periods with a clear validation error rather than silently assuming a calendar fiscal year or triggering an unhandled exception.
+- [x] Return HTTP 400 with a useful validation message for invalid income-statement/balance-sheet date ranges instead of allowing `ArgumentException` to surface as HTTP 500.
+- [x] Render the structured finance API validation message in the Accounting Reports screen instead of displaying raw JSON.
+
+### Verification still required
+
+- [ ] Run frontend TypeScript, Vitest and production build after the authentication and copy cleanup.
+- [ ] Run backend Finance application/API tests and add regression coverage for a balance-sheet date outside configured fiscal periods.
+- [ ] Verify Fee Types, Academic Years and Academic Periods with a real authenticated account; confirm no 401 requests remain.
+- [ ] Verify the balance sheet for 2026-11-08 with a configured fiscal period; confirm an out-of-period date returns HTTP 400 with the setup instruction.
+- [ ] Create the institution-approved fiscal period covering 2026-11-08 in the target database. Do not auto-create a financial period or assume calendar-year boundaries without institutional approval.
+- [ ] Continue a screen-by-screen visual review of all remaining authenticated modules and tabs. This change removes the identified redundant copy and stub paragraphs; it does not remove required labels, validation messages, warnings, empty states or operational instructions.
+
+**Status:** targeted UI copy and identified request/report defects are corrected in source. CI and runtime verification remain pending. Do not mark the repository-wide screen review complete until each remaining screen and tab has been inspected and its regression checks passed.

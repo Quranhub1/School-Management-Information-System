@@ -221,7 +221,6 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         <button className="secondary-button" type="submit" disabled={!newColumnName.trim()}>Add column</button>
         <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>
       </form>
-      
     </div>}
 
     <div className="inventory-card inventory-spreadsheet-card">
