@@ -435,7 +435,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <div className="short-course-section">
           <div className="catalogue-intro">
             <h3>Short and modular training</h3>
-            <p>Select a row to prefill a draft. Confirm the approved title, award and duration before publishing.</p>
+            
           </div>
           {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue">
             <h3>UVTAB · Modular and occupational skills</h3>
