@@ -129,6 +129,52 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const getInvoices = (studentId?: string) => request<Invoice[]>(`/api/finance/invoices${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`)
 export interface StudentFinanceProfile { id: string; studentNumber: string; name: string; phoneNumber?: string; email?: string; status: string }
 export const getStudentFinanceProfile = (studentIdOrNumber: string) => request<StudentFinanceProfile>(`/api/finance/students/profile?studentIdOrNumber=${encodeURIComponent(studentIdOrNumber)}`)
+
+export interface StudentFinancialStatementLine {
+  id: string
+  code: string
+  description: string
+  amount: number
+  currency: string
+  incomeAccountId?: string
+  sortOrder: number
+}
+export interface StudentFinancialStatementInvoice {
+  id: string
+  invoiceNumber: string
+  feeType: string
+  amount: number
+  discountAmount: number
+  netAmount: number
+  paidAmount: number
+  balance: number
+  currency: string
+  status: string
+  issuedAt: string
+  lines: StudentFinancialStatementLine[]
+}
+export interface StudentFinancialStatementPayment {
+  id: string
+  receiptNumber: string
+  amount: number
+  currency: string
+  paymentMethod: string
+  reference?: string
+  paidAt: string
+  studentInvoiceId?: string
+  invoiceNumber?: string
+}
+export interface StudentFinancialStatement {
+  studentId: string
+  currency: string
+  totals: { billed: number; paid: number; balance: number }
+  invoices: StudentFinancialStatementInvoice[]
+  payments: StudentFinancialStatementPayment[]
+  paymentAllocationGranularity: 'INVOICE' | string
+  itemAllocationNote: string
+}
+export const getStudentFinancialStatement = (studentId: string) =>
+  request<StudentFinancialStatement>(`/api/finance/students/${encodeURIComponent(studentId)}/statement`)
 export const createInvoice = (body: CreateInvoiceRequest) => request<Invoice>('/api/finance/invoices', { method: 'POST', body: JSON.stringify(body) })
 export const recordPayment = (invoiceId: string, body: RecordPaymentRequest) => request('/api/finance/invoices/' + invoiceId + '/payments', { method: 'POST', body: JSON.stringify(body) })
 
