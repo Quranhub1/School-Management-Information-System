@@ -1,7 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
+<<<<<<< HEAD
 import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, ClipboardList, Database, FileText, GraduationCap, HeartPulse, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, Shield, ShieldCheck, SlidersHorizontal, Stethoscope, UserPlus, UserRound, UsersRound, WalletCards } from 'lucide-react'
+=======
+import { BarChart3, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
+>>>>>>> origin/feat/multi-campus-management
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
 <<<<<<< HEAD

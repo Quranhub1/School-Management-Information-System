@@ -36,6 +36,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Campuses");
                 });
 
+<<<<<<< HEAD
             modelBuilder.Entity("SchoolManagement.Domain.Academic.UserCampusAssignment", b =>
                 {
                     b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
@@ -50,6 +51,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("UserCampusAssignments");
                 });
 
+=======
+>>>>>>> origin/feat/multi-campus-management
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Institution", b =>
                 {
                     b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");

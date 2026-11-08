@@ -1,5 +1,6 @@
 # Multi-campus management
 
+<<<<<<< HEAD
 SMIS supports multiple campuses under one institution on a shared server and PostgreSQL database. Campus ownership and user access are enforced by authenticated backend endpoints.
 
 ## Operational workflows
@@ -16,3 +17,17 @@ Finance journal lines and report services support campus dimensions and campus-f
 
 ## Database changes
 The EF Core migrations create institution and campus tables, user-to-campus assignments, campus ownership columns, indexes and foreign keys. Existing records are preserved and backfilled where a first campus is established.
+=======
+SMIS campus administration supports multiple sites under the active institution settings, using one server and one database.
+
+## Implemented in this change
+- System Administrators can add, edit, activate and deactivate campuses.
+- Campus code and name uniqueness are enforced within the institution.
+- Campus and institution records are persisted in PostgreSQL via EF Core migration.
+- Deactivation preserves records; campus records are not hard-deleted.
+
+## Scope boundary
+This register does not yet provide full campus-level data isolation. Student, staff, financial, inventory, attendance and examination records still need CampusId assignment and server-side authorization filters before campus-restricted accounts should be enabled. The current change must not be described as complete separation across every module.
+
+The migration creates institution/campus tables and does not delete existing school records.
+>>>>>>> origin/feat/multi-campus-management
