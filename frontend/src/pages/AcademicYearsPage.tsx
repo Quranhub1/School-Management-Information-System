@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getAccessToken } from '../api/auth';
 
 type AcademicYear = { id: string; name: string; startDate: string; endDate: string; isCurrent: boolean; isActive: boolean };
 
@@ -15,7 +16,8 @@ export default function AcademicYearsPage() {
   async function load() {
     setLoading(true);
     try {
-      const response = await fetch('/api/academic-structure/years', { headers: { Accept: 'application/json', ...(sessionStorage.getItem('smis.accessToken') ? { Authorization: `Bearer ${sessionStorage.getItem('smis.accessToken')}` } : {}) } });
+      const token = getAccessToken();
+      const response = await fetch('/api/academic-structure/years', { headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
       if (!response.ok) throw new Error(`Unable to load academic years (${response.status}).`);
       setYears(await response.json() as AcademicYear[]);
       setMessage('');
