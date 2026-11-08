@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bulkImportRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { applyFeeStructureRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -75,6 +75,21 @@ describe("SMIS Zod domain schemas", () => {
     expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { name: "Gloves", quantity: "-2" } }).success).toBe(false);
     expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { quantity: "2" } }).success).toBe(false);
     expect(inventoryGridRowSchema.safeParse({ id: "r1", values: { name: "", quantity: "" } }).success).toBe(true);
+  });
+
+  it("validates fee structures, credit notes and staff advances", () => {
+    expect(feeStructureCreateRequestSchema.safeParse({
+      name: "Semester One", feeType: "Tuition", currency: "UGX",
+      items: [{ code: "TUITION", name: "Tuition", amount: 1200000, sortOrder: 0, isOptional: false }],
+    }).success).toBe(true);
+    expect(feeStructureCreateRequestSchema.safeParse({
+      name: "Semester One", feeType: "Tuition", items: [],
+    }).success).toBe(false);
+    expect(applyFeeStructureRequestSchema.safeParse({ allActiveStudents: true }).success).toBe(true);
+    expect(applyFeeStructureRequestSchema.safeParse({ studentIds: ["s1", "s2"] }).success).toBe(true);
+    expect(applyFeeStructureRequestSchema.safeParse({}).success).toBe(false);
+    expect(creditNoteRequestSchema.safeParse({ amount: 10000, reason: "Approved adjustment" }).success).toBe(true);
+    expect(staffAdvanceRequestSchema.safeParse({ amount: -1, reason: "Emergency" }).success).toBe(false);
   });
 
   it("validates mobile money and bulk finance payment payloads", () => {
