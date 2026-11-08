@@ -231,4 +231,6 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - Neither library loads a CDN or calls an external rendering service at runtime.
 - Added `importSpreadsheetData` to feed locally parsed workbook sheets through the existing schema-validated CSV import API; PostgreSQL/API validation remains authoritative.
 - Added formula-injection regression tests and ensured export sanitisation does not mutate source rows.
-- Remaining: wire file selection into the central bulk-import UI, add parser/capture tests, verify dependency lock via CI, and complete manual offline/print acceptance.
+- Wired Excel/CSV/ODS file selection and worksheet selection into the central Bulk Operations import screen, including a row-count preview.
+- Added Excel export beside CSV export in Bulk Operations; export data still comes from the authorized backend endpoint and is rendered locally.
+- Remaining: verify dependency lock, parser/capture tests and manual offline/print acceptance through CI and a desktop/browser smoke test.
