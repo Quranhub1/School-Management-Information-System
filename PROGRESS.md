@@ -1,6 +1,6 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-10-11  
+**Last updated:** 2026-11-08  
 **Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
@@ -12,6 +12,38 @@ The core backend, persistence, security hardening, frontend, automated verificat
 Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed. The later duplicate desktop-workflow cleanup on `main` also passed the full CI suite, including native desktop builds.
 
 A dedicated executable target-environment acceptance runbook is now available at `docs/PRODUCTION_ACCEPTANCE.md`. It records the evidence required for golden-path, authorization, module, finance, attendance, assessment, clinical, staff/student, deployment, backup/restore, desktop, and security sign-off.
+
+## Finance capability implementation tracker — November 2026
+
+This tracker distinguishes code delivered on feature branches from changes merged into `main`. A feature is not considered deployed or visible in the running KSHS system merely because its pull request or CI checks exist.
+
+### Completed in code; awaiting merge
+
+- [x] **FIN-CAP-01 — Consolidate student payment posting onto the accounting-aware workflow.** Removed the legacy `FeeService`/`FeeWorkflowService` path and its repository/DI registrations so payment posting follows `FinanceController → FinanceWorkflowService → FinanceService`. This avoids retaining a second payment path that did not perform the same journal and student-ledger workflow.
+  - Branch: `fix/finance-canonical-payment-workflow`
+  - PR: [#220](https://github.com/Quranhub1/School-Management-Information-System/pull/220) (draft; not merged)
+  - Validation: Backend CI, Foundation CI and Full System CI succeeded on head `ac022e6814ceeb5876754423e2712c617845a52c`.
+  - No database migration or live payment integration was introduced.
+
+### In progress
+
+- [ ] **FIN-CAP-02 — Student financial statement and invoice-item detail.** Added a student-scoped statement endpoint and frontend itemized invoice display on `feat/student-financial-statement`. This capability is still in progress pending CI, review and merge.
+  - Statement includes invoice totals, discounts, paid amounts, balances, invoice lines and receipt/payment history.
+  - **Known model limitation:** payments are allocated to invoices, not individual invoice lines. The UI therefore shows billed amounts per line and paid/balance totals per invoice; it does not invent or proportionally assign line-level payments.
+  - Branch: `feat/student-financial-statement` (depends on FIN-CAP-01 branch/PR).
+  - Validation: pending GitHub Actions and review.
+
+### Not yet implemented in this sequence
+
+- [ ] **FIN-CAP-03 — Complete mobile-money backend workflow.** Verify and implement the API handlers, persistence, status transitions, authorization and posting through the canonical finance service.
+- [ ] **FIN-CAP-04 — SchoolPay provider adapter.** Implement secure provider configuration, Sync/Adhoc clients and provider response handling only after KSHS obtains credentials and UAT access.
+- [ ] **FIN-CAP-05 — School Main Account and Guild Account reporting.** Establish approved account/category mappings and reports that reconcile to the general ledger.
+- [ ] **FIN-CAP-06 — Finance approvals, role boundaries and audit verification.** Test read, post, approve, reverse and reconciliation permissions with representative roles.
+- [ ] **FIN-CAP-07 — Finance regression and accounting acceptance tests.** Verify idempotency, concurrency, transaction atomicity, receipt uniqueness, journal balancing and reconciliation before production use.
+
+### Merge and release rule
+
+A branch-level implementation is recorded as completed in code only when its changes and scope are explicit. It is recorded as merged only after GitHub confirms the pull request merge. CI success is not a substitute for production/target-environment acceptance.
 
 ## Current work — October 2026
 
