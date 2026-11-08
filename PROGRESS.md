@@ -1,6 +1,6 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-10-11  
+**Last updated:** 2026-11-08  
 **Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
@@ -22,6 +22,20 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [ ] Verify successful login transfers the authenticated session into the existing SMIS application shell
 - [ ] Verify login failure, loading state, Remember Me and password recovery behaviour against the real backend
 - [ ] Complete Windows target-machine setup and validate the same backend/frontend workflow used for the production-style environment
+
+## PDF generation and print standard — November 2026
+
+- [x] Add PDFMake 0.3.13 and its local font virtual file system to the frontend dependency set; no CDN dependency.
+- [x] Add shared download, print and preview helpers in `frontend/src/lib/pdfmake.ts`.
+- [x] Migrate student report cards and fee receipts to structured PDFMake documents.
+- [x] Migrate certificate printing and downloads to PDFMake.
+- [x] Migrate generated timetables, editable timetable templates and timetable-view printing to PDFMake.
+- [x] Migrate staff payslip printing and download to PDFMake, including advance details.
+- [x] Document PDF branding, offline, data integrity, layout and architecture rules in `docs/PDFMAKE-DOCUMENT-STANDARD.md`.
+- [ ] Run frontend build/tests and resolve any PDFMake typing or bundling issues.
+- [ ] Migrate remaining browser print surfaces: student application forms, student ID/library cards and guild election documents.
+- [ ] Review remaining CSV exports separately; preserve CSV/XLSX formats rather than forcing them into PDF.
+- [ ] Keep .NET API-generated report cards/transcripts on the existing server-side QuestPDF path until a deliberate backend document-service migration is approved.
 
 ## Current work — role-specific dashboards and table layouts
 
