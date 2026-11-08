@@ -248,7 +248,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         {!teachingGroupId && <label>Number of timetables<input type="number" min="1" max={Math.max(1, options.teachingGroups.length)} value={timetableCount} onChange={event => setTimetableCount(event.target.value)} required /></label>}
       </div>
-      {!teachingGroupId && }
       <div className="timetable-form-footer">
         <button className="timetable-action primary" type="submit" disabled={loading || availableSemesters.length === 0}>{loading ? 'Generating…' : 'Generate schedule'}</button>
         {availableSemesters.length === 0 && <span className="timetable-day-empty">No academic periods were returned. Create a period under Academic Periods, then reload this screen.</span>}
@@ -285,7 +284,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           })}</tr>)}</tbody>
         </table>
       </div>}
-      {templateGroupId && templateLoadedGroupId !== templateGroupId && }
       <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !options.courses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={() => setPrintTemplate(true)}>Print template</button></div>
     </section>}
 
