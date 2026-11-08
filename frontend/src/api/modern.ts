@@ -1,10 +1,12 @@
 import { getAccessToken } from './auth'
+import { createCorrelationId } from '../lib/logging'
 
 const api = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const token = getAccessToken()
+  const correlationId = createCorrelationId()
   const response = await fetch('/api' + path, {
     ...init,
-    headers: { Accept: 'application/json', ...(init?.headers ?? {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    headers: { Accept: 'application/json', 'X-Correlation-ID': correlationId, ...(init?.headers ?? {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   })
   if (!response.ok) throw new Error(await response.text() || `Request failed (${response.status})`)
   return response.json() as Promise<T>

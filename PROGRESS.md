@@ -1,6 +1,6 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-10-11  
+**Last updated:** 2026-11-08  
 **Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
@@ -12,6 +12,21 @@ The core backend, persistence, security hardening, frontend, automated verificat
 Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed. The later duplicate desktop-workflow cleanup on `main` also passed the full CI suite, including native desktop builds.
 
 A dedicated executable target-environment acceptance runbook is now available at `docs/PRODUCTION_ACCEPTANCE.md`. It records the evidence required for golden-path, authorization, module, finance, attendance, assessment, clinical, staff/student, deployment, backup/restore, desktop, and security sign-off.
+
+## Structured logging and observability — November 2026
+
+- [x] Add Serilog to the .NET 8 API with structured console and daily rolling file sinks.
+- [x] Store logs in the service account's local application data directory; allow deployment override through `SMIS_LOG_DIRECTORY`.
+- [x] Configure 14-file retention and a 10 MiB per-file limit through appsettings.
+- [x] Add request correlation middleware with safe incoming ID validation and an `X-Correlation-ID` response header.
+- [x] Enrich API request logs with correlation ID, HTTP method, path, status and elapsed time.
+- [x] Add authenticated, rate-limited browser diagnostic ingestion with bounded payloads and secret redaction.
+- [x] Add React global handlers for uncaught errors and unhandled promise rejections.
+- [x] Propagate correlation IDs from the modern API client.
+- [x] Add correlation middleware unit tests and document the operational logging policy in `docs/LOGGING-OBSERVABILITY.md`.
+- [ ] Run backend and frontend CI for this change and resolve any failures before merging.
+- [ ] Extend correlation header propagation to remaining legacy frontend API modules as they are consolidated.
+- [ ] Configure production log-directory permissions and retention/collection during target-environment acceptance.
 
 ## Current work — October 2026
 
