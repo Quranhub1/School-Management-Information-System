@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { expenseEntrySchema, inventoryItemSchema, libraryLoanSchema, paymentEntrySchema, studentAdmissionSchema, timetableEntrySchema } from "./index";
-import { validateForm } from "../lib/validation";
+import { bulkImportRequestSchema, createInvoiceRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryRegisterSaveRequestSchema, libraryLoanSchema, paymentEntrySchema, sendSmsRequestSchema, studentAdmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
   it("accepts a valid student admission record", () => {
@@ -38,6 +38,42 @@ describe("SMIS Zod domain schemas", () => {
 
   it("rejects loan due dates before the borrowing date", () => {
     expect(libraryLoanSchema.safeParse({ bookId: "b1", borrowerId: "s1", borrowedAt: "2026-04-02", dueAt: "2026-04-01" }).success).toBe(false);
+  });
+
+  it("validates actual student API create payloads", () => {
+    expect(studentCreateRequestSchema.safeParse({
+      studentNumber: "KSHS/2026/001", firstName: "Amina", lastName: "Nabirye",
+      dateOfBirth: "2005-03-12", email: "amina@example.com",
+    }).success).toBe(true);
+    expect(studentCreateRequestSchema.safeParse({ studentNumber: "", firstName: "A", lastName: "" }).success).toBe(false);
+  });
+
+  it("rejects invalid finance invoice and bulk import requests before submission", () => {
+    expect(createInvoiceRequestSchema.safeParse({
+      studentId: "s1", invoiceNumber: "INV-1", feeType: "Tuition", amount: 150000, currency: "UGX",
+    }).success).toBe(true);
+    expect(createInvoiceRequestSchema.safeParse({
+      studentId: "s1", invoiceNumber: "", feeType: "Tuition", amount: -100, currency: "UGX",
+    }).success).toBe(false);
+    expect(bulkImportRequestSchema.safeParse({ entityType: "students", csvData: "" }).success).toBe(false);
+  });
+
+  it("rejects empty SMS recipients and malformed inventory row values", () => {
+    expect(sendSmsRequestSchema.safeParse({ message: "Notice", recipientIds: [] }).success).toBe(false);
+    expect(inventoryRegisterSaveRequestSchema.safeParse({
+      columns: [{ id: "name", label: "Item" }],
+      rows: [{ id: "row-1", values: { name: 123 } }],
+    }).success).toBe(false);
+  });
+
+  it("throws a field-addressable error before invalid input reaches an API request", () => {
+    expect(() => parseApiInput(createInvoiceRequestSchema, {
+      studentId: "", invoiceNumber: "", feeType: "", amount: -1,
+    }, "create invoice")).toThrow(/Invalid create invoice input/);
+  });
+
+  it("rejects malformed API responses at the response boundary", () => {
+    expect(() => parseApiResponse(studentCreateRequestSchema, { studentNumber: "" }, "student")).toThrow(/does not match/);
   });
 
   it("maps schema failures into field-addressable form errors", () => {
