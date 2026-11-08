@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getInvoices, getPayments, getStudentFinanceProfile, recordPayment, type Invoice, type StudentFinanceProfile } from '../api/finance'
+import { getInvoices, getPayments, getStudentFinanceProfile, getStudentFinancialStatement, recordPayment, type Invoice, type StudentFinanceProfile, type StudentFinancialStatement } from '../api/finance'
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 
 type Props = { initialSearch?: string }
@@ -17,6 +17,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
   const [profile, setProfile] = useState<StudentFinanceProfile | null>(null)
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [payments, setPayments] = useState<any[]>([])
+  const [statement, setStatement] = useState<StudentFinancialStatement | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null)
@@ -30,10 +31,10 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
     setLoading(true); setError('')
     try {
       const p = await getStudentFinanceProfile(value.trim())
-      const [inv, pay] = await Promise.all([getInvoices(p.id), getPayments(p.id)])
-      setProfile(p); setInvoices(inv); setPayments(pay)
+      const [inv, pay, financialStatement] = await Promise.all([getInvoices(p.id), getPayments(p.id), getStudentFinancialStatement(p.id)])
+      setProfile(p); setInvoices(inv); setPayments(pay); setStatement(financialStatement)
     } catch (e) {
-      setProfile(null); setInvoices([]); setPayments([])
+      setProfile(null); setInvoices([]); setPayments([]); setStatement(null)
       setError(e instanceof Error ? e.message : 'Unable to load student finance account.')
     } finally { setLoading(false) }
   }
@@ -108,6 +109,21 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
           {breakdown.map(row => { const s=statusFor(row.balance,row.billed,row.paid); return <tr key={row.feeType}><td><strong>{row.feeType}</strong></td><td>{money(row.billed)}</td><td style={{color:'#059669',fontWeight:700}}>{money(row.paid)}</td><td style={{color:s.color,fontWeight:800}}>{money(row.balance)}</td><td><span className="finance-status-badge" style={{color:s.color,background:s.bg}}>{s.label}</span></td></tr> })}
           {breakdown.length===0 && <tr><td colSpan={5}>No fees have been billed to this student.</td></tr>}
         </tbody></table></div>
+      </div>
+      <div className="panel finance-inner-panel">
+        <div className="panel-heading"><div><p className="eyebrow">INVOICE LINE ITEMS</p><h3>Detailed Financial Statement</h3></div></div>
+        {statement?.invoices.map(invoice => <div className="finance-invoice-detail" key={invoice.id}>
+          <div className="panel-heading">
+            <div><strong>{invoice.invoiceNumber} · {invoice.feeType}</strong><small>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</small></div>
+            <div><strong>{money(invoice.netAmount)}</strong><small>Paid {money(invoice.paidAmount)} · Balance {money(invoice.balance)}</small></div>
+          </div>
+          <div className="table-wrap"><table><thead><tr><th>Code</th><th>Fee item</th><th>Amount billed</th></tr></thead><tbody>
+            {invoice.lines.map(line => <tr key={line.id}><td>{line.code}</td><td>{line.description}</td><td>{money(line.amount)}</td></tr>)}
+            {invoice.lines.length===0 && <tr><td colSpan={3}>No itemized lines recorded for this invoice.</td></tr>}
+          </tbody></table></div>
+        </div>)}
+        {statement && <p className="finance-muted">{statement.itemAllocationNote}</p>}
+        {statement?.invoices.length===0 && <p className="empty">No financial statement entries are available.</p>}
       </div>
       <div className="panel finance-inner-panel">
         <div className="panel-heading"><div><p className="eyebrow">TRANSACTIONS</p><h3>Payment History</h3></div></div>
