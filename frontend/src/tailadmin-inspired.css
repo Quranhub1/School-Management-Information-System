@@ -435,6 +435,9 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
   .app-shell main.content { padding: 16px !important; }
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/fix/remove-suboption-c-shaped-marker
 
 
 /* Child/suboption tabs: remove the left-edge C-shaped active marker entirely. */
@@ -457,6 +460,7 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
   background: #292821 !important;
   color: #f5efdf !important;
 }
+<<<<<<< HEAD
 
 
 /* Sidebar navigation is institution-theme independent: matte black and cream only. */
@@ -707,3 +711,5 @@ body { background: var(--smis-ui-bg); color: var(--smis-ui-text); }
 >>>>>>> origin/design/cream-workspace-theme
 =======
 >>>>>>> origin/feat/tailadmin-inspired-smis-ui
+=======
+>>>>>>> origin/fix/remove-suboption-c-shaped-marker
