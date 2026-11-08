@@ -35,7 +35,7 @@ This tracker distinguishes code delivered on feature branches from changes merge
   - Frontend now resolves student codes through the existing student finance profile API and uses the implemented mobile-money endpoints.
   - Branch: `feat/student-financial-statement`; included in draft PR #221.
   - **Not a live gateway:** no STK/USSD prompt is sent. Finance staff must independently verify the operator receipt and enter its external reference. The UI now states this explicitly.
-  - Validation: pending automated CI, review and target-environment tests.
+  - Validation: pending automated backend/frontend CI, review and target-environment tests; a `feature/**` validation branch is used to invoke the backend push workflow.
 
 ### Not yet implemented in this sequence
 
