@@ -17,5 +17,5 @@ export function searchFinanceAuditEvents(action?: string, from?: string, to?: st
   if (action) qs.set('action', action);
   if (from) qs.set('from', new Date(from).toISOString());
   if (to) qs.set('to', new Date(to + 'T23:59:59.999').toISOString());
-  return request<FinanceAuditEvent[]>(`/api/finance/staff-allowances/audit-events${qs.toString() ? '?' + qs.toString() : ''}`);
+  return request<FinanceAuditEvent[]>(`/api/audit/finance-events${qs.toString() ? '?' + qs.toString() : ''}`);
 }
