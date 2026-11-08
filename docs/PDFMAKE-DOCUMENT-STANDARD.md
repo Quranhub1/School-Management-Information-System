@@ -36,6 +36,8 @@ Document definitions should be built from live, authorized API data already avai
 
 ## Architecture boundary
 
+Uploaded student documents and other user-supplied attachments are stored and downloaded in their original file format. PDFMake is for generating SMIS documents and reports; it must not silently convert or modify uploaded source files.
+
 PDFMake is a JavaScript library. The React/Tauri frontend can use it directly and it is bundled for offline use. Existing .NET API PDF endpoints currently use QuestPDF in the backend. Those endpoints remain server-generated and retain their backend authorization and data integrity controls; do not replace them with client-side PDFMake or move sensitive report data into the browser merely to force one library across different runtimes. A future backend migration would require an explicit .NET/JavaScript document-service architecture decision.
 
 ## Initial migration coverage
@@ -52,7 +54,7 @@ PDFMake is a JavaScript library. The React/Tauri frontend can use it directly an
 - System audit log: filtered PDF download and print, including user, action, entity, record ID, change details, IP address, user agent and timestamp.
 - Financial audit events: separate administrator-authorized PDF export of immutable finance audit events, including action, entity, performer, reason, journal reference and metadata.
 - Workflow state history: separate administrator-authorized PDF export of workflow instance state transitions, entity references, performer, comments and timestamp.
-- Every shared AG Grid table: a common PDF export action exports the currently visible columns and all rows after the active filter/sort, independently of pagination.
+- Every shared AG Grid table: common PDF download and print actions export the currently visible columns and all rows after the active filter/sort, independently of pagination.
 - Standalone offline application template: PDFMake browser build and fonts are copied from local npm assets during dev/build; no CDN.
 
 ## Remaining migration work
