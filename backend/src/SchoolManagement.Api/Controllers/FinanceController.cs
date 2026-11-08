@@ -216,17 +216,22 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             })
             .ToListAsync(cancellationToken);
 
-        var billed = invoices.Sum(x => x.NetAmount);
-        var paid = invoices.Sum(x => x.PaidAmount);
-        var balance = invoices.Sum(x => x.balance);
+        var totalsByCurrency = invoices
+            .GroupBy(x => x.Currency)
+            .Select(group => new
+            {
+                currency = group.Key,
+                billed = group.Sum(x => x.NetAmount),
+                paid = group.Sum(x => x.PaidAmount),
+                balance = group.Sum(x => x.balance)
+            })
+            .ToList();
 
         return Ok(new
         {
             studentId,
-            currency = invoices.Select(x => x.Currency).Distinct().Count() == 1
-                ? invoices.Select(x => x.Currency).FirstOrDefault() ?? "UGX"
-                : "MULTI",
-            totals = new { billed, paid, balance },
+            currency = totalsByCurrency.Count == 1 ? totalsByCurrency[0].currency : totalsByCurrency.Count == 0 ? "UGX" : "MULTI",
+            totalsByCurrency,
             invoices,
             payments,
             paymentAllocationGranularity = "INVOICE",
