@@ -51,10 +51,15 @@
 >>>>>>> origin/feat/central-zod-validation
 =======
     "ag-grid-react": "36.3.0",
+<<<<<<< HEAD
     "zod": "^4.6.7"
 >>>>>>> origin/feat/central-zod-validation-v2
 =======
 >>>>>>> origin/feat/cmdk-global-command-palette
+=======
+    "zod": "^4.6.7",
+    "dexie": "4.4.7"
+>>>>>>> origin/feat/dexie-offline-data-sync
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",

@@ -9,12 +9,17 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
+<<<<<<< HEAD
       Promise.all(
         keys
           .filter((key) => key.startsWith('smis-') && key !== CACHE_NAME)
           .map((key) => caches.delete(key)),
       ),
     ),
+=======
+      Promise.all(keys.filter((key) => key.startsWith('smis-') && key !== CACHE_NAME).map((key) => caches.delete(key)))
+    )
+>>>>>>> origin/feat/dexie-offline-data-sync
   );
   event.waitUntil(self.clients.claim());
 });
@@ -24,7 +29,16 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+<<<<<<< HEAD
   if (url.origin !== self.location.origin) return;
+=======
+  // API data is managed by Dexie in the authenticated page context, never by
+  // the shared service-worker cache. This prevents cross-user cache leakage.
+  if (url.pathname.startsWith('/api/') || url.pathname === '/institution-login.html') {
+    event.respondWith(fetch(new Request(request, { cache: 'no-store' })));
+    return;
+  }
+>>>>>>> origin/feat/dexie-offline-data-sync
 
   // Never cache API data, authentication endpoints, or the standalone login.
   if (url.pathname.startsWith('/api/') || url.pathname === '/institution-login.html') {
@@ -65,11 +79,18 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// The service worker only wakes open clients. It never replays queued writes;
+// module-specific replay remains disabled until its server safety contract exists.
 self.addEventListener('sync', (event) => {
+<<<<<<< HEAD
   if (event.tag === 'smis-sync') event.waitUntil(doBackgroundSync());
+=======
+  if (event.tag === 'smis-sync') {
+    event.waitUntil(
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => client.postMessage({ type: 'SYNC_REQUIRED' }));
+      })
+    );
+  }
+>>>>>>> origin/feat/dexie-offline-data-sync
 });
-
-async function doBackgroundSync() {
-  const clients = await self.clients.matchAll();
-  clients.forEach((client) => client.postMessage({ type: 'SYNC_REQUIRED' }));
-}
