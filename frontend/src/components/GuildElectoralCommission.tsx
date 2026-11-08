@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 import {
   AlertCircle,
   CheckCircle2,
@@ -72,6 +74,7 @@ const resultRows = [
 ]
 
 export function GuildElectoralCommission() {
+  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
   const [view, setView] = useState<ElectionView>('ballot')
   const [selectedCandidate, setSelectedCandidate] = useState('')
   const [ballotSubmitted, setBallotSubmitted] = useState(false)
@@ -102,6 +105,37 @@ export function GuildElectoralCommission() {
     setSelectedNominee(current => current ? { ...current, status, notes } : current)
     setNotice(status === 'Approved' ? 'Nominee approved by the Electoral Commission.' : status === 'Rejected' ? 'Nominee rejected and the decision has been recorded.' : 'Additional information requested from the nominee.')
   }
+
+  function electionDeclarationPdfOptions() {
+    const rows = [
+      [{ text: 'Candidate', style: 'tableHeader' }, { text: 'Programme', style: 'tableHeader' }, { text: 'Year', style: 'tableHeader' }, { text: 'Votes', style: 'tableHeader' }, { text: 'Share', style: 'tableHeader' }],
+      ...resultRows.map(candidate => [candidate.name, candidate.programme, candidate.year, String(candidate.votes), candidate.percentage.toFixed(1) + '%']),
+    ]
+    return {
+      title: 'Guild Election Results — Preview',
+      filename: 'guild-election-results-preview',
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: 'DRAFT PREVIEW — NOT AN OFFICIAL ELECTION RECORD', color: '#b91c1c', bold: true, alignment: 'center', margin: [0, 0, 0, 12] },
+        { text: 'The current Electoral Commission screen contains demonstration candidate and vote data. This PDF is a preview only and must not be used as an official result, audit record or publication.', style: 'muted', margin: [0, 0, 0, 12] },
+        { text: 'Presidential candidate results', style: 'sectionHeading' },
+        { table: { headerRows: 1, widths: ['*', '*', 'auto', 'auto', 'auto'], body: rows }, layout: 'lightHorizontalLines' },
+        { text: 'Appointee vetting', style: 'sectionHeading' },
+        { table: { headerRows: 1, widths: ['*', '*', 'auto', '*', '*'], body: [
+          [{ text: 'Nominee', style: 'tableHeader' }, { text: 'Office', style: 'tableHeader' }, { text: 'Status', style: 'tableHeader' }, { text: 'Nominated by', style: 'tableHeader' }, { text: 'Notes', style: 'tableHeader' }],
+          ...nominees.map(item => [item.name, item.role, item.status, item.nominatedBy, item.notes || '—']),
+        ] }, layout: 'lightHorizontalLines' },
+        { text: 'Declaration signed: ' + (declarationSigned ? 'Yes' : 'No') + ' · Results marked published: ' + (published ? 'Yes' : 'No'), margin: [0, 14, 0, 6] },
+        { text: 'Prepared: ' + new Date().toLocaleString('en-UG'), style: 'muted' },
+      ],
+    }
+  }
+
+  function printElectionDeclaration() { printInstitutionalPdf(electionDeclarationPdfOptions()) }
+  function downloadElectionDeclaration() { downloadInstitutionalPdf(electionDeclarationPdfOptions()) }
 
   function publishResults() {
     if (!declarationSigned) {
@@ -295,7 +329,7 @@ export function GuildElectoralCommission() {
               <span><FileSignature size={17} /><strong>Digitally sign declaration</strong><small>Chairman authorisation required before publication</small></span>
             </label>
             <div className="guild-declaration-actions">
-              <button type="button" className="secondary-button" onClick={() => window.print()}><Download size={16} /> Print / Save as PDF</button>
+              <button type="button" className="secondary-button" onClick={printElectionDeclaration}><Download size={16} /> Print PDF</button><button type="button" className="secondary-button" onClick={downloadElectionDeclaration}>Download PDF</button>
               <button type="button" className="primary-button" onClick={publishResults}><Send size={16} /> Publish results</button>
             </div>
           </div>

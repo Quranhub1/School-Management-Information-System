@@ -135,6 +135,10 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
   return <InstitutionSettingsContext.Provider value={value}>{children}</InstitutionSettingsContext.Provider>
 }
 
+export function useOptionalInstitutionSettings() {
+  return useContext(InstitutionSettingsContext)
+}
+
 export function useInstitutionSettings() {
   const context = useContext(InstitutionSettingsContext)
   if (!context) throw new Error('useInstitutionSettings must be used inside InstitutionSettingsProvider')

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { generateCertificate, getCertificate, printCertificate, revokeCertificate, verifyCertificate, type CertificateDto, type RevokeCertificateRequest } from '../api/certificates'
+import { generateCertificate, getCertificate, revokeCertificate, verifyCertificate, type CertificateDto, type RevokeCertificateRequest } from '../api/certificates'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { getStudents, type Student } from '../api/students'
 
 type Tab = 'generate' | 'view' | 'verify'
@@ -21,6 +23,7 @@ export function CertificateManagement({ canManage }: CertificateManagementProps)
   const [verifyResult, setVerifyResult] = useState<CertificateDto | null>(null)
   const [verifyLoading, setVerifyLoading] = useState(false)
   const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null)
+  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
 
   useEffect(() => {
     void loadStudents()
@@ -107,9 +110,36 @@ export function CertificateManagement({ canManage }: CertificateManagementProps)
     }
   }
 
+  function certificatePdfOptions() {
+    if (!selectedCertificate) return null
+    return {
+      title: 'Certificate of ' + selectedCertificate.awardType,
+      filename: 'certificate-' + selectedCertificate.serialNumber + '.pdf',
+      orientation: 'landscape' as const,
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: selectedCertificate.name, alignment: 'center', bold: true, fontSize: 24, margin: [0, 38, 0, 16] },
+        { text: selectedCertificate.awardType + ' in ' + selectedCertificate.programme, alignment: 'center', fontSize: 18, margin: [0, 0, 0, 28] },
+        { text: 'This certifies that the above award was issued following successful completion of the programme.', alignment: 'center', fontSize: 11, margin: [30, 0, 30, 24] },
+        { text: 'Graduation date: ' + new Date(selectedCertificate.graduationDate).toLocaleDateString('en-UG'), alignment: 'center' },
+        { text: 'Issued by: ' + selectedCertificate.issuedBy + ' · Date issued: ' + new Date(selectedCertificate.issuedAt).toLocaleDateString('en-UG'), alignment: 'center', margin: [0, 8, 0, 24] },
+        { text: 'Serial: ' + selectedCertificate.serialNumber + ' · Verification: ' + selectedCertificate.verificationHash, alignment: 'center', fontSize: 8, color: '#666666' },
+        ...(selectedCertificate.isRevoked ? [{ text: 'REVOKED', color: '#b91c1c', bold: true, alignment: 'center', margin: [0, 14, 0, 0] }] : []),
+      ],
+    }
+  }
+
   function handlePrint() {
-    if (!selectedCertificate) return
-    window.print()
+    const options = certificatePdfOptions()
+    if (options) printInstitutionalPdf(options)
+  }
+
+  function handleDownloadPdf() {
+    const options = certificatePdfOptions()
+    if (options) downloadInstitutionalPdf(options)
   }
 
   return (
@@ -120,6 +150,7 @@ export function CertificateManagement({ canManage }: CertificateManagementProps)
           <h3>Certificate Management</h3>
         </div>
         <button className="secondary-button" onClick={handlePrint} disabled={!selectedCertificate}>Print Certificate</button>
+         <button className="secondary-button" onClick={handleDownloadPdf} disabled={!selectedCertificate}>Download PDF</button>
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}

@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run copy-fonts && npm run build:login-css && node scripts/check-offline-login.mjs && tsc -b && vite build",
+    "build": "npm run copy-fonts && npm run copy-pdfmake-assets && npm run build:login-css && node scripts/check-offline-login.mjs && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "build:login-css": "npx --yes tailwindcss@3.4.17 -c tailwind.login.config.cjs -i institution-login-tailwind.css -o public/assets/css/institution-login.css",
-    "predev": "npm run copy-fonts && npm run build:login-css",
-    "copy-fonts": "node scripts/copy-local-fonts.mjs"
+    "predev": "npm run copy-fonts && npm run copy-pdfmake-assets && npm run build:login-css",
+    "copy-fonts": "node scripts/copy-local-fonts.mjs",
+    "copy-pdfmake-assets": "node scripts/copy-pdfmake-assets.mjs"
   },
   "dependencies": {
     "react": "^19.1.1",
@@ -27,7 +28,8 @@
     "ag-grid-community": "36.3.0",
     "ag-grid-react": "36.3.0",
     "zod": "^4.6.7",
-    "dexie": "4.4.7"
+    "dexie": "4.4.7",
+    "pdfmake": "0.3.13"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",

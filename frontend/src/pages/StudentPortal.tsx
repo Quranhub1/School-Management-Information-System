@@ -2,6 +2,8 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import { useEffect, useMemo, useState } from 'react'
 import { getStudentPortalProfile, getStudentSummaries, getStudentTranscript, type StudentPortalProfile, type StudentSemesterResult } from '../api/studentPortal'
 import type { TranscriptEntry, AcademicResultSummary } from '../types/academic'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from '../components/InstitutionSettingsContext'
 
 function groupBySemester(summaries: AcademicResultSummary[], entries: TranscriptEntry[]): StudentSemesterResult[] {
   const map = new Map<string, StudentSemesterResult>()
@@ -23,6 +25,7 @@ function groupBySemester(summaries: AcademicResultSummary[], entries: Transcript
 type PortalTab = 'overview' | 'results' | 'national' | 'documents'
 
 export function StudentPortal() {
+  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
   const [profile, setProfile] = useState<StudentPortalProfile | null>(null)
   const [summaries, setSummaries] = useState<AcademicResultSummary[]>([])
   const [entries, setEntries] = useState<TranscriptEntry[]>([])
@@ -46,10 +49,58 @@ export function StudentPortal() {
   const semesters = useMemo(() => groupBySemester(summaries, entries), [summaries, entries])
   const latestCgpa = semesters[0]?.cgpa ?? null
 
+  function transcriptPdfOptions() {
+    const rows = [
+      [{ text: 'Academic year', style: 'tableHeader' }, { text: 'Semester', style: 'tableHeader' }, { text: 'Course code', style: 'tableHeader' }, { text: 'Course title', style: 'tableHeader' }, { text: 'Credits', style: 'tableHeader' }, { text: 'Score', style: 'tableHeader' }, { text: 'Grade', style: 'tableHeader' }, { text: 'Grade point', style: 'tableHeader' }, { text: 'Result', style: 'tableHeader' }],
+      ...semesters.flatMap(semester => semester.courses.map(course => [
+        semester.academicYearId,
+        semester.semesterId,
+        course.courseCode,
+        course.courseTitle,
+        course.creditUnits,
+        course.score.toFixed(2),
+        course.grade || '—',
+        course.gradePoint.toFixed(2),
+        course.isPass ? 'Pass' : 'Fail',
+      ])),
+    ]
+    return {
+      title: 'Official Student Transcript',
+      filename: 'transcript-' + (profile?.studentNumber || 'student'),
+      orientation: 'landscape' as const,
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: 'Student: ' + (profile?.fullName || '—') + ' · Student number: ' + (profile?.studentNumber || '—'), bold: true, margin: [0, 0, 0, 8] },
+        { text: 'Enrollment status: ' + (profile?.status || '—'), style: 'muted', margin: [0, 0, 0, 12] },
+        ...semesters.map(semester => ({
+          columns: [
+            { text: 'Year ' + semester.academicYearId + ' · Semester ' + semester.semesterId, bold: true },
+            { text: 'GPA ' + semester.gpa.toFixed(2) + ' · CGPA ' + (semester.cgpa === null ? '—' : semester.cgpa.toFixed(2)) + ' · ' + semester.standing, alignment: 'right' },
+          ],
+          margin: [0, 8, 0, 5],
+        })),
+        { table: { headerRows: 1, widths: ['auto', 'auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto'], body: rows }, layout: 'lightHorizontalLines' },
+        { text: 'This transcript contains the authenticated student’s academic records available in the portal at the time of generation.', style: 'muted', margin: [0, 12, 0, 0] },
+      ],
+    }
+  }
+
+  function downloadTranscriptPdf() {
+    if (profile && entries.length) downloadInstitutionalPdf(transcriptPdfOptions())
+  }
+
+  function printTranscriptPdf() {
+    if (profile && entries.length) printInstitutionalPdf(transcriptPdfOptions())
+  }
+
   return (
     <section className="panel" aria-label="Student Portal">
       <div className="panel-heading">
         <div><span className="eyebrow">STUDENT</span><h2>Student Portal</h2><p className="section-copy">A deliberately limited learner view. Administrative records, staff tools, finance controls and sensitive personal records remain outside this portal.</p></div>
+        <div className="form-actions"><button type="button" className="secondary-button" onClick={printTranscriptPdf} disabled={!profile || entries.length === 0 || loading}>Print Transcript</button><button type="button" onClick={downloadTranscriptPdf} disabled={!profile || entries.length === 0 || loading}>Download PDF</button></div>
       </div>
       {error && <div className="error" role="alert">{error}</div>}
       {loading ? <LoadingSpinner label="Loading student portal…" /> : (

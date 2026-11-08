@@ -8,5 +8,22 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 export type AuditLog = { id:string; userId?:string; action:string; entityType:string; entityId?:string; changes?:string; ipAddress?:string; userAgent?:string; timestamp:string };
-export function searchAuditLogs(userId?:string,action?:string,entityType?:string){ const qs = new URLSearchParams(); if(userId) qs.set('userId',userId); if(action) qs.set('action',action); if(entityType) qs.set('entityType',entityType); return request<AuditLog[]>(`/api/audit${qs.toString() ? '?' + qs.toString() : ''}`); }
+export function searchAuditLogs(userId?:string,action?:string,entityType?:string,from?:string,to?:string){ const qs = new URLSearchParams(); if(userId) qs.set('userId',userId); if(action) qs.set('action',action); if(entityType) qs.set('entityType',entityType); if(from) qs.set('from',new Date(from).toISOString()); if(to) qs.set('to',new Date(to + 'T23:59:59.999').toISOString()); return request<AuditLog[]>(`/api/audit${qs.toString() ? '?' + qs.toString() : ''}`); }
 export function getAuditLog(id:string){ return request<AuditLog>(`/api/audit/${id}`); }
+
+export type FinanceAuditEvent = { id: string; occurredAt: string; action: string; entityType: string; entityId: string; performedBy: string; reason?: string; sourceJournalEntryId?: string; metadata?: string };
+export function searchFinanceAuditEvents(action?: string, from?: string, to?: string) {
+  const qs = new URLSearchParams();
+  if (action) qs.set('action', action);
+  if (from) qs.set('from', new Date(from).toISOString());
+  if (to) qs.set('to', new Date(to + 'T23:59:59.999').toISOString());
+  return request<FinanceAuditEvent[]>(`/api/audit/finance-events${qs.toString() ? '?' + qs.toString() : ''}`);
+}
+
+export type WorkflowHistoryAudit = { id: string; workflowInstanceId: string; workflowType: string; entityType: string; entityId: string; fromState: string; toState: string; performedByUserId?: string; comments?: string; performedAt: string };
+export function searchWorkflowHistory(from?: string, to?: string) {
+  const qs = new URLSearchParams();
+  if (from) qs.set('from', new Date(from).toISOString());
+  if (to) qs.set('to', new Date(to + 'T23:59:59.999').toISOString());
+  return request<WorkflowHistoryAudit[]>(`/api/audit/workflow-history${qs.toString() ? '?' + qs.toString() : ''}`);
+}
