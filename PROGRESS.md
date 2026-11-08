@@ -13,6 +13,19 @@ Corrected native release workflow run `34351052149` completed successfully for W
 
 A dedicated executable target-environment acceptance runbook is now available at `docs/PRODUCTION_ACCEPTANCE.md`. It records the evidence required for golden-path, authorization, module, finance, attendance, assessment, clinical, staff/student, deployment, backup/restore, desktop, and security sign-off.
 
+## TanStack Query server-state and offline cache — November 2026
+
+- [x] Add TanStack Query v5 and an application-wide QueryClient.
+- [x] Configure freshness, bounded network/server retries, no retries for HTTP 4xx, reconnect/focus refetch and online network mode.
+- [x] Upgrade the existing IndexedDB schema to add a dedicated queryCache store.
+- [x] Restore persisted query state before mounting the workspace, partitioned by authenticated username and limited to 24 hours.
+- [x] Persist only successful allowlisted queries; keep student risk and Student 360 personal/financial details memory-only.
+- [x] Clear in-memory query state and remove the previous user's persisted cache on logout/account switch.
+- [x] Migrate ModernInformationHub dashboard, risk, workflow and Student 360 reads to TanStack Query hooks.
+- [x] Add cache-policy tests and document the offline query/write boundaries in docs/TANSTACK-QUERY-OFFLINE-CACHE.md.
+- [ ] Run frontend build/tests, full-system smoke tests and desktop CI; fix failures before merging.
+- [ ] Continue module-by-module migration of existing API reads and invalidate affected query keys after writes.
+
 ## Structured logging and observability — November 2026
 
 - [x] Add Serilog to the .NET 8 API with structured console and daily rolling file sinks.
