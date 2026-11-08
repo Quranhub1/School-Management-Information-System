@@ -19,3 +19,11 @@ export function searchFinanceAuditEvents(action?: string, from?: string, to?: st
   if (to) qs.set('to', new Date(to + 'T23:59:59.999').toISOString());
   return request<FinanceAuditEvent[]>(`/api/audit/finance-events${qs.toString() ? '?' + qs.toString() : ''}`);
 }
+
+export type WorkflowHistoryAudit = { id: string; workflowInstanceId: string; workflowType: string; entityType: string; entityId: string; fromState: string; toState: string; performedByUserId?: string; comments?: string; performedAt: string };
+export function searchWorkflowHistory(from?: string, to?: string) {
+  const qs = new URLSearchParams();
+  if (from) qs.set('from', new Date(from).toISOString());
+  if (to) qs.set('to', new Date(to + 'T23:59:59.999').toISOString());
+  return request<WorkflowHistoryAudit[]>(`/api/audit/workflow-history${qs.toString() ? '?' + qs.toString() : ''}`);
+}
