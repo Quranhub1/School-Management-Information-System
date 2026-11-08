@@ -54,6 +54,26 @@ SMIS now includes a complete software-level [`PRIVACY_POLICY.md`](PRIVACY_POLICY
 
 The policy is also published inside the web application at `/privacy-policy.html` and is linked from both the sign-in screen and authenticated workspace. The deploying institution remains responsible for its own legal notices, privacy contact details, retention schedule and compliance obligations.
 
+## One-command dependency setup
+
+After cloning the repository, or after updating a clean working tree, install the complete frontend and backend dependency graphs with the repository scripts:
+
+**Windows PowerShell**
+```powershell
+.\setup.ps1
+```
+
+**Ubuntu/Linux**
+```bash
+bash ./setup.sh
+```
+
+The scripts verify the required Node.js 24+ and .NET 8+ toolchains, run `npm ci` against the committed `frontend/package-lock.json`, and run `dotnet restore` for the backend solution. This installs all direct and transitive libraries declared by the project; do not install individual packages manually.
+
+After pulling updates, use `./update.ps1` (PowerShell) or `bash ./update.sh` (Linux) to fast-forward the current branch and then restore dependencies. These helpers stop if the working tree is dirty; commit or stash local changes first. A normal `git pull` by itself does not execute setup scripts.
+
+Dependency downloads require access to the configured npm and NuGet package feeds unless their packages are already cached. For restricted/offline servers, prepare and retain package caches or an approved internal package mirror; Git does not contain the package manager caches or the installed `node_modules` directory.
+
 ## Quick development setup
 
 ### Prerequisites
