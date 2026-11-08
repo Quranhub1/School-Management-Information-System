@@ -258,10 +258,11 @@ export default function MobileMoneyPayments() {
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Amount (UGX)</label>
               <input
                 type="number"
+                aria-invalid={Boolean(requestErrors.amount)}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
-                min="0"
+                min="1"
                 step="1"
                 required
                 style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
