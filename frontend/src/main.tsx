@@ -1,9 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+<<<<<<< HEAD
 import { InstitutionSettingsProvider } from './components/InstitutionSettingsContext'
 import { installGlobalErrorHandlers } from './lib/logging'
 import { QueryCacheProvider } from './lib/QueryCacheProvider'
+=======
+import { installGlobalErrorHandlers } from './lib/logging'
+>>>>>>> origin/feat/structured-logging-observability
 import './styles.css'
 import './institution-theme.css'
 import './tailadmin-inspired.css'

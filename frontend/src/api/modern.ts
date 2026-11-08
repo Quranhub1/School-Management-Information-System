@@ -1,5 +1,6 @@
 import { getAccessToken } from './auth'
 import { createCorrelationId } from '../lib/logging'
+<<<<<<< HEAD
 import { useQuery } from '@tanstack/react-query'
 
 export class ApiError extends Error {
@@ -8,6 +9,8 @@ export class ApiError extends Error {
     this.name = 'ApiError'
   }
 }
+=======
+>>>>>>> origin/feat/structured-logging-observability
 
 const api = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const token = getAccessToken()
