@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bulkImportRequestSchema, createInvoiceRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, libraryLoanSchema, paymentEntrySchema, sendSmsRequestSchema, studentAdmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { bulkImportRequestSchema, createInvoiceRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, libraryLoanSchema, paymentEntrySchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -38,6 +38,18 @@ describe("SMIS Zod domain schemas", () => {
 
   it("rejects loan due dates before the borrowing date", () => {
     expect(libraryLoanSchema.safeParse({ bookId: "b1", borrowerId: "s1", borrowedAt: "2026-04-02", dueAt: "2026-04-01" }).success).toBe(false);
+  });
+
+  it("requires a complete student application and declaration before submit", () => {
+    const base = {
+      studentNumber: "KSHS/2026/001", academicYear: "2026", intake: "August",
+      course: "Diploma in Pharmacy", firstName: "Amina", lastName: "Nabirye",
+      dateOfBirth: "2005-03-12", phone: "+256 700 123456", email: "amina@example.com",
+      declaration: true, applicantSignature: "Amina Nabirye", signatureDate: "2026-08-01",
+    };
+    expect(studentApplicationSubmissionSchema.safeParse(base).success).toBe(true);
+    expect(studentApplicationSubmissionSchema.safeParse({ ...base, declaration: false }).success).toBe(false);
+    expect(studentApplicationSubmissionSchema.safeParse({ ...base, phone: "bad" }).success).toBe(false);
   });
 
   it("validates actual student API create payloads", () => {
