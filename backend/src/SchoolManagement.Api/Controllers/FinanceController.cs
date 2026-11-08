@@ -275,11 +275,11 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> CreateMobileMoneyTransaction(CreateMobileMoneyTransactionRequest request, CancellationToken cancellationToken)
     {
         if (request.Amount <= 0) return BadRequest(new { message = "Amount must be greater than zero." });
-        if (request.Currency.Trim().ToUpperInvariant() != "UGX") return BadRequest(new { message = "Mobile-money collection currently supports UGX only." });
-        var provider = request.Provider.Trim();
+        if (!string.Equals(request.Currency?.Trim(), "UGX", StringComparison.OrdinalIgnoreCase)) return BadRequest(new { message = "Mobile-money collection currently supports UGX only." });
+        var provider = request.Provider?.Trim();
         if (provider is not ("MTN" or "Airtel")) return BadRequest(new { message = "Provider must be MTN or Airtel." });
-        var phone = request.PhoneNumber.Trim();
-        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^256[0-9]{9}$"))
+        var phone = request.PhoneNumber?.Trim();
+        if (string.IsNullOrWhiteSpace(phone) || !System.Text.RegularExpressions.Regex.IsMatch(phone, @"^256[0-9]{9}$"))
             return BadRequest(new { message = "Phone number must use Uganda international format: 256 followed by nine digits." });
         if (!await campusAccess.CanAccessStudentAsync(User, request.StudentId, cancellationToken)) return Forbid();
         if (!await db.Students.AnyAsync(x => x.Id == request.StudentId, cancellationToken))
@@ -331,12 +331,16 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         }
         if (transaction.Status != "Pending") return Conflict(new { message = $"Only pending transactions can be confirmed. Current status: {transaction.Status}." });
         var externalRef = request.ExternalRef.Trim();
-        if (await db.MobileMoneyTransactions.AnyAsync(x => x.Id != transaction.Id && x.ExternalRef == externalRef, cancellationToken))
-            return Conflict(new { message = "This provider transaction reference has already been used." });
+        if (string.IsNullOrWhiteSpace(request.ExternalRef)) return BadRequest(new { message = "The provider transaction reference is required for manual confirmation." });
 
-        await using var dbTransaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await using var dbTransaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         try
         {
+            if (await db.MobileMoneyTransactions.AnyAsync(x => x.Id != transaction.Id && x.ExternalRef == externalRef, cancellationToken))
+            {
+                await dbTransaction.RollbackAsync(cancellationToken);
+                return Conflict(new { message = "This provider transaction reference has already been used." });
+            }
             var receiptNumber = transaction.TransactionRef;
             if (transaction.StudentInvoiceId.HasValue)
                 await finance.RecordPaymentAsync(transaction.StudentInvoiceId.Value, receiptNumber, transaction.Amount, "Mobile Money", externalRef, cancellationToken);
