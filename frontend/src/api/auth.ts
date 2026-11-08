@@ -11,6 +11,10 @@ const SESSION_KEY = 'smis.session'
 
 type StoredSession = Omit<AuthResponse, 'accessToken'>
 
+function notifyAuthChanged(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('smis:auth-changed'))
+}
+
 function readStorage(storage: Storage, key: string): string | null {
   try {
     return storage.getItem(key)
@@ -52,6 +56,7 @@ export function saveAuthSession(session: AuthResponse): void {
   writeStorage(localStorage, SESSION_KEY, serialized)
   writeStorage(sessionStorage, TOKEN_KEY, session.accessToken)
   writeStorage(sessionStorage, SESSION_KEY, serialized)
+  notifyAuthChanged()
 }
 
 export async function login(username: string, password: string): Promise<AuthResponse> {
@@ -107,4 +112,5 @@ export function logout(): void {
   removeStorage(sessionStorage, SESSION_KEY)
   removeStorage(localStorage, TOKEN_KEY)
   removeStorage(localStorage, SESSION_KEY)
+  notifyAuthChanged()
 }
