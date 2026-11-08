@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react'
 import { getInventoryStockAlerts, type InventoryStockAlert } from '../api/inventoryRegisters'
+import { AgGridTable } from './AgGridTable'
+import type { ColDef } from 'ag-grid-community'
 
 export function InventoryStockAlerts() {
   const [alerts, setAlerts] = useState<InventoryStockAlert[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  const columns: ColDef<InventoryStockAlert>[] = [
+    { field: 'status', headerName: 'Severity', minWidth: 150 },
+    { field: 'itemName', headerName: 'Item', minWidth: 180 },
+    { field: 'sectionName', headerName: 'Inventory', minWidth: 180 },
+    { field: 'quantity', headerName: 'Current quantity', minWidth: 150 },
+    { field: 'reorderLevel', headerName: 'Warning threshold', minWidth: 160, valueFormatter: params => Number(params.value) > 0 ? String(params.value) : 'Out-of-stock only' },
+  ]
 
   useEffect(() => {
     let active = true
@@ -30,12 +40,13 @@ export function InventoryStockAlerts() {
     </div>
     {error && <div className="error" role="alert">Stock warnings could not be loaded: {error}</div>}
     {!loading && !error && alerts.length === 0 && <p className="empty">No low-stock items right now. Items that run out will be flagged automatically.</p>}
-    {alerts.length > 0 && <div className="table-wrap"><table>
-      <thead><tr><th>Severity</th><th>Item</th><th>Inventory</th><th>Current quantity</th><th>Warning threshold</th></tr></thead>
-      <tbody>{alerts.map(alert => <tr key={`${alert.sectionId}:${alert.rowId}`}>
-        <td><span className="badge" style={{ background: alert.status === 'Out of stock' ? '#fee2e2' : '#fef3c7', color: alert.status === 'Out of stock' ? '#991b1b' : '#92400e' }}>{alert.status}</span></td>
-        <td>{alert.itemName}</td><td>{alert.sectionName}</td><td>{alert.quantity}</td><td>{alert.reorderLevel > 0 ? alert.reorderLevel : 'Out-of-stock only'}</td>
-      </tr>)}</tbody>
-    </table></div>}
+    {alerts.length > 0 && <AgGridTable
+      rows={alerts}
+      columns={columns}
+      height={420}
+      pageSize={25}
+      exportFileName="inventory-stock-alerts"
+      getRowId={params => `${params.data.sectionId}:${params.data.rowId}`}
+    />}
   </section>
 }

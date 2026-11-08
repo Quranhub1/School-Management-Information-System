@@ -2671,8 +2671,8 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
 .admin-chart-heading p { margin:0; color:var(--smis-muted,#64748b); font-size:.75rem; line-height:1.45; }
 .admin-chart-body { display:grid; grid-template-columns:minmax(105px,.85fr) minmax(0,1.15fr); align-items:center; gap:12px; padding-top:16px; }
 .admin-donut-wrap { position:relative; width:min(100%,164px); aspect-ratio:1; margin:0 auto; }
-.admin-donut { display:block; width:100%; height:100%; overflow:visible; }
-.admin-donut-track { fill:none; stroke:var(--smis-border,#e2e8f0); stroke-width:12; }
+.admin-donut-canvas { display:block; width:100% !important; height:100% !important; }
+.admin-donut-empty { width:100%; height:100%; border:12px solid var(--smis-border,#e2e8f0); border-radius:50%; }
 .admin-donut-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px; text-align:center; pointer-events:none; }
 .admin-donut-center strong { max-width:100%; overflow-wrap:anywhere; color:var(--smis-text,#0f172a); font-size:clamp(.78rem,1.1vw,1rem); font-weight:800; line-height:1.25; }
 .admin-donut-center span { margin-top:3px; color:var(--smis-muted,#64748b); font-size:.66rem; }
@@ -4008,4 +4008,47 @@ table { font-variant-numeric: tabular-nums; }
 .content select,
 .content textarea {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+
+/* Shared AG Grid controls */
+.smis-ag-grid-shell { width: 100%; min-width: 0; }
+.smis-ag-grid-toolbar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 8px 0; margin-bottom: 6px;
+}
+.smis-ag-grid-search { flex: 1 1 220px; min-width: 180px; }
+.smis-ag-grid-search input {
+  width: 100%; min-height: 36px; padding: 7px 10px;
+  border: 1px solid #cbd5e1; border-radius: 0; background: #fff;
+}
+.smis-ag-grid-count { color: #64748b; font-size: 12px; white-space: nowrap; }
+.smis-ag-grid-columns { position: relative; }
+.smis-ag-grid-columns summary {
+  min-height: 36px; display: flex; align-items: center; padding: 0 12px;
+  border: 1px solid #cbd5e1; cursor: pointer; font-size: 13px; font-weight: 600;
+  background: #fff; list-style-position: inside;
+}
+.smis-ag-grid-column-menu {
+  position: absolute; z-index: 20; right: 0; top: calc(100% + 4px);
+  min-width: 190px; max-height: 280px; overflow: auto; padding: 8px;
+  border: 1px solid #cbd5e1; background: #fff; box-shadow: 0 8px 22px rgb(15 23 42 / 12%);
+}
+.smis-ag-grid-column-menu label {
+  display: flex; align-items: center; gap: 8px; padding: 5px 3px;
+  color: #334155; font-size: 12px; cursor: pointer;
+}
+.smis-ag-grid-column-menu input { width: 14px; height: 14px; }
+.smis-ag-grid .ag-root-wrapper { border-radius: 0; }
+.smis-ag-grid .ag-header-cell-text { font-weight: 700; }
+.smis-ag-grid .ag-cell { display: flex; align-items: center; }
+.inventory-column-heading-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.inventory-column-heading-list > .inventory-column-heading {
+  display: flex; align-items: center; gap: 8px; padding: 5px 8px;
+  border: 1px solid #dbe2ea; background: #fff;
+}
+@media (max-width: 600px) {
+  .smis-ag-grid-toolbar { align-items: stretch; }
+  .smis-ag-grid-count { align-self: center; }
+  .smis-ag-grid-toolbar > button { min-height: 36px; }
 }

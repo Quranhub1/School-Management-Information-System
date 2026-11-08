@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+import { AgGridTable } from './AgGridTable'
+import type { ColDef } from 'ag-grid-community'
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -18,6 +20,31 @@ type Payment = { id: string; receiptNumber: string; amount: number; paymentMetho
 type Payroll = { id: string; staffName: string; staffNumber: string; month: number; year: number; basicSalary: number; allowances: number; deductions: number; netPay: number; status: string; paymentMethod?: string }
 
 type Tab = 'dashboard' | 'outstanding' | 'payments' | 'payroll'
+
+const outstandingColumns: ColDef<Outstanding>[] = [
+  { field: 'studentNumber', headerName: 'Student Number' },
+  { field: 'studentName', headerName: 'Student Name' },
+  { field: 'programmeName', headerName: 'Programme' },
+  { field: 'balance', headerName: 'Balance (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'status', headerName: 'Status' },
+]
+const paymentColumns: ColDef<Payment>[] = [
+  { field: 'paidAt', headerName: 'Date', valueFormatter: p => p.value ? new Date(String(p.value)).toLocaleDateString('en-UG') : '—' },
+  { field: 'receiptNumber', headerName: 'Receipt' },
+  { field: 'studentName', headerName: 'Student' },
+  { field: 'paymentMethod', headerName: 'Method' },
+  { field: 'amount', headerName: 'Amount (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+]
+const payrollColumns: ColDef<Payroll>[] = [
+  { field: 'staffNumber', headerName: 'Staff Number' },
+  { field: 'staffName', headerName: 'Staff' },
+  { headerName: 'Period', valueGetter: p => p.data ? `${p.data.month}/${p.data.year}` : '—' },
+  { field: 'basicSalary', headerName: 'Basic (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'allowances', headerName: 'Allowances (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'deductions', headerName: 'Deductions (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'netPay', headerName: 'Net Pay (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'status', headerName: 'Status' },
+]
 const money = (n: number) => `UGX ${n.toLocaleString('en-UG')}`
 
 export function AccountsOverviewWorkspace() {
@@ -55,6 +82,6 @@ export function AccountsOverviewWorkspace() {
       <div className="summary-card"><span>Invoices</span><strong>{dashboard.invoiceCount.toLocaleString()}</strong></div>
       <div className="summary-card"><span>Payments</span><strong>{dashboard.paymentCount.toLocaleString()}</strong></div>
       <div className="summary-card"><span>Open invoices</span><strong>{dashboard.outstandingCount.toLocaleString()}</strong></div>
-    </div> : tab === 'outstanding' ? <div className="table-wrap"><table><thead><tr><th>Student</th><th>Programme</th><th>Balance</th><th>Status</th></tr></thead><tbody>{outstanding.map(x => <tr key={`${x.studentId}-${x.balance}`}><td><strong>{x.studentName}</strong><br /><small>{x.studentNumber}</small></td><td>{x.programmeName}</td><td>{money(x.balance)}</td><td>{x.status}</td></tr>)}</tbody></table>{outstanding.length === 0 && <p className="empty">No outstanding balances.</p>}</div> : tab === 'payments' ? <div className="table-wrap"><table><thead><tr><th>Date</th><th>Receipt</th><th>Student</th><th>Method</th><th>Amount</th></tr></thead><tbody>{payments.map(x => <tr key={x.id}><td>{new Date(x.paidAt).toLocaleDateString('en-UG')}</td><td>{x.receiptNumber}</td><td>{x.studentName}</td><td>{x.paymentMethod}</td><td>{money(x.amount)}</td></tr>)}</tbody></table>{payments.length === 0 && <p className="empty">No payments found.</p>}</div> : <div className="table-wrap"><table><thead><tr><th>Staff</th><th>Period</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net pay</th><th>Status</th></tr></thead><tbody>{payroll.map(x => <tr key={x.id}><td><strong>{x.staffName}</strong><br /><small>{x.staffNumber}</small></td><td>{x.month}/{x.year}</td><td>{money(x.basicSalary)}</td><td>{money(x.allowances)}</td><td>{money(x.deductions)}</td><td>{money(x.netPay)}</td><td>{x.status}</td></tr>)}</tbody></table>{payroll.length === 0 && <p className="empty">No payroll records found.</p>}</div>}
+    </div> : tab === 'outstanding' ? <AgGridTable rows={outstanding} columns={outstandingColumns} getRowId={p => p.data.studentId} exportFileName="accounts-outstanding-balances" /> : tab === 'payments' ? <AgGridTable rows={payments} columns={paymentColumns} getRowId={p => p.data.id} exportFileName="accounts-payments" /> : <AgGridTable rows={payroll} columns={payrollColumns} getRowId={p => p.data.id} exportFileName="accounts-payroll-summary" />}
   </section>
 }

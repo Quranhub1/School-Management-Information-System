@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { getSession } from '../api/auth'
 import { getDashboard, getOutstandingBalances, getPayments, type FinanceDashboard, type OutstandingBalance } from '../api/finance'
 import { formatCurrency } from '../lib/currency'
@@ -9,6 +10,7 @@ import { FinanceControlCenter } from './FinanceControlCenter'
 import { FeeTypesManager } from './FeeTypesManager'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
 import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
+import { AgGridTable } from './AgGridTable'
 
 type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
 
@@ -66,6 +68,39 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     void loadOverview()
   }, [])
 
+  const outstandingColumns = useMemo<ColDef<OutstandingBalance>[]>(() => [
+    { field: 'studentName', headerName: 'Student', minWidth: 180 },
+    { field: 'studentNumber', headerName: 'Student No.', minWidth: 140 },
+    { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
+    { field: 'balance', headerName: 'Balance (UGX)', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
+    { field: 'status', headerName: 'Status', minWidth: 130 },
+  ], [])
+
+  const recentPaymentColumns = useMemo<ColDef<Payment>[]>(() => [
+    { field: 'receiptNumber', headerName: 'Receipt', minWidth: 150, valueFormatter: params => params.value || '—' },
+    { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
+    { field: 'amount', headerName: 'Amount (UGX)', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
+    { field: 'paymentMethod', headerName: 'Method', minWidth: 130, valueFormatter: params => params.value || '—' },
+    { field: 'paidAt', headerName: 'Date', minWidth: 150, valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('en-UG') : '—' },
+  ], [])
+
+  const accountColumns = useMemo<ColDef<OutstandingBalance>[]>(() => [
+    { field: 'studentName', headerName: 'Student', minWidth: 190, cellRenderer: (params: ICellRendererParams<any>) => <div><strong>{params.value}</strong><small>{params.data?.studentNumber}</small></div> },
+    { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
+    { field: 'balance', headerName: 'Balance (UGX)', minWidth: 150, cellRenderer: (params: ICellRendererParams<any>) => { const s = statusFor(Number(params.value ?? 0), params.data?.amount, params.data?.paidAmount); return <strong className={s.tone === 'danger' ? 'finance-value-danger' : 'finance-value-success'}>{money(Number(params.value ?? 0))}</strong> } },
+    { field: 'status', headerName: 'Status', minWidth: 130, cellRenderer: (params: ICellRendererParams<any>) => { const s = statusFor(Number(params.data?.balance ?? 0), params.data?.amount, params.data?.paidAmount); return <span className={'finance-status ' + s.tone}>{s.label}</span> } },
+    { headerName: 'Collection', minWidth: 170, sortable: false, filter: false, cellRenderer: (params: ICellRendererParams<any>) => { const amount = Number(params.data?.amount ?? 0); const paid = Number(params.data?.paidAmount ?? 0); const progress = amount > 0 ? Math.min(100, paid / amount * 100) : 0; return <div><div className="finance-row-progress"><span style={{ width: progress + '%' }} /></div><small>{progress.toFixed(0)}% collected</small></div> } },
+  ], [])
+
+  const collectionColumns = useMemo<ColDef<Payment>[]>(() => [
+    { field: 'paidAt', headerName: 'Date', minWidth: 180, valueFormatter: params => params.value ? new Date(params.value).toLocaleString('en-UG') : '—' },
+    { field: 'receiptNumber', headerName: 'Receipt', minWidth: 160, cellRenderer: (params: ICellRendererParams<any>) => <div><strong>{params.value || '—'}</strong><small>{params.data?.reference || 'No reference'}</small></div> },
+    { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
+    { field: 'invoiceNumber', headerName: 'Invoice', minWidth: 150, valueFormatter: params => params.value || '—' },
+    { field: 'amount', headerName: 'Amount (UGX)', minWidth: 160, cellRenderer: (params: ICellRendererParams<any>) => <strong className="finance-value-success">{money(Number(params.value ?? 0))}</strong> },
+    { headerName: 'Status', minWidth: 120, sortable: false, filter: false, cellRenderer: () => <span className="finance-status success">Posted</span> },
+  ], [])
+
   const filteredOutstanding = useMemo(() => {
     const value = query.trim().toLowerCase()
     if (!value) return outstanding
@@ -113,18 +148,14 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
             </div>
             <div className="panel" style={{ marginTop: 20, padding: 20 }}>
               <h3>Outstanding Balances</h3>
-              <div className="table-wrap" style={{ marginTop: 12 }}>
-                <table className="table"><thead><tr><th>Student</th><th>Student No.</th><th>Programme</th><th>Balance</th><th>Status</th></tr></thead>
-                  <tbody>{outstanding.length === 0 ? <tr><td colSpan={5} className="empty">No outstanding balances</td></tr> : outstanding.map((item, index) => <tr key={item.studentId ?? index}><td>{item.studentName}</td><td>{item.studentNumber}</td><td>{item.programmeName}</td><td>{money(item.balance)}</td><td>{item.status}</td></tr>)}</tbody>
-                </table>
+              <div style={{ marginTop: 12 }}>
+                <AgGridTable rows={outstanding} columns={outstandingColumns} height={360} pageSize={10} />
               </div>
             </div>
             <div className="panel" style={{ marginTop: 20, padding: 20 }}>
               <h3>Recent Payments</h3>
-              <div className="table-wrap" style={{ marginTop: 12 }}>
-                <table className="table"><thead><tr><th>Receipt</th><th>Student</th><th>Amount</th><th>Method</th><th>Date</th></tr></thead>
-                  <tbody>{payments.length === 0 ? <tr><td colSpan={5} className="empty">No recent payments</td></tr> : payments.map((payment, index) => <tr key={payment.id ?? index}><td>{payment.receiptNumber ?? '—'}</td><td>{payment.studentName ?? '—'}</td><td>{money(payment.amount)}</td><td>{payment.paymentMethod ?? '—'}</td><td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td></tr>)}</tbody>
-                </table>
+              <div style={{ marginTop: 12 }}>
+                <AgGridTable rows={payments} columns={recentPaymentColumns} height={360} pageSize={10} />
               </div>
             </div>
           </>
@@ -196,10 +227,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
           <section className="finance-surface" style={{ marginTop: 18 }}>
             <div className="finance-surface-heading"><div><span className="eyebrow">SCHOOL FEES WORKSPACE</span><h3>Payment Provider-style collection view</h3><p>Searchable student accounts, payment status, collection indicators and transaction tables, adapted to SMIS finance data.</p></div><button type="button" className="secondary-button" onClick={() => setTab('collections')}>Open collections</button></div>
             <div className="finance-table-toolbar"><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search student name / code / programme" aria-label="Search finance accounts" /><span>{filteredOutstanding.length.toLocaleString()} outstanding accounts</span></div>
-            <div className="table-wrap"><table className="finance-table"><thead><tr><th>Student</th><th>Programme</th><th>Balance</th><th>Status</th><th>Collection indicator</th></tr></thead><tbody>
-              {filteredOutstanding.slice(0, 8).map(item => { const s = statusFor(item.balance, item.amount, item.paidAmount); const progress = item.amount > 0 ? Math.min(100, item.paidAmount / item.amount * 100) : 0; return <tr key={item.studentId}><td><strong>{item.studentName}</strong><small>{item.studentNumber}</small></td><td>{item.programmeName}</td><td><strong className={s.tone === 'danger' ? 'finance-value-danger' : 'finance-value-success'}>{money(item.balance)}</strong></td><td><span className={'finance-status ' + s.tone}>{s.label}</span></td><td><div className="finance-row-progress"><span style={{ width: progress + '%' }} /></div><small>{progress.toFixed(0)}% collected</small></td></tr> })}
-              {filteredOutstanding.length === 0 && <tr><td colSpan={5} className="empty">No matching outstanding accounts.</td></tr>}
-            </tbody></table></div>
+            <AgGridTable rows={filteredOutstanding.slice(0, 8)} columns={accountColumns} height={360} pageSize={8} />
           </section>
         </>
       )}
@@ -210,10 +238,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
         <section className="finance-surface">
           <div className="finance-surface-heading"><div><span className="eyebrow">COLLECTIONS</span><h3>Payments & receipts</h3><p>Real-time-style transaction table for posted finance payments. Payment channels are deliberately not used to drive the interface.</p></div></div>
           <div className="finance-table-toolbar"><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search receipt / student / reference" aria-label="Search payments" /><span>{payments.length.toLocaleString()} transactions loaded</span></div>
-          <div className="table-wrap"><table className="finance-table"><thead><tr><th>Date</th><th>Receipt</th><th>Student</th><th>Invoice</th><th>Amount</th><th>Status</th></tr></thead><tbody>
-            {payments.filter(p => !query.trim() || [p.receiptNumber,p.studentName,p.invoiceNumber,p.reference].some(v => String(v ?? '').toLowerCase().includes(query.trim().toLowerCase()))).map((payment, index) => <tr key={payment.id ?? index}><td>{new Date(payment.paidAt).toLocaleString('en-UG')}</td><td><strong>{payment.receiptNumber ?? '—'}</strong><small>{payment.reference ?? 'No reference'}</small></td><td>{payment.studentName ?? '—'}</td><td>{payment.invoiceNumber ?? '—'}</td><td><strong className="finance-value-success">{money(payment.amount)}</strong></td><td><span className="finance-status success">Posted</span></td></tr>)}
-            {payments.length === 0 && <tr><td colSpan={6} className="empty">No payment transactions found.</td></tr>}
-          </tbody></table></div>
+          <AgGridTable rows={payments.filter(p => !query.trim() || [p.receiptNumber,p.studentName,p.invoiceNumber,p.reference].some(v => String(v ?? '').toLowerCase().includes(query.trim().toLowerCase())))} columns={collectionColumns} height={520} pageSize={25} />
         </section>
       )}
 

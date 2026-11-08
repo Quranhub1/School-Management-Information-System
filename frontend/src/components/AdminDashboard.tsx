@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Chart from 'chart.js/auto'
 import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
 import { getUsers } from '../api/administration'
@@ -7,6 +8,8 @@ import { listStaff, STAFF_CHANGED_EVENT } from '../api/staff'
 import { getInvoices } from '../api/finance'
 import { listPayroll } from '../api/payroll'
 import { InventoryStockSettings } from './InventoryStockSettings'
+import { AgGridTable } from './AgGridTable'
+import type { ColDef } from 'ag-grid-community'
 
 type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring' | 'stock-settings'
 type ChartSegment = { label: string; value: number; color: string; displayValue?: string }
@@ -24,6 +27,21 @@ const chartColors = {
 const numberFormat = new Intl.NumberFormat('en-UG')
 const moneyFormat = (value: number) => `UGX ${numberFormat.format(Math.round(value || 0))}`
 
+type StudentSearchResult = { id: string; studentNumber: string; name: string; status: string }
+type StaffSearchResult = { id: string; staffNumber: string; name: string; department: string; status: string }
+
+const studentSearchColumns: ColDef<StudentSearchResult>[] = [
+  { field: 'studentNumber', headerName: 'Student Number' },
+  { field: 'name', headerName: 'Name', minWidth: 200 },
+  { field: 'status', headerName: 'Status' },
+]
+const staffSearchColumns: ColDef<StaffSearchResult>[] = [
+  { field: 'staffNumber', headerName: 'Staff Number' },
+  { field: 'name', headerName: 'Name', minWidth: 200 },
+  { field: 'department', headerName: 'Department' },
+  { field: 'status', headerName: 'Status' },
+]
+
 function DonutChart({
   title,
   description,
@@ -37,11 +55,44 @@ function DonutChart({
   centerValue: string
   centerCaption: string
 }) {
-  const radius = 39
-  const circumference = 2 * Math.PI * radius
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const safeSegments = segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) }))
   const total = safeSegments.reduce((sum, segment) => sum + segment.value, 0)
-  let offset = 0
+  const chartSignature = safeSegments.map(segment => `${segment.label}:${segment.value}:${segment.color}:${segment.displayValue ?? ''}`).join('|')
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const chart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: safeSegments.map(segment => segment.label),
+        datasets: [{
+          data: safeSegments.map(segment => segment.value),
+          backgroundColor: safeSegments.map(segment => segment.color),
+          borderWidth: 0,
+          hoverOffset: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: context => {
+                const segment = safeSegments[context.dataIndex]
+                return segment ? `${segment.label}: ${segment.displayValue ?? numberFormat.format(Number(context.raw) || 0)}` : ''
+              },
+            },
+          },
+        },
+      },
+    })
+    return () => chart.destroy()
+  }, [chartSignature])
 
   return (
     <article className="admin-chart-card">
@@ -52,30 +103,8 @@ function DonutChart({
         </div>
       </div>
       <div className="admin-chart-body">
-        <div className="admin-donut-wrap" role="img" aria-label={`${title}: ${safeSegments.map(s => `${s.label} ${s.value}`).join(', ')}`}>
-          <svg className="admin-donut" viewBox="0 0 100 100" aria-hidden="true">
-            <circle className="admin-donut-track" cx="50" cy="50" r={radius} />
-            {total > 0 ? safeSegments.filter(segment => segment.value > 0).map(segment => {
-              const length = (segment.value / total) * circumference
-              const dashOffset = offset
-              offset += length
-              return (
-                <circle
-                  key={segment.label}
-                  cx="50"
-                  cy="50"
-                  r={radius}
-                  fill="none"
-                  stroke={segment.color}
-                  strokeWidth="12"
-                  strokeDasharray={`${length} ${circumference - length}`}
-                  strokeDashoffset={-dashOffset}
-                  transform="rotate(-90 50 50)"
-                  strokeLinecap="butt"
-                />
-              )
-            }) : null}
-          </svg>
+        <div className="admin-donut-wrap" role="img" aria-label={`${title}: ${safeSegments.map(s => `${s.label} ${s.displayValue ?? numberFormat.format(s.value)}`).join(', ')}`}>
+          {total > 0 ? <canvas ref={canvasRef} className="admin-donut-canvas" aria-hidden="true" /> : <div className="admin-donut-empty" aria-hidden="true" />}
           <div className="admin-donut-center">
             <strong>{centerValue}</strong>
             <span>{centerCaption}</span>
@@ -108,9 +137,9 @@ export function AdminDashboard() {
   const [payroll, setPayroll] = useState<{ totalPaid: number; paid: number; pending: number; other: number }>({ totalPaid: 0, paid: 0, pending: 0, other: 0 })
 
   const [studentSearch, setStudentSearch] = useState('')
-  const [studentResults, setStudentResults] = useState<{ id: string; studentNumber: string; name: string; status: string }[]>([])
+  const [studentResults, setStudentResults] = useState<StudentSearchResult[]>([])
   const [staffSearch, setStaffSearch] = useState('')
-  const [staffResults, setStaffResults] = useState<{ id: string; staffNumber: string; name: string; department: string; status: string }[]>([])
+  const [staffResults, setStaffResults] = useState<StaffSearchResult[]>([])
 
   async function loadMetrics() {
     setLoading(true)
@@ -294,16 +323,7 @@ export function AdminDashboard() {
               <button type="submit">Search</button>
             </div>
           </form>
-          {studentResults.length > 0 && (
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Student Number</th><th>Name</th><th>Status</th></tr></thead>
-                <tbody>
-                  {studentResults.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{s.name}</td><td><span className="badge" style={{ background: s.status === 'Active' ? '#d1fae5' : '#fee2e2', color: s.status === 'Active' ? '#065f46' : '#991b1b' }}>{s.status}</span></td></tr>)}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {studentResults.length > 0 && <AgGridTable rows={studentResults} columns={studentSearchColumns} getRowId={p => p.data.id} exportFileName="admin-student-search" height={420} />}
         </div>
       )}
 
@@ -316,16 +336,7 @@ export function AdminDashboard() {
               <button type="submit">Search</button>
             </div>
           </form>
-          {staffResults.length > 0 && (
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Staff Number</th><th>Name</th><th>Department</th><th>Status</th></tr></thead>
-                <tbody>
-                  {staffResults.map(s => <tr key={s.id}><td>{s.staffNumber}</td><td>{s.name}</td><td>{s.department}</td><td><span className="badge" style={{ background: s.status === 'Active' ? '#d1fae5' : '#fee2e2', color: s.status === 'Active' ? '#065f46' : '#991b1b' }}>{s.status}</span></td></tr>)}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {staffResults.length > 0 && <AgGridTable rows={staffResults} columns={staffSearchColumns} getRowId={p => p.data.id} exportFileName="admin-staff-search" height={420} />}
         </div>
       )}
 

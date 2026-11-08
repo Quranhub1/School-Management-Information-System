@@ -1,4 +1,6 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
+import type { ColDef } from 'ag-grid-community'
+import { AgGridTable } from './AgGridTable'
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode, type CSSProperties } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import {
@@ -102,6 +104,17 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     ...availableCurricula.map(c => c.title),
     ...academicProgrammes.filter(p => authorityOf(p.id) === application.authority).map(p => p.name),
   ])).sort((a, b) => a.localeCompare(b))
+  const studentColumns = useMemo<ColDef<Student>[]>(() => [
+    { headerName: 'Student number', field: 'studentNumber', minWidth: 150 },
+    { headerName: 'Name', colId: 'fullName', valueGetter: params => params.data ? [params.data.firstName, params.data.otherNames, params.data.lastName].filter(Boolean).join(' ') : '' },
+    { headerName: 'Gender', field: 'gender', valueFormatter: params => params.value || '—' },
+    { headerName: 'Phone', field: 'phoneNumber', valueFormatter: params => params.value || '—' },
+    { headerName: 'Email', field: 'email', valueFormatter: params => params.value || '—' },
+    { headerName: 'Status', field: 'status', minWidth: 120 },
+    { headerName: 'Parent / guardian', colId: 'guardians', sortable: false, filter: false, minWidth: 160, cellRenderer: (params: { data?: Student }) => params.data && <button className="secondary-button" type="button" onClick={() => openGuardians(params.data!)}>View / manage</button> },
+    { headerName: 'QR code', colId: 'qr', sortable: false, filter: false, minWidth: 110, cellRenderer: (params: { data?: Student }) => params.data && <button className="secondary-button" type="button" onClick={() => setQrStudentId(params.data!.id)}>View QR</button> },
+  ], []);
+
   useEffect(() => {
     if (!photo) { setPhotoPreview(''); return }
     const url = URL.createObjectURL(photo); setPhotoPreview(url)
@@ -275,9 +288,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
 
     </form>}
     {view === 'registry' && <section className="panel student-registry-panel"><div className="panel-heading"><div><p className="eyebrow">Student Management</p><h3>{readOnly ? 'Student registry · Read-only' : 'Student registry'}</h3></div><span>{students.length} students</span></div>
-      <div className="table-wrap"><table><thead><tr><th>Student number</th><th>Name</th><th>Gender</th><th>Phone</th><th>Email</th><th>Status</th><th>Parent / guardian</th><th>QR code</th></tr></thead><tbody>
-        {loading ? <tr><td colSpan={8}><LoadingSpinner label="Loading students…" /></td></tr> : students.length === 0 ? <tr><td colSpan={8} className="empty">No students registered.</td></tr> : students.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{[s.firstName, s.otherNames, s.lastName].filter(Boolean).join(' ')}</td><td>{s.gender ?? '—'}</td><td>{s.phoneNumber ?? '—'}</td><td>{s.email ?? '—'}</td><td>{s.status}</td><td><button className="secondary-button" type="button" onClick={() => openGuardians(s)}>View / manage</button></td><td><button className="secondary-button" type="button" onClick={() => setQrStudentId(s.id)}>View QR</button></td></tr>)}
-      </tbody></table></div>
+      {loading ? <LoadingSpinner label="Loading students…" /> : students.length === 0 ? <p className="empty">No students registered.</p> : <AgGridTable rows={students} columns={studentColumns} height={560} pageSize={25} exportFileName="kshs-student-registry" getRowId={params => params.data.id} />}
     </section>}
     {qrStudentId && <div className="modal-backdrop" onClick={() => setQrStudentId(null)}><div className="auth-card" onClick={e => e.stopPropagation()}><p className="eyebrow">Student QR code</p><h3>{qrStudentId}</h3><img src={getStudentQrCode(qrStudentId)} alt="Student QR code" style={{ width: '100%', height: 'auto' }} /><button type="button" className="secondary-button" style={{ marginTop: 12 }} onClick={() => setQrStudentId(null)}>Close</button></div></div>}
     {guardianStudent && <div className="modal-backdrop" onClick={() => setGuardianStudent(null)}><div className="auth-card" style={{ width: 'min(900px, 96vw)', maxHeight: '90vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
