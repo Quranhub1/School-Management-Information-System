@@ -31,7 +31,7 @@ export default function AcademicYearsPage() {
     setSaving(true); setMessage('');
     try {
       const response = await fetch('/api/academic-structure/years', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(sessionStorage.getItem('smis.accessToken') ? { Authorization: `Bearer ${sessionStorage.getItem('smis.accessToken')}` } : {}) },
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}) },
         body: JSON.stringify({ name: name.trim(), startDate, endDate, isCurrent: false }),
       });
       if (!response.ok) throw new Error(await response.text() || `Unable to create academic year (${response.status}).`);
