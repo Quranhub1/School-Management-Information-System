@@ -191,6 +191,7 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Correct FeeTypesManager to load academic years through the shared authenticated academic-structure API.
 - [x] Correct the balance-sheet fiscal-period failure: reject an as-of date outside configured fiscal periods with a clear validation error rather than silently assuming a calendar fiscal year or triggering an unhandled exception.
 - [x] Return HTTP 400 with a useful validation message for invalid income-statement/balance-sheet date ranges instead of allowing `ArgumentException` to surface as HTTP 500.
+- [x] Render the structured finance API validation message in the Accounting Reports screen instead of displaying raw JSON.
 
 ### Verification still required
 
