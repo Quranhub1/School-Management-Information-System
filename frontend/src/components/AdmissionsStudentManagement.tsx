@@ -3,6 +3,7 @@ import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
 import { AlumniManagement } from './AlumniManagement'
 import { getStudents, type Student } from '../api/students'
+import { downloadElementAsPng } from '../lib/printCapture'
 
 type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'alumni'
 type AccessProfile = 'receptionist' | 'records' | 'department' | 'general'

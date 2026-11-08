@@ -1,6 +1,7 @@
 import { getAccessToken } from './auth'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
 import { bulkImportRequestSchema, bulkImportResultSchema } from '../schemas'
+import { exportRowsToExcel, parseSpreadsheetFile } from '../lib/spreadsheets'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken()
@@ -33,24 +34,44 @@ export async function importData(input: ImportExportRequest) {
   return parseApiResponse(bulkImportResultSchema, result, 'bulk import result') as BulkImportResult
 }
 
-export function exportData(entityType: string, filters?: Record<string, string>) {
+/** Parse a selected local workbook sheet, then submit it through the existing validated import endpoint. */
+export async function importSpreadsheetData(entityType: string, file: File, sheetName?: string) {
+  const parsed = await parseSpreadsheetFile(file, sheetName)
+  const result = await importData({ entityType, csvData: parsed.csvData })
+  return { ...result, sheetName: parsed.sheetName, availableSheets: parsed.sheetNames }
+}
+
+async function fetchExportBlob(entityType: string, filters?: Record<string, string>): Promise<Blob> {
   const qs = filters ? '?' + new URLSearchParams(filters).toString() : ''
   const token = getAccessToken()
   const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
-  return fetch(`${base}/api/import-export/export/${encodeURIComponent(entityType)}${qs}`, {
+  const response = await fetch(`${base}/api/import-export/export/${encodeURIComponent(entityType)}${qs}`, {
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-  }).then(async (response) => {
-    if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
-    if (response.status === 403) throw new Error('Your role is not authorized.')
-    if (!response.ok) throw new Error(`Export failed with status ${response.status}`)
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${entityType}s.csv`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    window.URL.revokeObjectURL(url)
   })
+  if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
+  if (response.status === 403) throw new Error('Your role is not authorized.')
+  if (!response.ok) throw new Error(`Export failed with status ${response.status}`)
+  return response.blob()
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+}
+
+export async function exportData(entityType: string, filters?: Record<string, string>) {
+  const blob = await fetchExportBlob(entityType, filters)
+  downloadBlob(blob, `${entityType}s.csv`)
+}
+
+export async function exportDataAsExcel(entityType: string, filters?: Record<string, string>) {
+  const blob = await fetchExportBlob(entityType, filters)
+  const parsed = await parseSpreadsheetFile(new File([blob], `${entityType}.csv`, { type: 'text/csv' }))
+  exportRowsToExcel(parsed.rows, `${entityType}s`, entityType)
 }
