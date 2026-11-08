@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { searchPayments, getPaymentReceipt, type PaymentSearchResult, type FeeReceipt } from '../api/receipts'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 
 interface ReceiptsProps { canManage?: boolean }
 
@@ -12,6 +14,7 @@ export function Receipts({ canManage }: ReceiptsProps) {
   const [receipt, setReceipt] = useState<FeeReceipt | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
 
   async function search() {
     setLoading(true)
@@ -40,8 +43,37 @@ export function Receipts({ canManage }: ReceiptsProps) {
     }
   }
 
+  function receiptPdfOptions() {
+    if (!receipt) return null
+    return {
+      title: 'Official Fee Receipt',
+      filename: 'receipt-' + receipt.receiptNumber + '.pdf',
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: 'Receipt No: ' + receipt.receiptNumber, bold: true, fontSize: 12, margin: [0, 4, 0, 14] },
+        { table: { widths: ['*', '*'], body: [
+          [{ text: 'Invoice', bold: true }, receipt.invoiceNumber],
+          [{ text: 'Amount paid', bold: true }, { text: receipt.currency + ' ' + receipt.amount.toLocaleString('en-UG'), bold: true }],
+          [{ text: 'Payment method', bold: true }, receipt.paymentMethod],
+          ...(receipt.reference ? [[{ text: 'Reference', bold: true }, receipt.reference]] : []),
+          [{ text: 'Date paid', bold: true }, new Date(receipt.paidAt).toLocaleString('en-UG')],
+        ] }, layout: 'lightHorizontalLines' },
+        { text: 'Thank you for your payment.', alignment: 'center', margin: [0, 24, 0, 0], italics: true },
+      ],
+    }
+  }
+
   function printReceipt() {
-    window.print()
+    const options = receiptPdfOptions()
+    if (options) printInstitutionalPdf(options)
+  }
+
+  function downloadReceipt() {
+    const options = receiptPdfOptions()
+    if (options) downloadInstitutionalPdf(options)
   }
 
   return (
@@ -52,6 +84,7 @@ export function Receipts({ canManage }: ReceiptsProps) {
           <h3>Fee Receipts</h3>
         </div>
         <button className="secondary-button" onClick={printReceipt} disabled={!receipt}>Print Receipt</button>
+        <button className="secondary-button" onClick={downloadReceipt} disabled={!receipt}>Download PDF</button>
       </div>
 
       <form className="student-form" onSubmit={e => { e.preventDefault(); void search() }} style={{ marginBottom: 22 }}>
