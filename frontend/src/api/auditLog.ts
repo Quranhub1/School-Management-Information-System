@@ -8,5 +8,5 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 export type AuditLog = { id:string; userId?:string; action:string; entityType:string; entityId?:string; changes?:string; ipAddress?:string; userAgent?:string; timestamp:string };
-export function searchAuditLogs(userId?:string,action?:string,entityType?:string){ const qs = new URLSearchParams(); if(userId) qs.set('userId',userId); if(action) qs.set('action',action); if(entityType) qs.set('entityType',entityType); return request<AuditLog[]>(`/api/audit${qs.toString() ? '?' + qs.toString() : ''}`); }
+export function searchAuditLogs(userId?:string,action?:string,entityType?:string,from?:string,to?:string){ const qs = new URLSearchParams(); if(userId) qs.set('userId',userId); if(action) qs.set('action',action); if(entityType) qs.set('entityType',entityType); if(from) qs.set('from',new Date(from).toISOString()); if(to) qs.set('to',new Date(to + 'T23:59:59.999').toISOString()); return request<AuditLog[]>(`/api/audit${qs.toString() ? '?' + qs.toString() : ''}`); }
 export function getAuditLog(id:string){ return request<AuditLog>(`/api/audit/${id}`); }
