@@ -363,6 +363,7 @@
   outline: 2px solid #d7cfbb !important;
   outline-offset: -2px !important;
 }
+<<<<<<< HEAD
 
 
 /* Sidebar tabs: rounded corners, but no solid borders or teal accents. */
@@ -653,3 +654,5 @@
   outline: 2px solid #d7cfbb !important;
   outline-offset: -2px !important;
 }
+=======
+>>>>>>> origin/fix/branding-copy-sidebar-navigation
