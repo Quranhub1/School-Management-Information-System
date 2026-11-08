@@ -5267,15 +5267,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Navigation("Allocations");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentInvoice", b =>
-                {
-                    b.Navigation("Discounts");
-
-                    b.Navigation("Installments");
-
-                    b.Navigation("Lines");
-                });
-
             modelBuilder.Entity("SchoolManagement.Domain.Finance.SchoolPaymentNotification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5342,6 +5333,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("StudentId", "Status");
 
                     b.ToTable("SchoolPaymentNotifications");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentInvoice", b =>
+                {
+                    b.Navigation("Discounts");
+
+                    b.Navigation("Installments");
+
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Hostel.Hostel", b =>
