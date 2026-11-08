@@ -101,7 +101,7 @@ export function PayrollManagement() {
     </div>}
 
     {loading ? <div className="payroll-loading"><LoadingSpinner label="Loading payroll…" /></div> : <div className="payroll-table-wrap">
-      <AgGridTable rows={records} columns={columns} height={560} pageSize={25} exportFileName="kshs-payroll" rowSelection="multiple" />
+      <AgGridTable rows={records} columns={columns} height={560} pageSize={25} exportFileName="kshs-payroll" />
       {records.length === 0 && <div className="payroll-empty"><strong>No payroll records yet</strong><span>Generate payroll for a month to see staff salary records here.</span></div>}
     </div>}
   </section>;
