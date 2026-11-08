@@ -9,11 +9,13 @@ export type DoughnutChartProps = {
   segments: DoughnutSegment[]
   centerValue: string
   centerCaption: string
+  valueFormatter?: (value: number) => string
 }
 
 const numberFormat = new Intl.NumberFormat('en-UG')
 
-export function DoughnutChart({ title, description, segments, centerValue, centerCaption }: DoughnutChartProps) {
+export function DoughnutChart({ title, description, segments, centerValue, centerCaption, valueFormatter }: DoughnutChartProps) {
+  const formatValue = valueFormatter ?? ((value: number) => numberFormat.format(value))
   const safeSegments = segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) }))
   const data: ChartData<'doughnut', number[], string> = {
     labels: safeSegments.map(segment => segment.label),
@@ -32,7 +34,7 @@ export function DoughnutChart({ title, description, segments, centerValue, cente
     animation: { duration: 350 },
     plugins: {
       legend: { display: false },
-      tooltip: { enabled: true, callbacks: { label: context => ` ${context.label}: ${numberFormat.format(Number(context.parsed) || 0)}` } },
+      tooltip: { enabled: true, callbacks: { label: context => ` ${context.label}: ${formatValue(Number(context.parsed) || 0)}` } },
     },
   }
   const total = safeSegments.reduce((sum, segment) => sum + segment.value, 0)
@@ -47,7 +49,7 @@ export function DoughnutChart({ title, description, segments, centerValue, cente
       <ul className="admin-chart-legend">
         {safeSegments.map(segment => <li key={segment.label}>
           <span className="admin-legend-label"><i style={{ background: segment.color }} />{segment.label}</span>
-          <strong>{segment.displayValue ?? numberFormat.format(segment.value)}</strong>
+          <strong>{segment.displayValue ?? formatValue(segment.value)}</strong>
         </li>)}
         {total === 0 && <li className="admin-chart-empty">No records to display</li>}
       </ul>
