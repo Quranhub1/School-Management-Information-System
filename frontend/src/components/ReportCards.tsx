@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { getStudentReportCard, type StudentReportCard } from '../api/reports'
 import { downloadPdf } from '../api/pdf'
+import { exportRowsToExcel } from '../lib/spreadsheets'
+import { downloadElementAsPng } from '../lib/printCapture'
 
 interface ReportCardsProps { canManage?: boolean }
 

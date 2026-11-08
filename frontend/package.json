@@ -29,7 +29,9 @@
     "zod": "^4.6.7",
     "dexie": "4.4.7",
     "@tanstack/react-query": "5.107.1",
-    "use-debounce": "10.1.1"
+    "use-debounce": "10.1.1",
+    "xlsx": "npm:@stackline/xlsx@1.0.10",
+    "html2canvas": "1.4.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",
