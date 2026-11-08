@@ -354,7 +354,20 @@ export function AdminDashboard() {
               <button type="submit">Search</button>
             </div>
           </form>
+<<<<<<< HEAD
           {studentResults.length > 0 && <AgGridTable rows={studentResults} columns={studentSearchColumns} getRowId={p => p.data.id} exportFileName="admin-student-search" height={420} />}
+=======
+          {studentResults.length > 0 && (
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Student Number</th><th>Name</th><th>Status</th></tr></thead>
+                <tbody>
+                  {studentResults.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{s.name}</td><td><span className="badge" style={{ background: s.status === 'Active' ? '#d1fae5' : '#fee2e2', color: s.status === 'Active' ? '#065f46' : '#991b1b' }}>{s.status}</span></td></tr>)}
+                </tbody>
+              </table>
+            </div>
+          )}
+>>>>>>> origin/polish/remove-four-more-explanatory-strings
         </div>
       )}
 
@@ -372,7 +385,20 @@ export function AdminDashboard() {
               <button type="submit">Search</button>
             </div>
           </form>
+<<<<<<< HEAD
           {staffResults.length > 0 && <AgGridTable rows={staffResults} columns={staffSearchColumns} getRowId={p => p.data.id} exportFileName="admin-staff-search" height={420} />}
+=======
+          {staffResults.length > 0 && (
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Staff Number</th><th>Name</th><th>Department</th><th>Status</th></tr></thead>
+                <tbody>
+                  {staffResults.map(s => <tr key={s.id}><td>{s.staffNumber}</td><td>{s.name}</td><td>{s.department}</td><td><span className="badge" style={{ background: s.status === 'Active' ? '#d1fae5' : '#fee2e2', color: s.status === 'Active' ? '#065f46' : '#991b1b' }}>{s.status}</span></td></tr>)}
+                </tbody>
+              </table>
+            </div>
+          )}
+>>>>>>> origin/polish/remove-four-more-explanatory-strings
         </div>
       )}
 
@@ -384,7 +410,11 @@ export function AdminDashboard() {
             <div className="admin-kpi-card"><span className="admin-kpi-icon amber">OS</span><div><span>Outstanding</span><strong>{moneyFormat(finance.outstanding)}</strong></div></div>
             <div className="admin-kpi-card"><span className="admin-kpi-icon purple">IN</span><div><span>Invoices</span><strong>{numberFormat.format(finance.invoices)}</strong></div></div>
           </div>
+<<<<<<< HEAD
           <DoughnutChart title="Fee collection overview" description="" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
+=======
+          <DonutChart title="Fee collection overview" description="" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
+>>>>>>> origin/polish/remove-four-more-explanatory-strings
         </div>
       )}
 
