@@ -226,3 +226,18 @@ export const bulkImportResultSchema = z.looseObject({
   errors: z.array(z.string()),
   warnings: z.array(z.string()),
 });
+
+export const studentApplicationSubmissionSchema = z.object({
+  studentNumber: identifierSchema,
+  academicYear: requiredTextSchema,
+  intake: requiredTextSchema,
+  course: requiredTextSchema,
+  firstName: requiredTextSchema.min(2),
+  lastName: requiredTextSchema.min(2),
+  dateOfBirth: z.iso.date().optional().or(z.literal("")),
+  phone: z.string().trim().regex(/^\\+?[0-9\\s()-]{7,20}$/, "Enter a valid telephone number."),
+  email: z.email().optional().or(z.literal("")),
+  declaration: z.literal(true, { error: "The applicant must accept the declaration before submitting." }),
+  applicantSignature: requiredTextSchema,
+  signatureDate: z.iso.date(),
+});
