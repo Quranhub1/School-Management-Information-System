@@ -194,3 +194,18 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Consider NuGet lock-file generation and pinning SDK versions after checking all project target frameworks and CI runners.
 
 **Important boundary:** a standard `git pull` does not run arbitrary setup scripts. Use `update.ps1` or `update.sh` for a pull-plus-restore operation. This avoids unsafe implicit code execution during Git operations while still making updates a single command.
+
+
+## Runtime diagnostics — React hooks and Vite HMR
+
+### Implemented on `chore/reproducible-one-command-setup`
+
+- [x] Confirm `ReportCards.tsx` declares `useState` and `useEffect` inside the `ReportCards` function; no hook-rule violation is visible in the current `main` source.
+- [x] Confirm the committed lockfile resolves `react` and `react-dom` to the same version (19.2.8) and has one top-level entry for each.
+- [x] Configure Vite `resolve.dedupe` for `react` and `react-dom` to guard against duplicate module instances in linked/hoisted dependency layouts.
+- [x] Remove the hard-coded HMR host so Vite derives the WebSocket host from the browser URL, supporting localhost and LAN access more reliably.
+- [ ] Verify the actual Windows `node_modules` tree with `npm ls react react-dom`; the browser error alone cannot establish whether a duplicate runtime is present.
+- [ ] Verify HMR after restarting Vite and confirming port 5173 is owned by the expected project process.
+- [ ] Run frontend CI and browser-level regression checks after these configuration changes.
+
+**Diagnostic note:** The Vite WebSocket error may also be caused by a stopped/failed Vite process, a port conflict, or browser/proxy network handling. Configuration changes alone do not prove the local server is reachable.
