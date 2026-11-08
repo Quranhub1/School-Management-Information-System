@@ -56,6 +56,29 @@ cd School-Management-Information-System
 
 Always build from `main` or a tagged release. Do not deploy an arbitrary feature branch.
 
+## 3A. One-command dependency installation
+
+From the repository root, run the appropriate setup script. It restores the complete declared dependency graph for both application tiers.
+
+Windows PowerShell:
+```powershell
+.\setup.ps1
+```
+
+Ubuntu/Linux:
+```bash
+bash ./setup.sh
+```
+
+The scripts require Node.js 24+ and the .NET 8 SDK (or newer compatible major versions), run `npm ci` using the committed lockfile, and run `dotnet restore` for `backend/SchoolManagement.sln`. The frontend's direct dependencies—including Zod, AG Grid, Chart.js and the bundled font packages—are installed together with all transitive dependencies from the lockfile.
+
+To update a clean checkout and immediately restore dependencies:
+
+- Windows: `./update.ps1`
+- Linux: `bash ./update.sh`
+
+The update helpers use fast-forward-only Git pulls and refuse to proceed with uncommitted changes. A plain `git pull` cannot itself guarantee dependency installation; use the update helper or run the setup script after pulling. Package downloads require access to npm and NuGet feeds unless the packages are already cached or served by an internal mirror.
+
 ## 4. PostgreSQL installation
 
 Ubuntu/Debian:
