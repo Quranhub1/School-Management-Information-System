@@ -10,14 +10,18 @@ import {
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { notify } from './GlobalNotifications'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getCurricula, type Curriculum } from '../api/curriculumManagement'
 <<<<<<< HEAD
 import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 import { validateForm } from '../lib/validation'
@@ -34,6 +38,8 @@ import { ACADEMIC_AUTHORITY_OPTIONS, SCHOOL_BASED_PROGRAMME_REFERENCES, VERIFIED
 =======
 import { notify } from './GlobalNotifications'
 >>>>>>> origin/feat/global-toast-notifications
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -86,7 +92,6 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
   const [qrStudentId, setQrStudentId] = useState<string | null>(null)
   const [guardianStudent, setGuardianStudent] = useState<Student | null>(null)
@@ -131,8 +136,11 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
   function applicationPdfOptions() {
     const label = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, value => value.toUpperCase())
     const values = Object.entries(application).map(([key, value]) => [
@@ -165,11 +173,14 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   function printApplicationPdf() { printInstitutionalPdf(applicationPdfOptions()) }
   function downloadApplicationPdf() { downloadInstitutionalPdf(applicationPdfOptions()) }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
   const studentColumns = useMemo<ColDef<Student>[]>(() => [
     { headerName: 'Student number', field: 'studentNumber', minWidth: 150 },
     { headerName: 'Name', colId: 'fullName', valueGetter: params => params.data ? [params.data.firstName, params.data.otherNames, params.data.lastName].filter(Boolean).join(' ') : '' },
@@ -192,7 +203,6 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
 
   function setApp<K extends keyof ApplicationForm>(key: K, value: ApplicationForm[K]) {
     setApplication(current => ({ ...current, [key]: value }))
-    setValidationErrors(current => { const next = { ...current }; delete next[String(key)]; return next })
   }
   function setEducationField(index: number, key: keyof EducationRow, value: string) {
     setEducation(rows => rows.map((row, i) => i === index ? { ...row, [key]: value } : row))
@@ -202,26 +212,6 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   async function submitApplication(event: FormEvent) {
     event.preventDefault(); setSaving(true); setError(''); setNotice('')
     try {
-      const validation = validateForm(studentApplicationSubmissionSchema, {
-        studentNumber: studentNumber.trim(),
-        academicYear: application.academicYear,
-        intake: application.intake,
-        course: application.course,
-        firstName: application.firstName,
-        lastName: application.lastName,
-        dateOfBirth: application.dateOfBirth,
-        phone: application.phone,
-        email: application.email,
-        declaration: application.declaration,
-        applicantSignature: application.applicantSignature,
-        signatureDate: application.signatureDate,
-      })
-      if (!validation.success) {
-        setValidationErrors(validation.errors)
-        setError('The application has not been submitted. Correct the validation errors shown below.')
-        return
-      }
-      setValidationErrors({})
       // Student identity is written through the existing protected student API. Application-only fields are
       // represented by the form below and must be persisted through the application-record endpoint.
       const profile: CreateStudentRequest = {
@@ -301,7 +291,6 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       <div className="application-view-switch"><button type="button" className={view === 'application' ? 'active' : ''} onClick={() => setView('application')} disabled={!canManage}>New application</button><button type="button" className={view === 'registry' ? 'active' : ''} onClick={() => setView('registry')}>Student registry <span>{students.length}</span></button></div>
     </div>
     {error && <div className="error" role="alert">{error}</div>}
-    {Object.keys(validationErrors).length > 0 && <div className="error" role="alert"><strong>Application fields requiring attention</strong><ul>{Object.entries(validationErrors).map(([field, message]) => <li key={field}><strong>{field}:</strong> {message}</li>)}</ul></div>}
     {notice && <div className="info-banner" role="status">{notice}</div>}
     {view === 'application' && canManage && <form className="student-application-form" onSubmit={submitApplication}>
       <header className="application-paper-header">
@@ -310,9 +299,10 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
         <label className="application-photo-upload"><span>{photoPreview ? <img src={photoPreview} alt="Applicant passport photograph preview" /> : 'Passport photograph'}</span><input type="file" accept="image/*" onChange={choosePhoto} /><small>Upload recent photo</small></label>
       </header>
       {!schoolName && <p className="application-settings-warning" role="status">The active institution name and branding have not loaded. Configure Institution Settings before printing or issuing this form.</p>}
-      <div className="application-form-intro"><p>Complete every relevant section in clear BLOCK letters. Fields marked * are required.</p><label>Student / application number *<input value={studentNumber} aria-invalid={Boolean(validationErrors.studentNumber)} onChange={e => { setStudentNumber(e.target.value); setValidationErrors(current => { const next = { ...current }; delete next.studentNumber; return next }) }} required /></label></div>
+      <div className="application-form-intro"><p>Complete every relevant section in clear BLOCK letters. Fields marked * are required.</p><label>Student / application number *<input value={studentNumber} onChange={e => setStudentNumber(e.target.value)} required /></label></div>
       <Section number="01" title="Admission information">
         <div className="application-grid">
+<<<<<<< HEAD
 <<<<<<< HEAD
           <Field label="Academic year *"><input value={application.academicYear} aria-invalid={Boolean(validationErrors.academicYear)} onChange={e => setApp('academicYear', e.target.value)} placeholder="e.g. 2027" required /></Field>
           <Field label="Intake *"><input value={application.intake} aria-invalid={Boolean(validationErrors.intake)} onChange={e => setApp('intake', e.target.value)} placeholder="e.g. January / August" required /></Field>
@@ -323,21 +313,26 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
           <Field label="Awarding authority *"><select value={application.authority} onChange={e => setApplication(current => ({ ...current, authority: e.target.value, course: '' }))} required>{ACADEMIC_AUTHORITY_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
           <Field label="Course / programme applied for *"><input list="admission-course-options" value={application.course} onChange={e => setApp('course', e.target.value)} placeholder="Choose or enter a programme" required /><datalist id="admission-course-options">{availableCourses.map(course => <option key={course} value={course} />)}</datalist></Field>
 >>>>>>> origin/feat/curriculum-catalogue-workflow-polish
+=======
+          <Field label="Academic year *"><input value={application.academicYear} onChange={e => setApp('academicYear', e.target.value)} placeholder="e.g. 2027" required /></Field>
+          <Field label="Intake *"><input value={application.intake} onChange={e => setApp('intake', e.target.value)} placeholder="e.g. January / August" required /></Field>
+          <Field label="Course / programme applied for *"><input value={application.course} onChange={e => setApp('course', e.target.value)} required /></Field>
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
           <Field label="Entry status"><select value={application.entryStatus} onChange={e => setApp('entryStatus', e.target.value)}><option>Direct</option><option>Mature</option></select></Field>
           <Field label="Study programme"><select value={application.programme} onChange={e => setApp('programme', e.target.value)}><option>Day</option><option>Evening</option><option>Weekend</option></select></Field>
         </div>
       </Section>
       <Section number="02" title="Applicant personal information">
         <div className="application-grid">
-          <Field label="First name *"><input value={application.firstName} aria-invalid={Boolean(validationErrors.firstName)} onChange={e => setApp('firstName', e.target.value)} required /></Field>
+          <Field label="First name *"><input value={application.firstName} onChange={e => setApp('firstName', e.target.value)} required /></Field>
           <Field label="Other names"><input value={application.otherNames} onChange={e => setApp('otherNames', e.target.value)} /></Field>
-          <Field label="Surname / last name *"><input value={application.lastName} aria-invalid={Boolean(validationErrors.lastName)} onChange={e => setApp('lastName', e.target.value)} required /></Field>
+          <Field label="Surname / last name *"><input value={application.lastName} onChange={e => setApp('lastName', e.target.value)} required /></Field>
           <Field label="Date of birth"><input type="date" value={application.dateOfBirth} onChange={e => setApp('dateOfBirth', e.target.value)} /></Field>
           <Field label="Gender"><select value={application.gender} onChange={e => setApp('gender', e.target.value)}><option value="">Select</option><option>Female</option><option>Male</option><option>Prefer not to say</option></select></Field>
           <Field label="Home village"><input value={application.village} onChange={e => setApp('village', e.target.value)} /></Field>
           <Field label="Sub-county"><input value={application.subCounty} onChange={e => setApp('subCounty', e.target.value)} /></Field>
           <Field label="County / district"><input value={application.district} onChange={e => setApp('district', e.target.value)} /></Field>
-          <Field label="Telephone number *"><input type="tel" value={application.phone} aria-invalid={Boolean(validationErrors.phone)} onChange={e => setApp('phone', e.target.value)} required /></Field>
+          <Field label="Telephone number *"><input type="tel" value={application.phone} onChange={e => setApp('phone', e.target.value)} required /></Field>
           <Field label="Email address"><input type="email" value={application.email} onChange={e => setApp('email', e.target.value)} /></Field>
           <Field label="Nationality"><input value={application.nationality} onChange={e => setApp('nationality', e.target.value)} /></Field>
           <Field label="Religion"><input value={application.religion} onChange={e => setApp('religion', e.target.value)} /></Field>
@@ -377,7 +372,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       </Section>
       <Section number="07" title="Declaration by applicant">
         <div className="application-declaration"><p>I declare that the information provided in this application is complete and accurate to the best of my knowledge. I understand that false or misleading information may result in the application being rejected or admission being withdrawn. I agree to abide by the institution's rules and regulations if admitted.</p><label className="application-checkbox"><input type="checkbox" checked={application.declaration} onChange={e => setApp('declaration', e.target.checked)} required /> I have read and agree to this declaration.</label></div>
-        <div className="application-grid"><Field label="Applicant signature (type full legal name) *"><input value={application.applicantSignature} aria-invalid={Boolean(validationErrors.applicantSignature)} onChange={e => setApp('applicantSignature', e.target.value)} required /></Field><Field label="Date *"><input type="date" value={application.signatureDate} aria-invalid={Boolean(validationErrors.signatureDate)} onChange={e => setApp('signatureDate', e.target.value)} required /></Field></div>
+        <div className="application-grid"><Field label="Applicant signature (type full legal name) *"><input value={application.applicantSignature} onChange={e => setApp('applicantSignature', e.target.value)} required /></Field><Field label="Date *"><input type="date" value={application.signatureDate} onChange={e => setApp('signatureDate', e.target.value)} required /></Field></div>
       </Section>
       <Section number="08" title="Official use only">
         <div className="application-official-only"><strong>Please do not write in this section.</strong><div className="application-grid">

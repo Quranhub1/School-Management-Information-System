@@ -35,6 +35,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
     "ag-grid-react": "36.3.0",
+<<<<<<< HEAD
     "zod": "^4.6.7",
     "dexie": "4.4.7",
     "@tanstack/react-query": "5.107.1",
@@ -48,6 +49,9 @@
     "ag-grid-react": "36.3.0"
 >>>>>>> origin/feat/ag-grid-table-migration
 =======
+=======
+    "pdfmake": "0.3.13",
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
     "zod": "^4.6.7"
 >>>>>>> origin/feat/central-zod-validation
 =======

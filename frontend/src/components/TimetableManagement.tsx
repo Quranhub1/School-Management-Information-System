@@ -90,6 +90,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   function printGeneratedTimetable(groupId: string) {
     const target = generatedTimetables.find(item => item.groupId === groupId)
@@ -109,6 +110,15 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   useEffect(() => {
     if (!printTemplate) return
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+
+  function printGeneratedTimetable(groupId: string) {
+    const target = generatedTimetables.find(item => item.groupId === groupId)
+    if (target) printInstitutionalPdf(timetablePdfOptions(target.groupLabel + ' Teaching Timetable', target.result.entries, target.groupLabel + '-timetable'))
+  }
+
+  function printTimetableTemplate() {
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
     const rows = weekOrder.filter(day => day !== 0).flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
       const cell = templateCells[day + '-' + slotIndex]
       if (!cell?.courseId && !cell?.teacherId && !cell?.room?.trim()) return []
@@ -128,11 +138,15 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     const groupLabel = groupLabels.get(templateGroupId) ?? 'Class timetable'
     printInstitutionalPdf(timetablePdfOptions(groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template'))
 <<<<<<< HEAD
+<<<<<<< HEAD
   }
 =======
     setPrintTemplate(false)
   }, [printTemplate])
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+  }
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
 
   async function handleGenerate(event: React.FormEvent) {
     event.preventDefault()
@@ -364,10 +378,14 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           <div className="timetable-class-actions">
             <button className="timetable-action" type="button" onClick={() => downloadInstitutionalPdf(timetablePdfOptions(groupLabel + ' Teaching Timetable', result.entries, groupLabel + '-timetable'))}>Download PDF</button>
 <<<<<<< HEAD
+<<<<<<< HEAD
             <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)}>Print</button>
 =======
             <button className="timetable-action" type="button" onClick={() => setPrintTargetGroupId(groupId)}>Print</button>
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+            <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)}>Print</button>
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
           </div>
         </div>
         <p className="timetable-class-status">Score: {result.optimizationScore.toFixed(1)}% · {result.isConflictFree ? 'No conflicts reported' : 'Conflicts detected'}</p>

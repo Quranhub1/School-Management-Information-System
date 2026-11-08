@@ -9,11 +9,14 @@ import { useCallback, useMemo, useState } from 'react'
 =======
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { ZodType } from 'zod'
+<<<<<<< HEAD
 import './AgGridTable.css'
 >>>>>>> origin/feat/central-zod-validation-v2
+=======
+import type { CellValueChangedEvent } from 'ag-grid-community'
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
 import {
   AllCommunityModule,
-  type CellValueChangedEvent,
   type ColDef,
   type GridApi,
   type GridOptions,
@@ -54,12 +57,16 @@ export type AgGridTableProps<TData extends object> = {
   onCellValueChanged?: GridOptions<TData>['onCellValueChanged']
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** Optional Zod contract enforced before edited rows reach persistence handlers. */
   rowValidationSchema?: ZodType
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
 =======
   /** Optional Zod contract enforced for edited rows before caller persistence handlers run. */
+=======
+  /** Optional Zod contract enforced before edited rows reach persistence handlers. */
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
   rowValidationSchema?: ZodType
 >>>>>>> origin/feat/central-zod-validation-v2
   getRowId?: GridOptions<TData>['getRowId']
@@ -104,6 +111,7 @@ export function AgGridTable<TData extends object>({
   const institutionContext = useOptionalInstitutionSettings()
   const institution = institutionContext?.institution
   const institutionLoaded = institutionContext?.loaded ?? false
+<<<<<<< HEAD
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
 =======
@@ -115,6 +123,8 @@ export function AgGridTable<TData extends object>({
   const institution = institutionContext?.institution
   const institutionLoaded = institutionContext?.loaded ?? false
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
     sortable: true,
     filter: true,
@@ -225,6 +235,48 @@ export function AgGridTable<TData extends object>({
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
 
+  const tablePdfOptions = useCallback(() => {
+    if (!api) return null
+    const displayedColumns = api.getAllDisplayedColumns()
+    const headers = displayedColumns.map(column => ({
+      text: String(column.getColDef().headerName ?? column.getColDef().field ?? column.getColId()),
+      style: 'tableHeader',
+    }))
+    const body: unknown[][] = [headers]
+    api.forEachNodeAfterFilterAndSort(node => {
+      if (!node.data) return
+      body.push(displayedColumns.map(column => {
+        const value = api.getCellValue({ rowNode: node, colKey: column.getColId(), useFormatter: true })
+        if (value === null || value === undefined || value === '') return '—'
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value)
+        try { return JSON.stringify(value) } catch { return String(value) }
+      }))
+    })
+    if (body.length === 1) return null
+    const title = exportFileName.replace(/[-_]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())
+    return {
+      title,
+      filename: exportFileName,
+      orientation: displayedColumns.length > 7 ? 'landscape' as const : 'portrait' as const,
+      institutionName: institutionLoaded && institution?.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution?.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution?.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution?.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: 'Records: ' + (body.length - 1).toLocaleString('en-UG'), style: 'muted', margin: [0, 0, 0, 8] },
+        { table: { headerRows: 1, widths: displayedColumns.map(() => '*'), body }, layout: 'lightHorizontalLines', fontSize: displayedColumns.length > 10 ? 6 : 8 },
+      ],
+    }
+  }, [api, exportFileName, institution, institutionLoaded])
+  const exportPdf = useCallback(() => {
+    const options = tablePdfOptions()
+    if (options) downloadInstitutionalPdf(options)
+  }, [tablePdfOptions])
+  const printPdf = useCallback(() => {
+    const options = tablePdfOptions()
+    if (options) printInstitutionalPdf(options)
+  }, [tablePdfOptions])
+
   return (
     <div className={['smis-ag-grid-shell', className].filter(Boolean).join(' ')}>
       {toolbar && <div className="smis-ag-grid-toolbar">
@@ -236,6 +288,7 @@ export function AgGridTable<TData extends object>({
         <button type="button" className="secondary-button" onClick={exportCsv} disabled={!api || rows.length === 0}>Export CSV</button>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
         <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
 =======
@@ -244,6 +297,10 @@ export function AgGridTable<TData extends object>({
         <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
         <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+        <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
+        <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
         <details className="smis-ag-grid-columns">
           <summary>Columns</summary>
           <div className="smis-ag-grid-column-menu">

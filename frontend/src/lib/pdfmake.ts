@@ -4,6 +4,7 @@ import * as pdfFonts from 'pdfmake/build/vfs_fonts'
 type PdfDocumentDefinition = Record<string, unknown>
 type PdfMakeEngine = {
 <<<<<<< HEAD
+<<<<<<< HEAD
   addVirtualFileSystem?: (fonts: unknown) => void
   vfs?: Record<string, string>
   createPdf?: (definition: PdfDocumentDefinition) => {
@@ -11,6 +12,10 @@ type PdfMakeEngine = {
   addVirtualFileSystem: (fonts: unknown) => void
   createPdf: (definition: PdfDocumentDefinition) => {
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+  addVirtualFileSystem: (fonts: unknown) => void
+  createPdf: (definition: PdfDocumentDefinition) => {
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
     download: (filename?: string) => void
     print: () => void
     open: () => void
@@ -29,6 +34,7 @@ export interface InstitutionalPdfOptions {
   pageSize?: 'A4' | 'A3' | 'LETTER'
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 const pdfMake = (((pdfMakeModule as unknown as { default?: unknown }).default ?? pdfMakeModule) as unknown) as PdfMakeEngine
 const fontBundle = ((pdfFonts as unknown as { default?: unknown }).default ?? pdfFonts) as unknown
@@ -58,6 +64,14 @@ const pdfMake = pdfMakeModule as unknown as PdfMakeEngine
 // Generated PDFs therefore work without a CDN or an internet connection.
 pdfMake.addVirtualFileSystem(pdfFonts)
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+const pdfMake = pdfMakeModule as unknown as PdfMakeEngine
+
+// This is the single frontend document-generation entry point for SMIS.
+// PDFMake and its font virtual file system are imported from local npm assets.
+// Generated PDFs therefore work without a CDN or an internet connection.
+pdfMake.addVirtualFileSystem(pdfFonts)
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
 
 function buildDefinition(options: InstitutionalPdfOptions): PdfDocumentDefinition {
   const accent = /^#[0-9a-f]{6}$/i.test(options.accentColor ?? '')
@@ -110,6 +124,7 @@ function safeFilename(filename: string | undefined, title: string): string {
 
 export function downloadInstitutionalPdf(options: InstitutionalPdfOptions): void {
 <<<<<<< HEAD
+<<<<<<< HEAD
   ensurePdfMakeReady()
   pdfMake.createPdf!(buildDefinition(options)).download(safeFilename(options.filename, options.title))
 }
@@ -123,6 +138,8 @@ export function openInstitutionalPdf(options: InstitutionalPdfOptions): void {
   ensurePdfMakeReady()
   pdfMake.createPdf!(buildDefinition(options)).open()
 =======
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
   pdfMake.createPdf(buildDefinition(options)).download(safeFilename(options.filename, options.title))
 }
 
@@ -132,5 +149,8 @@ export function printInstitutionalPdf(options: InstitutionalPdfOptions): void {
 
 export function openInstitutionalPdf(options: InstitutionalPdfOptions): void {
   pdfMake.createPdf(buildDefinition(options)).open()
+<<<<<<< HEAD
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
 }

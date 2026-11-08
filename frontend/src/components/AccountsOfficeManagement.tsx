@@ -6,6 +6,7 @@ import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
 import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } from '../api/payroll'
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 =======
@@ -16,6 +17,10 @@ import { recordPaymentRequestSchema } from '../schemas'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
 
 type MainTab = 'student-fees' | 'staff-salaries'
 
@@ -115,7 +120,6 @@ export function AccountsOfficeManagement() {
   const [paymentAmount, setPaymentAmount] = useState('')
   const [receiptNumber, setReceiptNumber] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Cash')
-  const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
 
   const [editingFees, setEditingFees] = useState<FeeBreakdownRow[]>([])
   const [editDraft, setEditDraft] = useState<Record<string, number>>({})
@@ -285,6 +289,53 @@ export function AccountsOfficeManagement() {
 
   return () => { cancelled = true }
   }, [])
+
+  function payrollPdfOptions() {
+    if (!payrollDetailData) return null
+    const staff = staffMap[payrollDetailData.staffMemberId]
+    const staffName = staff ? staff.firstName + ' ' + staff.lastName : 'Staff Member'
+    return {
+      title: 'Staff Payslip',
+      filename: 'payslip-' + staffName.replace(/[^a-z0-9-_]+/gi, '-') + '-' + payrollDetailData.year + '-' + payrollDetailData.month + '.pdf',
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: staffName, bold: true, fontSize: 13, margin: [0, 4, 0, 4] },
+        { text: 'Payroll period: ' + monthNames[payrollDetailData.month - 1] + ' ' + payrollDetailData.year, margin: [0, 0, 0, 12] },
+        { table: { widths: ['*', 'auto'], body: [
+          [{ text: 'Basic salary', bold: true }, 'UGX ' + payrollDetailData.basicSalary.toLocaleString('en-UG')],
+          [{ text: 'Allowances', bold: true }, 'UGX ' + payrollDetailData.allowances.toLocaleString('en-UG')],
+          [{ text: 'Deductions', bold: true }, 'UGX ' + payrollDetailData.deductions.toLocaleString('en-UG')],
+          [{ text: 'Net pay', bold: true }, { text: 'UGX ' + payrollDetailData.netPay.toLocaleString('en-UG'), bold: true }],
+          [{ text: 'Status', bold: true }, payrollDetailData.status],
+          [{ text: 'Payment method', bold: true }, payrollDetailData.paymentMethod || '—'],
+          [{ text: 'Reference', bold: true }, payrollDetailData.reference || '—'],
+          [{ text: 'Payment date', bold: true }, payrollDetailData.paymentDate ? new Date(payrollDetailData.paymentDate).toLocaleDateString('en-UG') : '—'],
+        ] }, layout: 'lightHorizontalLines' },
+        { text: 'Staff advances', style: 'sectionHeading', margin: [0, 16, 0, 6] },
+        { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto'], body: [
+          [{ text: 'Amount', style: 'tableHeader' }, { text: 'Reason', style: 'tableHeader' }, { text: 'Status', style: 'tableHeader' }, { text: 'Requested', style: 'tableHeader' }],
+          ...payrollDetailAdvances.map(advance => ['UGX ' + advance.amount.toLocaleString('en-UG'), advance.reason, advance.status, new Date(advance.requestedAt).toLocaleDateString('en-UG')]),
+        ] }, layout: 'lightHorizontalLines' },
+      ],
+    }
+  }
+
+  function printPayslip() {
+    const options = payrollPdfOptions()
+    if (options) printInstitutionalPdf(options)
+  }
+
+  function downloadPayslip() {
+    const options = payrollPdfOptions()
+    if (options) downloadInstitutionalPdf(options)
+  }
+
+
+
+
 
   useEffect(() => {
     let cancelled = false
@@ -549,20 +600,13 @@ export function AccountsOfficeManagement() {
   async function submitPayment(e: FormEvent) {
     e.preventDefault()
     if (!selectedInvoice) return
-    const validation = validateForm(recordPaymentRequestSchema, {
-      amount: Number(paymentAmount),
-      receiptNumber: receiptNumber.trim(),
-      paymentMethod,
-      currency: selectedInvoice.currency,
-    })
-    if (!validation.success) {
-      setPaymentErrors(validation.errors)
-      setError('Payment was not posted. Correct the payment fields shown below.')
-      return
-    }
-    setPaymentErrors({})
     try {
-      await recordPayment(selectedInvoice.id, validation.data)
+      await recordPayment(selectedInvoice.id, {
+        amount: Number(paymentAmount),
+        receiptNumber: receiptNumber.trim(),
+        paymentMethod,
+        currency: selectedInvoice.currency,
+      })
       setSelectedInvoice(null)
       setPaymentAmount('')
       setReceiptNumber('')
@@ -1159,9 +1203,8 @@ export function AccountsOfficeManagement() {
                 <p className="eyebrow">Payment</p>
                 <h3>{selectedInvoice.feeType} — {selectedInvoice.invoiceNumber}</h3>
                 <p>Outstanding: UGX {selectedInvoice.balance.toLocaleString()}</p>
-                {Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
-                <label>Payment Amount (UGX)<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={selectedInvoice.balance} step="1" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
-                <label>Receipt Number<input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>
+                <label>Payment Amount (UGX)<input type="number" min="0.01" max={selectedInvoice.balance} step="0.01" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
+                <label>Receipt Number<input value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>
                 <label>Payment Method<select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}><option>Cash</option><option>Bank</option><option>Mobile Money</option><option>Card</option></select></label>
                 <div className="topbar-actions">
                   <button type="button" className="secondary-button" onClick={() => setSelectedInvoice(null)}>Cancel</button>
@@ -1421,11 +1464,16 @@ export function AccountsOfficeManagement() {
                     )}
                     <div className="topbar-actions" style={{ marginTop: 20 }}>
 <<<<<<< HEAD
+<<<<<<< HEAD
                       <button type="button" onClick={printPayslip}>Print Payslip</button><button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
 =======
                       <button type="button" onClick={printPayslip}>Print Payslip</button>
                       <button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+                      <button type="button" onClick={printPayslip}>Print Payslip</button>
+                      <button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
                       <button type="button" className="secondary-button" onClick={() => setPayrollDetailId(null)}>Close</button>
                     </div>
                   </>

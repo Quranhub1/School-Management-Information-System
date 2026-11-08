@@ -3,10 +3,13 @@ import { getStudentReportCard, type StudentReportCard } from '../api/reports'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { exportRowsToExcel } from '../lib/spreadsheets'
 import { downloadElementAsPng } from '../lib/printCapture'
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
 
 interface ReportCardsProps { canManage?: boolean }
 
@@ -76,6 +79,7 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
           <button className="secondary-button" onClick={printReport} disabled={!report}>Print Report Card</button>
           <button className="secondary-button" onClick={downloadReport} disabled={!studentId.trim() || !report}>Download PDF</button>
 <<<<<<< HEAD
+<<<<<<< HEAD
           <button className="secondary-button" onClick={() => { if (report?.results.length) exportRowsToExcel(report.results, `report-card-${report.studentNumber}`, 'Results') }} disabled={!report || report.results.length === 0}>Export Excel</button>
           <button className="secondary-button" onClick={() => {
             const element = document.getElementById('report-card-print')
@@ -83,6 +87,8 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
           }} disabled={!report}>Download Image</button>
 =======
 >>>>>>> origin/feat/pdfmake-document-engine
+=======
+>>>>>>> origin/feat/pdfmake-document-engine-latest-main
       </div>
 
       <form className="student-form" onSubmit={e => { e.preventDefault(); void load() }} style={{ marginBottom: 22 }}>
