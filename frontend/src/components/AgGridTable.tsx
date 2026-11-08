@@ -7,7 +7,7 @@ import {
   themeQuartz,
 } from 'ag-grid-community'
 import { AgGridProvider, AgGridReact } from 'ag-grid-react'
-import { downloadInstitutionalPdf } from '../lib/pdfmake'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 
 export type AgGridTableProps<TData extends object> = {
@@ -77,8 +77,8 @@ export function AgGridTable<TData extends object>({
   const toggleColumn = useCallback((colId: string, visible: boolean) => {
     api?.setColumnsVisible([colId], visible)
   }, [api])
-  const exportPdf = useCallback(() => {
-    if (!api) return
+  const tablePdfOptions = useCallback(() => {
+    if (!api) return null
     const displayedColumns = api.getAllDisplayedColumns()
     const headers = displayedColumns.map(column => ({
       text: String(column.getColDef().headerName ?? column.getColDef().field ?? column.getColId()),
@@ -94,12 +94,12 @@ export function AgGridTable<TData extends object>({
         try { return JSON.stringify(value) } catch { return String(value) }
       }))
     })
-    if (body.length === 1) return
-    const title = exportFileName.replace(/[-_]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())
-    downloadInstitutionalPdf({
+    if (body.length === 1) return null
+    const title = exportFileName.replace(/[-_]+/g, ' ').replace(/\\b\\w/g, letter => letter.toUpperCase())
+    return {
       title,
       filename: exportFileName,
-      orientation: displayedColumns.length > 7 ? 'landscape' : 'portrait',
+      orientation: displayedColumns.length > 7 ? 'landscape' as const : 'portrait' as const,
       institutionName: institutionLoaded && institution?.isActive ? institution.institutionName : undefined,
       motto: institutionLoaded && institution?.isActive ? institution.motto : undefined,
       contactLines: institutionLoaded && institution?.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
@@ -108,8 +108,16 @@ export function AgGridTable<TData extends object>({
         { text: 'Records: ' + (body.length - 1).toLocaleString('en-UG'), style: 'muted', margin: [0, 0, 0, 8] },
         { table: { headerRows: 1, widths: displayedColumns.map(() => '*'), body }, layout: 'lightHorizontalLines' },
       ],
-    })
+    }
   }, [api, exportFileName, institution, institutionLoaded])
+  const exportPdf = useCallback(() => {
+    const options = tablePdfOptions()
+    if (options) downloadInstitutionalPdf(options)
+  }, [tablePdfOptions])
+  const printPdf = useCallback(() => {
+    const options = tablePdfOptions()
+    if (options) printInstitutionalPdf(options)
+  }, [tablePdfOptions])
 
   return (
     <div className={['smis-ag-grid-shell', className].filter(Boolean).join(' ')}>
@@ -121,6 +129,7 @@ export function AgGridTable<TData extends object>({
         <span className="smis-ag-grid-count">{rows.length.toLocaleString('en-UG')} records</span>
         <button type="button" className="secondary-button" onClick={exportCsv} disabled={!api || rows.length === 0}>Export CSV</button>
         <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
+        <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
         <details className="smis-ag-grid-columns">
           <summary>Columns</summary>
           <div className="smis-ag-grid-column-menu">
