@@ -36,7 +36,7 @@ env:
 jobs:
   full-system:
     name: PostgreSQL + API + Frontend + E2E smoke test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
