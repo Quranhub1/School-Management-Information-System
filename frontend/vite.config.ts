@@ -13,9 +13,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: { '/api': { target: 'http://127.0.0.1:5000', changeOrigin: true } },
-    // Let Vite infer the browser-facing HMR host/protocol. Hard-coding
-    // 127.0.0.1 breaks WebSocket updates when the UI is opened over LAN,
-    // a hostname, or a forwarded development port.
+    hmr: { host: '127.0.0.1', protocol: 'ws', clientPort: 5173 },
   },
   test: {
     environment: 'jsdom',

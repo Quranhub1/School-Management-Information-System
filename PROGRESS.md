@@ -1,6 +1,6 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-10-11  
+**Last updated:** 2026-11-08  
 **Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
@@ -12,6 +12,50 @@ The core backend, persistence, security hardening, frontend, automated verificat
 Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed. The later duplicate desktop-workflow cleanup on `main` also passed the full CI suite, including native desktop builds.
 
 A dedicated executable target-environment acceptance runbook is now available at `docs/PRODUCTION_ACCEPTANCE.md`. It records the evidence required for golden-path, authorization, module, finance, attendance, assessment, clinical, staff/student, deployment, backup/restore, desktop, and security sign-off.
+
+## Structured logging and observability — November 2026
+
+- [x] Add Serilog to the .NET 8 API with structured console and daily rolling file sinks.
+- [x] Store logs in the service account's local application data directory; allow deployment override through `SMIS_LOG_DIRECTORY`.
+- [x] Configure 14-file retention and a 10 MiB per-file limit through appsettings.
+- [x] Add request correlation middleware with safe incoming ID validation and an `X-Correlation-ID` response header.
+- [x] Enrich API request logs with correlation ID, HTTP method, path, status and elapsed time.
+- [x] Add authenticated, rate-limited browser diagnostic ingestion with bounded payloads and secret redaction.
+- [x] Add React global handlers for uncaught errors and unhandled promise rejections.
+- [x] Propagate correlation IDs from the modern API client.
+- [x] Add correlation middleware unit tests and document the operational logging policy in `docs/LOGGING-OBSERVABILITY.md`.
+- [ ] Run backend and frontend CI for this change and resolve any failures before merging.
+- [ ] Extend correlation header propagation to remaining legacy frontend API modules as they are consolidated.
+- [ ] Configure production log-directory permissions and retention/collection during target-environment acceptance.
+
+## Dexie.js offline data and synchronisation — 2026-11-08
+
+- [x] Add Dexie.js 4.4.7 as a locally bundled frontend dependency.
+- [x] Upgrade the existing `smis-offline` IndexedDB database to a versioned Dexie schema while retaining legacy stores.
+- [x] Add a role/user-scoped read-through cache with network-failure fallback; HTTP authorization/server errors are not masked.
+- [x] Enable the first read cache for the authenticated notices board (30-minute TTL).
+- [x] Clear the signed-out user's cached reads on logout.
+- [x] Replace the unsafe generic offline mutation replay path with a blocked-by-default, auditable operation journal and explicit conflict records.
+- [x] Reject offline mutations until a module-specific synchronisation contract is implemented; financial operations are explicitly excluded from the journal.
+- [x] Document PostgreSQL authority, cache isolation, migration, and financial idempotency/validation/conflict gates in `docs/OFFLINE_MODE.md` and `docs/OFFLINE_FIRST.md`.
+- [ ] Add visible staff-facing sync queue/conflict review UI and operational audit export.
+- [ ] Add automated IndexedDB migration, cache isolation, logout cleanup, offline fallback and conflict tests.
+- [ ] Expand read caching only to approved low-sensitivity datasets; sensitive student, clinical, staff and finance records remain excluded pending device data-protection controls.
+- [ ] Implement low-risk offline writes one module at a time with API authorization, idempotency, server validation and explicit 409 conflict handling.
+- [ ] Implement financial idempotency keys with a PostgreSQL unique constraint, atomic ledger posting, request-payload matching and staff-reviewed conflict resolution before enabling any finance replay.
+- [ ] Run frontend build/tests, backend tests, and Windows/Linux desktop CI on the Dexie branch; perform target-device offline acceptance testing.
+
+
+**Last updated:** 2026-10-11  
+**Tracking branch:** `main`  
+**Current release:** `v0.2.0`  
+**Currency:** UGX
+
+
+**Last updated:** 2026-10-11  
+**Tracking branch:** `main`  
+**Current release:** `v0.2.0`  
+**Currency:** UGX
 
 ## Current work — October 2026
 

@@ -32,6 +32,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Dexie owns user-scoped API read caching; this worker only caches the app shell/assets.
   // Always prefer the current HTML shell; fall back to the cached shell offline.
   if (request.mode === 'navigate') {
     event.respondWith(

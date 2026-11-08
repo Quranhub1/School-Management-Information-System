@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { InstitutionSettingsProvider } from './components/InstitutionSettingsContext'
+import { installGlobalErrorHandlers } from './lib/logging'
 import './styles.css'
 import './institution-theme.css'
 import './tailadmin-inspired.css'
@@ -9,10 +10,12 @@ import './sidebar-fixed.css'
 import './table-font.css'
 import './workspace-density.css'
 
-// A service worker must never control Vite's development server. A stale
-// cache can mix old React bundles with the current provider tree and break HMR.
+installGlobalErrorHandlers()
+
 if ('serviceWorker' in navigator) {
   if (import.meta.env.DEV) {
+    // Vite owns development assets. Unregister production workers and remove
+    // only SMIS caches so stale bundles cannot mix with the current module graph.
     void navigator.serviceWorker.getRegistrations().then((registrations) =>
       Promise.all(registrations.map((registration) => registration.unregister())),
     )
