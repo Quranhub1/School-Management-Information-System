@@ -27,7 +27,8 @@ export function QueryCacheProvider({ children }: { children: ReactNode }) {
     const onAuthChanged = () => {
       const nextUsername = getSession()?.username ?? null
       const previousUsername = activeUsername.current
-      if (previousUsername && previousUsername !== nextUsername) {
+      if (previousUsername === nextUsername) return
+      if (previousUsername) {
         void remove('queryCache', CACHE_PREFIX + previousUsername).catch(() => undefined)
       }
       activeUsername.current = nextUsername
