@@ -59,6 +59,11 @@ public sealed partial class AddSchoolPayNotifications : Migration
             column: "SchoolPayReference");
 
         migrationBuilder.CreateIndex(
+            name: "IX_SchoolPaymentNotifications_StudentInvoiceId",
+            table: "SchoolPaymentNotifications",
+            column: "StudentInvoiceId");
+
+        migrationBuilder.CreateIndex(
             name: "IX_SchoolPaymentNotifications_StudentId_Status",
             table: "SchoolPaymentNotifications",
             columns: new[] { "StudentId", "Status" });
