@@ -35,11 +35,13 @@ This tracker distinguishes code delivered on feature branches from changes merge
 
 ### Not yet implemented in this sequence
 
-- [ ] **FIN-CAP-03 — Complete mobile-money backend workflow.** Verify and implement the API handlers, persistence, status transitions, authorization and posting through the canonical finance service.
-- [ ] **FIN-CAP-04 — SchoolPay provider adapter.** Implement secure provider configuration, Sync/Adhoc clients and provider response handling only after KSHS obtains credentials and UAT access.
+- [x] **FIN-CAP-03 — Mobile-money transaction workflow (manual verification stage).** Added scoped transaction listing, FinanceOperations-protected initiation/confirmation/cancellation endpoints, Uganda phone validation, MTN/Airtel provider validation, pending-only cancellation, duplicate-reference checks, and atomic posting through the canonical finance service. Confirmation records the payment/journal/ledger and marks the transaction completed in the same database transaction. The frontend now resolves student codes through the existing student finance profile API and uses the implemented mobile-money endpoints.
+- [ ] **FIN-CAP-03 acceptance — Real MTN/Airtel provider integration.** The current workflow deliberately requires Finance staff to verify the provider transaction in the operator portal and enter its external reference. Automated collection prompts, callbacks/webhooks, provider API credentials and reconciliation polling are not implemented; do not treat this as a live gateway integration.
 - [ ] **FIN-CAP-05 — School Main Account and Guild Account reporting.** Establish approved account/category mappings and reports that reconcile to the general ledger.
 - [ ] **FIN-CAP-06 — Finance approvals, role boundaries and audit verification.** Test read, post, approve, reverse and reconciliation permissions with representative roles.
 - [ ] **FIN-CAP-07 — Finance regression and accounting acceptance tests.** Verify idempotency, concurrency, transaction atomicity, receipt uniqueness, journal balancing and reconciliation before production use.
+
+- [ ] **FIN-CAP-04 — SchoolPay provider adapter.** Implement secure provider configuration, Sync/Adhoc clients and provider response handling only after KSHS obtains credentials and UAT access.
 
 ### Merge and release rule
 
