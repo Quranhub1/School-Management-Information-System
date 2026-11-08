@@ -253,3 +253,14 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Run frontend CI and browser-level regression checks after these configuration changes.
 
 **Diagnostic note:** The Vite WebSocket error may also be caused by a stopped/failed Vite process, a port conflict, or browser/proxy network handling. Configuration changes alone do not prove the local server is reachable.
+
+
+## Dexie asynchronous key-value state — November 2026
+
+- [x] Extend the existing Dexie database to schema version 3 with a namespaced `appState` object store; preserve all existing v1/v2 stores during upgrade.
+- [x] Add promise-based `getAppState`, `setAppState`, `deleteAppState` and `clearAppStateForScope` helpers for preferences and offline drafts.
+- [x] Document user/role scoping, asynchronous usage and data-protection boundaries.
+- [x] Reuse Dexie rather than adding the overlapping `idb-keyval` package or creating a second IndexedDB database.
+- [ ] Run frontend TypeScript, unit, migration and offline desktop acceptance checks on the resulting branch before merge.
+
+**Safety boundary:** this is local client state only. PostgreSQL remains authoritative; credentials, sensitive records and financial transactions must not be stored through the generic key-value API.
