@@ -3,8 +3,9 @@ import * as pdfFonts from 'pdfmake/build/vfs_fonts'
 
 type PdfDocumentDefinition = Record<string, unknown>
 type PdfMakeEngine = {
-  addVirtualFileSystem: (fonts: unknown) => void
-  createPdf: (definition: PdfDocumentDefinition) => {
+  addVirtualFileSystem?: (fonts: unknown) => void
+  vfs?: Record<string, string>
+  createPdf?: (definition: PdfDocumentDefinition) => {
     download: (filename?: string) => void
     print: () => void
     open: () => void
@@ -23,12 +24,27 @@ export interface InstitutionalPdfOptions {
   pageSize?: 'A4' | 'A3' | 'LETTER'
 }
 
-const pdfMake = pdfMakeModule as unknown as PdfMakeEngine
+const pdfMake = (((pdfMakeModule as unknown as { default?: unknown }).default ?? pdfMakeModule) as unknown) as PdfMakeEngine
+const fontBundle = ((pdfFonts as unknown as { default?: unknown }).default ?? pdfFonts) as unknown
+let fontsRegistered = false
 
-// This is the single frontend document-generation entry point for SMIS.
-// PDFMake and its font virtual file system are imported from local npm assets.
-// Generated PDFs therefore work without a CDN or an internet connection.
-pdfMake.addVirtualFileSystem(pdfFonts)
+// Initialize only when a user requests a document. A PDF bundle issue must not
+// prevent the dashboard or other workspaces from mounting.
+function ensurePdfMakeReady() {
+  if (fontsRegistered) return
+
+  if (typeof pdfMake.addVirtualFileSystem === 'function') {
+    pdfMake.addVirtualFileSystem(fontBundle)
+  } else {
+    const legacyVfs = (fontBundle as { pdfMake?: { vfs?: Record<string, string> }; vfs?: Record<string, string> }).pdfMake?.vfs
+      ?? (fontBundle as { vfs?: Record<string, string> }).vfs
+    if (!legacyVfs) throw new Error('The bundled PDFMake virtual font system is unavailable.')
+    pdfMake.vfs = legacyVfs
+  }
+
+  if (typeof pdfMake.createPdf !== 'function') throw new Error('The bundled PDFMake document engine is unavailable.')
+  fontsRegistered = true
+}
 
 function buildDefinition(options: InstitutionalPdfOptions): PdfDocumentDefinition {
   const accent = /^#[0-9a-f]{6}$/i.test(options.accentColor ?? '')
@@ -80,13 +96,16 @@ function safeFilename(filename: string | undefined, title: string): string {
 }
 
 export function downloadInstitutionalPdf(options: InstitutionalPdfOptions): void {
-  pdfMake.createPdf(buildDefinition(options)).download(safeFilename(options.filename, options.title))
+  ensurePdfMakeReady()
+  pdfMake.createPdf!(buildDefinition(options)).download(safeFilename(options.filename, options.title))
 }
 
 export function printInstitutionalPdf(options: InstitutionalPdfOptions): void {
-  pdfMake.createPdf(buildDefinition(options)).print()
+  ensurePdfMakeReady()
+  pdfMake.createPdf!(buildDefinition(options)).print()
 }
 
 export function openInstitutionalPdf(options: InstitutionalPdfOptions): void {
-  pdfMake.createPdf(buildDefinition(options)).open()
+  ensurePdfMakeReady()
+  pdfMake.createPdf!(buildDefinition(options)).open()
 }
