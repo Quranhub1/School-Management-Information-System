@@ -1,24 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/fix/vite-hmr-service-worker-provider
 import { InstitutionSettingsProvider } from './components/InstitutionSettingsContext'
 import { installGlobalErrorHandlers } from './lib/logging'
 import { QueryCacheProvider } from './lib/QueryCacheProvider'
-<<<<<<< HEAD
-=======
-import { installGlobalErrorHandlers } from './lib/logging'
->>>>>>> origin/feat/structured-logging-observability
-=======
->>>>>>> origin/feat/tanstack-query-offline-cache
 import './styles.css'
-<<<<<<< HEAD
 import './institution-theme.css'
-=======
->>>>>>> origin/feat/tailadmin-inspired-smis-ui
 import './tailadmin-inspired.css'
 import './sidebar-fixed.css'
 import './table-font.css'
@@ -45,20 +32,10 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-<<<<<<< HEAD
     <QueryCacheProvider>
-<<<<<<< HEAD
       <InstitutionSettingsProvider>
         <App />
       </InstitutionSettingsProvider>
-=======
-      <App />
->>>>>>> origin/feat/tanstack-query-offline-cache
     </QueryCacheProvider>
-=======
-    <InstitutionSettingsProvider>
-      <App />
-    </InstitutionSettingsProvider>
->>>>>>> origin/fix/vite-hmr-service-worker-provider
   </StrictMode>,
 )
