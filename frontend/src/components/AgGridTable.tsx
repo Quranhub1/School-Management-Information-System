@@ -106,7 +106,7 @@ export function AgGridTable<TData extends object>({
       accentColor: institutionLoaded && institution?.isActive ? institution.primaryColor : undefined,
       content: [
         { text: 'Records: ' + (body.length - 1).toLocaleString('en-UG'), style: 'muted', margin: [0, 0, 0, 8] },
-        { table: { headerRows: 1, widths: displayedColumns.map(() => '*'), body }, layout: 'lightHorizontalLines' },
+        { table: { headerRows: 1, widths: displayedColumns.map(() => '*'), body }, layout: 'lightHorizontalLines', fontSize: displayedColumns.length > 10 ? 6 : 8 },
       ],
     }
   }, [api, exportFileName, institution, institutionLoaded])
