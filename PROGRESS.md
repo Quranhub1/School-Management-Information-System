@@ -125,3 +125,54 @@ Expected published assets:
 ## Definition of done
 
 SMIS is ready for production sign-off only when the remaining target-environment acceptance gates above are completed, CI remains green, deployment health is verified, critical workflows are exercised successfully, backups/restores are validated, and repository administration has configured branch protection where permitted.
+
+
+## Zod validation integration — November 2026
+
+### Implemented in this change
+
+- [x] Add Zod 4 as a direct frontend runtime dependency and record it in the npm lockfile.
+- [x] Establish a central schema directory at `frontend/src/schemas/` with shared primitives and domain schemas.
+- [x] Add reusable validation helpers for safe parsing, field-level error mapping, and API contract assertions.
+- [x] Add initial request/form schemas for student admissions, finance payments/expenses, staff records, inventory movements/items, academic timetable entries, examination results, and library catalogue/loans.
+- [x] Infer TypeScript types from schemas so validation and static types share a single source of truth.
+- [x] Add unit tests for representative valid and invalid inputs, including UGX integer amounts, non-negative stock, required identifiers and date/time constraints.
+- [x] Enforce request validation and response-contract parsing in Admissions API services (list/detail/create/update/decision).
+- [x] Enforce payroll request validation for generation, payment and allowance/deduction updates; validate payroll list responses.
+- [x] Enforce stream create/list validation in the Academics API service.
+- [x] Enforce individual and bulk SMS request validation and validate send-result responses.
+- [x] Enforce Student API create/update payload validation and validate student list/detail responses.
+- [x] Enforce Finance API invoice creation/list response validation and payment request validation.
+- [x] Enforce mobile-money payment initiation and bulk-payment request validation.
+- [x] Enforce Finance API request validation for fee structure creation/application, credit notes, invoice notes and staff advance request/approval/recovery.
+- [x] Add direct Zod form validation and field-error summaries to the Finance quick-payment, Accounts Office payment, Student Finance payment, bulk payment and mobile-money initiation forms.
+- [x] Enforce HR staff creation/update and leave-request validation at the API service boundary.
+- [x] Enforce Inventory register save payload and read/write response validation.
+- [x] Enforce Library book creation and loan issue request validation.
+- [x] Enforce bulk import request and result validation before/after the import API call.
+- [x] Wire direct React form validation and visible field-error summaries into Student Admission, Staff create/edit, and Library book/loan forms; prevent submission until required data passes Zod.
+- [x] Add optional Zod row-contract enforcement to the shared AG Grid component; invalid edits are reverted and field-level row errors are shown before caller persistence handlers run.
+- [x] Attach row validation to the editable Inventory AG Grid and enforce item-name plus whole-number/non-negative quantity rules on inventory register reads and saves.
+- [x] Add reusable `parseApiInput` and field-addressable `InputValidationError` so invalid requests are rejected before network submission.
+- [x] Keep backend validation, authorization, database constraints and financial posting rules authoritative; frontend validation is an additional boundary, not a replacement.
+
+### Verification notes
+
+- [x] The first Frontend CI compile exposed missing imports for the new Library form validation helpers; the imports were added in a follow-up commit.
+- [ ] Re-run Frontend CI against the corrected branch head and resolve any further TypeScript/test/build failures.
+
+### Not yet tackled — remaining rollout
+
+- [x] Install the frontend dependency graph successfully in CI (`npm install`); [ ] still run a clean `npm ci` to independently confirm lockfile reproducibility on the final head.
+- [ ] Run TypeScript build, full Vitest suite and production Vite build; resolve any failures introduced by the integration.
+- [ ] Extend direct React form validation to remaining create/edit workflows in Finance (fee structures, credits, advances and budgets), HR leave/recruitment, Inventory item setup, Library member management, Academics, Examinations and Administration. Current direct form wiring covers student admissions, staff records, library book/loan, finance payment, bulk payment and mobile-money forms; API guards protect additional service operations.
+- [ ] Extend AG Grid Zod validation to other editable grids and explicitly test clipboard/bulk-paste behaviour; the shared grid guard and Inventory grid are now wired, but broader grid coverage remains.
+- [ ] Validate each CSV/Excel imported row against the matching entity schema and return row/column-specific import errors; only the bulk-import request envelope and API result are currently validated.
+- [ ] Extend runtime response schemas to all remaining API services and endpoints. The current response validation is enabled for admissions, payroll, streams, students, invoices, inventory registers, SMS send results and bulk-import results; other APIs remain typed-only.
+- [ ] Add backend-aligned contract tests for DTOs, enums, nullable fields, IDs, pagination and date/time formats.
+- [ ] Verify schemas against actual .NET request/response DTOs and EF/database constraints; adjust assumptions before enabling strict validation on production flows.
+- [ ] Add module-by-module validation coverage and regression tests for all role-specific workflows.
+- [ ] Add validation for SchoolPay integration contracts once provider-approved request/response payloads are available.
+- [ ] Confirm offline desktop packaging includes Zod in the bundled frontend and run clean-machine Windows/Linux smoke tests.
+
+**Status:** central Zod foundation, active validation in selected departmental API services, direct React form validation in Admissions, HR staff, Library and Finance payment workflows, and an AG Grid row-validation hook wired into Inventory are committed on the feature branch. Remaining work includes additional departmental forms, complete API coverage, per-entity import-row validation, broader editable-grid adoption and clipboard regression tests. Automated TypeScript/test/build verification is still required after the Library import fix and subsequent Finance additions; corrected CI reruns are queued. Do not declare system-wide adoption until all checks and remaining rollout/regression work are complete.

@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import { createBulkPayment, getOutstandingBalances, type OutstandingBalance } from '../api/finance'
+import { validateForm } from '../lib/validation'
+import { bulkPaymentRequestSchema } from '../schemas'
 
 type PaymentMethod = 'Cash' | 'Mobile Money' | 'Bank' | 'Card'
 
@@ -26,6 +28,7 @@ export function BulkPayments() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState('')
   const [receiptCounter, setReceiptCounter] = useState(1)
 
@@ -89,19 +92,26 @@ export function BulkPayments() {
       setError('Enter a valid amount for all selected students.')
       return
     }
+    const payments = selectedStudents.map(s => ({
+      studentId: s.studentId,
+      invoiceId: '',
+      amount: Number(s.amountToPay),
+      receiptNumber: s.receiptNumber.trim(),
+      paymentMethod,
+      reference: reference.trim() || undefined,
+    }))
+    const validation = validateForm(bulkPaymentRequestSchema, { payments })
+    if (!validation.success) {
+      setValidationErrors(validation.errors)
+      setError('Bulk payment was not posted. Correct the selected payment rows shown below.')
+      return
+    }
+    setValidationErrors({})
     setSubmitting(true)
     setError('')
     setSuccess('')
     try {
-      const payments = selectedStudents.map(s => ({
-        studentId: s.studentId,
-        invoiceId: '',
-        amount: Number(s.amountToPay),
-        receiptNumber: s.receiptNumber.trim(),
-        paymentMethod,
-        reference: reference.trim() || undefined,
-      }))
-      const result = await createBulkPayment({ payments })
+      const result = await createBulkPayment(validation.data)
       setSuccess(`Bulk payment recorded successfully for ${selectedStudents.length} student(s).`)
       setStudents(prev => prev.map(s => {
         if (!s.selected) return s
@@ -129,6 +139,7 @@ export function BulkPayments() {
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
+      {Object.keys(validationErrors).length > 0 && <div className="error" role="alert"><strong>Bulk payment fields requiring attention</strong><ul>{Object.entries(validationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
       {success && <div className="summary-card" style={{ margin: '16px 0', padding: '14px', background: '#f0fdf4', borderColor: '#bbf7d0' }} role="status">{success}</div>}
 
       <form onSubmit={submitBulkPayment}>

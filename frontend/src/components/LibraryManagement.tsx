@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { validateForm } from '../lib/validation';
+import { libraryBookCreateRequestSchema, libraryLoanCreateRequestSchema } from '../schemas';
 import {
   addBook,
   getBookBarcode,
@@ -33,6 +35,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'recent' | 'overdue'>('recent');
   const [error, setError] = useState('');
+  const [bookValidationErrors, setBookValidationErrors] = useState<Record<string, string>>({});
+  const [loanValidationErrors, setLoanValidationErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     isbn: '',
@@ -87,10 +91,17 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
   async function submitBook(e: FormEvent) {
     e.preventDefault();
-    setBusy(true);
     setError('');
+    const validation = validateForm(libraryBookCreateRequestSchema, form);
+    if (!validation.success) {
+      setBookValidationErrors(validation.errors);
+      setError('Book was not added. Correct the catalogue fields shown below.');
+      return;
+    }
+    setBookValidationErrors({});
+    setBusy(true);
     try {
-      await addBook(form);
+      await addBook(validation.data);
       setForm({
         isbn: '',
         title: '',
@@ -113,14 +124,22 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       return;
     }
 
+    const loanInput = {
+      bookId: issue.bookId,
+      studentId: selectedMember.id,
+      dueAtUtc: new Date(`${issue.dueDate}T23:59:59`).toISOString(),
+    };
+    const validation = validateForm(libraryLoanCreateRequestSchema, loanInput);
+    if (!validation.success) {
+      setLoanValidationErrors(validation.errors);
+      setError('Book loan was not issued. Correct the loan details shown below.');
+      return;
+    }
+    setLoanValidationErrors({});
     setBusy(true);
     setError('');
     try {
-      await issueBook({
-        bookId: issue.bookId,
-        studentId: selectedMember.id,
-        dueAtUtc: new Date(`${issue.dueDate}T23:59:59`).toISOString(),
-      });
+      await issueBook(validation.data);
       setIssue({ bookId: '', memberNumber: '', dueDate: dateInput() });
       await load();
     } catch (e) {
@@ -205,6 +224,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
+      {Object.keys(loanValidationErrors).length > 0 && <div className="error" role="alert"><strong>Loan fields requiring attention</strong><ul>{Object.entries(loanValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
 
       <div className="library-grid">
         <div className="library-main-card">
@@ -418,20 +438,24 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             
           </div>
           <form className="library-book-form" onSubmit={submitBook}>
+            {Object.keys(bookValidationErrors).length > 0 && <div className="error" role="alert"><strong>Catalogue fields requiring attention</strong><ul>{Object.entries(bookValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
             <input
               placeholder="ISBN"
+              aria-invalid={Boolean(bookValidationErrors.isbn)}
               value={form.isbn}
               onChange={(e) => setForm({ ...form, isbn: e.target.value })}
               required
             />
             <input
               placeholder="Book title"
+              aria-invalid={Boolean(bookValidationErrors.title)}
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
             />
             <input
               placeholder="Author"
+              aria-invalid={Boolean(bookValidationErrors.author)}
               value={form.author}
               onChange={(e) => setForm({ ...form, author: e.target.value })}
               required
@@ -444,6 +468,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             <input
               type="number"
               min="1"
+              aria-invalid={Boolean(bookValidationErrors.totalCopies)}
               value={form.totalCopies}
               onChange={(e) =>
                 setForm({ ...form, totalCopies: Number(e.target.value) })

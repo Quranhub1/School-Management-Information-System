@@ -1,6 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import type { ZodType } from 'zod'
+import './AgGridTable.css'
 import {
   AllCommunityModule,
+  type CellValueChangedEvent,
   type ColDef,
   type GridApi,
   type GridOptions,
@@ -22,6 +25,8 @@ export type AgGridTableProps<TData extends object> = {
   onRowClicked?: GridOptions<TData>['onRowClicked']
   onSelectionChanged?: GridOptions<TData>['onSelectionChanged']
   onCellValueChanged?: GridOptions<TData>['onCellValueChanged']
+  /** Optional Zod contract enforced for edited rows before caller persistence handlers run. */
+  rowValidationSchema?: ZodType
   getRowId?: GridOptions<TData>['getRowId']
   className?: string
 }
@@ -41,11 +46,14 @@ export function AgGridTable<TData extends object>({
   onRowClicked,
   onSelectionChanged,
   onCellValueChanged,
+  rowValidationSchema,
   getRowId,
   className,
 }: AgGridTableProps<TData>) {
   const [api, setApi] = useState<GridApi<TData> | null>(null)
   const [filter, setFilter] = useState(quickFilterText ?? '')
+  const [rowValidationErrors, setRowValidationErrors] = useState<Record<string, string[]>>({})
+  const revertingCell = useRef(false)
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
     sortable: true,
     filter: true,
@@ -72,6 +80,28 @@ export function AgGridTable<TData extends object>({
   const toggleColumn = useCallback((colId: string, visible: boolean) => {
     api?.setColumnsVisible([colId], visible)
   }, [api])
+  const handleCellValueChanged = useCallback((event: CellValueChangedEvent<TData>) => {
+    if (revertingCell.current) return
+    const rowKey = event.node.id ?? String(event.rowIndex ?? 'unknown-row')
+    if (rowValidationSchema) {
+      const result = rowValidationSchema.safeParse(event.data)
+      if (!result.success) {
+        const messages = result.error.issues.map(issue => `${issue.path.join('.') || 'Row'}: ${issue.message}`)
+        setRowValidationErrors(current => ({ ...current, [rowKey]: messages }))
+        revertingCell.current = true
+        event.node.setDataValue(event.column.getColId(), event.oldValue)
+        Promise.resolve().then(() => { revertingCell.current = false })
+        return
+      }
+    }
+    setRowValidationErrors(current => {
+      if (!(rowKey in current)) return current
+      const next = { ...current }
+      delete next[rowKey]
+      return next
+    })
+    onCellValueChanged?.(event)
+  }, [onCellValueChanged, rowValidationSchema])
 
   return (
     <div className={['smis-ag-grid-shell', className].filter(Boolean).join(' ')}>
@@ -96,6 +126,12 @@ export function AgGridTable<TData extends object>({
           </div>
         </details>
       </div>}
+      {Object.entries(rowValidationErrors).map(([rowKey, messages]) => (
+        <div key={rowKey} className="smis-ag-grid-validation" role="alert" aria-live="polite">
+          <strong>Row {rowKey} was not saved because its data is invalid.</strong>
+          <ul>{messages.map((message, index) => <li key={`${rowKey}-${index}`}>{message}</li>)}</ul>
+        </div>
+      ))}
       <div className="smis-ag-grid" style={{ height, width: '100%' }}>
         <AgGridProvider modules={[AllCommunityModule]}>
           <AgGridReact<TData>
@@ -115,7 +151,7 @@ export function AgGridTable<TData extends object>({
             onGridReady={event => setApi(event.api)}
             onRowClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
-            onCellValueChanged={onCellValueChanged}
+            onCellValueChanged={handleCellValueChanged}
             getRowId={getRowId}
             suppressCellFocus={false}
           />

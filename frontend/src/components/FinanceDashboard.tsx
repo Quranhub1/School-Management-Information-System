@@ -11,6 +11,8 @@ import {
   type Invoice,
   type OutstandingBalance,
 } from '../api/finance'
+import { validateForm } from '../lib/validation'
+import { recordPaymentRequestSchema } from '../schemas'
 
 type PaymentMethod = 'Cash' | 'Mobile Money' | 'Bank' | 'Card'
 
@@ -48,6 +50,7 @@ export function FinanceDashboard() {
 
   const [paymentModal, setPaymentModal] = useState<PaymentModalState | null>(null)
   const [paying, setPaying] = useState(false)
+  const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
 
   async function loadAll() {
     setLoading(true)
@@ -107,14 +110,21 @@ export function FinanceDashboard() {
   async function submitPayment(e: FormEvent) {
     e.preventDefault()
     if (!paymentModal) return
+    const validation = validateForm(recordPaymentRequestSchema, {
+      amount: Number(paymentModal.amount),
+      receiptNumber: paymentModal.receiptNumber.trim(),
+      paymentMethod: paymentModal.paymentMethod,
+      currency: 'UGX',
+    })
+    if (!validation.success) {
+      setPaymentErrors(validation.errors)
+      setError('Payment was not posted. Correct the payment fields shown below.')
+      return
+    }
+    setPaymentErrors({})
     setPaying(true)
     try {
-      await recordPayment(paymentModal.invoiceId, {
-        amount: Number(paymentModal.amount),
-        receiptNumber: paymentModal.receiptNumber.trim(),
-        paymentMethod: paymentModal.paymentMethod,
-        currency: 'UGX',
-      })
+      await recordPayment(paymentModal.invoiceId, validation.data)
       setPaymentModal(null)
       setQuickPayResult(null)
       setQuickPaySearch('')
@@ -330,6 +340,7 @@ export function FinanceDashboard() {
           <form className="auth-card" onSubmit={submitPayment}>
             <p className="eyebrow">Payment</p>
             <h3>Record Payment - {quickPayResult.studentName}</h3>
+            {Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
             {quickPayResult.invoices.length > 1 && (
               <label>
                 Invoice
@@ -348,9 +359,10 @@ export function FinanceDashboard() {
             )}
             <input
               aria-label="Payment amount"
+              aria-invalid={Boolean(paymentErrors.amount)}
               type="number"
-              min="0.01"
-              step="0.01"
+              min="1"
+              step="1"
               placeholder="Amount"
               value={paymentModal.amount}
               onChange={e => setPaymentModal(prev => prev ? { ...prev, amount: e.target.value } : null)}
@@ -358,6 +370,7 @@ export function FinanceDashboard() {
             />
             <input
               aria-label="Receipt number"
+              aria-invalid={Boolean(paymentErrors.receiptNumber)}
               placeholder="Receipt number"
               value={paymentModal.receiptNumber}
               onChange={e => setPaymentModal(prev => prev ? { ...prev, receiptNumber: e.target.value } : null)}

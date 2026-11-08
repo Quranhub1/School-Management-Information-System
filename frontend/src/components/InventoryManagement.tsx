@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import type { ColDef } from 'ag-grid-community';
 import { AgGridTable } from './AgGridTable';
+import { inventoryGridRowSchema } from '../schemas';
 import { getInventoryRegister, saveInventoryRegister, type InventoryColumn, type InventoryRow } from '../api/inventoryRegisters'
 
 type InventorySection = { id: string; name: string; group: string }
@@ -252,6 +253,8 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         pageSize={25}
         exportFileName={`inventory-${section.id}`}
         editable={canEdit}
+        rowValidationSchema={inventoryGridRowSchema}
+        getRowId={params => params.data.id}
         toolbar
       />}
       <div className="inventory-spreadsheet-footer">

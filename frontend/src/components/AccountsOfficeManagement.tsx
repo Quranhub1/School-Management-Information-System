@@ -3,6 +3,8 @@ import type { Invoice } from '../api/finance'
 import { getInvoices, recordPayment, getPayments, issueCreditNote, getCreditNotes, addInvoiceNote, getInvoiceNotes, requestStaffAdvance, approveStaffAdvance, recoverStaffAdvance, getStaffAdvances, getInvoiceFeeItems } from '../api/finance'
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
 import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } from '../api/payroll'
+import { validateForm } from '../lib/validation'
+import { recordPaymentRequestSchema } from '../schemas'
 
 type MainTab = 'student-fees' | 'staff-salaries'
 
@@ -101,6 +103,7 @@ export function AccountsOfficeManagement() {
   const [paymentAmount, setPaymentAmount] = useState('')
   const [receiptNumber, setReceiptNumber] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Cash')
+  const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
 
   const [editingFees, setEditingFees] = useState<FeeBreakdownRow[]>([])
   const [editDraft, setEditDraft] = useState<Record<string, number>>({})
@@ -446,13 +449,20 @@ export function AccountsOfficeManagement() {
   async function submitPayment(e: FormEvent) {
     e.preventDefault()
     if (!selectedInvoice) return
+    const validation = validateForm(recordPaymentRequestSchema, {
+      amount: Number(paymentAmount),
+      receiptNumber: receiptNumber.trim(),
+      paymentMethod,
+      currency: selectedInvoice.currency,
+    })
+    if (!validation.success) {
+      setPaymentErrors(validation.errors)
+      setError('Payment was not posted. Correct the payment fields shown below.')
+      return
+    }
+    setPaymentErrors({})
     try {
-      await recordPayment(selectedInvoice.id, {
-        amount: Number(paymentAmount),
-        receiptNumber: receiptNumber.trim(),
-        paymentMethod,
-        currency: selectedInvoice.currency,
-      })
+      await recordPayment(selectedInvoice.id, validation.data)
       setSelectedInvoice(null)
       setPaymentAmount('')
       setReceiptNumber('')
@@ -1049,8 +1059,9 @@ export function AccountsOfficeManagement() {
                 <p className="eyebrow">Payment</p>
                 <h3>{selectedInvoice.feeType} — {selectedInvoice.invoiceNumber}</h3>
                 <p>Outstanding: UGX {selectedInvoice.balance.toLocaleString()}</p>
-                <label>Payment Amount (UGX)<input type="number" min="0.01" max={selectedInvoice.balance} step="0.01" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
-                <label>Receipt Number<input value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>
+                {Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
+                <label>Payment Amount (UGX)<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={selectedInvoice.balance} step="1" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
+                <label>Receipt Number<input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>
                 <label>Payment Method<select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}><option>Cash</option><option>Bank</option><option>Mobile Money</option><option>Card</option></select></label>
                 <div className="topbar-actions">
                   <button type="button" className="secondary-button" onClick={() => setSelectedInvoice(null)}>Cancel</button>
