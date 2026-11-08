@@ -244,10 +244,40 @@ export async function getPayments(studentId?: string) {
   return request<any[]>(`/api/accounts-overview/payments${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`)
 }
 
-export interface MobileMoneyTransaction { id: string; studentId: string; studentInvoiceId?: string; amount: number; currency: string; provider: string; status: string; reference: string; transactionRef?: string; phoneNumber?: string; requestedAt: string; createdAt: string }
-export async function createMobileMoneyTransaction(body: Partial<MobileMoneyTransaction>) { return request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(body) }) }
-export async function confirmMobileMoneyTransaction(transactionId: string, ref?: string) { return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ ref }) }) }
-export async function getMobileMoneyTransactions(status?: string) { return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`) }
+export interface MobileMoneyTransaction {
+  id: string
+  studentId: string
+  studentInvoiceId?: string
+  amount: number
+  currency: string
+  provider: 'MTN' | 'Airtel' | string
+  status: 'Pending' | 'Completed' | 'Cancelled' | 'Failed' | string
+  transactionRef: string
+  externalRef?: string
+  phoneNumber: string
+  requestedAt: string
+  completedAt?: string
+}
+export interface CreateMobileMoneyTransactionRequest {
+  studentId: string
+  studentInvoiceId?: string
+  provider: 'MTN' | 'Airtel'
+  phoneNumber: string
+  amount: number
+  currency?: string
+}
+export async function createMobileMoneyTransaction(body: CreateMobileMoneyTransactionRequest) {
+  return request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(body) })
+}
+export async function confirmMobileMoneyTransaction(transactionId: string, externalRef: string) {
+  return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST, body: JSON.stringify({ externalRef }) })
+}
+export async function cancelMobileMoneyTransaction(transactionId: string) {
+  return request<void>(`/api/finance/mobile-money/${transactionId}`, { method: 'DELETE' })
+}
+export async function getMobileMoneyTransactions(status?: string) {
+  return request<MobileMoneyTransaction[]>(`/api/finance/mobile-money${status ? `?status=${encodeURIComponent(status)}` : ''}`)
+}
 
 export async function createBulkPayment(body: { payments: { studentId: string; amount: number; paymentMethod: string; reference?: string }[] }) { return request<any>('/api/finance/payments/bulk', { method: 'POST', body: JSON.stringify(body) }) }
 export async function issueCreditNote(invoiceId: string, body: { amount: number; reason: string }) { return request<any>('/api/finance/invoices/' + invoiceId + '/credit-notes', { method: 'POST', body: JSON.stringify(body) }) }
