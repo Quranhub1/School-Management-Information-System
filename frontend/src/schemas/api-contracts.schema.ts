@@ -241,3 +241,21 @@ export const studentApplicationSubmissionSchema = z.object({
   applicantSignature: requiredTextSchema,
   signatureDate: z.iso.date(),
 });
+
+export const mobileMoneyCreateRequestSchema = z.object({
+  studentId: identifierSchema,
+  studentInvoiceId: identifierSchema.optional(),
+  amount: z.number().int().positive(),
+  currency: z.string().trim().min(3).max(3).optional(),
+  provider: requiredTextSchema,
+  phoneNumber: z.string().trim().regex(/^\\+?[0-9\\s()-]{7,20}$/, "Enter a valid mobile money phone number."),
+});
+export const bulkPaymentRequestSchema = z.object({
+  payments: z.array(z.object({
+    studentId: identifierSchema,
+    amount: z.number().int().positive(),
+    paymentMethod: requiredTextSchema,
+    receiptNumber: requiredTextSchema.optional(),
+    reference: z.string().trim().optional(),
+  })).min(1, "Select at least one student payment."),
+});
