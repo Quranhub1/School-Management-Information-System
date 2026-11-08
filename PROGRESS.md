@@ -280,3 +280,12 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Continue a screen-by-screen visual review of all remaining authenticated modules and tabs. This change removes the identified redundant copy and stub paragraphs; it does not remove required labels, validation messages, warnings, empty states or operational instructions.
 
 **Status:** targeted UI copy and identified request/report defects are corrected in source. CI and runtime verification remain pending. Do not mark the repository-wide screen review complete until each remaining screen and tab has been inspected and its regression checks passed.
+
+
+## Dexie asynchronous key-value state — November 2026
+
+- Extend the existing Dexie database to schema version 4, preserving the TanStack Query v3 cache and all existing v1/v2 stores.
+- Add a namespaced `appState` object store with asynchronous `getAppState`, `setAppState`, `deleteAppState` and `clearAppStateForScope` helpers.
+- Clear scoped app state alongside cached reads on user logout; do not persist credentials, sensitive personal data, financial transactions or authoritative server records.
+- Reuse the existing Dexie database rather than adding `idb-keyval` or opening a second IndexedDB database.
+- Frontend migration, TypeScript, unit and offline desktop acceptance checks remain required on the reconciled PR head.
