@@ -10,3 +10,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export type AuditLog = { id:string; userId?:string; action:string; entityType:string; entityId?:string; changes?:string; ipAddress?:string; userAgent?:string; timestamp:string };
 export function searchAuditLogs(userId?:string,action?:string,entityType?:string,from?:string,to?:string){ const qs = new URLSearchParams(); if(userId) qs.set('userId',userId); if(action) qs.set('action',action); if(entityType) qs.set('entityType',entityType); if(from) qs.set('from',new Date(from).toISOString()); if(to) qs.set('to',new Date(to + 'T23:59:59.999').toISOString()); return request<AuditLog[]>(`/api/audit${qs.toString() ? '?' + qs.toString() : ''}`); }
 export function getAuditLog(id:string){ return request<AuditLog>(`/api/audit/${id}`); }
+
+export type FinanceAuditEvent = { id: string; occurredAt: string; action: string; entityType: string; entityId: string; performedBy: string; reason?: string; sourceJournalEntryId?: string; metadata?: string };
+export function searchFinanceAuditEvents(action?: string, from?: string, to?: string) {
+  const qs = new URLSearchParams();
+  if (action) qs.set('action', action);
+  if (from) qs.set('from', new Date(from).toISOString());
+  if (to) qs.set('to', new Date(to + 'T23:59:59.999').toISOString());
+  return request<FinanceAuditEvent[]>(`/api/finance/staff-allowances/audit-events${qs.toString() ? '?' + qs.toString() : ''}`);
+}
