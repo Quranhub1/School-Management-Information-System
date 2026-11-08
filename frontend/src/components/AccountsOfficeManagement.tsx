@@ -2,35 +2,12 @@ import React, { useEffect, useState, type FormEvent } from 'react'
 import type { Invoice } from '../api/finance'
 import { getAccessToken } from '../api/auth'
 import { getInvoices, recordPayment, getPayments, issueCreditNote, getCreditNotes, addInvoiceNote, getInvoiceNotes, requestStaffAdvance, approveStaffAdvance, recoverStaffAdvance, getStaffAdvances, getInvoiceFeeItems } from '../api/finance'
-<<<<<<< HEAD
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
-=======
-import { SearchBar } from '@/components/ui/search-bar';
-import { listStaff, type StaffMember } from '../api/staff'
->>>>>>> origin/kilo/golden-circuit-3yz
 import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } from '../api/payroll'
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
-=======
->>>>>>> origin/feat/central-zod-validation-v2
-=======
-import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
-import { useInstitutionSettings } from './InstitutionSettingsContext'
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
-=======
-import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
-import { useInstitutionSettings } from './InstitutionSettingsContext'
->>>>>>> origin/feat/pdfmake-document-engine
-=======
-import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
-import { useInstitutionSettings } from './InstitutionSettingsContext'
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
 
 type MainTab = 'student-fees' | 'staff-salaries'
 
@@ -1483,21 +1460,7 @@ export function AccountsOfficeManagement() {
                       </div>
                     )}
                     <div className="topbar-actions" style={{ marginTop: 20 }}>
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
                       <button type="button" onClick={printPayslip}>Print Payslip</button><button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
-=======
-                      <button type="button" onClick={printPayslip}>Print Payslip</button>
-                      <button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
->>>>>>> origin/feat/pdfmake-document-engine
-=======
-                      <button type="button" onClick={printPayslip}>Print Payslip</button>
-                      <button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
-                      <button type="button" onClick={printPayslip}>Print Payslip</button><button type="button" className="secondary-button" onClick={downloadPayslip}>Download PDF</button>
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
                       <button type="button" className="secondary-button" onClick={() => setPayrollDetailId(null)}>Close</button>
                     </div>
                   </>
