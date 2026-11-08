@@ -15,69 +15,26 @@
     "copy-pdfmake-assets": "node scripts/copy-pdfmake-assets.mjs"
   },
   "dependencies": {
-<<<<<<< HEAD
-=======
-    "chart.js": "^4.5.1",
->>>>>>> origin/feat/chartjs-visualisation-foundation
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "framer-motion": "^12.23.24",
-    "lucide-react": "^0.468.0",
-    "tailwind-merge": "^3.3.1",
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
-<<<<<<< HEAD
-    "chart.js": "4.6.1",
-    "ag-grid-community": "36.3.0",
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "ag-grid-react": "36.3.0",
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "zod": "^4.6.7",
-    "dexie": "4.4.7",
     "@tanstack/react-query": "5.107.1",
+    "ag-grid-community": "36.3.0",
+    "ag-grid-react": "36.3.0",
+    "chart.js": "^4.5.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "dexie": "4.4.7",
+    "framer-motion": "^12.23.24",
+    "html2canvas": "1.4.1",
+    "lucide-react": "^0.468.0",
+    "pdfmake": "0.3.13",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "tailwind-merge": "^3.3.1",
     "use-debounce": "10.1.1",
     "xlsx": "npm:@stackline/xlsx@1.0.10",
-    "html2canvas": "1.4.1",
-<<<<<<< HEAD
-    "pdfmake": "0.3.13",
-    "cmdk": "^1.1.1"
-<<<<<<< HEAD
-=======
-    "ag-grid-react": "36.3.0"
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-=======
-    "pdfmake": "0.3.13",
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
     "zod": "^4.6.7"
->>>>>>> origin/feat/central-zod-validation
-=======
-    "ag-grid-react": "36.3.0",
-<<<<<<< HEAD
-    "zod": "^4.6.7"
->>>>>>> origin/feat/central-zod-validation-v2
-=======
->>>>>>> origin/feat/cmdk-global-command-palette
-=======
-    "zod": "^4.6.7",
-    "dexie": "4.4.7"
->>>>>>> origin/feat/dexie-offline-data-sync
-=======
-    "ag-grid-react": "36.3.0",
-    "pdfmake": "0.3.13"
->>>>>>> origin/feat/pdfmake-document-engine
-=======
-    "pdfmake": "0.3.13"
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
-=======
-    "zod": "^4.6.7",
-    "@tanstack/react-query": "5.107.1"
->>>>>>> origin/feat/tanstack-query-offline-cache
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",
