@@ -1,6 +1,8 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useInstitutionSettings } from './InstitutionSettingsContext'
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -107,19 +109,64 @@ export function AuditLogWorkspace() {
   const [logs, setLogs] = useState<any[]>([])
   const [action, setAction] = useState('')
   const [entityType, setEntityType] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const { institution, loaded: institutionLoaded } = useInstitutionSettings()
 
   async function load() {
     setLoading(true); setError('')
-    try { const qs = new URLSearchParams(); if (action.trim()) qs.set('action', action.trim()); if (entityType.trim()) qs.set('entityType', entityType.trim()); setLogs(await request<any[]>(`/api/audit${qs.toString() ? `?${qs}` : ''}`)) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load audit log.') } finally { setLoading(false) }
+    try {
+      const qs = new URLSearchParams()
+      if (action.trim()) qs.set('action', action.trim())
+      if (entityType.trim()) qs.set('entityType', entityType.trim())
+      if (from) qs.set('from', new Date(from).toISOString())
+      if (to) qs.set('to', new Date(to + 'T23:59:59.999').toISOString())
+      setLogs(await request<any[]>(`/api/audit${qs.toString() ? `?${qs}` : ''}`))
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load audit log.') }
+    finally { setLoading(false) }
   }
   useEffect(() => { void load() }, [])
 
+  function auditPdfOptions() {
+    const rows = [
+      [{ text: 'Timestamp', style: 'tableHeader' }, { text: 'User', style: 'tableHeader' }, { text: 'Action', style: 'tableHeader' }, { text: 'Entity', style: 'tableHeader' }, { text: 'Record ID', style: 'tableHeader' }, { text: 'Changes', style: 'tableHeader' }, { text: 'IP address', style: 'tableHeader' }, { text: 'User agent', style: 'tableHeader' }],
+      ...logs.map(log => [log.timestamp ? new Date(log.timestamp).toLocaleString('en-UG') : '—', log.userId || 'System', log.action || '—', log.entityType || '—', log.entityId || '—', log.changes || log.details || log.description || '—', log.ipAddress || '—', log.userAgent || '—']),
+    ]
+    return {
+      title: 'System Audit Log',
+      filename: 'smis-system-audit-log',
+      orientation: 'landscape' as const,
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
+      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
+      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
+      content: [
+        { text: 'Audit records: ' + logs.length, bold: true, margin: [0, 0, 0, 8] },
+        { text: 'Filters: ' + (action || 'All actions') + ' · ' + (entityType || 'All entities') + ' · ' + (from || 'Beginning') + ' to ' + (to || 'Present'), style: 'muted', margin: [0, 0, 0, 10] },
+        { table: { headerRows: 1, widths: [78, 62, 68, 62, 80, '*', 62, 100], body: rows }, layout: 'lightHorizontalLines' },
+        { text: 'Confidential — restricted system administration record.', style: 'muted', margin: [0, 12, 0, 0] },
+      ],
+    }
+  }
+
   return <section className="panel">
-    <div className="panel-heading"><div><p className="eyebrow">System Governance</p><h2>Audit Log</h2></div><button className="secondary-button" onClick={() => void load()}>Search</button></div>
+    <div className="panel-heading">
+      <div><p className="eyebrow">System Governance</p><h2>Audit Log</h2></div>
+      <div className="form-actions">
+        <button className="secondary-button" disabled={loading || logs.length === 0} onClick={() => printInstitutionalPdf(auditPdfOptions())}>Print PDF</button>
+        <button disabled={loading || logs.length === 0} onClick={() => downloadInstitutionalPdf(auditPdfOptions())}>Download PDF</button>
+        <button className="secondary-button" onClick={() => void load()}>Search</button>
+      </div>
+    </div>
     <ErrorBox message={error} />
-    <div className="form-grid"><label>Action<input value={action} onChange={e => setAction(e.target.value)} placeholder="e.g. Create, Update" /></label><label>Entity type<input value={entityType} onChange={e => setEntityType(e.target.value)} placeholder="e.g. Student" /></label></div>
-    {loading ? <p className="empty">Loading audit records…</p> : logs.length === 0 ? <p className="empty">No audit records match the current filters.</p> : <div className="table-wrap"><table><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Record</th><th>Details</th></tr></thead><tbody>{logs.map(x => <tr key={x.id}><td>{x.timestamp ? new Date(x.timestamp).toLocaleString() : '—'}</td><td>{x.userId || 'System'}</td><td>{x.action}</td><td>{x.entityType}</td><td>{x.entityId || '—'}</td><td>{x.details || x.description || '—'}</td></tr>)}</tbody></table></div>}
+    <div className="form-grid">
+      <label>Action<input value={action} onChange={e => setAction(e.target.value)} placeholder="e.g. Create, Update" /></label>
+      <label>Entity type<input value={entityType} onChange={e => setEntityType(e.target.value)} placeholder="e.g. Student" /></label>
+      <label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
+      <label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
+    </div>
+    {loading ? <p className="empty">Loading audit records…</p> : logs.length === 0 ? <p className="empty">No audit records match the current filters.</p> : <div className="table-wrap"><table><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Record</th><th>Details</th></tr></thead><tbody>{logs.map(x => <tr key={x.id}><td>{x.timestamp ? new Date(x.timestamp).toLocaleString() : '—'}</td><td>{x.userId || 'System'}</td><td>{x.action}</td><td>{x.entityType}</td><td>{x.entityId || '—'}</td><td>{x.changes || x.details || x.description || '—'}</td></tr>)}</tbody></table></div>}
   </section>
 }
