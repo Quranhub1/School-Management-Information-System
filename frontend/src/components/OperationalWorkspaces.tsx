@@ -1,8 +1,6 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
-import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
-import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { AuditLogManagement } from './AuditLog'
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
