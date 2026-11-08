@@ -9,6 +9,9 @@ import {
 } from '../api/students'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/pdfmake-document-engine
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { notify } from './GlobalNotifications'
 import { getProgrammes, type Programme } from '../api/programmes'
@@ -127,6 +130,9 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   ])).sort((a, b) => a.localeCompare(b))
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feat/pdfmake-document-engine
   function applicationPdfOptions() {
     const label = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, value => value.toUpperCase())
     const values = Object.entries(application).map(([key, value]) => [
@@ -158,9 +164,12 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
 
   function printApplicationPdf() { printInstitutionalPdf(applicationPdfOptions()) }
   function downloadApplicationPdf() { downloadInstitutionalPdf(applicationPdfOptions()) }
+<<<<<<< HEAD
 
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+>>>>>>> origin/feat/pdfmake-document-engine
   const studentColumns = useMemo<ColDef<Student>[]>(() => [
     { headerName: 'Student number', field: 'studentNumber', minWidth: 150 },
     { headerName: 'Name', colId: 'fullName', valueGetter: params => params.data ? [params.data.firstName, params.data.otherNames, params.data.lastName].filter(Boolean).join(' ') : '' },

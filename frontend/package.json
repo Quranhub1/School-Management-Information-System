@@ -33,6 +33,7 @@
     "ag-grid-community": "36.3.0",
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     "ag-grid-react": "36.3.0",
     "zod": "^4.6.7",
     "dexie": "4.4.7",
@@ -60,6 +61,10 @@
     "zod": "^4.6.7",
     "dexie": "4.4.7"
 >>>>>>> origin/feat/dexie-offline-data-sync
+=======
+    "ag-grid-react": "36.3.0",
+    "pdfmake": "0.3.13"
+>>>>>>> origin/feat/pdfmake-document-engine
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",

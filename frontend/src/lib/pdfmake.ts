@@ -3,9 +3,14 @@ import * as pdfFonts from 'pdfmake/build/vfs_fonts'
 
 type PdfDocumentDefinition = Record<string, unknown>
 type PdfMakeEngine = {
+<<<<<<< HEAD
   addVirtualFileSystem?: (fonts: unknown) => void
   vfs?: Record<string, string>
   createPdf?: (definition: PdfDocumentDefinition) => {
+=======
+  addVirtualFileSystem: (fonts: unknown) => void
+  createPdf: (definition: PdfDocumentDefinition) => {
+>>>>>>> origin/feat/pdfmake-document-engine
     download: (filename?: string) => void
     print: () => void
     open: () => void
@@ -24,6 +29,7 @@ export interface InstitutionalPdfOptions {
   pageSize?: 'A4' | 'A3' | 'LETTER'
 }
 
+<<<<<<< HEAD
 const pdfMake = (((pdfMakeModule as unknown as { default?: unknown }).default ?? pdfMakeModule) as unknown) as PdfMakeEngine
 const fontBundle = ((pdfFonts as unknown as { default?: unknown }).default ?? pdfFonts) as unknown
 let fontsRegistered = false
@@ -45,6 +51,13 @@ function ensurePdfMakeReady() {
   if (typeof pdfMake.createPdf !== 'function') throw new Error('The bundled PDFMake document engine is unavailable.')
   fontsRegistered = true
 }
+=======
+const pdfMake = pdfMakeModule as unknown as PdfMakeEngine
+
+// PDFMake and its font virtual file system are imported from local npm assets.
+// Generated PDFs therefore work without a CDN or an internet connection.
+pdfMake.addVirtualFileSystem(pdfFonts)
+>>>>>>> origin/feat/pdfmake-document-engine
 
 function buildDefinition(options: InstitutionalPdfOptions): PdfDocumentDefinition {
   const accent = /^#[0-9a-f]{6}$/i.test(options.accentColor ?? '')
@@ -96,6 +109,7 @@ function safeFilename(filename: string | undefined, title: string): string {
 }
 
 export function downloadInstitutionalPdf(options: InstitutionalPdfOptions): void {
+<<<<<<< HEAD
   ensurePdfMakeReady()
   pdfMake.createPdf!(buildDefinition(options)).download(safeFilename(options.filename, options.title))
 }
@@ -108,4 +122,15 @@ export function printInstitutionalPdf(options: InstitutionalPdfOptions): void {
 export function openInstitutionalPdf(options: InstitutionalPdfOptions): void {
   ensurePdfMakeReady()
   pdfMake.createPdf!(buildDefinition(options)).open()
+=======
+  pdfMake.createPdf(buildDefinition(options)).download(safeFilename(options.filename, options.title))
+}
+
+export function printInstitutionalPdf(options: InstitutionalPdfOptions): void {
+  pdfMake.createPdf(buildDefinition(options)).print()
+}
+
+export function openInstitutionalPdf(options: InstitutionalPdfOptions): void {
+  pdfMake.createPdf(buildDefinition(options)).open()
+>>>>>>> origin/feat/pdfmake-document-engine
 }

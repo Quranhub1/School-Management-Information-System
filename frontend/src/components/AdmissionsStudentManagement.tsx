@@ -5,7 +5,10 @@ import { AlumniManagement } from './AlumniManagement'
 import { getStudents, type Student } from '../api/students'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
+<<<<<<< HEAD
 import { downloadElementAsPng } from '../lib/printCapture'
+=======
+>>>>>>> origin/feat/pdfmake-document-engine
 
 type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'alumni'
 type AccessProfile = 'receptionist' | 'records' | 'department' | 'general'
@@ -190,10 +193,13 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
               <button type="button" className="secondary-button" onClick={() => setSelectedCardStudentIds([])} disabled={selectedCardStudentIds.length === 0}>Clear selection</button>
               <button type="button" className="secondary-button" onClick={printSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Print selected cards ({selectedCardStudentIds.length})</button>
               <button type="button" onClick={downloadSelectedCards} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PDF</button>
+<<<<<<< HEAD
               <button type="button" className="secondary-button" onClick={() => {
                 const element = document.getElementById('print-queue-section')
                 if (element) void downloadElementAsPng(element, { filename: `student-${cardType}-id-cards.png` }).catch(error => setCardQueueError(error instanceof Error ? error.message : 'Unable to capture ID cards.'))
               }} disabled={cardQueueLoading || selectedCardStudentIds.length === 0}>Download PNG</button>
+=======
+>>>>>>> origin/feat/pdfmake-document-engine
             </div>
             {cardQueueLoading ? <p className="empty">Loading registered students…</p> : cardStudents.length === 0 ? <p className="empty">No registered students are available for ID card printing.</p> : (
               <div className="table-wrap no-print">

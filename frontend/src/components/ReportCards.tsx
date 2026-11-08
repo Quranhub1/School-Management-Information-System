@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { getStudentReportCard, type StudentReportCard } from '../api/reports'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
+<<<<<<< HEAD
 import { exportRowsToExcel } from '../lib/spreadsheets'
 import { downloadElementAsPng } from '../lib/printCapture'
+=======
+>>>>>>> origin/feat/pdfmake-document-engine
 
 interface ReportCardsProps { canManage?: boolean }
 
@@ -72,11 +75,14 @@ export function ReportCards({ canManage = false }: ReportCardsProps) {
         </div>
           <button className="secondary-button" onClick={printReport} disabled={!report}>Print Report Card</button>
           <button className="secondary-button" onClick={downloadReport} disabled={!studentId.trim() || !report}>Download PDF</button>
+<<<<<<< HEAD
           <button className="secondary-button" onClick={() => { if (report?.results.length) exportRowsToExcel(report.results, `report-card-${report.studentNumber}`, 'Results') }} disabled={!report || report.results.length === 0}>Export Excel</button>
           <button className="secondary-button" onClick={() => {
             const element = document.getElementById('report-card-print')
             if (element && report) void downloadElementAsPng(element, { filename: `report-card-${report.studentNumber}.png` }).catch(error => window.alert(error instanceof Error ? error.message : 'Unable to capture report card.'))
           }} disabled={!report}>Download Image</button>
+=======
+>>>>>>> origin/feat/pdfmake-document-engine
       </div>
 
       <form className="student-form" onSubmit={e => { e.preventDefault(); void load() }} style={{ marginBottom: 22 }}>

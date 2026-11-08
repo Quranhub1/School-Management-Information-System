@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
 import { AgGridTable } from './AgGridTable';
 import type { ColDef } from 'ag-grid-community';
@@ -11,15 +12,26 @@ import { searchAuditLogs, type AuditLog } from '../api/auditLog';
 import { AgGridTable } from './AgGridTable';
 import type { ColDef } from 'ag-grid-community';
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+import { searchAuditLogs, searchFinanceAuditEvents, searchWorkflowHistory, type AuditLog } from '../api/auditLog';
+import { AgGridTable } from './AgGridTable';
+import type { ColDef } from 'ag-grid-community';
+import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake';
+import { useInstitutionSettings } from './InstitutionSettingsContext';
+>>>>>>> origin/feat/pdfmake-document-engine
 
 const auditColumns: ColDef<AuditLog>[] = [
   { field: 'userId', headerName: 'User', valueFormatter: p => p.value || '—' },
   { field: 'action', headerName: 'Action' },
 <<<<<<< HEAD
+<<<<<<< HEAD
   { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? p.data.entityType + ' (' + p.data.entityId + ')' : p.data.entityType : '—' },
 =======
   { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? `${p.data.entityType} (${p.data.entityId})` : p.data.entityType : '—' },
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+  { field: 'entityType', headerName: 'Entity', valueGetter: p => p.data ? p.data.entityId ? p.data.entityType + ' (' + p.data.entityId + ')' : p.data.entityType : '—' },
+>>>>>>> origin/feat/pdfmake-document-engine
   { field: 'changes', headerName: 'Changes', valueFormatter: p => p.value || '—', minWidth: 220 },
   { field: 'ipAddress', headerName: 'IP Address', valueFormatter: p => p.value || '—' },
   { field: 'timestamp', headerName: 'Timestamp', valueFormatter: p => p.value ? new Date(String(p.value)).toLocaleString('en-UG') : '—', minWidth: 180 },
@@ -192,8 +204,12 @@ export function AuditLogManagement() {
       <div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div>
       <div className="form-actions">
         <button type="button" className="secondary-button" onClick={printAuditPdf} disabled={loading || logs.length === 0}>Print PDF</button>
+<<<<<<< HEAD
         <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>
         <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
+=======
+        <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>\n        <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
+>>>>>>> origin/feat/pdfmake-document-engine
         <button type="button" className="secondary-button" onClick={() => void exportWorkflowHistoryPdf()} disabled={workflowAuditLoading}>{workflowAuditLoading ? "Preparing…" : "Download Workflow Audit PDF"}</button>
       </div>
     </div>
@@ -207,8 +223,12 @@ export function AuditLogManagement() {
     {error && <div className="error" role="alert">{error}</div>}
     {loading ? <LoadingSpinner label="Loading audit logs…" /> : <AgGridTable rows={logs} columns={auditColumns} getRowId={p => p.data.id} exportFileName="smis-audit-log" height={560} />}
 <<<<<<< HEAD
+<<<<<<< HEAD
   </section>;
 =======
   </section>
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+  </section>;
+>>>>>>> origin/feat/pdfmake-document-engine
 }
