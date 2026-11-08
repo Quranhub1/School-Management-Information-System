@@ -52,8 +52,6 @@ export function AgGridTable<TData extends object>({
     fontSize: 13,
     headerFontSize: 12,
     headerFontWeight: 700,
-    rowHeight: 38,
-    headerHeight: 40,
     borderRadius: 0,
     wrapperBorderRadius: 0,
     spacing: 6,
@@ -67,6 +65,8 @@ export function AgGridTable<TData extends object>({
           rowData={rows}
           columnDefs={columns}
           defaultColDef={defaultColDef}
+          rowHeight={38}
+          headerHeight={40}
           pagination
           paginationPageSize={pageSize}
           paginationPageSizeSelector={[10, 25, 50, 100]}
