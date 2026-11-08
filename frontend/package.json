@@ -24,6 +24,7 @@
     "tailwind-merge": "^3.3.1",
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+<<<<<<< HEAD
     "chart.js": "4.6.1",
     "ag-grid-community": "36.3.0",
 <<<<<<< HEAD
@@ -39,6 +40,9 @@
 =======
     "ag-grid-react": "36.3.0"
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+    "zod": "^4.6.7"
+>>>>>>> origin/feat/central-zod-validation
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",
