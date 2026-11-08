@@ -1,5 +1,12 @@
 import Dexie, { type Table } from 'dexie'
 
+export type QueryCacheRecord<T = unknown> = {
+  key: string
+  savedAt: number
+  buster: string
+  state: T
+}
+
 export type CacheEntry<T = unknown> = {
   key: string
   scope: string
@@ -43,6 +50,7 @@ class SmisOfflineDatabase extends Dexie {
   cacheEntries!: Table<CacheEntry, string>
   syncOperations!: Table<SyncOperation, string>
   syncConflicts!: Table<SyncConflict, string>
+  queryCache!: Table<QueryCacheRecord, string>
 
   // Retain the v1 stores during the upgrade so existing browser data is not
   // dropped. The legacy queue is deliberately no longer replayed.
@@ -64,6 +72,19 @@ class SmisOfflineDatabase extends Dexie {
       cacheEntries: '&key, scope, expiresAt, updatedAt',
       syncOperations: '&id, scope, domain, status, createdAt, updatedAt, idempotencyKey, [scope+status]',
       syncConflicts: '&id, operationId, scope, detectedAt, resolutionStatus',
+    })
+    // TanStack Query uses a dedicated store in the same Dexie database. Version 3
+    // avoids opening a second IndexedDB connection with a conflicting v2 schema.
+    this.version(3).stores({
+      queue: '++id, createdAt',
+      students: '&id, studentCode',
+      attendance: '&id, sessionId',
+      finance: '&id',
+      settings: '&key',
+      cacheEntries: '&key, scope, expiresAt, updatedAt',
+      syncOperations: '&id, scope, domain, status, createdAt, updatedAt, idempotencyKey, [scope+status]',
+      syncConflicts: '&id, operationId, scope, detectedAt, resolutionStatus',
+      queryCache: '&key',
     })
   }
 }
@@ -97,9 +118,25 @@ export async function invalidateCachedRead(key: string, scope?: string): Promise
   await offlineDb.cacheEntries.filter(entry => entry.key.endsWith(`::${key}`)).delete()
 }
 
+export async function readQueryCache<T = unknown>(key: string): Promise<QueryCacheRecord<T> | undefined> {
+  return offlineDb.queryCache.get(key) as Promise<QueryCacheRecord<T> | undefined>
+}
+
+export async function writeQueryCache<T>(record: QueryCacheRecord<T>): Promise<void> {
+  await offlineDb.queryCache.put(record as QueryCacheRecord)
+}
+
+export async function removeQueryCache(key: string): Promise<void> {
+  await offlineDb.queryCache.delete(key)
+}
+
 export async function clearCacheForUser(username: string): Promise<void> {
-  const prefix = `${username.trim().toLowerCase()}|`
-  await offlineDb.cacheEntries.where('scope').startsWith(prefix).delete()
+  const normalized = username.trim().toLowerCase()
+  const prefix = `${normalized}|`
+  await Promise.all([
+    offlineDb.cacheEntries.where('scope').startsWith(prefix).delete(),
+    offlineDb.queryCache.delete(`query-cache:${username}`),
+  ])
 }
 
 function containsFinancialPayload(value: unknown, depth = 0): boolean {

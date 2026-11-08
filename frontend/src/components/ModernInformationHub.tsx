@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ArrowRight, ArrowUpRight, BellRing, BookOpenCheck, BrainCircuit, CalendarClock, CheckCircle2, CircleDollarSign, GraduationCap, RefreshCw, Search, ShieldAlert, UsersRound, Wallet, X } from 'lucide-react'
-import { getModernDashboard, getStudentRisk, getStudent360, getWorkflowSummary, type ModernDashboard, type StudentRisk, type Student360, type WorkflowSummary } from '../api/modern'
+import { modernQueryKeys, useModernDashboardQuery, useStudentRiskQuery, useStudent360Query, useWorkflowSummaryQuery } from '../api/modern'
+import { useQueryClient } from '@tanstack/react-query'
 import { getAccessToken } from '../api/auth'
 import { DoughnutChart, BarChart } from './charts'
 import './ModernInformationHub.css'
@@ -13,30 +14,30 @@ function goTo(module: Destination) {
 }
 
 export function ModernInformationHub() {
-  const [dashboard, setDashboard] = useState<ModernDashboard | null>(null)
-  const [risk, setRisk] = useState<StudentRisk[]>([])
-  const [workflow, setWorkflow] = useState<WorkflowSummary | null>(null)
-  const [selected, setSelected] = useState<Student360 | null>(null)
+  const queryClient = useQueryClient()
+  const dashboardQuery = useModernDashboardQuery()
+  const riskQuery = useStudentRiskQuery()
+  const workflowQuery = useWorkflowSummaryQuery()
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
+  const student360Query = useStudent360Query(selectedStudentId)
+  const dashboard = dashboardQuery.data ?? null
+  const risk = riskQuery.data ?? []
+  const workflow = workflowQuery.data ?? null
+  const selected = student360Query.data ?? null
+  const loading = dashboardQuery.isPending || dashboardQuery.isFetching || riskQuery.isPending || riskQuery.isFetching || workflowQuery.isPending || workflowQuery.isFetching
+  const queryError = dashboardQuery.error ?? riskQuery.error ?? workflowQuery.error ?? student360Query.error
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
   const [assistantLoading, setAssistantLoading] = useState(false)
 
   async function refresh() {
-    setLoading(true)
-    try {
-      setError('')
-      const [d, r, w] = await Promise.all([getModernDashboard(), getStudentRisk(), getWorkflowSummary()])
-      setDashboard(d); setRisk(r); setWorkflow(w)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load dashboard data.')
-    } finally { setLoading(false) }
+    setError('')
+    await queryClient.invalidateQueries({ queryKey: modernQueryKeys.all })
   }
-  useEffect(() => { void refresh() }, [])
-  async function openStudent(id: string) {
-    try { setSelected(await getStudent360(id)) }
-    catch (e) { setError(e instanceof Error ? e.message : 'Unable to load student profile.') }
+
+  function openStudent(id: string) {
+    setSelectedStudentId(id)
   }
   async function askAssistant() {
     if (!question.trim() || assistantLoading) return
@@ -63,7 +64,7 @@ export function ModernInformationHub() {
       <div><p className="eyebrow">SCHOOL OVERVIEW</p><h2>Dashboard</h2><p>Your institution at a glance. Review key indicators and follow up on work that needs attention.</p></div>
       <button className="dashboard-refresh" onClick={() => void refresh()} disabled={loading}><RefreshCw size={16} className={loading ? 'dashboard-spin' : ''}/>{loading ? 'Refreshing' : 'Refresh data'}</button>
     </div>
-    {error && <div className="dashboard-alert" role="alert"><ShieldAlert size={18}/><span>{error}</span><button onClick={() => setError('')} aria-label="Dismiss message"><X size={16}/></button></div>}
+    {(error || queryError) && <div className="dashboard-alert" role="alert"><ShieldAlert size={18}/><span>{error || (queryError instanceof Error ? queryError.message : 'Unable to load dashboard data.')}</span><button onClick={() => setError('')} aria-label="Dismiss message"><X size={16}/></button></div>}
     <div className="dashboard-kpi-grid">
       {metrics.map((metric, index) => {
         const Icon = metric.icon
@@ -115,7 +116,7 @@ export function ModernInformationHub() {
       </article>
     </div>
     {selected && <div className="student360-modal" role="dialog" aria-modal="true" aria-label="Student profile"><div className="student360-card dashboard-student-modal">
-      <button className="close-button" onClick={() => setSelected(null)} aria-label="Close student profile">×</button><p className="eyebrow">STUDENT PROFILE</p><h3>{selected.name}</h3><p>{selected.studentNumber} · {selected.status}</p>
+      <button className="close-button" onClick={() => setSelectedStudentId(null)} aria-label="Close student profile">×</button><p className="eyebrow">STUDENT PROFILE</p><h3>{selected.name}</h3><p>{selected.studentNumber} · {selected.status}</p>
       <div className="student360-grid"><div><span>Attendance</span><b>{selected.attendanceRate}%</b></div><div><span>Assessment</span><b>{selected.averageAssessment}%</b></div><div><span>Fees outstanding</span><b>UGX {money(selected.outstanding)}</b></div><div><span>Placements</span><b>{selected.completedPlacements}/{selected.placementCount}</b></div><div><span>Certificates</span><b>{selected.certificateCount}</b></div><div><span>Admission documents</span><b>{selected.admissionDocumentCount}</b></div></div>
       <div className="student360-details"><p><b>Phone:</b> {selected.phone || 'Not recorded'}</p><p><b>Email:</b> {selected.email || 'Not recorded'}</p><p><b>Gender:</b> {selected.gender || 'Not recorded'}</p></div>
     </div></div>}
