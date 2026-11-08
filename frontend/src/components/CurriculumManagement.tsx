@@ -426,6 +426,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 <<<<<<< HEAD
           <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })); setCatalogueSearch(''); setAwardFilter('all'); setVerificationFilter('all') }}>
             <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
+<<<<<<< HEAD
 =======
           <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setCf(current => ({ ...current, programmeId: '' })) }}>
 <<<<<<< HEAD
@@ -437,6 +438,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 =======
             <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
 >>>>>>> origin/fix/remove-unmeb-curriculum-authority
+=======
+>>>>>>> origin/fix/remove-unmeb-dropdown-main
           </select>
         </label>
       </div>
@@ -471,6 +474,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 <<<<<<< HEAD
 <<<<<<< HEAD
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}
+<<<<<<< HEAD
 =======
           {authority === 'School-based' && <p className="empty">School-based courses are taken from the curricula and courses you have created for the school.</p>}
 <<<<<<< HEAD
@@ -484,6 +488,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 >>>>>>> origin/feat/authority-separated-academic-workflows
 =======
 >>>>>>> origin/fix/remove-unmeb-curriculum-authority
+=======
+>>>>>>> origin/fix/remove-unmeb-dropdown-main
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
@@ -590,6 +596,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 <<<<<<< HEAD
           {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}
           {authority === 'UHPAB' && renderCatalogue(UHPAB_SHORT_COURSES, 'ShortCourse')}
+<<<<<<< HEAD
 =======
           {authority === 'School-based' && <p className="empty">School-based short courses are managed in your saved curricula.</p>}
 =======
@@ -608,6 +615,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 >>>>>>> origin/fix/remove-uhpab-short-course-disclaimer
 =======
 >>>>>>> origin/fix/remove-unmeb-curriculum-authority
+=======
+>>>>>>> origin/fix/remove-unmeb-dropdown-main
 
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>

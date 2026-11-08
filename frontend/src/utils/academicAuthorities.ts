@@ -1,5 +1,6 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB'
 =======
 export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB' | 'UNMEB'
@@ -7,6 +8,9 @@ export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB' | 'UNMEB'
 =======
 export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB'
 >>>>>>> origin/fix/remove-unmeb-curriculum-authority
+=======
+export type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB'
+>>>>>>> origin/fix/remove-unmeb-dropdown-main
 
 export const ACADEMIC_AUTHORITY_OPTIONS: { value: AcademicAuthority; label: string }[] = [
   { value: 'School-based', label: 'School-based curriculum' },
@@ -14,11 +18,14 @@ export const ACADEMIC_AUTHORITY_OPTIONS: { value: AcademicAuthority; label: stri
   { value: 'UVTAB', label: 'UVTAB — Vocational & technical' },
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   { value: 'UNMEB', label: 'UNMEB — Legacy records' },
 >>>>>>> origin/feat/authority-separated-academic-workflows
 =======
 >>>>>>> origin/fix/remove-unmeb-curriculum-authority
+=======
+>>>>>>> origin/fix/remove-unmeb-dropdown-main
 ]
 
 export function resolveAcademicAuthority(regulator?: string | null): AcademicAuthority {
@@ -27,11 +34,14 @@ export function resolveAcademicAuthority(regulator?: string | null): AcademicAut
   if (value.includes('UVTAB')) return 'UVTAB'
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   if (value.includes('UNMEB')) return 'UNMEB'
 >>>>>>> origin/feat/authority-separated-academic-workflows
 =======
 >>>>>>> origin/fix/remove-unmeb-curriculum-authority
+=======
+>>>>>>> origin/fix/remove-unmeb-dropdown-main
   return 'School-based'
 }
 
