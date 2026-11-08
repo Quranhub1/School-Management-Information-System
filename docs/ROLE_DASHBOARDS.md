@@ -34,6 +34,7 @@ The table is a content standard, not a claim that all listed dashboards have alr
 
 ## Visualization rules
 
+- Use **Chart.js** as the shared charting engine for dashboard visualisations. It is installed as a local npm dependency and bundled with the frontend; never load it from a CDN.
 - Use **line charts** for trends over time, **bar charts** for comparisons between classes/departments/periods, and **donut charts** only for meaningful parts of a whole.
 - Use KPI cards for concise totals and status counts; use tables for actionable detail and drill-down.
 - Prefer institution-configured academic periods, dates and eligibility thresholds instead of hardcoded assumptions.
