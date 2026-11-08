@@ -24,7 +24,7 @@ export function ModernInformationHub() {
   const risk = riskQuery.data ?? []
   const workflow = workflowQuery.data ?? null
   const selected = student360Query.data ?? null
-  const loading = dashboardQuery.isPending || riskQuery.isPending || workflowQuery.isPending
+  const loading = dashboardQuery.isFetching || riskQuery.isFetching || workflowQuery.isFetching
   const queryError = dashboardQuery.error ?? riskQuery.error ?? workflowQuery.error ?? student360Query.error
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
