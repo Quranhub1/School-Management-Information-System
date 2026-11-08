@@ -20,7 +20,6 @@ export default function MobileMoneyPayments() {
   const [submitted, setSubmitted] = useState<MobileMoneyTransaction | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [externalRef, setExternalRef] = useState('');
-  const [showPaymentProviderMsg, setShowPaymentProviderMsg] = useState('');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
@@ -145,13 +144,13 @@ export default function MobileMoneyPayments() {
 
       {submitted && (
         <div className="panel" style={{ marginBottom: '24px', padding: '20px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-          <h3 style={{ marginTop: 0, color: '#166534' }}>Transaction Initiated</h3>
+          <h3 style={{ marginTop: 0, color: '#166534' }}>Payment Awaiting Verification</h3>
           <p><strong>Reference:</strong> {submitted.transactionRef}</p>
           <p><strong>Student:</strong> {submitted.studentId}</p>
           <p><strong>Amount:</strong> {formatAmount(submitted.amount)}</p>
           <p><strong>Provider:</strong> {submitted.provider} Mobile Money</p>
           <p><strong>Phone:</strong> {submitted.phoneNumber}</p>
-          <p style={{ fontWeight: 600, color: '#166534' }}>Waiting for confirmation...</p>
+          <p style={{ fontWeight: 600, color: '#92400e' }}>No MTN/Airtel payment prompt has been sent. Verify receipt in the operator portal before confirming here.</p>
 
           {!showConfirm ? (
             <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
@@ -374,33 +373,6 @@ export default function MobileMoneyPayments() {
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '24px' }}>
-        <div className="panel-heading">
-          <h3>Provider Integration Status</h3>
-        </div>
-        <div style={{ padding: '20px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}>
-          <p style={{ marginTop: 0, fontWeight: 600, color: '#92400e' }}>Automatic MTN and Airtel provider API credentials are not configured. Transactions are recorded as pending and must only be confirmed after Finance staff verify the provider receipt in the operator portal.</p>
-          <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
-            <button
-              className="secondary-button"
-              onClick={() => setShowPaymentProviderMsg('Automatic provider API integration is not connected. Do not treat a pending request as money received.')}
-            >
-              Configure Payment Provider
-            </button>
-            <button
-              className="secondary-button"
-              onClick={() => setShowPaymentProviderMsg('Provider transaction synchronization is not enabled. Verify the payment directly with MTN or Airtel before confirming it here.')}
-            >
-              Sync with Payment Provider
-            </button>
-          </div>
-          {showPaymentProviderMsg && (
-            <div style={{ marginTop: '16px', padding: '12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '6px', color: '#92400e' }}>
-              {showPaymentProviderMsg}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+      <p className="finance-muted">Manual verification only. Automatic MTN/Airtel STK prompts, callbacks and API synchronization are not connected.</p>    </div>
   );
 }
