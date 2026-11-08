@@ -5335,6 +5335,19 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("SchoolPaymentNotifications");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Finance.SchoolPaymentNotification", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SchoolManagement.Domain.Finance.StudentInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("StudentInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentInvoice", b =>
                 {
                     b.Navigation("Discounts");
