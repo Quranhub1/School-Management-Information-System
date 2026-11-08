@@ -1,0 +1,212 @@
+import { z } from "zod";
+import { identifierSchema, requiredTextSchema } from "./common.schema";
+
+/**
+ * Boundary schemas for API modules migrated to runtime validation.
+ * Loose objects preserve additive server fields while checking required contract fields.
+ */
+export const admissionResponseSchema = z.looseObject({
+  id: identifierSchema,
+  applicantId: identifierSchema,
+  programmeId: identifierSchema,
+  academicYearId: identifierSchema,
+  intakeId: identifierSchema,
+  status: requiredTextSchema,
+  decidedAt: z.string().nullable().optional(),
+});
+export const admissionDecisionResponseSchema = z.looseObject({
+  id: identifierSchema,
+  admissionId: identifierSchema,
+  decision: requiredTextSchema,
+  reason: z.string().nullable().optional(),
+  decidedBy: z.string().nullable().optional(),
+});
+export const createAdmissionRequestSchema = z.object({
+  applicantId: identifierSchema,
+  programmeId: identifierSchema,
+  academicYearId: identifierSchema,
+  intakeId: identifierSchema,
+});
+export const updateAdmissionRequestSchema = z.object({
+  id: identifierSchema,
+  status: requiredTextSchema.optional(),
+});
+export const admissionDecisionRequestSchema = z.object({
+  decision: requiredTextSchema,
+  reason: z.string().trim().optional(),
+  decidedBy: z.string().trim().optional(),
+});
+
+export const payrollGenerateRequestSchema = z.object({
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(2000).max(2100),
+});
+export const payrollPaymentRequestSchema = z.object({
+  paymentMethod: requiredTextSchema.optional(),
+});
+export const payrollAdjustmentRequestSchema = z.object({
+  allowances: z.number().int().nonnegative(),
+  deductions: z.number().int().nonnegative(),
+});
+
+export const streamCreateRequestSchema = z.object({
+  academicClassId: identifierSchema,
+  code: requiredTextSchema,
+  name: z.string().trim().optional(),
+  capacity: z.number().int().positive().optional(),
+});
+export const streamResponseSchema = z.looseObject({
+  id: identifierSchema,
+  academicClassId: identifierSchema,
+  code: requiredTextSchema,
+  name: z.string().nullable().optional(),
+  capacity: z.number().int().nullable().optional(),
+  isActive: z.boolean(),
+});
+
+export const sendSmsRequestSchema = z.object({
+  subject: z.string().trim().optional(),
+  message: requiredTextSchema,
+  recipientType: z.string().trim().optional(),
+  recipientIds: z.array(identifierSchema).min(1, "Select at least one recipient."),
+  templateName: z.string().trim().optional(),
+});
+export const sendBulkSmsRequestSchema = z.object({
+  subject: z.string().trim().optional(),
+  message: requiredTextSchema,
+  recipientType: requiredTextSchema,
+  classFilter: z.string().trim().optional(),
+  templateName: z.string().trim().optional(),
+});
+export const smsSendResponseSchema = z.looseObject({
+  success: z.boolean(),
+  message: z.string(),
+  count: z.number().int().nonnegative(),
+});
+
+export const payrollRecordResponseSchema = z.looseObject({
+  id: identifierSchema,
+  staffMemberId: identifierSchema,
+  month: z.number().int().min(1).max(12),
+  year: z.number().int(),
+  basicSalary: z.number().finite(),
+  allowances: z.number().finite(),
+  deductions: z.number().finite(),
+  netPay: z.number().finite(),
+  paymentDate: z.string().nullable(),
+  status: requiredTextSchema,
+  paymentMethod: z.string().optional(),
+  reference: z.string().optional(),
+});
+
+export const studentCreateRequestSchema = z.object({
+  studentNumber: identifierSchema,
+  firstName: requiredTextSchema.min(2),
+  lastName: requiredTextSchema.min(2),
+  otherNames: z.string().trim().optional(),
+  dateOfBirth: z.iso.date().optional(),
+  gender: z.string().trim().optional(),
+  nationalId: z.string().trim().optional(),
+  phoneNumber: z.string().trim().optional(),
+  email: z.email().optional().or(z.literal("")),
+  campusId: z.string().trim().optional(),
+});
+export const studentResponseSchema = z.looseObject({
+  id: identifierSchema,
+  studentNumber: identifierSchema,
+  firstName: requiredTextSchema,
+  lastName: requiredTextSchema,
+  status: requiredTextSchema,
+  createdAt: z.string(),
+});
+
+export const createInvoiceRequestSchema = z.object({
+  studentId: identifierSchema,
+  feeStructureId: identifierSchema.optional(),
+  invoiceNumber: requiredTextSchema,
+  feeType: requiredTextSchema,
+  amount: z.number().int().positive().optional(),
+  currency: z.string().trim().min(3).max(3).optional(),
+});
+export const recordPaymentRequestSchema = z.object({
+  amount: z.number().int().positive(),
+  receiptNumber: requiredTextSchema,
+  paymentMethod: requiredTextSchema,
+  reference: z.string().trim().optional(),
+  currency: z.string().trim().min(3).max(3).optional(),
+});
+export const invoiceResponseSchema = z.looseObject({
+  id: identifierSchema,
+  studentId: identifierSchema,
+  invoiceNumber: requiredTextSchema,
+  feeType: requiredTextSchema,
+  amount: z.number().finite(),
+  paidAmount: z.number().finite(),
+  balance: z.number().finite(),
+  currency: requiredTextSchema,
+  status: requiredTextSchema,
+  issuedAt: z.string(),
+});
+
+export const staffCreateRequestSchema = z.object({
+  staffNumber: identifierSchema,
+  firstName: requiredTextSchema.min(2),
+  lastName: requiredTextSchema.min(2),
+  employmentType: requiredTextSchema,
+  staffType: requiredTextSchema,
+  nationalId: z.string().trim().optional(),
+  phoneNumber: z.string().trim().optional(),
+  email: z.email().optional().or(z.literal("")),
+  departmentId: z.string().trim().nullable().optional(),
+  jobTitle: z.string().trim().nullable().optional(),
+  highestQualification: z.string().trim().nullable().optional(),
+  speciality: z.string().trim().nullable().optional(),
+  professionalRegistration: z.string().trim().nullable().optional(),
+  courseUnitIds: z.array(identifierSchema).optional(),
+});
+export const leaveRequestSchema = z.object({
+  staffMemberId: identifierSchema,
+  leaveType: requiredTextSchema,
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+  reason: requiredTextSchema.min(5),
+}).refine((value) => value.endDate >= value.startDate, {
+  path: ["endDate"],
+  message: "End date cannot be before start date.",
+});
+
+export const inventoryRegisterSaveRequestSchema = z.object({
+  columns: z.array(z.object({ id: identifierSchema, label: requiredTextSchema })),
+  rows: z.array(z.object({ id: identifierSchema, values: z.record(z.string(), z.string()) })),
+});
+export const inventoryRegisterResponseSchema = z.looseObject({
+  sectionId: identifierSchema,
+  columns: z.array(z.object({ id: identifierSchema, label: requiredTextSchema })),
+  rows: z.array(z.object({ id: identifierSchema, values: z.record(z.string(), z.string()) })),
+  updatedAtUtc: z.string(),
+});
+
+export const libraryBookCreateRequestSchema = z.object({
+  isbn: requiredTextSchema.min(10).max(17),
+  title: requiredTextSchema,
+  author: requiredTextSchema,
+  publisher: z.string().trim().optional(),
+  totalCopies: z.number().int().positive(),
+});
+export const libraryLoanCreateRequestSchema = z.object({
+  bookId: identifierSchema,
+  studentId: identifierSchema,
+  dueAtUtc: z.string().min(1),
+});
+
+export const bulkImportRequestSchema = z.object({
+  entityType: requiredTextSchema,
+  csvData: requiredTextSchema,
+});
+export const bulkImportResultSchema = z.looseObject({
+  entityType: requiredTextSchema,
+  successCount: z.number().int().nonnegative(),
+  errorCount: z.number().int().nonnegative(),
+  errors: z.array(z.string()),
+  warnings: z.array(z.string()),
+});
