@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
+import type { ColDef } from 'ag-grid-community';
+import { AgGridTable } from './AgGridTable';
 import { getInventoryRegister, saveInventoryRegister, type InventoryColumn, type InventoryRow } from '../api/inventoryRegisters'
 
 type InventorySection = { id: string; name: string; group: string }
@@ -142,6 +144,33 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
     }))
   }
 
+  const gridColumns = useMemo<ColDef<InventoryRow>[]>(() => [
+    { headerName: 'S/N', colId: 'serial', width: 78, sortable: false, filter: false, valueGetter: params => params.node?.rowIndex == null ? '' : params.node.rowIndex + 1 },
+    ...register.columns.map(column => ({
+      headerName: column.label,
+      colId: column.id,
+      minWidth: column.id === 'description' ? 220 : 140,
+      editable: canEdit,
+      valueGetter: (params: { data?: InventoryRow }) => params.data?.values[column.id] ?? '',
+      valueSetter: (params: { data: InventoryRow; newValue: unknown }) => {
+        updateCell(params.data.id, column.id, String(params.newValue ?? ''));
+        return true;
+      },
+      cellEditor: 'agLargeTextCellEditor',
+      cellEditorPopup: true,
+    })),
+    ...(canEdit ? [{
+      headerName: 'Actions',
+      colId: 'actions',
+      minWidth: 130,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: { data?: InventoryRow }) => params.data
+        ? <button className="secondary-button" type="button" onClick={() => deleteRow(params.data!.id)}>Delete row</button>
+        : null,
+    } as ColDef<InventoryRow>] : []),
+  ], [register.columns, canEdit]);
+
   return <section className="panel inventory-register-panel" aria-label="School inventory register">
     <div className="panel-heading">
       <div>
@@ -199,38 +228,32 @@ export function InventoryManagement({ canManage }: { canManage?: boolean; initia
         {canEdit && <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>}
       </div>
       {loading && <LoadingSpinner label="Loading register from database…" />}
-      <div className="table-wrap inventory-table-wrap inventory-spreadsheet-wrap">
-        <table className="compact-table inventory-spreadsheet">
-          <thead><tr>
-            <th className="inventory-serial-column">S/N</th>
-            {register.columns.map(column => <th key={column.id}>
-              {renamingColumn === column.id
-                ? <form className="inventory-rename-column" onSubmit={event => { event.preventDefault(); renameColumn(column.id) }}>
-                    <input autoFocus aria-label="New column name" value={renamedLabel} onChange={event => setRenamedLabel(event.target.value)} />
-                    <button className="secondary-button" type="submit">Save</button>
-                    <button className="secondary-button" type="button" onClick={() => setRenamingColumn(null)}>Cancel</button>
-                  </form>
-                : <div className="inventory-column-heading"><span>{column.label}</span>{canEdit && <div className="inventory-column-actions">
-                    <button type="button" title={`Rename ${column.label}`} onClick={() => { setRenamingColumn(column.id); setRenamedLabel(column.label) }}>Rename</button>
-                    {!['name', 'description', 'quantity', 'condition', 'location'].includes(column.id) && <button type="button" title={`Delete ${column.label}`} onClick={() => deleteColumn(column.id)}>Remove</button>}
-                  </div>}</div>}
-            </th>)}
-            {canEdit && <th>Actions</th>}
-          </tr></thead>
-          <tbody>
-            {!loadError && register.rows.map((row, index) => <tr key={row.id}>
-              <td className="inventory-serial-cell">{index + 1}</td>
-              {register.columns.map(column => <td key={column.id}>
-                {canEdit
-                  ? <input className="inventory-cell-input" aria-label={`Row ${index + 1}, ${column.label}`} value={row.values[column.id] ?? ''} onChange={event => updateCell(row.id, column.id, event.target.value)} placeholder="—" type={column.id === 'quantity' ? 'number' : 'text'} min={column.id === 'quantity' ? 0 : undefined} step={column.id === 'quantity' ? '0.001' : undefined} />
-                  : <span>{row.values[column.id] || '—'}</span>}
-              </td>)}
-              {canEdit && <td><button className="secondary-button" type="button" onClick={() => deleteRow(row.id)}>Delete row</button></td>}
-            </tr>)}
-            {!loading && !loadError && register.rows.length === 0 && <tr><td colSpan={register.columns.length + (canEdit ? 2 : 1)} className="inventory-empty-cell">No rows yet for {section.name}. {canEdit ? 'Select “Add row” to start entering items.' : ''}</td></tr>}
-          </tbody>
-        </table>
-      </div>
+      {canEdit && <div className="inventory-column-tools">
+        <div className="inventory-column-heading-list">
+          {register.columns.map(column => <div className="inventory-column-heading" key={column.id}>
+            <span>{column.label}</span>
+            <div className="inventory-column-actions">
+              <button type="button" title={`Rename ${column.label}`} onClick={() => { setRenamingColumn(column.id); setRenamedLabel(column.label) }}>Rename</button>
+              {!['name', 'description', 'quantity', 'condition', 'location'].includes(column.id) && <button type="button" title={`Delete ${column.label}`} onClick={() => deleteColumn(column.id)}>Remove</button>}
+            </div>
+          </div>)}
+        </div>
+        {renamingColumn && <form className="inventory-rename-column" onSubmit={event => { event.preventDefault(); renameColumn(renamingColumn) }}>
+          <input aria-label="New column name" value={renamedLabel} onChange={event => setRenamedLabel(event.target.value)} />
+          <button className="secondary-button" type="submit">Save heading</button>
+          <button className="secondary-button" type="button" onClick={() => setRenamingColumn(null)}>Cancel</button>
+        </form>}
+      </div>}
+      {!loading && !loadError && <AgGridTable
+        rows={register.rows}
+        columns={gridColumns}
+        height={560}
+        pageSize={25}
+        exportFileName={`inventory-${section.id}`}
+        rowSelection="multiple"
+        editable={canEdit}
+        toolbar
+      />}
       <div className="inventory-spreadsheet-footer">
         <span>{register.rows.length} total rows · {register.columns.length + 1} columns · Auto-numbered S/N</span>
         {canEdit && <button className="secondary-button" type="button" onClick={addRow}>+ Add row</button>}
