@@ -7,7 +7,6 @@ export function StudentNotifications() {
           <h3>Student Notifications</h3>
         </div>
       </div>
-      <p className="empty">Student notifications module is available.</p>
     </section>
   );
 }
