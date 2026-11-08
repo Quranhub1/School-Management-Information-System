@@ -50,9 +50,9 @@ export function QueryCacheProvider({ children }: { children: ReactNode }) {
 
       const storageKey = CACHE_PREFIX + username
       try {
-        const record = await readQueryCache<DehydratedState>(storageKey)
+        const record = await readQueryCache(storageKey)
         if (record && record.buster === CACHE_BUSTER && Date.now() - record.savedAt <= QUERY_CACHE_MAX_AGE && !cancelled) {
-          hydrate(queryClient, record.state)
+          hydrate(queryClient, record.state as DehydratedState)
         } else if (record) {
           await removeQueryCache(storageKey)
         }
@@ -71,7 +71,7 @@ export function QueryCacheProvider({ children }: { children: ReactNode }) {
             shouldDehydrateQuery: isPersistableQuery,
             shouldDehydrateMutation: () => false,
           })
-          void writeQueryCache<DehydratedState>({
+          void writeQueryCache({
             key: storageKey,
             savedAt: Date.now(),
             buster: CACHE_BUSTER,
