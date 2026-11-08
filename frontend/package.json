@@ -42,7 +42,6 @@
     "vitest": "^3.2.4",
     "@tailwindcss/vite": "^4.1.13",
     "tailwindcss": "^4.1.13",
-    "@types/node": "^22.10.2",
-    "@types/pdfmake": "^0.3.3"
+    "@types/node": "^22.10.2"
   }
 }
