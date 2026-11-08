@@ -9,3 +9,14 @@
 }
 .smis-ag-grid-validation strong { display: block; margin-bottom: 4px; }
 .smis-ag-grid-validation ul { margin: 0; padding-left: 18px; }
+
+.smis-ag-grid-overlay {
+  display: flex;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: var(--text-muted, #64748b);
+  font-size: 13px;
+  text-align: center;
+}
