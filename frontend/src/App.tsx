@@ -2,10 +2,14 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, ClipboardList, Database, FileText, GraduationCap, HeartPulse, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, Shield, ShieldCheck, SlidersHorizontal, Stethoscope, UserPlus, UserRound, UsersRound, WalletCards } from 'lucide-react'
 =======
 import { BarChart3, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, GraduationCap, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, ShieldCheck, Stethoscope, UsersRound, WalletCards } from 'lucide-react'
 >>>>>>> origin/feat/multi-campus-management
+=======
+import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, ClipboardList, Database, FileText, GraduationCap, HeartPulse, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, Shield, ShieldCheck, SlidersHorizontal, Stethoscope, UserPlus, UserRound, UsersRound, WalletCards } from 'lucide-react'
+>>>>>>> origin/fix/unique-sidebar-suboption-icons
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
 <<<<<<< HEAD
@@ -514,10 +518,14 @@ return <main className="app-shell">
                     >
                       {!item.child && !isItemActive && <span className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-indigo-400 rounded-r-full opacity-0 scale-y-0 group-hover:opacity-100 group-hover:scale-y-100 transition-all duration-300 origin-center"></span>}
 <<<<<<< HEAD
+<<<<<<< HEAD
                       <Icon size={item.child ? 16 : 18} strokeWidth={isItemActive ? 2.5 : 2} className={"flex-shrink-0 " + (isItemActive ? "text-[#f5efdf]" : "text-[#c9c0aa]")} aria-hidden="true" />
 =======
                       {!item.child && <Icon size={18} strokeWidth={isItemActive ? 2.5 : 2} className={"flex-shrink-0 " + (isItemActive ? "text-white" : "text-slate-400 ")} aria-hidden="true" />}
 >>>>>>> origin/fix/sidebar-rounding-remove-button-motion
+=======
+                      <Icon size={item.child ? 16 : 18} strokeWidth={isItemActive ? 2.5 : 2} className={"flex-shrink-0 " + (isItemActive ? "text-[#f5efdf]" : "text-[#c9c0aa]")} aria-hidden="true" />
+>>>>>>> origin/fix/unique-sidebar-suboption-icons
                       <span className="relative z-10 truncate">{(item.module === 'laboratories' && (r.includes('SchoolWarden') || r.includes('School Warden'))) ? 'School Warden' : item.label}</span>
                     </button>
                   );
