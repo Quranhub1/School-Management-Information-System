@@ -61,7 +61,18 @@ export function BulkOperations() {
     }
   }
 
-  async function handleSheetChange(name: string) {\n    setSelectedSheet(name)\n    if (!selectedFile) return\n    try {\n      const parsed = await parseSpreadsheetFile(selectedFile, name)\n      setPreviewCount(parsed.rows.length)\n    } catch (e) {\n      setError(e instanceof Error ? e.message : 'Unable to preview worksheet.')\n    }\n  }\n\n  async function handleExport(excel = false) {
+  async function handleSheetChange(name: string) {
+    setSelectedSheet(name)
+    if (!selectedFile) return
+    try {
+      const parsed = await parseSpreadsheetFile(selectedFile, name)
+      setPreviewCount(parsed.rows.length)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to preview worksheet.')
+    }
+  }
+
+  async function handleExport(excel = false) {
     setLoading(true)
     setError('')
     try {

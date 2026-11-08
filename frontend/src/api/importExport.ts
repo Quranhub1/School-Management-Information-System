@@ -37,7 +37,7 @@ export async function importData(input: ImportExportRequest) {
 async function fetchExportBlob(entityType: string, filters?: Record<string, string>): Promise<Blob> {
   const qs = filters ? '?' + new URLSearchParams(filters).toString() : ''
   const token = getAccessToken()
-  const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\\/$/, '') ?? ''
+  const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
   const response = await fetch(`${base}/api/import-export/export/${encodeURIComponent(entityType)}${qs}`, {
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   })
