@@ -8,6 +8,7 @@ public static class AuthorizationPolicies
     public const string StudentManagement = "StudentManagement";
     public const string FinanceManagement = "FinanceManagement";
     public const string FinanceRead = "FinanceRead";
+    public const string PayrollRead = "PayrollRead";
     public const string FinanceOperations = "FinanceOperations";
     public const string ExaminationManagement = "ExaminationManagement";
     public const string AttendanceManagement = "AttendanceManagement";
@@ -31,6 +32,7 @@ public static class AuthorizationPolicies
         public static readonly string[] FinanceManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant, ];
         public static readonly string[] FinanceOperations = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, ];
         public static readonly string[] FinanceRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Secretary, InstitutionalRoles.HrManager];
+        public static readonly string[] PayrollRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.HrManager];
         public static readonly string[] ExaminationManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.HrManager];
         public static readonly string[] AttendanceManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Lecturer, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.HrManager];
         public static readonly string[] AttendanceRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.Lecturer, InstitutionalRoles.Principal, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.HrManager];
