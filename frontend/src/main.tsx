@@ -1,12 +1,15 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { installGlobalErrorHandlers } from './lib/logging'
 import './styles.css'
 import './institution-theme.css'
 import './tailadmin-inspired.css'
 import './sidebar-fixed.css'
 import './table-font.css'
 import './workspace-density.css'
+
+installGlobalErrorHandlers()
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
