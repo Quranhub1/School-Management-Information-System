@@ -1,4 +1,6 @@
 import { getAccessToken } from './auth'
+import { parseApiInput, parseApiResponse } from '../lib/validation'
+import { inventoryRegisterResponseSchema, inventoryRegisterSaveRequestSchema } from '../schemas'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -29,15 +31,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export function getInventoryRegister(sectionId: string) {
-  return request<InventoryRegister>(`/${encodeURIComponent(sectionId)}`)
+export async function getInventoryRegister(sectionId: string) {
+  if (!sectionId.trim()) throw new Error('Inventory section is required.')
+  const register = await request<unknown>(`/${encodeURIComponent(sectionId)}`)
+  return parseApiResponse(inventoryRegisterResponseSchema, register, 'inventory register') as InventoryRegister
 }
 
-export function saveInventoryRegister(sectionId: string, data: Pick<InventoryRegister, 'columns' | 'rows'>) {
-  return request<InventoryRegister>(`/${encodeURIComponent(sectionId)}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  })
+export async function saveInventoryRegister(sectionId: string, data: Pick<InventoryRegister, 'columns' | 'rows'>) {
+  if (!sectionId.trim()) throw new Error('Inventory section is required.')
+  const validated = parseApiInput(inventoryRegisterSaveRequestSchema, data, 'save inventory register')
+  const saved = await request<unknown>(`/${encodeURIComponent(sectionId)}`, { method: 'PUT', body: JSON.stringify(validated) })
+  return parseApiResponse(inventoryRegisterResponseSchema, saved, 'saved inventory register') as InventoryRegister
 }
 
 
