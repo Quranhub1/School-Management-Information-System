@@ -425,8 +425,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, act
       {tab === 'recruitment' && (
         <div className="card">
           <h3>Recruitment & Onboarding</h3>
-          <p className="empty">Staff recruitment workflow will be available here. Post vacancies, receive applications, shortlist, interview, and onboard new staff.</p>
-        </div>
+            </div>
       )}
     </section>
   )
