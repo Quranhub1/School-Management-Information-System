@@ -1,23 +1,6 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { ZodType } from 'zod'
 import type { CellValueChangedEvent } from 'ag-grid-community'
-<<<<<<< HEAD
-=======
-import { useCallback, useMemo, useState } from 'react'
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-import { useCallback, useMemo, useRef, useState } from 'react'
-import type { ZodType } from 'zod'
-<<<<<<< HEAD
-import './AgGridTable.css'
->>>>>>> origin/feat/central-zod-validation-v2
-=======
-import type { CellValueChangedEvent } from 'ag-grid-community'
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
 import {
   AllCommunityModule,
   type ColDef,
@@ -29,7 +12,6 @@ import { AgGridProvider, AgGridReact } from 'ag-grid-react'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 
-<<<<<<< HEAD
 function GridLoadingOverlay() {
   return <div className="smis-ag-grid-overlay" role="status" aria-live="polite">Loading records…</div>
 }
@@ -42,8 +24,6 @@ import { useDebounce } from 'use-debounce'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 
-=======
->>>>>>> origin/feat/ag-grid-table-migration
 export type AgGridTableProps<TData extends object> = {
   rows: TData[]
   columns: ColDef<TData>[]
@@ -58,23 +38,9 @@ export type AgGridTableProps<TData extends object> = {
   onRowClicked?: GridOptions<TData>['onRowClicked']
   onSelectionChanged?: GridOptions<TData>['onSelectionChanged']
   onCellValueChanged?: GridOptions<TData>['onCellValueChanged']
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
   /** Optional Zod contract enforced before edited rows reach persistence handlers. */
   rowValidationSchema?: ZodType
-=======
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-  /** Optional Zod contract enforced for edited rows before caller persistence handlers run. */
-=======
-  /** Optional Zod contract enforced before edited rows reach persistence handlers. */
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
   rowValidationSchema?: ZodType
->>>>>>> origin/feat/central-zod-validation-v2
   getRowId?: GridOptions<TData>['getRowId']
   className?: string
 }
@@ -94,25 +60,12 @@ export function AgGridTable<TData extends object>({
   onRowClicked,
   onSelectionChanged,
   onCellValueChanged,
-<<<<<<< HEAD
-<<<<<<< HEAD
   rowValidationSchema,
-=======
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-  rowValidationSchema,
->>>>>>> origin/feat/central-zod-validation-v2
   getRowId,
   className,
 }: AgGridTableProps<TData>) {
   const [api, setApi] = useState<GridApi<TData> | null>(null)
   const [filter, setFilter] = useState(quickFilterText ?? '')
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
   // Keep typing immediate; debounce the expensive grid quick-filter pass.
   const [debouncedFilter] = useDebounce(quickFilterText ?? filter, 300)
   const [rowValidationErrors, setRowValidationErrors] = useState<Record<string, string[]>>({})
@@ -120,23 +73,6 @@ export function AgGridTable<TData extends object>({
   const institutionContext = useOptionalInstitutionSettings()
   const institution = institutionContext?.institution
   const institutionLoaded = institutionContext?.loaded ?? false
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-  const [rowValidationErrors, setRowValidationErrors] = useState<Record<string, string[]>>({})
-  const revertingCell = useRef(false)
->>>>>>> origin/feat/central-zod-validation-v2
-=======
-  const institutionContext = useOptionalInstitutionSettings()
-  const institution = institutionContext?.institution
-  const institutionLoaded = institutionContext?.loaded ?? false
->>>>>>> origin/feat/pdfmake-document-engine
-=======
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
   const defaultColDef = useMemo<ColDef<TData>>(() => ({
     sortable: true,
     filter: true,
@@ -163,11 +99,6 @@ export function AgGridTable<TData extends object>({
   const toggleColumn = useCallback((colId: string, visible: boolean) => {
     api?.setColumnsVisible([colId], visible)
   }, [api])
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/central-zod-validation-v2
   const handleCellValueChanged = useCallback((event: CellValueChangedEvent<TData>) => {
     if (revertingCell.current) return
     const rowKey = event.node.id ?? String(event.rowIndex ?? 'unknown-row')
@@ -190,10 +121,7 @@ export function AgGridTable<TData extends object>({
     })
     onCellValueChanged?.(event)
   }, [onCellValueChanged, rowValidationSchema])
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/feat/pdfmake-document-engine
   const tablePdfOptions = useCallback(() => {
     if (!api) return null
     const displayedColumns = api.getAllDisplayedColumns()
@@ -212,11 +140,7 @@ export function AgGridTable<TData extends object>({
       }))
     })
     if (body.length === 1) return null
-<<<<<<< HEAD
     const title = exportFileName.replace(/[-_]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())
-=======
-    const title = exportFileName.replace(/[-_]+/g, ' ').replace(/\\b\\w/g, letter => letter.toUpperCase())
->>>>>>> origin/feat/pdfmake-document-engine
     return {
       title,
       filename: exportFileName,
@@ -239,13 +163,6 @@ export function AgGridTable<TData extends object>({
     const options = tablePdfOptions()
     if (options) printInstitutionalPdf(options)
   }, [tablePdfOptions])
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/ag-grid-table-migration
-=======
->>>>>>> origin/feat/central-zod-validation-v2
-=======
->>>>>>> origin/feat/pdfmake-document-engine
 
   const tablePdfOptions = useCallback(() => {
     if (!api) return null
@@ -340,26 +257,8 @@ export function AgGridTable<TData extends object>({
         </label>
         <span className="smis-ag-grid-count">{rows.length.toLocaleString('en-UG')} records</span>
         <button type="button" className="secondary-button" onClick={exportCsv} disabled={!api || rows.length === 0}>Export CSV</button>
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
         <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
-=======
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-        <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
-        <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
->>>>>>> origin/feat/pdfmake-document-engine
-=======
-        <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
-        <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
->>>>>>> origin/feat/pdfmake-document-engine-latest-main
-=======
-        <button type="button" className="secondary-button" onClick={exportPdf} disabled={!api || rows.length === 0}>Export PDF</button>
-        <button type="button" className="secondary-button" onClick={printPdf} disabled={!api || rows.length === 0}>Print PDF</button>
->>>>>>> origin/feat/pdfmake-document-engine-main-sync
         <details className="smis-ag-grid-columns">
           <summary>Columns</summary>
           <div className="smis-ag-grid-column-menu">
@@ -374,21 +273,12 @@ export function AgGridTable<TData extends object>({
           </div>
         </details>
       </div>}
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/central-zod-validation-v2
       {Object.entries(rowValidationErrors).map(([rowKey, messages]) => (
         <div key={rowKey} className="smis-ag-grid-validation" role="alert" aria-live="polite">
           <strong>Row {rowKey} was not saved because its data is invalid.</strong>
           <ul>{messages.map((message, index) => <li key={`${rowKey}-${index}`}>{message}</li>)}</ul>
         </div>
       ))}
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/ag-grid-table-migration
-=======
->>>>>>> origin/feat/central-zod-validation-v2
       <div className="smis-ag-grid" style={{ height, width: '100%' }}>
         <AgGridProvider modules={[AllCommunityModule]}>
           <AgGridReact<TData>
@@ -403,7 +293,6 @@ export function AgGridTable<TData extends object>({
             paginationPageSizeSelector={[10, 25, 50, 100]}
             animateRows={false}
             loading={loading}
-<<<<<<< HEAD
             quickFilterText={debouncedFilter}
             rowSelection={rowSelection}
             suppressMultiSort={false}
@@ -414,18 +303,6 @@ export function AgGridTable<TData extends object>({
             onRowClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
             onCellValueChanged={handleCellValueChanged}
-=======
-            quickFilterText={quickFilterText ?? filter}
-            rowSelection={rowSelection}
-            onGridReady={event => setApi(event.api)}
-            onRowClicked={onRowClicked}
-            onSelectionChanged={onSelectionChanged}
-<<<<<<< HEAD
-            onCellValueChanged={onCellValueChanged}
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-            onCellValueChanged={handleCellValueChanged}
->>>>>>> origin/feat/central-zod-validation-v2
             getRowId={getRowId}
             suppressCellFocus={false}
           />
