@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Chart from 'chart.js/auto'
-=======
-import { useEffect, useState } from 'react'
->>>>>>> origin/feat/chartjs-centralized-visualisation
 import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
 import { getUsers } from '../api/administration'
@@ -13,20 +9,9 @@ import { listStaff, STAFF_CHANGED_EVENT } from '../api/staff'
 import { getInvoices } from '../api/finance'
 import { listPayroll } from '../api/payroll'
 import { InventoryStockSettings } from './InventoryStockSettings'
-<<<<<<< HEAD
 import { AgGridTable } from './AgGridTable'
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { DoughnutChart } from './charts'
-=======
->>>>>>> origin/feat/ag-grid-table-migration
-=======
-import { DoughnutChart } from './charts'
->>>>>>> origin/feat/chartjs-centralized-visualisation
 import type { ColDef } from 'ag-grid-community'
-=======
-import { DoughnutChart } from './charts'
->>>>>>> origin/feat/chartjs-visualisation-foundation
 
 type Tab = 'overview' | 'users' | 'students' | 'staff' | 'finance' | 'monitoring' | 'stock-settings'
 type ChartSegment = { label: string; value: number; color: string; displayValue?: string }
@@ -44,7 +29,6 @@ const chartColors = {
 const numberFormat = new Intl.NumberFormat('en-UG')
 const moneyFormat = (value: number) => `UGX ${numberFormat.format(Math.round(value || 0))}`
 
-<<<<<<< HEAD
 type StudentSearchResult = { id: string; studentNumber: string; name: string; status: string }
 type StaffSearchResult = { id: string; staffNumber: string; name: string; department: string; status: string }
 
@@ -59,97 +43,8 @@ const staffSearchColumns: ColDef<StaffSearchResult>[] = [
   { field: 'department', headerName: 'Department' },
   { field: 'status', headerName: 'Status' },
 ]
-<<<<<<< HEAD
 
-=======
 
-<<<<<<< HEAD
-function DonutChart({
-  title,
-  description,
-  segments,
-  centerValue,
-  centerCaption,
-}: {
-  title: string
-  description: string
-  segments: ChartSegment[]
-  centerValue: string
-  centerCaption: string
-}) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const safeSegments = useMemo(() => segments.map(segment => ({ ...segment, value: Math.max(0, Number.isFinite(segment.value) ? segment.value : 0) })), [segments])
-  const total = safeSegments.reduce((sum, segment) => sum + segment.value, 0)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const chart = new Chart(canvas, {
-      type: 'doughnut',
-      data: {
-        labels: safeSegments.map(segment => segment.label),
-        datasets: [{
-          data: safeSegments.map(segment => segment.value),
-          backgroundColor: safeSegments.map(segment => segment.color),
-          borderWidth: 0,
-          hoverOffset: 4,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '70%',
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: context => {
-                const segment = safeSegments[context.dataIndex]
-                return segment ? `${segment.label}: ${segment.displayValue ?? numberFormat.format(Number(context.raw) || 0)}` : ''
-              },
-            },
-          },
-        },
-      },
-    })
-    return () => chart.destroy()
-  }, [safeSegments])
-
-  return (
-    <article className="admin-chart-card">
-      <div className="admin-chart-heading">
-        <div>
-          <h3>{title}</h3>
-          {description && <p>{description}</p>}
-        </div>
-      </div>
-      <div className="admin-chart-body">
-        <div className="admin-donut-wrap" role="img" aria-label={`${title}: ${safeSegments.map(s => `${s.label} ${s.displayValue ?? numberFormat.format(s.value)}`).join(', ')}`}>
-          {total > 0 ? <canvas ref={canvasRef} className="admin-donut-canvas" aria-hidden="true" /> : <div className="admin-donut-empty" aria-hidden="true" />}
-          <div className="admin-donut-center">
-            <strong>{centerValue}</strong>
-            <span>{centerCaption}</span>
-          </div>
-        </div>
-        <ul className="admin-chart-legend">
-          {safeSegments.map(segment => (
-            <li key={segment.label}>
-              <span className="admin-legend-label"><i style={{ background: segment.color }} />{segment.label}</span>
-              <strong>{segment.displayValue ?? numberFormat.format(segment.value)}</strong>
-            </li>
-          ))}
-          {total === 0 && <li className="admin-chart-empty">No records to display</li>}
-        </ul>
-      </div>
-    </article>
-  )
-}
->>>>>>> origin/feat/ag-grid-table-migration
-=======
->>>>>>> origin/feat/chartjs-centralized-visualisation
-
-=======
->>>>>>> origin/feat/chartjs-visualisation-foundation
 export function AdminDashboard() {
   const session = getSession()
   const [tab, setTab] = useState<Tab>('overview')
@@ -354,20 +249,7 @@ export function AdminDashboard() {
               <button type="submit">Search</button>
             </div>
           </form>
-<<<<<<< HEAD
           {studentResults.length > 0 && <AgGridTable rows={studentResults} columns={studentSearchColumns} getRowId={p => p.data.id} exportFileName="admin-student-search" height={420} />}
-=======
-          {studentResults.length > 0 && (
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Student Number</th><th>Name</th><th>Status</th></tr></thead>
-                <tbody>
-                  {studentResults.map(s => <tr key={s.id}><td>{s.studentNumber}</td><td>{s.name}</td><td><span className="badge" style={{ background: s.status === 'Active' ? '#d1fae5' : '#fee2e2', color: s.status === 'Active' ? '#065f46' : '#991b1b' }}>{s.status}</span></td></tr>)}
-                </tbody>
-              </table>
-            </div>
-          )}
->>>>>>> origin/polish/remove-four-more-explanatory-strings
         </div>
       )}
 
@@ -385,20 +267,7 @@ export function AdminDashboard() {
               <button type="submit">Search</button>
             </div>
           </form>
-<<<<<<< HEAD
           {staffResults.length > 0 && <AgGridTable rows={staffResults} columns={staffSearchColumns} getRowId={p => p.data.id} exportFileName="admin-staff-search" height={420} />}
-=======
-          {staffResults.length > 0 && (
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Staff Number</th><th>Name</th><th>Department</th><th>Status</th></tr></thead>
-                <tbody>
-                  {staffResults.map(s => <tr key={s.id}><td>{s.staffNumber}</td><td>{s.name}</td><td>{s.department}</td><td><span className="badge" style={{ background: s.status === 'Active' ? '#d1fae5' : '#fee2e2', color: s.status === 'Active' ? '#065f46' : '#991b1b' }}>{s.status}</span></td></tr>)}
-                </tbody>
-              </table>
-            </div>
-          )}
->>>>>>> origin/polish/remove-four-more-explanatory-strings
         </div>
       )}
 
@@ -410,15 +279,7 @@ export function AdminDashboard() {
             <div className="admin-kpi-card"><span className="admin-kpi-icon amber">OS</span><div><span>Outstanding</span><strong>{moneyFormat(finance.outstanding)}</strong></div></div>
             <div className="admin-kpi-card"><span className="admin-kpi-icon purple">IN</span><div><span>Invoices</span><strong>{numberFormat.format(finance.invoices)}</strong></div></div>
           </div>
-<<<<<<< HEAD
-<<<<<<< HEAD
           <DoughnutChart title="Fee collection overview" description="" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
-=======
-          <DonutChart title="Fee collection overview" description="" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
->>>>>>> origin/polish/remove-four-more-explanatory-strings
-=======
-          <DonutChart title="Fee collection overview" description="Based on invoice totals loaded from the finance API" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" />
->>>>>>> origin/polish/remove-redundant-copy-across-screens
         </div>
       )}
 
