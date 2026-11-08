@@ -175,14 +175,29 @@ export const leaveRequestSchema = z.object({
   message: "End date cannot be before start date.",
 });
 
+export const inventoryGridRowSchema = z.object({
+  id: identifierSchema,
+  values: z.record(z.string(), z.string()),
+}).superRefine((row, context) => {
+  const entries = Object.values(row.values);
+  const isBlankDraft = entries.every(value => !value.trim());
+  if (isBlankDraft) return;
+  if (!row.values.name?.trim()) {
+    context.addIssue({ code: "custom", path: ["values", "name"], message: "Item name is required." });
+  }
+  const quantity = row.values.quantity?.trim();
+  if (quantity && !/^\\d+$/.test(quantity)) {
+    context.addIssue({ code: "custom", path: ["values", "quantity"], message: "Quantity must be a whole number of zero or greater." });
+  }
+});
 export const inventoryRegisterSaveRequestSchema = z.object({
   columns: z.array(z.object({ id: identifierSchema, label: requiredTextSchema })),
-  rows: z.array(z.object({ id: identifierSchema, values: z.record(z.string(), z.string()) })),
+  rows: z.array(inventoryGridRowSchema),
 });
 export const inventoryRegisterResponseSchema = z.looseObject({
   sectionId: identifierSchema,
   columns: z.array(z.object({ id: identifierSchema, label: requiredTextSchema })),
-  rows: z.array(z.object({ id: identifierSchema, values: z.record(z.string(), z.string()) })),
+  rows: z.array(inventoryGridRowSchema),
   updatedAtUtc: z.string(),
 });
 
