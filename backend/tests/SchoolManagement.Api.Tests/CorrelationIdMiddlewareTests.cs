@@ -15,7 +15,7 @@ public sealed class CorrelationIdMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        Assert.Equal("finance-save-2026-01", context.Response.Headers[CorrelationIdMiddleware.HeaderName]);
+        Assert.Equal("finance-save-2026-01", context.Response.Headers[CorrelationIdMiddleware.HeaderName].ToString());
         Assert.Equal("finance-save-2026-01", context.Items[CorrelationIdMiddleware.ItemKey]);
     }
 
