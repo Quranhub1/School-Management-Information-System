@@ -20,12 +20,10 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
 
         var invoices = db.StudentInvoices.AsNoTracking().AsQueryable();
         var payments = db.Payments.AsNoTracking().AsQueryable();
-        var payroll = db.PayrollRecords.AsNoTracking().AsQueryable();
         if (accessibleCampuses is not null)
         {
             invoices = invoices.Where(x => db.Students.Any(student => student.Id == x.StudentId && student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value)));
             payments = payments.Where(x => db.Students.Any(student => student.Id == x.StudentId && student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value)));
-            payroll = payroll.Where(x => db.StaffMembers.Any(staff => staff.Id == x.StaffMemberId && staff.CampusId.HasValue && accessibleCampuses.Contains(staff.CampusId.Value)));
         }
 
         var totalBilled = await invoices
