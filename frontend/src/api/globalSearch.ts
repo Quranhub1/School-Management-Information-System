@@ -1,17 +1,35 @@
+import { useQuery } from '@tanstack/react-query'
 import { getAccessToken } from './auth'
+import { createCorrelationId } from '../lib/logging'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
+export class GlobalSearchApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message)
+    this.name = 'GlobalSearchApiError'
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken()
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(API_BASE_URL + path, {
     ...init,
-    headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init?.headers ?? {}) },
+    headers: {
+      Accept: 'application/json',
+      'X-Correlation-ID': createCorrelationId(),
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+      ...(init?.headers ?? {}),
+    },
   })
-  if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null
-    throw new Error(body?.message ?? `Request failed with status ${response.status}`)
+    throw new GlobalSearchApiError(
+      response.status === 401
+        ? 'Your session has expired. Please sign in again.'
+        : body?.message ?? 'Request failed with status ' + response.status,
+      response.status,
+    )
   }
   return response.json() as Promise<T>
 }
@@ -39,10 +57,29 @@ export interface GlobalSearchResponse {
   alumni: AlumniSearchResult[]
 }
 
+export const globalSearchQueryKeys = {
+  all: ['global-search'] as const,
+  results: (query: string, from?: string, to?: string) =>
+    ['global-search', query.trim().toLocaleLowerCase(), from ?? '', to ?? ''] as const,
+}
+
 export function globalSearch(q: string, from?: string, to?: string): Promise<GlobalSearchResponse> {
   const qs = new URLSearchParams()
   qs.set('q', q)
   if (from) qs.set('from', from)
   if (to) qs.set('to', to)
-  return request<GlobalSearchResponse>(`/api/search?${qs.toString()}`)
+  return request<GlobalSearchResponse>('/api/search?' + qs.toString())
+}
+
+/** Search results include personal records; keep them in memory only, never in IndexedDB. */
+export function useGlobalSearchQuery(q: string, from?: string, to?: string) {
+  const term = q.trim()
+  return useQuery({
+    queryKey: globalSearchQueryKeys.results(term, from, to),
+    queryFn: () => globalSearch(term, from, to),
+    enabled: term.length >= 2,
+    staleTime: 15_000,
+    gcTime: 2 * 60_000,
+    meta: { persist: false },
+  })
 }

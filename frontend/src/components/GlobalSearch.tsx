@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { globalSearch, type GlobalSearchResponse } from '../api/globalSearch'
+import { useGlobalSearchQuery, type GlobalSearchResponse } from '../api/globalSearch'
 
 const EMPTY: GlobalSearchResponse = {
   query: '',
@@ -18,38 +18,40 @@ export function GlobalSearch() {
   const [query, setQuery] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
-  const [results, setResults] = useState<GlobalSearchResponse>(EMPTY)
-  const [loading, setLoading] = useState(false)
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const searchQuery = useGlobalSearchQuery(debouncedQuery, from || undefined, to || undefined)
+  const results: GlobalSearchResponse = debouncedQuery === query.trim() ? searchQuery.data ?? EMPTY : EMPTY
+  const loading = query.trim().length >= 2 && (debouncedQuery !== query.trim() || searchQuery.isFetching || searchQuery.isPending)
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [history, setHistory] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('smis.search.history') ?? '[]') as string[] } catch { return [] } })
 
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 2) {
-      setResults(EMPTY)
+    const term = query.trim()
+    if (term.length < 2) {
+      setDebouncedQuery('')
       setOpen(false)
       return
     }
-    setLoading(true)
+
     setActiveIndex(0)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const term=query.trim(); const data = await globalSearch(term, from || undefined, to || undefined); setHistory(current=>{const next=[term,...current.filter(x=>x.toLowerCase()!==term.toLowerCase())].slice(0,10); localStorage.setItem('smis.search.history',JSON.stringify(next)); return next})
-        setResults(data)
-        setOpen(true)
-      } catch {
-        setResults(EMPTY)
-      } finally {
-        setLoading(false)
-      }
-    }, 250)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [query, from, to])
+    const timeout = setTimeout(() => setDebouncedQuery(term), 250)
+    return () => clearTimeout(timeout)
+  }, [query])
+
+  useEffect(() => {
+    if (searchQuery.data && debouncedQuery.length >= 2) {
+      setHistory(current => {
+        const next = [debouncedQuery, ...current.filter(x => x.toLowerCase() !== debouncedQuery.toLowerCase())].slice(0, 10)
+        try { localStorage.setItem('smis.search.history', JSON.stringify(next)) } catch { /* Search remains usable when storage is unavailable. */ }
+        return next
+      })
+      setOpen(true)
+    }
+  }, [searchQuery.data, debouncedQuery])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -117,6 +119,7 @@ export function GlobalSearch() {
         </div>
       )}
       {loading && <span className="search-status" role="status" aria-live="polite"><span className="spinner spinner--small" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <span key={index} />)}</span> Searching…</span>}
+      {searchQuery.error && debouncedQuery === query.trim() && <span className="search-status search-status--error" role="alert">{searchQuery.error instanceof Error ? searchQuery.error.message : 'Search is temporarily unavailable.'}</span>}
       {open && total > 0 && (
         <div className="search-dropdown" role="listbox" aria-label="Search results">
           {items.map((item, idx) => (
@@ -135,7 +138,7 @@ export function GlobalSearch() {
         </div>
       )}
       {open && !loading && total === 0 && !query.trim() && history.length > 0 && <div className="search-dropdown search-history" role="listbox" aria-label="Recent searches"><div className="search-history-heading">Recent searches</div>{history.map(term=><button type="button" key={term} className="search-history-item" onClick={()=>setQuery(term)}>{term}</button>)}</div>}
-      {open && !loading && total === 0 && query.trim().length >= 2 && (
+      {open && !loading && !searchQuery.error && total === 0 && query.trim().length >= 2 && (
         <div className="search-dropdown" role="listbox" aria-label="Search results">
           <div className="search-empty">No results for “{query.trim()}”</div>
         </div>
