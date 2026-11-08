@@ -1,5 +1,8 @@
 import { getAccessToken } from './auth'
 import { readApiErrorMessage } from './errors'
+import { z } from 'zod'
+import { parseApiInput, parseApiResponse } from '../lib/validation'
+import { createInvoiceRequestSchema, invoiceResponseSchema, recordPaymentRequestSchema } from '../schemas'
 
 export interface Invoice {
   id: string
@@ -126,11 +129,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export const getInvoices = (studentId?: string) => request<Invoice[]>(`/api/finance/invoices${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`)
+export async function getInvoices(studentId?: string) { const rows = await request<unknown>(`/api/finance/invoices${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`); return parseApiResponse(z.array(invoiceResponseSchema), rows, 'invoices') as Invoice[] }
 export interface StudentFinanceProfile { id: string; studentNumber: string; name: string; phoneNumber?: string; email?: string; status: string }
 export const getStudentFinanceProfile = (studentIdOrNumber: string) => request<StudentFinanceProfile>(`/api/finance/students/profile?studentIdOrNumber=${encodeURIComponent(studentIdOrNumber)}`)
-export const createInvoice = (body: CreateInvoiceRequest) => request<Invoice>('/api/finance/invoices', { method: 'POST', body: JSON.stringify(body) })
-export const recordPayment = (invoiceId: string, body: RecordPaymentRequest) => request('/api/finance/invoices/' + invoiceId + '/payments', { method: 'POST', body: JSON.stringify(body) })
+export async function createInvoice(body: CreateInvoiceRequest) { const input = parseApiInput(createInvoiceRequestSchema, body, 'create invoice'); return parseApiResponse(invoiceResponseSchema, await request<unknown>('/api/finance/invoices', { method: 'POST', body: JSON.stringify(input) }), 'created invoice') as Invoice }
+export function recordPayment(invoiceId: string, body: RecordPaymentRequest) { if (!invoiceId.trim()) throw new Error('Invoice ID is required.'); const input = parseApiInput(recordPaymentRequestSchema, body, 'record payment'); return request('/api/finance/invoices/' + encodeURIComponent(invoiceId) + '/payments', { method: 'POST', body: JSON.stringify(input) }) }
 
 export const getBudgets = (params?: { departmentId?: string; academicYearId?: string; activeOnly?: boolean }) => {
   const query = new URLSearchParams()
