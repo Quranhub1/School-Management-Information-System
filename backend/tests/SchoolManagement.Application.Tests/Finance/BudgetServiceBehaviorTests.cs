@@ -54,7 +54,6 @@ public sealed class BudgetServiceBehaviorTests
         public Task<IReadOnlyList<Budget>> GetAsync(Guid? academicYearId, bool activeOnly, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<Budget>>(new[] { Budget! });
         public Task<Budget?> GetAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Budget?>(id == Budget!.Id ? Budget : null);
         public Task AddAsync(Budget budget, CancellationToken cancellationToken) => Task.CompletedTask;
-        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>([]);
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
@@ -95,6 +94,7 @@ public sealed class BudgetServiceBehaviorTests
         public Task AddInvoiceDiscountAsync(InvoiceDiscount discount, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task AddCreditNoteAsync(CreditNote creditNote, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>([]);
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 }
