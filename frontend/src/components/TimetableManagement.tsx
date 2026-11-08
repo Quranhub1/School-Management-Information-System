@@ -33,8 +33,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [timetableCount, setTimetableCount] = useState('1')
   const [generatedTimetables, setGeneratedTimetables] = useState<Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }>>([])
-  const [printTargetGroupId, setPrintTargetGroupId] = useState('')
-  const [printTemplate, setPrintTemplate] = useState(false)
   const [view, setView] = useState<'week' | 'list'>('week')
   const [showTemplateEditor, setShowTemplateEditor] = useState(false)
   const [templateGroupId, setTemplateGroupId] = useState('')
@@ -92,15 +90,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
   }
 
-  useEffect(() => {
-    if (!printTargetGroupId) return
-    const target = generatedTimetables.find(item => item.groupId === printTargetGroupId)
+  function printGeneratedTimetable(groupId: string) {
+    const target = generatedTimetables.find(item => item.groupId === groupId)
     if (target) printInstitutionalPdf(timetablePdfOptions(target.groupLabel + ' Teaching Timetable', target.result.entries, target.groupLabel + '-timetable'))
-    setPrintTargetGroupId('')
-  }, [printTargetGroupId])
+  }
 
-  useEffect(() => {
-    if (!printTemplate) return
+  function printTimetableTemplate() {
     const rows = weekOrder.filter(day => day !== 0).flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
       const cell = templateCells[day + '-' + slotIndex]
       if (!cell?.courseId && !cell?.teacherId && !cell?.room?.trim()) return []
@@ -119,8 +114,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }))
     const groupLabel = groupLabels.get(templateGroupId) ?? 'Class timetable'
     printInstitutionalPdf(timetablePdfOptions(groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template'))
-    setPrintTemplate(false)
-  }, [printTemplate])
+  }
 
   async function handleGenerate(event: React.FormEvent) {
     event.preventDefault()
@@ -323,7 +317,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         </table>
       </div>}
       {templateGroupId && templateLoadedGroupId !== templateGroupId && <p className="timetable-generator-help">Click “Load class” to fill the template with that class’s saved sessions before editing.</p>}
-      <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !options.courses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={() => setPrintTemplate(true)}>Print template</button></div>
+      <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !options.courses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={printTimetableTemplate}>Print template</button></div>
     </section>}
 
     {!readOnly && showScheduleForm && <form className="timetable-form-panel" onSubmit={submit}>
@@ -351,7 +345,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <div className="timetable-class-document-heading"><div><h4>{groupLabel}</h4><span>Teaching timetable · {availableSemesters.find(item => item.id === semesterId)?.label ?? 'Selected academic period'}</span></div>
           <div className="timetable-class-actions">
             <button className="timetable-action" type="button" onClick={() => downloadInstitutionalPdf(timetablePdfOptions(groupLabel + ' Teaching Timetable', result.entries, groupLabel + '-timetable'))}>Download PDF</button>
-            <button className="timetable-action" type="button" onClick={() => setPrintTargetGroupId(groupId)}>Print</button>
+            <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)}>Print</button>
           </div>
         </div>
         <p className="timetable-class-status">Score: {result.optimizationScore.toFixed(1)}% · {result.isConflictFree ? 'No conflicts reported' : 'Conflicts detected'}</p>
