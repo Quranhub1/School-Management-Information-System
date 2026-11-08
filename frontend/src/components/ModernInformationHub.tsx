@@ -1,7 +1,13 @@
+<<<<<<< HEAD
 import { useState } from 'react'
 import { ArrowRight, ArrowUpRight, BellRing, BookOpenCheck, BrainCircuit, CalendarClock, CheckCircle2, CircleDollarSign, GraduationCap, RefreshCw, Search, ShieldAlert, UsersRound, Wallet, X } from 'lucide-react'
 import { modernQueryKeys, useModernDashboardQuery, useStudentRiskQuery, useStudent360Query, useWorkflowSummaryQuery } from '../api/modern'
 import { useQueryClient } from '@tanstack/react-query'
+=======
+import { useEffect, useState } from 'react'
+import { ArrowRight, ArrowUpRight, BellRing, BookOpenCheck, BrainCircuit, CalendarClock, CheckCircle2, CircleDollarSign, GraduationCap, RefreshCw, Search, ShieldAlert, UsersRound, Wallet, X } from 'lucide-react'
+import { getModernDashboard, getStudentRisk, getStudent360, getWorkflowSummary, type ModernDashboard, type StudentRisk, type Student360, type WorkflowSummary } from '../api/modern'
+>>>>>>> origin/fix/rebase-main-screen-redesign
 import { getAccessToken } from '../api/auth'
 <<<<<<< HEAD
 import { DoughnutChart, BarChart } from './charts'
@@ -34,6 +40,7 @@ export function ModernInformationHub() {
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
   const [error, setError] = useState('')
+<<<<<<< HEAD
   const [assistantLoading, setAssistantLoading] = useState(false)
 
   async function refresh() {
@@ -59,6 +66,39 @@ export function ModernInformationHub() {
 
 
 
+=======
+  const [loading, setLoading] = useState(true)
+  const [assistantLoading, setAssistantLoading] = useState(false)
+
+  async function refresh() {
+    setLoading(true)
+    try {
+      setError('')
+      const [d, r, w] = await Promise.all([getModernDashboard(), getStudentRisk(), getWorkflowSummary()])
+      setDashboard(d); setRisk(r); setWorkflow(w)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load dashboard data.')
+    } finally { setLoading(false) }
+  }
+  useEffect(() => { void refresh() }, [])
+  async function openStudent(id: string) {
+    try { setSelected(await getStudent360(id)) }
+    catch (e) { setError(e instanceof Error ? e.message : 'Unable to load student profile.') }
+  }
+  async function askAssistant() {
+    if (!question.trim() || assistantLoading) return
+    setAssistantLoading(true)
+    try {
+      const token = getAccessToken()
+      const response = await fetch('/api/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ question }) })
+      if (!response.ok) throw new Error(await response.text())
+      const data = await response.json() as { answer: string }
+      setAnswer(data.answer)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Assistant unavailable.') }
+    finally { setAssistantLoading(false) }
+  }
+
+>>>>>>> origin/fix/rebase-main-screen-redesign
   const metrics = dashboard ? [
     { label: 'Active students', value: number(dashboard.activeStudents), note: `${number(dashboard.totalStudents)} total records`, icon: UsersRound, tone: 'blue' },
     { label: 'Pending admissions', value: number(dashboard.pendingAdmissions), note: 'Applications awaiting action', icon: GraduationCap, tone: 'violet' },
@@ -71,7 +111,11 @@ export function ModernInformationHub() {
       <div><p className="eyebrow">SCHOOL OVERVIEW</p><h2>Dashboard</h2><p>Your institution at a glance. Review key indicators and follow up on work that needs attention.</p></div>
       <button className="dashboard-refresh" onClick={() => void refresh()} disabled={loading}><RefreshCw size={16} className={loading ? 'dashboard-spin' : ''}/>{loading ? 'Refreshing' : 'Refresh data'}</button>
     </div>
+<<<<<<< HEAD
     {(error || queryError) && <div className="dashboard-alert" role="alert"><ShieldAlert size={18}/><span>{error || (queryError instanceof Error ? queryError.message : 'Unable to load dashboard data.')}</span><button onClick={() => setError('')} aria-label="Dismiss message"><X size={16}/></button></div>}
+=======
+    {error && <div className="dashboard-alert" role="alert"><ShieldAlert size={18}/><span>{error}</span><button onClick={() => setError('')} aria-label="Dismiss message"><X size={16}/></button></div>}
+>>>>>>> origin/fix/rebase-main-screen-redesign
     <div className="dashboard-kpi-grid">
       {metrics.map((metric, index) => {
         const Icon = metric.icon
@@ -85,7 +129,12 @@ export function ModernInformationHub() {
     <div className="dashboard-secondary-grid">
       <article className="dashboard-panel dashboard-performance">
         <div className="dashboard-panel-heading"><div><span className="dashboard-section-kicker">ACADEMIC OUTCOMES</span><h3>Learning & clinical progress</h3></div><BookOpenCheck size={19}/></div>
+<<<<<<< HEAD
         {dashboard ? <div className="dashboard-performance-chart"><BarChart labels={['Assessment average', 'Clinical placement']} datasets={[{ label: 'Completion rate', data: [dashboard.averageAssessment, dashboard.placementCompletionRate].map(value => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0))), color: '#4569f5' }]} horizontal maxValue={100} valueFormatter={value => `${number(value)}%`} ariaLabel={`Assessment average ${number(dashboard.averageAssessment)} percent; clinical placement completion ${number(dashboard.placementCompletionRate)} percent`} /></div> : <div className="dashboard-empty-state">Performance figures will appear when dashboard data loads.</div>}
+=======
+        <div className="dashboard-progress-row"><div className="dashboard-progress-copy"><span>Assessment average</span><strong>{dashboard ? `${number(dashboard.averageAssessment)}%` : '—'}</strong></div><div className="dashboard-progress-track"><span style={{ width: `${Math.min(100, Math.max(0, dashboard?.averageAssessment ?? 0))}%` }}/></div></div>
+        <div className="dashboard-progress-row"><div className="dashboard-progress-copy"><span>Clinical placement completion</span><strong>{dashboard ? `${number(dashboard.placementCompletionRate)}%` : '—'}</strong></div><div className="dashboard-progress-track dashboard-progress-clinical"><span style={{ width: `${Math.min(100, Math.max(0, dashboard?.placementCompletionRate ?? 0))}%` }}/></div></div>
+>>>>>>> origin/fix/rebase-main-screen-redesign
         <div className="dashboard-panel-footnote"><CheckCircle2 size={15}/> Figures reflect data currently recorded in SMIS.</div>
       </article>
       <article className="dashboard-panel dashboard-work-queue">
@@ -95,9 +144,12 @@ export function ModernInformationHub() {
         <button className="dashboard-queue-item" onClick={() => goTo('reports')}><span className="dashboard-queue-icon queue-blue"><CalendarClock size={17}/></span><span><strong>Clinical placements</strong><small>Placements awaiting completion</small></span><b>{workflow?.pendingPlacements ?? '—'}</b><ArrowRight size={16}/></button>
       </article>
     </div>
+<<<<<<< HEAD
     {dashboard && <div className="dashboard-chart-grid">
       <DoughnutChart title="Fee collection position" description="Collected fees compared with outstanding balances" segments={[{ label: 'Collected', value: Math.max(0, dashboard.totalPaid), color: '#0d9488', displayValue: `UGX ${money(dashboard.totalPaid)}` }, { label: 'Outstanding', value: Math.max(0, dashboard.outstanding), color: '#f59e0b', displayValue: `UGX ${money(dashboard.outstanding)}` }]} centerValue={`UGX ${money(dashboard.totalPaid)}`} centerCaption="collected" valueFormatter={value => `UGX ${money(value)}`} />
     </div>}
+=======
+>>>>>>> origin/fix/rebase-main-screen-redesign
     <div className="dashboard-bottom-grid">
       <article className="dashboard-panel dashboard-risk-panel">
         <div className="dashboard-panel-heading"><div><span className="dashboard-section-kicker">STUDENT SUPPORT</span><h3>Early-warning list</h3><p>Review learners flagged by recorded attendance and assessment indicators.</p></div><span className="dashboard-count-pill">{risk.length} records</span></div>
@@ -123,7 +175,11 @@ export function ModernInformationHub() {
       </article>
     </div>
     {selected && <div className="student360-modal" role="dialog" aria-modal="true" aria-label="Student profile"><div className="student360-card dashboard-student-modal">
+<<<<<<< HEAD
       <button className="close-button" onClick={() => setSelectedStudentId(null)} aria-label="Close student profile">×</button><p className="eyebrow">STUDENT PROFILE</p><h3>{selected.name}</h3><p>{selected.studentNumber} · {selected.status}</p>
+=======
+      <button className="close-button" onClick={() => setSelected(null)} aria-label="Close student profile">×</button><p className="eyebrow">STUDENT PROFILE</p><h3>{selected.name}</h3><p>{selected.studentNumber} · {selected.status}</p>
+>>>>>>> origin/fix/rebase-main-screen-redesign
       <div className="student360-grid"><div><span>Attendance</span><b>{selected.attendanceRate}%</b></div><div><span>Assessment</span><b>{selected.averageAssessment}%</b></div><div><span>Fees outstanding</span><b>UGX {money(selected.outstanding)}</b></div><div><span>Placements</span><b>{selected.completedPlacements}/{selected.placementCount}</b></div><div><span>Certificates</span><b>{selected.certificateCount}</b></div><div><span>Admission documents</span><b>{selected.admissionDocumentCount}</b></div></div>
       <div className="student360-details"><p><b>Phone:</b> {selected.phone || 'Not recorded'}</p><p><b>Email:</b> {selected.email || 'Not recorded'}</p><p><b>Gender:</b> {selected.gender || 'Not recorded'}</p></div>
     </div></div>}

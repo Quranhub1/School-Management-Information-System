@@ -130,6 +130,7 @@
  .dashboard-assistant-panel { padding-inline:15px; }
  .student360-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+<<<<<<< HEAD
 
 
 <<<<<<< HEAD
@@ -142,3 +143,5 @@
 .dashboard-chart-grid .admin-chart-card { min-width: 0; }
 .dashboard-chart-grid .admin-chart-body { align-items: center; }
 @media (max-width: 560px) { .dashboard-performance-chart { height: 150px; margin-inline: 14px; } }
+=======
+>>>>>>> origin/fix/rebase-main-screen-redesign

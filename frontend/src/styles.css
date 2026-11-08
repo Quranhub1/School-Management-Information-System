@@ -4029,6 +4029,7 @@ table { font-variant-numeric: tabular-nums; }
 .content textarea {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
+<<<<<<< HEAD
 
 
 /* Shared AG Grid controls */
@@ -4077,3 +4078,5 @@ table { font-variant-numeric: tabular-nums; }
 >>>>>>> origin/design/green-create-account-button
 =======
 >>>>>>> origin/feat/ag-grid-table-migration
+=======
+>>>>>>> origin/fix/rebase-main-screen-redesign
