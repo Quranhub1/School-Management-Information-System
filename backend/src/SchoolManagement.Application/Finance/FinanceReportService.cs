@@ -72,9 +72,25 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
         var assets = totals.Where(x => IsAsset(x.AccountType)).ToList();
         var liabilities = totals.Where(x => IsLiability(x.AccountType)).ToList();
         var equity = totals.Where(x => IsEquity(x.AccountType)).ToList();
-        var netIncome = containingPeriod is null
-            ? await GetIncomeStatementAsync(null, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId)
-            : await GetIncomeStatementAsync(containingPeriod.StartDate, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId);
+        IncomeStatementReport netIncome;
+        if (containingPeriod is null)
+        {
+            // Without a configured containing fiscal period, use calendar-year-to-date
+            // for the balance sheet's net-income component. A configured fiscal period
+            // remains authoritative whenever one contains the requested as-of date.
+            var calendarYearStart = new DateOnly(effectiveAsOf.Year, 1, 1);
+            var yearToDateEntries = await finance.GetPostedJournalEntriesAsync(calendarYearStart, effectiveAsOf, null, cancellationToken);
+            var yearToDateRows = BuildIncomeStatementRows(yearToDateEntries, campusId, facultyId, departmentId, programmeId);
+            var revenue = yearToDateRows.Where(x => IsRevenue(x.AccountType)).ToList();
+            var expenses = yearToDateRows.Where(x => IsExpense(x.AccountType)).ToList();
+            var totalRevenue = revenue.Sum(x => x.Amount);
+            var totalExpenses = expenses.Sum(x => x.Amount);
+            netIncome = new IncomeStatementReport(revenue, expenses, totalRevenue, totalExpenses, totalRevenue - totalExpenses);
+        }
+        else
+        {
+            netIncome = await GetIncomeStatementAsync(containingPeriod.StartDate, effectiveAsOf, cancellationToken, campusId, facultyId, departmentId, programmeId);
+        }
         var totalAssets = assets.Sum(x => x.Balance);
         var totalLiabilities = liabilities.Sum(x => x.Balance);
         var totalEquity = equity.Sum(x => x.Balance);
