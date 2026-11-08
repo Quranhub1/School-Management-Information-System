@@ -61,7 +61,7 @@ export function BulkOperations() {
     }
   }
 
-  async function handleExport(excel = false) {
+  async function handleSheetChange(name: string) {\n    setSelectedSheet(name)\n    if (!selectedFile) return\n    try {\n      const parsed = await parseSpreadsheetFile(selectedFile, name)\n      setPreviewCount(parsed.rows.length)\n    } catch (e) {\n      setError(e instanceof Error ? e.message : 'Unable to preview worksheet.')\n    }\n  }\n\n  async function handleExport(excel = false) {
     setLoading(true)
     setError('')
     try {
@@ -96,7 +96,7 @@ export function BulkOperations() {
           <input ref={fileRef} type="file" accept={SPREADSHEET_ACCEPT} onChange={e => void handleFileChange(e)} />
           {sheetNames.length > 1 && (
             <label>Worksheet
-              <select value={selectedSheet} onChange={e => setSelectedSheet(e.target.value)}>
+              <select value={selectedSheet} onChange={e => void handleSheetChange(e.target.value)}>
                 {sheetNames.map(name => <option key={name} value={name}>{name}</option>)}
               </select>
             </label>
@@ -105,10 +105,10 @@ export function BulkOperations() {
             <p className="hint">Selected: {selectedFile.name} · {previewCount.toLocaleString()} data rows</p>
           )}
           <label>CSV data
-            <textarea value={csv} onChange={e => { setCsv(e.target.value); setSelectedFile(null); setPreviewCount(null) }} rows={8} placeholder={SAMPLE_CSV[entityType]} />
+            <textarea value={csv} onChange={e => { setCsv(e.target.value); setSelectedFile(null); setSheetNames([]); setSelectedSheet(''); setPreviewCount(null) }} rows={8} placeholder={SAMPLE_CSV[entityType]} />
           </label>
           <div>
-            <button type="button" className="secondary-button" onClick={() => { setCsv(SAMPLE_CSV[entityType]); setSelectedFile(null); setPreviewCount(null) }}>Load sample CSV</button>
+            <button type="button" className="secondary-button" onClick={() => { setCsv(SAMPLE_CSV[entityType]); setSelectedFile(null); setSheetNames([]); setSelectedSheet(''); setPreviewCount(null) }}>Load sample CSV</button>
             <button type="button" disabled={loading || (!csv.trim() && !selectedFile)} onClick={() => void handleImport()}>{loading ? 'Importing…' : 'Import'}</button>
           </div>
           {error && <div className="error" role="alert">{error}</div>}
