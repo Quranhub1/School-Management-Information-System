@@ -34,7 +34,7 @@ export function AgGridTable<TData extends object>({
   pageSize = 25,
   loading = false,
   quickFilterText,
-  rowSelection = 'multiple',
+  rowSelection = { mode: 'multiRow' },
   editable = false,
   exportFileName = 'smis-data',
   toolbar = true,
