@@ -393,10 +393,10 @@ export default function MobileMoneyPayments() {
 
       <div className="panel" style={{ marginBottom: '24px' }}>
         <div className="panel-heading">
-          <h3>Payment Provider Integration (Placeholder)</h3>
+          <h3>Payment Provider Integration</h3>
         </div>
         <div style={{ padding: '20px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}>
-              <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
             <button
               className="secondary-button"
               onClick={() => setShowPaymentProviderMsg('Payment Provider integration is not configured. Contact your system administrator to set up Payment Provider API credentials.')}
