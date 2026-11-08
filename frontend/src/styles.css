@@ -2719,7 +2719,6 @@ body.smis-table-resizing, body.smis-table-resizing * { user-select: none !import
   .admin-section-title { align-items:flex-start; flex-direction:column; gap:9px; }
   .admin-chart-card { padding:16px; }
   .admin-chart-body { grid-template-columns:1fr; gap:10px; }
-  .admin-donut-wrap { width:150px; }
   .admin-chart-legend { gap:9px; }
   .admin-quick-actions { grid-template-columns:1fr; }
 }
