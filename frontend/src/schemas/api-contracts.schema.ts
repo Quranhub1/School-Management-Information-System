@@ -95,8 +95,8 @@ export const payrollRecordResponseSchema = z.looseObject({
   netPay: z.number().finite(),
   paymentDate: z.string().nullable(),
   status: requiredTextSchema,
-  paymentMethod: z.string().optional(),
-  reference: z.string().optional(),
+  paymentMethod: z.string().nullable().optional(),
+  reference: z.string().nullable().optional(),
 });
 
 export const studentCreateRequestSchema = z.object({
