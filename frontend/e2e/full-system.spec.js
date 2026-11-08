@@ -18,12 +18,16 @@ async function signIn(page) {
     return {
       username: session?.username ?? null,
       roles: Array.isArray(session?.roles) ? session.roles : [],
+      expiresAt: session?.expiresAt ?? null,
+      sessionValid: Boolean(session?.accessToken && Number.isFinite(Date.parse(session.expiresAt)) && Date.parse(session.expiresAt) > Date.now()),
       hasAccessToken: Boolean(sessionStorage.getItem('smis.accessToken') || localStorage.getItem('smis.accessToken')),
-      sidebarButtons: Array.from(document.querySelectorAll('aside button')).map(button => ({
+      allButtons: Array.from(document.querySelectorAll('button')).map(button => button.innerText.trim()).filter(Boolean).slice(0, 40),
+      navButtons: Array.from(document.querySelectorAll('nav button, aside button, .sidebar button')).map(button => ({
         text: button.innerText.trim(),
         expanded: button.getAttribute('aria-expanded'),
-        hidden: button.closest('section')?.querySelector('[aria-hidden]')?.getAttribute('aria-hidden') ?? null,
+        hidden: button.getAttribute('aria-hidden'),
       })),
+      bodyText: document.body.innerText.slice(0, 900),
     };
   });
   console.log('SMIS E2E auth/nav diagnostics', JSON.stringify(authNavDiagnostics));
