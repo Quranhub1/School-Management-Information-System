@@ -49,8 +49,8 @@ export function BarChart({ labels, datasets, ariaLabel, valueFormatter = default
     },
   }), [datasets.length, horizontal, maxValue, valueFormatter])
 
-  const hasValues = datasets.some(dataset => dataset.data.some(value => Number.isFinite(value) && value !== 0))
-  return <div className={className ? `smis-chart-canvas smis-bar-chart ${className}` : 'smis-chart-canvas smis-bar-chart'}>
+  const hasValues = labels.length > 0 && datasets.some(dataset => dataset.data.length > 0)
+  return <div className={className ? `smis-bar-chart ${className}` : 'smis-bar-chart'}>
     {hasValues ? <ChartCanvas type="bar" data={data} options={options} ariaLabel={ariaLabel} /> : <div className="smis-chart-empty">No chart data available</div>}
   </div>
 }
