@@ -260,3 +260,45 @@ export const bulkPaymentRequestSchema = z.object({
     reference: z.string().trim().optional(),
   })).min(1, "Select at least one student payment."),
 });
+
+export const feeStructureItemRequestSchema = z.object({
+  code: requiredTextSchema,
+  name: requiredTextSchema,
+  amount: z.number().int().positive(),
+  incomeAccountId: z.string().trim().optional(),
+  sortOrder: z.number().int().nonnegative(),
+  isOptional: z.boolean(),
+});
+export const feeStructureCreateRequestSchema = z.object({
+  name: requiredTextSchema,
+  feeType: requiredTextSchema,
+  currency: z.string().trim().min(3).max(3).optional(),
+  programmeId: identifierSchema.optional(),
+  academicYearId: identifierSchema.optional(),
+  items: z.array(feeStructureItemRequestSchema).min(1, "Add at least one fee item."),
+});
+export const applyFeeStructureRequestSchema = z.object({
+  studentIds: z.array(identifierSchema).optional(),
+  allActiveStudents: z.boolean().optional(),
+}).refine(value => Boolean(value.allActiveStudents) !== Boolean(value.studentIds?.length), {
+  message: "Choose either selected students or all active students.",
+});
+export const creditNoteRequestSchema = z.object({
+  amount: z.number().int().positive(),
+  reason: requiredTextSchema.min(5),
+});
+export const staffAdvanceRequestSchema = z.object({
+  amount: z.number().int().positive(),
+  reason: requiredTextSchema.min(5),
+});
+export const approveStaffAdvanceRequestSchema = z.object({
+  approvedBy: z.string().trim().optional(),
+  approved: z.boolean(),
+});
+export const recoverStaffAdvanceRequestSchema = z.object({
+  amount: z.number().int().positive(),
+});
+export const invoiceNoteRequestSchema = z.object({
+  note: requiredTextSchema.min(3),
+  createdBy: z.string().trim().optional(),
+});
