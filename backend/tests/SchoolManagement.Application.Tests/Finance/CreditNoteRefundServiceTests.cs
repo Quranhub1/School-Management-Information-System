@@ -141,6 +141,8 @@ public sealed class CreditNoteRefundServiceTests
         public Task<bool> NameExistsAsync(string name, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(periods.Any(x => x.Name == name && x.Id != excludingId));
         public Task<bool> HasOverlappingPeriodAsync(DateOnly startDate, DateOnly endDate, Guid? excludingId, CancellationToken cancellationToken) => Task.FromResult(periods.Any(x => x.Id != excludingId && x.StartDate <= endDate && startDate <= x.EndDate));
         public Task AddAsync(FiscalPeriod period, CancellationToken cancellationToken) { periods.Add(period); return Task.CompletedTask; }
+        public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>([]);
+
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
