@@ -75,6 +75,9 @@ public sealed class InvoiceInstallmentServiceTests
         public Task AddJournalEntryAsync(JournalEntry journalEntry, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<IReadOnlyList<JournalEntry>> GetPostedJournalEntriesAsync(DateOnly? from, DateOnly? to, Guid? accountId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<JournalEntry>>([]);
         public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Payment>>([]);
+        public Task<SchoolPaymentNotification?> GetSchoolPaymentNotificationAsync(string externalReference, CancellationToken cancellationToken) => Task.FromResult<SchoolPaymentNotification?>(null);
+        public Task AddSchoolPaymentNotificationAsync(SchoolPaymentNotification notification, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<IReadOnlyList<SchoolPaymentNotification>> GetSchoolPaymentNotificationsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<SchoolPaymentNotification>>([]);
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }
