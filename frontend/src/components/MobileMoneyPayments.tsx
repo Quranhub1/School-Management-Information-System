@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, cancelMobileMoneyTransaction, getMobileMoneyTransactions, getStudentFinanceProfile, getInvoices, type MobileMoneyTransaction } from '../api/finance';
 
 interface Invoice {
@@ -21,6 +21,7 @@ export default function MobileMoneyPayments() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [externalRef, setExternalRef] = useState('');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const studentSearchSequence = useRef(0);
 
   useEffect(() => {
     loadTransactions();
@@ -40,29 +41,29 @@ export default function MobileMoneyPayments() {
 
   const handleStudentSearch = async (code: string) => {
     setStudentCode(code);
-    if (!code.trim()) {
-      setStudentName('');
-      setStudentId('');
-      setInvoices([]);
-      return;
-    }
-    try {
-      const data = await getStudentFinanceProfile(code.trim());
-      setStudentId(data.id);
-      setStudentName(data.name);
-      await loadInvoices(data.id);
-    } catch {
-      setStudentName('');
-      setStudentId('');
-      setInvoices([]);
-    }
-  };
+    const sequence = ++studentSearchSequence.current;
+    setStudentId('');
+    setStudentName('');
+    setInvoices([]);
+    setSelectedInvoice('');
+    if (!code.trim()) return;
 
-  const loadInvoices = async (studentId: string) => {
     try {
-      const data = await getInvoices(studentId);
-      setInvoices(data.map(invoice => ({ id: invoice.id, description: invoice.invoiceNumber + ' · ' + invoice.feeType, amount: invoice.balance })));
+      const student = await getStudentFinanceProfile(code.trim());
+      if (sequence !== studentSearchSequence.current) return;
+      setStudentId(student.id);
+      setStudentName(student.name);
+      const invoiceRows = await getInvoices(student.id);
+      if (sequence !== studentSearchSequence.current) return;
+      setInvoices(invoiceRows.map(invoice => ({
+        id: invoice.id,
+        description: invoice.invoiceNumber + ' · ' + invoice.feeType,
+        amount: invoice.balance
+      })));
     } catch {
+      if (sequence !== studentSearchSequence.current) return;
+      setStudentId('');
+      setStudentName('');
       setInvoices([]);
     }
   };
