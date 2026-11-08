@@ -25,6 +25,7 @@ export interface InstitutionalPdfOptions {
 
 const pdfMake = pdfMakeModule as unknown as PdfMakeEngine
 
+// This is the single frontend document-generation entry point for SMIS.
 // PDFMake and its font virtual file system are imported from local npm assets.
 // Generated PDFs therefore work without a CDN or an internet connection.
 pdfMake.addVirtualFileSystem(pdfFonts)
