@@ -152,47 +152,17 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
       setTranscript([]);
     } finally { setBusy(false); }
   }
-<<<<<<< HEAD
 
-<<<<<<< HEAD
-=======
-type AcademicAuthority = 'School-based' | 'UHPAB' | 'UVTAB' | 'UNMEB';
-
-export function ExaminationManagement({ canManage }: { canManage?: boolean }) {
-  const [view, setView] = useState<'sessions' | 'marks' | 'report-cards' | 'approvals' | 'reports'>('sessions');
-  const [authority, setAuthority] = useState<AcademicAuthority>('School-based');
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
-
->>>>>>> origin/feat/persisted-examination-workflows
   return (
     <section className="panel" aria-label="Examination management">
       <div className="panel-heading">
         <div><span className="eyebrow">EXAMINATIONS</span><h3>Examination Management</h3></div>
         <button type="button" className="secondary-button" onClick={() => void loadPlans()} disabled={loadingPlans}>Refresh plans</button>
-<<<<<<< HEAD
-      </div>
-<<<<<<< HEAD
-
-      {error && <p role="alert" className="form-error">{error}</p>}
-      {notice && <p role="status" className="form-success">{notice}</p>}
-
-=======
-      <div className="form-row academic-authority-picker">
-        <label>Examination authority
-          <select value={authority} onChange={e => setAuthority(e.target.value as AcademicAuthority)}>
-            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB — Health programmes</option><option value="UVTAB">UVTAB — Vocational & technical</option><option value="UNMEB">UNMEB — Legacy records</option>
-          </select>
-        </label>
-      </div>
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
       </div>
 
       {error && <p role="alert" className="form-error">{error}</p>}
       {notice && <p role="status" className="form-success">{notice}</p>}
 
->>>>>>> origin/feat/persisted-examination-workflows
       <div className="library-workspace-tabs" role="tablist" aria-label="Examination sections">
         {([
           ['sessions', 'Assessment plans'],
@@ -203,10 +173,6 @@ export function ExaminationManagement({ canManage }: { canManage?: boolean }) {
           <button key={key} type="button" role="tab" aria-selected={view === key} className={view === key ? 'active' : ''} onClick={() => setView(key)}>{label}</button>
         ))}
       </div>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feat/persisted-examination-workflows
 
       {view === 'sessions' && (
         <section className="academic-authority-workspace">
@@ -280,16 +246,6 @@ export function ExaminationManagement({ canManage }: { canManage?: boolean }) {
           {registrationAssessments.length > 0 && <p>{registrationAssessments.length} assessment record(s) loaded. Total score: {registrationAssessments.reduce((sum, item) => sum + item.score, 0)} / {registrationAssessments.reduce((sum, item) => sum + item.maximumScore, 0)}.</p>}
         </section>
       )}
-<<<<<<< HEAD
-=======
-      <section className="academic-authority-workspace" aria-live="polite">
-        <h4>{authority === 'School-based' ? 'School-based examinations' : `${authority} examinations`}</h4>
-        <p>Sessions, marks, report cards, approvals and reports are scoped to the selected academic authority. Records from other authorities must not be mixed into this workspace.</p>
-        <p className="empty">No examination records are connected to this authority workspace yet.</p>
-      </section>
->>>>>>> origin/feat/authority-separated-academic-workflows
-=======
->>>>>>> origin/feat/persisted-examination-workflows
     </section>
   );
 }
