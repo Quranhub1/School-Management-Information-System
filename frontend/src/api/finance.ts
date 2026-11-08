@@ -270,7 +270,7 @@ export async function createMobileMoneyTransaction(body: CreateMobileMoneyTransa
   return request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(body) })
 }
 export async function confirmMobileMoneyTransaction(transactionId: string, externalRef: string) {
-  return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST, body: JSON.stringify({ externalRef }) })
+  return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ externalRef }) })
 }
 export async function cancelMobileMoneyTransaction(transactionId: string) {
   return request<void>(`/api/finance/mobile-money/${transactionId}`, { method: 'DELETE' })
