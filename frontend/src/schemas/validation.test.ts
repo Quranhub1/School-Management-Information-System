@@ -86,7 +86,7 @@ describe("SMIS Zod domain schemas", () => {
     }).success).toBe(false);
     expect(bulkPaymentRequestSchema.safeParse({ payments: [] }).success).toBe(false);
     expect(bulkPaymentRequestSchema.safeParse({
-      payments: [{ studentId: "student-1", amount: 10000, paymentMethod: "Cash" }],
+      payments: [{ studentId: "student-1", invoiceId: "", amount: 10000, paymentMethod: "Cash", receiptNumber: "BLK-001" }],
     }).success).toBe(true);
   });
 
