@@ -64,3 +64,8 @@ Then manually verify:
 - Student guardian and QR actions still open the correct records
 
 Do not merge to `main` until dependency installation, build, tests and manual checks pass.
+
+
+## Search responsiveness
+
+The shared grid toolbar keeps the text input controlled and responsive while `use-debounce` 10.1.1 delays the value passed to AG Grid by 300 ms. This optimization applies to client-side quick filtering in every screen using `AgGridTable`; it does not delay unrelated form inputs or financial submissions, and it does not debounce server API calls outside this shared grid. The debounce value is centralized so the delay can be tuned consistently. Clearing the search is subject to the same short debounce window.
