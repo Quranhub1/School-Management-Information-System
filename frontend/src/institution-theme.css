@@ -325,6 +325,7 @@
 .app-shell > aside nav section button:not([aria-expanded]) {
   border-radius: 10px !important;
 }
+<<<<<<< HEAD
 
 
 /* Sidebar navigation: remove the rounded teal/green treatment. Keep a restrained,
@@ -665,3 +666,5 @@
 >>>>>>> origin/fix/compact-course-mapping-select
 =======
 >>>>>>> origin/fix/remove-sidebar-selected-tab-c-shape
+=======
+>>>>>>> origin/fix/sidebar-rounding-remove-button-motion
