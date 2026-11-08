@@ -77,17 +77,19 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
     }
 
     let active = true
+    const controller = new AbortController()
     const timer = window.setTimeout(() => {
       setLoading(true)
-      globalSearch(term)
+      globalSearch(term, undefined, undefined, controller.signal)
         .then(data => { if (active) setResults(toSearchItems(data)) })
         .catch(() => { if (active) setResults([]) })
         .finally(() => { if (active) setLoading(false) })
-    }, 250)
+    }, 300)
 
     return () => {
       active = false
       window.clearTimeout(timer)
+      controller.abort()
     }
   }, [query])
 

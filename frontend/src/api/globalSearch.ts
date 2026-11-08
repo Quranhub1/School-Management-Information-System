@@ -63,12 +63,12 @@ export const globalSearchQueryKeys = {
     ['global-search', query.trim().toLocaleLowerCase(), from ?? '', to ?? ''] as const,
 }
 
-export function globalSearch(q: string, from?: string, to?: string): Promise<GlobalSearchResponse> {
+export function globalSearch(q: string, from?: string, to?: string, signal?: AbortSignal): Promise<GlobalSearchResponse> {
   const qs = new URLSearchParams()
   qs.set('q', q)
   if (from) qs.set('from', from)
   if (to) qs.set('to', to)
-  return request<GlobalSearchResponse>('/api/search?' + qs.toString())
+  return request<GlobalSearchResponse>('/api/search?' + qs.toString(), { signal })
 }
 
 /** Search results include personal records; keep them in memory only, never in IndexedDB. */
