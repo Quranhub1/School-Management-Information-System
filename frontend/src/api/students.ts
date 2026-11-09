@@ -87,7 +87,8 @@ export async function getStudents() { return parseApiResponse(z.array(studentRes
 export async function getArchivedStudents(search = '') {
   const params = new URLSearchParams()
   if (search.trim()) params.set('search', search.trim())
-  return parseApiResponse(z.array(studentResponseSchema), await request<unknown>(`/api/students/archived${params.size ? `?${params}` : ''}`), 'archived students') as Student[]
+  const query = params.toString()
+  return parseApiResponse(z.array(studentResponseSchema), await request<unknown>(`/api/students/archived${query ? `?${query}` : ''}`), 'archived students') as Student[]
 }
 export const archiveStudent = (id: string, reason?: string) => request<{ id: string; studentNumber: string; isArchived: boolean; archivedAt: string }>(`/api/students/${encodeURIComponent(id)}/archive`, { method: 'POST', body: JSON.stringify({ reason: reason?.trim() || null }) })
 export const restoreStudent = (id: string) => request<{ id: string; studentNumber: string; isArchived: boolean }>(`/api/students/${encodeURIComponent(id)}/restore`, { method: 'POST' })
