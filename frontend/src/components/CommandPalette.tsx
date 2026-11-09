@@ -142,15 +142,14 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
                 searchInputRef.current?.blur()
               }
             }}
-            placeholder="Search students, staff, courses or modules…"
-            aria-label="Search students, staff, courses or modules"
+            placeholder="Search…"
+            aria-label="Search"
         />
-        <kbd>Ctrl K</kbd>
       </div>
 
       {open && (
         <CommandMenu.List>
-            <CommandMenu.Empty>{loading ? 'Searching…' : query.trim().length < 2 ? 'Type at least 2 characters to search records.' : 'No matching records.'}</CommandMenu.Empty>
+            <CommandMenu.Empty>{loading ? 'Searching…' : query.trim().length < 2 ? '' : 'No results'}</CommandMenu.Empty>
             {groupedResults.map(([type, group]) => (
               <CommandMenu.Group key={type} heading={type}>
                 {group.map(item => (
