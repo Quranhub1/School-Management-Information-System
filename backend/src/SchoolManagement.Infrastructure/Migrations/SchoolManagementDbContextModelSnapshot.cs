@@ -3358,7 +3358,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("StaffAdvances");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentCharge", b =>
+            modelBuilder.Entity<SchoolManagement.Domain.Finance.StudentCharge>(b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -4380,7 +4380,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Alumni");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Students.Student", b =>
+            modelBuilder.Entity<SchoolManagement.Domain.Students.Student>(b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
