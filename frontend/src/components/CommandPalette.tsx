@@ -127,11 +127,11 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
   }
 
   return (
-    <div className="command-palette-inline" ref={paletteRef}>
+    <div className="command-palette-container" ref={paletteRef}>
+      <CommandMenu className="command-palette-inline" shouldFilter>
       <div className="command-palette-input-wrap">
         <Search size={17} aria-hidden="true" />
-        <CommandMenu>
-          <CommandMenu.Input
+        <CommandMenu.Input
             ref={searchInputRef}
             value={query}
             onFocus={() => setOpen(true)}
@@ -144,21 +144,12 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
             }}
             placeholder="Search students, staff, courses or modules…"
             aria-label="Search students, staff, courses or modules"
-          />
-        </CommandMenu>
+        />
         <kbd>Ctrl K</kbd>
       </div>
 
       {open && (
-        <CommandMenu className="command-palette-results" shouldFilter>
-          <CommandMenu.Input
-            className="command-palette-filter-input"
-            value={query}
-            onValueChange={setQuery}
-            aria-hidden="true"
-            tabIndex={-1}
-          />
-          <CommandMenu.List>
+        <CommandMenu.List>
             <CommandMenu.Empty>{loading ? 'Searching…' : query.trim().length < 2 ? 'Type at least 2 characters to search records.' : 'No matching records.'}</CommandMenu.Empty>
             {groupedResults.map(([type, group]) => (
               <CommandMenu.Group key={type} heading={type}>
@@ -191,8 +182,7 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
               </CommandMenu.Group>
             )}
           </CommandMenu.List>
-        </CommandMenu>
-      )}
+      </CommandMenu>
     </div>
   )
 }
