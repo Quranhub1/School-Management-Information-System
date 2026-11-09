@@ -49,6 +49,7 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const paletteRef = useRef<HTMLDivElement>(null)
 
@@ -77,18 +78,25 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
     if (term.length < 2) {
       setResults([])
       setLoading(false)
+      setSearchError(null)
       return
     }
 
     setResults([])
+    setSearchError(null)
     setLoading(true)
     let active = true
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
-      setLoading(true)
-      globalSearch(term, undefined, undefined, controller.signal, scope)
+      // This is a global search, not a search limited to the currently open module.
+      globalSearch(term, undefined, undefined, controller.signal)
         .then(data => { if (active) setResults(toSearchItems(data)) })
-        .catch(() => { if (active) setResults([]) })
+        .catch(error => {
+          if (active && !controller.signal.aborted) {
+            setResults([])
+            setSearchError(error instanceof Error ? error.message : 'Search is temporarily unavailable. Please try again.')
+          }
+        })
         .finally(() => { if (active) setLoading(false) })
     }, 300)
 
@@ -97,7 +105,7 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
       window.clearTimeout(timer)
       controller.abort()
     }
-  }, [query, scope])
+  }, [query])
 
   const groupedResults = useMemo(() => {
     const groups = new Map<string, SearchItem[]>()
@@ -109,6 +117,7 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
     setOpen(false)
     setQuery('')
     setResults([])
+    setSearchError(null)
   }
 
   const selectSearchResult = (item: SearchItem) => {
@@ -119,9 +128,9 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
   return (
     <div className="command-palette-container" ref={paletteRef}>
       <CommandMenu className="command-palette-menu" shouldFilter={false}>
-      <div className="command-palette-input-wrap">
-        <Search size={17} aria-hidden="true" />
-        <CommandMenu.Input
+        <div className="command-palette-input-wrap">
+          <Search size={17} aria-hidden="true" />
+          <CommandMenu.Input
             ref={searchInputRef}
             value={query}
             onFocus={() => setOpen(true)}
@@ -132,34 +141,35 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
                 searchInputRef.current?.blur()
               }
             }}
-            placeholder={scope === "dashboard" ? "Search all records…" : `Search ${scope.replaceAll("-", " ")}…` }
-            aria-label="Search"
-        />
-      </div>
-
-      {open && (
-        <div className="command-palette-results">
-        <CommandMenu.List>
-            <CommandMenu.Empty>{loading ? 'Searching…' : query.trim().length < 2 ? '' : 'No results'}</CommandMenu.Empty>
-            {groupedResults.map(([type, group]) => (
-              <CommandMenu.Group key={type} heading={type}>
-                {group.map(item => (
-                  <CommandMenu.Item
-                    key={`record-${item.type}-${item.id}`}
-                    value={`${item.type} ${item.label} ${item.detail}`}
-                    onSelect={() => selectSearchResult(item)}
-                  >
-                    <Search size={14} aria-hidden="true" />
-                    <span>{item.label}</span>
-                    <small>{item.detail}</small>
-                  </CommandMenu.Item>
-                ))}
-              </CommandMenu.Group>
-            ))}
-
-          </CommandMenu.List>
+            placeholder={scope === 'dashboard' ? 'Search all records…' : `Search all records (currently: ${scope.replaceAll('-', ' ')})…`}
+            aria-label="Search all records"
+          />
         </div>
-      )}
+
+        {open && (
+          <div className="command-palette-results">
+            <CommandMenu.List>
+              <CommandMenu.Empty>
+                {loading ? 'Searching…' : searchError ?? (query.trim().length < 2 ? '' : 'No results')}
+              </CommandMenu.Empty>
+              {groupedResults.map(([type, group]) => (
+                <CommandMenu.Group key={type} heading={type}>
+                  {group.map(item => (
+                    <CommandMenu.Item
+                      key={`record-${item.type}-${item.id}`}
+                      value={`${item.type} ${item.label} ${item.detail}`}
+                      onSelect={() => selectSearchResult(item)}
+                    >
+                      <Search size={14} aria-hidden="true" />
+                      <span>{item.label}</span>
+                      <small>{item.detail}</small>
+                    </CommandMenu.Item>
+                  ))}
+                </CommandMenu.Group>
+              ))}
+            </CommandMenu.List>
+          </div>
+        )}
       </CommandMenu>
     </div>
   )
