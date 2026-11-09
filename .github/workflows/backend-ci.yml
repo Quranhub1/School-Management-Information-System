@@ -32,6 +32,9 @@ jobs:
       - name: Audit NuGet dependencies
         working-directory: backend
         run: dotnet list SchoolManagement.sln package --vulnerable --include-transitive
+      - name: Report outdated NuGet dependencies
+        working-directory: backend
+        run: dotnet list SchoolManagement.sln package --outdated --include-transitive
       - name: Build
         working-directory: backend
         run: dotnet build SchoolManagement.sln --configuration Release --no-restore
