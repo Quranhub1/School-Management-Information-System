@@ -119,6 +119,26 @@ jobs:
         working-directory: backend
         run: dotnet build SchoolManagement.sln --configuration Release
 
+      - name: Diagnose EF Core model snapshot differences
+        if: always()
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/smis-model-diff
+          dotnet ef migrations add CiModelDiff \\
+            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \\
+            --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \\
+            --configuration Release \\
+            --no-build \\
+            --output-dir /tmp/smis-model-diff
+          for file in /tmp/smis-model-diff/*_CiModelDiff.cs; do
+            if [ -f "$file" ]; then
+              echo "===== GENERATED EF MODEL DIFFERENCE: $file ====="
+              cat "$file"
+            fi
+          done
+
       - name: Verify EF Core model matches migrations
         working-directory: backend
         run: |
