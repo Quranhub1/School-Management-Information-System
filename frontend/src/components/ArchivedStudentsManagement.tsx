@@ -152,8 +152,8 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
     {error && <div className="error" role="alert">{error}</div>}
     {notice && <div className="info-banner" role="status">{notice}</div>}
 
-    {canManage && <form className="panel" onSubmit={submitArchive}>
-      <div className="panel-heading"><div><p className="eyebrow">ARCHIVE ACTION</p><h3>Move an active student into Archives</h3></div></div>
+    {canManage && <form className="panel archive-action-panel" onSubmit={submitArchive}>
+      <div className="panel-heading"><h3>Archive student</h3></div>
       <div className="lifecycle-form-grid">
         <label>Search active students
           <input value={activeSearch} onChange={e => setActiveSearch(e.target.value)} placeholder="Name or student number" />
@@ -169,7 +169,6 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
         </label>
       </div>
       <div className="form-actions"><button type="submit" disabled={!archiveTarget || saving}>{saving ? 'Archiving…' : 'Archive student'}</button></div>
-      <p className="finance-muted">This action removes the student from active student lists. It does not delete biodata, marks, attendance, fee invoices, payments, guardians or documents.</p>
     </form>}
 
     <form className="finance-search-form archive-search-form" onSubmit={searchArchive}>
