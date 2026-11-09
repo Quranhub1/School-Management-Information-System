@@ -9,6 +9,25 @@ namespace SchoolManagement.Api.Tests;
 public sealed class AuthorizationBoundaryTests
 {
     [Fact]
+    public void AdminSecretaryCanManageStudentAndAdmissionWorkflows()
+    {
+        Assert.Contains(InstitutionalRoles.AdminSecretary, AuthorizationPolicies.RoleSets.StudentManagement);
+        Assert.Contains(InstitutionalRoles.AdminSecretary, AuthorizationPolicies.RoleSets.AdmissionsManagement);
+    }
+
+    [Fact]
+    public void SystemAdministratorHasFullOperationalRoleCoverage()
+    {
+        var operationalRoleSets = typeof(AuthorizationPolicies.RoleSets)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(field => field.FieldType == typeof(string[]))
+            .Where(field => field.Name != nameof(AuthorizationPolicies.RoleSets.StudentPortal));
+
+        Assert.All(operationalRoleSets, field =>
+            Assert.Contains(InstitutionalRoles.SystemAdministrator, (string[])field.GetValue(null)!));
+    }
+
+    [Fact]
     public void AdmissionDocumentsControllerRequiresAdmissionsReadByDefault()
     {
         var attribute = typeof(AdmissionDocumentsController)
