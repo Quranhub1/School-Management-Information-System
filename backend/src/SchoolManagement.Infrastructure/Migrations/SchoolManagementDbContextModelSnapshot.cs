@@ -4380,7 +4380,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Alumni");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Students.Student", b =>
+            modelBuilder.Entity<SchoolManagement.Domain.Students.Student>(b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -4450,7 +4450,7 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("IsArchived", "CampusId", "StudentNumber");
 
-
+                    b.HasQueryFilter(student => !student.IsArchived);
 
                     b.ToTable("Students");
                 });
@@ -5407,10 +5407,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                 {
                     b.Navigation("Assignments");
                 });
-modelBuilder.Entity<SchoolManagement.Domain.Students.Student>()
-                .HasQueryFilter(student => !student.IsArchived);
-
-            #pragma warning restore 612, 618
+#pragma warning restore 612, 618
         }
     }
 }
