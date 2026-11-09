@@ -12,6 +12,7 @@ import { StudentFinanceDashboard } from './StudentFinanceDashboard'
 import { StaffAllowancesWorkspace } from './StaffAllowancesWorkspace'
 import { AgGridTable } from './AgGridTable'
 import { BarChart } from './charts'
+import './FinanceManagement.css'
 
 type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
 
@@ -170,7 +171,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
         <div>
           <p className="eyebrow">FINANCE & ACCOUNTS · UGX</p>
           <h2>Finance & Accounting</h2>
-          <p>Student billing, collections, receivables and accounting controls in one finance workspace.</p>
+          <p>Billing, collections and accounting controls.</p>
         </div>
         <div className="page-actions">
           <button type="button" className="secondary-button" onClick={() => void loadOverview()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
@@ -225,7 +226,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
           </div>
 
           <section className="finance-surface" style={{ marginTop: 18 }}>
-            <div className="finance-surface-heading"><div><span className="eyebrow">SCHOOL FEES WORKSPACE</span><h3>Payment Provider-style collection view</h3><p>Searchable student accounts, payment status, collection indicators and transaction tables, adapted to SMIS finance data.</p></div><button type="button" className="secondary-button" onClick={() => setTab('collections')}>Open collections</button></div>
+            <div className="finance-surface-heading"><div><span className="eyebrow">SCHOOL FEES WORKSPACE</span><h3>Student receivables</h3><p>Search admitted student accounts, review balances and track collection progress.</p></div><button type="button" className="secondary-button" onClick={() => setTab('collections')}>Open collections</button></div>
             <div className="finance-table-toolbar"><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search student name / code / programme" aria-label="Search finance accounts" /><span>{filteredOutstanding.length.toLocaleString()} outstanding accounts</span></div>
             <AgGridTable rows={filteredOutstanding.slice(0, 8)} columns={accountColumns} height={360} pageSize={8} />
           </section>
@@ -236,7 +237,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
 
       {tab === 'collections' && (
         <section className="finance-surface">
-          <div className="finance-surface-heading"><div><span className="eyebrow">COLLECTIONS</span><h3>Payments & receipts</h3><p>Real-time-style transaction table for posted finance payments. Payment channels are deliberately not used to drive the interface.</p></div></div>
+          <div className="finance-surface-heading"><div><span className="eyebrow">COLLECTIONS</span><h3>Payments & receipts</h3><p>Review posted payments, receipts and transaction references.</p></div></div>
           <div className="finance-table-toolbar"><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search receipt / student / reference" aria-label="Search payments" /><span>{payments.length.toLocaleString()} transactions loaded</span></div>
           <AgGridTable rows={payments.filter(p => !query.trim() || [p.receiptNumber,p.studentName,p.invoiceNumber,p.reference].some(v => String(v ?? '').toLowerCase().includes(query.trim().toLowerCase())))} columns={collectionColumns} height={520} pageSize={25} />
         </section>
