@@ -154,8 +154,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (string.IsNullOrWhiteSpace(studentIdOrNumber)) return BadRequest(new { message = "Student ID or number is required." });
         var value = studentIdOrNumber.Trim();
         var student = Guid.TryParse(value, out var id)
-            ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
-            : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
+            ? await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
+            : await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
         if (student is null) return NotFound(new { message = "Student was not found." });
         if (!await campusAccess.CanAccessStudentAsync(User, student.Id, cancellationToken)) return Forbid();
         return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.FirstName, student.OtherNames, student.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
