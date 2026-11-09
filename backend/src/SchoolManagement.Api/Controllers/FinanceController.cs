@@ -172,7 +172,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             {
                 x.Id,
                 x.StudentNumber,
-                name = string.Join(" ", new[] { x.FirstName, x.OtherNames, x.LastName }.Where(value => !string.IsNullOrWhiteSpace(value))),
+                name = x.FirstName + " " + (x.OtherNames ?? "") + " " + x.LastName,
                 x.Status,
                 invoiceCount = db.StudentInvoices.Count(invoice => invoice.StudentId == x.Id),
                 billed = db.StudentInvoices.Where(invoice => invoice.StudentId == x.Id)
