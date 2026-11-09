@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { globalSearchQueryKeys } from './globalSearch'
+import { globalSearchQueryKeys, normalizeSearchTerm } from './globalSearch'
 
 describe('global search query keys', () => {
+  it('normalizes mixed-case and compatibility-equivalent search terms', () => {
+    expect(normalizeSearchTerm('  JANE DOE  ')).toBe('jane doe')
+    expect(normalizeSearchTerm('ＫＳＨＳ')).toBe('kshs')
+    expect(globalSearchQueryKeys.results('STUDENT')).toEqual(
+      globalSearchQueryKeys.results('student'),
+    )
+  })
+
   it('normalizes search terms to avoid duplicate cache entries by letter case', () => {
     expect(globalSearchQueryKeys.results('Jane Doe')).toEqual(
       globalSearchQueryKeys.results('jane doe'),

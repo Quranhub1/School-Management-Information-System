@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Command as CommandMenu } from 'cmdk'
 import { Search } from 'lucide-react'
-import { globalSearch, type GlobalSearchResponse } from '../api/globalSearch'
+import { globalSearch, normalizeSearchTerm, type GlobalSearchResponse } from '../api/globalSearch'
 import './CommandPalette.css'
 
 interface SearchItem {
@@ -73,7 +73,7 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
   }, [])
 
   useEffect(() => {
-    const term = query.trim()
+    const term = normalizeSearchTerm(query)
     if (term.length < 2) {
       setResults([])
       setLoading(false)
@@ -118,7 +118,7 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
 
   return (
     <div className="command-palette-container" ref={paletteRef}>
-      <CommandMenu className="command-palette-menu" shouldFilter>
+      <CommandMenu className="command-palette-menu" shouldFilter={false}>
       <div className="command-palette-input-wrap">
         <Search size={17} aria-hidden="true" />
         <CommandMenu.Input
