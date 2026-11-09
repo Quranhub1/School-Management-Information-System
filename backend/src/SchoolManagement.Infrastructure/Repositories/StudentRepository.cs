@@ -11,7 +11,7 @@ public sealed class StudentRepository(SchoolManagementDbContext db) : IStudentRe
         await db.Students.AsNoTracking().Where(x => !x.IsArchived).OrderBy(x => x.StudentNumber).ToListAsync(cancellationToken);
 
     public Task<Student?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public async Task AddAsync(Student student, CancellationToken cancellationToken = default) =>
         await db.Students.AddAsync(student, cancellationToken);
