@@ -22,6 +22,7 @@ export interface Student {
   archivedAt?: string | null
   archivedBy?: string | null
   archiveReason?: string | null
+  statusBeforeArchive?: string | null
 }
 
 export interface StudentGuardian {
