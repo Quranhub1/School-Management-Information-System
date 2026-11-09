@@ -1,14 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Command as CommandMenu } from 'cmdk'
-import { ArrowRight, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { globalSearch, type GlobalSearchResponse } from '../api/globalSearch'
 import './CommandPalette.css'
-
-interface NavigationItem {
-  label: string
-  module: string
-  subsection?: string
-}
 
 interface SearchItem {
   id: string
@@ -19,9 +13,8 @@ interface SearchItem {
 }
 
 interface CommandPaletteProps {
-  items: NavigationItem[]
-  onNavigate: (module: string, subsection?: string) => void
-  onSignOut: () => void
+  scope: string
+  onNavigate: (module: string) => void
 }
 
 const EMPTY_RESULTS: GlobalSearchResponse = {
@@ -51,7 +44,7 @@ function toSearchItems(data: GlobalSearchResponse): SearchItem[] {
   ]
 }
 
-export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteProps) {
+export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchItem[]>([])
@@ -91,7 +84,7 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
       setLoading(true)
-      globalSearch(term, undefined, undefined, controller.signal)
+      globalSearch(term, undefined, undefined, controller.signal, scope)
         .then(data => { if (active) setResults(toSearchItems(data)) })
         .catch(() => { if (active) setResults([]) })
         .finally(() => { if (active) setLoading(false) })
@@ -102,7 +95,7 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
       window.clearTimeout(timer)
       controller.abort()
     }
-  }, [query])
+  }, [query, scope])
 
   const groupedResults = useMemo(() => {
     const groups = new Map<string, SearchItem[]>()
@@ -114,11 +107,6 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
     setOpen(false)
     setQuery('')
     setResults([])
-  }
-
-  const selectNavigation = (item: NavigationItem) => {
-    close()
-    onNavigate(item.module, item.subsection)
   }
 
   const selectSearchResult = (item: SearchItem) => {
@@ -142,7 +130,7 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
                 searchInputRef.current?.blur()
               }
             }}
-            placeholder="Search…"
+            placeholder={scope === "dashboard" ? "Search all records…" : `Search ${scope.replaceAll("-", " ")}…` }
             aria-label="Search"
         />
       </div>
@@ -166,21 +154,7 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
                 ))}
               </CommandMenu.Group>
             ))}
-            {items.length > 0 && (
-              <CommandMenu.Group heading="Go to">
-                {items.map((item, index) => (
-                  <CommandMenu.Item
-                    key={`nav-${item.module}-${item.subsection ?? 'root'}-${index}`}
-                    value={`navigate ${item.label} ${item.module} ${item.subsection ?? ''}`}
-                    onSelect={() => selectNavigation(item)}
-                  >
-                    <ArrowRight size={14} aria-hidden="true" />
-                    <span>{item.label}</span>
-                    <small>{item.subsection ? item.module : 'Module'}</small>
-                  </CommandMenu.Item>
-                ))}
-              </CommandMenu.Group>
-            )}
+
           </CommandMenu.List>
         </div>
       )}
