@@ -7,6 +7,7 @@ using SchoolManagement.Application.Finance;
 using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Students;
+using SchoolManagement.Domain.Workflows;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Infrastructure.Persistence;
 
@@ -109,8 +110,33 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
             appliedFeeStructureIds.Add(applicableFee.Id);
         }
 
+        // One central clearance register for all offices. Each department updates
+        // its own row; all rows point to the same canonical Student.Id.
+        var clearanceOffices = new[]
+        {
+            "Finance", "Library", "Academic Registry", "Programme Department",
+            "Examinations", "Student Affairs", "ICT", "Stores", "Hostel / Welfare",
+            "Administration"
+        };
+        foreach (var office in clearanceOffices)
+        {
+            var exists = await db.WorkflowInstances.AnyAsync(x =>
+                x.EntityType == "StudentClearance" && x.EntityId == student.Id &&
+                x.WorkflowType == office, cancellationToken);
+            if (exists) continue;
+            db.WorkflowInstances.Add(new WorkflowInstance
+            {
+                WorkflowType = office,
+                EntityType = "StudentClearance",
+                EntityId = student.Id,
+                CurrentState = "Pending",
+                Comments = "Awaiting office review"
+            });
+        }
+        await db.SaveChangesAsync(cancellationToken);
+
         await transaction.CommitAsync(cancellationToken);
-        return Created($"/api/students/{student.Id}", new { student, admission, enrollment, feeStructuresApplied = appliedFeeStructureIds });
+        return Created($"/api/students/{student.Id}", new { student, admission, enrollment, feeStructuresApplied = appliedFeeStructureIds, clearanceOffices });
     }
 }
 
