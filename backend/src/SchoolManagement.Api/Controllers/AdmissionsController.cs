@@ -83,25 +83,30 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
         // Admission is the source event for student billing. Select the most specific
         // active fee structure for this programme and academic year; empty IDs represent
         // institution-wide structures configured in Finance.
-        var applicableFee = await db.FeeStructures
+        var applicableFees = await db.FeeStructures
             .Include(x => x.Items)
             .Where(x => x.IsActive &&
                 (x.ProgrammeId == request.ProgrammeId || x.ProgrammeId == Guid.Empty) &&
                 (x.AcademicYearId == request.AcademicYearId || x.AcademicYearId == Guid.Empty))
             .OrderByDescending(x => x.ProgrammeId == request.ProgrammeId)
             .ThenByDescending(x => x.AcademicYearId == request.AcademicYearId)
-            .ThenByDescending(x => x.CreatedAt)
-            .FirstOrDefaultAsync(cancellationToken);
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
 
-        if (applicableFee is not null &&
-            !await db.StudentInvoices.AnyAsync(x => x.StudentId == student.Id && x.FeeStructureId == applicableFee.Id, cancellationToken))
+        var appliedFeeStructureIds = new List<Guid>();
+        foreach (var applicableFee in applicableFees)
         {
-            var invoiceNumber = $"INV-{Guid.NewGuid():N}";
-            await finance.CreateInvoiceAsync(student.Id, applicableFee.Id, invoiceNumber, cancellationToken);
+            var alreadyApplied = await db.StudentInvoices.AnyAsync(
+                x => x.StudentId == student.Id && x.FeeStructureId == applicableFee.Id,
+                cancellationToken);
+            if (alreadyApplied) continue;
+
+            await finance.CreateInvoiceAsync(student.Id, applicableFee.Id, $"INV-{Guid.NewGuid():N}", cancellationToken);
+            appliedFeeStructureIds.Add(applicableFee.Id);
         }
 
         await transaction.CommitAsync(cancellationToken);
-        return Created($"/api/students/{student.Id}", new { student, admission, enrollment, feeStructureApplied = applicableFee?.Id });
+        return Created($"/api/students/{student.Id}", new { student, admission, enrollment, feeStructuresApplied = appliedFeeStructureIds });
     }
 }
 
