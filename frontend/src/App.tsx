@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
-import { BarChart3, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, ClipboardList, Database, FileText, GraduationCap, HeartPulse, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, Shield, ShieldCheck, SlidersHorizontal, Stethoscope, UserPlus, UserRound, UsersRound, WalletCards } from 'lucide-react'
+import { Archive, BarChart3, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ChevronDown, ClipboardCheck, ClipboardList, Database, FileText, GraduationCap, HeartPulse, LayoutDashboard, Library, LogOut, Megaphone, MessageSquare, Package, Settings, Shield, ShieldCheck, SlidersHorizontal, Stethoscope, UserPlus, UserRound, UsersRound, WalletCards } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { getSession, logout, saveAuthSession } from './api/auth'
 import { canManageAcademics, canManageAdministration, canManageAdmissions, canManageFinance, canAccessFinance, canManageStudents, canManageStaff, canReadStaff, canReadLibrary, canManageLibrary, canManageCommunication, canManageReporting, canManageInventory, canManageHostel, canViewAnalytics, canManageAttendance, canReadAttendance, canReadOnlyFinance, canManageTimetable, canReadTimetable, canReadPayroll, canProcessPayroll } from './auth/roleGuards'
@@ -357,6 +357,7 @@ const iconBySidebarLabel: Record<string, LucideIcon> = {
   Classes: GraduationCap,
   Courses: BookOpen,
   'Medical Records': HeartPulse,
+  Archives: Archive,
   Clinic: Stethoscope,
 };
 const sidebarGroups:SidebarGroup[]=[
@@ -382,6 +383,7 @@ const sidebarGroups:SidebarGroup[]=[
     {label:'Students',module:'students'},
     {label:'Registration',module:'students',subsection:'registration',child:true},
     {label:'Records',module:'students',subsection:'records',child:true},
+    {label:'Archives',module:'students',subsection:'archives',child:true},
     {label:'Academic Management',module:'academics'},
     {label:'Curriculum & Courses',module:'curriculum'},
     {label:'Timetables',module:'timetable'},
