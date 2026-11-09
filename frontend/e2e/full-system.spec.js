@@ -127,6 +127,16 @@ test.describe('SMIS full-system smoke tests', () => {
     expect(invoices.status()).toBe(404);
   });
 
+  test('authenticated administrator can read the staff directory', async ({ request }) => {
+    const token = await getAdminToken(request);
+    const response = await request.get(`${API_BASE_URL}/api/staff?activeOnly=true`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await response.text();
+    expect(response.status(), `Staff directory request failed: ${body}`).toBe(200);
+    expect(JSON.parse(body)).toEqual(expect.any(Array));
+  });
+
   test('authenticated attendance API protects manual and QR recording paths', async ({ request }) => {
     const token = await getAdminToken(request);
     const headers = { Authorization: `Bearer ${token}` };
