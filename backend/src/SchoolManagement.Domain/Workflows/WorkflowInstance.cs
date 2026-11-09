@@ -6,7 +6,7 @@ public sealed class WorkflowInstance
     public required string WorkflowType { get; init; }
     public required string EntityType { get; init; }
     public Guid EntityId { get; init; }
-    public required string CurrentState { get; init; }
+    public required string CurrentState { get; set; }
     public Guid? AssignedToUserId { get; init; }
     public string? Comments { get; init; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
