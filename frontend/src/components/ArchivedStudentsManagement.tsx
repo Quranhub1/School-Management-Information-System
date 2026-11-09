@@ -21,6 +21,8 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
   const [guardians, setGuardians] = useState<StudentGuardian[]>([])
   const [application, setApplication] = useState<{ application: Record<string, unknown>; submittedAt: string; status: string } | null>(null)
   const [documents, setDocuments] = useState<StudentDocument[]>([])
+  const [transcriptNotice, setTranscriptNotice] = useState('')
+  const [documentsNotice, setDocumentsNotice] = useState('')
   const [tab, setTab] = useState<Tab>('biodata')
   const [archiveTarget, setArchiveTarget] = useState('')
   const [archiveReason, setArchiveReason] = useState('')
@@ -63,6 +65,8 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
     setGuardians([])
     setApplication(null)
     setDocuments([])
+    setTranscriptNotice('')
+    setDocumentsNotice('')
     setError('')
     try {
       const [record, studentProfile, guardianRows, applicationRecord, transcriptRows, documentRows] = await Promise.all([
@@ -70,8 +74,8 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
         loadStudent360(student.id).catch(() => null),
         getStudentGuardians(student.id).catch(() => []),
         getStudentApplicationForm(student.id).catch(() => null),
-        getStudentTranscript(student.id).catch(() => []),
-        getStudentDocuments(student.id).catch(() => []),
+        getStudentTranscript(student.id).catch(e => { setTranscriptNotice(e instanceof Error ? e.message : 'Academic transcript access is unavailable.'); return [] }),
+        getStudentDocuments(student.id).catch(e => { setDocumentsNotice(e instanceof Error ? e.message : 'Document access is unavailable.'); return [] }),
       ])
       setSelected(record)
       setProfile(studentProfile)
@@ -214,7 +218,7 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
           <h4>Transcript / Course Results</h4>
           <div className="table-wrap"><table><thead><tr><th>Course code</th><th>Course</th><th>Credit units</th><th>Score</th><th>Grade</th><th>Grade points</th><th>Result</th></tr></thead><tbody>
             {transcript.map(entry => <tr key={entry.id}><td>{entry.courseCode}</td><td>{entry.courseTitle}</td><td>{entry.creditUnits}</td><td>{entry.score}</td><td>{entry.grade || '—'}</td><td>{entry.gradePoint}</td><td>{entry.isPass ? 'Pass' : 'Not passed'}</td></tr>)}
-            {transcript.length === 0 && <tr><td colSpan={7}>No transcript entries are available for this student, or your role cannot access academic results.</td></tr>}
+            {transcript.length === 0 && <tr><td colSpan={7}>{transcriptNotice || 'No transcript entries are recorded for this student.'}</td></tr>}
           </tbody></table></div>
           {!profile && <p className="empty">Academic summary is not available for this record. The underlying student record has been retained.</p>}
         </div>}
@@ -231,7 +235,7 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
           <h4>Uploaded student documents</h4>
           <div className="table-wrap"><table><thead><tr><th>Document type</th><th>File name</th><th>Uploaded</th><th>Version</th><th>Status</th></tr></thead><tbody>
             {documents.map(document => <tr key={document.id}><td>{document.documentType}</td><td>{document.fileName}</td><td>{new Date(document.uploadedAt).toLocaleString('en-UG')}</td><td>{document.version}</td><td>{document.isArchived ? 'Document archived' : 'Available'}</td></tr>)}
-            {documents.length === 0 && <tr><td colSpan={5}>No uploaded documents are available for this student.</td></tr>}
+            {documents.length === 0 && <tr><td colSpan={5}>{documentsNotice || 'No uploaded documents are available for this student.'}</td></tr>}
           </tbody></table></div>
           {application ? <><h4>Admission application record</h4><p>Submitted: {new Date(application.submittedAt).toLocaleString('en-UG')} · Status: {application.status}</p><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{JSON.stringify(application.application, null, 2)}</pre></> : null}
           <p>Document count recorded in Student 360: {profile?.documentCount ?? documents.length}</p>
