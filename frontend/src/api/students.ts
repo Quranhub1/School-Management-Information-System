@@ -18,6 +18,10 @@ export interface Student {
   admissionId?: string | null
   campusId?: string | null
   createdAt: string
+  isArchived?: boolean
+  archivedAt?: string | null
+  archivedBy?: string | null
+  archiveReason?: string | null
 }
 
 export interface StudentGuardian {
@@ -79,6 +83,14 @@ export interface UpdateStudentRequest {
 }
 
 export async function getStudents() { return parseApiResponse(z.array(studentResponseSchema), await request<unknown>('/api/students'), 'students list') as Student[] }
+export async function getArchivedStudents(search = '') {
+  const params = new URLSearchParams()
+  if (search.trim()) params.set('search', search.trim())
+  return parseApiResponse(z.array(studentResponseSchema), await request<unknown>(`/api/students/archived${params.size ? `?${params}` : ''}`), 'archived students') as Student[]
+}
+export const archiveStudent = (id: string, reason?: string) => request<{ id: string; studentNumber: string; isArchived: boolean; archivedAt: string }>(`/api/students/${encodeURIComponent(id)}/archive`, { method: 'POST', body: JSON.stringify({ reason: reason?.trim() || null }) })
+export const restoreStudent = (id: string) => request<{ id: string; studentNumber: string; isArchived: boolean }>(`/api/students/${encodeURIComponent(id)}/restore`, { method: 'POST' })
+
 export async function getStudent(id: string) { if (!id.trim()) throw new Error('Student ID is required.'); return parseApiResponse(studentResponseSchema, await request<unknown>(`/api/students/${encodeURIComponent(id)}`), 'student record') as Student }
 export async function createStudent(requestBody: CreateStudentRequest) { const input = parseApiInput(studentCreateRequestSchema, requestBody, 'create student'); return parseApiResponse(studentResponseSchema, await request<unknown>('/api/students', { method: 'POST', body: JSON.stringify(input) }), 'created student') as Student }
 export async function updateStudent(id: string, requestBody: UpdateStudentRequest) { if (!id.trim()) throw new Error('Student ID is required.'); const input = parseApiInput(studentCreateRequestSchema.extend({ id: z.string().optional() }), requestBody, 'update student'); return parseApiResponse(studentResponseSchema, await request<unknown>(`/api/students/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) }), 'updated student') as Student }
