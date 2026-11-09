@@ -4,6 +4,7 @@ import { getStudent360Profile as loadStudent360, type Student360ProfileDto } fro
 import { getStudentFinancialStatement, type StudentFinancialStatement } from '../api/finance'
 import { getStudentTranscript } from '../api/academicRecords'
 import type { TranscriptEntry } from '../types/academic'
+import { showConfirmDialog } from '../utils/confirmDialog'
 import { getStudentDocuments, type StudentDocument } from '../api/documents'
 
 type Tab = 'biodata' | 'academic' | 'attendance' | 'fees' | 'documents'
@@ -101,7 +102,7 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
     if (!archiveTarget) return
     const student = activeStudents.find(x => x.id === archiveTarget)
     if (!student) return
-    if (!window.confirm(`Move ${fullName(student)} (${student.studentNumber}) into Archives? They will be removed from active student lists while all linked history is retained.`)) return
+    if (!(await showConfirmDialog(`Move ${fullName(student)} (${student.studentNumber}) into Archives?\nTheir active-list access will end; all linked records will be retained.`, { title: 'Move student to Archives', confirmLabel: 'Move to Archives' }))) return
     setSaving(true); setError(''); setNotice('')
     try {
       await archiveStudent(student.id, archiveReason)
@@ -116,7 +117,7 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
 
   async function restoreSelected() {
     if (!selected || !canManage) return
-    if (!window.confirm(`Restore ${fullName(selected)} to the active student system?`)) return
+    if (!(await showConfirmDialog(`Restore ${fullName(selected)} (${selected.studentNumber}) to the active student lists?`, { title: 'Restore student', confirmLabel: 'Restore student' }))) return
     setSaving(true); setError(''); setNotice('')
     try {
       await restoreStudent(selected.id)
@@ -145,35 +146,34 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
 
   return <section className="panel archived-students-workspace" aria-label="Student archives">
     <div className="panel-heading">
-      <div><p className="eyebrow">STUDENT RECORDS REPOSITORY</p><h2>Archives</h2><p>Search former and archived students and open their preserved institutional records.</p></div>
-      <div className="summary-card"><span>Archived students</span><strong>{archived.length}</strong></div>
+      <div><h2>Archives</h2></div>
+      <div className="summary-card archive-count"><span>Archived</span><strong>{archived.length}</strong></div>
     </div>
     {error && <div className="error" role="alert">{error}</div>}
     {notice && <div className="info-banner" role="status">{notice}</div>}
 
-    {canManage && <form className="panel" onSubmit={submitArchive}>
-      <div className="panel-heading"><div><p className="eyebrow">ARCHIVE ACTION</p><h3>Move an active student into Archives</h3></div></div>
+    {canManage && <form className="panel archive-action-panel" onSubmit={submitArchive}>
+      <div className="panel-heading"><h3>Archive student</h3></div>
       <div className="lifecycle-form-grid">
-        <label>Find active student
-          <input value={activeSearch} onChange={e => setActiveSearch(e.target.value)} placeholder="Search by student number or name" />
+        <label>Search active students
+          <input value={activeSearch} onChange={e => setActiveSearch(e.target.value)} placeholder="Name or student number" />
         </label>
-        <label>Select student
+        <label>Student
           <select value={archiveTarget} onChange={e => setArchiveTarget(e.target.value)} required>
             <option value="">Choose student…</option>
             {activeChoices.map(student => <option key={student.id} value={student.id}>{student.studentNumber} — {fullName(student)} ({student.status})</option>)}
           </select>
         </label>
-        <label className="full-width">Archive reason (optional)
-          <input value={archiveReason} onChange={e => setArchiveReason(e.target.value)} placeholder="e.g. Completed programme, transferred, withdrawn, historical record" />
+        <label>Reason (optional)
+          <input value={archiveReason} onChange={e => setArchiveReason(e.target.value)} placeholder="e.g. Completed programme" />
         </label>
       </div>
-      <div className="form-actions"><button type="submit" disabled={!archiveTarget || saving}>{saving ? 'Archiving…' : 'Move to Archives'}</button></div>
-      <p className="finance-muted">This action removes the student from active student lists. It does not delete biodata, marks, attendance, fee invoices, payments, guardians or documents.</p>
+      <div className="form-actions"><button type="submit" disabled={!archiveTarget || saving}>{saving ? 'Archiving…' : 'Archive student'}</button></div>
     </form>}
 
-    <form className="finance-search-form" onSubmit={searchArchive}>
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search archived students by name, student number, email, phone or national ID" aria-label="Search archived students" />
-      <button type="submit" disabled={loading}>{loading ? 'Searching…' : 'Search Archives'}</button>
+    <form className="finance-search-form archive-search-form" onSubmit={searchArchive}>
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search archived students…" aria-label="Search archived students" />
+      <button type="submit" disabled={loading}>{loading ? 'Searching…' : 'Search'}</button>
       <button type="button" className="secondary-button" onClick={() => { setSearch(''); void refresh('') }}>Clear</button>
     </form>
 
@@ -195,7 +195,7 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
         <div><p className="eyebrow">HISTORICAL STUDENT FILE</p><h2>{fullName(selected)}</h2><p>{selected.studentNumber} · Archived {selected.archivedAt ? new Date(selected.archivedAt).toLocaleDateString('en-UG') : ''}</p></div>
         <div className="form-actions"><button type="button" className="secondary-button" onClick={() => setSelected(null)}>Back to Archives</button>{canManage && <button type="button" onClick={() => void restoreSelected()} disabled={saving}>Restore to active system</button>}</div>
       </div>
-      <div className="student-lifecycle-tabs" role="tablist" aria-label="Archived student record sections">
+      <div className="student-lifecycle-tabs archive-tabs" role="tablist" aria-label="Archived student record sections">
         {tabs.map(item => <button type="button" key={item.key} className={tab === item.key ? 'active' : ''} onClick={() => setTab(item.key)} role="tab" aria-selected={tab === item.key}>{item.label}</button>)}
       </div>
       {detailLoading ? <p className="empty">Loading the student's preserved record…</p> : <>
