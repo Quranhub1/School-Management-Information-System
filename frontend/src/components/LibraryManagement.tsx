@@ -13,7 +13,12 @@ import {
   type LibraryBook,
   type LibraryLoan,
   type LibraryMember,
+  listProgrammeRequirements,
+  setProgrammeRequirement,
+  setProgrammeRequirementActive,
+  type LibraryProgrammeRequirement,
 } from '../api/library';
+import { getProgrammes, type Programme } from '../api/programmes';
 
 const dateInput = () => {
   const d = new Date();
@@ -32,6 +37,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [books, setBooks] = useState<LibraryBook[]>([]);
   const [loans, setLoans] = useState<LibraryLoan[]>([]);
   const [members, setMembers] = useState<LibraryMember[]>([]);
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [requirements, setRequirements] = useState<LibraryProgrammeRequirement[]>([]);
+  const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'recent' | 'overdue'>('recent');
   const [error, setError] = useState('');
@@ -70,7 +78,15 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
   useEffect(() => {
     void load();
-  }, []);
+    if (canManage) {
+      Promise.all([getProgrammes(), listProgrammeRequirements()])
+        .then(([programmeRows, requirementRows]) => {
+          setProgrammes(programmeRows.filter(programme => programme.isActive));
+          setRequirements(requirementRows);
+        })
+        .catch(e => setError(e instanceof Error ? e.message : 'Unable to load course book requirements.'));
+    }
+  }, [canManage]);
 
   const availableCopies = useMemo(
     () => books.reduce((sum, b) => sum + b.availableCopies, 0),
@@ -88,6 +104,42 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const selectedMember = members.find(
     (m) => m.studentNumber === issue.memberNumber,
   );
+
+  async function submitProgrammeRequirement(e: FormEvent) {
+    e.preventDefault();
+    if (!requirementForm.programmeId || !requirementForm.name.trim() || Number(requirementForm.amount) <= 0) {
+      setError('Select a programme, enter the book requirement and a fee greater than zero.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      await setProgrammeRequirement({
+        programmeId: requirementForm.programmeId,
+        name: requirementForm.name.trim(),
+        amount: Number(requirementForm.amount),
+        currency: 'UGX',
+      });
+      setRequirements(await listProgrammeRequirements());
+      setRequirementForm(current => ({ ...current, amount: '' }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to save course book requirement.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleProgrammeRequirement(id: string, active: boolean) {
+    setBusy(true);
+    try {
+      await setProgrammeRequirementActive(id, active);
+      setRequirements(await listProgrammeRequirements());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update requirement.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function submitBook(e: FormEvent) {
     e.preventDefault();
@@ -223,6 +275,36 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </div>
 
+      {canManage && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
+        <h3>Course book requirements and fees</h3>
+        <p>Set the required book or book-purchase amount for each programme. These charges are added to the student's Finance account automatically on admission.</p>
+        <form onSubmit={submitProgrammeRequirement} style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 1.5fr) minmax(160px, 1fr) minmax(120px, .7fr) auto', gap: 10, alignItems: 'end' }}>
+          <label>Programme
+            <select value={requirementForm.programmeId} onChange={e => setRequirementForm(v => ({ ...v, programmeId: e.target.value }))} required>
+              <option value="">Select course/programme</option>
+              {programmes.map(programme => <option key={programme.id} value={programme.id}>{programme.name}</option>)}
+            </select>
+          </label>
+          <label>Book / requirement
+            <input value={requirementForm.name} onChange={e => setRequirementForm(v => ({ ...v, name: e.target.value }))} required />
+          </label>
+          <label>Amount (UGX)
+            <input type="number" min="1" step="1" value={requirementForm.amount} onChange={e => setRequirementForm(v => ({ ...v, amount: e.target.value }))} required />
+          </label>
+          <button className="library-primary" type="submit" disabled={busy}>Save requirement</button>
+        </form>
+        <div className="table-wrap" style={{ marginTop: 12 }}>
+          <table><thead><tr><th>Programme</th><th>Requirement</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>{requirements.map(item => <tr key={item.id}>
+              <td>{programmes.find(p => p.id === item.programmeId)?.name ?? item.programmeId}</td>
+              <td>{item.name}</td><td>{item.currency} {item.totalAmount.toLocaleString('en-UG')}</td>
+              <td>{item.isActive ? 'Active' : 'Inactive'}</td>
+              <td><button type="button" className="secondary-button" disabled={busy} onClick={() => void toggleProgrammeRequirement(item.id, !item.isActive)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td>
+            </tr>)}
+            {requirements.length === 0 && <tr><td colSpan={5}>No course book requirements configured.</td></tr>}</tbody>
+          </table>
+        </div>
+      </section>}
       {error && <div className="error" role="alert">{error}</div>}
       {Object.keys(loanValidationErrors).length > 0 && <div className="error" role="alert"><strong>Loan fields requiring attention</strong><ul>{Object.entries(loanValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
 
