@@ -20,7 +20,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     {
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
-        var query = db.Students.AsNoTracking().AsQueryable();
+        var query = db.Students.AsNoTracking().Where(x => !x.IsArchived).AsQueryable();
         if (campusId.HasValue)
         {
             if (accessibleCampuses is not null && !accessibleCampuses.Contains(campusId.Value)) return Forbid();
@@ -31,6 +31,66 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
             query = query.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
         }
         return Ok(await query.OrderBy(x => x.StudentNumber).ToListAsync(cancellationToken));
+    }
+
+    [HttpGet("archived")]
+    public async Task<IActionResult> GetArchived([FromQuery] string? search, CancellationToken cancellationToken)
+    {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        var query = db.Students.IgnoreQueryFilters().AsNoTracking().Where(x => x.IsArchived);
+        if (accessibleCampuses is not null)
+            query = query.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(x =>
+                x.StudentNumber.ToLower().Contains(term) ||
+                x.FirstName.ToLower().Contains(term) ||
+                x.LastName.ToLower().Contains(term) ||
+                (x.OtherNames != null && x.OtherNames.ToLower().Contains(term)) ||
+                (x.Email != null && x.Email.ToLower().Contains(term)) ||
+                (x.PhoneNumber != null && x.PhoneNumber.Contains(term)) ||
+                (x.NationalId != null && x.NationalId.ToLower().Contains(term)));
+        }
+        return Ok(await query.OrderBy(x => x.StudentNumber).ToListAsync(cancellationToken));
+    }
+
+    [HttpPost("{id:guid}/archive")]
+    [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
+    public async Task<IActionResult> Archive(Guid id, [FromBody] ArchiveStudentRequest request, CancellationToken cancellationToken)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
+        var student = await db.Students.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (student is null) return NotFound(new { message = "Student was not found." });
+        if (student.IsArchived) return Conflict(new { message = "Student is already archived." });
+
+        student.StatusBeforeArchive = student.Status;
+        student.IsArchived = true;
+        student.Status = "Archived";
+        student.ArchivedAt = DateTimeOffset.UtcNow;
+        student.ArchivedBy = User.Identity?.Name ?? "Unknown";
+        student.ArchiveReason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { student.Id, student.StudentNumber, student.Status, student.IsArchived, student.ArchivedAt, student.ArchivedBy, student.ArchiveReason });
+    }
+
+    [HttpPost("{id:guid}/restore")]
+    [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
+    public async Task<IActionResult> Restore(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
+        var student = await db.Students.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == id && x.IsArchived, cancellationToken);
+        if (student is null) return NotFound(new { message = "Archived student was not found." });
+
+        student.IsArchived = false;
+        student.Status = string.IsNullOrWhiteSpace(student.StatusBeforeArchive) ? "Active" : student.StatusBeforeArchive;
+        student.StatusBeforeArchive = null;
+        student.ArchivedAt = null;
+        student.ArchivedBy = null;
+        student.ArchiveReason = null;
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { student.Id, student.StudentNumber, student.Status, student.IsArchived });
     }
 
     [HttpGet("{id:guid}")]
@@ -196,6 +256,8 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
             return BadRequest(new { message = "Student number, first name, and last name are required." });
         }
 
+        var existing = await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (existing?.IsArchived == true) return Conflict(new { message = "Archived student records are read-only in active student management. Restore the student before editing." });
         var updated = await service.UpdateAsync(request, cancellationToken);
         return updated is null ? NotFound() : Ok(updated);
     }
@@ -205,9 +267,13 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
+        var existing = await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (existing?.IsArchived == true) return Conflict(new { message = "Archived student records cannot be deleted from the active student endpoint." });
         var deleted = await service.DeleteAsync(id, cancellationToken);
         return deleted ? NoContent() : NotFound();
     }
 }
 
 public sealed record SaveStudentApplicationFormRequest(System.Text.Json.JsonElement Application, string? PhotographBase64 = null, string? PhotographContentType = null, string? PhotographFileName = null);
+
+public sealed record ArchiveStudentRequest(string? Reason = null);

@@ -3358,7 +3358,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("StaffAdvances");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Finance.StudentCharge", b =>
+            modelBuilder.Entity<SchoolManagement.Domain.Finance.StudentCharge>(b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -4380,7 +4380,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Alumni");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Students.Student", b =>
+            modelBuilder.Entity<SchoolManagement.Domain.Students.Student>(b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -4391,6 +4391,21 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.Property<Guid?>("CampusId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ArchivedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ArchiveReason")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("StatusBeforeArchive")
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -4432,6 +4447,10 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CampusId");
+
+                    b.HasIndex("IsArchived", "CampusId", "StudentNumber");
+
+                    b.HasQueryFilter((SchoolManagement.Domain.Students.Student student) => !student.IsArchived);
 
                     b.ToTable("Students");
                 });

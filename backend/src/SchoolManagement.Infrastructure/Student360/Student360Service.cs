@@ -18,8 +18,8 @@ public sealed class Student360Service(SchoolManagementDbContext db)
 
         var value = Uri.UnescapeDataString(studentIdOrNumber.Trim());
         var student = Guid.TryParse(value, out var parsedId)
-            ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
-            : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
+            ? await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
+            : await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
 
         if (student is null)
             throw new KeyNotFoundException("Student not found.");

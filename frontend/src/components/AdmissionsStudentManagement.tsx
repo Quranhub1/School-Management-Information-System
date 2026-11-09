@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
-import { AlumniManagement } from './AlumniManagement'
+import { ArchivedStudentsManagement } from './ArchivedStudentsManagement'
 import { getStudents, type Student } from '../api/students'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { downloadElementAsPng } from '../lib/printCapture'
 
-type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'alumni'
+type Section = 'biodata' | 'admissions' | 'indexing' | 'status' | 'cards' | 'national-results' | 'archives'
 type AccessProfile = 'receptionist' | 'records' | 'department' | 'general'
 
 const sections: { key: Section; label: string }[] = [
@@ -17,7 +17,7 @@ const sections: { key: Section; label: string }[] = [
   { key: 'status', label: 'Enrollment & Status' },
   { key: 'cards', label: 'ID Card Generator' },
   { key: 'national-results', label: 'National Results' },
-  { key: 'alumni', label: 'Alumni & Graduates' },
+  { key: 'archives', label: 'Archives' },
 ]
 
 const statuses = ['Active', 'On Clinical Attachment', 'Retake/Repeat Year', 'Discontinued', 'Deferred', 'Graduated']
@@ -42,6 +42,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
   useEffect(() => {
     if (activeSubsection === 'records') setSection('biodata')
     else if (activeSubsection === 'registration') setSection('admissions')
+    else if (activeSubsection === 'archives') setSection('archives')
   }, [activeSubsection])
 
   // Keep the sidebar's Students > Records destination synchronized with this workspace.
@@ -51,6 +52,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
       if (detail?.module !== 'students' || !detail.subsection) return
       if (detail.subsection === 'records') setSection('biodata')
       else if (detail.subsection === 'registration') setSection('admissions')
+      else if (detail.subsection === 'archives') setSection('archives')
     }
     window.addEventListener('smis:navigate-subsection', handleSubsectionNavigation)
     return () => window.removeEventListener('smis:navigate-subsection', handleSubsectionNavigation)
@@ -122,7 +124,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
   }
 
   const visibleSections = readOnly
-    ? sections.filter(item => accessProfile === 'receptionist' ? ['biodata', 'admissions'].includes(item.key) : accessProfile === 'department' ? item.key === 'biodata' : accessProfile === 'records' ? ['biodata', 'admissions', 'status'].includes(item.key) : ['biodata', 'admissions', 'status'].includes(item.key))
+    ? sections.filter(item => accessProfile === 'receptionist' ? ['biodata', 'admissions', 'archives'].includes(item.key) : accessProfile === 'department' ? ['biodata', 'archives'].includes(item.key) : accessProfile === 'records' ? ['biodata', 'admissions', 'status', 'archives'].includes(item.key) : ['biodata', 'admissions', 'status', 'archives'].includes(item.key))
     : sections
   const selected = useMemo(() => visibleSections.find(item => item.key === section), [visibleSections, section])
 
@@ -231,9 +233,9 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
           </section>
         )}
 
-        {section === 'alumni' && (
+        {section === 'archives' && (
           <div>
-            <AlumniManagement />
+            <ArchivedStudentsManagement canManage={canManage} />
           </div>
         )}
 

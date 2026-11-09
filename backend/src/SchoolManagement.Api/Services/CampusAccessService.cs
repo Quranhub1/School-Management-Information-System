@@ -51,7 +51,7 @@ public sealed class CampusAccessService(SchoolManagementDbContext db)
         if ((await GetActiveInstitutionCampusIdsAsync(cancellationToken)).Count == 0)
             return !await db.Campuses.AsNoTracking().AnyAsync(cancellationToken);
 
-        var campusId = await db.Students.AsNoTracking()
+        var campusId = await db.Students.IgnoreQueryFilters().AsNoTracking()
             .Where(x => x.Id == studentId)
             .Select(x => x.CampusId)
             .SingleOrDefaultAsync(cancellationToken);

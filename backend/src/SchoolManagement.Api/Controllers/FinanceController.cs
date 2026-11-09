@@ -45,8 +45,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
         var value = studentId.Trim();
         var student = Guid.TryParse(value, out var parsedId)
-            ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
-            : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
+            ? await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
+            : await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
 
         if (student is null) return NotFound(new { message = "Student was not found." });
         if (!await campusAccess.CanAccessStudentAsync(User, student.Id, cancellationToken)) return Forbid();
@@ -93,7 +93,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     {
         var query =
             from payment in db.Payments.AsNoTracking()
-            join student in db.Students.AsNoTracking() on payment.StudentId equals student.Id
+            join student in db.Students.IgnoreQueryFilters().AsNoTracking() on payment.StudentId equals student.Id
             join invoice in db.StudentInvoices.AsNoTracking() on payment.StudentInvoiceId equals invoice.Id into invoices
             from invoice in invoices.DefaultIfEmpty()
             select new { payment, student, invoice };
@@ -154,8 +154,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (string.IsNullOrWhiteSpace(studentIdOrNumber)) return BadRequest(new { message = "Student ID or number is required." });
         var value = studentIdOrNumber.Trim();
         var student = Guid.TryParse(value, out var id)
-            ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
-            : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
+            ? await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
+            : await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
         if (student is null) return NotFound(new { message = "Student was not found." });
         if (!await campusAccess.CanAccessStudentAsync(User, student.Id, cancellationToken)) return Forbid();
         return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.FirstName, student.OtherNames, student.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
