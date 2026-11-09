@@ -78,6 +78,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<FeeStructureItem> FeeStructureItems => Set<FeeStructureItem>();
     public DbSet<FeeItem> FeeItems => Set<FeeItem>();
     public DbSet<StudentInvoice> StudentInvoices => Set<StudentInvoice>();
+    public DbSet<StudentCharge> StudentCharges => Set<StudentCharge>();
     public DbSet<StudentFee> StudentFees => Set<StudentFee>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
