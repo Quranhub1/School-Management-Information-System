@@ -33,15 +33,15 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
         if (!searchAll && !supportedScopes.Contains(searchScope))
             return BadRequest(new { message = "The requested search scope is invalid." });
 
-        var students = searchStudents ? await SearchStudents(term, from, to, ct) : Array.Empty<StudentSearchResult>();
-        var staff = searchStaff ? await SearchStaff(term, ct) : Array.Empty<StudentSearchResult>();
-        var courses = searchCurriculum ? await SearchCourses(term, ct) : Array.Empty<StudentSearchResult>();
-        var programmes = searchCurriculum ? await SearchProgrammes(term, ct) : Array.Empty<StudentSearchResult>();
-        var academicYears = searchAcademics ? await SearchAcademicYears(term, from, to, ct) : Array.Empty<StudentSearchResult>();
-        var semesters = searchAcademics ? await SearchSemesters(term, from, to, ct) : Array.Empty<StudentSearchResult>();
-        var teachingGroups = searchAcademics ? await SearchTeachingGroups(term, ct) : Array.Empty<StudentSearchResult>();
-        var applicants = searchStudents ? await SearchApplicants(term, from, to, ct) : Array.Empty<StudentSearchResult>();
-        var alumni = searchStudents ? await SearchAlumni(term, from, to, ct) : Array.Empty<StudentSearchResult>();
+        IReadOnlyList<StudentSearchResult> students = searchStudents ? await SearchStudents(term, from, to, ct) : Array.Empty<StudentSearchResult>();
+        IReadOnlyList<StaffSearchResult> staff = searchStaff ? await SearchStaff(term, ct) : Array.Empty<StaffSearchResult>();
+        IReadOnlyList<CourseSearchResult> courses = searchCurriculum ? await SearchCourses(term, ct) : Array.Empty<CourseSearchResult>();
+        IReadOnlyList<ProgrammeSearchResult> programmes = searchCurriculum ? await SearchProgrammes(term, ct) : Array.Empty<ProgrammeSearchResult>();
+        IReadOnlyList<AcademicYearSearchResult> academicYears = searchAcademics ? await SearchAcademicYears(term, from, to, ct) : Array.Empty<AcademicYearSearchResult>();
+        IReadOnlyList<SemesterSearchResult> semesters = searchAcademics ? await SearchSemesters(term, from, to, ct) : Array.Empty<SemesterSearchResult>();
+        IReadOnlyList<TeachingGroupSearchResult> teachingGroups = searchAcademics ? await SearchTeachingGroups(term, ct) : Array.Empty<TeachingGroupSearchResult>();
+        IReadOnlyList<ApplicantSearchResult> applicants = searchStudents ? await SearchApplicants(term, from, to, ct) : Array.Empty<ApplicantSearchResult>();
+        IReadOnlyList<AlumniSearchResult> alumni = searchStudents ? await SearchAlumni(term, from, to, ct) : Array.Empty<AlumniSearchResult>();
 
         return Ok(new GlobalSearchResponse
         {
