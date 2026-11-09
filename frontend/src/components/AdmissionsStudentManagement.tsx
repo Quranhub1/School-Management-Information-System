@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
-import { AlumniManagement } from './AlumniManagement'
+import { ArchivedStudentsManagement } from './ArchivedStudentsManagement'
 import { getStudents, type Student } from '../api/students'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
@@ -235,7 +235,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
         {section === 'archives' && (
           <div>
-            <AlumniManagement />
+            <ArchivedStudentsManagement canManage={canManage} />
           </div>
         )}
 
