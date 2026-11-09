@@ -19,13 +19,21 @@ export function ChartCanvas<TType extends ChartType>({ type, data, options, aria
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    chartRef.current?.destroy()
-    chartRef.current = new ChartJS(canvas, { type, data, options } as ChartConfiguration)
+    const chart = new ChartJS(canvas, { type, data, options } as ChartConfiguration)
+    chartRef.current = chart
     return () => {
-      chartRef.current?.destroy()
+      chart.destroy()
       chartRef.current = null
     }
-  }, [type, data, options])
+  }, [type])
+
+  useEffect(() => {
+    const chart = chartRef.current
+    if (!chart) return
+    chart.data = data as ChartData
+    chart.options = options as ChartOptions
+    chart.update('none')
+  }, [data, options])
 
   return <div className={className ? `smis-chart-canvas ${className}` : 'smis-chart-canvas'}>
     <canvas ref={canvasRef} role="img" aria-label={ariaLabel} />
