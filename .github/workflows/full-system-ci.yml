@@ -126,11 +126,11 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf /tmp/smis-model-diff
-          dotnet ef migrations add CiModelDiff \\
-            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \\
-            --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \\
-            --configuration Release \\
-            --no-build \\
+          dotnet ef migrations add CiModelDiff \
+            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
+            --configuration Release \
+            --no-build \
             --output-dir /tmp/smis-model-diff
           for file in /tmp/smis-model-diff/*_CiModelDiff.cs; do
             if [ -f "$file" ]; then
