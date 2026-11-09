@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Command as CommandMenu } from 'cmdk'
 import { ArrowRight, Command as CommandIcon, LogOut, Search } from 'lucide-react'
 import { globalSearch, type GlobalSearchResponse } from '../api/globalSearch'
@@ -56,17 +56,24 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchItem[]>([])
   const [loading, setLoading] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        setOpen(current => !current)
+        setOpen(true)
       }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [])
+
+  useEffect(() => {
+    if (!open) return
+    const frame = window.requestAnimationFrame(() => searchInputRef.current?.focus())
+    return () => window.cancelAnimationFrame(frame)
+  }, [open])
 
   useEffect(() => {
     const term = query.trim()
@@ -133,6 +140,8 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
           <div className="command-palette-input-wrap">
             <Search size={18} aria-hidden="true" />
             <CommandMenu.Input
+              ref={searchInputRef}
+              autoFocus
               value={query}
               onValueChange={setQuery}
               placeholder="Search students, staff, courses or modules…"
