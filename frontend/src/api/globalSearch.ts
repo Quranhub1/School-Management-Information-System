@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAccessToken } from './auth'
 import { createCorrelationId } from '../lib/logging'
+import { readApiErrorMessage } from './errors'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -23,13 +24,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   })
   if (!response.ok) {
-    const body = await response.json().catch(() => null) as { message?: string } | null
-    throw new GlobalSearchApiError(
-      response.status === 401
-        ? 'Your session has expired. Please sign in again.'
-        : body?.message ?? 'Request failed with status ' + response.status,
-      response.status,
-    )
+    // Reuse the shared API error handler so server diagnostics and stack traces
+    // are never exposed in the global search palette.
+    const message = await readApiErrorMessage(response)
+    throw new GlobalSearchApiError(message, response.status)
   }
   return response.json() as Promise<T>
 }
