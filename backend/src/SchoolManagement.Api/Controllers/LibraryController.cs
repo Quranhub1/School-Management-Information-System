@@ -77,6 +77,13 @@ public sealed class LibraryController(
             return BadRequest(new { message = "The selected programme is not active." });
 
         var currency = string.IsNullOrWhiteSpace(request.Currency) ? "UGX" : request.Currency.Trim().ToUpperInvariant();
+        // Keep one active Library requirement per programme so a student is never
+        // billed twice for competing versions of the same course book policy.
+        var previousRequirements = await db.FeeStructures
+            .Where(x => x.ProgrammeId == request.ProgrammeId && x.FeeType == "LibraryBook" && x.IsActive)
+            .ToListAsync(ct);
+        foreach (var previous in previousRequirements) previous.IsActive = false;
+
         var structure = new SchoolManagement.Domain.Finance.FeeStructure
         {
             ProgrammeId = request.ProgrammeId,
