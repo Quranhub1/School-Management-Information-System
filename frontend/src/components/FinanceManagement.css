@@ -246,3 +246,95 @@
   .finance-workspace .finance-surface-heading { align-items: flex-start; flex-direction: column; }
   .finance-workspace .finance-table-toolbar input { min-width: 100%; }
 }
+
+
+/* Continuous student-fee payment ticker */
+.finance-workspace .finance-fee-ticker {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 42px;
+  overflow: hidden;
+  border: 1px solid var(--smis-border);
+  border-left: 3px solid #16845b;
+  border-radius: 5px;
+  background: var(--smis-surface);
+}
+.finance-workspace .finance-fee-ticker-label {
+  z-index: 1;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  color: var(--smis-text);
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .055em;
+  white-space: nowrap;
+  background: var(--smis-surface);
+}
+.finance-workspace .finance-fee-ticker-viewport {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.finance-workspace .finance-fee-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: finance-fee-ticker-scroll 42s linear infinite;
+  will-change: transform;
+}
+.finance-workspace .finance-fee-ticker:hover .finance-fee-ticker-track {
+  animation-play-state: paused;
+}
+.finance-workspace .finance-fee-ticker-group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+.finance-workspace .finance-fee-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 15px;
+  color: var(--smis-text);
+  font-size: .73rem;
+  white-space: nowrap;
+}
+.finance-workspace .finance-fee-ticker-item strong {
+  color: #16845b;
+  font-size: .65rem;
+  letter-spacing: .035em;
+}
+.finance-workspace .finance-fee-ticker-item b {
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.finance-workspace .finance-fee-ticker-item > span {
+  color: var(--smis-text-muted);
+  font-weight: 600;
+}
+.finance-workspace .finance-fee-ticker-item small {
+  color: var(--smis-text-muted);
+  font-size: .64rem;
+}
+.finance-workspace .finance-fee-ticker-item i {
+  color: var(--smis-border);
+  font-size: .55rem;
+  font-style: normal;
+}
+@keyframes finance-fee-ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .finance-workspace .finance-fee-ticker-track {
+    animation: none;
+  }
+  .finance-workspace .finance-fee-ticker-viewport {
+    overflow-x: auto;
+  }
+}
+@media (max-width: 620px) {
+  .finance-workspace .finance-fee-ticker-label { padding-inline: 8px; font-size: .58rem; }
+  .finance-workspace .finance-fee-ticker-item { padding-inline: 10px; }
+}
