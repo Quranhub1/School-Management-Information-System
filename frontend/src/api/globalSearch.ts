@@ -57,15 +57,20 @@ export interface GlobalSearchResponse {
   alumni: AlumniSearchResult[]
 }
 
+/** Normalize terms consistently before caching and sending them to the API. */
+export function normalizeSearchTerm(query: string): string {
+  return query.normalize('NFKC').trim().toLowerCase()
+}
+
 export const globalSearchQueryKeys = {
   all: ['global-search'] as const,
   results: (query: string, from?: string, to?: string) =>
-    ['global-search', query.trim().toLocaleLowerCase(), from ?? '', to ?? ''] as const,
+    ['global-search', normalizeSearchTerm(query), from ?? '', to ?? ''] as const,
 }
 
 export function globalSearch(q: string, from?: string, to?: string, signal?: AbortSignal, scope?: string): Promise<GlobalSearchResponse> {
   const qs = new URLSearchParams()
-  qs.set('q', q)
+  qs.set('q', normalizeSearchTerm(q))
   if (from) qs.set('from', from)
   if (to) qs.set('to', to)
   if (scope && scope !== 'dashboard') qs.set('scope', scope)
@@ -74,7 +79,7 @@ export function globalSearch(q: string, from?: string, to?: string, signal?: Abo
 
 /** Search results include personal records; keep them in memory only, never in IndexedDB. */
 export function useGlobalSearchQuery(q: string, from?: string, to?: string) {
-  const term = q.trim()
+  const term = normalizeSearchTerm(q)
   return useQuery({
     queryKey: globalSearchQueryKeys.results(term, from, to),
     queryFn: () => globalSearch(term, from, to),
