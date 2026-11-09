@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { archiveStudent, getArchivedStudents, getStudent, getStudent360Profile, getStudentApplicationForm, getStudentGuardians, getStudents, restoreStudent, type Student, type StudentGuardian } from '../api/students'
+import { archiveStudent, getArchivedStudents, getStudent, getStudentApplicationForm, getStudentGuardians, getStudents, restoreStudent, type Student, type StudentGuardian } from '../api/students'
 import { getStudent360Profile as loadStudent360, type Student360ProfileDto } from '../api/student360'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
 
