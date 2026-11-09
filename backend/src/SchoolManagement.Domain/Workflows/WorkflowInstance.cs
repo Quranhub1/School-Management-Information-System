@@ -8,9 +8,9 @@ public sealed class WorkflowInstance
     public Guid EntityId { get; init; }
     public required string CurrentState { get; set; }
     public Guid? AssignedToUserId { get; init; }
-    public string? Comments { get; init; }
+    public string? Comments { get; set; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset? UpdatedAt { get; init; }
+    public DateTimeOffset? UpdatedAt { get; set; }
     public Guid? CreatedByUserId { get; init; }
     public bool IsCompleted { get; set; }
 }
