@@ -197,8 +197,11 @@ public sealed class LibraryController(
 
         if (string.Equals(method, "FeePaid", StringComparison.OrdinalIgnoreCase))
         {
-            var outstanding = await db.StudentInvoices.AsNoTracking()
-                .Where(x => x.StudentId == studentId && x.FeeType == "LibraryBook")
+            var libraryInvoices = db.StudentInvoices.AsNoTracking()
+                .Where(x => x.StudentId == studentId && x.FeeType == "LibraryBook");
+            if (!await libraryInvoices.AnyAsync(ct))
+                return Conflict(new { message = "No Library book-fee invoice exists for this student. The Librarian must configure the course requirement first." });
+            var outstanding = await libraryInvoices
                 .SumAsync(x => (decimal?)(x.Amount - x.DiscountAmount - x.PaidAmount), ct) ?? 0m;
             if (outstanding > 0)
                 return Conflict(new { message = $"Library book fee is not fully paid. Outstanding: {outstanding:N0} UGX." });
