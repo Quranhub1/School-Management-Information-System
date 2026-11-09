@@ -102,6 +102,30 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         return Ok(student);
     }
 
+    [HttpGet("{id:guid}/clearances")]
+    public async Task<IActionResult> GetClearances(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
+        var studentExists = await db.Students.AsNoTracking().AnyAsync(x => x.Id == id, cancellationToken);
+        if (!studentExists) return NotFound(new { message = "Student was not found." });
+
+        var clearances = await db.WorkflowInstances.AsNoTracking()
+            .Where(x => x.EntityType == "StudentClearance" && x.EntityId == id)
+            .OrderBy(x => x.WorkflowType)
+            .Select(x => new
+            {
+                id = x.Id,
+                office = x.WorkflowType,
+                status = x.CurrentState,
+                notes = x.Comments,
+                x.CreatedAt,
+                x.UpdatedAt,
+                x.IsCompleted
+            })
+            .ToListAsync(cancellationToken);
+        return Ok(clearances);
+    }
+
     [HttpGet("{id:guid}/guardians")]
     public async Task<IActionResult> GetGuardians(Guid id, CancellationToken cancellationToken)
     {

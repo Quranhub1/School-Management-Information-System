@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getInvoices, getPayments, getStudentFinanceProfile, getStudentFinancialStatement, recordPayment, type Invoice, type StudentFinanceProfile, type StudentFinancialStatement } from '../api/finance'
+import { getFinanceStudents, getInvoices, getPayments, getStudentFinanceProfile, getStudentFinancialStatement, recordPayment, type FinanceStudentRegisterEntry, type Invoice, type StudentFinanceProfile, type StudentFinancialStatement } from '../api/finance'
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
@@ -17,6 +17,7 @@ const statusFor = (balance: number, billed: number, paid: number) => {
 export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
   const [query, setQuery] = useState(initialSearch)
   const [profile, setProfile] = useState<StudentFinanceProfile | null>(null)
+  const [registerStudents, setRegisterStudents] = useState<FinanceStudentRegisterEntry[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [statement, setStatement] = useState<StudentFinancialStatement | null>(null)
@@ -42,7 +43,22 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
     } finally { setLoading(false) }
   }
 
+  useEffect(() => {
+    let cancelled = false
+    getFinanceStudents().then(rows => { if (!cancelled) setRegisterStudents(rows) })
+      .catch(() => { if (!cancelled) setRegisterStudents([]) })
+    return () => { cancelled = true }
+  }, [])
+
   useEffect(() => { if (initialSearch.trim()) void loadStudent(initialSearch) }, [initialSearch])
+
+  const visibleRegisterStudents = useMemo(() => {
+    const term = query.trim().toLowerCase()
+    return registerStudents.filter(student => !term ||
+      student.studentNumber.toLowerCase().includes(term) ||
+      student.name.toLowerCase().includes(term))
+      .slice(0, 15)
+  }, [registerStudents, query])
 
   const summary = useMemo(() => {
     const billed = invoices.reduce((s, x) => s + x.amount, 0)
@@ -103,6 +119,14 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="e.g. 9912001842" aria-label="Student number or ID" />
         <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Open Account'}</button>
       </form>
+      {!profile && <div className="finance-register-list" style={{ marginTop: 14, maxHeight: 300, overflowY: 'auto', border: '1px solid #e5e7eb' }}>
+        <div style={{ padding: '9px 12px', fontWeight: 700, borderBottom: '1px solid #e5e7eb' }}>Admitted student accounts ({registerStudents.length})</div>
+        {visibleRegisterStudents.map(student => <button type="button" key={student.id} disabled={loading} onClick={() => { setQuery(student.studentNumber); void loadStudent(student.studentNumber) }} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 12px', border: 0, borderBottom: '1px solid #f1f5f9', background: '#fff', textAlign: 'left', cursor: 'pointer' }}>
+          <span><strong>{student.studentNumber}</strong> · {student.name}<small style={{ display: 'block', color: '#64748b' }}>{student.status} · {student.invoiceCount} invoices</small></span>
+          <span style={{ whiteSpace: 'nowrap', fontWeight: 700 }}>{money(student.billed - student.paid)} due</span>
+        </button>)}
+        {visibleRegisterStudents.length === 0 && <p className="empty" style={{ padding: 12 }}>No admitted students match this search.</p>}
+      </div>}
     </div>
     {error && <div className="error" role="alert">{error}</div>}
     {profile && <>

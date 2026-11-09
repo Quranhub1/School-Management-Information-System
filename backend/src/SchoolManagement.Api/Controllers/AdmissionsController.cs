@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Admissions;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Finance;
 using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Students;
+using SchoolManagement.Domain.Workflows;
+using SchoolManagement.Api.Services;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -13,7 +16,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/admissions")]
 [Authorize(Policy = AdmissionsPolicies.Read)]
-public sealed class AdmissionsController(AdmissionsWorkflowService workflow, SchoolManagementDbContext db) : ControllerBase
+public sealed class AdmissionsController(AdmissionsWorkflowService workflow, FinanceWorkflowService finance, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdmissionDto>>> GetAll(CancellationToken cancellationToken) => Ok(await workflow.GetAllAsync(cancellationToken));
@@ -48,8 +51,10 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
         if (string.Equals(admission.Status, "Admitted", StringComparison.OrdinalIgnoreCase)) return Conflict(new { message = "This applicant has already been admitted." });
         if (!string.Equals(admission.Status, "Accepted", StringComparison.OrdinalIgnoreCase)) return Conflict(new { message = "The matching admission is not accepted." });
 
-        var studentNumber = request.StudentNumber.Trim();
+        var studentNumber = request.StudentNumber?.Trim();
         if (string.IsNullOrWhiteSpace(studentNumber)) return BadRequest(new { message = "Student number is required." });
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         var student = await db.Students.SingleOrDefaultAsync(x => x.AdmissionId == admission.Id, cancellationToken);
         if (student is null)
         {
@@ -62,6 +67,9 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
             if (await db.Students.AnyAsync(x => x.Id != student.Id && x.StudentNumber == studentNumber, cancellationToken)) return Conflict(new { message = "The student number is already in use." });
             student.StudentNumber = studentNumber;
         }
+
+        if (student.CampusId is null)
+            student.CampusId = await campusAccess.ResolveCampusForWriteAsync(User, null, cancellationToken);
 
         var enrollment = await db.StudentEnrollments.SingleOrDefaultAsync(x => x.StudentId == student.Id && x.ProgrammeId == request.ProgrammeId && x.IntakeId == request.IntakeId, cancellationToken);
         if (enrollment is null)
@@ -76,7 +84,59 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Sch
         admission.Status = "Admitted";
         applicant.Status = "Admitted";
         await db.SaveChangesAsync(cancellationToken);
-        return Created($"/api/students/{student.Id}", new { student, admission, enrollment });
+
+        // Admission is the source event for student billing. Select the most specific
+        // active fee structure for this programme and academic year; empty IDs represent
+        // institution-wide structures configured in Finance.
+        var applicableFees = await db.FeeStructures
+            .Include(x => x.Items)
+            .Where(x => x.IsActive &&
+                (x.ProgrammeId == request.ProgrammeId || x.ProgrammeId == Guid.Empty) &&
+                (x.AcademicYearId == request.AcademicYearId || x.AcademicYearId == Guid.Empty))
+            .OrderByDescending(x => x.ProgrammeId == request.ProgrammeId)
+            .ThenByDescending(x => x.AcademicYearId == request.AcademicYearId)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var appliedFeeStructureIds = new List<Guid>();
+        foreach (var applicableFee in applicableFees)
+        {
+            var alreadyApplied = await db.StudentInvoices.AnyAsync(
+                x => x.StudentId == student.Id && x.FeeStructureId == applicableFee.Id,
+                cancellationToken);
+            if (alreadyApplied) continue;
+
+            await finance.CreateInvoiceAsync(student.Id, applicableFee.Id, $"INV-{Guid.NewGuid():N}", cancellationToken);
+            appliedFeeStructureIds.Add(applicableFee.Id);
+        }
+
+        // One central clearance register for all offices. Each department updates
+        // its own row; all rows point to the same canonical Student.Id.
+        var clearanceOffices = new[]
+        {
+            "Finance", "Library", "Academic Registry", "Programme Department",
+            "Examinations", "Student Affairs", "ICT", "Stores", "Hostel / Welfare",
+            "Administration"
+        };
+        foreach (var office in clearanceOffices)
+        {
+            var exists = await db.WorkflowInstances.AnyAsync(x =>
+                x.EntityType == "StudentClearance" && x.EntityId == student.Id &&
+                x.WorkflowType == office, cancellationToken);
+            if (exists) continue;
+            db.WorkflowInstances.Add(new WorkflowInstance
+            {
+                WorkflowType = office,
+                EntityType = "StudentClearance",
+                EntityId = student.Id,
+                CurrentState = "Pending",
+                Comments = "Awaiting office review"
+            });
+        }
+        await db.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+        return Created($"/api/students/{student.Id}", new { student, admission, enrollment, feeStructuresApplied = appliedFeeStructureIds, clearanceOffices });
     }
 }
 

@@ -54,3 +54,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const getStudent360Profile = (studentId: string) => request<Student360ProfileDto>(`/api/student360/${encodeURIComponent(studentId)}`)
+
+export interface StudentOfficeClearance {
+  id: string
+  office: string
+  status: string
+  notes?: string | null
+  createdAt: string
+  updatedAt?: string | null
+  isCompleted: boolean
+}
+export const getStudentClearances = (studentId: string) =>
+  request<StudentOfficeClearance[]>(`/api/students/${encodeURIComponent(studentId)}/clearances`)

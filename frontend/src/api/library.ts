@@ -49,3 +49,18 @@ export const returnBook = (id:string) => {
 };
 
 export const getBookBarcode = (id: string) => `${BASE}/api/library/books/${id}/barcode`
+
+export type LibraryProgrammeRequirement = {
+  id: string
+  programmeId: string
+  name: string
+  totalAmount: number
+  currency: string
+  isActive: boolean
+}
+export const listProgrammeRequirements = () =>
+  request<LibraryProgrammeRequirement[]>('/api/library/programme-requirements')
+export const setProgrammeRequirement = (input: { programmeId: string; name: string; amount: number; currency: string }) =>
+  request<LibraryProgrammeRequirement>('/api/library/programme-requirements', { method: 'POST', body: JSON.stringify(input) })
+export const setProgrammeRequirementActive = (id: string, active: boolean) =>
+  request<{ id: string; isActive: boolean }>(`/api/library/programme-requirements/${id}/active?active=${active}`, { method: 'PATCH' })

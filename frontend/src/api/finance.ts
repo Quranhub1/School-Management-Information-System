@@ -131,6 +131,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function getInvoices(studentId?: string) { const rows = await request<unknown>(`/api/finance/invoices${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`); return parseApiResponse(z.array(invoiceResponseSchema), rows, 'invoices') as Invoice[] }
 export interface StudentFinanceProfile { id: string; studentNumber: string; name: string; phoneNumber?: string; email?: string; status: string }
+export interface FinanceStudentRegisterEntry {
+  id: string
+  studentNumber: string
+  name: string
+  status: string
+  invoiceCount: number
+  billed: number
+  paid: number
+}
+export const getFinanceStudents = (search?: string) =>
+  request<FinanceStudentRegisterEntry[]>(`/api/finance/students${search ? `?search=${encodeURIComponent(search)}` : ''}`)
 export const getStudentFinanceProfile = (studentIdOrNumber: string) => request<StudentFinanceProfile>(`/api/finance/students/profile?studentIdOrNumber=${encodeURIComponent(studentIdOrNumber)}`)
 export interface StudentFinancialStatementLine {
   id: string

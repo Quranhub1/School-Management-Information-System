@@ -148,6 +148,43 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         var data = await dataQuery.ToListAsync(cancellationToken);
         return Ok(data);
     }
+    [HttpGet("students")]
+    public async Task<IActionResult> GetFinanceStudents([FromQuery] string? search, CancellationToken cancellationToken)
+    {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
+        var query = db.Students.AsNoTracking().Where(x => !x.IsArchived);
+        if (accessibleCampuses is not null)
+            query = query.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(x =>
+                x.StudentNumber.ToLower().Contains(term) ||
+                x.FirstName.ToLower().Contains(term) ||
+                x.LastName.ToLower().Contains(term) ||
+                (x.OtherNames != null && x.OtherNames.ToLower().Contains(term)));
+        }
+
+        var students = await query.OrderBy(x => x.StudentNumber)
+            .Select(x => new
+            {
+                x.Id,
+                x.StudentNumber,
+                name = x.FirstName + " " + (x.OtherNames ?? "") + " " + x.LastName,
+                x.Status,
+                invoiceCount = db.StudentInvoices.Count(invoice => invoice.StudentId == x.Id),
+                billed = db.StudentInvoices.Where(invoice => invoice.StudentId == x.Id)
+                    .Sum(invoice => (decimal?)(invoice.Amount - invoice.DiscountAmount)) ?? 0m,
+                paid = db.StudentInvoices.Where(invoice => invoice.StudentId == x.Id)
+                    .Sum(invoice => (decimal?)invoice.PaidAmount) ?? 0m
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(students);
+    }
+
     [HttpGet("students/profile")]
     public async Task<IActionResult> GetStudentProfile([FromQuery] string studentIdOrNumber, CancellationToken cancellationToken)
     {
