@@ -49,6 +49,66 @@ public sealed class LibraryController(
         return Ok(members);
     }
 
+    // Librarians own course-specific book purchase/fee requirements. These are stored
+    // as ordinary programme fee structures so Finance can invoice and receipt them.
+    [HttpGet("programme-requirements")]
+    [Authorize(Policy = LibraryPolicies.Management)]
+    public async Task<IActionResult> ProgrammeRequirements(CancellationToken ct)
+    {
+        var requirements = await db.FeeStructures.AsNoTracking()
+            .Include(x => x.Items)
+            .Where(x => x.FeeType == "LibraryBook")
+            .OrderBy(x => x.Name)
+            .ToListAsync(ct);
+        return Ok(requirements);
+    }
+
+    [HttpPost("programme-requirements")]
+    [Authorize(Policy = LibraryPolicies.Management)]
+    public async Task<IActionResult> SetProgrammeRequirement(SetLibraryProgrammeRequirementRequest request, CancellationToken ct)
+    {
+        if (request.ProgrammeId == Guid.Empty) return BadRequest(new { message = "Select a course/programme." });
+        if (string.IsNullOrWhiteSpace(request.Name)) return BadRequest(new { message = "Requirement name is required." });
+        if (request.Amount <= 0) return BadRequest(new { message = "The book fee must be greater than zero." });
+        if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId && x.IsActive, ct))
+            return BadRequest(new { message = "The selected programme is not active." });
+
+        var currency = string.IsNullOrWhiteSpace(request.Currency) ? "UGX" : request.Currency.Trim().ToUpperInvariant();
+        var structure = new SchoolManagement.Domain.Finance.FeeStructure
+        {
+            ProgrammeId = request.ProgrammeId,
+            AcademicYearId = Guid.Empty,
+            Name = request.Name.Trim(),
+            FeeType = "LibraryBook",
+            Currency = currency
+        };
+        structure.Items.Add(new SchoolManagement.Domain.Finance.FeeStructureItem
+        {
+            FeeStructureId = structure.Id,
+            Code = "LIB-BOOK",
+            Name = request.Name.Trim(),
+            Amount = decimal.Round(request.Amount, 2, MidpointRounding.AwayFromZero),
+            Currency = currency,
+            SortOrder = 1,
+            IsOptional = false
+        });
+        structure.RecalculateTotal();
+        db.FeeStructures.Add(structure);
+        await db.SaveChangesAsync(ct);
+        return Created($"/api/library/programme-requirements/{structure.Id}", structure);
+    }
+
+    [HttpPatch("programme-requirements/{id:guid}/active")]
+    [Authorize(Policy = LibraryPolicies.Management)]
+    public async Task<IActionResult> SetProgrammeRequirementActive(Guid id, [FromQuery] bool active, CancellationToken ct)
+    {
+        var requirement = await db.FeeStructures.SingleOrDefaultAsync(x => x.Id == id && x.FeeType == "LibraryBook", ct);
+        if (requirement is null) return NotFound();
+        requirement.IsActive = active;
+        await db.SaveChangesAsync(ct);
+        return Ok(new { requirement.Id, requirement.IsActive });
+    }
+
     [HttpGet("books/{id:guid}/barcode")]
     [AllowAnonymous]
     public IActionResult GetBookBarcode(Guid id)
@@ -138,3 +198,5 @@ public sealed class LibraryController(
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 }
+
+public sealed record SetLibraryProgrammeRequirementRequest(Guid ProgrammeId, string Name, decimal Amount, string? Currency = "UGX");
