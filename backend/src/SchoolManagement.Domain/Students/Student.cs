@@ -15,6 +15,11 @@ public sealed class Student
     public string? PhoneNumber { get; set; }
     public string? Email { get; set; }
     public string Status { get; set; } = "Active";
+    public bool IsArchived { get; set; }
+    public DateTimeOffset? ArchivedAt { get; set; }
+    public string? ArchivedBy { get; set; }
+    public string? ArchiveReason { get; set; }
+    public string? StatusBeforeArchive { get; set; }
     public Guid? AdmissionId { get; set; }
     public Guid? CampusId { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
