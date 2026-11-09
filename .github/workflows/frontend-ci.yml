@@ -44,11 +44,12 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Audit dependency vulnerabilities
-        run: npm audit --audit-level=high
-
       - name: Run frontend unit and component tests
         run: npm test
 
       - name: Build frontend
         run: npm run build
+
+      - name: Audit dependency vulnerabilities
+        run: npm audit --audit-level=high
+
