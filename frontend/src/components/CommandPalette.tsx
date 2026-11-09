@@ -128,7 +128,7 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
 
   return (
     <div className="command-palette-container" ref={paletteRef}>
-      <CommandMenu className="command-palette-inline" shouldFilter>
+      <CommandMenu className="command-palette-menu" shouldFilter>
       <div className="command-palette-input-wrap">
         <Search size={17} aria-hidden="true" />
         <CommandMenu.Input
@@ -148,6 +148,7 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
       </div>
 
       {open && (
+        <div className="command-palette-results">
         <CommandMenu.List>
             <CommandMenu.Empty>{loading ? 'Searching…' : query.trim().length < 2 ? '' : 'No results'}</CommandMenu.Empty>
             {groupedResults.map(([type, group]) => (
@@ -181,6 +182,8 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
               </CommandMenu.Group>
             )}
           </CommandMenu.List>
+        </div>
+      )}
       </CommandMenu>
     </div>
   )
