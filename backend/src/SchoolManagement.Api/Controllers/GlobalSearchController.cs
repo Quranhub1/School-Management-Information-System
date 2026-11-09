@@ -12,21 +12,36 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class GlobalSearchController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<GlobalSearchResponse>> Search([FromQuery] string? q, [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? to, CancellationToken ct)
+    public async Task<ActionResult<GlobalSearchResponse>> Search([FromQuery] string? q, [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? to, [FromQuery] string? scope, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
             return Ok(new GlobalSearchResponse { Query = q ?? string.Empty, Students = [], Staff = [], Courses = [], Programmes = [], AcademicYears = [], Semesters = [], TeachingGroups = [], Applicants = [], Alumni = [] });
 
         var term = q.Trim().ToLower();
-        var students = await SearchStudents(term, from, to, ct);
-        var staff = await SearchStaff(term, ct);
-        var courses = await SearchCourses(term, ct);
-        var programmes = await SearchProgrammes(term, ct);
-        var academicYears = await SearchAcademicYears(term, from, to, ct);
-        var semesters = await SearchSemesters(term, from, to, ct);
-        var teachingGroups = await SearchTeachingGroups(term, ct);
-        var applicants = await SearchApplicants(term, from, to, ct);
-        var alumni = await SearchAlumni(term, from, to, ct);
+        var searchScope = (scope ?? "all").Trim().ToLowerInvariant();
+        var searchAll = searchScope is "" or "all" or "dashboard";
+        var searchStudents = searchAll || searchScope == "students";
+        var searchStaff = searchAll || searchScope == "staff";
+        var searchCurriculum = searchAll || searchScope == "curriculum";
+        var searchAcademics = searchAll || searchScope == "academics";
+        var supportedScopes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "dashboard", "students", "staff", "curriculum", "academics", "finance", "attendance",
+            "library", "health", "laboratories", "inventory", "communication", "guild", "reports",
+            "timetable", "administration", "system-administration", "campuses"
+        };
+        if (!searchAll && !supportedScopes.Contains(searchScope))
+            return BadRequest(new { message = "The requested search scope is invalid." });
+
+        IReadOnlyList<StudentSearchResult> students = searchStudents ? await SearchStudents(term, from, to, ct) : Array.Empty<StudentSearchResult>();
+        IReadOnlyList<StaffSearchResult> staff = searchStaff ? await SearchStaff(term, ct) : Array.Empty<StaffSearchResult>();
+        IReadOnlyList<CourseSearchResult> courses = searchCurriculum ? await SearchCourses(term, ct) : Array.Empty<CourseSearchResult>();
+        IReadOnlyList<ProgrammeSearchResult> programmes = searchCurriculum ? await SearchProgrammes(term, ct) : Array.Empty<ProgrammeSearchResult>();
+        IReadOnlyList<AcademicYearSearchResult> academicYears = searchAcademics ? await SearchAcademicYears(term, from, to, ct) : Array.Empty<AcademicYearSearchResult>();
+        IReadOnlyList<SemesterSearchResult> semesters = searchAcademics ? await SearchSemesters(term, from, to, ct) : Array.Empty<SemesterSearchResult>();
+        IReadOnlyList<TeachingGroupSearchResult> teachingGroups = searchAcademics ? await SearchTeachingGroups(term, ct) : Array.Empty<TeachingGroupSearchResult>();
+        IReadOnlyList<ApplicantSearchResult> applicants = searchStudents ? await SearchApplicants(term, from, to, ct) : Array.Empty<ApplicantSearchResult>();
+        IReadOnlyList<AlumniSearchResult> alumni = searchStudents ? await SearchAlumni(term, from, to, ct) : Array.Empty<AlumniSearchResult>();
 
         return Ok(new GlobalSearchResponse
         {
