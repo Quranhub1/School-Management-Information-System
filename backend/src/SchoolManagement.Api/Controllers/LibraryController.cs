@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Library;
+using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Domain.Workflows;
@@ -15,6 +16,7 @@ namespace SchoolManagement.Api.Controllers;
 [Route("api/library")]
 public sealed class LibraryController(
     LibraryWorkflowService library,
+    FinanceWorkflowService finance,
     IConfiguration configuration,
     SchoolManagementDbContext db,
     CampusAccessService campusAccess) : ControllerBase
@@ -121,6 +123,21 @@ public sealed class LibraryController(
         });
         structure.RecalculateTotal();
         await db.SaveChangesAsync(ct);
+
+        // Also catch currently enrolled students who were admitted before this
+        // programme's Library requirement was configured.
+        var enrolledStudentIds = await db.StudentEnrollments.AsNoTracking()
+            .Where(x => x.ProgrammeId == request.ProgrammeId && x.Status == "Active")
+            .Select(x => x.StudentId)
+            .Distinct()
+            .ToListAsync(ct);
+        foreach (var studentId in enrolledStudentIds)
+        {
+            var alreadyInvoiced = await db.StudentInvoices.AnyAsync(
+                x => x.StudentId == studentId && x.FeeStructureId == structure.Id, ct);
+            if (alreadyInvoiced) continue;
+            await finance.CreateInvoiceAsync(studentId, structure.Id, $"LIB-{Guid.NewGuid():N}", ct);
+        }
         return Created($"/api/library/programme-requirements/{structure.Id}", structure);
     }
 
