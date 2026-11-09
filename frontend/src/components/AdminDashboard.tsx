@@ -48,6 +48,7 @@ export function AdminDashboard() {
   const [tab, setTab] = useState<Tab>('overview')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [metricErrors, setMetricErrors] = useState<{ students?: string; finance?: string }>({})
 
   const [users, setUsers] = useState<{ total: number; active: number; admins: number }>({ total: 0, active: 0, admins: 0 })
   const [students, setStudents] = useState<{ total: number; active: number }>({ total: 0, active: 0 })
@@ -63,41 +64,31 @@ export function AdminDashboard() {
   async function loadMetrics() {
     setLoading(true)
     setError('')
-    try {
-      const [usersRes, studentsRes, staffRes, invoicesRes, payrollRes] = await Promise.all([
-        getUsers(),
-        getStudents(),
-        listStaff(),
-        getInvoices(),
-        listPayroll(),
-      ])
-      setUsers({
-        total: usersRes.length,
-        active: usersRes.filter(u => u.isActive).length,
-        admins: usersRes.filter(u => u.roles.includes('SystemAdministrator')).length,
-      })
-      setStudents({ total: studentsRes.length, active: studentsRes.filter(s => s.status === 'Active').length })
-      setStaff({ total: staffRes.length, active: staffRes.filter(s => s.isActive).length })
-      const totalBilled = invoicesRes.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0)
-      const totalPaid = invoicesRes.reduce((sum, inv) => sum + (Number(inv.paidAmount) || 0), 0)
-      const outstanding = invoicesRes.reduce((sum, inv) => sum + (Number.isFinite(Number(inv.balance)) ? Math.max(0, Number(inv.balance)) : Math.max(0, (Number(inv.amount) || 0) - (Number(inv.paidAmount) || 0))), 0)
-      setFinance({ totalBilled, totalPaid, outstanding, invoices: invoicesRes.length })
-      const payrollRecords = payrollRes as { status?: string; netPay?: number }[]
-      const paidRecords = payrollRecords.filter(p => (p.status || '').toLowerCase() === 'paid')
-      const pendingRecords = payrollRecords.filter(p => (p.status || '').toLowerCase() === 'pending')
-      setPayroll({
-        totalPaid: paidRecords.reduce((sum, p) => sum + (Number(p.netPay) || 0), 0),
-        paid: paidRecords.length,
-        pending: pendingRecords.length,
-        other: payrollRecords.length - paidRecords.length - pendingRecords.length,
-      })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load dashboard data.')
-    } finally {
-      setLoading(false)
+    setMetricErrors({})
+    const results = await Promise.allSettled([getUsers(), getStudents(), listStaff(), getInvoices(), listPayroll()] as const)
+    const [usersRes, studentsRes, staffRes, invoicesRes, payrollRes] = results
+    const errors: { students?: string; finance?: string } = {}
+    const reason = (value: unknown) => value instanceof Error ? value.message : 'Request failed. Check API availability and role permissions.'
+    if (usersRes.status === 'fulfilled') { const rows = usersRes.value; setUsers({ total: rows.length, active: rows.filter(u => u.isActive).length, admins: rows.filter(u => u.roles.includes('SystemAdministrator')).length }) }
+    if (studentsRes.status === 'fulfilled') { const rows = studentsRes.value; setStudents({ total: rows.length, active: rows.filter(s => s.status?.trim().toLowerCase() === 'active').length }) } else errors.students = reason(studentsRes.reason)
+    if (staffRes.status === 'fulfilled') { const rows = staffRes.value; setStaff({ total: rows.length, active: rows.filter(s => s.isActive).length }) }
+    if (invoicesRes.status === 'fulfilled') {
+      const rows = invoicesRes.value
+      const totalBilled = rows.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0)
+      const totalPaid = rows.reduce((sum, inv) => sum + (Number(inv.paidAmount) || 0), 0)
+      const outstanding = rows.reduce((sum, inv) => sum + (Number.isFinite(Number(inv.balance)) ? Math.max(0, Number(inv.balance)) : Math.max(0, (Number(inv.amount) || 0) - (Number(inv.paidAmount) || 0))), 0)
+      setFinance({ totalBilled, totalPaid, outstanding, invoices: rows.length })
+    } else errors.finance = reason(invoicesRes.reason)
+    if (payrollRes.status === 'fulfilled') {
+      const records = payrollRes.value as { status?: string; netPay?: number }[]
+      const paid = records.filter(p => (p.status || '').toLowerCase() === 'paid')
+      const pending = records.filter(p => (p.status || '').toLowerCase() === 'pending')
+      setPayroll({ totalPaid: paid.reduce((sum, p) => sum + (Number(p.netPay) || 0), 0), paid: paid.length, pending: pending.length, other: records.length - paid.length - pending.length })
     }
+    setMetricErrors(errors)
+    if (results.every(result => result.status === 'rejected')) setError('All dashboard data requests failed. Check your session, API availability and role permissions.')
+    setLoading(false)
   }
-
   useEffect(() => {
     void loadMetrics()
     const refreshMetrics = () => { void loadMetrics() }
@@ -197,10 +188,10 @@ export function AdminDashboard() {
             <span className="admin-data-note"><i /> Based on loaded records</span>
           </div>
           <div className="admin-charts-grid">
-            <DoughnutChart title="Student status" description="Active compared with other statuses" segments={studentSegments} centerValue={numberFormat.format(students.total)} centerCaption="students" />
+            {metricErrors.students ? <div className="admin-chart-card" role="alert"><h3>Student status</h3><p>Could not load student records: {metricErrors.students}</p><button type="button" onClick={() => void loadMetrics()}>Retry</button></div> : <DoughnutChart title="Student status" description="Active compared with other statuses" segments={studentSegments} centerValue={numberFormat.format(students.total)} centerCaption="students" />}
             <DoughnutChart title="Staff status" description="Current active staff records" segments={staffSegments} centerValue={numberFormat.format(staff.total)} centerCaption="staff" />
             <DoughnutChart title="User accounts" description="Active and inactive accounts" segments={userSegments} centerValue={numberFormat.format(users.total)} centerCaption="accounts" />
-            <DoughnutChart title="Fee collection" description="Collected fees compared with outstanding" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" valueFormatter={moneyFormat} />
+            {metricErrors.finance ? <div className="admin-chart-card" role="alert"><h3>Fee collection</h3><p>Could not load fee invoices: {metricErrors.finance}</p><button type="button" onClick={() => void loadMetrics()}>Retry</button></div> : <DoughnutChart title="Fee collection" description="Collected fees compared with outstanding" segments={feeSegments} centerValue={moneyFormat(finance.totalPaid)} centerCaption="collected" valueFormatter={moneyFormat} />}
             <DoughnutChart title="Payroll records" description="Paid, pending, and other statuses" segments={payrollSegments} centerValue={numberFormat.format(payroll.paid + payroll.pending + payroll.other)} centerCaption="records" />
           </div>
 
