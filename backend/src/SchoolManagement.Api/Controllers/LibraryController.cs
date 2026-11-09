@@ -122,6 +122,7 @@ public sealed class LibraryController(
             IsOptional = false
         });
         structure.RecalculateTotal();
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await db.SaveChangesAsync(ct);
 
         // Also catch currently enrolled students who were admitted before this
@@ -138,6 +139,7 @@ public sealed class LibraryController(
             if (alreadyInvoiced) continue;
             await finance.CreateInvoiceAsync(studentId, structure.Id, $"LIB-{Guid.NewGuid():N}", ct);
         }
+        await transaction.CommitAsync(ct);
         return Created($"/api/library/programme-requirements/{structure.Id}", structure);
     }
 
