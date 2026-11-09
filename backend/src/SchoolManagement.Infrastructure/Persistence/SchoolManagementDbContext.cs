@@ -153,6 +153,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     {
         // Archived students are excluded from ordinary operational queries. Historical record endpoints opt in with IgnoreQueryFilters().
         m.Entity<SchoolManagement.Domain.Students.Student>().HasQueryFilter(student => !student.IsArchived);
+        m.Entity<SchoolManagement.Domain.Students.Student>().HasIndex(student => new { student.IsArchived, student.CampusId, student.StudentNumber });
         // Preserve the existing singular table name after exposing StudentCharge as a DbSet.
         m.Entity<StudentCharge>().ToTable("StudentCharge");
         m.Entity<InstitutionGalleryImage>(e => { e.HasKey(x => x.Id); e.Property(x => x.Title).HasMaxLength(200).IsRequired(); e.Property(x => x.Caption).HasMaxLength(1000); e.Property(x => x.Source).HasMaxLength(20).IsRequired(); e.Property(x => x.ExternalUrl).HasMaxLength(2000); e.Property(x => x.ContentType).HasMaxLength(100); e.Property(x => x.OriginalFileName).HasMaxLength(255); e.Property(x => x.ImageData).HasColumnType("bytea"); e.HasIndex(x => x.UploadedAt); });
