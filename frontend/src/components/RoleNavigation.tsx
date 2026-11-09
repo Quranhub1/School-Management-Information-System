@@ -12,7 +12,7 @@ export function RoleNavigation({ roles }: RoleNavigationProps) {
     hasAnyRole(roles, STUDENT_MANAGEMENT_ROLES) ? 'Student Management' : null,
     hasAnyRole(roles, FINANCE_MANAGEMENT_ROLES) ? 'Finance' : null,
     hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar', 'Lecturer']) ? 'Timetable' : null,
-    hasAnyRole(roles, ['System Administrator', 'Registrar', 'Academic Registrar']) ? 'Admissions' : null,
+    hasAnyRole(roles, ['System Administrator', 'SystemAdministrator', 'Registrar', 'Academic Registrar', 'Admin Secretary', 'AdminSecretary']) ? 'Admissions' : null,
     hasAnyRole(roles, ATTENDANCE_ROLES) ? 'Attendance' : null,
     hasAnyRole(roles, INVENTORY_MANAGEMENT_ROLES) ? 'Inventory' : null,
     hasAnyRole(roles, ['System Administrator', 'Registrar', 'Principal', 'ResidentDirector', 'Secretary', 'Records Officer']) ? 'Printers' : null,
