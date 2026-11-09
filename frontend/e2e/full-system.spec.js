@@ -7,6 +7,9 @@ const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'admin123';
 async function signIn(page) {
   page.on('pageerror', error => console.log('SMIS E2E pageerror', error.message));
   page.on('console', message => { if (message.type() === 'error') console.log('SMIS E2E browser console error', message.text()); });
+  page.on('response', response => {
+    if (response.status() >= 500) console.log('SMIS E2E HTTP 5xx', response.status(), response.url());
+  });
   const loginFrame = page.frameLocator('iframe[title="Institutional Sign In"]');
   await expect(loginFrame.locator('#username')).toBeVisible({ timeout: 15000 });
   await loginFrame.locator('#username').fill('admin');
@@ -21,7 +24,7 @@ async function signIn(page) {
       username: session?.username ?? null,
       roles: Array.isArray(session?.roles) ? session.roles : [],
       expiresAt: session?.expiresAt ?? null,
-      sessionValid: Boolean(session?.accessToken && Number.isFinite(Date.parse(session.expiresAt)) && Date.parse(session.expiresAt) > Date.now()),
+      sessionValid: Boolean(session?.username && (sessionStorage.getItem('smis.accessToken') || localStorage.getItem('smis.accessToken')) && Number.isFinite(Date.parse(session.expiresAt)) && Date.parse(session.expiresAt) > Date.now()),
       hasAccessToken: Boolean(sessionStorage.getItem('smis.accessToken') || localStorage.getItem('smis.accessToken')),
       allButtons: Array.from(document.querySelectorAll('button')).map(button => button.innerText.trim()).filter(Boolean).slice(0, 40),
       navButtons: Array.from(document.querySelectorAll('nav button, aside button, .sidebar button')).map(button => ({
