@@ -80,6 +80,8 @@ export function CommandPalette({ scope, onNavigate }: CommandPaletteProps) {
       return
     }
 
+    setResults([])
+    setLoading(true)
     let active = true
     const controller = new AbortController()
     const timer = window.setTimeout(() => {
