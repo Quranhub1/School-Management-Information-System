@@ -29,6 +29,9 @@ jobs:
       - name: Restore
         working-directory: backend
         run: dotnet restore SchoolManagement.sln
+      - name: Audit NuGet dependencies
+        working-directory: backend
+        run: dotnet list SchoolManagement.sln package --vulnerable --include-transitive
       - name: Build
         working-directory: backend
         run: dotnet build SchoolManagement.sln --configuration Release --no-restore
