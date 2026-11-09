@@ -6,6 +6,8 @@ using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Library;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Api.Services;
+using SchoolManagement.Domain.Workflows;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -14,7 +16,8 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class LibraryController(
     LibraryWorkflowService library,
     IConfiguration configuration,
-    SchoolManagementDbContext db) : ControllerBase
+    SchoolManagementDbContext db,
+    CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet("books")]
     [Authorize(Policy = LibraryPolicies.Read)]
@@ -156,6 +159,54 @@ public sealed class LibraryController(
     public Task<IReadOnlyList<LibraryLoanDto>> StudentLoans(Guid studentId, [FromQuery] bool activeOnly = false, CancellationToken ct = default) =>
         library.GetStudentLoansAsync(studentId, activeOnly, ct);
 
+    [HttpPost("students/{studentId:guid}/clearance")]
+    [Authorize(Policy = LibraryPolicies.Management)]
+    public async Task<IActionResult> ClearStudentLibraryRequirement(Guid studentId, LibraryClearanceRequest request, CancellationToken ct)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, studentId, ct)) return Forbid();
+        var studentExists = await db.Students.AsNoTracking().AnyAsync(x => x.Id == studentId, ct);
+        if (!studentExists) return NotFound(new { message = "Student was not found." });
+
+        var method = request.Method?.Trim();
+        if (!string.Equals(method, "BookIssued", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(method, "FeePaid", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Clearance method must be BookIssued or FeePaid." });
+
+        if (string.Equals(method, "FeePaid", StringComparison.OrdinalIgnoreCase))
+        {
+            var outstanding = await db.StudentInvoices.AsNoTracking()
+                .Where(x => x.StudentId == studentId && x.FeeType == "LibraryBook")
+                .SumAsync(x => (decimal?)(x.Amount - x.DiscountAmount - x.PaidAmount), ct) ?? 0m;
+            if (outstanding > 0)
+                return Conflict(new { message = $"Library book fee is not fully paid. Outstanding: {outstanding:N0} UGX." });
+        }
+        else if (string.IsNullOrWhiteSpace(request.Reference))
+        {
+            return BadRequest(new { message = "Record the book title or ISBN issued to the student." });
+        }
+
+        var clearance = await db.WorkflowInstances.SingleOrDefaultAsync(x =>
+            x.EntityType == "StudentClearance" && x.EntityId == studentId &&
+            x.WorkflowType == "Library", ct);
+        if (clearance is null)
+        {
+            clearance = new WorkflowInstance
+            {
+                WorkflowType = "Library",
+                EntityType = "StudentClearance",
+                EntityId = studentId,
+                CurrentState = "Cleared"
+            };
+            db.WorkflowInstances.Add(clearance);
+        }
+        clearance.CurrentState = "Cleared";
+        clearance.IsCompleted = true;
+        clearance.Comments = $"{method}: {request.Reference?.Trim()}";
+        clearance.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(ct);
+        return Ok(new { clearance.Id, office = clearance.WorkflowType, status = clearance.CurrentState, clearance.Comments, clearance.UpdatedAt });
+    }
+
     [HttpGet("integrations")]
     [Authorize(Policy = LibraryPolicies.Read)]
     public IActionResult Integrations()
@@ -200,3 +251,5 @@ public sealed class LibraryController(
 }
 
 public sealed record SetLibraryProgrammeRequirementRequest(Guid ProgrammeId, string Name, decimal Amount, string? Currency = "UGX");
+
+public sealed record LibraryClearanceRequest(string Method, string? Reference = null);
