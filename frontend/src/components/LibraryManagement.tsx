@@ -308,6 +308,15 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       {error && <div className="error" role="alert">{error}</div>}
       {Object.keys(loanValidationErrors).length > 0 && <div className="error" role="alert"><strong>Loan fields requiring attention</strong><ul>{Object.entries(loanValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
 
+      <section className="library-main-card" style={{ marginBottom: 18, padding: 14 }}>
+        <div className="library-toolbar"><div><h3>Student library register</h3><small>{members.length} students linked from the central student register</small></div></div>
+        <div className="table-wrap" style={{ maxHeight: 260, overflowY: 'auto' }}>
+          <table><thead><tr><th>Student number</th><th>Student name</th><th>Library membership</th></tr></thead>
+            <tbody>{members.map(member => <tr key={member.id}><td><strong>{member.studentNumber}</strong></td><td>{member.name}</td><td>Registered from Admissions</td></tr>)}
+            {members.length === 0 && <tr><td colSpan={3}>No admitted students are available in the Library register.</td></tr>}</tbody>
+          </table>
+        </div>
+      </section>
       <div className="library-grid">
         <div className="library-main-card">
           <div className="library-tabs">
