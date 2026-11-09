@@ -68,6 +68,15 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
 
   useEffect(() => {
     void loadOverview()
+    const refreshFeePayments = async () => {
+      try {
+        setPayments(await getPayments() as Payment[])
+      } catch {
+        // Keep the last successful ticker data visible during temporary API failures.
+      }
+    }
+    const intervalId = window.setInterval(() => { void refreshFeePayments() }, 15000)
+    return () => window.clearInterval(intervalId)
   }, [])
 
   const outstandingColumns = useMemo<ColDef<OutstandingBalance>[]>(() => [
@@ -125,6 +134,34 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     ? Math.min(100, Math.max(0, dashboard.totalPaid / dashboard.totalBilled * 100))
     : 0
 
+  const tickerPayments = useMemo(() => [...payments]
+    .filter(payment => Number(payment.amount) > 0 && payment.paidAt)
+    .sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime())
+    .slice(0, 12), [payments])
+
+  const feePaymentTicker = tickerPayments.length > 0 ? (
+    <div className="finance-fee-ticker" aria-label="Latest posted student fee payments">
+      <span className="finance-fee-ticker-label">LATEST FEE PAYMENTS</span>
+      <div className="finance-fee-ticker-viewport">
+        <div className="finance-fee-ticker-track">
+          {[0, 1].map(copy => (
+            <div className="finance-fee-ticker-group" key={copy} aria-hidden={copy === 1}>
+              {tickerPayments.map((payment, index) => (
+                <span className="finance-fee-ticker-item" key={(payment.id || payment.receiptNumber || payment.reference || 'fee') + '-' + index}>
+                  <strong>PAID</strong>
+                  <b>{money(Number(payment.amount))}</b>
+                  <span>{payment.studentName || 'Student'}</span>
+                  {payment.receiptNumber && <small>Receipt {payment.receiptNumber}</small>}
+                  <i aria-hidden="true">◆</i>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  ) : null
+
   if (readOnly) {
     return (
       <section className="finance-workspace" aria-label="Read-only finance overview">
@@ -138,6 +175,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
             <button type="button" className="secondary-button" onClick={() => void loadOverview()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
           </div>
         </div>
+        {feePaymentTicker}
         {error && <div className="error" role="alert">{error}</div>}
         {loading ? <p className="empty">Loading financial overview…</p> : (
           <>
@@ -177,6 +215,8 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
           <button type="button" className="secondary-button" onClick={() => void loadOverview()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
         </div>
       </div>
+
+      {feePaymentTicker}
 
       <div className="finance-tab-strip" role="tablist" aria-label="Finance sections">
         {([
