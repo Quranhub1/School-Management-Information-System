@@ -24,18 +24,24 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
         var searchStaff = searchAll || searchScope == "staff";
         var searchCurriculum = searchAll || searchScope == "curriculum";
         var searchAcademics = searchAll || searchScope == "academics";
-        if (!searchAll && !searchStudents && !searchStaff && !searchCurriculum && !searchAcademics)
-            return BadRequest(new { message = "The requested search scope is not supported yet." });
+        var supportedScopes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "dashboard", "students", "staff", "curriculum", "academics", "finance", "attendance",
+            "library", "health", "laboratories", "inventory", "communication", "guild", "reports",
+            "timetable", "administration", "system-administration", "campuses"
+        };
+        if (!searchAll && !supportedScopes.Contains(searchScope))
+            return BadRequest(new { message = "The requested search scope is invalid." });
 
-        var students = searchStudents ? await SearchStudents(term, from, to, ct) : [];
-        var staff = searchStaff ? await SearchStaff(term, ct) : [];
-        var courses = searchCurriculum ? await SearchCourses(term, ct) : [];
-        var programmes = searchCurriculum ? await SearchProgrammes(term, ct) : [];
-        var academicYears = searchAcademics ? await SearchAcademicYears(term, from, to, ct) : [];
-        var semesters = searchAcademics ? await SearchSemesters(term, from, to, ct) : [];
-        var teachingGroups = searchAcademics ? await SearchTeachingGroups(term, ct) : [];
-        var applicants = searchStudents ? await SearchApplicants(term, from, to, ct) : [];
-        var alumni = searchStudents ? await SearchAlumni(term, from, to, ct) : [];
+        var students = searchStudents ? await SearchStudents(term, from, to, ct) : Array.Empty<StudentSearchResult>();
+        var staff = searchStaff ? await SearchStaff(term, ct) : Array.Empty<StudentSearchResult>();
+        var courses = searchCurriculum ? await SearchCourses(term, ct) : Array.Empty<StudentSearchResult>();
+        var programmes = searchCurriculum ? await SearchProgrammes(term, ct) : Array.Empty<StudentSearchResult>();
+        var academicYears = searchAcademics ? await SearchAcademicYears(term, from, to, ct) : Array.Empty<StudentSearchResult>();
+        var semesters = searchAcademics ? await SearchSemesters(term, from, to, ct) : Array.Empty<StudentSearchResult>();
+        var teachingGroups = searchAcademics ? await SearchTeachingGroups(term, ct) : Array.Empty<StudentSearchResult>();
+        var applicants = searchStudents ? await SearchApplicants(term, from, to, ct) : Array.Empty<StudentSearchResult>();
+        var alumni = searchStudents ? await SearchAlumni(term, from, to, ct) : Array.Empty<StudentSearchResult>();
 
         return Ok(new GlobalSearchResponse
         {
