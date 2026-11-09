@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Command as CommandMenu } from 'cmdk'
-import { ArrowRight, Command as CommandIcon, LogOut, Search } from 'lucide-react'
+import { ArrowRight, Search } from 'lucide-react'
 import { globalSearch, type GlobalSearchResponse } from '../api/globalSearch'
 import './CommandPalette.css'
 
@@ -57,12 +57,14 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
   const [results, setResults] = useState<SearchItem[]>([])
   const [loading, setLoading] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const paletteRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         setOpen(true)
+        searchInputRef.current?.focus()
       }
     }
     document.addEventListener('keydown', onKeyDown)
@@ -70,10 +72,12 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
   }, [])
 
   useEffect(() => {
-    if (!open) return
-    const frame = window.requestAnimationFrame(() => searchInputRef.current?.focus())
-    return () => window.cancelAnimationFrame(frame)
-  }, [open])
+    const onPointerDown = (event: PointerEvent) => {
+      if (!paletteRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [])
 
   useEffect(() => {
     const term = query.trim()
@@ -123,51 +127,39 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
   }
 
   return (
-    <>
-      <button type="button" className="command-palette-trigger" onClick={() => setOpen(true)} aria-label="Open command palette">
-        <Search size={16} aria-hidden="true" />
-        <span>Search or jump to…</span>
-        <kbd><CommandIcon size={11} aria-hidden="true" /> K</kbd>
-      </button>
+    <div className="command-palette-inline" ref={paletteRef}>
+      <div className="command-palette-input-wrap">
+        <Search size={17} aria-hidden="true" />
+        <CommandMenu>
+          <CommandMenu.Input
+            ref={searchInputRef}
+            value={query}
+            onFocus={() => setOpen(true)}
+            onValueChange={value => { setQuery(value); setOpen(true) }}
+            onKeyDown={event => {
+              if (event.key === 'Escape') {
+                close()
+                searchInputRef.current?.blur()
+              }
+            }}
+            placeholder="Search students, staff, courses or modules…"
+            aria-label="Search students, staff, courses or modules"
+          />
+        </CommandMenu>
+        <kbd>Ctrl K</kbd>
+      </div>
 
-      <CommandMenu.Dialog
-        open={open}
-        onOpenChange={nextOpen => { if (!nextOpen) close(); else setOpen(true) }}
-        label="SMIS command palette"
-        className="command-palette-dialog"
-      >
-        <div className="command-palette-panel">
-          <div className="command-palette-input-wrap">
-            <Search size={18} aria-hidden="true" />
-            <CommandMenu.Input
-              ref={searchInputRef}
-              autoFocus
-              value={query}
-              onValueChange={setQuery}
-              placeholder="Search students, staff, courses or modules…"
-              aria-label="Search commands and records"
-            />
-            <kbd>ESC</kbd>
-          </div>
+      {open && (
+        <CommandMenu className="command-palette-results" shouldFilter>
+          <CommandMenu.Input
+            className="command-palette-filter-input"
+            value={query}
+            onValueChange={setQuery}
+            aria-hidden="true"
+            tabIndex={-1}
+          />
           <CommandMenu.List>
-            <CommandMenu.Empty>{loading ? 'Searching…' : query.trim().length < 2 ? 'Type to search records or choose a destination.' : 'No matching records or commands.'}</CommandMenu.Empty>
-
-            {items.length > 0 && (
-              <CommandMenu.Group heading="Navigate">
-                {items.map((item, index) => (
-                  <CommandMenu.Item
-                    key={`nav-${item.module}-${item.subsection ?? 'root'}-${index}`}
-                    value={`navigate ${item.label} ${item.module} ${item.subsection ?? ''}`}
-                    onSelect={() => selectNavigation(item)}
-                  >
-                    <ArrowRight size={15} aria-hidden="true" />
-                    <span>{item.label}</span>
-                    <small>{item.subsection ? item.module : 'Module'}</small>
-                  </CommandMenu.Item>
-                ))}
-              </CommandMenu.Group>
-            )}
-
+            <CommandMenu.Empty>{loading ? 'Searching…' : query.trim().length < 2 ? 'Type at least 2 characters to search records.' : 'No matching records.'}</CommandMenu.Empty>
             {groupedResults.map(([type, group]) => (
               <CommandMenu.Group key={type} heading={type}>
                 {group.map(item => (
@@ -176,30 +168,31 @@ export function CommandPalette({ items, onNavigate, onSignOut }: CommandPaletteP
                     value={`${item.type} ${item.label} ${item.detail}`}
                     onSelect={() => selectSearchResult(item)}
                   >
-                    <Search size={15} aria-hidden="true" />
+                    <Search size={14} aria-hidden="true" />
                     <span>{item.label}</span>
                     <small>{item.detail}</small>
                   </CommandMenu.Item>
                 ))}
               </CommandMenu.Group>
             ))}
-
-            <CommandMenu.Separator />
-            <CommandMenu.Group heading="Actions">
-              <CommandMenu.Item value="sign out log out" onSelect={() => { close(); onSignOut() }}>
-                <LogOut size={15} aria-hidden="true" />
-                <span>Sign out</span>
-                <small>End current session</small>
-              </CommandMenu.Item>
-            </CommandMenu.Group>
+            {items.length > 0 && (
+              <CommandMenu.Group heading="Go to">
+                {items.map((item, index) => (
+                  <CommandMenu.Item
+                    key={`nav-${item.module}-${item.subsection ?? 'root'}-${index}`}
+                    value={`navigate ${item.label} ${item.module} ${item.subsection ?? ''}`}
+                    onSelect={() => selectNavigation(item)}
+                  >
+                    <ArrowRight size={14} aria-hidden="true" />
+                    <span>{item.label}</span>
+                    <small>{item.subsection ? item.module : 'Module'}</small>
+                  </CommandMenu.Item>
+                ))}
+              </CommandMenu.Group>
+            )}
           </CommandMenu.List>
-          <footer className="command-palette-footer">
-            <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
-            <span><kbd>↵</kbd> Select</span>
-            <span><kbd>Ctrl</kbd> + <kbd>K</kbd> Open</span>
-          </footer>
-        </div>
-      </CommandMenu.Dialog>
-    </>
+        </CommandMenu>
+      )}
+    </div>
   )
 }
