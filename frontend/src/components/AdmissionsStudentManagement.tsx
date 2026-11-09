@@ -124,7 +124,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
   }
 
   const visibleSections = readOnly
-    ? sections.filter(item => accessProfile === 'receptionist' ? ['biodata', 'admissions'].includes(item.key) : accessProfile === 'department' ? item.key === 'biodata' : accessProfile === 'records' ? ['biodata', 'admissions', 'status', 'archives'].includes(item.key) : ['biodata', 'admissions', 'status', 'archives'].includes(item.key))
+    ? sections.filter(item => accessProfile === 'receptionist' ? ['biodata', 'admissions', 'archives'].includes(item.key) : accessProfile === 'department' ? ['biodata', 'archives'].includes(item.key) : accessProfile === 'records' ? ['biodata', 'admissions', 'status', 'archives'].includes(item.key) : ['biodata', 'admissions', 'status', 'archives'].includes(item.key))
     : sections
   const selected = useMemo(() => visibleSections.find(item => item.key === section), [visibleSections, section])
 
