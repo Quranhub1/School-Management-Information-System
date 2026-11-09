@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { archiveStudent, getArchivedStudents, getStudent, getStudentApplicationForm, getStudentGuardians, getStudents, restoreStudent, type Student, type StudentGuardian } from '../api/students'
 import { getStudent360Profile as loadStudent360, type Student360ProfileDto } from '../api/student360'
-import { StudentFinanceDashboard } from './StudentFinanceDashboard'
+import { getStudentFinancialStatement, type StudentFinancialStatement } from '../api/finance'
 import { getStudentTranscript } from '../api/academicRecords'
 import type { TranscriptEntry } from '../types/academic'
 import { getStudentDocuments, type StudentDocument } from '../api/documents'
@@ -21,6 +21,8 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
   const [guardians, setGuardians] = useState<StudentGuardian[]>([])
   const [application, setApplication] = useState<{ application: Record<string, unknown>; submittedAt: string; status: string } | null>(null)
   const [documents, setDocuments] = useState<StudentDocument[]>([])
+  const [financialStatement, setFinancialStatement] = useState<StudentFinancialStatement | null>(null)
+  const [financeNotice, setFinanceNotice] = useState('')
   const [transcriptNotice, setTranscriptNotice] = useState('')
   const [documentsNotice, setDocumentsNotice] = useState('')
   const [tab, setTab] = useState<Tab>('biodata')
@@ -65,17 +67,20 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
     setGuardians([])
     setApplication(null)
     setDocuments([])
+    setFinancialStatement(null)
+    setFinanceNotice('')
     setTranscriptNotice('')
     setDocumentsNotice('')
     setError('')
     try {
-      const [record, studentProfile, guardianRows, applicationRecord, transcriptRows, documentRows] = await Promise.all([
+      const [record, studentProfile, guardianRows, applicationRecord, transcriptRows, documentRows, statement] = await Promise.all([
         getStudent(student.id),
         loadStudent360(student.id).catch(() => null),
         getStudentGuardians(student.id).catch(() => []),
         getStudentApplicationForm(student.id).catch(() => null),
         getStudentTranscript(student.id).catch(e => { setTranscriptNotice(e instanceof Error ? e.message : 'Academic transcript access is unavailable.'); return [] }),
         getStudentDocuments(student.id).catch(e => { setDocumentsNotice(e instanceof Error ? e.message : 'Document access is unavailable.'); return [] }),
+        getStudentFinancialStatement(student.id).catch(e => { setFinanceNotice(e instanceof Error ? e.message : 'Finance history access is unavailable.'); return null }),
       ])
       setSelected(record)
       setProfile(studentProfile)
@@ -83,6 +88,7 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
       setApplication(applicationRecord)
       setTranscript(transcriptRows)
       setDocuments(documentRows)
+      setFinancialStatement(statement)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load this archived student record.')
     } finally {
@@ -230,7 +236,22 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
           <div className="summary-card"><span>Late</span><strong>{profile?.lateSessions ?? 0}</strong></div>
           {!profile && <p className="empty">Attendance summary is not available for this record.</p>}
         </div>}
-        {tab === 'fees' && <StudentFinanceDashboard initialSearch={selected.studentNumber} />}
+        {tab === 'fees' && <div>
+          {financialStatement ? <>
+            <div className="summary-grid">{financialStatement.totalsByCurrency.map(total => <div className="summary-card" key={total.currency}><span>Total billed · {total.currency}</span><strong>{total.billed.toLocaleString('en-UG')}</strong><small>Paid {total.paid.toLocaleString('en-UG')} · Balance {total.balance.toLocaleString('en-UG')}</small></div>)}</div>
+            <h4>Invoices & fee charges</h4>
+            <div className="table-wrap"><table><thead><tr><th>Invoice</th><th>Fee type</th><th>Date</th><th>Billed</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody>
+              {financialStatement.invoices.map(invoice => <tr key={invoice.id}><td>{invoice.invoiceNumber}</td><td>{invoice.feeType}</td><td>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</td><td>{invoice.netAmount.toLocaleString('en-UG')} {invoice.currency}</td><td>{invoice.paidAmount.toLocaleString('en-UG')}</td><td>{invoice.balance.toLocaleString('en-UG')}</td><td>{invoice.status}</td></tr>)}
+              {financialStatement.invoices.length === 0 && <tr><td colSpan={7}>No invoices are recorded.</td></tr>}
+            </tbody></table></div>
+            <h4>Payment history</h4>
+            <div className="table-wrap"><table><thead><tr><th>Receipt</th><th>Invoice</th><th>Method</th><th>Reference</th><th>Date</th><th>Amount</th></tr></thead><tbody>
+              {financialStatement.payments.map(payment => <tr key={payment.id}><td>{payment.receiptNumber}</td><td>{payment.invoiceNumber || '—'}</td><td>{payment.paymentMethod}</td><td>{payment.reference || '—'}</td><td>{new Date(payment.paidAt).toLocaleString('en-UG')}</td><td>{payment.amount.toLocaleString('en-UG')} {payment.currency}</td></tr>)}
+              {financialStatement.payments.length === 0 && <tr><td colSpan={6}>No payments are recorded.</td></tr>}
+            </tbody></table></div>
+            <p className="finance-muted">{financialStatement.itemAllocationNote}</p>
+          </> : <p className="empty">{financeNotice || 'Financial history is not available for this record.'}</p>}
+        </div>}
         {tab === 'documents' && <div>
           <h4>Uploaded student documents</h4>
           <div className="table-wrap"><table><thead><tr><th>Document type</th><th>File name</th><th>Uploaded</th><th>Version</th><th>Status</th></tr></thead><tbody>
