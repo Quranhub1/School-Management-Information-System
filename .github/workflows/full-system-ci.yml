@@ -138,11 +138,15 @@ jobs:
 
       - name: Install Playwright for E2E tests
         working-directory: frontend
-        run: npm install --no-save @playwright/test@1.55.0
+        run: npm install --no-save --package-lock=false @playwright/test@1.65.0
 
       - name: Build frontend against running API
         working-directory: frontend
         run: npm run build
+
+      - name: Audit complete E2E dependency tree
+        working-directory: frontend
+        run: npm audit --audit-level=high
 
       - name: Install Playwright Chromium
         working-directory: frontend
