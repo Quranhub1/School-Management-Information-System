@@ -4450,6 +4450,8 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("IsArchived", "CampusId", "StudentNumber");
 
+                    b.HasQueryFilter((SchoolManagement.Domain.Students.Student student) => !student.IsArchived);
+
                     b.ToTable("Students");
                 });
 
