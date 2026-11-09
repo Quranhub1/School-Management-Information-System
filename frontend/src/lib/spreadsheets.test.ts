@@ -8,7 +8,10 @@ function workbookFile(sheets: Record<string, unknown[][]>, name = 'import.xlsx')
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), sheetName)
   }
   const bytes = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer
-  return new File([bytes], name, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const file = new File([bytes], name, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  // jsdom's File does not implement Blob.arrayBuffer(); real browsers do.
+  Object.defineProperty(file, 'arrayBuffer', { value: async () => bytes })
+  return file
 }
 
 describe('spreadsheet export safety', () => {
