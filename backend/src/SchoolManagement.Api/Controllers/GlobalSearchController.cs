@@ -104,7 +104,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
             .Select(x => new StudentSearchResult(
                 x.Student.Id,
                 x.Student.StudentNumber,
-                $"{x.Student.FirstName} {x.Student.OtherNames} {x.Student.LastName}".Trim(),
+                (x.Student.FirstName + " " + (x.Student.OtherNames ?? string.Empty) + " " + x.Student.LastName).Trim(),
                 x.Student.Status,
                 x.Enrollment == null ? null : x.Enrollment.ProgrammeId,
                 x.Enrollment == null ? null : db.Programmes.Where(p => p.Id == x.Enrollment.ProgrammeId).Select(p => p.Name).FirstOrDefault(),
@@ -127,7 +127,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
                      || (x.Email != null && x.Email.ToLower().Contains(term))
                      || (x.PhoneNumber != null && x.PhoneNumber.ToLower().Contains(term)))
             .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
-            .Select(x => new StaffSearchResult(x.Id, x.StaffNumber, $"{x.FirstName} {x.LastName}".Trim(), x.EmploymentType))
+            .Select(x => new StaffSearchResult(x.Id, x.StaffNumber, (x.FirstName + " " + x.LastName).Trim(), x.EmploymentType))
             .Take(20).ToListAsync(ct);
     }
 
@@ -197,7 +197,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
         if (to.HasValue) query = query.Where(x => x.AppliedAt <= to.Value);
 
         return await query.OrderByDescending(x => x.AppliedAt)
-            .Select(x => new ApplicantSearchResult(x.Id, x.ApplicationNumber, $"{x.FirstName} {x.LastName}".Trim(), x.Status))
+            .Select(x => new ApplicantSearchResult(x.Id, x.ApplicationNumber, (x.FirstName + " " + x.LastName).Trim(), x.Status))
             .Take(20).ToListAsync(ct);
     }
 
@@ -220,7 +220,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
             .Select(x => new AlumniSearchResult(
                 x.alumni.Id,
                 x.alumni.StudentId,
-                $"{x.student.FirstName} {x.student.LastName}".Trim(),
+                (x.student.FirstName + " " + x.student.LastName).Trim(),
                 x.alumni.GraduationDate))
             .Take(20).ToListAsync(ct);
     }
