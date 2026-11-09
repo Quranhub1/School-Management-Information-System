@@ -43,7 +43,7 @@
   font-size: 10px;
   white-space: nowrap;
 }
-.command-palette-results {
+.command-palette-inline {
   position: absolute;
   top: calc(100% + 5px);
   right: 0;
@@ -88,6 +88,6 @@
 .command-palette-results [cmdk-item][aria-selected="true"] small { color: #d7cfbb; }
 .command-palette-results [cmdk-empty] { padding: 16px 10px; color: #77746b; font-size: 12px; text-align: center; }
 @media (max-width: 640px) {
-  .command-palette-inline { width: min(100%, 320px); min-width: 0; }
+  .command-palette-container { width: min(100%, 320px); min-width: 0; }
   .command-palette-input-wrap kbd { display: none; }
 }
