@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { archiveStudent, getArchivedStudents, getStudent, getStudentApplicationForm, getStudentGuardians, getStudents, restoreStudent, type Student, type StudentGuardian } from '../api/students'
 import { getStudent360Profile as loadStudent360, type Student360ProfileDto } from '../api/student360'
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
+import { getStudentTranscript } from '../api/academicRecords'
+import type { TranscriptEntry } from '../types/academic'
 
 type Tab = 'biodata' | 'academic' | 'attendance' | 'fees' | 'documents'
 
@@ -14,6 +16,7 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
   const [activeSearch, setActiveSearch] = useState('')
   const [selected, setSelected] = useState<Student | null>(null)
   const [profile, setProfile] = useState<Student360ProfileDto | null>(null)
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [guardians, setGuardians] = useState<StudentGuardian[]>([])
   const [application, setApplication] = useState<{ application: Record<string, unknown>; submittedAt: string; status: string } | null>(null)
   const [tab, setTab] = useState<Tab>('biodata')
@@ -54,20 +57,23 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
     setTab('biodata')
     setDetailLoading(true)
     setProfile(null)
+    setTranscript([])
     setGuardians([])
     setApplication(null)
     setError('')
     try {
-      const [record, studentProfile, guardianRows, applicationRecord] = await Promise.all([
+      const [record, studentProfile, guardianRows, applicationRecord, transcriptRows] = await Promise.all([
         getStudent(student.id),
         loadStudent360(student.id).catch(() => null),
         getStudentGuardians(student.id).catch(() => []),
         getStudentApplicationForm(student.id).catch(() => null),
+        getStudentTranscript(student.id).catch(() => []),
       ])
       setSelected(record)
       setProfile(studentProfile)
       setGuardians(guardianRows)
       setApplication(applicationRecord)
+      setTranscript(transcriptRows)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load this archived student record.')
     } finally {
@@ -191,13 +197,20 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
           <label>Archived by<input readOnly value={selected.archivedBy || '—'} /></label>
           <div className="full-width"><h4>Parent / Guardian records</h4>{guardians.length ? <div className="table-wrap"><table><thead><tr><th>Name</th><th>Relationship</th><th>Phone</th><th>Email</th><th>Primary</th></tr></thead><tbody>{guardians.map(g => <tr key={g.id}><td>{g.fullName}</td><td>{g.relationship || '—'}</td><td>{g.phoneNumber || '—'}</td><td>{g.email || '—'}</td><td>{g.isPrimary ? 'Yes' : 'No'}</td></tr>)}</tbody></table></div> : <p className="empty">No guardian records available.</p>}</div>
         </div>}
-        {tab === 'academic' && <div className="summary-grid">
-          <div className="summary-card"><span>Programme</span><strong>{profile?.programmeName || 'Not recorded'}</strong><small>{profile?.department || ''}</small></div>
-          <div className="summary-card"><span>Cumulative GPA</span><strong>{profile?.gpa?.toFixed(2) ?? '—'}</strong></div>
-          <div className="summary-card"><span>Average assessment score</span><strong>{profile?.averageScore?.toFixed(1) ?? '—'}</strong></div>
-          <div className="summary-card"><span>Examination average</span><strong>{profile?.averageExamScore?.toFixed(1) ?? '—'}</strong></div>
-          <div className="summary-card"><span>Assessments recorded</span><strong>{profile?.assessmentCount ?? 0}</strong></div>
-          <div className="summary-card"><span>Certificates</span><strong>{profile?.certificateCount ?? 0}</strong></div>
+        {tab === 'academic' && <div>
+          <div className="summary-grid">
+            <div className="summary-card"><span>Programme</span><strong>{profile?.programmeName || 'Not recorded'}</strong><small>{profile?.department || ''}</small></div>
+            <div className="summary-card"><span>Cumulative GPA</span><strong>{profile?.gpa?.toFixed(2) ?? '—'}</strong></div>
+            <div className="summary-card"><span>Average assessment score</span><strong>{profile?.averageScore?.toFixed(1) ?? '—'}</strong></div>
+            <div className="summary-card"><span>Examination average</span><strong>{profile?.averageExamScore?.toFixed(1) ?? '—'}</strong></div>
+            <div className="summary-card"><span>Assessments recorded</span><strong>{profile?.assessmentCount ?? 0}</strong></div>
+            <div className="summary-card"><span>Certificates</span><strong>{profile?.certificateCount ?? 0}</strong></div>
+          </div>
+          <h4>Transcript / Course Results</h4>
+          <div className="table-wrap"><table><thead><tr><th>Course code</th><th>Course</th><th>Credit units</th><th>Score</th><th>Grade</th><th>Grade points</th><th>Result</th></tr></thead><tbody>
+            {transcript.map(entry => <tr key={entry.id}><td>{entry.courseCode}</td><td>{entry.courseTitle}</td><td>{entry.creditUnits}</td><td>{entry.score}</td><td>{entry.grade || '—'}</td><td>{entry.gradePoint}</td><td>{entry.isPass ? 'Pass' : 'Not passed'}</td></tr>)}
+            {transcript.length === 0 && <tr><td colSpan={7}>No transcript entries are available for this student, or your role cannot access academic results.</td></tr>}
+          </tbody></table></div>
           {!profile && <p className="empty">Academic summary is not available for this record. The underlying student record has been retained.</p>}
         </div>}
         {tab === 'attendance' && <div className="summary-grid">
