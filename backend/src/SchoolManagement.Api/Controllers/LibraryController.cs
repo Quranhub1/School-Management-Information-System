@@ -84,14 +84,31 @@ public sealed class LibraryController(
             .ToListAsync(ct);
         foreach (var previous in previousRequirements) previous.IsActive = false;
 
-        var structure = new SchoolManagement.Domain.Finance.FeeStructure
+        // Reuse an existing same-name policy rather than violating the unique
+        // programme/year/name index when the librarian revises its amount.
+        var structure = await db.FeeStructures.Include(x => x.Items)
+            .SingleOrDefaultAsync(x => x.ProgrammeId == request.ProgrammeId &&
+                x.AcademicYearId == Guid.Empty && x.Name == request.Name.Trim(), ct);
+        if (structure is null)
         {
-            ProgrammeId = request.ProgrammeId,
-            AcademicYearId = Guid.Empty,
-            Name = request.Name.Trim(),
-            FeeType = "LibraryBook",
-            Currency = currency
-        };
+            structure = new SchoolManagement.Domain.Finance.FeeStructure
+            {
+                ProgrammeId = request.ProgrammeId,
+                AcademicYearId = Guid.Empty,
+                Name = request.Name.Trim(),
+                FeeType = "LibraryBook",
+                Currency = currency
+            };
+            db.FeeStructures.Add(structure);
+        }
+        else
+        {
+            db.FeeStructureItems.RemoveRange(structure.Items);
+            structure.Items.Clear();
+            structure.Currency = currency;
+            structure.FeeType = "LibraryBook";
+            structure.IsActive = true;
+        }
         structure.Items.Add(new SchoolManagement.Domain.Finance.FeeStructureItem
         {
             FeeStructureId = structure.Id,
@@ -103,7 +120,6 @@ public sealed class LibraryController(
             IsOptional = false
         });
         structure.RecalculateTotal();
-        db.FeeStructures.Add(structure);
         await db.SaveChangesAsync(ct);
         return Created($"/api/library/programme-requirements/{structure.Id}", structure);
     }
