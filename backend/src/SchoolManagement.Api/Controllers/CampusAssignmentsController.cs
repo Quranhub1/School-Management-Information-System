@@ -21,10 +21,11 @@ public sealed class CampusAssignmentsController(SchoolManagementDbContext db, Ca
         var assignments = await db.UserCampusAssignments.AsNoTracking()
             .Where(x => x.CampusId == campusId)
             .Join(db.Users.AsNoTracking(), assignment => assignment.UserId, user => user.Id,
-                (assignment, user) => new CampusUserResponse(
-                    user.Id, user.Username, user.FirstName, user.LastName, user.IsActive,
-                    assignment.IsPrimary, assignment.AssignedAt))
-            .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
+                (assignment, user) => new { Assignment = assignment, User = user })
+            .OrderBy(x => x.User.LastName).ThenBy(x => x.User.FirstName)
+            .Select(x => new CampusUserResponse(
+                x.User.Id, x.User.Username, x.User.FirstName, x.User.LastName, x.User.IsActive,
+                x.Assignment.IsPrimary, x.Assignment.AssignedAt))
             .ToListAsync(cancellationToken);
         return Ok(assignments);
     }
