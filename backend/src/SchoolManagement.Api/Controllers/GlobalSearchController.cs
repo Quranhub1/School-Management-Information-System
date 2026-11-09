@@ -17,7 +17,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
         if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
             return Ok(new GlobalSearchResponse { Query = q ?? string.Empty, Students = [], Staff = [], Courses = [], Programmes = [], AcademicYears = [], Semesters = [], TeachingGroups = [], Applicants = [], Alumni = [] });
 
-        var term = q.Trim().ToLower();
+        var term = q.Trim().Normalize(System.Text.NormalizationForm.FormKC).ToLowerInvariant();
         var searchScope = (scope ?? "all").Trim().ToLowerInvariant();
         var searchAll = searchScope is "" or "all" or "dashboard";
         var searchStudents = searchAll || searchScope == "students";
