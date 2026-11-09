@@ -8,7 +8,7 @@ namespace SchoolManagement.Infrastructure.Repositories;
 public sealed class StudentRecordsRepository(SchoolManagementDbContext db) : IStudentRecordsRepository
 {
     public Task<Student?> GetStudentAsync(Guid studentId, CancellationToken cancellationToken = default) =>
-        db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == studentId, cancellationToken);
+        db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == studentId, cancellationToken);
 
     public async Task<IReadOnlyList<StudentGuardian>> GetGuardiansAsync(
         Guid studentId,
