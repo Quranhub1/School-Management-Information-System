@@ -7,6 +7,7 @@ using SchoolManagement.Application.Finance;
 using SchoolManagement.Domain.Academic;
 using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Students;
+using SchoolManagement.Api.Services;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -14,7 +15,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/admissions")]
 [Authorize(Policy = AdmissionsPolicies.Read)]
-public sealed class AdmissionsController(AdmissionsWorkflowService workflow, FinanceWorkflowService finance, SchoolManagementDbContext db) : ControllerBase
+public sealed class AdmissionsController(AdmissionsWorkflowService workflow, FinanceWorkflowService finance, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdmissionDto>>> GetAll(CancellationToken cancellationToken) => Ok(await workflow.GetAllAsync(cancellationToken));
@@ -65,6 +66,9 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
             if (await db.Students.AnyAsync(x => x.Id != student.Id && x.StudentNumber == studentNumber, cancellationToken)) return Conflict(new { message = "The student number is already in use." });
             student.StudentNumber = studentNumber;
         }
+
+        if (student.CampusId is null)
+            student.CampusId = await campusAccess.ResolveCampusForWriteAsync(User, null, cancellationToken);
 
         var enrollment = await db.StudentEnrollments.SingleOrDefaultAsync(x => x.StudentId == student.Id && x.ProgrammeId == request.ProgrammeId && x.IntakeId == request.IntakeId, cancellationToken);
         if (enrollment is null)
