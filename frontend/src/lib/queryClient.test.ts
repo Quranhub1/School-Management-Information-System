@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
-import { isPersistableQuery, QUERY_CACHE_MAX_AGE } from './queryClient'
+import { isPersistableQuery, QUERY_CACHE_MAX_AGE, queryClient } from './queryClient'
 
 describe('TanStack Query persistence policy', () => {
   it('persists only successful queries explicitly marked as safe to persist', () => {
@@ -29,7 +29,7 @@ describe('TanStack Query persistence policy', () => {
   })
 
   it('does not retry client errors but retries transient network failures twice', () => {
-    const retry = new QueryClient().getDefaultOptions().queries?.retry
+    const retry = queryClient.getDefaultOptions().queries?.retry
     expect(typeof retry).toBe('function')
     if (typeof retry !== 'function') return
 
