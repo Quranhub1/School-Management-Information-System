@@ -38,7 +38,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     {
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
-        var query = db.Students.AsNoTracking().Where(x => x.IsArchived);
+        var query = db.Students.IgnoreQueryFilters().AsNoTracking().Where(x => x.IsArchived);
         if (accessibleCampuses is not null)
             query = query.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
         if (!string.IsNullOrWhiteSpace(search))
@@ -61,7 +61,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     public async Task<IActionResult> Archive(Guid id, [FromBody] ArchiveStudentRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
-        var student = await db.Students.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var student = await db.Students.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (student is null) return NotFound(new { message = "Student was not found." });
         if (student.IsArchived) return Conflict(new { message = "Student is already archived." });
 
@@ -80,7 +80,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     public async Task<IActionResult> Restore(Guid id, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
-        var student = await db.Students.SingleOrDefaultAsync(x => x.Id == id && x.IsArchived, cancellationToken);
+        var student = await db.Students.IgnoreQueryFilters().SingleOrDefaultAsync(x => x.Id == id && x.IsArchived, cancellationToken);
         if (student is null) return NotFound(new { message = "Archived student was not found." });
 
         student.IsArchived = false;
@@ -256,6 +256,8 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
             return BadRequest(new { message = "Student number, first name, and last name are required." });
         }
 
+        var existing = await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (existing?.IsArchived == true) return Conflict(new { message = "Archived student records are read-only in active student management. Restore the student before editing." });
         var updated = await service.UpdateAsync(request, cancellationToken);
         return updated is null ? NotFound() : Ok(updated);
     }
@@ -265,6 +267,8 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
+        var existing = await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (existing?.IsArchived == true) return Conflict(new { message = "Archived student records cannot be deleted from the active student endpoint." });
         var deleted = await service.DeleteAsync(id, cancellationToken);
         return deleted ? NoContent() : NotFound();
     }
