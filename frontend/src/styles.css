@@ -4052,26 +4052,35 @@ table { font-variant-numeric: tabular-nums; }
 /* Student Archives: compact register controls and balanced field sizing. */
 .archived-students-workspace {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 .archived-students-workspace > .panel-heading {
   min-height: 0;
-  padding: 0 0 4px;
+  padding: 0;
   border: 0;
+  align-items: center;
 }
 .archived-students-workspace > .panel-heading h2 {
   margin: 0;
-  font-size: 1.45rem;
+  font-size: 1.08rem;
+  line-height: 1.2;
 }
 .archived-students-workspace .archive-count {
-  min-width: 112px;
-  padding: 10px 14px;
-  border-radius: 8px;
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px;
+  border-radius: 4px;
   box-shadow: none;
 }
+.archived-students-workspace .archive-count > span {
+  font-size: .7rem;
+}
 .archived-students-workspace .archive-count strong {
-  margin: 2px 0 0;
-  font-size: 1.2rem;
+  margin: 0;
+  font-size: .82rem;
+  line-height: 1;
 }
 .archive-action-panel {
   padding: 0 16px 14px;
