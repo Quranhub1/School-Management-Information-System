@@ -5407,7 +5407,10 @@ namespace SchoolManagement.Infrastructure.Migrations
                 {
                     b.Navigation("Assignments");
                 });
-#pragma warning restore 612, 618
+modelBuilder.Entity<SchoolManagement.Domain.Students.Student>()
+                .HasQueryFilter(student => !student.IsArchived);
+
+            #pragma warning restore 612, 618
         }
     }
 }
