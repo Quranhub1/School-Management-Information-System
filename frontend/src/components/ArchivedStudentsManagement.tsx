@@ -4,6 +4,7 @@ import { getStudent360Profile as loadStudent360, type Student360ProfileDto } fro
 import { StudentFinanceDashboard } from './StudentFinanceDashboard'
 import { getStudentTranscript } from '../api/academicRecords'
 import type { TranscriptEntry } from '../types/academic'
+import { getStudentDocuments, type StudentDocument } from '../api/documents'
 
 type Tab = 'biodata' | 'academic' | 'attendance' | 'fees' | 'documents'
 
@@ -19,6 +20,7 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [guardians, setGuardians] = useState<StudentGuardian[]>([])
   const [application, setApplication] = useState<{ application: Record<string, unknown>; submittedAt: string; status: string } | null>(null)
+  const [documents, setDocuments] = useState<StudentDocument[]>([])
   const [tab, setTab] = useState<Tab>('biodata')
   const [archiveTarget, setArchiveTarget] = useState('')
   const [archiveReason, setArchiveReason] = useState('')
@@ -60,20 +62,23 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
     setTranscript([])
     setGuardians([])
     setApplication(null)
+    setDocuments([])
     setError('')
     try {
-      const [record, studentProfile, guardianRows, applicationRecord, transcriptRows] = await Promise.all([
+      const [record, studentProfile, guardianRows, applicationRecord, transcriptRows, documentRows] = await Promise.all([
         getStudent(student.id),
         loadStudent360(student.id).catch(() => null),
         getStudentGuardians(student.id).catch(() => []),
         getStudentApplicationForm(student.id).catch(() => null),
         getStudentTranscript(student.id).catch(() => []),
+        getStudentDocuments(student.id).catch(() => []),
       ])
       setSelected(record)
       setProfile(studentProfile)
       setGuardians(guardianRows)
       setApplication(applicationRecord)
       setTranscript(transcriptRows)
+      setDocuments(documentRows)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load this archived student record.')
     } finally {
@@ -223,8 +228,13 @@ export function ArchivedStudentsManagement({ canManage = false }: { canManage?: 
         </div>}
         {tab === 'fees' && <StudentFinanceDashboard initialSearch={selected.studentNumber} />}
         {tab === 'documents' && <div>
-          {application ? <><h4>Admission application record</h4><p>Submitted: {new Date(application.submittedAt).toLocaleString('en-UG')} · Status: {application.status}</p><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{JSON.stringify(application.application, null, 2)}</pre></> : <p className="empty">No saved application/document record is available through the current student application endpoint.</p>}
-          <p>Document count recorded in Student 360: {profile?.documentCount ?? 0}</p>
+          <h4>Uploaded student documents</h4>
+          <div className="table-wrap"><table><thead><tr><th>Document type</th><th>File name</th><th>Uploaded</th><th>Version</th><th>Status</th></tr></thead><tbody>
+            {documents.map(document => <tr key={document.id}><td>{document.documentType}</td><td>{document.fileName}</td><td>{new Date(document.uploadedAt).toLocaleString('en-UG')}</td><td>{document.version}</td><td>{document.isArchived ? 'Document archived' : 'Available'}</td></tr>)}
+            {documents.length === 0 && <tr><td colSpan={5}>No uploaded documents are available for this student.</td></tr>}
+          </tbody></table></div>
+          {application ? <><h4>Admission application record</h4><p>Submitted: {new Date(application.submittedAt).toLocaleString('en-UG')} · Status: {application.status}</p><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{JSON.stringify(application.application, null, 2)}</pre></> : null}
+          <p>Document count recorded in Student 360: {profile?.documentCount ?? documents.length}</p>
         </div>}
       </>}
     </section>}
