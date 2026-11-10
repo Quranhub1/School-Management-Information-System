@@ -335,7 +335,7 @@ The EF Core model snapshot and finance configuration were inspected on `main`. T
 |---|---|---|
 | `chart_of_accounts` | `ChartOfAccounts` | Existing chart-of-accounts model; reconcile columns and map the physical table name without creating a duplicate chart. |
 | `students` | `Students` | Reuse the canonical SMIS Student entity/table; do not create a second student directory. Map SchoolPay identifiers and any required provider-facing fields carefully. |
-| `student_ledgers` | `PaymentLedgerEntries` | No direct equivalent found. Ledger entries are history/events, not a student-plus-semester summary. Design a separate aggregate only if the agreed contract requires it. |
+| `student_ledgers` | `PaymentLedgerEntries` / `StudentInvoices` | No direct equivalent found. Ledger entries are history/events, not a student-plus-semester summary, and the current StudentInvoice model has no SemesterId. A semester aggregate requires an explicit invoice/charge-to-semester relationship first; never infer semester from payment date. |
 | `payment_transactions` | `Payments`, `MobileMoneyTransactions`, `SchoolPaymentNotifications` | No single direct equivalent found. Define the relationship between provider transaction, notification/event, SMIS payment and invoice before creating a table or duplicating records. |
 | `payment_allocations` | `PaymentAllocations` | Existing invoice-based allocations must be reconciled with the requested transaction/student/fee-type shape; preserve invoice allocation and reconciliation behavior. |
 | `journal_entries` | `JournalEntries` | Existing accounting journal model; reconcile field names and retain posting, status, source and reversal behavior. |
@@ -467,3 +467,5 @@ PR: https://github.com/Quranhub1/School-Management-Information-System/pull/290
 - Provider documentation: https://www.schoolpay.co.ug/apidocumentation
 
 **Verification boundary:** PR #290 is an isolated posting correction, not completion of the provider-neutral transaction inbox, signed webhook, Sync API, full reconciliation or live SchoolPay integration. No live database migration or provider transaction has been run.
+
+**Additional source-level constraint (verified 2026-11-10):** `StudentInvoice` currently has no `SemesterId`; `PaymentLedgerEntry` is a dated event record. The central all-time student balance can continue to be derived from invoice obligations and posted allocations/payments. A per-semester ledger projection must wait until invoice/charge records carry an explicit academic-semester relationship. Do not introduce a semester balance table that cannot be populated reliably.
