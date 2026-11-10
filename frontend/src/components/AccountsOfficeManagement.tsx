@@ -106,7 +106,7 @@ export function AccountsOfficeManagement() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [paymentAmount, setPaymentAmount] = useState('')
   const [receiptNumber, setReceiptNumber] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('Cash')
+  const [sourceChannel, setSourceChannel] = useState('Cash')
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
 
   const [editingFees, setEditingFees] = useState<FeeBreakdownRow[]>([])
@@ -501,7 +501,8 @@ export function AccountsOfficeManagement() {
     const validation = validateForm(recordPaymentRequestSchema, {
       amount: Number(paymentAmount),
       receiptNumber: receiptNumber.trim(),
-      paymentMethod,
+      paymentMethod: 'Manual',
+      sourceChannel,
       currency: selectedInvoice.currency,
     })
     if (!validation.success) {
@@ -515,7 +516,7 @@ export function AccountsOfficeManagement() {
       setSelectedInvoice(null)
       setPaymentAmount('')
       setReceiptNumber('')
-      setPaymentMethod('Cash')
+      setSourceChannel('Cash')
       if (selectedStudentId) {
         const data = await getInvoices(selectedStudentId)
         setInvoices(data)
@@ -1111,7 +1112,7 @@ export function AccountsOfficeManagement() {
                 {Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
                 <label>Payment Amount (UGX)<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={selectedInvoice.balance} step="1" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
                 <label>Receipt Number<input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>
-                <label>Payment Method<select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}><option>Cash</option><option>Bank</option><option>Mobile Money</option><option>Card</option></select></label>
+                <label>Manual Source<select value={sourceChannel} onChange={e => setSourceChannel(e.target.value)}><option>Cash</option><option>Cheque</option></select></label>
                 <div className="topbar-actions">
                   <button type="button" className="secondary-button" onClick={() => setSelectedInvoice(null)}>Cancel</button>
                   <button type="submit">Update Payment</button>
