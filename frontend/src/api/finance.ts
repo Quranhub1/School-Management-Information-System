@@ -140,6 +140,15 @@ export interface FinanceStudentRegisterEntry {
   invoiceCount: number
   billed: number
   paid: number
+  programmeCode?: string | null
+  programmeName?: string | null
+  intakeCode?: string | null
+  intakeName?: string | null
+  classYear?: number | null
+  semesterName?: string | null
+  academicYearName?: string | null
+  academicStatus?: string | null
+  enrollmentStatus?: string | null
 }
 export const getFinanceStudents = (search?: string) =>
   request<FinanceStudentRegisterEntry[]>(`/api/finance/students${search ? `?search=${encodeURIComponent(search)}` : ''}`)

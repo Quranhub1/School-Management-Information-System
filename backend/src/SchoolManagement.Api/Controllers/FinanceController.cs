@@ -115,7 +115,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 x.payment.PaymentSource,
                 x.payment.Reference,
                 x.payment.PaidAt,
-                studentName = x.student.FirstName + " " + (x.student.OtherNames ?? "") + " " + x.student.LastName,
+                studentName = x.student.LastName + " " + x.student.FirstName + (x.student.OtherNames == null || x.student.OtherNames == "" ? "" : " " + x.student.OtherNames),
                 invoiceNumber = x.invoice == null ? null : x.invoice.InvoiceNumber
             })
             .ToListAsync(cancellationToken));
@@ -136,7 +136,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             {
                 studentId = student.Id,
                 studentNumber = student.StudentNumber,
-                studentName = student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName,
+                studentName = student.LastName + " " + student.FirstName + (student.OtherNames == null || student.OtherNames == "" ? "" : " " + student.OtherNames),
                 programmeName = fee == null ? invoice.FeeType : fee.Name,
                 amount = invoice.Amount,
                 paidAmount = invoice.PaidAmount,
@@ -168,12 +168,12 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 (x.OtherNames != null && x.OtherNames.ToLower().Contains(term)));
         }
 
-        var students = await query.OrderBy(x => x.StudentNumber)
+        var studentRows = await query.OrderBy(x => x.StudentNumber)
             .Select(x => new
             {
                 x.Id,
                 x.StudentNumber,
-                name = x.FirstName + " " + (x.OtherNames ?? "") + " " + x.LastName,
+                name = x.LastName + " " + x.FirstName + (x.OtherNames == null || x.OtherNames == "" ? "" : " " + x.OtherNames),
                 x.Status,
                 invoiceCount = db.StudentInvoices.Count(invoice => invoice.StudentId == x.Id),
                 billed = db.StudentInvoices.Where(invoice => invoice.StudentId == x.Id)
@@ -182,6 +182,88 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                     .Sum(invoice => (decimal?)invoice.PaidAmount) ?? 0m
             })
             .ToListAsync(cancellationToken);
+
+        if (studentRows.Count == 0) return Ok(Array.Empty<object>());
+
+        var studentIds = studentRows.Select(x => x.Id).ToArray();
+        var enrollments = await (
+            from enrollment in db.StudentEnrollments.AsNoTracking()
+            join programme in db.Programmes.AsNoTracking() on enrollment.ProgrammeId equals programme.Id
+            join intake in db.Intakes.AsNoTracking() on enrollment.IntakeId equals intake.Id
+            where studentIds.Contains(enrollment.StudentId)
+            orderby enrollment.Status == "Active" descending, enrollment.AdmissionDate descending
+            select new
+            {
+                enrollment.StudentId,
+                ProgrammeCode = programme.Code,
+                ProgrammeName = programme.Name,
+                IntakeCode = intake.Code,
+                IntakeName = intake.Name,
+                enrollment.CurrentYear,
+                EnrollmentStatus = enrollment.Status
+            })
+            .ToListAsync(cancellationToken);
+
+        var currentAcademicPeriod = await (
+            from semester in db.Semesters.AsNoTracking()
+            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id
+            where semester.IsCurrent && academicYear.IsCurrent
+            orderby semester.Sequence descending
+            select new
+            {
+                SemesterName = semester.Name,
+                AcademicYearName = academicYear.Name
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var academicStatuses = await (
+            from status in db.StudentAcademicStatuses.AsNoTracking()
+            join semester in db.Semesters.AsNoTracking() on status.SemesterId equals semester.Id
+            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id
+            where studentIds.Contains(status.StudentId)
+            orderby academicYear.IsCurrent descending, semester.IsCurrent descending,
+                semester.EndDate descending, status.YearOfStudy descending, semester.Sequence descending
+            select new
+            {
+                status.StudentId,
+                status.YearOfStudy,
+                status.Status,
+                SemesterName = semester.Name,
+                AcademicYearName = academicYear.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        var enrollmentByStudent = enrollments
+            .GroupBy(x => x.StudentId)
+            .ToDictionary(group => group.Key, group => group.First());
+        var academicStatusByStudent = academicStatuses
+            .GroupBy(x => x.StudentId)
+            .ToDictionary(group => group.Key, group => group.First());
+
+        var students = studentRows.Select(student =>
+        {
+            enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
+            academicStatusByStudent.TryGetValue(student.Id, out var academicStatus);
+            return new
+            {
+                student.Id,
+                student.StudentNumber,
+                student.name,
+                student.Status,
+                student.invoiceCount,
+                student.billed,
+                student.paid,
+                programmeCode = enrollment?.ProgrammeCode,
+                programmeName = enrollment?.ProgrammeName,
+                intakeCode = enrollment?.IntakeCode,
+                intakeName = enrollment?.IntakeName,
+                classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
+                semesterName = academicStatus?.SemesterName ?? currentAcademicPeriod?.SemesterName,
+                academicYearName = academicStatus?.AcademicYearName ?? currentAcademicPeriod?.AcademicYearName,
+                academicStatus = academicStatus?.Status,
+                enrollmentStatus = enrollment?.EnrollmentStatus
+            };
+        }).ToList();
 
         return Ok(students);
     }
@@ -196,7 +278,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             : await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
         if (student is null) return NotFound(new { message = "Student was not found." });
         if (!await campusAccess.CanAccessStudentAsync(User, student.Id, cancellationToken)) return Forbid();
-        return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.FirstName, student.OtherNames, student.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
+        return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.LastName, student.FirstName, student.OtherNames }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
     }
 
     [HttpGet("students/{studentId:guid}/statement")]

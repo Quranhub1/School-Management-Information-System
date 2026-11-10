@@ -69,7 +69,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             {
                 studentId = student.Id,
                 studentNumber = student.StudentNumber,
-                studentName = student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName,
+                studentName = student.LastName + " " + student.FirstName + (student.OtherNames == null || student.OtherNames == "" ? "" : " " + student.OtherNames),
                 programmeName = fee == null ? invoice.FeeType : fee.Name,
                 balance = invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount,
                 invoice.Currency,
@@ -142,7 +142,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
                 x.payment.ProviderTransactionId,
                 x.payment.Reference,
                 x.payment.PaidAt,
-                studentName = x.student.FirstName + " " + (x.student.OtherNames ?? "") + " " + x.student.LastName,
+                studentName = x.student.LastName + " " + x.student.FirstName + (x.student.OtherNames == null || x.student.OtherNames == "" ? "" : " " + x.student.OtherNames),
                 invoiceNumber = x.invoice == null ? null : x.invoice.InvoiceNumber
             })
             .ToListAsync(cancellationToken);
