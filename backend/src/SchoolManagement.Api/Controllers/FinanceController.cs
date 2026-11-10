@@ -114,7 +114,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 x.payment.PaymentMethod,
                 x.payment.Reference,
                 x.payment.PaidAt,
-                studentName = x.student.LastName + " " + x.student.FirstName + (x.student.OtherNames == null || x.student.OtherNames == "" ? "" : " " + x.student.OtherNames),
+                studentName = (x.student.LastName + " " + x.student.FirstName + (x.student.OtherNames == null || x.student.OtherNames == "" ? "" : " " + x.student.OtherNames)).ToUpper(),
                 invoiceNumber = x.invoice == null ? null : x.invoice.InvoiceNumber
             })
             .ToListAsync(cancellationToken));
@@ -135,7 +135,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             {
                 studentId = student.Id,
                 studentNumber = student.StudentNumber,
-                studentName = student.LastName + " " + student.FirstName + (student.OtherNames == null || student.OtherNames == "" ? "" : " " + student.OtherNames),
+                studentName = (student.LastName + " " + student.FirstName + (student.OtherNames == null || student.OtherNames == "" ? "" : " " + student.OtherNames)).ToUpper(),
                 programmeName = fee == null ? invoice.FeeType : fee.Name,
                 amount = invoice.Amount,
                 paidAmount = invoice.PaidAmount,
@@ -172,7 +172,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             {
                 x.Id,
                 x.StudentNumber,
-                name = x.LastName + " " + x.FirstName + (x.OtherNames == null || x.OtherNames == "" ? "" : " " + x.OtherNames),
+                name = (x.LastName + " " + x.FirstName + (x.OtherNames == null || x.OtherNames == "" ? "" : " " + x.OtherNames)).ToUpper(),
                 x.Status,
                 invoiceCount = db.StudentInvoices.Count(invoice => invoice.StudentId == x.Id),
                 billed = db.StudentInvoices.Where(invoice => invoice.StudentId == x.Id)
