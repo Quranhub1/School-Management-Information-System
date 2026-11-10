@@ -1,12 +1,8 @@
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
-[DbContext(typeof(SchoolManagementDbContext))]
-[Migration("20261111220000_BackfillLegacyStudentPaymentLedger")]
-public sealed class BackfillLegacyStudentPaymentLedger : Migration
+public partial class BackfillLegacyStudentPaymentLedger : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
