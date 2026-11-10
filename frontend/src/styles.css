@@ -4652,3 +4652,45 @@ table { font-variant-numeric: tabular-nums; }
     max-width: 100%;
   }
 }
+
+
+/* Final Audit Logs button-width correction: fit buttons to their labels, never stretch. */
+.audit-log-actions {
+  display: flex;
+  flex: 0 0 auto;
+  width: fit-content;
+  max-width: 100%;
+  justify-content: flex-start;
+  align-items: center;
+}
+.audit-log-actions > button {
+  flex: 0 0 auto;
+  width: fit-content;
+  min-width: 0;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.audit-log-grid .smis-ag-grid-toolbar > button {
+  flex: 0 0 auto;
+  width: fit-content;
+  min-width: 0;
+  max-width: 150px;
+}
+.audit-log-grid .smis-ag-grid-columns {
+  width: fit-content;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .audit-log-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 7px;
+  }
+  .audit-log-actions > button {
+    width: fit-content;
+    max-width: 100%;
+  }
+}
