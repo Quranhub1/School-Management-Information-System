@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { useEffect, useState } from 'react'
 import { generateCertificate, getCertificate, revokeCertificate, verifyCertificate, type CertificateDto, type RevokeCertificateRequest } from '../api/certificates'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
@@ -168,7 +169,7 @@ export function CertificateManagement({ canManage }: CertificateManagementProps)
               <select value={selectedStudentId} onChange={e => setSelectedStudentId(e.target.value)} required>
                 <option value="">Select student</option>
                 {students.map(s => (
-                  <option key={s.id} value={s.id}>{s.studentNumber} - {s.firstName} {s.lastName}</option>
+                  <option key={s.id} value={s.id}>{s.studentNumber} - {formatPersonName(s.lastName, s.firstName)}</option>
                 ))}
               </select>
             </label>
