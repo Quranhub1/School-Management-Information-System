@@ -30,6 +30,7 @@ Deployment configuration for the School Management Information System.
 ## Institutional email service
 
 - Set the same random 32+ character `EMAIL_SERVICE_API_KEY` in the API and Node email service configuration.
+- Persist ASP.NET Core Data Protection keys: Docker deployments mount `smis_dataprotection` at `/app/dataprotection-keys`; systemd stores them under `/var/lib/schoolmanagement/DataProtectionKeys`. Back up this directory/volume with the database, or encrypted SMTP passwords will become unreadable after key loss.
 - Docker Compose keeps the email service on the private service network; do not publish port 5100.
 - For systemd deployments, install `schoolmanagement-email.service`, create `/etc/schoolmanagement/email-service.env` with `EMAIL_SERVICE_API_KEY=<same-random-key>`, restrict that file to root/service administrators, and set `EmailService__ApiKey` in the API service to the same key.
 - Install the Node service under `/opt/schoolmanagement/email-service` with its production dependencies before enabling the systemd unit.
