@@ -40,6 +40,8 @@ type PaymentHistoryRow = {
   paidAt: string
   amount: number
   paymentMethod: string
+  paymentSource: string
+  sourceChannel?: string
   reference?: string
 }
 
@@ -106,7 +108,7 @@ export function AccountsOfficeManagement() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [paymentAmount, setPaymentAmount] = useState('')
   const [receiptNumber, setReceiptNumber] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('Cash')
+  const [sourceChannel, setSourceChannel] = useState('Cash')
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
 
   const [editingFees, setEditingFees] = useState<FeeBreakdownRow[]>([])
@@ -501,7 +503,8 @@ export function AccountsOfficeManagement() {
     const validation = validateForm(recordPaymentRequestSchema, {
       amount: Number(paymentAmount),
       receiptNumber: receiptNumber.trim(),
-      paymentMethod,
+      paymentMethod: sourceChannel,
+      sourceChannel,
       currency: selectedInvoice.currency,
     })
     if (!validation.success) {
@@ -515,7 +518,7 @@ export function AccountsOfficeManagement() {
       setSelectedInvoice(null)
       setPaymentAmount('')
       setReceiptNumber('')
-      setPaymentMethod('Cash')
+      setSourceChannel('Cash')
       if (selectedStudentId) {
         const data = await getInvoices(selectedStudentId)
         setInvoices(data)
@@ -677,7 +680,7 @@ export function AccountsOfficeManagement() {
   const filteredPayroll = payrollRecords.filter(r => r.month === selectedMonth && r.year === selectedYear)
 
   const filteredPayments = paymentHistory.filter(p => {
-    if (paymentHistoryFilterMethod && p.paymentMethod !== paymentHistoryFilterMethod) return false
+    if (paymentHistoryFilterMethod && p.paymentSource !== paymentHistoryFilterMethod) return false
     if (paymentHistoryFrom && p.paidAt < paymentHistoryFrom) return false
     if (paymentHistoryTo && p.paidAt > paymentHistoryTo + 'T23:59:59') return false
     return true
@@ -723,8 +726,8 @@ export function AccountsOfficeManagement() {
 
   function exportPaymentHistory() {
     const rows = [
-      ['Receipt No.', 'Date', 'Amount (UGX)', 'Payment Method', 'Reference'],
-      ...filteredPayments.map(p => [p.receiptNumber, p.paidAt, p.amount, p.paymentMethod, p.reference || '']),
+      ['Receipt No.', 'Date', 'Amount (UGX)', 'Payment Source', 'Source Channel', 'Reference'],
+      ...filteredPayments.map(p => [p.receiptNumber, p.paidAt, p.amount, p.paymentSource, p.sourceChannel || '', p.reference || '']),
     ]
     const csv = rows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -937,7 +940,8 @@ export function AccountsOfficeManagement() {
                           <th>Receipt No.</th>
                           <th>Date</th>
                           <th>Amount</th>
-                          <th>Payment Method</th>
+                          <th>Payment Source</th>
+                          <th>Source Channel</th>
                           <th>Reference</th>
                           <th>Action</th>
                         </tr>
@@ -948,7 +952,8 @@ export function AccountsOfficeManagement() {
                             <td>{p.receiptNumber}</td>
                             <td>{new Date(p.paidAt).toLocaleDateString('en-UG')}</td>
                             <td style={{ color: '#059669' }}>UGX {p.amount.toLocaleString()}</td>
-                            <td>{p.paymentMethod}</td>
+                            <td>{p.paymentSource}</td>
+                            <td>{p.sourceChannel || '—'}</td>
                             <td>{p.reference || '—'}</td>
                             <td>
                               {idx === 0 && (
@@ -1111,7 +1116,7 @@ export function AccountsOfficeManagement() {
                 {Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
                 <label>Payment Amount (UGX)<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={selectedInvoice.balance} step="1" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
                 <label>Receipt Number<input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>
-                <label>Payment Method<select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}><option>Cash</option><option>Bank</option><option>Mobile Money</option><option>Card</option></select></label>
+                <label>Manual Source<select value={sourceChannel} onChange={e => setSourceChannel(e.target.value)}><option>Cash</option><option>Cheque</option></select></label>
                 <div className="topbar-actions">
                   <button type="button" className="secondary-button" onClick={() => setSelectedInvoice(null)}>Cancel</button>
                   <button type="submit">Update Payment</button>
