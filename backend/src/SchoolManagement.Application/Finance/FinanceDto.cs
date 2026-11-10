@@ -28,10 +28,11 @@ public sealed record FinancePaymentDto(
     decimal UnallocatedAmount,
     string Currency,
     string PaymentMethod,
+    string PaymentSource,
     string? Reference,
     DateTimeOffset PaidAt)
 {
-    public static FinancePaymentDto FromDomain(Payment payment) => new(payment.Id, payment.StudentId, payment.StudentInvoiceId, payment.ReceiptNumber, payment.Amount, payment.AllocatedAmount, payment.UnallocatedAmount, payment.Currency, payment.PaymentMethod, payment.Reference, payment.PaidAt);
+    public static FinancePaymentDto FromDomain(Payment payment) => new(payment.Id, payment.StudentId, payment.StudentInvoiceId, payment.ReceiptNumber, payment.Amount, payment.AllocatedAmount, payment.UnallocatedAmount, payment.Currency, payment.PaymentMethod, payment.PaymentSource, payment.Reference, payment.PaidAt);
 }
 
 public sealed record FinanceLedgerEntryDto(
