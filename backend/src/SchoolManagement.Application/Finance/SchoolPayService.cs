@@ -7,7 +7,7 @@ namespace SchoolManagement.Application.Finance;
 
 public sealed class SchoolPayService(IFinanceRepository finance, FinanceService financeService) : ISchoolPayService
 {
-    public async Task<SchoolPaymentNotification> ProcessNotificationAsync(string externalReference, string schoolPayReference, Guid? studentId, Guid? studentInvoiceId, decimal amount, string currency, string phoneNumber, string? payerName, string rawPayload, CancellationToken cancellationToken)
+    public async Task<SchoolPaymentNotification> ProcessNotificationAsync(string externalReference, string schoolPayReference, Guid? studentId, Guid? studentInvoiceId, decimal amount, string currency, string phoneNumber, string? payerName, string? channel, string rawPayload, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(externalReference)) throw new ArgumentException("External reference is required.");
         if (string.IsNullOrWhiteSpace(schoolPayReference)) throw new ArgumentException("SchoolPay reference is required.");
@@ -22,7 +22,8 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
                 && existing.StudentId == studentId
                 && existing.StudentInvoiceId == studentInvoiceId
                 && existing.Amount == amount
-                && string.Equals(existing.Currency, currency.Trim(), StringComparison.OrdinalIgnoreCase);
+                && string.Equals(existing.Currency, currency.Trim(), StringComparison.OrdinalIgnoreCase)
+                && string.Equals(existing.Channel, channel?.Trim(), StringComparison.OrdinalIgnoreCase);
             if (!samePayment)
                 throw new InvalidOperationException("External reference has already been received with different payment details.");
             return existing;
@@ -47,6 +48,7 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
             StudentInvoiceId = studentInvoiceId,
             Amount = amount,
             Currency = currency.Trim().ToUpperInvariant(),
+            Channel = string.IsNullOrWhiteSpace(channel) ? null : channel.Trim(),
             PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim(),
             PayerName = string.IsNullOrWhiteSpace(payerName) ? null : payerName.Trim(),
             RawPayload = rawPayload,
