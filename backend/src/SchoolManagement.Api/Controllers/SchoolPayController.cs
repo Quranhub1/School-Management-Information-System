@@ -1,54 +1,101 @@
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
+using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/schoolpay")]
 [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
-public sealed class SchoolPayController(ISchoolPayService schoolPay) : ControllerBase
+public sealed class SchoolPayController(
+    ISchoolPayService schoolPay,
+    SchoolManagementDbContext db,
+    IConfiguration configuration) : ControllerBase
 {
     [HttpPost("webhook")]
     [AllowAnonymous]
-    public async Task<IActionResult> ReceiveNotification([FromBody] SchoolPayNotificationRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> ReceiveNotification([FromBody] SchoolPayWebhookRequest request, CancellationToken cancellationToken)
     {
-        if (request is null) return BadRequest("Notification payload is required.");
-        if (string.IsNullOrWhiteSpace(request.ExternalReference)) return BadRequest("External reference is required.");
-        if (string.IsNullOrWhiteSpace(request.SchoolPayReference)) return BadRequest("SchoolPay reference is required.");
-        if (request.Amount <= 0) return BadRequest("Amount must be greater than zero.");
-        if (string.IsNullOrWhiteSpace(request.ProviderTransactionId)) return BadRequest("Provider transaction ID is required.");
-        if (string.IsNullOrWhiteSpace(request.ProviderStatus) || !string.Equals(request.ProviderStatus.Trim(), "PAID", StringComparison.OrdinalIgnoreCase)) return BadRequest("Only SchoolPay transactions confirmed as PAID can be posted.");
-        var sourceChannel = request.SourceChannel ?? request.SourcePaymentChannel;
-        if (string.IsNullOrWhiteSpace(sourceChannel)) return BadRequest("SchoolPay source channel is required.");
+        if (request?.Payment is null) return BadRequest("SchoolPay payment payload is required.");
+        if (!string.Equals(request.Type, "SCHOOL_FEES", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("Only SCHOOL_FEES webhook notifications are supported by this endpoint.");
 
-        Guid? studentId = null;
-        Guid? studentInvoiceId = null;
-        if (!string.IsNullOrWhiteSpace(request.StudentId) && Guid.TryParse(request.StudentId, out var parsedStudentId)) studentId = parsedStudentId;
-        if (!string.IsNullOrWhiteSpace(request.StudentInvoiceId) && Guid.TryParse(request.StudentInvoiceId, out var parsedInvoiceId)) studentInvoiceId = parsedInvoiceId;
-        if (studentId is null && studentInvoiceId is null) return BadRequest("Either studentId or studentInvoiceId is required.");
+        var payment = request.Payment;
+        if (string.IsNullOrWhiteSpace(payment.SchoolPayReceiptNumber))
+            return BadRequest("SchoolPay receipt number is required.");
+        if (string.IsNullOrWhiteSpace(payment.SourceChannelTransactionId))
+            return BadRequest("SchoolPay source transaction ID is required.");
+        if (string.IsNullOrWhiteSpace(payment.SourcePaymentChannel))
+            return BadRequest("SchoolPay source payment channel is required.");
+        if (payment.Amount <= 0) return BadRequest("Payment amount must be greater than zero.");
+
+        var apiPassword = configuration["SchoolPay:ApiPassword"];
+        if (string.IsNullOrWhiteSpace(apiPassword))
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, "SchoolPay webhook verification is not configured.");
+
+        var expectedSignature = Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes(apiPassword + payment.SchoolPayReceiptNumber)))
+            .ToLowerInvariant();
+        var suppliedSignature = request.Signature?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(suppliedSignature) ||
+            suppliedSignature.Length != expectedSignature.Length ||
+            !CryptographicOperations.FixedTimeEquals(
+                Encoding.ASCII.GetBytes(expectedSignature),
+                Encoding.ASCII.GetBytes(suppliedSignature)))
+            return Unauthorized("Invalid SchoolPay webhook signature.");
+
+        if (!string.Equals(payment.TransactionCompletionStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+            return Ok(new { status = "Ignored", reason = "SchoolPay transaction is not completed." });
+
+        var paymentCode = payment.StudentPaymentCode?.Trim();
+        var registrationNumber = payment.StudentRegistrationNumber?.Trim();
+        if (string.IsNullOrWhiteSpace(paymentCode) && string.IsNullOrWhiteSpace(registrationNumber))
+            return BadRequest("SchoolPay student payment code or registration number is required.");
+
+        var student = await db.Students.IgnoreQueryFilters().SingleOrDefaultAsync(
+            x => (!string.IsNullOrWhiteSpace(paymentCode) && x.StudentNumber == paymentCode) ||
+                 (!string.IsNullOrWhiteSpace(registrationNumber) && x.StudentNumber == registrationNumber),
+            cancellationToken);
+        if (student is null)
+            return UnprocessableEntity("SchoolPay student payment code/registration number does not match a student in SMIS.");
 
         try
         {
             var notification = await schoolPay.ProcessNotificationAsync(
-                request.ExternalReference,
-                request.SchoolPayReference,
-                studentId,
-                studentInvoiceId,
-                request.Amount,
-                request.Currency ?? "UGX",
-                request.PhoneNumber,
-                request.PayerName,
-                request.RawPayload,
+                payment.SchoolPayReceiptNumber,
+                payment.SchoolPayReceiptNumber,
+                student.Id,
+                null,
+                payment.Amount,
+                "UGX",
+                string.Empty,
+                payment.StudentName,
+                JsonSerializer.Serialize(request),
                 cancellationToken,
-                request.ProviderTransactionId,
-                sourceChannel,
-                request.ProviderStatus);
-            return Ok(new { notification.ExternalReference, notification.Status, notification.ProcessedAt });
+                payment.SourceChannelTransactionId,
+                payment.SourcePaymentChannel,
+                "PAID");
+
+            return Ok(new
+            {
+                notification.ExternalReference,
+                notification.SchoolPayReference,
+                notification.ProviderTransactionId,
+                notification.SourceChannel,
+                notification.Status,
+                notification.ProcessedAt
+            });
         }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) || ex.Message.Contains("already fully paid", StringComparison.OrdinalIgnoreCase))
+        catch (InvalidOperationException ex) when (
+            ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+            ex.Message.Contains("already fully paid", StringComparison.OrdinalIgnoreCase))
         {
             return Conflict(ex.Message);
         }
@@ -64,28 +111,58 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay) : Controlle
         if (string.IsNullOrWhiteSpace(externalReference)) return BadRequest("External reference is required.");
         var notification = await schoolPay.GetNotificationAsync(externalReference, cancellationToken);
         if (notification is null) return NotFound();
-        return Ok(new { notification.ExternalReference, notification.SchoolPayReference, notification.StudentId, notification.StudentInvoiceId, notification.Amount, notification.Currency, notification.Status, notification.ReceivedAt, notification.ProcessedAt, notification.ErrorMessage });
+        return Ok(new
+        {
+            notification.ExternalReference,
+            notification.SchoolPayReference,
+            notification.ProviderTransactionId,
+            notification.SourceChannel,
+            notification.ProviderStatus,
+            notification.StudentId,
+            notification.StudentInvoiceId,
+            notification.Amount,
+            notification.Currency,
+            notification.Status,
+            notification.ReceivedAt,
+            notification.ProcessedAt,
+            notification.ErrorMessage
+        });
     }
 
     [HttpGet("notifications")]
     public async Task<IActionResult> GetNotifications(CancellationToken cancellationToken)
     {
         var notifications = await schoolPay.GetNotificationsAsync(cancellationToken);
-        return Ok(notifications.Select(n => new { n.ExternalReference, n.SchoolPayReference, n.StudentId, n.StudentInvoiceId, n.Amount, n.Currency, n.Status, n.ReceivedAt, n.ProcessedAt, n.ErrorMessage }));
+        return Ok(notifications.Select(n => new
+        {
+            n.ExternalReference,
+            n.SchoolPayReference,
+            n.ProviderTransactionId,
+            n.SourceChannel,
+            n.ProviderStatus,
+            n.StudentId,
+            n.StudentInvoiceId,
+            n.Amount,
+            n.Currency,
+            n.Status,
+            n.ReceivedAt,
+            n.ProcessedAt,
+            n.ErrorMessage
+        }));
     }
 }
 
-public sealed record SchoolPayNotificationRequest(
-    string ExternalReference,
-    string SchoolPayReference,
-    string? StudentId,
-    string? StudentInvoiceId,
-    decimal Amount,
-    string? Currency,
-    string? PhoneNumber,
-    string? PayerName,
-    string? RawPayload,
-    [property: JsonPropertyName("transactionId")] string? ProviderTransactionId = null,
-    [property: JsonPropertyName("channelName")] string? SourceChannel = null,
-    [property: JsonPropertyName("sourcePaymentChannel")] string? SourcePaymentChannel = null,
-    [property: JsonPropertyName("status")] string? ProviderStatus = null);
+public sealed record SchoolPayWebhookRequest(
+    string? Signature,
+    string? Type,
+    SchoolPayWebhookPayment? Payment);
+
+public sealed record SchoolPayWebhookPayment(
+    [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)] decimal Amount,
+    string? SchoolPayReceiptNumber,
+    string? SourceChannelTransactionId,
+    string? SourcePaymentChannel,
+    string? StudentPaymentCode,
+    string? StudentRegistrationNumber,
+    string? StudentName,
+    string? TransactionCompletionStatus);
