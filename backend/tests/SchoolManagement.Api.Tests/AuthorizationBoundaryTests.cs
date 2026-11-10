@@ -16,6 +16,12 @@ public sealed class AuthorizationBoundaryTests
     }
 
     [Fact]
+    public void RecordsOfficerCanManageStaffRecords()
+    {
+        Assert.Contains(InstitutionalRoles.RecordsOfficer, AuthorizationPolicies.RoleSets.StaffManagement);
+    }
+
+    [Fact]
     public void SystemAdministratorHasFullOperationalRoleCoverage()
     {
         var operationalRoleSets = typeof(AuthorizationPolicies.RoleSets)
