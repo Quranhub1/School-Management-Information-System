@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +18,14 @@ using System.Threading.RateLimiting;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+var dataProtectionPath = builder.Configuration["Security:DataProtectionKeysPath"];
+if (string.IsNullOrWhiteSpace(dataProtectionPath))
+{
+    var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    dataProtectionPath = Path.Combine(string.IsNullOrWhiteSpace(localData) ? AppContext.BaseDirectory : localData, "SMIS", "DataProtectionKeys");
+}
+Directory.CreateDirectory(dataProtectionPath);
+builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath)).SetApplicationName("KSHS.SMIS");
 var logDirectory = Environment.GetEnvironmentVariable("SMIS_LOG_DIRECTORY");
 if (string.IsNullOrWhiteSpace(logDirectory))
 {
