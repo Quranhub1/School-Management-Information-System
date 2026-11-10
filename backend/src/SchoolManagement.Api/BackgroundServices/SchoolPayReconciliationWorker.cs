@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
@@ -69,6 +70,8 @@ public sealed class SchoolPayReconciliationWorker(
 
         var client = httpClientFactory.CreateClient(nameof(SchoolPayReconciliationWorker));
         client.Timeout = TimeSpan.FromSeconds(Math.Clamp(options.RequestTimeoutSeconds, 5, 120));
+        if (!client.DefaultRequestHeaders.Accept.Any(x => x.MediaType == "application/json"))
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         using var response = await client.GetAsync(requestUrl, cancellationToken);
         response.EnsureSuccessStatusCode();
         var payload = await response.Content.ReadFromJsonAsync<SchoolPaySyncResponse>(cancellationToken: cancellationToken)
