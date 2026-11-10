@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
@@ -102,7 +103,7 @@ export function AdminDashboard() {
     try {
       const all = await getStudents()
       const q = studentSearch.trim().toLowerCase()
-      setStudentResults(all.filter(s => s.studentNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, studentNumber: s.studentNumber, name: `${s.firstName} ${s.lastName}`.trim(), status: s.status })))
+      setStudentResults(all.filter(s => s.studentNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, studentNumber: s.studentNumber, name: formatPersonName(s.lastName, s.firstName), status: s.status })))
     } catch { setError('Unable to search students.') }
   }
 
@@ -112,7 +113,7 @@ export function AdminDashboard() {
     try {
       const all = await listStaff()
       const q = staffSearch.trim().toLowerCase()
-      setStaffResults(all.filter(s => s.staffNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, staffNumber: s.staffNumber, name: `${s.firstName} ${s.lastName}`.trim(), department: (s as { department?: string }).department || '—', status: s.isActive ? 'Active' : 'Inactive' })))
+      setStaffResults(all.filter(s => s.staffNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, staffNumber: s.staffNumber, name: formatPersonName(s.lastName, s.firstName), department: (s as { department?: string }).department || '—', status: s.isActive ? 'Active' : 'Inactive' })))
     } catch { setError('Unable to search staff.') }
   }
 
