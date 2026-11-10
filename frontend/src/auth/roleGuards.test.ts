@@ -13,6 +13,7 @@ import {
   canManageStaff,
   canReadLibrary,
   canManageLibrary,
+  canManagePrinters,
 } from './roleGuards'
 
 describe('role guards — administration', () => {
@@ -67,6 +68,14 @@ describe('role guards — payroll', () => {
     expect(canReadPayroll(['Director'])).toBe(false)
     expect(canReadPayroll(['Lecturer'])).toBe(false)
     expect(canReadPayroll([])).toBe(false)
+  })
+})
+
+describe('role guards — printers', () => {
+  it('uses the academic registrar roles and rejects the obsolete generic Registrar role', () => {
+    expect(canManagePrinters(['AcademicRegistrar'])).toBe(true)
+    expect(canManagePrinters(['AssistantRegistrar'])).toBe(true)
+    expect(canManagePrinters(['Registrar'])).toBe(false)
   })
 })
 
