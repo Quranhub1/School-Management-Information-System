@@ -30,6 +30,7 @@ export interface RecordPaymentRequest {
   amount: number
   receiptNumber: string
   paymentMethod: string
+  sourceChannel?: string
   reference?: string
   currency?: string
 }
@@ -172,6 +173,9 @@ export interface StudentFinancialStatementPayment {
   amount: number
   currency: string
   paymentMethod: string
+  paymentSource: string
+  sourceChannel?: string
+  providerTransactionId?: string
   reference?: string
   paidAt: string
   studentInvoiceId?: string
