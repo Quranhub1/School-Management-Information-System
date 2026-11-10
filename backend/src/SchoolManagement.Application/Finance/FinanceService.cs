@@ -177,7 +177,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var method = paymentMethod.Trim().ToLowerInvariant();
         if (method is "cash" or "cash payment") return FinanceAccountCodes.Cash;
         if (method.Contains("mobile") || method.Contains("momo") || method.Contains("mtn") || method.Contains("airtel")) return FinanceAccountCodes.MobileMoney;
-        if (method.Contains("bank") || method.Contains("transfer") || method.Contains("card") || method.Contains("cheque") || method.Contains("check")) return FinanceAccountCodes.Bank;
+        if (method is "schoolpay" || method.Contains("bank") || method.Contains("transfer") || method.Contains("card") || method.Contains("cheque") || method.Contains("check")) return FinanceAccountCodes.Bank;
         throw new ArgumentException("Unsupported payment method. Use Cash, Bank/Transfer/Card/Cheque, or Mobile Money.");
     }
 
