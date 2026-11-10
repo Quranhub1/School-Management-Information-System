@@ -51,6 +51,8 @@ Direct MTN/Airtel initiation and staff-entered provider-reference confirmation a
 
 SchoolPay documentation states that webhook delivery is single-attempt. SMIS therefore includes a background reconciliation worker that calls the authenticated `SchoolRangeTransactions` endpoint using the official MD5 formula `MD5(schoolCode + fromDate + apiPassword)` (uppercase hexadecimal). It checks a rolling date window, with a maximum 30-day lookback, and sends both regular and supplementary fee transactions through the same idempotent finance workflow as webhooks.
 
+The worker runs every six hours by default and scans the preceding seven days; both settings are configurable, and the lookback cannot exceed 30 days.
+
 Enable reconciliation only after KSHS supplies the SchoolPay school code and transactions API password and completes UAT. The worker posts only completed transactions that match exactly one active student. Unmatched or ambiguous identifiers are skipped and written to structured API logs for Finance investigation; they are not silently assigned to a student.
 
 The webhook and Sync API share receipt/provider-transaction uniqueness constraints, so a transaction already posted by one path is not posted again by the other. Do not bypass student matching or manually post an unverified provider transaction.
