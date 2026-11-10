@@ -688,7 +688,10 @@
 
 .finance-workspace button:disabled {
   cursor: not-allowed;
-  opacity: .62;
+  border-color: #cbd5cf;
+  background: #e9eeeb;
+  color: #526158;
+  opacity: 1;
   box-shadow: none;
   transform: none;
 }
