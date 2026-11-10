@@ -921,10 +921,8 @@ export function AccountsOfficeManagement() {
                     <input type="date" value={paymentHistoryTo} onChange={e => setPaymentHistoryTo(e.target.value)} placeholder="To" />
                     <select value={paymentHistoryFilterMethod} onChange={e => setPaymentHistoryFilterMethod(e.target.value)}>
                       <option value="">All Methods</option>
-                      <option>Cash</option>
-                      <option>Bank</option>
-                      <option>Mobile Money</option>
-                      <option>Card</option>
+                      <option>Manual</option>
+                      <option>SchoolPay</option>
                     </select>
                   </div>
                 </form>
