@@ -248,6 +248,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 payment.Currency,
                 payment.PaymentMethod,
                 payment.PaymentSource,
+                payment.SourceChannel,
+                payment.ProviderTransactionId,
                 payment.Reference,
                 payment.PaidAt,
                 studentInvoiceId = payment.StudentInvoiceId,
