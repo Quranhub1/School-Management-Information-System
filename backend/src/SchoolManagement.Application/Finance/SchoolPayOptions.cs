@@ -15,7 +15,7 @@ public sealed class SchoolPayOptions
     public string ApiPassword { get; set; } = string.Empty;
     public bool ReconciliationEnabled { get; set; }
     public int ReconciliationIntervalMinutes { get; set; } = 360;
-    public int ReconciliationLookbackDays { get; set; } = 2;
+    public int ReconciliationLookbackDays { get; set; } = 7;
     public string SuccessRedirectUrl { get; set; } = string.Empty;
     public string FailureRedirectUrl { get; set; } = string.Empty;
     public int RequestTimeoutSeconds { get; set; } = 30;
