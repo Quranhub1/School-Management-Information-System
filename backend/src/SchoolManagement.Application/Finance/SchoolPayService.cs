@@ -1,5 +1,7 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Finance;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SchoolManagement.Application.Finance;
 
@@ -16,6 +18,13 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
         var existing = await finance.GetSchoolPaymentNotificationAsync(normalizedExternalRef, cancellationToken);
         if (existing is not null)
         {
+            var samePayment = string.Equals(existing.SchoolPayReference, schoolPayReference.Trim(), StringComparison.Ordinal)
+                && existing.StudentId == studentId
+                && existing.StudentInvoiceId == studentInvoiceId
+                && existing.Amount == amount
+                && string.Equals(existing.Currency, currency.Trim(), StringComparison.OrdinalIgnoreCase);
+            if (!samePayment)
+                throw new InvalidOperationException("External reference has already been received with different payment details.");
             return existing;
         }
 
@@ -39,12 +48,12 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
         {
             if (studentInvoiceId.HasValue)
             {
-                var receiptNumber = $"SP-{normalizedExternalRef.Substring(0, Math.Min(normalizedExternalRef.Length, 12))}";
+                var receiptNumber = CreateReceiptNumber(normalizedExternalRef);
                 await financeService.RecordPaymentAsync(studentInvoiceId.Value, receiptNumber, amount, "SchoolPay", schoolPayReference, cancellationToken);
             }
             else if (studentId.HasValue)
             {
-                var receiptNumber = $"SP-{normalizedExternalRef.Substring(0, Math.Min(normalizedExternalRef.Length, 12))}";
+                var receiptNumber = CreateReceiptNumber(normalizedExternalRef);
                 await financeService.RecordUnallocatedPaymentAsync(studentId.Value, receiptNumber, amount, currency, "SchoolPay", schoolPayReference, cancellationToken);
             }
             else
@@ -75,6 +84,12 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
     public Task<IReadOnlyList<SchoolPaymentNotification>> GetNotificationsAsync(CancellationToken cancellationToken) => finance.GetSchoolPaymentNotificationsAsync(cancellationToken);
 
     public Task<SchoolPaymentNotification?> GetNotificationAsync(string externalReference, CancellationToken cancellationToken) => finance.GetSchoolPaymentNotificationAsync(externalReference, cancellationToken);
+
+    private static string CreateReceiptNumber(string externalReference)
+    {
+        var digest = SHA256.HashData(Encoding.UTF8.GetBytes(externalReference));
+        return $"SP-{Convert.ToHexString(digest)[..40]}";
+    }
 
     private async Task<bool> IsProcessedAsyncCore(string externalReference, CancellationToken cancellationToken)
     {
