@@ -5,6 +5,9 @@ public sealed class SchoolPaymentNotification
     public Guid Id { get; init; } = Guid.NewGuid();
     public required string ExternalReference { get; init; }
     public required string SchoolPayReference { get; init; }
+    public string? ProviderTransactionId { get; init; }
+    public string? SourceChannel { get; init; }
+    public string? ProviderStatus { get; init; }
     public Guid? StudentId { get; init; }
     public Guid? StudentInvoiceId { get; init; }
     public decimal Amount { get; init; }
