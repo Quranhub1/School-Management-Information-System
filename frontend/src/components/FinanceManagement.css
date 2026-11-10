@@ -603,45 +603,61 @@
 }
 
 
-/* Finance action-button system: clear hierarchy, deliberate spacing, institutional colour. */
+
+/* Finance actions: accessible, stable colours and readable typography. */
+.finance-workspace {
+  --finance-action-bg: #166534;
+  --finance-action-hover: #14532d;
+  --finance-action-text: #ffffff;
+  --finance-secondary-bg: #f8faf9;
+  --finance-secondary-hover: #eef3f0;
+  --finance-secondary-text: #24332d;
+  --finance-secondary-border: #cbd5cf;
+  --finance-danger-bg: #991b1b;
+  --finance-danger-hover: #7f1d1d;
+}
+
 .finance-workspace button {
   font-family: inherit;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
   letter-spacing: normal;
+  font-weight: 600;
 }
 
 .finance-workspace button:not(.finance-tab-strip button):not([role="tab"]):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button) {
   min-height: 36px;
   border-radius: 4px;
   font-size: .76rem;
-  font-weight: 650;
-  line-height: 1.2;
-  transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+  line-height: 1.25;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
   transform: none;
 }
 
-.finance-workspace button:not(.secondary-button):not(.finance-tab-strip button):not([role="tab"]):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button) {
+/* Standard primary actions use a fixed dark green, not an arbitrary institution colour. */
+.finance-workspace button:not(.secondary-button):not(.danger-button):not(.delete-button):not(.finance-tab-strip button):not([role="tab"]):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button) {
   padding: 8px 13px;
-  border: 1px solid var(--brand-primary, #16845b);
-  background: var(--brand-primary, #16845b);
-  color: #fff;
+  border: 1px solid var(--finance-action-bg);
+  background: var(--finance-action-bg);
+  color: var(--finance-action-text);
   box-shadow: none;
+  font-weight: 650;
 }
 
-.finance-workspace button:not(.secondary-button):not(.finance-tab-strip button):not([role="tab"]):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button):hover:not(:disabled) {
-  border-color: var(--brand-primary-hover, #116b49);
-  background: var(--brand-primary-hover, #116b49);
+.finance-workspace button:not(.secondary-button):not(.danger-button):not(.delete-button):not(.finance-tab-strip button):not([role="tab"]):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button):hover:not(:disabled) {
+  border-color: var(--finance-action-hover);
+  background: var(--finance-action-hover);
   color: #fff;
   box-shadow: none;
-  transform: none;
 }
 
 .finance-workspace button.secondary-button {
   min-height: 36px;
   padding: 8px 13px;
-  border: 1px solid var(--smis-border-strong, #cbd5d1);
+  border: 1px solid var(--finance-secondary-border);
   border-radius: 4px;
-  background: var(--smis-surface, #fff);
-  color: var(--smis-text, #24332d);
+  background: var(--finance-secondary-bg);
+  color: var(--finance-secondary-text);
   font-size: .76rem;
   font-weight: 650;
   box-shadow: none;
@@ -649,26 +665,42 @@
 }
 
 .finance-workspace button.secondary-button:hover:not(:disabled) {
-  border-color: var(--brand-primary, #16845b);
-  background: var(--smis-surface-muted, #f3f6f4);
-  color: var(--smis-text, #24332d);
+  border-color: #aab8af;
+  background: var(--finance-secondary-hover);
+  color: #17251e;
   box-shadow: none;
   transform: none;
 }
 
+/* Preserve a distinct, legible destructive-action treatment where these classes exist. */
+.finance-workspace button.danger-button,
+.finance-workspace button.delete-button {
+  border: 1px solid var(--finance-danger-bg);
+  background: var(--finance-danger-bg);
+  color: #fff;
+}
+.finance-workspace button.danger-button:hover:not(:disabled),
+.finance-workspace button.delete-button:hover:not(:disabled) {
+  border-color: var(--finance-danger-hover);
+  background: var(--finance-danger-hover);
+  color: #fff;
+}
+
 .finance-workspace button:disabled {
   cursor: not-allowed;
-  opacity: .58;
+  opacity: .62;
   box-shadow: none;
   transform: none;
 }
 
 .finance-workspace button:focus-visible {
-  outline: 2px solid var(--brand-primary, #16845b);
+  outline: 2px solid #166534;
   outline-offset: 2px;
 }
 
 .finance-workspace .finance-tab-strip {
+  display: flex;
+  align-items: stretch;
   gap: 5px;
   padding: 5px;
 }
@@ -679,20 +711,23 @@
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
-  color: var(--smis-text-muted);
+  color: #46554c;
   font-size: .75rem;
   font-weight: 650;
+  line-height: 1.25;
+  white-space: nowrap;
   box-shadow: none;
 }
 
 .finance-workspace .finance-tab-strip button:hover {
-  background: var(--smis-surface-muted);
-  color: var(--smis-text);
+  border-color: #d5ded8;
+  background: #f1f5f2;
+  color: #24332d;
 }
 
 .finance-workspace .finance-tab-strip button.active {
-  border-color: var(--brand-primary, #16845b);
-  background: var(--brand-primary, #16845b);
+  border-color: #166534;
+  background: #166534;
   color: #fff;
   box-shadow: none;
 }
@@ -717,15 +752,9 @@
 }
 
 @media (max-width: 620px) {
-  .finance-workspace .finance-tab-strip {
-    gap: 4px;
-  }
-  .finance-workspace .finance-tab-strip button {
-    padding-inline: 11px;
-  }
+  .finance-workspace .finance-tab-strip { gap: 4px; }
+  .finance-workspace .finance-tab-strip button { padding-inline: 11px; }
   .finance-workspace .page-actions,
   .finance-workspace .topbar-actions,
-  .finance-workspace .form-actions {
-    gap: 7px;
-  }
+  .finance-workspace .form-actions { gap: 7px; }
 }
