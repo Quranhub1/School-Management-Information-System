@@ -214,7 +214,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
       </div>
       <div className="panel finance-inner-panel">
         <div className="panel-heading"><div><p className="eyebrow">TRANSACTIONS</p><h3>Payment History</h3></div></div>
-        {payments.length===0 ? <p className="empty">No payments recorded for this student.</p> : <div className="finance-timeline">{payments.map((p,i)=><div className="finance-timeline-item" key={p.id ?? i}><span className="finance-timeline-dot" /><div><strong>{money(Number(p.amount))}</strong><span>{p.paymentMethod} · Receipt {p.receiptNumber}</span><small>{new Date(p.paidAt).toLocaleString('en-UG')}{p.reference ? ' · Ref: ' + p.reference : ''}</small></div></div>)}</div>}
+        {payments.length===0 ? <p className="empty">No payments recorded for this student.</p> : <div className="finance-timeline">{payments.map((p,i)=><div className="finance-timeline-item" key={p.id ?? i}><span className="finance-timeline-dot" /><div><strong>{money(Number(p.amount))}</strong><span>{p.paymentMethod}{p.sourceChannel && ' · ' + p.sourceChannel} · Receipt {p.receiptNumber}</span><small>{new Date(p.paidAt).toLocaleString('en-UG')}{p.reference ? ' · Ref: ' + p.reference : ''}</small></div></div>)}</div>}
       </div>
       <div className="panel finance-inner-panel">
         <div className="panel-heading"><div><p className="eyebrow">INVOICES</p><h3>Billable Items</h3></div></div>
