@@ -4687,3 +4687,53 @@ table { font-variant-numeric: tabular-nums; }
     justify-content: flex-start;
   }
 }
+
+
+/* Guild button proportions: landscape controls, never tall/stacked tabs. */
+.guild-page .guild-primary-tabs {
+  align-items: center;
+}
+.guild-page .guild-primary-tabs button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  width: auto;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 14px;
+  white-space: nowrap;
+  line-height: 1;
+}
+.guild-page .guild-header .page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.guild-page .guild-header .page-actions button,
+.guild-page .guild-section-heading > .secondary-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  width: auto;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 12px;
+  white-space: nowrap;
+  line-height: 1;
+}
+@media (max-width: 700px) {
+  .guild-page .guild-primary-tabs {
+    justify-content: flex-start;
+  }
+  .guild-page .guild-primary-tabs button {
+    flex: 0 0 auto;
+  }
+  .guild-page .guild-header .page-actions {
+    width: auto;
+  }
+  .guild-page .guild-header .page-actions button {
+    flex: 0 0 auto;
+    width: auto;
+  }
+}
