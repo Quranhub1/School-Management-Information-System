@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getFinanceStudents, getInvoices, getPayments, getStudentFinanceProfile, getStudentFinancialStatement, recordPayment, type FinanceStudentRegisterEntry, type Invoice, type StudentFinanceProfile, type StudentFinancialStatement } from '../api/finance'
+import { getFinanceStudents, getFeeStructures, getInvoices, getPayments, getStudentFinanceProfile, getStudentFinancialStatement, recordPayment, type FinanceStudentRegisterEntry, type FeeStructure, type Invoice, type StudentFinanceProfile, type StudentFinancialStatement } from '../api/finance'
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
@@ -18,6 +18,9 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
   const [query, setQuery] = useState(initialSearch)
   const [profile, setProfile] = useState<StudentFinanceProfile | null>(null)
   const [registerStudents, setRegisterStudents] = useState<FinanceStudentRegisterEntry[]>([])
+  const [registerInvoices, setRegisterInvoices] = useState<Invoice[]>([])
+  const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([])
+  const [registerLoading, setRegisterLoading] = useState(true)
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [statement, setStatement] = useState<StudentFinancialStatement | null>(null)
@@ -45,20 +48,44 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
 
   useEffect(() => {
     let cancelled = false
-    getFinanceStudents().then(rows => { if (!cancelled) setRegisterStudents(rows) })
-      .catch(() => { if (!cancelled) setRegisterStudents([]) })
+    Promise.all([getFinanceStudents(), getInvoices(), getFeeStructures()])
+      .then(([students, allInvoices, structures]) => {
+        if (cancelled) return
+        setRegisterStudents(students)
+        setRegisterInvoices(allInvoices)
+        setFeeStructures(structures)
+      })
+      .catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load the student fee register.') })
+      .finally(() => { if (!cancelled) setRegisterLoading(false) })
     return () => { cancelled = true }
   }, [])
 
   useEffect(() => { if (initialSearch.trim()) void loadStudent(initialSearch) }, [initialSearch])
 
-  const visibleRegisterStudents = useMemo(() => {
+  const feeTypeColumns = useMemo(() => {
+    const configured = feeStructures.filter(x => x.isActive).map(x => x.feeType?.trim()).filter(Boolean)
+    const billed = registerInvoices.map(x => x.feeType?.trim()).filter(Boolean)
+    return [...new Set([...configured, ...billed])].sort((a, b) => a.localeCompare(b))
+  }, [feeStructures, registerInvoices])
+
+  const registerRows = useMemo(() => {
     const term = query.trim().toLowerCase()
     return registerStudents.filter(student => !term ||
       student.studentNumber.toLowerCase().includes(term) ||
       student.name.toLowerCase().includes(term))
-      .slice(0, 15)
-  }, [registerStudents, query])
+      .map(student => {
+        const studentInvoices = registerInvoices.filter(invoice => invoice.studentId === student.id)
+        const billedByFee: Record<string, number> = {}
+        for (const invoice of studentInvoices) {
+          const feeType = invoice.feeType || 'Other Fees'
+          billedByFee[feeType] = (billedByFee[feeType] ?? 0) + Math.max(0, invoice.paidAmount + invoice.balance)
+        }
+        const billed = studentInvoices.reduce((sum, invoice) => sum + Math.max(0, invoice.paidAmount + invoice.balance), 0)
+        const paid = studentInvoices.reduce((sum, invoice) => sum + invoice.paidAmount, 0)
+        const balance = studentInvoices.reduce((sum, invoice) => sum + invoice.balance, 0)
+        return { student, billedByFee, billed, paid, balance, invoiceCount: studentInvoices.length }
+      })
+  }, [registerStudents, registerInvoices, query])
 
   const summary = useMemo(() => {
     const billed = invoices.reduce((s, x) => s + x.amount, 0)
@@ -119,13 +146,33 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="e.g. 9912001842" aria-label="Student number or ID" />
         <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Open Account'}</button>
       </form>
-      {!profile && <div className="finance-register-list" style={{ marginTop: 14, maxHeight: 300, overflowY: 'auto', border: '1px solid #e5e7eb' }}>
-        <div style={{ padding: '9px 12px', fontWeight: 700, borderBottom: '1px solid #e5e7eb' }}>Admitted student accounts ({registerStudents.length})</div>
-        {visibleRegisterStudents.map(student => <button type="button" key={student.id} disabled={loading} onClick={() => { setQuery(student.studentNumber); void loadStudent(student.studentNumber) }} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 12px', border: 0, borderBottom: '1px solid #f1f5f9', background: '#fff', textAlign: 'left', cursor: 'pointer' }}>
-          <span><strong>{student.studentNumber}</strong> · {student.name}<small style={{ display: 'block', color: '#64748b' }}>{student.status} · {student.invoiceCount} invoices</small></span>
-          <span style={{ whiteSpace: 'nowrap', fontWeight: 700 }}>{money(student.billed - student.paid)} due</span>
-        </button>)}
-        {visibleRegisterStudents.length === 0 && <p className="empty" style={{ padding: 12 }}>No admitted students match this search.</p>}
+      {!profile && <div className="finance-register-list" style={{ marginTop: 14, border: '1px solid #e5e7eb', overflowX: 'auto' }}>
+        <div style={{ padding: '9px 12px', fontWeight: 700, borderBottom: '1px solid #e5e7eb' }}>
+          Student fees register · {registerRows.length} students
+          <small style={{ display: 'block', color: '#64748b', fontWeight: 400 }}>Each student appears once. Fee columns follow the active Accountant-configured fee types.</small>
+        </div>
+        <table style={{ minWidth: 980, width: '100%', borderCollapse: 'collapse' }}>
+          <thead><tr>
+            <th style={{ textAlign: 'left', padding: '9px 10px', position: 'sticky', left: 0, background: '#f8fafc' }}>Student No.</th>
+            <th style={{ textAlign: 'left', padding: '9px 10px' }}>Student Name</th>
+            {feeTypeColumns.map(feeType => <th key={feeType} style={{ textAlign: 'right', padding: '9px 10px', whiteSpace: 'nowrap' }}>{feeType}</th>)}
+            <th style={{ textAlign: 'right', padding: '9px 10px' }}>Total Billed</th>
+            <th style={{ textAlign: 'right', padding: '9px 10px' }}>Paid</th>
+            <th style={{ textAlign: 'right', padding: '9px 10px' }}>Balance</th>
+          </tr></thead>
+          <tbody>
+            {registerRows.map(({ student, billedByFee, billed, paid, balance, invoiceCount }) => <tr key={student.id} onClick={() => { setQuery(student.studentNumber); void loadStudent(student.studentNumber) }} style={{ cursor: 'pointer' }} title="Open detailed student account">
+              <td style={{ padding: '9px 10px', fontWeight: 700, position: 'sticky', left: 0, background: '#fff' }}>{student.studentNumber}</td>
+              <td style={{ padding: '9px 10px', whiteSpace: 'nowrap' }}>{student.name}<small style={{ display: 'block', color: '#64748b' }}>{student.status} · {invoiceCount} invoices</small></td>
+              {feeTypeColumns.map(feeType => <td key={feeType} style={{ padding: '9px 10px', textAlign: 'right', whiteSpace: 'nowrap' }}>{money(billedByFee[feeType] ?? 0)}</td>)}
+              <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700 }}>{money(billed)}</td>
+              <td style={{ padding: '9px 10px', textAlign: 'right', color: '#059669', fontWeight: 700 }}>{money(paid)}</td>
+              <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 800 }}>{money(balance)}</td>
+            </tr>)}
+            {registerLoading && <tr><td colSpan={feeTypeColumns.length + 5} style={{ padding: 16 }}>Loading student fee register…</td></tr>}
+            {!registerLoading && registerRows.length === 0 && <tr><td colSpan={feeTypeColumns.length + 5} style={{ padding: 16 }}>No admitted students match this search.</td></tr>}
+          </tbody>
+        </table>
       </div>}
     </div>
     {error && <div className="error" role="alert">{error}</div>}
