@@ -26,7 +26,7 @@ public sealed class Student360Service(SchoolManagementDbContext db)
 
         var studentId = student.Id;
 
-        var fullName = $"{student.LastName} {student.FirstName}".Trim();
+        var fullName = $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant();
 
         var admission = student.AdmissionId.HasValue
             ? await db.Admissions.AsNoTracking().SingleOrDefaultAsync(x => x.Id == student.AdmissionId.Value, cancellationToken)
