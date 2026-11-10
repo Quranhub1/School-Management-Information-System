@@ -97,6 +97,7 @@ describe('role guards — staff', () => {
   it('grants manage staff to authorized roles', () => {
     expect(canManageStaff(['HR Manager'])).toBe(true)
     expect(canManageStaff(['System Administrator'])).toBe(true)
+    expect(canManageStaff(['Records Officer'])).toBe(true)
   })
 
   it('denies manage staff to lecturers', () => {
