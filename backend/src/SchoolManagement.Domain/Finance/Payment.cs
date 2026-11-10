@@ -10,6 +10,8 @@ public sealed class Payment
     public string Currency { get; init; } = "UGX";
     public required string PaymentMethod { get; init; }
     public string PaymentSource { get; init; } = "Manual";
+    public string? SourceChannel { get; init; }
+    public string? ProviderTransactionId { get; init; }
     public string? Reference { get; init; }
     public DateTimeOffset PaidAt { get; init; } = DateTimeOffset.UtcNow;
     public ICollection<PaymentAllocation> Allocations { get; init; } = new List<PaymentAllocation>();
