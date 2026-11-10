@@ -5321,6 +5321,10 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
+                    b.Property<string>("Channel")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
