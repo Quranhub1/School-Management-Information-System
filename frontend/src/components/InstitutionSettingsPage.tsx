@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
+import { InstitutionEmailSettingsPanel } from './InstitutionEmailSettingsPanel'
 import { createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSettings, getGallery, uploadGalleryImage, uploadInstitutionLogo, uploadInstitutionLogoFromUrl, type CreateInstitutionSettingsRequest, type GalleryItem, type InstitutionSettings } from '../api/institutionSettings'
 
-type SettingsTab = 'general' | 'branding' | 'gallery'
+type SettingsTab = 'general' | 'branding' | 'gallery' | 'email'
 type GalleryFilter = 'all' | 'recent' | 'captioned'
 
 interface InstitutionSettingsPageProps {
@@ -241,6 +242,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
         <button role="tab" aria-selected={tab === 'general'} className={tab === 'general' ? 'active' : ''} onClick={() => setTab('general')}>General Information</button>
         <button role="tab" aria-selected={tab === 'branding'} className={tab === 'branding' ? 'active' : ''} onClick={() => setTab('branding')}>Branding</button>
         <button role="tab" aria-selected={tab === 'gallery'} className={tab === 'gallery' ? 'active' : ''} onClick={() => setTab('gallery')}>Gallery</button>
+        <button role="tab" aria-selected={tab === 'email'} className={tab === 'email' ? 'active' : ''} onClick={() => setTab('email')}>Institutional Email</button>
       </div>
 
       <form className="student-form" onSubmit={submit}>
@@ -320,6 +322,8 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
             </section>
           </div>
         )}
+
+        {tab === 'email' && <InstitutionEmailSettingsPanel />}
 
         {tab === 'gallery' && (
           <div className="gallery-section smis-gallery">
