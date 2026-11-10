@@ -66,7 +66,7 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(x => x.ProviderTransactionId).HasMaxLength(120);
         builder.Property(x => x.Reference).HasMaxLength(120);
         builder.HasIndex(x => x.ReceiptNumber).IsUnique();
-        builder.HasIndex(x => x.ProviderTransactionId).IsUnique().HasFilter("\\"ProviderTransactionId\\" IS NOT NULL");
+        builder.HasIndex(x => x.ProviderTransactionId).IsUnique().HasFilter("\"ProviderTransactionId\" IS NOT NULL");
         builder.HasIndex(x => new { x.StudentInvoiceId, x.PaidAt });
         builder.HasOne<SchoolManagement.Domain.Students.Student>()
             .WithMany()
@@ -219,7 +219,7 @@ public sealed class SchoolPaymentNotificationConfiguration : IEntityTypeConfigur
         builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
         builder.Property(x => x.ErrorMessage).HasMaxLength(1000);
         builder.HasIndex(x => x.ExternalReference).IsUnique();
-        builder.HasIndex(x => x.ProviderTransactionId).IsUnique().HasFilter("\\"ProviderTransactionId\\" IS NOT NULL");
+        builder.HasIndex(x => x.ProviderTransactionId).IsUnique().HasFilter("\"ProviderTransactionId\" IS NOT NULL");
         builder.HasIndex(x => x.SchoolPayReference);
         builder.HasIndex(x => new { x.StudentId, x.Status });
         builder.HasOne<SchoolManagement.Domain.Students.Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
