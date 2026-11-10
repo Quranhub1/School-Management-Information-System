@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
@@ -96,15 +97,15 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       if (editingStaffId) {
         const updated = await updateStaff(editingStaffId, { id: editingStaffId, ...profile })
         setStaff(current => current.map(item => item.id === updated.id ? updated : item))
-        setSuccess(`${updated.firstName} ${updated.lastName} was updated successfully.`)
-        notify(`${updated.firstName} ${updated.lastName} updated successfully.`, 'success', 'Staff updated')
+        setSuccess(`${formatPersonName(updated.lastName, updated.firstName)} was updated successfully.`)
+        notify(`${formatPersonName(updated.lastName, updated.firstName)} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
         const created = await createStaff(profile)
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
-        setSuccess(`${created.firstName} ${created.lastName} was saved and added to the staff table.`)
-        notify(`${created.firstName} ${created.lastName} saved successfully.`, 'success', 'Staff saved')
+        setSuccess(`${formatPersonName(created.lastName, created.firstName)} was saved and added to the staff table.`)
+        notify(`${formatPersonName(created.lastName, created.firstName)} saved successfully.`, 'success', 'Staff saved')
         void listStaff(false).then(latest => {
           setStaff(latest.some(item => item.id === created.id) ? latest : [created, ...latest])
         }).catch(() => {
@@ -150,8 +151,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       const updated = await updateStaffCourseUnits(person.id, courseUnitDraftIds)
       setStaff(current => current.map(item => item.id === updated.id ? updated : item))
       cancelEditCourseUnits()
-      setSuccess(`Course unit assignments for ${updated.firstName} ${updated.lastName} were saved.`)
-      notify(`Course unit assignments for ${updated.firstName} ${updated.lastName} saved.`, 'success', 'Course units updated')
+      setSuccess(`Course unit assignments for ${formatPersonName(updated.lastName, updated.firstName)} were saved.`)
+      notify(`Course unit assignments for ${formatPersonName(updated.lastName, updated.firstName)} saved.`, 'success', 'Course units updated')
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Unable to save course unit assignments.'
       setError(message)
@@ -180,14 +181,14 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to activate staff.'; setError(message); notify(message, 'error', 'Activation failed') }
   }
   async function removeStaff(person: StaffMember) {
-    if (!(await showConfirmDialog(`Permanently delete ${person.firstName} ${person.lastName} (staff no. ${person.staffNumber})? This cannot be undone.`, { title: 'Delete staff member', confirmLabel: "Yes, I'm sure", destructive: true }))) return
+    if (!(await showConfirmDialog(`Permanently delete ${formatPersonName(person.lastName, person.firstName)} (staff no. ${person.staffNumber})? This cannot be undone.`, { title: 'Delete staff member', confirmLabel: "Yes, I'm sure", destructive: true }))) return
     try {
       await deleteStaff(person.id)
       setStaff(current => current.filter(item => item.id !== person.id))
       if (editingStaffId === person.id) cancelEdit()
       window.dispatchEvent(new Event(STAFF_CHANGED_EVENT))
-      setSuccess(`${person.firstName} ${person.lastName} was deleted.`)
-      notify(`${person.firstName} ${person.lastName} deleted successfully.`, 'success', 'Staff deleted')
+      setSuccess(`${formatPersonName(person.lastName, person.firstName)} was deleted.`)
+      notify(`${formatPersonName(person.lastName, person.firstName)} deleted successfully.`, 'success', 'Staff deleted')
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to delete staff. They may be linked to other records.'; setError(message); notify(message, 'error', 'Staff deletion failed') }
   }
   async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave(); notify('Leave request submitted successfully.', 'success', 'Leave request saved') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to request leave.'; setError(message); notify(message, 'error', 'Leave request failed') } }
@@ -312,7 +313,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
               <thead><tr><th>Staff No.</th><th>Name</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
                 {loading ? <tr><td colSpan={canManage ? 8 : 7}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 8 : 7} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{s.firstName} {s.lastName}</td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName)}</td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
                     {editingCourseUnitsStaffId === s.id ? (
                       <div style={{ display: 'grid', gap: 7, minWidth: 250 }}>
                         {courseUnits.length === 0 ? <span className="text-muted">No active course units available.</span> : <div style={{ display: 'grid', gap: 5, maxHeight: 180, overflowY: 'auto', padding: 2 }}>
@@ -379,7 +380,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   return (
                     <tr key={p.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
                       <td style={cellStyle}><span style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 8px', borderRadius: 4, background: '#e2e8f0', color: '#0f172a', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, fontWeight: 800, letterSpacing: '0.02em' }}>PAY-{String(index + 1).padStart(4, '0')}</span></td>
-                      <td style={{ ...cellStyle, whiteSpace: 'normal', minWidth: 180 }}><strong style={{ display: 'block', color: '#0f172a', fontSize: 13 }}>{person ? `${person.firstName} ${person.lastName}` : 'Staff record unavailable'}</strong>{person && <span style={{ display: 'block', marginTop: 4, color: '#64748b', fontSize: 11 }}>Staff No. {person.staffNumber}</span>}</td>
+                      <td style={{ ...cellStyle, whiteSpace: 'normal', minWidth: 180 }}><strong style={{ display: 'block', color: '#0f172a', fontSize: 13 }}>{person ? `${formatPersonName(person.lastName, person.firstName)}` : 'Staff record unavailable'}</strong>{person && <span style={{ display: 'block', marginTop: 4, color: '#64748b', fontSize: 11 }}>Staff No. {person.staffNumber}</span>}</td>
                       <td style={cellStyle}><span style={{ color: '#0f172a', fontWeight: 600 }}>{new Date(2000, p.month - 1).toLocaleString('default', { month: 'short' })}</span><span style={{ color: '#64748b' }}> {p.year}</span></td>
                       <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>UGX {p.basicSalary.toLocaleString()}</td>
                       <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>UGX {p.allowances.toLocaleString()}</td>

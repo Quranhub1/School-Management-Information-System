@@ -130,7 +130,7 @@ public sealed class ExaminationAnalyticsService(SchoolManagementDbContext db)
         return allStudentIds.Select(studentId =>
         {
             var student = studentLookup.GetValueOrDefault(studentId);
-            var name = student is null ? "Unknown" : $"{student.FirstName} {student.LastName}".Trim();
+            var name = student is null ? "Unknown" : $"{student.LastName} {student.FirstName}".Trim();
 
             var avgScore = scoreLookup.GetValueOrDefault(studentId);
             var attendancePct = attendanceByStudent.GetValueOrDefault(studentId);

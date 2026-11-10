@@ -23,7 +23,7 @@ public sealed class CertificateService(ICertificateRepository repository, IStude
         var certificate = new Certificate
         {
             StudentId = request.StudentId,
-            Name = $"{student.FirstName} {student.LastName}".Trim(),
+            Name = $"{student.LastName} {student.FirstName}".Trim(),
             Programme = request.Programme,
             AwardType = request.AwardType,
             GraduationDate = request.GraduationDate,

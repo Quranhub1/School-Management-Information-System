@@ -1,5 +1,6 @@
 import React, { useEffect, useState, type FormEvent } from 'react'
 import type { Invoice } from '../api/finance'
+import { formatPersonName } from '../utils/personName'
 import { getAccessToken } from '../api/auth'
 import { getInvoices, recordPayment, getPayments, issueCreditNote, getCreditNotes, addInvoiceNote, getInvoiceNotes, requestStaffAdvance, approveStaffAdvance, recoverStaffAdvance, getStaffAdvances, getInvoiceFeeItems } from '../api/finance'
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
@@ -134,7 +135,7 @@ export function AccountsOfficeManagement() {
   function payrollPdfOptions() {
     if (!payrollDetailData) return null
     const staff = staffMap[payrollDetailData.staffMemberId]
-    const staffName = staff ? staff.firstName + ' ' + staff.lastName : 'Staff Member'
+    const staffName = staff ? formatPersonName(staff.lastName, staff.firstName) : 'Staff Member'
     return {
       title: 'Staff Payslip',
       filename: 'payslip-' + staffName.replace(/[^a-z0-9-_]+/gi, '-') + '-' + payrollDetailData.year + '-' + payrollDetailData.month + '.pdf',
@@ -740,7 +741,7 @@ export function AccountsOfficeManagement() {
       ['Staff Name', 'Staff No.', 'Basic Salary', 'Allowances', 'Deductions', 'Net Pay', 'Status', 'Payment Method'],
       ...filteredPayroll.map(r => {
         const staff = staffMap[r.staffMemberId]
-        return [staff ? `${staff.firstName} ${staff.lastName}` : '—', staff?.staffNumber || '—', r.basicSalary, r.allowances, r.deductions, r.netPay, r.status, r.paymentMethod || '']
+        return [staff ? formatPersonName(staff.lastName, staff.firstName) : '—', staff?.staffNumber || '—', r.basicSalary, r.allowances, r.deductions, r.netPay, r.status, r.paymentMethod || '']
       }),
     ]
     const csv = rows.map(r => r.join(',')).join('\n')
@@ -1131,7 +1132,7 @@ export function AccountsOfficeManagement() {
               {staffSearchResults.length > 0 && (
                 <select aria-label="Staff result" onChange={e => { const s = staffSearchResults.find(s => s.id === e.target.value); if (s) selectStaffForHistory(s); }}>
                   <option value="">Select staff</option>
-                  {staffSearchResults.map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName} ({s.staffNumber})</option>)}
+                  {staffSearchResults.map(s => <option key={s.id} value={s.id}>{formatPersonName(s.lastName, s.firstName)} ({s.staffNumber})</option>)}
                 </select>
               )}
               <select aria-label="Month" value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}>
@@ -1214,7 +1215,7 @@ export function AccountsOfficeManagement() {
                     const method = paymentMethodMap[record.id] || 'Cash'
                     return (
                       <tr key={record.id}>
-                        <td><button type="button" className="secondary-button" style={{ background: 'transparent', padding: 0, color: '#2563eb', textDecoration: 'underline' }} onClick={() => setPayrollDetailId(record.id)}>{staff ? `${staff.firstName} ${staff.lastName}` : '—'}</button></td>
+                        <td><button type="button" className="secondary-button" style={{ background: 'transparent', padding: 0, color: '#2563eb', textDecoration: 'underline' }} onClick={() => setPayrollDetailId(record.id)}>{staff ? formatPersonName(staff.lastName, staff.firstName) : '—'}</button></td>
                         <td>{staff?.staffNumber || '—'}</td>
                         <td>UGX {record.basicSalary.toLocaleString()}</td>
                         <td>UGX {record.allowances.toLocaleString()}</td>
@@ -1267,7 +1268,7 @@ export function AccountsOfficeManagement() {
               <div className="form-row">
                 <label>Staff<select value={advanceStaffId} onChange={e => setAdvanceStaffId(e.target.value)} required>
                   <option value="">Select staff</option>
-                  {Object.values(staffMap).map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName} ({s.staffNumber})</option>)}
+                  {Object.values(staffMap).map(s => <option key={s.id} value={s.id}>{formatPersonName(s.lastName, s.firstName)} ({s.staffNumber})</option>)}
                 </select></label>
                 <label>Amount (UGX)<input type="number" min="0" step="0.01" placeholder="0.00" value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} required /></label>
                 <label>Reason<input value={advanceReason} onChange={e => setAdvanceReason(e.target.value)} placeholder="Reason for advance" /></label>
@@ -1298,7 +1299,7 @@ export function AccountsOfficeManagement() {
                       const staff = staffMap[adv.staffMemberId]
                       return (
                         <tr key={adv.id}>
-                          <td>{staff ? `${staff.firstName} ${staff.lastName}` : '—'}</td>
+                          <td>{staff ? formatPersonName(staff.lastName, staff.firstName) : '—'}</td>
                           <td style={{ color: '#059669' }}>UGX {adv.amount.toLocaleString()}</td>
                           <td>{adv.reason}</td>
                           <td>{new Date(adv.requestedAt).toLocaleDateString('en-UG')}</td>
@@ -1330,7 +1331,7 @@ export function AccountsOfficeManagement() {
                   <div className="error" role="alert">{payrollDetailError}</div>
                 ) : payrollDetailData ? (
                   <>
-                    <h3>{staffMap[payrollDetailData.staffMemberId] ? `${staffMap[payrollDetailData.staffMemberId].firstName} ${staffMap[payrollDetailData.staffMemberId].lastName}` : 'Staff Member'}</h3>
+                    <h3>{staffMap[payrollDetailData.staffMemberId] ? formatPersonName(staffMap[payrollDetailData.staffMemberId].lastName, staffMap[payrollDetailData.staffMemberId].firstName) : 'Staff Member'}</h3>
                     <p>Period: {monthNames[payrollDetailData.month - 1]} {payrollDetailData.year}</p>
                     <p>Basic Salary: UGX {payrollDetailData.basicSalary.toLocaleString()}</p>
                     <p>Allowances: UGX {payrollDetailData.allowances.toLocaleString()}</p>

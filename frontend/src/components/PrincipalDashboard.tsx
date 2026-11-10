@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   getPrincipalDashboard,
@@ -393,7 +394,7 @@ export function PrincipalDashboard() {
                       staffPerformance.map(s => (
                         <tr key={s.id}>
                           <td><strong>{s.staffNumber}</strong></td>
-                          <td>{s.firstName} {s.lastName}</td>
+                          <td>{formatPersonName(s.lastName, s.firstName)}</td>
                           <td>{s.department || 'Unassigned'}</td>
                           <td>{String(s.staffType)}</td>
                           <td>

@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { useEffect, useMemo, useState } from 'react'
 import { archiveStudent, getArchivedStudents, getStudent, getStudentApplicationForm, getStudentGuardians, getStudents, restoreStudent, type Student, type StudentGuardian } from '../api/students'
 import { getStudent360Profile as loadStudent360, type Student360ProfileDto } from '../api/student360'
@@ -9,7 +10,7 @@ import { getStudentDocuments, type StudentDocument } from '../api/documents'
 
 type Tab = 'biodata' | 'academic' | 'attendance' | 'fees' | 'documents'
 
-const fullName = (student: Student) => [student.firstName, student.otherNames, student.lastName].filter(Boolean).join(' ')
+const fullName = (student: Student) => formatPersonName(student.lastName, student.firstName, student.otherNames)
 
 export function ArchivedStudentsManagement({ canManage = false }: { canManage?: boolean }) {
   const [archived, setArchived] = useState<Student[]>([])

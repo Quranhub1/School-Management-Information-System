@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { useEffect, useState } from 'react'
 import {
   getDeputyPrincipalDashboard,
@@ -193,7 +194,7 @@ export function DeputyPrincipalDashboard() {
                         dashboard.staffPerformance.map(s => (
                           <tr key={s.id}>
                             <td><strong>{s.staffNumber}</strong></td>
-                            <td>{s.firstName} {s.lastName}</td>
+                            <td>{formatPersonName(s.lastName, s.firstName)}</td>
                             <td>{s.department || '—'}</td>
                             <td>{s.position || '—'}</td>
                             <td>{s.classCount}</td>
