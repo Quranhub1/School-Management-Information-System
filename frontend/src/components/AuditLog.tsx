@@ -195,6 +195,6 @@ export function AuditLogManagement() {
       <button className="audit-log-search-button" onClick={() => void load()}>Search</button>
     </div>
     {error && <div className="error" role="alert">{error}</div>}
-    {loading ? <LoadingSpinner label="Loading audit logs…" /> : <AgGridTable rows={logs} columns={auditColumns} getRowId={p => p.data.id} exportFileName="smis-audit-log" height={560} />}
+    {loading ? <LoadingSpinner label="Loading audit logs…" /> : <AgGridTable rows={logs} columns={auditColumns} getRowId={p => p.data.id} exportFileName="smis-audit-log" height={560} className="audit-log-grid" />}
   </section>;
 }
