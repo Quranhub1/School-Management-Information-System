@@ -14,6 +14,8 @@ public sealed class Payment
     public string? ProviderTransactionId { get; init; }
     public string? Reference { get; init; }
     public DateTimeOffset PaidAt { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? ReceiptEmailRequestedAt { get; set; }
+    public DateTimeOffset? ReceiptEmailLastAttemptAt { get; set; }
     public DateTimeOffset? ReceiptEmailSentAt { get; set; }
     public ICollection<PaymentAllocation> Allocations { get; init; } = new List<PaymentAllocation>();
 
