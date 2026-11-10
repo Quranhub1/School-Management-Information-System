@@ -8,7 +8,7 @@ namespace SchoolManagement.Infrastructure.Migrations;
 
 [DbContext(typeof(SchoolManagementDbContext))]
 [Migration("20261110120000_CentralizePaymentSourcesAndRestorePaymentLedger")]
-public sealed class CentralizePaymentSourcesAndRestorePaymentLedger : Migration
+public sealed partial class CentralizePaymentSourcesAndRestorePaymentLedger : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
