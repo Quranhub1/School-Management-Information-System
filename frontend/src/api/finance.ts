@@ -172,6 +172,8 @@ export interface StudentFinancialStatementPayment {
   amount: number
   currency: string
   paymentMethod: string
+  sourceChannel?: string
+  providerTransactionId?: string
   reference?: string
   paidAt: string
   studentInvoiceId?: string
