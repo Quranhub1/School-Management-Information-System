@@ -28,6 +28,17 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
             return existing;
         }
 
+        if (studentInvoiceId.HasValue)
+        {
+            var invoice = await finance.GetInvoiceAsync(studentInvoiceId.Value, cancellationToken)
+                ?? throw new ArgumentException("SchoolPay notification references an unknown invoice.");
+            if (studentId.HasValue && studentId.Value != invoice.StudentId)
+                throw new InvalidOperationException("SchoolPay student and invoice references do not match.");
+            if (!string.Equals(invoice.Currency, currency.Trim(), StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("SchoolPay payment currency does not match the invoice currency.");
+            studentId = invoice.StudentId;
+        }
+
         var notification = new SchoolPaymentNotification
         {
             ExternalReference = normalizedExternalRef,
