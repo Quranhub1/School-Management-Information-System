@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { useEffect, useState } from 'react'
 import { getStudentDocuments, uploadDocument, archiveDocument, deleteDocument, getDocumentDownloadUrl, type StudentDocument } from '../api/documents'
 import { getStudents, type Student } from '../api/students'
@@ -84,7 +85,7 @@ export function DocumentManagement({ canManage }: { canManage: boolean }) {
       <label>Student
         <select value={selectedStudentId} onChange={e => setSelectedStudentId(e.target.value)} required>
           <option value="">Select a student</option>
-          {students.map((s) => <option key={s.id} value={s.id}>{[s.firstName, s.otherNames, s.lastName].filter(Boolean).join(' ')} ({s.studentNumber})</option>)}
+          {students.map((s) => <option key={s.id} value={s.id}>{formatPersonName(s.lastName, s.firstName, s.otherNames)} ({s.studentNumber})</option>)}
         </select>
       </label>
     </div>
