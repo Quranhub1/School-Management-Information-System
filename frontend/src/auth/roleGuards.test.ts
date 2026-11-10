@@ -14,6 +14,9 @@ import {
   canReadLibrary,
   canManageLibrary,
   canManagePrinters,
+  canReadOnlyFinance,
+  canReadAttendance,
+  canManageReporting,
 } from './roleGuards'
 
 describe('role guards — administration', () => {
@@ -111,5 +114,26 @@ describe('role guards — staff', () => {
 
   it('denies manage staff to lecturers', () => {
     expect(canManageStaff(['Lecturer'])).toBe(false)
+  })
+})
+
+describe('role guards — institutional leadership boundaries', () => {
+  it('keeps Admin Secretary out of finance and timetable access', () => {
+    expect(canManageAdmissions(['Admin Secretary'])).toBe(true)
+    expect(canReadOnlyFinance(['Admin Secretary'])).toBe(false)
+    expect(canManageTimetable(['Admin Secretary'])).toBe(false)
+  })
+
+  it('grants Deputy Principal read-only finance access, not finance operations', () => {
+    expect(canReadOnlyFinance(['AssistantPrincipal'])).toBe(true)
+    expect(canManageFinance(['AssistantPrincipal'])).toBe(false)
+  })
+
+  it('grants Admin Secretary and Assistant Academic Registrar the intended read access', () => {
+    expect(canReadAttendance(['Admin Secretary'])).toBe(true)
+    expect(canReadAttendance(['AssistantRegistrar'])).toBe(true)
+    expect(canReadStaff(['Admin Secretary'])).toBe(true)
+    expect(canReadLibrary(['AssistantRegistrar'])).toBe(true)
+    expect(canManageReporting(['Admin Secretary'])).toBe(true)
   })
 })
