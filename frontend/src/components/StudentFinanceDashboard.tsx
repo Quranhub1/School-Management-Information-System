@@ -239,7 +239,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
                 <td style={{ padding: '9px 10px', textAlign: 'right', color: '#059669', fontWeight: 700 }}>{money(paid)}</td>
                 <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 800 }}>{money(balance)}</td>
               </tr>)}
-            </React.Fragment>)}
+            </Fragment>)}
             {registerLoading && <tr><td colSpan={feeTypeColumns.length + 5} style={{ padding: 16 }}>Loading student fee register…</td></tr>}
             {!registerLoading && registerRows.length === 0 && <tr><td colSpan={feeTypeColumns.length + 5} style={{ padding: 16 }}>No students match the search and cohort filters.</td></tr>}
           </tbody>
