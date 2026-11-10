@@ -21,6 +21,9 @@ type Payment = {
   receiptNumber?: string
   amount: number
   paymentMethod?: string
+  paymentSource?: string
+  sourceChannel?: string
+  providerTransactionId?: string
   reference?: string
   paidAt: string
   studentName?: string
@@ -91,7 +94,8 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     { field: 'receiptNumber', headerName: 'Receipt', minWidth: 150, valueFormatter: params => params.value || '—' },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
     { field: 'amount', headerName: 'Amount (UGX)', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
-    { field: 'paymentMethod', headerName: 'Method', minWidth: 130, valueFormatter: params => params.value || '—' },
+    { field: 'paymentSource', headerName: 'Payment Source', minWidth: 130, valueFormatter: params => params.value || '—' },
+    { field: 'sourceChannel', headerName: 'Channel', minWidth: 150, valueFormatter: params => params.value || '—' },
     { field: 'paidAt', headerName: 'Date', minWidth: 150, valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('en-UG') : '—' },
   ], [])
 
@@ -221,7 +225,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
       <div className="finance-tab-strip" role="tablist" aria-label="Finance sections">
         {([
           ['overview', 'Overview'],
-          ['student-accounts', 'Student Accounts'],
+          ['student-accounts', 'Student Fees & Payments'],
           ['collections', 'Collections'],
           ...(isAssistantAccountant ? [] : [['fees', 'Fee Structures'], ['accounting', 'Accounting']] as [FinanceTab, string][]),
           ['allowances', 'Staff Allowances'],
