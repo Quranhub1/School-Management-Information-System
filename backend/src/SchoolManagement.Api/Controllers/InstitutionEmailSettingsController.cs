@@ -66,10 +66,10 @@ public sealed class InstitutionEmailSettingsController : ControllerBase
             return BadRequest(new { message = "Valid SMTP username and sender email are required." });
         if (string.IsNullOrWhiteSpace(request.FromName) || request.FromName.Length > 200)
             return BadRequest(new { message = "Sender name is required." });
-        if (request.ClearPassword) x.EmailSmtpPasswordProtected = null;
-        else if (!string.IsNullOrWhiteSpace(request.Password)) x.EmailSmtpPasswordProtected = protector.Protect(request.Password);
         if (!string.IsNullOrEmpty(request.Password) && request.Password.Length > 4096)
             return BadRequest(new { message = "SMTP password must not exceed 4096 characters." });
+        if (request.ClearPassword) x.EmailSmtpPasswordProtected = null;
+        else if (!string.IsNullOrWhiteSpace(request.Password)) x.EmailSmtpPasswordProtected = protector.Protect(request.Password);
         if (request.Enabled && string.IsNullOrWhiteSpace(x.EmailSmtpPasswordProtected) && string.IsNullOrWhiteSpace(request.Password))
             return BadRequest(new { message = "Enter the SMTP password before enabling email." });
 
