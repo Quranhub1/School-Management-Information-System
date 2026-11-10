@@ -301,9 +301,9 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Add a compact, left-scrolling latest-admitted-student ribbon to the Admissions & Screening workspace. It reads the newest non-archived student linked to an admission record and respects reduced-motion preferences.
 
 
-## SchoolPay integration — schema audit paused at database verification (2026-11-10)
+## SchoolPay integration — unified payment work resumed (2026-11-10)
 
-**Status: PAUSED — source-code review recorded; live PostgreSQL schema inspection is the next required step. No SchoolPay schema migration or application-code change has been made.**
+**Status: RESUMED — source review and provider-documentation checks are complete enough to begin isolated posting corrections. The live PostgreSQL schema still must be inspected before any schema migration is designed or applied.**
 
 ### Scope and integration decisions already established
 
@@ -335,7 +335,7 @@ The EF Core model snapshot and finance configuration were inspected on `main`. T
 |---|---|---|
 | `chart_of_accounts` | `ChartOfAccounts` | Existing chart-of-accounts model; reconcile columns and map the physical table name without creating a duplicate chart. |
 | `students` | `Students` | Reuse the canonical SMIS Student entity/table; do not create a second student directory. Map SchoolPay identifiers and any required provider-facing fields carefully. |
-| `student_ledgers` | `PaymentLedgerEntries` | No direct equivalent found. Ledger entries are history/events, not a student-plus-semester summary. Design a separate aggregate only if the agreed contract requires it. |
+| `student_ledgers` | `PaymentLedgerEntries` / `StudentInvoices` | No direct equivalent found. Ledger entries are history/events, not a student-plus-semester summary, and the current StudentInvoice model has no SemesterId. A semester aggregate requires an explicit invoice/charge-to-semester relationship first; never infer semester from payment date. |
 | `payment_transactions` | `Payments`, `MobileMoneyTransactions`, `SchoolPaymentNotifications` | No single direct equivalent found. Define the relationship between provider transaction, notification/event, SMIS payment and invoice before creating a table or duplicating records. |
 | `payment_allocations` | `PaymentAllocations` | Existing invoice-based allocations must be reconciled with the requested transaction/student/fee-type shape; preserve invoice allocation and reconciliation behavior. |
 | `journal_entries` | `JournalEntries` | Existing accounting journal model; reconcile field names and retain posting, status, source and reversal behavior. |
@@ -418,3 +418,54 @@ Additional design facts from that review:
 - [ ] Verify representative student and staff records with and without other names in registry, search, dashboards, payroll, reports, certificates and printed/exported documents.
 
 **Data-integrity rule:** this change must affect display formatting only. Uppercasing is also display-only; Existing stored name components and API input fields remain in their original semantic columns. Do not run a database migration or bulk-update person records to change display order.
+
+
+## Unified finance payment pipeline — implementation resumed (2026-11-10)
+
+### Confirmed architecture decisions
+
+- All payment channels must update the same canonical SMIS student financial records; no gateway may maintain an independent student balance.
+- Keep the existing StudentInvoices, Payments, PaymentAllocations, PaymentLedgerEntries, JournalEntries and JournalEntryLines finance foundation.
+- Provider intake/notification records are evidence and processing state, not separate student balances.
+- SchoolPay covers multiple collection rails (bank, mobile money and other channels). Its receipt must not be posted as if every SchoolPay transaction were a mobile-money settlement.
+- Use a dedicated SchoolPay clearing asset account for verified SchoolPay receipts, then reconcile settlement to the correct bank/mobile-money destination using provider settlement evidence.
+- Keep pending, failed, unmatched or unverified transactions out of posted student balances.
+- Implement one provider-neutral idempotency/transaction intake layer before enabling unattended processing across multiple gateways.
+- Keep manual payments in the same Payments/allocation/journal path. Manual cash, bank transfer, card/cheque and gateway receipts must never create separate student balances.
+
+### Implemented in the consolidated finance integration (PRs #294 and #304; awaiting final CI)
+
+- [x] Correct SchoolPay unallocated payment method/currency argument order.
+- [x] Preserve SchoolPay as the recorded channel.
+- [x] Add SchoolPayClearing account code 1040 and seed the SchoolPay Clearing asset account.
+- [x] Centralize payment account resolution and route SchoolPay to the clearing account rather than the mobile-money or bank account directly.
+- [x] Add unit tests for Cash, Bank Transfer, Cheque, Card, Mobile Money, MTN MoMo, Airtel Money, SchoolPay, blank and unsupported channels.
+- [ ] Complete backend, foundation, frontend, full-system and native desktop checks on the final rebased integration PRs.
+- [ ] Merge the combined finance implementation into `main` only after all required checks pass.
+
+PR #290 is superseded; its payment-account resolver and clearing-account changes are retained in the consolidated finance implementation.
+
+### Next implementation milestones
+
+1. Evaluate whether a separate provider-neutral transaction inbox is still needed; the current SchoolPay notification and Payment records already retain provider identifiers and processing evidence.
+2. Verify that payment posting, notification state, FIFO allocations, student balances and journal entries remain atomic under concurrent callbacks and Sync imports.
+3. Confirm the provider's student payment-code/registration-number mapping during KSHS UAT; current matching requires exactly one active SMIS student and never matches by name alone.
+4. The signed SchoolPay webhook path now validates the documented SHA-256 signature; keep Sync/Adhoc MD5 request signing separate.
+5. The scheduled SchoolPay Sync API worker now provides missed-webhook recovery with bounded lookback and configurable cadence.
+6. Add a Finance review/quarantine workflow for unmatched, ambiguous, amount-mismatched and unsupported supplementary-fee transactions; current worker logs and skips these records.
+7. Complete settlement reconciliation from SchoolPay Clearing to the actual bank/mobile-money destination using provider settlement evidence.
+8. Extend the same canonical posting contract to other approved gateways while keeping manual receipts in the shared Payments/allocation/journal path.
+9. Complete migration/model snapshot checks, backend unit/integration tests, PostgreSQL CI and frontend regression checks before production use.
+
+### Provider contract confirmed from official SchoolPay documentation
+
+- Sync API: MD5 of schoolCode + identifyingDate + API password; range sync uses fromDate.
+- Adhoc API: MD5 of schoolCode + identifyingReference + API password; Register/Request use external reference and Check uses payment reference.
+- General webhook signature: SHA-256 of School API password + schoolpayReceiptNumber.
+- SchoolPay webhook delivery is documented as a single attempt; scheduled Sync API recovery is therefore required.
+- Sync API exposes both ordinary and supplementary fee payments, including source transaction ID, receipt number, channel, settlement bank and student payment code.
+- Provider documentation: https://www.schoolpay.co.ug/apidocumentation
+
+**Verification boundary:** the consolidated source now includes payment-account resolution, the SchoolPay clearing account, signed webhook processing and scheduled Sync recovery. This is not live provider activation or completed settlement reconciliation. No live SchoolPay credentials, production provider transaction or live database migration has been run. Keep SchoolPay disabled until provider UAT is complete.
+
+**Additional source-level constraint (verified 2026-11-10):** `StudentInvoice` currently has no `SemesterId`; `PaymentLedgerEntry` is a dated event record. The central all-time student balance can continue to be derived from invoice obligations and posted allocations/payments. A per-semester ledger projection must wait until invoice/charge records carry an explicit academic-semester relationship. Do not introduce a semester balance table that cannot be populated reliably.
