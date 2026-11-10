@@ -40,7 +40,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var outstanding = invoice.OutstandingAmount;
         if (outstanding <= 0) throw new InvalidOperationException("Invoice is already fully paid.");
         if (amount > outstanding) throw new ArgumentException($"Payment exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
-        var paymentAccount = await GetAccountAsync(ResolvePaymentAccountCode(paymentMethod), cancellationToken);
+        var paymentAccount = await GetAccountAsync(PaymentAccountResolver.Resolve(paymentMethod), cancellationToken);
         var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
         var payment = new Payment { StudentId = invoice.StudentId, StudentInvoiceId = invoice.Id, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = invoice.Currency, PaymentMethod = paymentMethod.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
         var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Payment receipt {normalizedReceipt} for invoice {invoice.InvoiceNumber}", payment.Amount, paymentAccount.Id, receivableAccount.Id, "Payment", payment.Id);
@@ -67,7 +67,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var normalizedReceipt = receiptNumber.Trim();
         if (await finance.ReceiptExistsAsync(normalizedReceipt, cancellationToken)) throw new InvalidOperationException("Receipt number already exists.");
         var normalizedCurrency = currency.Trim().ToUpperInvariant();
-        var paymentAccount = await GetAccountAsync(ResolvePaymentAccountCode(paymentMethod), cancellationToken);
+        var paymentAccount = await GetAccountAsync(PaymentAccountResolver.Resolve(paymentMethod), cancellationToken);
         var unappliedAccount = await GetAccountAsync(FinanceAccountCodes.StudentUnappliedPayments, cancellationToken);
         var payment = new Payment { StudentId = studentId, StudentInvoiceId = null, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = normalizedCurrency, PaymentMethod = paymentMethod.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
         var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Unallocated student payment {normalizedReceipt}", payment.Amount, paymentAccount.Id, unappliedAccount.Id, "Payment", payment.Id);
@@ -170,16 +170,6 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
             entry.Lines.Add(new JournalEntryLine { AccountId = accountId, Description = $"Income - {invoice.InvoiceNumber}", Credit = group.Sum(x => x.Amount) });
         }
         return entry;
-    }
-
-    private static string ResolvePaymentAccountCode(string paymentMethod)
-    {
-        var method = paymentMethod.Trim().ToLowerInvariant();
-        if (method is "cash" or "cash payment") return FinanceAccountCodes.Cash;
-        if (method.Contains("schoolpay")) return FinanceAccountCodes.SchoolPayClearing;
-        if (method.Contains("mobile") || method.Contains("momo") || method.Contains("mtn") || method.Contains("airtel")) return FinanceAccountCodes.MobileMoney;
-        if (method.Contains("bank") || method.Contains("transfer") || method.Contains("card") || method.Contains("cheque") || method.Contains("check")) return FinanceAccountCodes.Bank;
-        throw new ArgumentException("Unsupported payment method. Use Cash, Bank/Transfer/Card/Cheque, or Mobile Money.");
     }
 
     private static JournalEntry CreateJournalEntry(string entryNumber, string description, decimal amount, Guid debitAccountId, Guid creditAccountId, string sourceType, Guid sourceId)
