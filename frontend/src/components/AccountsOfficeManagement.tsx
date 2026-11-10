@@ -40,6 +40,7 @@ type PaymentHistoryRow = {
   paidAt: string
   amount: number
   paymentMethod: string
+  sourceChannel?: string
   reference?: string
 }
 
@@ -724,8 +725,8 @@ export function AccountsOfficeManagement() {
 
   function exportPaymentHistory() {
     const rows = [
-      ['Receipt No.', 'Date', 'Amount (UGX)', 'Payment Method', 'Reference'],
-      ...filteredPayments.map(p => [p.receiptNumber, p.paidAt, p.amount, p.paymentMethod, p.reference || '']),
+      ['Receipt No.', 'Date', 'Amount (UGX)', 'Payment Method', 'Source', 'Reference'],
+      ...filteredPayments.map(p => [p.receiptNumber, p.paidAt, p.amount, p.paymentMethod, p.sourceChannel || '', p.reference || '']),
     ]
     const csv = rows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -950,6 +951,7 @@ export function AccountsOfficeManagement() {
                             <td>{new Date(p.paidAt).toLocaleDateString('en-UG')}</td>
                             <td style={{ color: '#059669' }}>UGX {p.amount.toLocaleString()}</td>
                             <td>{p.paymentMethod}</td>
+                            <td>{p.sourceChannel || '—'}</td>
                             <td>{p.reference || '—'}</td>
                             <td>
                               {idx === 0 && (
