@@ -7,7 +7,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Infrastructure.Migrations;
 
 [DbContext(typeof(SchoolManagementDbContext))]
-[Migration("20261110120000_CentralizeSchoolPayProviderAndRestorePaymentLedger")]
+[Migration("20261110200000_CentralizeSchoolPayProviderAndRestorePaymentLedger")]
 public sealed partial class CentralizeSchoolPayProviderAndRestorePaymentLedger : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
