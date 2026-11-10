@@ -42,7 +42,7 @@ public sealed class ChronicAbsenteeController(SchoolManagementDbContext db, Camp
         {
             var student = students.FirstOrDefault(s => s.Id == a.StudentId);
             var rate = a.TotalSessions > 0 ? (double)a.AbsenceCount / a.TotalSessions : 0d;
-            return new { a.StudentId, studentNumber = student?.StudentNumber, studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim(), phoneNumber = student?.PhoneNumber, a.AbsenceCount, a.TotalSessions, absenceRate = Math.Round(rate * 100, 1), isChronic = rate > 0.3 };
+            return new { a.StudentId, studentNumber = student?.StudentNumber, studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant(), phoneNumber = student?.PhoneNumber, a.AbsenceCount, a.TotalSessions, absenceRate = Math.Round(rate * 100, 1), isChronic = rate > 0.3 };
         }).OrderByDescending(x => x.absenceRate).ThenByDescending(x => x.AbsenceCount).ToList();
         return Ok(result);
     }
@@ -71,7 +71,7 @@ public sealed class ChronicAbsenteeController(SchoolManagementDbContext db, Camp
         {
             var student = students.FirstOrDefault(s => s.Id == a.StudentId);
             var rate = a.TotalSessions > 0 ? (double)a.AbsenceCount / a.TotalSessions : 0d;
-            return new { a.StudentId, studentNumber = student?.StudentNumber, studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim(), phoneNumber = student?.PhoneNumber, a.AbsenceCount, absenceRate = Math.Round(rate * 100, 1), severity = rate > 0.3 ? "Critical" : rate > 0.15 ? "Warning" : "Low", suggestedAction = rate > 0.3 ? "Schedule parent meeting" : rate > 0.15 ? "Send SMS to parent" : "Monitor closely" };
+            return new { a.StudentId, studentNumber = student?.StudentNumber, studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant(), phoneNumber = student?.PhoneNumber, a.AbsenceCount, absenceRate = Math.Round(rate * 100, 1), severity = rate > 0.3 ? "Critical" : rate > 0.15 ? "Warning" : "Low", suggestedAction = rate > 0.3 ? "Schedule parent meeting" : rate > 0.15 ? "Send SMS to parent" : "Monitor closely" };
         }).OrderByDescending(a => a.absenceRate).ToList();
         return Ok(alerts);
     }
