@@ -13,7 +13,9 @@ public static class SchoolPayWebhookSignatureValidator
     {
         if (string.IsNullOrWhiteSpace(suppliedSignature)
             || string.IsNullOrWhiteSpace(schoolApiPassword)
-            || string.IsNullOrWhiteSpace(schoolPayReceiptNumber))
+            || string.IsNullOrWhiteSpace(schoolPayReceiptNumber)
+            || schoolApiPassword.Contains("REPLACE_ME", StringComparison.OrdinalIgnoreCase)
+            || schoolApiPassword.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase))
             return false;
 
         var expected = SHA256.HashData(Encoding.UTF8.GetBytes(schoolApiPassword + schoolPayReceiptNumber.Trim()));
