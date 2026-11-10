@@ -11,7 +11,7 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
         if (string.IsNullOrWhiteSpace(schoolPayReference)) throw new ArgumentException("SchoolPay reference is required.");
         if (amount <= 0) throw new ArgumentException("Payment amount must be greater than zero.");
         if (string.IsNullOrWhiteSpace(currency)) throw new ArgumentException("Currency is required.");
-        if (!string.Equals(providerStatus?.Trim(), "PAID", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("SchoolPay transaction is not confirmed as PAID.");
+        if (!string.Equals(providerStatus?.Trim(), "PAID", StringComparison.OrdinalIgnoreCase) && !string.Equals(providerStatus?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("SchoolPay transaction is not confirmed as paid/completed.");
         if (string.IsNullOrWhiteSpace(providerTransactionId)) throw new ArgumentException("SchoolPay provider transaction ID is required.");
         if (string.IsNullOrWhiteSpace(sourceChannel)) throw new ArgumentException("SchoolPay source channel is required.");
 
