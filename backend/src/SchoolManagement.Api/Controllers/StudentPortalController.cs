@@ -27,7 +27,7 @@ public sealed class StudentPortalController(SchoolManagementDbContext db, Progre
             ?? throw new InvalidOperationException("Username claim not found in token.");
         var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == username, ct);
         if (student is null) return NotFound(new { message = "Student record not found. Contact administration." });
-        return Ok(new StudentPortalProfile(student.Id, student.StudentNumber, $"{student.LastName} {student.FirstName}".Trim(), student.Status, student.FirstName, student.LastName, student.OtherNames, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.CreatedAt, student.AdmissionId));
+        return Ok(new StudentPortalProfile(student.Id, student.StudentNumber, $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant(), student.Status, student.FirstName, student.LastName, student.OtherNames, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.CreatedAt, student.AdmissionId));
     }
 
     [HttpGet("me/transcript")]
@@ -62,7 +62,7 @@ public sealed class StudentPortalController(SchoolManagementDbContext db, Progre
     {
         var studentId = await ResolveStudentIdAsync(ct);
         var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == studentId, ct) ?? throw new KeyNotFoundException("Student record not found.");
-        var profile = new SchoolManagement.Infrastructure.Reporting.StudentPortalProfile(student.Id, student.StudentNumber, $"{student.LastName} {student.FirstName}".Trim(), student.Status, student.FirstName, student.LastName, student.OtherNames, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.CreatedAt, student.AdmissionId);
+        var profile = new SchoolManagement.Infrastructure.Reporting.StudentPortalProfile(student.Id, student.StudentNumber, $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant(), student.Status, student.FirstName, student.LastName, student.OtherNames, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.CreatedAt, student.AdmissionId);
         var entries = await db.TranscriptEntries.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ThenBy(x => x.CourseCode).ToListAsync(ct);
         var summaries = await db.AcademicResultSummaries.AsNoTracking().Where(x => x.StudentId == studentId).OrderByDescending(x => x.AcademicYearId).ThenByDescending(x => x.SemesterId).ToListAsync(ct);
         var bytes = pdf.GenerateTranscriptPdf(profile, entries, summaries);
