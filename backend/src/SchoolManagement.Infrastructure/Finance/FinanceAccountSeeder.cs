@@ -27,6 +27,7 @@ public sealed class FinanceAccountSeeder(SchoolManagementDbContext db)
             (FinanceAccountCodes.Cash, "Cash on Hand", "Asset"),
             (FinanceAccountCodes.Bank, "Bank Account", "Asset"),
             (FinanceAccountCodes.MobileMoney, "Mobile Money", "Asset"),
+            (FinanceAccountCodes.SchoolPayClearing, "SchoolPay Clearing", "Asset"),
             (FinanceAccountCodes.StudentReceivables, "Student Receivables", "Asset"),
             (FinanceAccountCodes.StudentUnappliedPayments, "Student Unapplied Payments", "Liability"),
             (FinanceAccountCodes.TuitionRevenue, "Tuition and Fee Revenue", "Revenue"),

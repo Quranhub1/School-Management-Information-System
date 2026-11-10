@@ -9,6 +9,7 @@ public sealed class SchoolPayOptions
     public string ApiKey { get; set; } = string.Empty;
     public string ApiSecret { get; set; } = string.Empty;
     public string MerchantId { get; set; } = string.Empty;
+    // Must be the SchoolPay-issued password used for SHA256(password + receiptNumber) webhook verification.
     public string WebhookSecret { get; set; } = string.Empty;
     public string SuccessRedirectUrl { get; set; } = string.Empty;
     public string FailureRedirectUrl { get; set; } = string.Empty;

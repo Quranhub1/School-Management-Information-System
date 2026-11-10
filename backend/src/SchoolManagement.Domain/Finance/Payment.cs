@@ -9,8 +9,14 @@ public sealed class Payment
     public decimal Amount { get; init; }
     public string Currency { get; init; } = "UGX";
     public required string PaymentMethod { get; init; }
+    public string PaymentSource { get; init; } = "Manual";
+    public string? SourceChannel { get; init; }
+    public string? ProviderTransactionId { get; init; }
     public string? Reference { get; init; }
     public DateTimeOffset PaidAt { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? ReceiptEmailRequestedAt { get; set; }
+    public DateTimeOffset? ReceiptEmailLastAttemptAt { get; set; }
+    public DateTimeOffset? ReceiptEmailSentAt { get; set; }
     public ICollection<PaymentAllocation> Allocations { get; init; } = new List<PaymentAllocation>();
 
     // Legacy payments pre-dating PaymentAllocation remain fully allocated when their invoice link exists.

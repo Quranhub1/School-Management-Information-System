@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +11,7 @@ using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
+using QuestPDF.Infrastructure;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -17,6 +19,15 @@ using System.Threading.RateLimiting;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+QuestPDF.Settings.License = LicenseType.Community;
+var dataProtectionPath = builder.Configuration["Security:DataProtectionKeysPath"];
+if (string.IsNullOrWhiteSpace(dataProtectionPath))
+{
+    var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    dataProtectionPath = Path.Combine(string.IsNullOrWhiteSpace(localData) ? AppContext.BaseDirectory : localData, "SMIS", "DataProtectionKeys");
+}
+Directory.CreateDirectory(dataProtectionPath);
+builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath)).SetApplicationName("KSHS.SMIS");
 var logDirectory = Environment.GetEnvironmentVariable("SMIS_LOG_DIRECTORY");
 if (string.IsNullOrWhiteSpace(logDirectory))
 {
@@ -85,6 +96,8 @@ if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
     throw new InvalidOperationException("AllowedOrigins must contain at least one trusted frontend origin in Production.");
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); else policy.AllowAnyOrigin(); policy.AllowAnyHeader().AllowAnyMethod().WithExposedHeaders(SchoolManagement.Api.Middleware.CorrelationIdMiddleware.HeaderName); }); });
 builder.Services.AddApplication();
+builder.Services.AddScoped<PaymentReceiptEmailService>();
+builder.Services.AddHostedService<PaymentReceiptEmailWorker>();
 builder.Services.Configure<SchoolPayOptions>(builder.Configuration.GetSection(SchoolPayOptions.SectionName));
 builder.Services.AddScoped<CampusAccessService>();
 builder.Services.AddSingleton<LocalDatabaseBackupService>();

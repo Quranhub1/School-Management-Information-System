@@ -132,6 +132,7 @@ export const recordPaymentRequestSchema = z.object({
   amount: z.number().int().positive(),
   receiptNumber: requiredTextSchema,
   paymentMethod: requiredTextSchema,
+  sourceChannel: z.string().trim().optional(),
   reference: z.string().trim().optional(),
   currency: z.string().trim().min(3).max(3).optional(),
 });
