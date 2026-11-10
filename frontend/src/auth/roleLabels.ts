@@ -15,5 +15,6 @@ export const ROLE_LABELS: Record<string, string> = {
   HeadOfDepartment: 'Head of Department',
   Receptionist: 'Receptionist',
   Principal: 'Principal',
+  AssistantPrincipal: 'Deputy Principal',
   Director: 'Director',
 }

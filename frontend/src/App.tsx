@@ -255,7 +255,7 @@ function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: {
   case 'dashboard': return true;
   case 'administration': return a && !isAdminSecretary;
   case 'students': return st || ad || s360 || studentRead || admissionRead || r.includes('HR Manager') || r.includes('Records Officer');
-  case 'academics': return ac || lecturer || r.includes('HeadOfDepartment') || r.includes('Principal') || r.includes('AssistantPrincipal');
+  case 'academics': return ac || isAdminSecretary || lecturer || r.includes('HeadOfDepartment') || r.includes('Principal') || r.includes('AssistantPrincipal');
   case 'curriculum': return ac;
   case 'finance': return fi && !isAdminSecretary;
   case 'staff': return sr;
@@ -264,7 +264,7 @@ function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: {
   case 'health': return attManage || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator');
   case 'laboratories': return hostel;
   case 'inventory': return inv;
-  case 'communication': return cm || ['ExaminationsOfficer','Lecturer','Student','Records Officer','SchoolWarden','Principal','Secretary','ResidentDirector','HeadOfDepartment','AssistantPrincipal'].some(role => r.includes(role));
+  case 'communication': return cm || ['ExaminationsOfficer','Lecturer','Student','Records Officer','Admin Secretary','AssistantRegistrar','SchoolWarden','Principal','Secretary','ResidentDirector','HeadOfDepartment','AssistantPrincipal'].some(role => r.includes(role));
   case 'guild': return r.includes('Student') || r.includes('Guild') || r.includes('SystemAdministrator') || r.includes('HR Manager');
   case 'reports': return rp || analytics;
   case 'timetable': return canReadTimetable(r);
@@ -527,7 +527,7 @@ return <main className="app-shell">
 {activeModule==='dashboard'&&(r.includes('Records Officer')||r.includes('RecordsOfficer')||r.includes('School Warden')||r.includes('SchoolWarden')||r.includes('SchoolWarden'))&&<InventoryStockAlerts/>}
 {activeModule==='administration'&&a&&<AdministrationManagement institution={institution} onInstitutionSaved={onInstitutionSaved} activeSubsection={activeSubsection}/>} 
 {activeModule==='students'&&(st||ad||s360||studentRead||admissionRead)&&<AdmissionsStudentManagement canManage={st||ad} readOnly={!st&&!ad} activeSubsection={activeSubsection} accessProfile={r.includes('Receptionist')?'receptionist':r.includes('Records Officer')?'records':r.includes('HeadOfDepartment')?'department':'general'} />} 
-{activeModule==='academics'&&activeSubsection==='classes'&&ac&&<AcademicStructures canManage={ac}/>} {activeModule==='academics'&&activeSubsection!=='classes'&&(ac||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/>} {activeModule==='curriculum'&&ac&&<CurriculumManagement canManage={ac}/>} 
+{activeModule==='academics'&&activeSubsection==='classes'&&ac&&<AcademicStructures canManage={ac}/>} {activeModule==='academics'&&activeSubsection!=='classes'&&(ac||isAdminSecretary||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/>} {activeModule==='curriculum'&&ac&&<CurriculumManagement canManage={ac}/>} 
 {activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}
 {activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
 {activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={canReadPayroll(r)} canManagePayroll={canManageFinance(r)} canProcessPayroll={canProcessPayroll(r)} activeSubsection={activeSubsection}/>}
