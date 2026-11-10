@@ -28,6 +28,7 @@ services:
       Authentication__JwtKey: ${JWT_KEY}
       EmailService__BaseUrl: http://email-service:5100
       EmailService__ApiKey: ${EMAIL_SERVICE_API_KEY:?Set EMAIL_SERVICE_API_KEY in .env}
+      Security__DataProtectionKeysPath: /app/dataprotection-keys
     depends_on:
       db:
         condition: service_healthy
@@ -60,9 +61,11 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - webassets:/usr/share/nginx/html:ro
+      - smis_dataprotection:/app/dataprotection-keys
     depends_on:
       - api
 
 volumes:
   pgdata:
   webassets:
+  smis_dataprotection:
