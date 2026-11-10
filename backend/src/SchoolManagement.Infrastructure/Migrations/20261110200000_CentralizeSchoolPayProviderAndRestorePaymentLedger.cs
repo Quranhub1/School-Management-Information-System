@@ -220,7 +220,7 @@ public sealed partial class CentralizeSchoolPayProviderAndRestorePaymentLedger :
                    OR EXISTS (SELECT 1 FROM "SchoolPaymentNotifications" WHERE "ProviderTransactionId" IS NOT NULL OR "ProviderStatus" IS NOT NULL) THEN
                     RAISE EXCEPTION 'Cannot revert payment integrity migration after allocation, ledger or provider metadata has been recorded.';
                 END IF;
-            END $;
+            END $$;
             """);
 
         migrationBuilder.DropIndex(name: "IX_SchoolPaymentNotifications_ProviderTransactionId", table: "SchoolPaymentNotifications");
