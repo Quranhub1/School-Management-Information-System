@@ -14,6 +14,7 @@ public sealed class Payment
     public string? ProviderTransactionId { get; init; }
     public string? Reference { get; init; }
     public DateTimeOffset PaidAt { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? ReceiptEmailSentAt { get; set; }
     public ICollection<PaymentAllocation> Allocations { get; init; } = new List<PaymentAllocation>();
 
     // Legacy payments pre-dating PaymentAllocation remain fully allocated when their invoice link exists.
