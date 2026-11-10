@@ -40,12 +40,12 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
             if (studentInvoiceId.HasValue)
             {
                 var receiptNumber = $"SP-{normalizedExternalRef.Substring(0, Math.Min(normalizedExternalRef.Length, 12))}";
-                await financeService.RecordPaymentAsync(studentInvoiceId.Value, receiptNumber, amount, "SchoolPay", schoolPayReference, cancellationToken);
+                await financeService.RecordPaymentAsync(studentInvoiceId.Value, receiptNumber, amount, "Mobile Money", schoolPayReference, cancellationToken);
             }
             else if (studentId.HasValue)
             {
                 var receiptNumber = $"SP-{normalizedExternalRef.Substring(0, Math.Min(normalizedExternalRef.Length, 12))}";
-                await financeService.RecordUnallocatedPaymentAsync(studentId.Value, receiptNumber, amount, currency, "SchoolPay", schoolPayReference, cancellationToken);
+                await financeService.RecordUnallocatedPaymentAsync(studentId.Value, receiptNumber, amount, "Mobile Money", currency, schoolPayReference, cancellationToken);
             }
             else
             {
