@@ -19,6 +19,8 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay, IOptions<Sc
         if (string.IsNullOrWhiteSpace(request.ExternalReference)) return BadRequest("External reference is required.");
         if (string.IsNullOrWhiteSpace(request.SchoolPayReference)) return BadRequest("SchoolPay reference is required.");
         if (request.Amount <= 0) return BadRequest("Amount must be greater than zero.");
+        if (!schoolPayOptions.Value.Enabled)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, "SchoolPay processing is not enabled for this environment.");
         if (!string.Equals(request.Status, "PAID", StringComparison.OrdinalIgnoreCase))
             return Conflict("Only confirmed PAID SchoolPay transactions can be posted.");
         if (!SchoolPayWebhookSignatureValidator.IsValid(request.Signature, schoolPayOptions.Value.WebhookSecret, request.SchoolPayReference))
