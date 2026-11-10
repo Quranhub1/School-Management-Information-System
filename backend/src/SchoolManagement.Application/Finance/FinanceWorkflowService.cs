@@ -22,15 +22,15 @@ public sealed class FinanceWorkflowService(FinanceService finance)
         return FeeDto.FromDomain(invoice);
     }
 
-    public async Task<FinancePaymentDto> RecordPaymentAsync(Guid invoiceId, string receiptNumber, decimal amount, string paymentMethod, string? reference = null, CancellationToken cancellationToken = default)
+    public async Task<FinancePaymentDto> RecordPaymentAsync(Guid invoiceId, string receiptNumber, decimal amount, string paymentMethod, string? reference = null, CancellationToken cancellationToken = default, string? sourceChannel = null)
     {
-        var payment = await finance.RecordPaymentAsync(invoiceId, receiptNumber, amount, paymentMethod, reference, cancellationToken);
+        var payment = await finance.RecordPaymentAsync(invoiceId, receiptNumber, amount, paymentMethod, reference, cancellationToken, "Manual", sourceChannel);
         return FinancePaymentDto.FromDomain(payment);
     }
 
-    public async Task<FinancePaymentDto> RecordUnallocatedPaymentAsync(Guid studentId, string receiptNumber, decimal amount, string paymentMethod, string currency = "UGX", string? reference = null, CancellationToken cancellationToken = default)
+    public async Task<FinancePaymentDto> RecordUnallocatedPaymentAsync(Guid studentId, string receiptNumber, decimal amount, string paymentMethod, string currency = "UGX", string? reference = null, CancellationToken cancellationToken = default, string? sourceChannel = null)
     {
-        var payment = await finance.RecordUnallocatedPaymentAsync(studentId, receiptNumber, amount, paymentMethod, currency, reference, cancellationToken);
+        var payment = await finance.RecordUnallocatedPaymentAsync(studentId, receiptNumber, amount, paymentMethod, currency, reference, cancellationToken, "Manual", sourceChannel);
         return FinancePaymentDto.FromDomain(payment);
     }
 

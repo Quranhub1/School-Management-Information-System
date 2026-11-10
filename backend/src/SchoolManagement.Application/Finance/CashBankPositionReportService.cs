@@ -83,7 +83,8 @@ public sealed class CashBankPositionReportService(
     [
         FinanceAccountCodes.Cash,
         FinanceAccountCodes.Bank,
-        FinanceAccountCodes.MobileMoney
+        FinanceAccountCodes.MobileMoney,
+        FinanceAccountCodes.SchoolPayClearing
     ];
 
     public async Task<CashBankPositionReport> GetAsync(

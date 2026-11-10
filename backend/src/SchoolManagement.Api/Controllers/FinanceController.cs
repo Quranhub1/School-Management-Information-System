@@ -112,9 +112,10 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 x.payment.ReceiptNumber,
                 x.payment.Amount,
                 x.payment.PaymentMethod,
+                x.payment.PaymentSource,
                 x.payment.Reference,
                 x.payment.PaidAt,
-                studentName = x.student.FirstName + " " + (x.student.OtherNames ?? "") + " " + x.student.LastName,
+                studentName = x.student.LastName + " " + x.student.FirstName + (x.student.OtherNames == null || x.student.OtherNames == "" ? "" : " " + x.student.OtherNames),
                 invoiceNumber = x.invoice == null ? null : x.invoice.InvoiceNumber
             })
             .ToListAsync(cancellationToken));
@@ -135,7 +136,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             {
                 studentId = student.Id,
                 studentNumber = student.StudentNumber,
-                studentName = student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName,
+                studentName = student.LastName + " " + student.FirstName + (student.OtherNames == null || student.OtherNames == "" ? "" : " " + student.OtherNames),
                 programmeName = fee == null ? invoice.FeeType : fee.Name,
                 amount = invoice.Amount,
                 paidAmount = invoice.PaidAmount,
@@ -167,12 +168,12 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 (x.OtherNames != null && x.OtherNames.ToLower().Contains(term)));
         }
 
-        var students = await query.OrderBy(x => x.StudentNumber)
+        var studentRows = await query.OrderBy(x => x.StudentNumber)
             .Select(x => new
             {
                 x.Id,
                 x.StudentNumber,
-                name = x.FirstName + " " + (x.OtherNames ?? "") + " " + x.LastName,
+                name = x.LastName + " " + x.FirstName + (x.OtherNames == null || x.OtherNames == "" ? "" : " " + x.OtherNames),
                 x.Status,
                 invoiceCount = db.StudentInvoices.Count(invoice => invoice.StudentId == x.Id),
                 billed = db.StudentInvoices.Where(invoice => invoice.StudentId == x.Id)
@@ -181,6 +182,88 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                     .Sum(invoice => (decimal?)invoice.PaidAmount) ?? 0m
             })
             .ToListAsync(cancellationToken);
+
+        if (studentRows.Count == 0) return Ok(Array.Empty<object>());
+
+        var studentIds = studentRows.Select(x => x.Id).ToArray();
+        var enrollments = await (
+            from enrollment in db.StudentEnrollments.AsNoTracking()
+            join programme in db.Programmes.AsNoTracking() on enrollment.ProgrammeId equals programme.Id
+            join intake in db.Intakes.AsNoTracking() on enrollment.IntakeId equals intake.Id
+            where studentIds.Contains(enrollment.StudentId)
+            orderby enrollment.Status == "Active" descending, enrollment.AdmissionDate descending
+            select new
+            {
+                enrollment.StudentId,
+                ProgrammeCode = programme.Code,
+                ProgrammeName = programme.Name,
+                IntakeCode = intake.Code,
+                IntakeName = intake.Name,
+                enrollment.CurrentYear,
+                EnrollmentStatus = enrollment.Status
+            })
+            .ToListAsync(cancellationToken);
+
+        var currentAcademicPeriod = await (
+            from semester in db.Semesters.AsNoTracking()
+            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id
+            where semester.IsCurrent && academicYear.IsCurrent
+            orderby semester.Sequence descending
+            select new
+            {
+                SemesterName = semester.Name,
+                AcademicYearName = academicYear.Name
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var academicStatuses = await (
+            from status in db.StudentAcademicStatuses.AsNoTracking()
+            join semester in db.Semesters.AsNoTracking() on status.SemesterId equals semester.Id
+            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id
+            where studentIds.Contains(status.StudentId)
+            orderby academicYear.IsCurrent descending, semester.IsCurrent descending,
+                semester.EndDate descending, status.YearOfStudy descending, semester.Sequence descending
+            select new
+            {
+                status.StudentId,
+                status.YearOfStudy,
+                status.Status,
+                SemesterName = semester.Name,
+                AcademicYearName = academicYear.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        var enrollmentByStudent = enrollments
+            .GroupBy(x => x.StudentId)
+            .ToDictionary(group => group.Key, group => group.First());
+        var academicStatusByStudent = academicStatuses
+            .GroupBy(x => x.StudentId)
+            .ToDictionary(group => group.Key, group => group.First());
+
+        var students = studentRows.Select(student =>
+        {
+            enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
+            academicStatusByStudent.TryGetValue(student.Id, out var academicStatus);
+            return new
+            {
+                student.Id,
+                student.StudentNumber,
+                student.name,
+                student.Status,
+                student.invoiceCount,
+                student.billed,
+                student.paid,
+                programmeCode = enrollment?.ProgrammeCode,
+                programmeName = enrollment?.ProgrammeName,
+                intakeCode = enrollment?.IntakeCode,
+                intakeName = enrollment?.IntakeName,
+                classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
+                semesterName = academicStatus?.SemesterName ?? currentAcademicPeriod?.SemesterName,
+                academicYearName = academicStatus?.AcademicYearName ?? currentAcademicPeriod?.AcademicYearName,
+                academicStatus = academicStatus?.Status,
+                enrollmentStatus = enrollment?.EnrollmentStatus
+            };
+        }).ToList();
 
         return Ok(students);
     }
@@ -195,7 +278,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             : await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
         if (student is null) return NotFound(new { message = "Student was not found." });
         if (!await campusAccess.CanAccessStudentAsync(User, student.Id, cancellationToken)) return Forbid();
-        return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.FirstName, student.OtherNames, student.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
+        return Ok(new { student.Id, student.StudentNumber, name = string.Join(" ", new[] { student.LastName, student.FirstName, student.OtherNames }.Where(x => !string.IsNullOrWhiteSpace(x))), student.PhoneNumber, student.Email, student.Status });
     }
 
     [HttpGet("students/{studentId:guid}/statement")]
@@ -246,6 +329,9 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 payment.Amount,
                 payment.Currency,
                 payment.PaymentMethod,
+                payment.PaymentSource,
+                payment.SourceChannel,
+                payment.ProviderTransactionId,
                 payment.Reference,
                 payment.PaidAt,
                 studentInvoiceId = payment.StudentInvoiceId,
@@ -309,105 +395,19 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("mobile-money")]
-    public async Task<IActionResult> CreateMobileMoneyTransaction(CreateMobileMoneyTransactionRequest request, CancellationToken cancellationToken)
-    {
-        if (request.Amount <= 0) return BadRequest(new { message = "Amount must be greater than zero." });
-        if (!string.Equals(request.Currency?.Trim(), "UGX", StringComparison.OrdinalIgnoreCase)) return BadRequest(new { message = "Mobile-money collection currently supports UGX only." });
-        var provider = request.Provider?.Trim();
-        if (provider is not ("MTN" or "Airtel")) return BadRequest(new { message = "Provider must be MTN or Airtel." });
-        var phone = request.PhoneNumber?.Trim();
-        if (string.IsNullOrWhiteSpace(phone) || !System.Text.RegularExpressions.Regex.IsMatch(phone, @"^256[0-9]{9}$"))
-            return BadRequest(new { message = "Phone number must use Uganda international format: 256 followed by nine digits." });
-        if (!await campusAccess.CanAccessStudentAsync(User, request.StudentId, cancellationToken)) return Forbid();
-        if (!await db.Students.AnyAsync(x => x.Id == request.StudentId, cancellationToken))
-            return NotFound(new { message = "Student was not found." });
-
-        if (request.StudentInvoiceId.HasValue)
+    public IActionResult CreateMobileMoneyTransaction(CreateMobileMoneyTransactionRequest request)
+        => StatusCode(StatusCodes.Status410Gone, new
         {
-            var invoice = await db.StudentInvoices.AsNoTracking()
-                .SingleOrDefaultAsync(x => x.Id == request.StudentInvoiceId.Value, cancellationToken);
-            if (invoice is null || invoice.StudentId != request.StudentId)
-                return BadRequest(new { message = "The selected invoice does not belong to this student." });
-            if (invoice.Currency != "UGX" || request.Amount > invoice.OutstandingAmount)
-                return BadRequest(new { message = "Amount or currency is invalid for the selected invoice balance." });
-        }
-
-        var transaction = new SchoolManagement.Domain.Finance.MobileMoneyTransaction
-        {
-            StudentId = request.StudentId,
-            StudentInvoiceId = request.StudentInvoiceId,
-            TransactionRef = $"MM-{Guid.NewGuid():N}",
-            Provider = provider,
-            PhoneNumber = phone,
-            Amount = request.Amount,
-            Currency = "UGX"
-        };
-        db.MobileMoneyTransactions.Add(transaction);
-        await db.SaveChangesAsync(cancellationToken);
-        return Created($"/api/finance/mobile-money/{transaction.Id}", new
-        {
-            transaction.Id, studentId = transaction.StudentId, transaction.StudentInvoiceId,
-            transaction.TransactionRef, transaction.Provider, transaction.PhoneNumber,
-            transaction.Amount, transaction.Currency, transaction.Status,
-            transaction.ExternalRef, transaction.RequestedAt, transaction.CompletedAt
+            message = "Direct MTN/Airtel initiation is disabled. Use SchoolPay for provider payments or record a Manual payment."
         });
-    }
 
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("mobile-money/{transactionId:guid}/confirm")]
-    public async Task<IActionResult> ConfirmMobileMoneyTransaction(Guid transactionId, ConfirmMobileMoneyTransactionRequest request, CancellationToken cancellationToken)
-    {
-        var transaction = await db.MobileMoneyTransactions.SingleOrDefaultAsync(x => x.Id == transactionId, cancellationToken);
-        if (transaction is null) return NotFound(new { message = "Mobile-money transaction was not found." });
-        if (!await campusAccess.CanAccessStudentAsync(User, transaction.StudentId, cancellationToken)) return Forbid();
-        if (string.IsNullOrWhiteSpace(request.ExternalRef)) return BadRequest(new { message = "The provider transaction reference is required for manual confirmation." });
-        if (transaction.Status == "Completed")
+    public IActionResult ConfirmMobileMoneyTransaction(Guid transactionId, ConfirmMobileMoneyTransactionRequest request)
+        => StatusCode(StatusCodes.Status410Gone, new
         {
-            if (string.Equals(transaction.ExternalRef, request.ExternalRef.Trim(), StringComparison.OrdinalIgnoreCase))
-                return Ok(new { transaction.Id, studentId = transaction.StudentId, transaction.StudentInvoiceId, transaction.TransactionRef, transaction.Provider, transaction.PhoneNumber, transaction.Amount, transaction.Currency, transaction.Status, transaction.ExternalRef, transaction.RequestedAt, transaction.CompletedAt });
-            return Conflict(new { message = "This transaction has already been completed with a different external reference." });
-        }
-        if (transaction.Status != "Pending") return Conflict(new { message = $"Only pending transactions can be confirmed. Current status: {transaction.Status}." });
-        var externalRef = request.ExternalRef.Trim();
-
-        await using var dbTransaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
-        try
-        {
-            if (await db.MobileMoneyTransactions.AnyAsync(x => x.Id != transaction.Id && x.Provider == transaction.Provider && x.ExternalRef != null && x.ExternalRef.ToUpper() == externalRef.ToUpper(), cancellationToken))
-            {
-                await dbTransaction.RollbackAsync(cancellationToken);
-                return Conflict(new { message = "This provider transaction reference has already been used." });
-            }
-            var receiptNumber = transaction.TransactionRef;
-            if (transaction.StudentInvoiceId.HasValue)
-                await finance.RecordPaymentAsync(transaction.StudentInvoiceId.Value, receiptNumber, transaction.Amount, "Mobile Money", externalRef, cancellationToken);
-            else
-                await finance.RecordUnallocatedPaymentAsync(transaction.StudentId, receiptNumber, transaction.Amount, "Mobile Money", transaction.Currency, externalRef, cancellationToken);
-
-            transaction.Status = "Completed";
-            transaction.ExternalRef = externalRef;
-            transaction.CompletedAt = DateTimeOffset.UtcNow;
-            transaction.ErrorMessage = null;
-            await db.SaveChangesAsync(cancellationToken);
-            await dbTransaction.CommitAsync(cancellationToken);
-            return Ok(new { transaction.Id, studentId = transaction.StudentId, transaction.StudentInvoiceId, transaction.TransactionRef, transaction.Provider, transaction.PhoneNumber, transaction.Amount, transaction.Currency, transaction.Status, transaction.ExternalRef, transaction.RequestedAt, transaction.CompletedAt });
-        }
-        catch (ArgumentException ex)
-        {
-            await dbTransaction.RollbackAsync(cancellationToken);
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            await dbTransaction.RollbackAsync(cancellationToken);
-            return Conflict(new { message = ex.Message });
-        }
-        catch
-        {
-            await dbTransaction.RollbackAsync(cancellationToken);
-            throw;
-        }
-    }
+            message = "Staff-entered mobile-money references are not proof of payment. Verify the transaction through SchoolPay or record an authorised Manual payment."
+        });
 
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpDelete("mobile-money/{transactionId:guid}")]
@@ -682,14 +682,30 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> RecordPayment(Guid invoiceId, RecordPaymentRequest request, CancellationToken cancellationToken)
     {
         if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
-        try { return Ok(await finance.RecordPaymentAsync(invoiceId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Reference, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        if (string.Equals(request.PaymentMethod, "SchoolPay", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "SchoolPay payments must be received through the verified SchoolPay notification workflow." });
+        try
+        {
+            var payment = await finance.RecordPaymentAsync(invoiceId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Reference, cancellationToken, request.SourceChannel);
+            return Ok(payment);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("students/{studentId:guid}/payments")]
     public async Task<IActionResult> RecordUnallocatedPayment(Guid studentId, RecordUnallocatedPaymentRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
-        try { return Ok(await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Currency, request.Reference, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        if (string.Equals(request.PaymentMethod, "SchoolPay", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "SchoolPay payments must be received through the verified SchoolPay notification workflow." });
+        try
+        {
+            var payment = await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Currency, request.Reference, cancellationToken, request.SourceChannel);
+            return Ok(payment);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/allocate")]
@@ -843,8 +859,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public sealed record CreateRefundRequest(decimal Amount, string RefundMethod, string Reason, string? Reference = null, Guid? CreditNoteId = null);
     public sealed record RequestDiscountRequest(string DiscountType, decimal? Percentage, decimal? Amount, string Reason);
     public sealed record CreateInstallmentScheduleRequest(IReadOnlyCollection<InvoiceInstallmentService.InstallmentRequest> Installments);
-    public sealed record RecordPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Reference);
-    public sealed record RecordUnallocatedPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string Currency = "UGX", string? Reference = null);
+    public sealed record RecordPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Reference, string? SourceChannel = null);
+    public sealed record RecordUnallocatedPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string Currency = "UGX", string? Reference = null, string? SourceChannel = null);
     public sealed record AllocatePaymentRequest(IReadOnlyCollection<PaymentAllocationRequest> Allocations);
     public sealed record ReverseJournalEntryRequest(string Reason);
 }

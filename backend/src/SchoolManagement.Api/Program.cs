@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
+using SchoolManagement.Api.BackgroundServices;
 using SchoolManagement.Infrastructure;
 using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Infrastructure.Identity;
@@ -17,6 +19,14 @@ using System.Threading.RateLimiting;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+var dataProtectionPath = builder.Configuration["Security:DataProtectionKeysPath"];
+if (string.IsNullOrWhiteSpace(dataProtectionPath))
+{
+    var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    dataProtectionPath = Path.Combine(string.IsNullOrWhiteSpace(localData) ? AppContext.BaseDirectory : localData, "SMIS", "DataProtectionKeys");
+}
+Directory.CreateDirectory(dataProtectionPath);
+builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath)).SetApplicationName("KSHS.SMIS");
 var logDirectory = Environment.GetEnvironmentVariable("SMIS_LOG_DIRECTORY");
 if (string.IsNullOrWhiteSpace(logDirectory))
 {
@@ -59,6 +69,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddHttpClient("Superset");
+builder.Services.AddHttpClient("InstitutionalEmailService", client =>
+{
+    var emailServiceBaseUrl = builder.Configuration["EmailService:BaseUrl"] ?? "http://127.0.0.1:5100";
+    client.BaseAddress = new Uri(emailServiceBaseUrl, UriKind.Absolute);
+    client.Timeout = TimeSpan.FromSeconds(45);
+});
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -85,7 +101,11 @@ if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
     throw new InvalidOperationException("AllowedOrigins must contain at least one trusted frontend origin in Production.");
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); else policy.AllowAnyOrigin(); policy.AllowAnyHeader().AllowAnyMethod().WithExposedHeaders(SchoolManagement.Api.Middleware.CorrelationIdMiddleware.HeaderName); }); });
 builder.Services.AddApplication();
+builder.Services.AddScoped<PaymentReceiptEmailService>();
+builder.Services.AddHostedService<PaymentReceiptEmailWorker>();
 builder.Services.Configure<SchoolPayOptions>(builder.Configuration.GetSection(SchoolPayOptions.SectionName));
+builder.Services.AddHttpClient(nameof(SchoolPayReconciliationWorker));
+builder.Services.AddHostedService<SchoolPayReconciliationWorker>();
 builder.Services.AddScoped<CampusAccessService>();
 builder.Services.AddSingleton<LocalDatabaseBackupService>();
 builder.Services.AddHostedService<ScheduledLocalBackupWorker>();
