@@ -41,6 +41,7 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay, IOptions<Sc
                 request.Currency ?? "UGX",
                 request.PhoneNumber,
                 request.PayerName,
+                request.Channel,
                 request.RawPayload,
                 cancellationToken);
             return Ok(new { notification.ExternalReference, notification.Status, notification.ProcessedAt });
@@ -61,14 +62,14 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay, IOptions<Sc
         if (string.IsNullOrWhiteSpace(externalReference)) return BadRequest("External reference is required.");
         var notification = await schoolPay.GetNotificationAsync(externalReference, cancellationToken);
         if (notification is null) return NotFound();
-        return Ok(new { notification.ExternalReference, notification.SchoolPayReference, notification.StudentId, notification.StudentInvoiceId, notification.Amount, notification.Currency, notification.Status, notification.ReceivedAt, notification.ProcessedAt, notification.ErrorMessage });
+        return Ok(new { notification.ExternalReference, notification.SchoolPayReference, notification.StudentId, notification.StudentInvoiceId, notification.Amount, notification.Currency, notification.Channel, notification.Status, notification.ReceivedAt, notification.ProcessedAt, notification.ErrorMessage });
     }
 
     [HttpGet("notifications")]
     public async Task<IActionResult> GetNotifications(CancellationToken cancellationToken)
     {
         var notifications = await schoolPay.GetNotificationsAsync(cancellationToken);
-        return Ok(notifications.Select(n => new { n.ExternalReference, n.SchoolPayReference, n.StudentId, n.StudentInvoiceId, n.Amount, n.Currency, n.Status, n.ReceivedAt, n.ProcessedAt, n.ErrorMessage }));
+        return Ok(notifications.Select(n => new { n.ExternalReference, n.SchoolPayReference, n.StudentId, n.StudentInvoiceId, n.Amount, n.Currency, n.Channel, n.Status, n.ReceivedAt, n.ProcessedAt, n.ErrorMessage }));
     }
 }
 
@@ -81,6 +82,7 @@ public sealed record SchoolPayNotificationRequest(
     string? Currency,
     string? PhoneNumber,
     string? PayerName,
+    string? Channel,
     string? RawPayload,
     string? Status,
     string? Signature);
