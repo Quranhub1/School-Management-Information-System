@@ -59,6 +59,11 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
 
         try
         {
+            // Mark the inbox event before invoking FinanceService: its SaveChanges persists
+            // the verified event and the corresponding ledger posting in one unit of work.
+            notification.Status = "Processed";
+            notification.ProcessedAt = DateTimeOffset.UtcNow;
+
             if (studentInvoiceId.HasValue)
             {
                 var receiptNumber = CreateReceiptNumber(normalizedExternalRef);
@@ -74,17 +79,15 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
                 throw new InvalidOperationException("SchoolPay notification must include either a student ID or a student invoice ID.");
             }
 
-            notification.Status = "Processed";
-            notification.ProcessedAt = DateTimeOffset.UtcNow;
+            await finance.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex)
         {
             notification.Status = "Failed";
             notification.ErrorMessage = ex.Message;
+            await finance.SaveChangesAsync(cancellationToken);
             throw;
         }
-
-        await finance.SaveChangesAsync(cancellationToken);
         return notification;
     }
 
