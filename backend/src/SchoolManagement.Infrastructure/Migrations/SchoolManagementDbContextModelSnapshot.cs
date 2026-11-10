@@ -3139,6 +3139,14 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("SourceChannel")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("ProviderTransactionId")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
                     b.Property<string>("ReceiptNumber")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -3159,7 +3167,11 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("ReceiptNumber")
                         .IsUnique();
 
-                    b.HasIndex("StudentInvoiceId");
+                    b.HasIndex("ProviderTransactionId")
+                        .IsUnique()
+                        .HasFilter("\\"ProviderTransactionId\\" IS NOT NULL");
+
+                    b.HasIndex("StudentInvoiceId", "PaidAt");
 
                     b.ToTable("Payments");
                 });
@@ -5325,6 +5337,14 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
+                    b.Property<string>("ProviderTransactionId")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("ProviderStatus")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -5355,6 +5375,10 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("ExternalReference")
                         .IsUnique();
+
+                    b.HasIndex("ProviderTransactionId")
+                        .IsUnique()
+                        .HasFilter("\\"ProviderTransactionId\\" IS NOT NULL");
 
                     b.HasIndex("SchoolPayReference");
 
