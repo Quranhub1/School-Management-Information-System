@@ -1,12 +1,22 @@
-/* System-wide action control sizing and separation.
-   Scoped to signed-in workspace content; login, sidebar, printed documents and
-   component-specific workflows retain their own layouts and behaviour. */
+/* Shared Finance-standard action styling across signed-in SMIS workspaces.
+   Login, sidebar navigation, printed documents and explicit tab/navigation
+   controls retain their own presentation. */
 .app-shell .content {
-  --smis-action-height: 35px;
+  --smis-action-height: 36px;
   --smis-action-gap: 8px;
-  --smis-action-radius: 3px;
+  --smis-action-radius: 4px;
+  --smis-action-primary: #166534;
+  --smis-action-primary-hover: #14532d;
+  --smis-action-primary-text: #ffffff;
+  --smis-action-secondary: #f8faf9;
+  --smis-action-secondary-hover: #eef3f0;
+  --smis-action-secondary-text: #24332d;
+  --smis-action-secondary-border: #cbd5cf;
+  --smis-action-danger: #991b1b;
+  --smis-action-danger-hover: #7f1d1d;
 }
 
+/* Common dimensions and typography. */
 .app-shell .content button,
 .app-shell .content input[type="button"],
 .app-shell .content input[type="submit"],
@@ -14,15 +24,106 @@
   box-sizing: border-box;
   min-width: 0;
   min-height: var(--smis-action-height) !important;
-  padding: 7px 11px;
+  padding: 8px 13px;
+  border-radius: var(--smis-action-radius);
+  font-family: inherit;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  letter-spacing: normal;
+  font-size: .76rem;
+  font-weight: 650;
   line-height: 1.25;
   vertical-align: middle;
-  border-radius: var(--smis-ui-radius, var(--smis-action-radius));
   white-space: normal;
   overflow-wrap: anywhere;
+  box-shadow: none;
+  transform: none;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 
-/* Icon-only controls remain compact and square instead of becoming wide. */
+/* Primary action: Finance department dark green with white text. */
+.app-shell .content button:not(.secondary-button):not(.btn-secondary):not(.button-secondary):not(.cancel-button):not(.danger-button):not(.delete-button):not(.btn-danger):not(.button-danger):not([data-variant="secondary"]):not([data-variant="danger"]):not([data-destructive="true"]):not([role="tab"]):not(.tab-button):not(.nav-tab):not(.pagination-button):not(.page-link):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button),
+.app-shell .content input[type="button"],
+.app-shell .content input[type="submit"],
+.app-shell .content input[type="reset"] {
+  border: 1px solid var(--smis-action-primary) !important;
+  background: var(--smis-action-primary) !important;
+  color: var(--smis-action-primary-text) !important;
+  font-weight: 650;
+}
+
+.app-shell .content button:not(.secondary-button):not(.btn-secondary):not(.button-secondary):not(.cancel-button):not(.danger-button):not(.delete-button):not(.btn-danger):not(.button-danger):not([data-variant="secondary"]):not([data-variant="danger"]):not([data-destructive="true"]):not([role="tab"]):not(.tab-button):not(.nav-tab):not(.pagination-button):not(.page-link):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button):hover:not(:disabled),
+.app-shell .content input[type="button"]:hover:not(:disabled),
+.app-shell .content input[type="submit"]:hover:not(:disabled),
+.app-shell .content input[type="reset"]:hover:not(:disabled) {
+  border-color: var(--smis-action-primary-hover) !important;
+  background: var(--smis-action-primary-hover) !important;
+  color: #fff !important;
+  box-shadow: none;
+}
+
+/* Secondary actions: neutral surface, dark text and a visible border. */
+.app-shell .content button:is(.secondary-button, .btn-secondary, .button-secondary, .cancel-button, [data-variant="secondary"]) {
+  border: 1px solid var(--smis-action-secondary-border) !important;
+  background: var(--smis-action-secondary) !important;
+  color: var(--smis-action-secondary-text) !important;
+}
+
+.app-shell .content button:is(.secondary-button, .btn-secondary, .button-secondary, .cancel-button, [data-variant="secondary"]):hover:not(:disabled) {
+  border-color: #aab8af !important;
+  background: var(--smis-action-secondary-hover) !important;
+  color: #17251e !important;
+}
+
+/* Destructive actions remain clearly distinct from normal actions. */
+.app-shell .content button:is(.danger-button, .delete-button, .btn-danger, .button-danger, [data-variant="danger"], [data-destructive="true"]) {
+  border: 1px solid var(--smis-action-danger) !important;
+  background: var(--smis-action-danger) !important;
+  color: #fff !important;
+}
+
+.app-shell .content button:is(.danger-button, .delete-button, .btn-danger, .button-danger, [data-variant="danger"], [data-destructive="true"]):hover:not(:disabled) {
+  border-color: var(--smis-action-danger-hover) !important;
+  background: var(--smis-action-danger-hover) !important;
+  color: #fff !important;
+}
+
+/* Tabs and pagination keep their neutral/navigation semantics, but share
+   Finance's dimensions and typography. */
+.app-shell .content button:is([role="tab"], .tab-button, .nav-tab, .pagination-button, .page-link) {
+  min-height: 36px;
+  border-radius: 4px;
+  font-size: .75rem;
+  font-weight: 650;
+  line-height: 1.25;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Disabled controls use a readable neutral state regardless of variant. */
+.app-shell .content button:disabled,
+.app-shell .content input[type="button"]:disabled,
+.app-shell .content input[type="submit"]:disabled,
+.app-shell .content input[type="reset"]:disabled {
+  cursor: not-allowed;
+  border-color: #cbd5cf !important;
+  background: #e9eeeb !important;
+  color: #526158 !important;
+  opacity: 1;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Keyboard focus remains obvious against every action colour. */
+.app-shell .content button:focus-visible,
+.app-shell .content input[type="button"]:focus-visible,
+.app-shell .content input[type="submit"]:focus-visible,
+.app-shell .content input[type="reset"]:focus-visible {
+  outline: 2px solid #166534;
+  outline-offset: 2px;
+}
+
+/* Icon-only controls remain compact and square. */
 .app-shell .content button:has(> svg:only-child),
 .app-shell .content button:has(> i:only-child),
 .app-shell .content button:has(> [aria-hidden="true"]:only-child) {
@@ -32,8 +133,7 @@
   flex: 0 0 var(--smis-action-height);
 }
 
-/* Separate action siblings in existing flex/grid groups without changing
-   their display mode, order, event handlers, or responsive column rules. */
+/* Keep existing action groups separated and allow them to wrap. */
 .app-shell .content :has(> button + button) {
   column-gap: var(--smis-action-gap) !important;
   row-gap: var(--smis-action-gap) !important;
@@ -50,30 +150,10 @@
   max-width: 100%;
 }
 
-/* Table cells sometimes render action buttons as bare adjacent siblings rather
-   than inside a flex wrapper. Give those controls a real visual separation. */
 .app-shell .content td > button + button {
   margin-left: 8px !important;
 }
 
-/* Keep focus and disabled states legible and consistent. */
-.app-shell .content button:focus-visible,
-.app-shell .content input[type="button"]:focus-visible,
-.app-shell .content input[type="submit"]:focus-visible,
-.app-shell .content input[type="reset"]:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--brand-accent, #b88b45) 72%, transparent);
-  outline-offset: 2px;
-}
-
-.app-shell .content button:disabled,
-.app-shell .content input[type="button"]:disabled,
-.app-shell .content input[type="submit"]:disabled,
-.app-shell .content input[type="reset"]:disabled {
-  cursor: not-allowed;
-}
-
-/* On narrow screens, let grouped actions wrap instead of overlapping or
-   forcing the workspace wider than the viewport. */
 @media (max-width: 760px) {
   .app-shell .content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions, .form-actions, [style*="display: flex"], [style*="display:flex"]):has(> button + button) {
     flex-wrap: wrap;
