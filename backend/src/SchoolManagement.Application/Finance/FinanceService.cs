@@ -60,7 +60,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         return payment;
     }
 
-    public async Task<Payment> RecordUnallocatedPaymentAsync(Guid studentId, string receiptNumber, decimal amount, string paymentMethod, string currency, string? reference, CancellationToken cancellationToken, string? sourceChannel = null, string? providerTransactionId = null, bool saveChanges = true)
+    public async Task<Payment> RecordUnallocatedPaymentAsync(Guid studentId, string receiptNumber, decimal amount, string paymentMethod, string currency, string? reference, CancellationToken cancellationToken, string? sourceChannel = null, string? providerTransactionId = null, bool saveChanges = true, bool allocateToOutstandingInvoices = false)
     {
         if (!await finance.StudentExistsAsync(studentId, cancellationToken)) throw new ArgumentException("Student was not found.");
         if (amount <= 0) throw new ArgumentException("Payment amount must be greater than zero.");
@@ -80,6 +80,48 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         await finance.AddPaymentAsync(payment, cancellationToken);
         await finance.AddPaymentLedgerEntryAsync(new PaymentLedgerEntry { StudentId = studentId, PaymentId = payment.Id, EntryType = "Payment", Description = $"Payment {payment.ReceiptNumber}", Amount = -amount, Currency = payment.Currency, Reference = payment.Reference ?? payment.ReceiptNumber }, cancellationToken);
+
+        if (allocateToOutstandingInvoices)
+        {
+            var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
+            var outstandingInvoices = await finance.GetOutstandingInvoicesAsync(studentId, normalizedCurrency, cancellationToken);
+            var remaining = amount;
+            foreach (var candidate in outstandingInvoices)
+            {
+                if (remaining <= 0) break;
+                var invoice = await finance.GetInvoiceAsync(candidate.Id, cancellationToken);
+                if (invoice is null) continue;
+                var allocationAmount = Math.Min(remaining, invoice.OutstandingAmount);
+                if (allocationAmount <= 0) continue;
+
+                invoice.PaidAmount += allocationAmount;
+                invoice.Status = invoice.PaidAmount >= invoice.NetAmount ? "Paid" : "PartiallyPaid";
+                ApplyPaymentToInstallments(invoice, allocationAmount);
+
+                var allocation = new PaymentAllocation
+                {
+                    PaymentId = payment.Id,
+                    StudentInvoiceId = invoice.Id,
+                    AllocatedAmount = allocationAmount,
+                    Currency = payment.Currency,
+                    Notes = "Automatic FIFO allocation of SchoolPay payment"
+                };
+                payment.Allocations.Add(allocation);
+                await finance.AddPaymentAllocationAsync(allocation, cancellationToken);
+
+                var allocationJournal = CreateJournalEntry(
+                    $"ALLOC-{allocation.Id:N}",
+                    $"Allocate SchoolPay payment {payment.ReceiptNumber} to invoice {invoice.InvoiceNumber}",
+                    allocationAmount,
+                    unappliedAccount.Id,
+                    receivableAccount.Id,
+                    "PaymentAllocation",
+                    allocation.Id);
+                await AddPostedJournalEntryAsync(allocationJournal, cancellationToken);
+                remaining -= allocationAmount;
+            }
+        }
+
         if (saveChanges) await finance.SaveChangesAsync(cancellationToken);
         return payment;
     }
