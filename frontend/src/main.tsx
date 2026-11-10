@@ -10,6 +10,7 @@ import './tailadmin-inspired.css'
 import './sidebar-fixed.css'
 import './table-font.css'
 import './workspace-density.css'
+import './system-button-layout.css'
 
 installGlobalErrorHandlers()
 
