@@ -4,7 +4,6 @@
 INSERT INTO roles (id, name, description) VALUES
     (gen_random_uuid(), 'System Administrator', 'Full system access and configuration'),
     (gen_random_uuid(), 'Principal', 'Institutional leadership and oversight'),
-    (gen_random_uuid(), 'Registrar', 'Academic registry and records management'),
     (gen_random_uuid(), 'Academic Registrar', 'Academic operations and curriculum'),
     (gen_random_uuid(), 'Admissions Officer', 'Application and admission processing'),
     (gen_random_uuid(), 'Head of Faculty', 'Faculty/school leadership'),

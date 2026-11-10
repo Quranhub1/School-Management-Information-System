@@ -88,7 +88,7 @@ export function canManageHostel(roles: string[]) {
   return hasAnyRole(roles, HOSTEL_MANAGEMENT_ROLES)
 }
 export function canManagePrinters(roles: string[]) {
-  return hasAnyRole(roles, ['SystemAdministrator', 'Registrar', 'Principal', 'Director', 'ResidentDirector', 'Secretary', 'Records Officer'])
+  return hasAnyRole(roles, ['SystemAdministrator', 'AcademicRegistrar', 'AssistantRegistrar', 'Principal', 'Director', 'ResidentDirector', 'Secretary', 'Records Officer'])
 }
 export function canManageDocuments(roles: string[]) {
   return hasAnyRole(roles, STUDENT_MANAGEMENT_ROLES)
