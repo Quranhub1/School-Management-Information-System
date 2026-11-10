@@ -78,9 +78,9 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
         const billedByFee: Record<string, number> = {}
         for (const invoice of studentInvoices) {
           const feeType = invoice.feeType || 'Other Fees'
-          billedByFee[feeType] = (billedByFee[feeType] ?? 0) + Math.max(0, invoice.amount)
+          billedByFee[feeType] = (billedByFee[feeType] ?? 0) + Math.max(0, invoice.paidAmount + invoice.balance)
         }
-        const billed = studentInvoices.reduce((sum, invoice) => sum + Math.max(0, invoice.amount), 0)
+        const billed = studentInvoices.reduce((sum, invoice) => sum + Math.max(0, invoice.paidAmount + invoice.balance), 0)
         const paid = studentInvoices.reduce((sum, invoice) => sum + invoice.paidAmount, 0)
         const balance = studentInvoices.reduce((sum, invoice) => sum + invoice.balance, 0)
         return { student, billedByFee, billed, paid, balance, invoiceCount: studentInvoices.length }
