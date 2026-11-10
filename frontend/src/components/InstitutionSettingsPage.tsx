@@ -429,10 +429,12 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
           </div>
         )}
 
-        <div className="topbar-actions" style={{ marginTop: 22 }}>
-          <button type="submit" disabled={saving} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #15803d', borderRadius: 6, minHeight: 42, padding: '10px 20px', fontWeight: 600, boxShadow: 'none' }}>{saving ? 'Saving…' : 'Save Settings'}</button>
-          <button type="button" onClick={() => void load()} disabled={saving || uploadingLogo || uploadingGallery} style={{ background: '#ffffff', color: '#44403c', border: '1px solid #d6d3d1', borderRadius: 6, minHeight: 42, padding: '10px 18px', fontWeight: 600, boxShadow: 'none', cursor: saving || uploadingLogo || uploadingGallery ? 'not-allowed' : 'pointer', opacity: saving || uploadingLogo || uploadingGallery ? 0.65 : 1 }}>Reset</button>
-        </div>
+        {tab !== 'email' && (
+          <div className="topbar-actions" style={{ marginTop: 22 }}>
+            <button type="submit" disabled={saving} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #15803d', borderRadius: 6, minHeight: 42, padding: '10px 20px', fontWeight: 600, boxShadow: 'none' }}>{saving ? 'Saving…' : 'Save Settings'}</button>
+            <button type="button" onClick={() => void load()} disabled={saving || uploadingLogo || uploadingGallery} style={{ background: '#ffffff', color: '#44403c', border: '1px solid #d6d3d1', borderRadius: 6, minHeight: 42, padding: '10px 18px', fontWeight: 600, boxShadow: 'none', cursor: saving || uploadingLogo || uploadingGallery ? 'not-allowed' : 'pointer', opacity: saving || uploadingLogo || uploadingGallery ? 0.65 : 1 }}>Reset</button>
+          </div>
+        )}
       </form>
     </section>
   )
