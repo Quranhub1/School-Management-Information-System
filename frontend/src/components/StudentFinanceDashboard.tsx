@@ -29,7 +29,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null)
   const [paymentAmount, setPaymentAmount] = useState('')
   const [receiptNumber, setReceiptNumber] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('Cash')
+  const [sourceChannel, setSourceChannel] = useState('Cash')
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
   const [reference, setReference] = useState('')
 
@@ -111,7 +111,8 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
     const validation = validateForm(recordPaymentRequestSchema, {
       amount: Number(paymentAmount),
       receiptNumber: receiptNumber.trim(),
-      paymentMethod,
+      paymentMethod: 'Manual',
+      sourceChannel,
       reference: reference.trim(),
       currency: SYSTEM_CURRENCY,
     })
@@ -221,6 +222,6 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
         <div className="table-wrap"><table><thead><tr><th>Invoice</th><th>Fee Type</th><th>Issued</th><th>Billed</th><th>Paid</th><th>Balance</th><th /></tr></thead><tbody>{invoices.map(inv=><tr key={inv.id}><td><strong>{inv.invoiceNumber}</strong></td><td>{inv.feeType}</td><td>{new Date(inv.issuedAt).toLocaleDateString('en-UG')}</td><td>{money(inv.amount)}</td><td style={{color:'#059669'}}>{money(inv.paidAmount)}</td><td style={{fontWeight:800}}>{money(inv.balance)}</td><td>{inv.balance>0 && <button className="secondary-button" onClick={()=>setPaymentInvoice(inv)}>Record Payment</button>}</td></tr>)}</tbody></table></div>
       </div>
     </>}
-    {paymentInvoice && <div className="modal-backdrop"><form className="auth-card" onSubmit={submitPayment}><p className="eyebrow">PAYMENT</p><h3>{paymentInvoice.feeType} · {paymentInvoice.invoiceNumber}</h3><p>Outstanding: {money(paymentInvoice.balance)}</p>{Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={paymentInvoice.balance} step="1" value={paymentAmount} onChange={e=>setPaymentAmount(e.target.value)} placeholder="Amount" required /><input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e=>setReceiptNumber(e.target.value)} placeholder="Receipt number" required /><select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}><option>Cash</option><option>Bank Deposit - Centenary</option><option>Bank Deposit - Stanbic</option><option>MTN Mobile Money</option><option>Airtel Money</option><option>Card</option><option>Cheque</option></select><input value={reference} onChange={e=>setReference(e.target.value)} placeholder="Payment Provider / bank / mobile reference" /><div className="topbar-actions"><button type="button" className="secondary-button" onClick={()=>setPaymentInvoice(null)}>Cancel</button><button type="submit">Post Payment</button></div></form></div>}
+    {paymentInvoice && <div className="modal-backdrop"><form className="auth-card" onSubmit={submitPayment}><p className="eyebrow">PAYMENT</p><h3>{paymentInvoice.feeType} · {paymentInvoice.invoiceNumber}</h3><p>Outstanding: {money(paymentInvoice.balance)}</p>{Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={paymentInvoice.balance} step="1" value={paymentAmount} onChange={e=>setPaymentAmount(e.target.value)} placeholder="Amount" required /><input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e=>setReceiptNumber(e.target.value)} placeholder="Receipt number" required /><label>Manual source<select value={sourceChannel} onChange={e=>setSourceChannel(e.target.value)}><option>Cash</option><option>Cheque</option></select></label><input value={reference} onChange={e=>setReference(e.target.value)} placeholder="Manual receipt / cheque reference" /><div className="topbar-actions"><button type="button" className="secondary-button" onClick={()=>setPaymentInvoice(null)}>Cancel</button><button type="submit">Post Payment</button></div></form></div>}
   </section>
 }
