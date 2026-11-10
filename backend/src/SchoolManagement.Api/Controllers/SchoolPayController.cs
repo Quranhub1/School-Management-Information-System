@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
+using System.Text;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
 
@@ -8,7 +11,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/schoolpay")]
 [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
-public sealed class SchoolPayController(ISchoolPayService schoolPay) : ControllerBase
+public sealed class SchoolPayController(ISchoolPayService schoolPay, IOptions<SchoolPayOptions> schoolPayOptions) : ControllerBase
 {
     [HttpPost("webhook")]
     [AllowAnonymous]
@@ -18,6 +21,10 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay) : Controlle
         if (string.IsNullOrWhiteSpace(request.ExternalReference)) return BadRequest("External reference is required.");
         if (string.IsNullOrWhiteSpace(request.SchoolPayReference)) return BadRequest("SchoolPay reference is required.");
         if (request.Amount <= 0) return BadRequest("Amount must be greater than zero.");
+        if (!string.Equals(request.Status, "PAID", StringComparison.OrdinalIgnoreCase))
+            return Conflict("Only confirmed PAID SchoolPay transactions can be posted.");
+        if (!IsValidWebhookSignature(request.Signature, request.SchoolPayReference))
+            return Unauthorized("SchoolPay webhook signature is invalid or not configured.");
 
         Guid? studentId = null;
         Guid? studentInvoiceId = null;
@@ -50,6 +57,25 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay) : Controlle
         }
     }
 
+    private bool IsValidWebhookSignature(string? suppliedSignature, string schoolPayReceiptNumber)
+    {
+        var secret = schoolPayOptions.Value.WebhookSecret;
+        if (string.IsNullOrWhiteSpace(secret) || string.IsNullOrWhiteSpace(suppliedSignature))
+            return false;
+
+        var expected = SHA256.HashData(Encoding.UTF8.GetBytes(secret + schoolPayReceiptNumber.Trim()));
+        try
+        {
+            var supplied = Convert.FromHexString(suppliedSignature.Trim());
+            return supplied.Length == expected.Length
+                && CryptographicOperations.FixedTimeEquals(supplied, expected);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
     [HttpGet("notifications/{externalReference}")]
     public async Task<IActionResult> GetNotification(string externalReference, CancellationToken cancellationToken)
     {
@@ -76,4 +102,6 @@ public sealed record SchoolPayNotificationRequest(
     string? Currency,
     string? PhoneNumber,
     string? PayerName,
-    string? RawPayload);
+    string? RawPayload,
+    string? Status,
+    string? Signature);
