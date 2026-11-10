@@ -50,6 +50,12 @@
   max-width: 100%;
 }
 
+/* Table cells sometimes render action buttons as bare adjacent siblings rather
+   than inside a flex wrapper. Give those controls a real visual separation. */
+.app-shell .content td > button + button {
+  margin-left: 8px !important;
+}
+
 /* Keep focus and disabled states legible and consistent. */
 .app-shell .content button:focus-visible,
 .app-shell .content input[type="button"]:focus-visible,
