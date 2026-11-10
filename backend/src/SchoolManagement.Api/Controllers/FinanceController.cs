@@ -620,7 +620,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         try
         {
             var payment = await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Currency, request.Reference, cancellationToken, request.SourceChannel);
-            await receiptEmails.SendReceiptAsync(payment.Id, cancellationToken);
             return Ok(payment);
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
