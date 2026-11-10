@@ -61,6 +61,7 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(x => x.Amount).HasPrecision(18, 2);
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         builder.Property(x => x.PaymentMethod).HasMaxLength(40).IsRequired();
+        builder.Property(x => x.PaymentSource).HasMaxLength(20).IsRequired();
         builder.Property(x => x.Reference).HasMaxLength(120);
         builder.HasIndex(x => x.ReceiptNumber).IsUnique();
         builder.HasIndex(x => new { x.StudentInvoiceId, x.PaidAt });
