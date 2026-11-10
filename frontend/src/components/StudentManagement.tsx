@@ -15,6 +15,7 @@ import { getCurricula, type Curriculum } from '../api/curriculumManagement'
 import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { validateForm } from '../lib/validation'
 import { studentApplicationSubmissionSchema } from '../schemas'
+import { formatPersonName } from '../utils/personName'
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -142,7 +143,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
 
   const studentColumns = useMemo<ColDef<Student>[]>(() => [
     { headerName: 'Student number', field: 'studentNumber', minWidth: 150 },
-    { headerName: 'Name', colId: 'fullName', valueGetter: params => params.data ? [params.data.firstName, params.data.otherNames, params.data.lastName].filter(Boolean).join(' ') : '' },
+    { headerName: 'Name', colId: 'fullName', valueGetter: params => params.data ? formatPersonName(params.data.lastName, params.data.firstName, params.data.otherNames) : '' },
     { headerName: 'Gender', field: 'gender', valueFormatter: params => params.value || '—' },
     { headerName: 'Phone', field: 'phoneNumber', valueFormatter: params => params.value || '—' },
     { headerName: 'Email', field: 'email', valueFormatter: params => params.value || '—' },
