@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   getResidentDirectorDashboard,
@@ -276,7 +277,7 @@ export function ResidentDirectorDashboard() {
                       students.map(student => (
                         <tr key={student.id}>
                           <td><strong>{student.studentNumber}</strong></td>
-                          <td>{student.firstName} {student.otherNames} {student.lastName}</td>
+                          <td>{formatPersonName(student.lastName, student.firstName, student.otherNames)}</td>
                           <td>{student.gender || '—'}</td>
                           <td>
                             <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: getStatusColor(student.status), color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
@@ -324,7 +325,7 @@ export function ResidentDirectorDashboard() {
                       staff.map(member => (
                         <tr key={member.id}>
                           <td><strong>{member.staffNumber}</strong></td>
-                          <td>{member.firstName} {member.otherNames} {member.lastName}</td>
+                          <td>{formatPersonName(member.lastName, member.firstName, member.otherNames)}</td>
                           <td>{member.email || '—'}</td>
                           <td>{member.phoneNumber || '—'}</td>
                           <td>{member.department || '—'}</td>
