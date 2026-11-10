@@ -95,7 +95,7 @@ public sealed class DefaultersController(SchoolManagementDbContext db) : Control
             {
                 d.studentId,
                 studentNumber = student?.StudentNumber,
-                studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim(),
+                studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant(),
                 d.totalBalance,
                 d.currency,
                 d.oldestInvoice,
@@ -137,7 +137,7 @@ public sealed class DefaultersController(SchoolManagementDbContext db) : Control
         {
             studentId,
             studentNumber = student?.StudentNumber,
-            studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim(),
+            studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant(),
             totalBalance = invoices.Sum(x => x.balance),
             invoices
         });
@@ -173,7 +173,7 @@ public sealed class DefaultersController(SchoolManagementDbContext db) : Control
             return new
             {
                 d.studentId,
-                studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim(),
+                studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant(),
                 d.totalBalance,
                 severity,
                 suggestedActions = severity switch
