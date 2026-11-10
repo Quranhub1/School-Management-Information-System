@@ -7,12 +7,15 @@ namespace SchoolManagement.Application.Finance;
 
 public sealed class SchoolPayService(IFinanceRepository finance, FinanceService financeService) : ISchoolPayService
 {
-    public async Task<SchoolPaymentNotification> ProcessNotificationAsync(string externalReference, string schoolPayReference, Guid? studentId, Guid? studentInvoiceId, decimal amount, string currency, string? phoneNumber, string? payerName, string? channel, string? rawPayload, CancellationToken cancellationToken)
+    public async Task<SchoolPaymentNotification> ProcessNotificationAsync(string externalReference, string schoolPayReference, Guid? studentId, Guid? studentInvoiceId, decimal amount, string currency, string? phoneNumber, string? payerName, string? channel, string? rawPayload, CancellationToken cancellationToken, string? providerTransactionId = null, string? providerStatus = null)
     {
         if (string.IsNullOrWhiteSpace(externalReference)) throw new ArgumentException("External reference is required.");
         if (string.IsNullOrWhiteSpace(schoolPayReference)) throw new ArgumentException("SchoolPay reference is required.");
         if (amount <= 0) throw new ArgumentException("Payment amount must be greater than zero.");
         if (string.IsNullOrWhiteSpace(currency)) throw new ArgumentException("Currency is required.");
+        if (!string.Equals(providerStatus?.Trim(), "PAID", StringComparison.OrdinalIgnoreCase) && !string.Equals(providerStatus?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("SchoolPay transaction is not confirmed as paid/completed.");
+        if (string.IsNullOrWhiteSpace(providerTransactionId)) throw new ArgumentException("SchoolPay provider transaction ID is required.");
+        if (string.IsNullOrWhiteSpace(channel)) throw new ArgumentException("SchoolPay source channel is required.");
 
         var normalizedExternalRef = externalReference.Trim();
         var existing = await finance.GetSchoolPaymentNotificationAsync(normalizedExternalRef, cancellationToken);
@@ -23,7 +26,9 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
                 && existing.StudentInvoiceId == studentInvoiceId
                 && existing.Amount == amount
                 && string.Equals(existing.Currency, currency.Trim(), StringComparison.OrdinalIgnoreCase)
-                && string.Equals(existing.Channel, channel?.Trim(), StringComparison.OrdinalIgnoreCase);
+                && string.Equals(existing.Channel, channel?.Trim(), StringComparison.OrdinalIgnoreCase)
+                && string.Equals(existing.ProviderTransactionId, providerTransactionId?.Trim(), StringComparison.Ordinal)
+                && string.Equals(existing.ProviderStatus, providerStatus?.Trim(), StringComparison.OrdinalIgnoreCase);
             if (!samePayment)
                 throw new InvalidOperationException("External reference has already been received with different payment details.");
             return existing;
@@ -49,6 +54,8 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
             Amount = amount,
             Currency = currency.Trim().ToUpperInvariant(),
             Channel = string.IsNullOrWhiteSpace(channel) ? null : channel.Trim(),
+            ProviderTransactionId = providerTransactionId.Trim(),
+            ProviderStatus = providerStatus!.Trim(),
             PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim(),
             PayerName = string.IsNullOrWhiteSpace(payerName) ? null : payerName.Trim(),
             RawPayload = rawPayload,
@@ -59,33 +66,30 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
 
         try
         {
-            // Mark the inbox event before invoking FinanceService: its SaveChanges persists
-            // the verified event and the corresponding ledger posting in one unit of work.
-            notification.Status = "Processed";
-            notification.ProcessedAt = DateTimeOffset.UtcNow;
 
             if (studentInvoiceId.HasValue)
             {
                 var receiptNumber = CreateReceiptNumber(normalizedExternalRef);
-                await financeService.RecordPaymentAsync(studentInvoiceId.Value, receiptNumber, amount, "SchoolPay", schoolPayReference, cancellationToken, "SchoolPay");
+                await financeService.RecordPaymentAsync(studentInvoiceId.Value, receiptNumber, amount, "SchoolPay", schoolPayReference, cancellationToken, "SchoolPay", channel, providerTransactionId, saveChanges: false);
             }
             else if (studentId.HasValue)
             {
                 var receiptNumber = CreateReceiptNumber(normalizedExternalRef);
-                await financeService.RecordUnallocatedPaymentAsync(studentId.Value, receiptNumber, amount, "SchoolPay", currency, schoolPayReference, cancellationToken, "SchoolPay");
+                await financeService.RecordUnallocatedPaymentAsync(studentId.Value, receiptNumber, amount, "SchoolPay", currency, schoolPayReference, cancellationToken, "SchoolPay", channel, providerTransactionId, saveChanges: false, allocateToOutstandingInvoices: true);
             }
             else
             {
                 throw new InvalidOperationException("SchoolPay notification must include either a student ID or a student invoice ID.");
             }
 
+            notification.Status = "Processed";
+            notification.ProcessedAt = DateTimeOffset.UtcNow;
             await finance.SaveChangesAsync(cancellationToken);
         }
-        catch (Exception ex)
+        catch
         {
-            notification.Status = "Failed";
-            notification.ErrorMessage = ex.Message;
-            await finance.SaveChangesAsync(cancellationToken);
+            // Do not retry SaveChanges after a failed transaction; tracked Added entities
+            // could otherwise be committed by a second save.
             throw;
         }
         return notification;
