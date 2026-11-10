@@ -24,8 +24,8 @@ public sealed class SchoolPayController(
     public async Task<IActionResult> ReceiveNotification([FromBody] SchoolPayWebhookRequest request, CancellationToken cancellationToken)
     {
         if (request?.Payment is null) return BadRequest("SchoolPay payment payload is required.");
-        if (!string.Equals(request.Type, "SCHOOL_FEES", StringComparison.OrdinalIgnoreCase))
-            return BadRequest("Only SCHOOL_FEES webhook notifications are supported by this endpoint.");
+        if (!string.Equals(request.Type, "SCHOOL_FEES", StringComparison.OrdinalIgnoreCase) && !string.Equals(request.Type, "OTHER_FEES", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("Unsupported SchoolPay webhook payment type.");
 
         var payment = request.Payment;
         if (string.IsNullOrWhiteSpace(payment.SchoolPayReceiptNumber))
@@ -59,12 +59,15 @@ public sealed class SchoolPayController(
         if (string.IsNullOrWhiteSpace(paymentCode) && string.IsNullOrWhiteSpace(registrationNumber))
             return BadRequest("SchoolPay student payment code or registration number is required.");
 
-        var student = await db.Students.IgnoreQueryFilters().SingleOrDefaultAsync(
-            x => (!string.IsNullOrWhiteSpace(paymentCode) && x.StudentNumber == paymentCode) ||
-                 (!string.IsNullOrWhiteSpace(registrationNumber) && x.StudentNumber == registrationNumber),
-            cancellationToken);
-        if (student is null)
-            return UnprocessableEntity("SchoolPay student payment code/registration number does not match a student in SMIS.");
+        var matchedStudents = await db.Students.IgnoreQueryFilters()
+            .Where(x => !x.IsArchived &&
+                ((!string.IsNullOrWhiteSpace(paymentCode) && x.StudentNumber == paymentCode) ||
+                 (!string.IsNullOrWhiteSpace(registrationNumber) && x.StudentNumber == registrationNumber)))
+            .Take(2)
+            .ToListAsync(cancellationToken);
+        if (matchedStudents.Count != 1)
+            return UnprocessableEntity("SchoolPay student payment code/registration number must match exactly one active SMIS student.");
+        var student = matchedStudents[0];
 
         try
         {
