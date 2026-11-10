@@ -97,6 +97,7 @@ if (builder.Environment.IsProduction() && allowedOrigins.Length == 0)
 builder.Services.AddCors(options => { options.AddDefaultPolicy(policy => { if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins); else policy.AllowAnyOrigin(); policy.AllowAnyHeader().AllowAnyMethod().WithExposedHeaders(SchoolManagement.Api.Middleware.CorrelationIdMiddleware.HeaderName); }); });
 builder.Services.AddApplication();
 builder.Services.AddScoped<PaymentReceiptEmailService>();
+builder.Services.AddHostedService<PaymentReceiptEmailWorker>();
 builder.Services.Configure<SchoolPayOptions>(builder.Configuration.GetSection(SchoolPayOptions.SectionName));
 builder.Services.AddScoped<CampusAccessService>();
 builder.Services.AddSingleton<LocalDatabaseBackupService>();
