@@ -210,6 +210,7 @@ public sealed class SchoolPaymentNotificationConfiguration : IEntityTypeConfigur
         builder.Property(x => x.PhoneNumber).HasMaxLength(30);
         builder.Property(x => x.PayerName).HasMaxLength(200);
         builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+        builder.Property(x => x.Channel).HasMaxLength(40);
         builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
         builder.Property(x => x.ErrorMessage).HasMaxLength(1000);
         builder.HasIndex(x => x.ExternalReference).IsUnique();
