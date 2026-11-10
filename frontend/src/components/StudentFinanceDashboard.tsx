@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { getFinanceStudents, getFeeStructures, getInvoices, getPayments, getStudentFinanceProfile, getStudentFinancialStatement, recordPayment, type FinanceStudentRegisterEntry, type FeeStructure, type Invoice, type StudentFinanceProfile, type StudentFinancialStatement } from '../api/finance'
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { validateForm } from '../lib/validation'
@@ -225,7 +225,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
             <th style={{ textAlign: 'right', padding: '9px 10px' }}>Balance</th>
           </tr></thead>
           <tbody>
-            {groupedRegisterRows.map(group => <React.Fragment key={group.key}>
+            {groupedRegisterRows.map(group => <Fragment key={group.key}>
               <tr className="finance-register-group-row">
                 <td colSpan={feeTypeColumns.length + 5} style={{ padding: '10px', background: '#f1f5f9', fontWeight: 800, borderTop: '1px solid #cbd5e1' }}>{group.label} <span style={{ color: '#64748b', fontWeight: 500 }}>· {group.rows.length} students</span></td>
               </tr>
