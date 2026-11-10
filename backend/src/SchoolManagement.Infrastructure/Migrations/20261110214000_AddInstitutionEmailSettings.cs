@@ -1,11 +1,7 @@
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
-[DbContext(typeof(SchoolManagementDbContext))]
-[Migration("20261110214000_AddInstitutionEmailSettings")]
 public partial class AddInstitutionEmailSettings : Migration
 {
     protected override void Up(MigrationBuilder m)
