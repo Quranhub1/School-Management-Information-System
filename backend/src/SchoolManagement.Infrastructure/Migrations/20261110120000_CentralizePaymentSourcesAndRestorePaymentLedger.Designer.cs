@@ -3164,7 +3164,7 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("ProviderTransactionId")
                         .IsUnique()
-                        .HasFilter("\\"ProviderTransactionId\\" IS NOT NULL");
+                        .HasFilter("\"ProviderTransactionId\" IS NOT NULL");
 
                     b.HasIndex("StudentInvoiceId", "PaidAt");
 
@@ -5373,7 +5373,7 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("ProviderTransactionId")
                         .IsUnique()
-                        .HasFilter("\\"ProviderTransactionId\\" IS NOT NULL");
+                        .HasFilter("\"ProviderTransactionId\" IS NOT NULL");
 
                     b.HasIndex("SchoolPayReference");
 
