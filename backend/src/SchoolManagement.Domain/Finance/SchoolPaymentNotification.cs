@@ -9,6 +9,7 @@ public sealed class SchoolPaymentNotification
     public Guid? StudentInvoiceId { get; init; }
     public decimal Amount { get; init; }
     public string Currency { get; init; } = "UGX";
+    public string? Channel { get; init; }
     public string Status { get; set; } = "Pending";
     public string? PhoneNumber { get; init; }
     public string? PayerName { get; init; }
