@@ -95,7 +95,7 @@ public sealed class ReportGenerator(SchoolManagementDbContext db)
             rank = higherGpas + 1;
         }
 
-        return new StudentReportCardDto(student.StudentNumber, $"{student.FirstName} {student.LastName}".Trim(), formatted, gpa, rank, cohortGpas.Count);
+        return new StudentReportCardDto(student.StudentNumber, $"{student.LastName} {student.FirstName}".Trim(), formatted, gpa, rank, cohortGpas.Count);
     }
 
     public async Task<FeeReceiptDto?> GenerateFeeReceiptAsync(Guid paymentId, CancellationToken cancellationToken = default)
