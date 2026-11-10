@@ -212,7 +212,7 @@ public sealed partial class CentralizeSchoolPayProviderAndRestorePaymentLedger :
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.Sql("""
-            DO $
+            DO $$
             BEGIN
                 IF EXISTS (SELECT 1 FROM "PaymentAllocations")
                    OR EXISTS (SELECT 1 FROM "PaymentLedgerEntries")
