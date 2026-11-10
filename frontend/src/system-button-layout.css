@@ -34,8 +34,10 @@
   font-weight: 650;
   line-height: 1.25;
   vertical-align: middle;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  /* Action labels stay on one line so narrow cards and tables do not turn
+     landscape controls into tall, multi-line buttons. Action groups wrap instead. */
+  white-space: nowrap;
+  overflow-wrap: normal;
   box-shadow: none;
   transform: none;
   transition: background-color .15s ease, border-color .15s ease, color .15s ease;
