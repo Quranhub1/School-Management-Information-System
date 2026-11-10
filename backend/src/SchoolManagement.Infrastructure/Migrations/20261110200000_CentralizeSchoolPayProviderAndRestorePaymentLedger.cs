@@ -210,6 +210,18 @@ public sealed partial class CentralizeSchoolPayProviderAndRestorePaymentLedger :
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.Sql("""
+            DO $
+            BEGIN
+                IF EXISTS (SELECT 1 FROM "PaymentAllocations")
+                   OR EXISTS (SELECT 1 FROM "PaymentLedgerEntries")
+                   OR EXISTS (SELECT 1 FROM "Payments" WHERE "ProviderTransactionId" IS NOT NULL OR "SourceChannel" IS NOT NULL)
+                   OR EXISTS (SELECT 1 FROM "SchoolPaymentNotifications" WHERE "ProviderTransactionId" IS NOT NULL OR "ProviderStatus" IS NOT NULL) THEN
+                    RAISE EXCEPTION 'Cannot revert payment integrity migration after allocation, ledger or provider metadata has been recorded.';
+                END IF;
+            END $;
+            """);
+
         migrationBuilder.DropIndex(name: "IX_SchoolPaymentNotifications_ProviderTransactionId", table: "SchoolPaymentNotifications");
         migrationBuilder.DropTable(name: "PaymentLedgerEntries");
         migrationBuilder.DropTable(name: "PaymentAllocations");
