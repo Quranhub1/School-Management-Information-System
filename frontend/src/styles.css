@@ -4344,6 +4344,260 @@ table { font-variant-numeric: tabular-nums; }
 }
 
 
+/* Guild workspace visual refinement: restrained institutional green, clear type and controls. */
+.guild-page {
+  --brand-primary: #176b43;
+  --brand-primary-soft: #eaf5ee;
+  --smis-text: #202b25;
+  --smis-text-muted: #59675f;
+  --smis-text-soft: #718078;
+  font-family: var(--font-sans, "Inter Variable", Inter, sans-serif);
+  color: var(--smis-text);
+}
+.guild-page h2,
+.guild-page h3,
+.guild-page h4,
+.guild-page .guild-kpi strong,
+.guild-page .guild-portfolio-card strong,
+.guild-page .guild-quick-actions strong {
+  font-family: var(--font-display, "Plus Jakarta Sans Variable", sans-serif);
+  letter-spacing: -0.015em;
+}
+.guild-page .eyebrow {
+  color: #28734d;
+  font-weight: 750;
+  letter-spacing: .09em;
+}
+.guild-page .guild-surface,
+.guild-page .guild-kpi {
+  border-color: #dce7df;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(24, 48, 34, .045);
+}
+.guild-page .guild-kpi {
+  background: #fff;
+}
+.guild-page .guild-kpi span {
+  color: #59675f;
+}
+.guild-page .guild-kpi strong {
+  color: #1e392b;
+  font-size: 1.48rem;
+}
+.guild-page .guild-kpi small,
+.guild-page .guild-portfolio-card small,
+.guild-page .guild-quick-actions small,
+.guild-page .guild-activity small,
+.guild-page .guild-note span {
+  color: #65746b;
+}
+.guild-page .guild-primary-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid #dce7df;
+  border-radius: 9px;
+  background: #f4f8f5;
+}
+.guild-page .guild-primary-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #526258;
+  font-family: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: background-color .16s ease, color .16s ease, border-color .16s ease;
+}
+.guild-page .guild-primary-tabs button:hover {
+  border-color: #c8ddcf;
+  background: #eaf3ed;
+  color: #174d31;
+}
+.guild-page .guild-primary-tabs button.active {
+  border-color: #176b43;
+  background: #176b43;
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(23, 107, 67, .16);
+}
+.guild-page .guild-primary-tabs button:focus-visible,
+.guild-page button:focus-visible {
+  outline: 3px solid rgba(36, 132, 82, .28);
+  outline-offset: 2px;
+}
+.guild-page .guild-header .page-actions button,
+.guild-page .guild-section-heading > .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #cbd9cf;
+  border-radius: 6px;
+  background: #fff;
+  color: #315440;
+  font-family: inherit;
+  font-size: .76rem;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: none;
+}
+.guild-page .guild-header .page-actions .primary-button,
+.guild-page .guild-header .page-actions button.primary-button {
+  border-color: #176b43;
+  background: #176b43;
+  color: #fff;
+}
+.guild-page .guild-header .page-actions button:hover,
+.guild-page .guild-section-heading > .secondary-button:hover {
+  border-color: #176b43;
+  background: #eaf5ee;
+  color: #145332;
+}
+.guild-page .guild-header .page-actions .primary-button:hover,
+.guild-page .guild-header .page-actions button.primary-button:hover {
+  border-color: #125535;
+  background: #125535;
+  color: #fff;
+}
+.guild-page .guild-portfolio-card {
+  border-color: #dce7df;
+  border-radius: 8px;
+  background: #fff;
+  color: #24372b;
+  font-family: inherit;
+}
+.guild-page .guild-portfolio-card:hover {
+  border-color: #80ad91;
+  background: #f7fbf8;
+}
+.guild-page .guild-portfolio-card.active {
+  border-color: #176b43;
+  background: #edf6f0;
+  box-shadow: inset 3px 0 0 #176b43;
+}
+.guild-page .guild-portfolio-index {
+  border-radius: 7px;
+  background: #eaf3ed;
+  color: #176b43;
+}
+.guild-page .guild-responsibility {
+  border-color: #e0e9e2;
+  border-radius: 8px;
+  background: #f7faf8;
+}
+.guild-page .guild-responsibility > span {
+  border-radius: 7px;
+  background: #e4f1e8;
+  color: #176b43;
+}
+.guild-page .guild-status {
+  border: 1px solid #c4e2ce;
+  border-radius: 5px;
+  background: #edf8f0;
+  color: #176b43;
+}
+.guild-page .guild-quick-actions button {
+  border-color: #dce7df;
+  border-radius: 8px;
+  background: #fff;
+  color: #263b2e;
+  font-family: inherit;
+}
+.guild-page .guild-quick-actions button:hover {
+  border-color: #8db99b;
+  background: #f2f8f4;
+}
+.guild-page .guild-quick-actions button > svg {
+  color: #176b43;
+}
+.guild-page .guild-activity > span {
+  border-radius: 5px;
+  background: #eaf3ed;
+  color: #176b43;
+}
+.guild-page .guild-note {
+  border-color: #dce7df;
+  border-radius: 8px;
+  background: #f5f8f6;
+}
+[data-theme="dark"] .guild-page {
+  --brand-primary: #55b77d;
+  --brand-primary-soft: #1c3a2a;
+  --smis-text: #e5eee8;
+  --smis-text-muted: #b5c5ba;
+  --smis-text-soft: #91a398;
+}
+[data-theme="dark"] .guild-page .guild-surface,
+[data-theme="dark"] .guild-page .guild-kpi,
+[data-theme="dark"] .guild-page .guild-portfolio-card,
+[data-theme="dark"] .guild-page .guild-quick-actions button {
+  border-color: #344b3d;
+  background: #17271e;
+  color: #e5eee8;
+}
+[data-theme="dark"] .guild-page .guild-primary-tabs,
+[data-theme="dark"] .guild-page .guild-note,
+[data-theme="dark"] .guild-page .guild-responsibility {
+  border-color: #344b3d;
+  background: #1b2d23;
+}
+[data-theme="dark"] .guild-page .guild-primary-tabs button {
+  color: #bdcfc2;
+}
+[data-theme="dark"] .guild-page .guild-primary-tabs button.active {
+  border-color: #55b77d;
+  background: #23613e;
+  color: #fff;
+}
+[data-theme="dark"] .guild-page .guild-primary-tabs button:hover,
+[data-theme="dark"] .guild-page .guild-portfolio-card:hover,
+[data-theme="dark"] .guild-page .guild-quick-actions button:hover {
+  border-color: #4b8e64;
+  background: #203b2b;
+  color: #e8f5ec;
+}
+[data-theme="dark"] .guild-page .guild-portfolio-card.active {
+  border-color: #55b77d;
+  background: #203b2b;
+}
+[data-theme="dark"] .guild-page .guild-portfolio-index,
+[data-theme="dark"] .guild-page .guild-responsibility > span,
+[data-theme="dark"] .guild-page .guild-activity > span {
+  background: #254633;
+  color: #9be0b2;
+}
+[data-theme="dark"] .guild-page .guild-header .page-actions button,
+[data-theme="dark"] .guild-page .guild-section-heading > .secondary-button {
+  border-color: #486151;
+  background: #203329;
+  color: #d7e8dc;
+}
+[data-theme="dark"] .guild-page .guild-header .page-actions .primary-button {
+  border-color: #347d50;
+  background: #286641;
+  color: #fff;
+}
+@media (max-width: 700px) {
+  .guild-page .guild-primary-tabs button {
+    flex: 1 1 150px;
+  }
+  .guild-page .guild-header .page-actions button {
+    flex: 0 1 auto;
+    width: auto;
+  }
+}
+
 /* Audit Logs: keep export actions distinct and filters independently usable. */
 .audit-log-actions {
   display: flex;
