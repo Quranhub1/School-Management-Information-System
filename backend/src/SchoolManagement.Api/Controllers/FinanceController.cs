@@ -257,8 +257,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 intakeCode = enrollment?.IntakeCode,
                 intakeName = enrollment?.IntakeName,
                 classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
-                semesterName = academicStatus?.SemesterName,
-                academicYearName = academicStatus?.AcademicYearName,
+                semesterName = academicStatus?.SemesterName ?? currentAcademicPeriod?.SemesterName,
+                academicYearName = academicStatus?.AcademicYearName ?? currentAcademicPeriod?.AcademicYearName,
                 academicStatus = academicStatus?.Status,
                 enrollmentStatus = enrollment?.EnrollmentStatus
             };
