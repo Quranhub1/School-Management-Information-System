@@ -940,6 +940,7 @@ export function AccountsOfficeManagement() {
                           <th>Date</th>
                           <th>Amount</th>
                           <th>Payment Method</th>
+                          <th>Source</th>
                           <th>Reference</th>
                           <th>Action</th>
                         </tr>
