@@ -31,4 +31,4 @@ The student fee register is grouped using the student's actual academic records:
 - Semester
 - Academic year
 
-Where a student has no individual academic-status record, the current semester and academic year are used for display when configured. A student's year of study falls back to the active programme enrollment's current year. Missing programme or intake links remain visibly unassigned; they are not inferred from a fee description.
+Where a student has no individual academic-status record, the current semester and academic year are used for display when configured. A student's year of study falls back to the active programme enrollment's current year. Missing programme or intake links remain visibly unassigned; they are not inferred from a fee description. Cohort grouping and filters are read-only register views; they do not change invoice ownership, payment allocation, or posting.
