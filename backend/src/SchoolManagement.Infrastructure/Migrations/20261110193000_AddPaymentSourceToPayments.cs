@@ -21,10 +21,21 @@ public sealed partial class AddPaymentSourceToPayments : Migration
             SET "PaymentSource" = 'SchoolPay'
             WHERE LOWER("PaymentMethod") = 'schoolpay';
             """);
+
+        migrationBuilder.AddColumn<string>(
+            name: "Channel",
+            table: "SchoolPaymentNotifications",
+            type: "character varying(40)",
+            maxLength: 40,
+            nullable: true);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.DropColumn(
+            name: "Channel",
+            table: "SchoolPaymentNotifications");
+
         migrationBuilder.DropColumn(
             name: "PaymentSource",
             table: "Payments");
