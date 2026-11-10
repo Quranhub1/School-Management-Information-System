@@ -297,3 +297,5 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Add sign-out command and keyboard navigation; search is on-demand and does not preload full directories.
 - [ ] Run frontend type-check, tests and production build on the rebased PR head; verify the palette with representative roles.
 - [ ] Add direct record-detail navigation only where the destination modules expose a supported record-opening route.
+
+- [x] Add a compact, left-scrolling latest-admitted-student ribbon to the Admissions & Screening workspace. It reads the newest non-archived student linked to an admission record and respects reduced-motion preferences.

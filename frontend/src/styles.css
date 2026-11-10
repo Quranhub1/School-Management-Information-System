@@ -4282,3 +4282,63 @@ table { font-variant-numeric: tabular-nums; }
     grid-column: auto;
   }
 }
+
+
+/* Admissions: compact latest-admitted announcement ribbon. */
+.latest-admitted-ribbon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 38px;
+  margin: 0 0 14px;
+  padding: 0 12px;
+  overflow: hidden;
+  border: 1px solid var(--smis-glass-border);
+  border-left: 3px solid var(--brand-accent, #b77945);
+  border-radius: 5px;
+  background: var(--smis-glass-bg);
+  color: var(--smis-text);
+}
+.latest-admitted-ribbon-label {
+  flex: 0 0 auto;
+  color: var(--smis-text-muted);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.latest-admitted-ribbon-track {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.latest-admitted-ribbon-track span {
+  display: inline-block;
+  min-width: max-content;
+  padding-left: 100%;
+  animation: latest-admitted-scroll 18s linear infinite;
+  color: var(--smis-text);
+  font-size: .82rem;
+  font-weight: 700;
+}
+@keyframes latest-admitted-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+.latest-admitted-ribbon:hover .latest-admitted-ribbon-track span {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .latest-admitted-ribbon-track span {
+    padding-left: 0;
+    animation: none;
+  }
+}
+[data-theme="dark"] .latest-admitted-ribbon {
+  border-color: #334155;
+  border-left-color: var(--brand-accent, #b77945);
+  background: #172338;
+  color: #e2e8f0;
+}

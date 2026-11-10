@@ -36,6 +36,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
   const [cardQueueLoading, setCardQueueLoading] = useState(false)
   const [cardQueueError, setCardQueueError] = useState('')
   const [cardQueueNotice, setCardQueueNotice] = useState('')
+  const [latestAdmittedStudent, setLatestAdmittedStudent] = useState<Student | null>(null)
 
   // Prop synchronization also handles navigation into Students from another module,
   // where the sidebar event can fire before this component has mounted.
@@ -57,6 +58,23 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
     window.addEventListener('smis:navigate-subsection', handleSubsectionNavigation)
     return () => window.removeEventListener('smis:navigate-subsection', handleSubsectionNavigation)
   }, [])
+
+  useEffect(() => {
+    if (section !== 'admissions') return
+    let cancelled = false
+    getStudents()
+      .then(items => {
+        if (cancelled) return
+        const latest = items
+          .filter(student => Boolean(student.admissionId) && !student.isArchived)
+          .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))[0] ?? null
+        setLatestAdmittedStudent(latest)
+      })
+      .catch(() => {
+        if (!cancelled) setLatestAdmittedStudent(null)
+      })
+    return () => { cancelled = true }
+  }, [section])
 
   useEffect(() => {
     if (section !== 'cards') return
@@ -157,6 +175,14 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
 
         {section === 'admissions' && (
           <div>
+            {latestAdmittedStudent && (
+              <div className="latest-admitted-ribbon" role="status" aria-label={`Latest admitted student: ${[latestAdmittedStudent.firstName, latestAdmittedStudent.otherNames, latestAdmittedStudent.lastName].filter(Boolean).join(' ')}`}>
+                <span className="latest-admitted-ribbon-label">Latest admitted</span>
+                <div className="latest-admitted-ribbon-track" aria-hidden="true">
+                  <span>{[latestAdmittedStudent.firstName, latestAdmittedStudent.otherNames, latestAdmittedStudent.lastName].filter(Boolean).join(' ')} · {latestAdmittedStudent.studentNumber}</span>
+                </div>
+              </div>
+            )}
             <AdmissionsManagement readOnly={readOnly} />
           </div>
         )}
