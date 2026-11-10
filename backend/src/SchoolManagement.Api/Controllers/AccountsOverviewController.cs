@@ -137,6 +137,8 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
                 x.payment.ReceiptNumber,
                 x.payment.Amount,
                 x.payment.PaymentMethod,
+                x.payment.SourceChannel,
+                x.payment.ProviderTransactionId,
                 x.payment.Reference,
                 x.payment.PaidAt,
                 studentName = x.student.FirstName + " " + (x.student.OtherNames ?? "") + " " + x.student.LastName,
