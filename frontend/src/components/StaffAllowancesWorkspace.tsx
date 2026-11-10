@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { useEffect, useState, type FormEvent } from 'react'
 import { getSession } from '../api/auth'
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
@@ -100,7 +101,7 @@ export function StaffAllowancesWorkspace() {
             <label>Staff
               <select value={staffMemberId} onChange={e => setStaffMemberId(e.target.value)} required>
                 <option value="">Select staff</option>
-                {staff.map(s => <option key={s.id} value={s.id}>{s.firstName} {s.lastName} ({s.staffNumber})</option>)}
+                {staff.map(s => <option key={s.id} value={s.id}>{formatPersonName(s.lastName, s.firstName)} ({s.staffNumber})</option>)}
               </select>
             </label>
             <label>Allowance Type
