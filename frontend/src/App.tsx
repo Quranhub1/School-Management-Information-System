@@ -264,7 +264,7 @@ function AuthenticatedWorkspace({ onLogout, institution, onInstitutionSaved }: {
   case 'health': return attManage || r.includes('Nurse') || r.includes('ClinicalInstructor') || r.includes('SystemAdministrator');
   case 'laboratories': return hostel;
   case 'inventory': return inv;
-  case 'communication': return cm || ['ExaminationsOfficer','Lecturer','Student','Records Officer','SchoolWarden','Principal','Secretary','ResidentDirector','HeadOfDepartment','AssistantPrincipal'].some(role => r.includes(role));
+  case 'communication': return cm || ['ExaminationsOfficer','Lecturer','Student','Records Officer','Admin Secretary','AssistantRegistrar','SchoolWarden','Principal','Secretary','ResidentDirector','HeadOfDepartment','AssistantPrincipal'].some(role => r.includes(role));
   case 'guild': return r.includes('Student') || r.includes('Guild') || r.includes('SystemAdministrator') || r.includes('HR Manager');
   case 'reports': return rp || analytics;
   case 'timetable': return canReadTimetable(r);
