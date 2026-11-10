@@ -30,6 +30,7 @@ export interface RecordPaymentRequest {
   amount: number
   receiptNumber: string
   paymentMethod: string
+  sourceChannel?: string
   reference?: string
   currency?: string
 }
