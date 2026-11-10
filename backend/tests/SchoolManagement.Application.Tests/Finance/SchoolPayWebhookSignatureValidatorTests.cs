@@ -39,5 +39,6 @@ public sealed class SchoolPayWebhookSignatureValidatorTests
     {
         Assert.False(SchoolPayWebhookSignatureValidator.IsValid("not-hex", "password", "receipt"));
         Assert.False(SchoolPayWebhookSignatureValidator.IsValid(new string('0', 64), "password", "receipt"));
+        Assert.False(SchoolPayWebhookSignatureValidator.IsValid(new string('0', 64), "REPLACE_ME", "receipt"));
     }
 }
