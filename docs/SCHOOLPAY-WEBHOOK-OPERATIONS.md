@@ -8,7 +8,7 @@ Configure these values on the API server only. Never commit provider credentials
 - `SchoolPay__WebhookSecret` to the exact SchoolPay-issued API password used for webhook signature verification.
 - `SchoolPay__SchoolCode` and `SchoolPay__ApiPassword` for authenticated Sync API reconciliation.
 - `SchoolPay__ReconciliationEnabled=true` to enable the background reconciliation worker.
-- Optional: `SchoolPay__BaseUrl=https://schoolpay.co.ug/paymentapi`, `SchoolPay__ReconciliationIntervalMinutes=360`, and `SchoolPay__ReconciliationLookbackDays=2` (maximum lookback: 30 days).
+- Optional: `SchoolPay__BaseUrl=https://schoolpay.co.ug/paymentapi`, `SchoolPay__ReconciliationIntervalMinutes=360`, and `SchoolPay__ReconciliationLookbackDays=7` (maximum lookback: 30 days).
 
 When SchoolPay is disabled or the secret is missing/invalid, the webhook cannot post payments.
 
