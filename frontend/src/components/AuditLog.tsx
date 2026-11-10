@@ -177,7 +177,7 @@ export function AuditLogManagement() {
     }
   }
 
-  return <section className="panel" aria-label="Audit Log">
+  return <section className="panel audit-log-screen" aria-label="Audit Log">
     <div className="panel-heading">
       <div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div>
       <div className="form-actions">
