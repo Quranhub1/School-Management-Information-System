@@ -81,7 +81,7 @@ public sealed class SchoolPayController(
                 cancellationToken,
                 payment.SourceChannelTransactionId,
                 payment.SourcePaymentChannel,
-                "PAID");
+                payment.TransactionCompletionStatus);
 
             return Ok(new
             {
