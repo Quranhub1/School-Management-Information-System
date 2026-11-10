@@ -17,8 +17,7 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
 
         var normalizedExternalRef = externalReference.Trim();
         var normalizedTransactionId = providerTransactionId.Trim();
-        var existing = await finance.GetSchoolPaymentNotificationAsync(normalizedExternalRef, cancellationToken)
-            ?? await finance.GetSchoolPaymentNotificationByProviderTransactionIdAsync(normalizedTransactionId, cancellationToken);
+        var existing = await finance.GetSchoolPaymentNotificationAsync(normalizedExternalRef, cancellationToken);
         if (existing is not null) return existing;
 
         var notification = new SchoolPaymentNotification
