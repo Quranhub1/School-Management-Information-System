@@ -36,6 +36,8 @@ services:
         condition: service_healthy
       email-service:
         condition: service_healthy
+      email-service:
+        condition: service_healthy
 
   email-service:
     build:
