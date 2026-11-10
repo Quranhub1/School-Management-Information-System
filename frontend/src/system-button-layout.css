@@ -1,0 +1,83 @@
+/* System-wide action control sizing and separation.
+   Scoped to signed-in workspace content; login, sidebar, printed documents and
+   component-specific workflows retain their own layouts and behaviour. */
+.app-shell main.content {
+  --smis-action-height: 35px;
+  --smis-action-gap: 8px;
+  --smis-action-radius: 3px;
+}
+
+.app-shell main.content button,
+.app-shell main.content input[type="button"],
+.app-shell main.content input[type="submit"],
+.app-shell main.content input[type="reset"] {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: var(--smis-action-height);
+  padding: 7px 11px;
+  line-height: 1.25;
+  vertical-align: middle;
+  border-radius: var(--smis-ui-radius, var(--smis-action-radius));
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Icon-only controls remain compact and square instead of becoming wide. */
+.app-shell main.content button:has(> svg:only-child),
+.app-shell main.content button:has(> i:only-child),
+.app-shell main.content button:has(> [aria-hidden="true"]:only-child) {
+  width: var(--smis-action-height);
+  min-width: var(--smis-action-height);
+  padding: 0;
+  flex: 0 0 var(--smis-action-height);
+}
+
+/* Separate action siblings in existing flex/grid groups without changing
+   their display mode, order, event handlers, or responsive column rules. */
+.app-shell main.content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions):has(> button + button) {
+  column-gap: var(--smis-action-gap) !important;
+  row-gap: var(--smis-action-gap) !important;
+}
+
+.app-shell main.content :is(.flex, .inline-flex, .button-group, .action-buttons, .toolbar-actions, .table-actions):has(> button + button) {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Prevent action clusters in data tables from collapsing into one another. */
+.app-shell main.content td :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .table-actions):has(> button + button) {
+  min-width: max-content;
+  max-width: 100%;
+}
+
+/* Keep focus and disabled states legible and consistent. */
+.app-shell main.content button:focus-visible,
+.app-shell main.content input[type="button"]:focus-visible,
+.app-shell main.content input[type="submit"]:focus-visible,
+.app-shell main.content input[type="reset"]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand-accent, #b88b45) 72%, transparent);
+  outline-offset: 2px;
+}
+
+.app-shell main.content button:disabled,
+.app-shell main.content input[type="button"]:disabled,
+.app-shell main.content input[type="submit"]:disabled,
+.app-shell main.content input[type="reset"]:disabled {
+  cursor: not-allowed;
+}
+
+/* On narrow screens, let grouped actions wrap instead of overlapping or
+   forcing the workspace wider than the viewport. */
+@media (max-width: 760px) {
+  .app-shell main.content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions):has(> button + button) {
+    flex-wrap: wrap;
+    row-gap: 7px !important;
+  }
+
+  .app-shell main.content button,
+  .app-shell main.content input[type="button"],
+  .app-shell main.content input[type="submit"],
+  .app-shell main.content input[type="reset"] {
+    max-width: 100%;
+  }
+}
