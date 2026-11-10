@@ -50,8 +50,24 @@ public sealed class PaymentReceiptEmailService
 
     public async Task<bool> SendReceiptAsync(Guid paymentId, CancellationToken ct)
     {
+        var alreadySent = await db.Payments.AsNoTracking()
+            .Where(x => x.Id == paymentId)
+            .Select(x => x.ReceiptEmailSentAt != null)
+            .SingleOrDefaultAsync(ct);
+        if (alreadySent) return true;
+
+        var attemptAt = DateTimeOffset.UtcNow;
+        var retryBefore = attemptAt.AddMinutes(-5);
+        var claimed = await db.Payments
+            .Where(x => x.Id == paymentId
+                && x.ReceiptEmailRequestedAt != null
+                && x.ReceiptEmailSentAt == null
+                && (x.ReceiptEmailLastAttemptAt == null || x.ReceiptEmailLastAttemptAt < retryBefore))
+            .ExecuteUpdateAsync(update => update.SetProperty(x => x.ReceiptEmailLastAttemptAt, attemptAt), ct);
+        if (claimed == 0) return false;
+
         var payment = await db.Payments.SingleOrDefaultAsync(x => x.Id == paymentId, ct);
-        if (payment is null || payment.ReceiptEmailSentAt.HasValue) return payment?.ReceiptEmailSentAt.HasValue == true;
+        if (payment is null) return false;
 
         var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == payment.StudentId, ct);
         var school = await db.InstitutionSettings.AsNoTracking().SingleOrDefaultAsync(x => x.IsActive, ct);
@@ -61,8 +77,6 @@ public sealed class PaymentReceiptEmailService
             || string.IsNullOrWhiteSpace(school.EmailFromAddress ?? school.Email))
             return false;
 
-        payment.ReceiptEmailLastAttemptAt = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync(ct);
         if (string.IsNullOrWhiteSpace(student.Email)) return false;
 
         try
