@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
@@ -18,6 +19,10 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay) : Controlle
         if (string.IsNullOrWhiteSpace(request.ExternalReference)) return BadRequest("External reference is required.");
         if (string.IsNullOrWhiteSpace(request.SchoolPayReference)) return BadRequest("SchoolPay reference is required.");
         if (request.Amount <= 0) return BadRequest("Amount must be greater than zero.");
+        if (string.IsNullOrWhiteSpace(request.ProviderTransactionId)) return BadRequest("Provider transaction ID is required.");
+        if (string.IsNullOrWhiteSpace(request.ProviderStatus) || !string.Equals(request.ProviderStatus.Trim(), "PAID", StringComparison.OrdinalIgnoreCase)) return BadRequest("Only SchoolPay transactions confirmed as PAID can be posted.");
+        var sourceChannel = request.SourceChannel ?? request.SourcePaymentChannel;
+        if (string.IsNullOrWhiteSpace(sourceChannel)) return BadRequest("SchoolPay source channel is required.");
 
         Guid? studentId = null;
         Guid? studentInvoiceId = null;
@@ -37,7 +42,10 @@ public sealed class SchoolPayController(ISchoolPayService schoolPay) : Controlle
                 request.PhoneNumber,
                 request.PayerName,
                 request.RawPayload,
-                cancellationToken);
+                cancellationToken,
+                request.ProviderTransactionId,
+                sourceChannel,
+                request.ProviderStatus);
             return Ok(new { notification.ExternalReference, notification.Status, notification.ProcessedAt });
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase) || ex.Message.Contains("already fully paid", StringComparison.OrdinalIgnoreCase))
@@ -76,4 +84,8 @@ public sealed record SchoolPayNotificationRequest(
     string? Currency,
     string? PhoneNumber,
     string? PayerName,
-    string? RawPayload);
+    string? RawPayload,
+    [property: JsonPropertyName("transactionId")] string? ProviderTransactionId = null,
+    [property: JsonPropertyName("channelName")] string? SourceChannel = null,
+    [property: JsonPropertyName("sourcePaymentChannel")] string? SourcePaymentChannel = null,
+    [property: JsonPropertyName("status")] string? ProviderStatus = null);
