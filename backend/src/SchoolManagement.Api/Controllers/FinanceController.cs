@@ -11,7 +11,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
-public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals, SchoolManagementDbContext db, CampusAccessService campusAccess, PaymentReceiptEmailService receiptEmails) : ControllerBase
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] string? studentId, CancellationToken cancellationToken)
@@ -602,7 +602,14 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
         if (string.Equals(request.PaymentMethod, "SchoolPay", StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { message = "SchoolPay payments must be received through the verified SchoolPay notification workflow." });
-        try { return Ok(await finance.RecordPaymentAsync(invoiceId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Reference, cancellationToken, request.SourceChannel)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        try
+        {
+            var payment = await finance.RecordPaymentAsync(invoiceId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Reference, cancellationToken, request.SourceChannel);
+            await receiptEmails.SendReceiptAsync(payment.Id, cancellationToken);
+            return Ok(payment);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("students/{studentId:guid}/payments")]
@@ -611,7 +618,14 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
         if (string.Equals(request.PaymentMethod, "SchoolPay", StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { message = "SchoolPay payments must be received through the verified SchoolPay notification workflow." });
-        try { return Ok(await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Currency, request.Reference, cancellationToken, request.SourceChannel)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        try
+        {
+            var payment = await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Currency, request.Reference, cancellationToken, request.SourceChannel);
+            await receiptEmails.SendReceiptAsync(payment.Id, cancellationToken);
+            return Ok(payment);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/allocate")]
