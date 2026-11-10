@@ -441,7 +441,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         return Ok(await query.OrderByDescending(x => x.CreatedAt).ToListAsync(cancellationToken));
     }
 
-    [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
+    [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("administration/fee-structures")]
     public async Task<IActionResult> CreateFeeStructure(CreateFeeStructureRequest request, CancellationToken cancellationToken)
     {
@@ -486,7 +486,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
-    [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
+    [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("administration/fee-structures/{feeStructureId:guid}/apply")]
     public async Task<IActionResult> ApplyFeeStructure(Guid feeStructureId, ApplyFeeStructureRequest request, CancellationToken cancellationToken)
     {
