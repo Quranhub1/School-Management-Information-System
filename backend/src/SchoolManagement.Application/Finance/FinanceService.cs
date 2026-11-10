@@ -29,8 +29,9 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         return invoice;
     }
 
-    public async Task<Payment> RecordPaymentAsync(Guid invoiceId, string receiptNumber, decimal amount, string paymentMethod, string? reference, CancellationToken cancellationToken)
+    public async Task<Payment> RecordPaymentAsync(Guid invoiceId, string receiptNumber, decimal amount, string paymentMethod, string? reference, CancellationToken cancellationToken, string paymentSource = "Manual")
     {
+        var normalizedSource = NormalizePaymentSource(paymentSource);
         if (amount <= 0) throw new ArgumentException("Payment amount must be greater than zero.");
         if (string.IsNullOrWhiteSpace(receiptNumber)) throw new ArgumentException("Receipt number is required.");
         if (string.IsNullOrWhiteSpace(paymentMethod)) throw new ArgumentException("Payment method is required.");
@@ -42,7 +43,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         if (amount > outstanding) throw new ArgumentException($"Payment exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
         var paymentAccount = await GetAccountAsync(ResolvePaymentAccountCode(paymentMethod), cancellationToken);
         var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
-        var payment = new Payment { StudentId = invoice.StudentId, StudentInvoiceId = invoice.Id, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = invoice.Currency, PaymentMethod = paymentMethod.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
+        var payment = new Payment { StudentId = invoice.StudentId, StudentInvoiceId = invoice.Id, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = invoice.Currency, PaymentMethod = paymentMethod.Trim(), PaymentSource = normalizedSource, Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
         var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Payment receipt {normalizedReceipt} for invoice {invoice.InvoiceNumber}", payment.Amount, paymentAccount.Id, receivableAccount.Id, "Payment", payment.Id);
         await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         invoice.PaidAmount += amount;
@@ -57,8 +58,9 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         return payment;
     }
 
-    public async Task<Payment> RecordUnallocatedPaymentAsync(Guid studentId, string receiptNumber, decimal amount, string paymentMethod, string currency, string? reference, CancellationToken cancellationToken)
+    public async Task<Payment> RecordUnallocatedPaymentAsync(Guid studentId, string receiptNumber, decimal amount, string paymentMethod, string currency, string? reference, CancellationToken cancellationToken, string paymentSource = "Manual")
     {
+        var normalizedSource = NormalizePaymentSource(paymentSource);
         if (!await finance.StudentExistsAsync(studentId, cancellationToken)) throw new ArgumentException("Student was not found.");
         if (amount <= 0) throw new ArgumentException("Payment amount must be greater than zero.");
         if (string.IsNullOrWhiteSpace(receiptNumber)) throw new ArgumentException("Receipt number is required.");
@@ -69,7 +71,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var normalizedCurrency = currency.Trim().ToUpperInvariant();
         var paymentAccount = await GetAccountAsync(ResolvePaymentAccountCode(paymentMethod), cancellationToken);
         var unappliedAccount = await GetAccountAsync(FinanceAccountCodes.StudentUnappliedPayments, cancellationToken);
-        var payment = new Payment { StudentId = studentId, StudentInvoiceId = null, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = normalizedCurrency, PaymentMethod = paymentMethod.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
+        var payment = new Payment { StudentId = studentId, StudentInvoiceId = null, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = normalizedCurrency, PaymentMethod = paymentMethod.Trim(), PaymentSource = normalizedSource, Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
         var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Unallocated student payment {normalizedReceipt}", payment.Amount, paymentAccount.Id, unappliedAccount.Id, "Payment", payment.Id);
         await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         await finance.AddPaymentAsync(payment, cancellationToken);
@@ -170,6 +172,14 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
             entry.Lines.Add(new JournalEntryLine { AccountId = accountId, Description = $"Income - {invoice.InvoiceNumber}", Credit = group.Sum(x => x.Amount) });
         }
         return entry;
+    }
+
+    private static string NormalizePaymentSource(string paymentSource)
+    {
+        var source = paymentSource.Trim();
+        if (source.Equals("Manual", StringComparison.OrdinalIgnoreCase)) return "Manual";
+        if (source.Equals("SchoolPay", StringComparison.OrdinalIgnoreCase)) return "SchoolPay";
+        throw new ArgumentException("Unsupported payment source. Use SchoolPay or Manual.");
     }
 
     private static string ResolvePaymentAccountCode(string paymentMethod)
