@@ -3159,6 +3159,12 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("PaidAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("ReceiptEmailRequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ReceiptEmailLastAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset?>("ReceiptEmailSentAt")
                         .HasColumnType("timestamp with time zone");
 
