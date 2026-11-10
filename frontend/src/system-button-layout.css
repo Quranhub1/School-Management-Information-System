@@ -39,13 +39,13 @@
   row-gap: var(--smis-action-gap) !important;
 }
 
-.app-shell .content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions, .form-actions):has(> button + button) {
+.app-shell .content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions, .form-actions, [style*="display: flex"], [style*="display:flex"]):has(> button + button) {
   flex-wrap: wrap;
   align-items: center;
 }
 
 /* Prevent action clusters in data tables from collapsing into one another. */
-.app-shell .content td :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .table-actions, .form-actions):has(> button + button) {
+.app-shell .content td :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .table-actions, .form-actions, [style*="display: flex"], [style*="display:flex"]):has(> button + button) {
   min-width: max-content;
   max-width: 100%;
 }
@@ -75,7 +75,7 @@
 /* On narrow screens, let grouped actions wrap instead of overlapping or
    forcing the workspace wider than the viewport. */
 @media (max-width: 760px) {
-  .app-shell .content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions, .form-actions):has(> button + button) {
+  .app-shell .content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions, .form-actions, [style*="display: flex"], [style*="display:flex"]):has(> button + button) {
     flex-wrap: wrap;
     row-gap: 7px !important;
   }
