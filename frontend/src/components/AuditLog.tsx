@@ -180,19 +180,19 @@ export function AuditLogManagement() {
   return <section className="panel" aria-label="Audit Log">
     <div className="panel-heading">
       <div><span className="eyebrow">Integrity</span><h2>Audit Log</h2></div>
-      <div className="form-actions">
+      <div className="form-actions audit-log-actions" aria-label="Audit log exports">
         <button type="button" className="secondary-button" onClick={printAuditPdf} disabled={loading || logs.length === 0}>Print PDF</button>
         <button type="button" onClick={downloadAuditPdf} disabled={loading || logs.length === 0}>Download PDF</button>
         <button type="button" className="secondary-button" onClick={() => void exportFinanceAuditPdf()} disabled={financeAuditLoading}>{financeAuditLoading ? "Preparing…" : "Download Finance Audit PDF"}</button>
         <button type="button" className="secondary-button" onClick={() => void exportWorkflowHistoryPdf()} disabled={workflowAuditLoading}>{workflowAuditLoading ? "Preparing…" : "Download Workflow Audit PDF"}</button>
       </div>
     </div>
-    <div className="library-search" style={{ margin: '14px 0' }}>
+    <div className="library-search audit-log-filters" role="search" aria-label="Filter audit logs" style={{ margin: '14px 0' }}>
       <input placeholder="User ID" value={userId} onChange={e => setUserId(e.target.value)} />
       <input placeholder="Action" value={action} onChange={e => setAction(e.target.value)} />
       <label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
       <label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
-      <button onClick={() => void load()}>Search</button>
+      <button className="audit-log-search-button" onClick={() => void load()}>Search</button>
     </div>
     {error && <div className="error" role="alert">{error}</div>}
     {loading ? <LoadingSpinner label="Loading audit logs…" /> : <AgGridTable rows={logs} columns={auditColumns} getRowId={p => p.data.id} exportFileName="smis-audit-log" height={560} />}
