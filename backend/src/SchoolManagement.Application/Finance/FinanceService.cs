@@ -84,7 +84,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         return payment;
     }
 
-    public async Task<Payment> AllocatePaymentAsync(Guid paymentId, IReadOnlyCollection<PaymentAllocationRequest> allocations, CancellationToken cancellationToken)
+    public async Task<Payment> AllocatePaymentAsync(Guid paymentId, IReadOnlyCollection<PaymentAllocationRequest> allocations, CancellationToken cancellationToken, bool saveChanges = true)
     {
         if (allocations.Count == 0) throw new ArgumentException("At least one allocation is required.");
         if (allocations.Any(x => x.Amount <= 0)) throw new ArgumentException("Allocation amounts must be greater than zero.");
@@ -117,11 +117,11 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
             var allocationJournal = CreateJournalEntry($"ALLOC-{allocation.Id:N}", $"Allocate payment {payment.ReceiptNumber} to invoice {invoice.InvoiceNumber}", request.Amount, unappliedAccount.Id, receivableAccount.Id, "PaymentAllocation", allocation.Id);
             await AddPostedJournalEntryAsync(allocationJournal, cancellationToken);
         }
-        await finance.SaveChangesAsync(cancellationToken);
+        if (saveChanges) await finance.SaveChangesAsync(cancellationToken);
         return payment;
     }
 
-    public async Task<Payment> AllocatePaymentFifoAsync(Guid paymentId, CancellationToken cancellationToken)
+    public async Task<Payment> AllocatePaymentFifoAsync(Guid paymentId, CancellationToken cancellationToken, bool saveChanges = true)
     {
         var payment = await finance.GetPaymentAsync(paymentId, cancellationToken) ?? throw new ArgumentException("Payment was not found.");
         if (payment.UnallocatedAmount <= 0) return payment;
@@ -135,7 +135,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
             if (amount > 0) { requests.Add(new PaymentAllocationRequest(invoice.Id, amount, "FIFO allocation")); remaining -= amount; }
         }
         if (requests.Count == 0) return payment;
-        return await AllocatePaymentAsync(paymentId, requests, cancellationToken);
+        return await AllocatePaymentAsync(paymentId, requests, cancellationToken, saveChanges);
     }
 
     public Task<IReadOnlyList<Payment>> GetPaymentsAsync(string? receiptNumber = null, string? paymentMethod = null, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default) => finance.GetPaymentsAsync(receiptNumber, paymentMethod, from, to, cancellationToken);
