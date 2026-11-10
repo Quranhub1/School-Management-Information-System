@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { useEffect, useMemo, useState } from 'react'
 import { AdmissionsManagement } from './AdmissionsManagement'
 import { StudentManagement } from './StudentManagement'
@@ -117,7 +118,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
       stack: [
         { text: cardType === 'campus' ? 'STUDENT ID CARD' : 'LIBRARY ID CARD', bold: true, color: institutionLoaded && institution.isActive ? institution.primaryColor : '#166534', fontSize: 11, margin: [0, 0, 0, 12] },
         { text: institutionLoaded && institution.isActive ? institution.institutionName : 'Institutional identification', bold: true, fontSize: 12, margin: [0, 0, 0, 8] },
-        { text: [student.firstName, student.otherNames, student.lastName].filter(Boolean).join(' '), bold: true, fontSize: 15, margin: [0, 0, 0, 8] },
+        { text: formatPersonName(student.lastName, student.firstName, student.otherNames), bold: true, fontSize: 15, margin: [0, 0, 0, 8] },
         { columns: [{ text: [{ text: 'Student number: ', bold: true }, student.studentNumber] }, { text: [{ text: 'Status: ', bold: true }, student.status || 'Active'], alignment: 'right' }] },
         { text: 'Keep this card for institutional identification.', fontSize: 8, color: '#64748b', margin: [0, 10, 0, 0] },
       ],
@@ -176,10 +177,10 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
         {section === 'admissions' && (
           <div>
             {latestAdmittedStudent && (
-              <div className="latest-admitted-ribbon" role="status" aria-label={`Latest admitted student: ${[latestAdmittedStudent.firstName, latestAdmittedStudent.otherNames, latestAdmittedStudent.lastName].filter(Boolean).join(' ')}`}>
+              <div className="latest-admitted-ribbon" role="status" aria-label={`Latest admitted student: ${formatPersonName(latestAdmittedStudent.lastName, latestAdmittedStudent.firstName, latestAdmittedStudent.otherNames)}`}>
                 <span className="latest-admitted-ribbon-label">Latest admitted</span>
                 <div className="latest-admitted-ribbon-track" aria-hidden="true">
-                  <span>{[latestAdmittedStudent.firstName, latestAdmittedStudent.otherNames, latestAdmittedStudent.lastName].filter(Boolean).join(' ')} · {latestAdmittedStudent.studentNumber}</span>
+                  <span>{formatPersonName(latestAdmittedStudent.lastName, latestAdmittedStudent.firstName, latestAdmittedStudent.otherNames)} · {latestAdmittedStudent.studentNumber}</span>
                 </div>
               </div>
             )}
@@ -230,7 +231,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
                   <tbody>{cardStudents.map(student => <tr key={student.id}>
                     <td><input type="checkbox" aria-label={`Select ${student.studentNumber}`} checked={selectedCardStudentIds.includes(student.id)} onChange={() => toggleCardStudent(student.id)} /></td>
                     <td>{student.studentNumber}</td>
-                    <td>{[student.firstName, student.otherNames, student.lastName].filter(Boolean).join(' ')}</td>
+                    <td>{formatPersonName(student.lastName, student.firstName, student.otherNames)}</td>
                     <td>{student.status}</td>
                   </tr>)}</tbody>
                 </table>
@@ -241,7 +242,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
                 <article key={student.id} className="student-id-card">
                   <header><strong>{cardType === 'campus' ? 'STUDENT ID CARD' : 'LIBRARY ID CARD'}</strong></header>
                   <div><span>Student number</span><strong>{student.studentNumber}</strong></div>
-                  <h4>{[student.firstName, student.otherNames, student.lastName].filter(Boolean).join(' ')}</h4>
+                  <h4>{formatPersonName(student.lastName, student.firstName, student.otherNames)}</h4>
                   <div><span>Status</span><strong>{student.status || 'Active'}</strong></div>
                   <small>Keep this card for institutional identification.</small>
                 </article>
