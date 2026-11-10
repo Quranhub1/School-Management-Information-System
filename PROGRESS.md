@@ -301,9 +301,9 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [x] Add a compact, left-scrolling latest-admitted-student ribbon to the Admissions & Screening workspace. It reads the newest non-archived student linked to an admission record and respects reduced-motion preferences.
 
 
-## SchoolPay integration — schema audit paused at database verification (2026-11-10)
+## SchoolPay integration — unified payment work resumed (2026-11-10)
 
-**Status: PAUSED — source-code review recorded; live PostgreSQL schema inspection is the next required step. No SchoolPay schema migration or application-code change has been made.**
+**Status: RESUMED — source review and provider-documentation checks are complete enough to begin isolated posting corrections. The live PostgreSQL schema still must be inspected before any schema migration is designed or applied.**
 
 ### Scope and integration decisions already established
 
@@ -418,3 +418,52 @@ Additional design facts from that review:
 - [ ] Verify representative student and staff records with and without other names in registry, search, dashboards, payroll, reports, certificates and printed/exported documents.
 
 **Data-integrity rule:** this change must affect display formatting only. Uppercasing is also display-only; Existing stored name components and API input fields remain in their original semantic columns. Do not run a database migration or bulk-update person records to change display order.
+
+
+## Unified finance payment pipeline — implementation resumed (2026-11-10)
+
+### Confirmed architecture decisions
+
+- All payment channels must update the same canonical SMIS student financial records; no gateway may maintain an independent student balance.
+- Keep the existing StudentInvoices, Payments, PaymentAllocations, PaymentLedgerEntries, JournalEntries and JournalEntryLines finance foundation.
+- Provider intake/notification records are evidence and processing state, not separate student balances.
+- SchoolPay covers multiple collection rails (bank, mobile money and other channels). Its receipt must not be posted as if every SchoolPay transaction were a mobile-money settlement.
+- Use a dedicated SchoolPay clearing asset account for verified SchoolPay receipts, then reconcile settlement to the correct bank/mobile-money destination using provider settlement evidence.
+- Keep pending, failed, unmatched or unverified transactions out of posted student balances.
+- Implement one provider-neutral idempotency/transaction intake layer before enabling unattended processing across multiple gateways.
+- Keep manual payments in the same Payments/allocation/journal path. Manual cash, bank transfer, card/cheque and gateway receipts must never create separate student balances.
+
+### Implemented in PR #290 — not merged
+
+- [x] Correct SchoolPay unallocated payment method/currency argument order.
+- [x] Preserve SchoolPay as the recorded channel.
+- [x] Add SchoolPayClearing account code 1040 and seed the SchoolPay Clearing asset account.
+- [x] Centralize payment account resolution and route SchoolPay to the clearing account rather than the mobile-money or bank account directly.
+- [x] Add unit tests for Cash, Bank Transfer, Cheque, Card, Mobile Money, MTN MoMo, Airtel Money, SchoolPay, blank and unsupported channels.
+- [ ] Wait for Backend CI, Foundation CI and Full System CI on the final PR head; inspect failures and rerun/fix as required.
+- [ ] Review and merge only after checks pass.
+
+PR: https://github.com/Quranhub1/School-Management-Information-System/pull/290
+
+### Next implementation milestones
+
+1. Add a provider-neutral transaction inbox/idempotency key with unique provider + provider transaction/receipt identifiers, and a nullable link to the canonical Payment.
+2. Make payment posting and the transaction's Posted state one database transaction; concurrent callbacks and Sync imports must not double-post.
+3. Add student SchoolPay payment-code mapping and strict matching. Do not match by name alone.
+4. Implement the official SchoolPay webhook envelope and SHA-256 signature validation (API password + schoolpayReceiptNumber) with constant-time comparison. Keep Sync/Adhoc MD5 request signing separate.
+5. Add Sync API import/recovery because the official documentation says webhook delivery is a single attempt and is not automatically retried.
+6. Quarantine unmatched, ambiguous, amount-mismatched and unsupported supplementary-fee transactions for Finance review.
+7. Reconcile SchoolPay clearing to the actual settlement bank/channel; do not treat the platform as a single physical payment rail.
+8. Extend the same provider-neutral posting contract to mobile money and any additional gateways; keep Finance-entered manual receipts on the same canonical posting path.
+9. Run migration/model snapshot checks, backend unit/integration tests, PostgreSQL CI and frontend regression checks before production use.
+
+### Provider contract confirmed from official SchoolPay documentation
+
+- Sync API: MD5 of schoolCode + identifyingDate + API password; range sync uses fromDate.
+- Adhoc API: MD5 of schoolCode + identifyingReference + API password; Register/Request use external reference and Check uses payment reference.
+- General webhook signature: SHA-256 of School API password + schoolpayReceiptNumber.
+- SchoolPay webhook delivery is documented as a single attempt; scheduled Sync API recovery is therefore required.
+- Sync API exposes both ordinary and supplementary fee payments, including source transaction ID, receipt number, channel, settlement bank and student payment code.
+- Provider documentation: https://www.schoolpay.co.ug/apidocumentation
+
+**Verification boundary:** PR #290 is an isolated posting correction, not completion of the provider-neutral transaction inbox, signed webhook, Sync API, full reconciliation or live SchoolPay integration. No live database migration or provider transaction has been run.
