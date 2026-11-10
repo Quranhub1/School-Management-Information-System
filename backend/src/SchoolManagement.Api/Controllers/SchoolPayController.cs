@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Api.Services;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -16,7 +17,8 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class SchoolPayController(
     ISchoolPayService schoolPay,
     IOptions<SchoolPayOptions> schoolPayOptions,
-    SchoolManagementDbContext db) : ControllerBase
+    SchoolManagementDbContext db,
+    PaymentReceiptEmailService receiptEmails) : ControllerBase
 {
     [HttpPost("webhook")]
     [AllowAnonymous]
@@ -76,6 +78,13 @@ public sealed class SchoolPayController(
                 cancellationToken,
                 payment.SourceChannelTransactionId,
                 payment.TransactionCompletionStatus);
+
+            var postedPaymentId = await db.Payments.AsNoTracking()
+                .Where(x => x.ProviderTransactionId == payment.SourceChannelTransactionId)
+                .Select(x => (Guid?)x.Id)
+                .SingleOrDefaultAsync(cancellationToken);
+            if (postedPaymentId.HasValue)
+                await receiptEmails.SendReceiptAsync(postedPaymentId.Value, cancellationToken);
 
             return Ok(new
             {
