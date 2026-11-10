@@ -13,7 +13,7 @@
 .app-shell .content input[type="reset"] {
   box-sizing: border-box;
   min-width: 0;
-  min-height: var(--smis-action-height);
+  min-height: var(--smis-action-height) !important;
   padding: 7px 11px;
   line-height: 1.25;
   vertical-align: middle;
@@ -34,18 +34,18 @@
 
 /* Separate action siblings in existing flex/grid groups without changing
    their display mode, order, event handlers, or responsive column rules. */
-.app-shell .content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions):has(> button + button) {
+.app-shell .content :has(> button + button) {
   column-gap: var(--smis-action-gap) !important;
   row-gap: var(--smis-action-gap) !important;
 }
 
-.app-shell .content :is(.flex, .inline-flex, .button-group, .action-buttons, .toolbar-actions, .table-actions):has(> button + button) {
+.app-shell .content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions, .form-actions):has(> button + button) {
   flex-wrap: wrap;
   align-items: center;
 }
 
 /* Prevent action clusters in data tables from collapsing into one another. */
-.app-shell .content td :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .table-actions):has(> button + button) {
+.app-shell .content td :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .table-actions, .form-actions):has(> button + button) {
   min-width: max-content;
   max-width: 100%;
 }
@@ -69,7 +69,7 @@
 /* On narrow screens, let grouped actions wrap instead of overlapping or
    forcing the workspace wider than the viewport. */
 @media (max-width: 760px) {
-  .app-shell .content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions):has(> button + button) {
+  .app-shell .content :is(.flex, .inline-flex, [role="group"], .button-group, .action-buttons, .toolbar-actions, .table-actions, .form-actions):has(> button + button) {
     flex-wrap: wrap;
     row-gap: 7px !important;
   }
