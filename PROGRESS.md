@@ -299,3 +299,104 @@ SMIS is ready for production sign-off only when the remaining target-environment
 - [ ] Add direct record-detail navigation only where the destination modules expose a supported record-opening route.
 
 - [x] Add a compact, left-scrolling latest-admitted-student ribbon to the Admissions & Screening workspace. It reads the newest non-archived student linked to an admission record and respects reduced-motion preferences.
+
+
+## SchoolPay integration — schema audit paused at database verification (2026-11-10)
+
+**Status: PAUSED — source-code review recorded; live PostgreSQL schema inspection is the next required step. No SchoolPay schema migration or application-code change has been made.**
+
+### Scope and integration decisions already established
+
+- Institution: Kampala School of Health Sciences (KSHS).
+- Finance integration approach: extend the existing SMIS finance module (hybrid approach).
+- Initial payment channel: mobile money.
+- Payment initiation: support both school/staff-initiated and payer-initiated flows.
+- SchoolPay implementation is deliberately paused here while other work takes priority. Resume from the database-verification step below; do not begin migrations based only on the source-code snapshot.
+
+### Seven required SchoolPay physical tables and fields
+
+The supplied SchoolPay schema notes specify these physical PostgreSQL table names and fields:
+
+1. `chart_of_accounts`: `id`, `account_code`, `account_name`, `account_type`, `is_active`, `created_at`.
+2. `students`: `id`, `reg_number`, `schoolpay_code`, `full_name`, `program_name`, `status`, `created_at`.
+3. `student_ledgers`: `id`, `student_id`, `semester_id`, `total_billed`, `total_paid`, `balance`, `updated_at`.
+4. `payment_transactions`: `id`, `schoolpay_tx_id`, `student_id`, `amount_paid`, `payment_channel`, `payer_name`, `payer_phone`, `payment_date`, `status`, `raw_payload`.
+5. `payment_allocations`: `id`, `transaction_id`, `student_id`, `fee_type`, `amount_allocated`, `created_at`.
+6. `journal_entries`: `id`, `entry_date`, `reference_number`, `description`, `created_at`.
+7. `journal_items`: `id`, `journal_entry_id`, `account_id`, `debit_amount`, `credit_amount`.
+
+The supplied notes also call for unique SchoolPay/provider transaction identifiers and unique receipt numbers. Confirm the complete provider contract and constraints before implementation.
+
+### Existing SMIS model/table mapping found in source review
+
+The EF Core model snapshot and finance configuration were inspected on `main`. The following are source-level findings, **not confirmation of the live database schema**:
+
+| Required SchoolPay table | Existing SMIS table/entity candidates | Assessment to carry into design |
+|---|---|---|
+| `chart_of_accounts` | `ChartOfAccounts` | Existing chart-of-accounts model; reconcile columns and map the physical table name without creating a duplicate chart. |
+| `students` | `Students` | Reuse the canonical SMIS Student entity/table; do not create a second student directory. Map SchoolPay identifiers and any required provider-facing fields carefully. |
+| `student_ledgers` | `PaymentLedgerEntries` | No direct equivalent found. Ledger entries are history/events, not a student-plus-semester summary. Design a separate aggregate only if the agreed contract requires it. |
+| `payment_transactions` | `Payments`, `MobileMoneyTransactions`, `SchoolPaymentNotifications` | No single direct equivalent found. Define the relationship between provider transaction, notification/event, SMIS payment and invoice before creating a table or duplicating records. |
+| `payment_allocations` | `PaymentAllocations` | Existing invoice-based allocations must be reconciled with the requested transaction/student/fee-type shape; preserve invoice allocation and reconciliation behavior. |
+| `journal_entries` | `JournalEntries` | Existing accounting journal model; reconcile field names and retain posting, status, source and reversal behavior. |
+| `journal_items` | `JournalEntryLines` | Existing journal-line model; reconcile debit/credit and account relationships without bypassing journal balancing rules. |
+
+Relevant source inspected: `FinanceConfiguration.cs`; finance domain models including `StudentInvoice`, `MobileMoneyTransaction` and `SchoolPaymentNotification`; `SchoolManagementDbContext.cs`; `SchoolManagementDbContextModelSnapshot.cs`; and the November 2026 SchoolPay-notification and student-invoice-line migrations.
+
+Additional design facts from that review:
+- Existing `PaymentAllocation` is tied to a `Payment` and a `StudentInvoice`, with a unique payment/invoice pair.
+- Existing journal entries carry entry number, status, source type/source ID and reversal-related behavior; journal lines carry journal-entry ID, account ID, debit, credit and description.
+- Existing SchoolPay notification records already retain provider references, student/invoice links where known, amount/currency, status, payer details, raw payload and processing timestamps.
+- Existing mobile-money transactions already retain provider, transaction/external references, student/invoice links, amount/currency, status and request/completion timestamps.
+- Existing student invoices represent billed fee obligations and track paid/discount amounts and outstanding balance.
+
+### Provisional mapping direction — not approved for migration yet
+
+- Prefer EF Core table/column mapping (for example, `.ToTable(...)` and `.HasColumnName(...)`) over renaming CLR/domain classes solely to satisfy physical PostgreSQL names.
+- Assess whether the five existing tables can safely be mapped to the required snake_case physical names: `ChartOfAccounts` → `chart_of_accounts`, `Students` → `students`, `PaymentAllocations` → `payment_allocations`, `JournalEntries` → `journal_entries`, and `JournalEntryLines` → `journal_items`.
+- Treat `student_ledgers` as a potential new student/semester aggregate, distinct from the existing ledger-entry history.
+- Treat `payment_transactions` as a potential provider transaction record only after its lifecycle and relationship to `SchoolPaymentNotifications`, `MobileMoneyTransactions` and `Payments` are explicitly designed.
+- Preserve existing foreign keys, indexes, unique constraints, invoice allocation, audit history, journal balancing, reversals and finance workflows.
+- Validate data types and semantics with the provider contract before choosing numeric precision, timestamp handling or JSON/JSONB representation.
+
+### Required next steps when work resumes
+
+1. In Windows PowerShell, update the local checkout from `main` using the fast-forward-only workflow:
+   ```powershell
+   cd "C:\Users\JOES TECH\School-Management-Information-System"
+   git switch main
+   git pull --ff-only origin main
+   ```
+2. In pgAdmin, open the `school_management` database's Query Tool and run the read-only schema inspection SQL below. Do not paste SQL into PowerShell.
+   ```sql
+   -- List public tables
+   SELECT table_name
+   FROM information_schema.tables
+   WHERE table_schema = 'public'
+     AND table_type = 'BASE TABLE'
+   ORDER BY table_name;
+
+   -- Inspect relevant columns
+   SELECT table_name, column_name, data_type, is_nullable
+   FROM information_schema.columns
+   WHERE table_schema = 'public'
+     AND (
+       table_name ILIKE '%student%'
+       OR table_name ILIKE '%payment%'
+       OR table_name ILIKE '%journal%'
+       OR table_name ILIKE '%account%'
+       OR table_name ILIKE '%schoolpay%'
+     )
+   ORDER BY table_name, ordinal_position;
+
+   -- Check applied EF Core migrations
+   SELECT *
+   FROM "__EFMigrationsHistory"
+   ORDER BY "MigrationId";
+   ```
+3. Save/share the query results and compare the actual PostgreSQL schema and applied migration history with the EF Core model snapshot. Record any drift before designing migrations.
+4. Confirm the complete SchoolPay specification, including exact types, nullability, primary/foreign keys, unique constraints, indexes, receipt-number rules, transaction lifecycle, retries/idempotency and reconciliation expectations.
+5. Produce a table-by-table migration and compatibility plan, including data-preservation and rollback strategy, for review before implementation.
+6. Only after approval, implement migrations and code changes on a feature branch; test against a database backup/test database, run backend/frontend tests and CI, and verify existing finance workflows.
+
+**Important:** the SQL above is read-only. The live database has not yet been inspected by the assistant, and no claim is made that the physical database currently matches the source snapshot. Do not rename tables, create tables, or apply migrations until the live inspection and compatibility review are complete.
