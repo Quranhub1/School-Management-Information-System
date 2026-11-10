@@ -183,10 +183,9 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
   return <section className="finance-student-dashboard" aria-label="Student finance dashboard">
     <div className="finance-search-card">
       <div><p className="eyebrow">STUDENT FEES & PAYMENTS</p><h3>Student fee register</h3></div>
-      <form onSubmit={e => { e.preventDefault(); void loadStudent() }} className="finance-search-form">
-        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search student name or number" aria-label="Student number or name" />
-        <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Open Account'}</button>
-      </form>
+      <div className="finance-search-form">
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Filter by student name or number" aria-label="Filter students by name or number" />
+      </div>
       {!profile && <div className="finance-register-list" style={{ marginTop: 14, border: '1px solid #e5e7eb', overflowX: 'auto' }}>
         <div style={{ padding: '9px 12px', fontWeight: 700, borderBottom: '1px solid #e5e7eb' }}>
           {registerRows.length.toLocaleString()} students · {groupedRegisterRows.length.toLocaleString()} class groups
@@ -199,7 +198,10 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
           </select>
           <select aria-label="Filter by uptake" value={intakeFilter} onChange={e => setIntakeFilter(e.target.value)}>
             <option value="">All uptakes</option>
-            {intakeOptions.map(code => <option key={code} value={code}>{code}</option>)}
+            {intakeOptions.map(code => {
+              const intake = registerStudents.find(student => (student.intakeCode || student.intakeName) === code)
+              return <option key={code} value={code}>{intake?.intakeCode ? intake.intakeCode + (intake.intakeName ? ' — ' + intake.intakeName : '') : code}</option>
+            })}
           </select>
           <select aria-label="Filter by class or year of study" value={classFilter} onChange={e => setClassFilter(e.target.value)}>
             <option value="">All classes / years</option>
@@ -247,7 +249,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
     {error && <div className="error" role="alert">{error}</div>}
     {profile && <>
       <div className="page-actions" style={{ marginBottom: 12 }}>
-        <button type="button" className="secondary-button" onClick={() => { setProfile(null); setInvoices([]); setPayments([]); setStatement(null); setError('') }}>Back to student register</button>
+        <button type="button" className="secondary-button" onClick={() => { setProfile(null); setInvoices([]); setPayments([]); setStatement(null); setQuery(''); setError('') }}>Back to student register</button>
       </div>
       <div className="finance-student-banner">
         <div><span className="finance-muted">Student</span><strong>{profile.name}</strong><small>{profile.status} · {profile.email || profile.phoneNumber || 'No contact recorded'}</small></div>
