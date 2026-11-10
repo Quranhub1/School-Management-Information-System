@@ -4603,3 +4603,52 @@ table { font-variant-numeric: tabular-nums; }
   background: #173526;
   color: #bbf7d0;
 }
+
+
+/* Audit Logs: reduce button widths while preserving readable labels and spacing. */
+.audit-log-actions {
+  flex: 0 1 auto;
+  max-width: 100%;
+  justify-content: flex-start;
+  gap: 7px;
+}
+.audit-log-actions > button {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 190px;
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: .75rem;
+  line-height: 1.2;
+}
+.audit-log-filters > button.audit-log-search-button {
+  min-height: 34px;
+  padding: 6px 12px;
+}
+.audit-log-grid .smis-ag-grid-toolbar {
+  grid-template-columns: minmax(180px, 1fr) auto repeat(3, max-content) max-content;
+  gap: 7px;
+}
+.audit-log-grid .smis-ag-grid-toolbar > button {
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 9px;
+  font-size: .74rem;
+}
+.audit-log-grid .smis-ag-grid-columns summary {
+  min-height: 34px;
+  padding-inline: 9px;
+  font-size: .74rem;
+}
+@media (max-width: 1050px) {
+  .audit-log-actions > button {
+    flex: 0 1 auto;
+    max-width: 190px;
+  }
+}
+@media (max-width: 600px) {
+  .audit-log-actions > button {
+    width: auto;
+    max-width: 100%;
+  }
+}
