@@ -33,7 +33,8 @@ public sealed class PaymentReceiptEmailService
         var school = await db.InstitutionSettings.AsNoTracking().SingleOrDefaultAsync(x => x.IsActive, ct);
         if (student is null || string.IsNullOrWhiteSpace(student.Email) || school is null || !school.EmailEnabled
             || string.IsNullOrWhiteSpace(school.EmailSmtpHost) || string.IsNullOrWhiteSpace(school.EmailSmtpUsername)
-            || string.IsNullOrWhiteSpace(school.EmailSmtpPasswordProtected))
+            || string.IsNullOrWhiteSpace(school.EmailSmtpPasswordProtected)
+            || string.IsNullOrWhiteSpace(school.EmailFromAddress ?? school.Email))
             return false;
 
         try
