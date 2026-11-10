@@ -49,8 +49,7 @@ public sealed class SchoolPayService(IFinanceRepository finance, FinanceService 
             else if (studentId.HasValue)
             {
                 var receiptNumber = CreateReceiptNumber(normalizedExternalRef);
-                var unallocatedPayment = await financeService.RecordUnallocatedPaymentAsync(studentId.Value, receiptNumber, amount, "SchoolPay", currency, schoolPayReference, cancellationToken, sourceChannel, normalizedTransactionId, saveChanges: false);
-                await financeService.AllocatePaymentFifoAsync(unallocatedPayment.Id, cancellationToken, saveChanges: false);
+                await financeService.RecordUnallocatedPaymentAsync(studentId.Value, receiptNumber, amount, "SchoolPay", currency, schoolPayReference, cancellationToken, sourceChannel, normalizedTransactionId, saveChanges: false, allocateToOutstandingInvoices: true);
             }
             else
             {
