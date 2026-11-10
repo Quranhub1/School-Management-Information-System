@@ -4597,3 +4597,93 @@ table { font-variant-numeric: tabular-nums; }
     width: auto;
   }
 }
+
+
+/* Audit Logs screen only: keep controls compact in height and size their
+   width to their labels. These rules deliberately do not affect Overview. */
+.audit-log-screen > .panel-heading {
+  align-items: center;
+  gap: 12px;
+}
+.audit-log-screen > .panel-heading .form-actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+.audit-log-screen > .panel-heading .form-actions > button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 0;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 13px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.audit-log-screen > .library-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  min-width: 0;
+}
+.audit-log-screen > .library-search > input,
+.audit-log-screen > .library-search > label {
+  flex: 1 1 150px;
+  min-width: 130px;
+}
+.audit-log-screen > .library-search > input {
+  width: auto;
+  min-height: 36px;
+  border: 1px solid var(--smis-border, #d6d3d1);
+  border-radius: 5px;
+  padding: 7px 10px;
+}
+.audit-log-screen > .library-search > label {
+  display: grid;
+  gap: 4px;
+  color: var(--smis-text, #334155);
+  font-size: .78rem;
+  font-weight: 600;
+}
+.audit-log-screen > .library-search > label > input {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--smis-border, #d6d3d1);
+  border-radius: 5px;
+  padding: 7px 10px;
+}
+.audit-log-screen > .library-search > button {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 88px;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid #176b43;
+  border-radius: 5px;
+  background: #176b43;
+  color: #fff;
+  white-space: nowrap;
+}
+.audit-log-screen > .library-search > button:hover {
+  background: #125536;
+}
+[data-theme="dark"] .audit-log-screen > .library-search > label {
+  color: var(--smis-text, #e2e8f0);
+}
+@media (max-width: 760px) {
+  .audit-log-screen > .panel-heading {
+    align-items: flex-start;
+  }
+  .audit-log-screen > .panel-heading .form-actions {
+    justify-content: flex-start;
+  }
+}
