@@ -77,15 +77,17 @@ public sealed class SchoolPayReconciliationWorker(
         if (payload.ReturnCode != 0)
             throw new InvalidOperationException($"SchoolPay Sync API returned code {payload.ReturnCode}: {payload.ReturnMessage}");
 
-        using var scope = scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<SchoolManagementDbContext>();
-        var schoolPay = scope.ServiceProvider.GetRequiredService<ISchoolPayService>();
         var transactions = (payload.Transactions ?? []).Concat(payload.SupplementaryFeePayments ?? []).ToList();
         var processed = 0;
 
         foreach (var transaction in transactions)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            // Isolate each provider transaction in its own scope so a failed EF save
+            // cannot leave tracked entities that contaminate the next transaction.
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<SchoolManagementDbContext>();
+            var schoolPay = scope.ServiceProvider.GetRequiredService<ISchoolPayService>();
             if (!string.Equals(transaction.TransactionCompletionStatus, "Completed", StringComparison.OrdinalIgnoreCase))
                 continue;
 
