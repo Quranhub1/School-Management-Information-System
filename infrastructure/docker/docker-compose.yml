@@ -30,6 +30,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__SchoolManagement: "Host=postgres;Port=5432;Database=school_management;Username=school_management;Password=${DB_PASS:-change-me-in-production}"
       Authentication__JwtKey: ${JWT_KEY:-change-me-in-production-32-chars-minimum}
+      EmailService__BaseUrl: http://email-service:5100
+      EmailService__ApiKey: ${EMAIL_SERVICE_API_KEY:?Set EMAIL_SERVICE_API_KEY in .env}
       LibraryIntegrations__Koha__Enabled: "false"
       LibraryIntegrations__DSpace__Enabled: "false"
       DocumentStorage__RootPath: /app/documents
@@ -39,6 +41,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      email-service:
+        condition: service_healthy
     volumes:
       - smis_logs:/app/logs
       - smis_documents:/app/documents
@@ -46,6 +50,25 @@ services:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
       interval: 30s
       timeout: 10s
+      retries: 3
+
+  email-service:
+    build:
+      context: ../..
+      dockerfile: services/email-service/Dockerfile
+    container_name: smis-email-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5100
+      EMAIL_SERVICE_HOST: 0.0.0.0
+      EMAIL_SERVICE_API_KEY: ${EMAIL_SERVICE_API_KEY:?Set EMAIL_SERVICE_API_KEY in .env}
+    expose:
+      - "5100"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
       retries: 3
 
   nginx:

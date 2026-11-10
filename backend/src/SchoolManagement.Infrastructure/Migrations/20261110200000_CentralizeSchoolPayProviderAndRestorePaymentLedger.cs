@@ -206,6 +206,57 @@ public sealed partial class CentralizeSchoolPayProviderAndRestorePaymentLedger :
             column: "ProviderTransactionId",
             unique: true,
             filter: "\"ProviderTransactionId\" IS NOT NULL");
+        // Preserve the finance history that predates the new allocation/ledger tables.
+        // Before this migration every existing payment had a required invoice link.
+        migrationBuilder.Sql("""
+            INSERT INTO "PaymentAllocations"
+                ("Id", "PaymentId", "StudentInvoiceId", "AllocatedAmount", "Currency", "AllocatedAt", "Notes")
+            SELECT
+                gen_random_uuid(),
+                p."Id",
+                p."StudentInvoiceId",
+                p."Amount",
+                p."Currency",
+                p."PaidAt",
+                'Backfilled from existing payment'
+            FROM "Payments" p
+            WHERE p."StudentInvoiceId" IS NOT NULL;
+
+            INSERT INTO "PaymentLedgerEntries"
+                ("Id", "StudentId", "StudentInvoiceId", "PaymentId", "PaymentAllocationId",
+                 "EntryDate", "EntryType", "Description", "Amount", "Currency", "Reference")
+            SELECT
+                gen_random_uuid(),
+                i."StudentId",
+                i."Id",
+                NULL,
+                NULL,
+                i."IssuedAt",
+                'Invoice',
+                'Invoice ' || i."InvoiceNumber",
+                i."Amount",
+                i."Currency",
+                i."InvoiceNumber"
+            FROM "StudentInvoices" i;
+
+            INSERT INTO "PaymentLedgerEntries"
+                ("Id", "StudentId", "StudentInvoiceId", "PaymentId", "PaymentAllocationId",
+                 "EntryDate", "EntryType", "Description", "Amount", "Currency", "Reference")
+            SELECT
+                gen_random_uuid(),
+                p."StudentId",
+                p."StudentInvoiceId",
+                p."Id",
+                a."Id",
+                p."PaidAt",
+                'Payment',
+                'Payment ' || p."ReceiptNumber",
+                -p."Amount",
+                p."Currency",
+                COALESCE(NULLIF(p."Reference", ''), p."ReceiptNumber")
+            FROM "Payments" p
+            INNER JOIN "PaymentAllocations" a ON a."PaymentId" = p."Id";
+            """);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)

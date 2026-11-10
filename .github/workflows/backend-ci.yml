@@ -22,6 +22,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node.js for institutional email service
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and test institutional email service
+        working-directory: services/email-service
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm test
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:

@@ -18,6 +18,14 @@ public sealed class InstitutionSettings
     public string? LogoContentType { get; set; }
     public string? PrimaryColor { get; set; }
     public string? AccentColor { get; set; }
+    public bool EmailEnabled { get; set; }
+    public string? EmailSmtpHost { get; set; }
+    public int? EmailSmtpPort { get; set; }
+    public string? EmailSmtpSecureMode { get; set; }
+    public string? EmailSmtpUsername { get; set; }
+    public string? EmailSmtpPasswordProtected { get; set; }
+    public string? EmailFromAddress { get; set; }
+    public string? EmailFromName { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
