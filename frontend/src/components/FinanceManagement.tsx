@@ -221,7 +221,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
       <div className="finance-tab-strip" role="tablist" aria-label="Finance sections">
         {([
           ['overview', 'Overview'],
-          ['student-accounts', 'Student Accounts'],
+          ['student-accounts', 'Student Fees & Payments'],
           ['collections', 'Collections'],
           ...(isAssistantAccountant ? [] : [['fees', 'Fee Structures'], ['accounting', 'Accounting']] as [FinanceTab, string][]),
           ['allowances', 'Staff Allowances'],
