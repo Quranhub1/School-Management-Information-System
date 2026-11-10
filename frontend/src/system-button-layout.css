@@ -4,16 +4,7 @@
 .app-shell .content {
   --smis-action-height: 36px;
   --smis-action-gap: 8px;
-  --smis-action-radius: 4px;
-  --smis-action-primary: #166534;
-  --smis-action-primary-hover: #14532d;
-  --smis-action-primary-text: #ffffff;
-  --smis-action-secondary: #f8faf9;
-  --smis-action-secondary-hover: #eef3f0;
-  --smis-action-secondary-text: #24332d;
-  --smis-action-secondary-border: #cbd5cf;
-  --smis-action-danger: #991b1b;
-  --smis-action-danger-hover: #7f1d1d;
+  --smis-action-radius: 3px;
 }
 
 /* Common dimensions and typography. */
@@ -34,59 +25,16 @@
   font-weight: 650;
   line-height: 1.25;
   vertical-align: middle;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  /* Action labels stay on one line so narrow cards and tables do not turn
+     landscape controls into tall, multi-line buttons. Action groups wrap instead. */
+  white-space: nowrap;
+  overflow-wrap: normal;
   box-shadow: none;
   transform: none;
   transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 
-/* Primary action: Finance department dark green with white text. */
-.app-shell .content button:not(.secondary-button):not(.btn-secondary):not(.button-secondary):not(.cancel-button):not(.danger-button):not(.delete-button):not(.btn-danger):not(.button-danger):not([data-variant="secondary"]):not([data-variant="danger"]):not([data-destructive="true"]):not([role="tab"]):not(.tab-button):not(.nav-tab):not(.pagination-button):not(.page-link):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button),
-.app-shell .content input[type="button"],
-.app-shell .content input[type="submit"],
-.app-shell .content input[type="reset"] {
-  border: 1px solid var(--smis-action-primary) !important;
-  background: var(--smis-action-primary) !important;
-  color: var(--smis-action-primary-text) !important;
-  font-weight: 650;
-}
-
-.app-shell .content button:not(.secondary-button):not(.btn-secondary):not(.button-secondary):not(.cancel-button):not(.danger-button):not(.delete-button):not(.btn-danger):not(.button-danger):not([data-variant="secondary"]):not([data-variant="danger"]):not([data-destructive="true"]):not([role="tab"]):not(.tab-button):not(.nav-tab):not(.pagination-button):not(.page-link):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button):hover:not(:disabled),
-.app-shell .content input[type="button"]:hover:not(:disabled),
-.app-shell .content input[type="submit"]:hover:not(:disabled),
-.app-shell .content input[type="reset"]:hover:not(:disabled) {
-  border-color: var(--smis-action-primary-hover) !important;
-  background: var(--smis-action-primary-hover) !important;
-  color: #fff !important;
-  box-shadow: none;
-}
-
-/* Secondary actions: neutral surface, dark text and a visible border. */
-.app-shell .content button:is(.secondary-button, .btn-secondary, .button-secondary, .cancel-button, [data-variant="secondary"]) {
-  border: 1px solid var(--smis-action-secondary-border) !important;
-  background: var(--smis-action-secondary) !important;
-  color: var(--smis-action-secondary-text) !important;
-}
-
-.app-shell .content button:is(.secondary-button, .btn-secondary, .button-secondary, .cancel-button, [data-variant="secondary"]):hover:not(:disabled) {
-  border-color: #aab8af !important;
-  background: var(--smis-action-secondary-hover) !important;
-  color: #17251e !important;
-}
-
-/* Destructive actions remain clearly distinct from normal actions. */
-.app-shell .content button:is(.danger-button, .delete-button, .btn-danger, .button-danger, [data-variant="danger"], [data-destructive="true"]) {
-  border: 1px solid var(--smis-action-danger) !important;
-  background: var(--smis-action-danger) !important;
-  color: #fff !important;
-}
-
-.app-shell .content button:is(.danger-button, .delete-button, .btn-danger, .button-danger, [data-variant="danger"], [data-destructive="true"]):hover:not(:disabled) {
-  border-color: var(--smis-action-danger-hover) !important;
-  background: var(--smis-action-danger-hover) !important;
-  color: #fff !important;
-}
+/* Keep each module's existing primary, secondary and destructive colours. */
 
 /* Tabs and pagination keep their neutral/navigation semantics, but share
    Finance's dimensions and typography. */
@@ -119,7 +67,7 @@
 .app-shell .content input[type="button"]:focus-visible,
 .app-shell .content input[type="submit"]:focus-visible,
 .app-shell .content input[type="reset"]:focus-visible {
-  outline: 2px solid #166534;
+  outline: 2px solid color-mix(in srgb, var(--brand-accent, #64748b) 72%, transparent);
   outline-offset: 2px;
 }
 
