@@ -7,7 +7,7 @@ namespace SchoolManagement.Application.Finance;
 
 public sealed class SchoolPayService(IFinanceRepository finance, FinanceService financeService) : ISchoolPayService
 {
-    public async Task<SchoolPaymentNotification> ProcessNotificationAsync(string externalReference, string schoolPayReference, Guid? studentId, Guid? studentInvoiceId, decimal amount, string currency, string phoneNumber, string? payerName, string? channel, string rawPayload, CancellationToken cancellationToken)
+    public async Task<SchoolPaymentNotification> ProcessNotificationAsync(string externalReference, string schoolPayReference, Guid? studentId, Guid? studentInvoiceId, decimal amount, string currency, string? phoneNumber, string? payerName, string? channel, string? rawPayload, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(externalReference)) throw new ArgumentException("External reference is required.");
         if (string.IsNullOrWhiteSpace(schoolPayReference)) throw new ArgumentException("SchoolPay reference is required.");
