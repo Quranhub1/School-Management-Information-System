@@ -203,6 +203,18 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             })
             .ToListAsync(cancellationToken);
 
+        var currentAcademicPeriod = await (
+            from semester in db.Semesters.AsNoTracking()
+            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id
+            where semester.IsCurrent && academicYear.IsCurrent
+            orderby semester.Sequence descending
+            select new
+            {
+                SemesterName = semester.Name,
+                AcademicYearName = academicYear.Name
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
         var academicStatuses = await (
             from status in db.StudentAcademicStatuses.AsNoTracking()
             join semester in db.Semesters.AsNoTracking() on status.SemesterId equals semester.Id
