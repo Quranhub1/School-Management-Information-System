@@ -263,10 +263,6 @@ export function FinanceControlCenter({ onNavigate }: Props) {
         </div>
       </section>
 
-      <div className="finance-accountant-footer">
-        <div><strong>Accounting principle</strong><span>Posted financial transactions remain traceable; corrections should use controlled adjustments, credit notes, refunds or reversals rather than silently changing history.</span></div>
-        <div><strong>Current payment mode</strong><span>Existing manual/recorded payment workflows remain available. Mobile-money, USSD, bank API and gateway integrations are not assumed.</span></div>
-      </div>
     </section>
   )
 }
