@@ -63,7 +63,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
         var paid = invoices.Sum(x => x.PaidAmount);
 
         return Ok(new Student360Dto(
-            student.Id, student.StudentNumber, $"{student.LastName} {student.FirstName} {student.OtherNames}".Replace("  ", " ").Trim(),
+            student.Id, student.StudentNumber, $"{student.LastName} {student.FirstName} {student.OtherNames}".Replace("  ", " ").Trim().ToUpperInvariant(),
             student.DateOfBirth, student.Gender, student.PhoneNumber, student.Email, student.Status,
             attendanceRate, score, billed, paid, billed - paid,
             placements.Count, placements.Count(x => string.Equals(x.Status, "Completed", StringComparison.OrdinalIgnoreCase)), certificates,
@@ -94,7 +94,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
             else if (score < 60) risk += 20;
             if (balance > 0) risk += 10;
             var level = risk >= 60 ? "High" : risk >= 30 ? "Moderate" : "Low";
-            result.Add(new StudentRiskDto(s.Id, s.StudentNumber, $"{s.LastName} {s.FirstName}", Math.Min(risk, 100), level, Math.Round(attendanceRate, 1), Math.Round(score, 1), balance));
+            result.Add(new StudentRiskDto(s.Id, s.StudentNumber, $"{s.LastName} {s.FirstName} {s.OtherNames}".Trim().ToUpperInvariant(), Math.Min(risk, 100), level, Math.Round(attendanceRate, 1), Math.Round(score, 1), balance));
         }
         return Ok(result.OrderByDescending(x => x.RiskScore).Take(100).ToList());
     }

@@ -151,7 +151,7 @@ app.get('/api/student-portal/me', authMiddleware, (req, res) => {
   if (!student) return res.status(404).json({ message: 'Student record not found. Contact administration.' });
   res.json({
     studentId: student.id, studentNumber: student.studentNumber,
-    fullName: `${student.lastName} ${student.firstName} ${student.otherNames || ''}`.replace(/\s+/g, ' ').trim().trim(), status: student.status,
+    fullName: `${student.lastName} ${student.firstName} ${student.otherNames || ''}`.replace(/\s+/g, ' ').trim().toUpperCase(), status: student.status,
     firstName: student.firstName, lastName: student.lastName, otherNames: student.otherNames,
     dateOfBirth: student.dateOfBirth, gender: student.gender, nationalId: student.nationalId,
     phoneNumber: student.phoneNumber, email: student.email, createdAt: student.createdAt, admissionId: student.admissionId
@@ -244,7 +244,7 @@ app.post('/api/students', authMiddleware, (req, res) => {
 app.get('/api/students/:id/qrcode', authMiddleware, (req, res) => {
   const student = students.find(s => s.id === req.params.id);
   if (!student) return res.status(404).json({ message: 'Student not found' });
-  const qrData = Buffer.from(JSON.stringify({ studentId: student.id, studentNumber: student.studentNumber, name: `${student.lastName} ${student.firstName} ${student.otherNames || ''}`.replace(/\s+/g, ' ').trim() }));
+  const qrData = Buffer.from(JSON.stringify({ studentId: student.id, studentNumber: student.studentNumber, name: `${student.lastName} ${student.firstName} ${student.otherNames || ''}`.replace(/\s+/g, ' ').trim().toUpperCase() }));
   res.setHeader('Content-Type', 'application/octet-stream');
   res.setHeader('Content-Disposition', `attachment; filename="qrcode-${student.studentNumber}.txt"`);
   res.send(qrData);
@@ -304,7 +304,7 @@ app.get('/api/reports/student/:studentId/report-card', authMiddleware, (req, res
   const gpa = latestSummary ? latestSummary.gpa : 0;
   res.json({
     studentNumber: student.studentNumber,
-    studentName: `${student.lastName} ${student.firstName} ${student.otherNames || ''}`.replace(/\s+/g, ' ').trim(),
+    studentName: `${student.lastName} ${student.firstName} ${student.otherNames || ''}`.replace(/\s+/g, ' ').trim().toUpperCase(),
     results: studentTranscripts.map(t => ({
       courseCode: t.courseCode,
       courseName: t.courseTitle,
@@ -332,15 +332,15 @@ app.get('/api/search', authMiddleware, (req, res) => {
 
   const results = {
     query: q,
-    students: students.filter(s => (!from || new Date(s.createdAt) >= from) && (!to || new Date(s.createdAt) <= to)).filter(s => s.studentNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, studentNumber: s.studentNumber, fullName: `${s.lastName} ${s.firstName}`, status: s.status })),
-    staff: staff.filter(s => s.staffNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q) || s.staffType.toLowerCase().includes(q) || s.employmentType.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, staffNumber: s.staffNumber, fullName: `${s.lastName} ${s.firstName}`, employmentType: s.employmentType, staffType: s.staffType })),
+    students: students.filter(s => (!from || new Date(s.createdAt) >= from) && (!to || new Date(s.createdAt) <= to)).filter(s => s.studentNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, studentNumber: s.studentNumber, fullName: `${s.lastName} ${s.firstName} ${s.otherNames || ''}`.replace(/\s+/g, ' ').trim().toUpperCase(), status: s.status })),
+    staff: staff.filter(s => s.staffNumber.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q) || s.lastName.toLowerCase().includes(q) || s.staffType.toLowerCase().includes(q) || s.employmentType.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, staffNumber: s.staffNumber, fullName: `${s.lastName} ${s.firstName} ${s.otherNames || ''}`.replace(/\s+/g, ' ').trim().toUpperCase(), employmentType: s.employmentType, staffType: s.staffType })),
     courses: courses.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)).slice(0, 20).map(c => ({ id: c.id, code: c.code, name: c.name, creditUnits: c.creditUnits })),
     programmes: programmes.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)).slice(0, 20).map(p => ({ id: p.id, code: p.code, name: p.name, award: p.award })),
     academicYears: academicYears.filter(y => y.name.toLowerCase().includes(q)).slice(0, 20).map(y => ({ id: y.id, name: y.name, startDate: y.startDate, endDate: y.endDate, isCurrent: y.isCurrent })),
     semesters: semesters.filter(s => s.name.toLowerCase().includes(q)).slice(0, 20).map(s => ({ id: s.id, name: s.name, sequence: s.sequence, startDate: s.startDate, endDate: s.endDate, academicYearId: s.academicYearId })),
     teachingGroups: teachingGroups.filter(g => g.groupCode.toLowerCase().includes(q) || (g.name && g.name.toLowerCase().includes(q))).slice(0, 20).map(g => ({ id: g.id, groupCode: g.groupCode, name: g.name, courseOfferingId: g.courseOfferingId })),
-    applicants: applicants.filter(a => a.applicationNumber.toLowerCase().includes(q) || a.firstName.toLowerCase().includes(q) || a.lastName.toLowerCase().includes(q)).slice(0, 20).map(a => ({ id: a.id, applicationNumber: a.applicationNumber, fullName: `${a.lastName} ${a.firstName} ${a.otherNames || ''}`.replace(/\s+/g, ' ').trim(), status: a.status })),
-    alumni: alumni.filter(a => a.firstName.toLowerCase().includes(q) || a.lastName.toLowerCase().includes(q)).slice(0, 20).map(a => ({ id: a.id, studentId: a.studentId, fullName: `${a.lastName} ${a.firstName} ${a.otherNames || ''}`.replace(/\s+/g, ' ').trim(), graduationDate: a.graduationDate }))
+    applicants: applicants.filter(a => a.applicationNumber.toLowerCase().includes(q) || a.firstName.toLowerCase().includes(q) || a.lastName.toLowerCase().includes(q)).slice(0, 20).map(a => ({ id: a.id, applicationNumber: a.applicationNumber, fullName: `${a.lastName} ${a.firstName} ${a.otherNames || ''}`.replace(/\s+/g, ' ').trim().toUpperCase(), status: a.status })),
+    alumni: alumni.filter(a => a.firstName.toLowerCase().includes(q) || a.lastName.toLowerCase().includes(q)).slice(0, 20).map(a => ({ id: a.id, studentId: a.studentId, fullName: `${a.lastName} ${a.firstName} ${a.otherNames || ''}`.replace(/\s+/g, ' ').trim().toUpperCase(), graduationDate: a.graduationDate }))
   };
   res.json(results);
 });
