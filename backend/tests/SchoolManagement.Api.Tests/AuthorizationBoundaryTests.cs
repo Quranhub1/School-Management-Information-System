@@ -8,6 +8,27 @@ namespace SchoolManagement.Api.Tests;
 
 public sealed class AuthorizationBoundaryTests
 {
+
+    [Fact]
+    public void ModuleAccessKeepsAdminSecretaryOutOfFinanceAndTimetables()
+    {
+        Assert.Contains(InstitutionalRoles.AdminSecretary, ModuleAccess.RolesByModule[InstitutionalModules.Academic]);
+        Assert.Contains(InstitutionalRoles.AdminSecretary, ModuleAccess.RolesByModule[InstitutionalModules.Attendance]);
+        Assert.Contains(InstitutionalRoles.AdminSecretary, ModuleAccess.RolesByModule[InstitutionalModules.Staff]);
+        Assert.DoesNotContain(InstitutionalRoles.AdminSecretary, ModuleAccess.RolesByModule[InstitutionalModules.Finance]);
+        Assert.DoesNotContain(InstitutionalRoles.AdminSecretary, ModuleAccess.RolesByModule[InstitutionalModules.Timetable]);
+        Assert.DoesNotContain(InstitutionalRoles.AdminSecretary, ModuleAccess.RolesByModule[InstitutionalModules.Users]);
+        Assert.DoesNotContain(InstitutionalRoles.AdminSecretary, ModuleAccess.RolesByModule[InstitutionalModules.Settings]);
+    }
+
+    [Fact]
+    public void AssistantAcademicRegistrarHasAcademicAndTimetableModuleAccess()
+    {
+        Assert.Contains(InstitutionalRoles.AssistantRegistrar, ModuleAccess.RolesByModule[InstitutionalModules.Academic]);
+        Assert.Contains(InstitutionalRoles.AssistantRegistrar, ModuleAccess.RolesByModule[InstitutionalModules.Curriculum]);
+        Assert.Contains(InstitutionalRoles.AssistantRegistrar, ModuleAccess.RolesByModule[InstitutionalModules.Timetable]);
+    }
+
     [Fact]
     public void AdminSecretaryCanManageStudentAndAdmissionWorkflows()
     {
