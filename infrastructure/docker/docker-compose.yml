@@ -32,6 +32,7 @@ services:
       Authentication__JwtKey: ${JWT_KEY:-change-me-in-production-32-chars-minimum}
       EmailService__BaseUrl: http://email-service:5100
       EmailService__ApiKey: ${EMAIL_SERVICE_API_KEY:?Set EMAIL_SERVICE_API_KEY in .env}
+      Security__DataProtectionKeysPath: /app/dataprotection-keys
       LibraryIntegrations__Koha__Enabled: "false"
       LibraryIntegrations__DSpace__Enabled: "false"
       DocumentStorage__RootPath: /app/documents
@@ -46,6 +47,7 @@ services:
     volumes:
       - smis_logs:/app/logs
       - smis_documents:/app/documents
+      - smis_dataprotection:/app/dataprotection-keys
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
       interval: 30s
@@ -94,3 +96,4 @@ volumes:
   postgres_data:
   smis_logs:
   smis_documents:
+  smis_dataprotection:
