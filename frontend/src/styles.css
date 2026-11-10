@@ -4479,3 +4479,127 @@ table { font-variant-numeric: tabular-nums; }
   background: #172338;
   color: #e2e8f0;
 }
+
+
+/* Audit Logs data-grid toolbar: separate compact controls with consistent hit areas. */
+.audit-log-grid {
+  min-width: 0;
+}
+.audit-log-grid .smis-ag-grid-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto repeat(3, minmax(104px, max-content)) max-content;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 0;
+  margin: 0 0 8px;
+}
+.audit-log-grid .smis-ag-grid-search {
+  min-width: 0;
+  width: 100%;
+}
+.audit-log-grid .smis-ag-grid-search input {
+  min-height: 38px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  padding: 8px 10px;
+  color: #334155;
+  font-size: .8rem;
+}
+.audit-log-grid .smis-ag-grid-count {
+  justify-self: end;
+  font-size: .76rem;
+  font-weight: 600;
+}
+.audit-log-grid .smis-ag-grid-toolbar > button {
+  display: inline-flex;
+  min-width: 104px;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: #fff;
+  color: #334155;
+  font-size: .78rem;
+  font-weight: 650;
+  line-height: 1.25;
+  white-space: nowrap;
+  box-shadow: none;
+}
+.audit-log-grid .smis-ag-grid-toolbar > button:hover:not(:disabled) {
+  border-color: #15803d;
+  background: #f0fdf4;
+  color: #166534;
+}
+.audit-log-grid .smis-ag-grid-toolbar > button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.audit-log-grid .smis-ag-grid-columns {
+  min-width: 92px;
+}
+.audit-log-grid .smis-ag-grid-columns summary {
+  min-height: 38px;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  color: #334155;
+  font-size: .78rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+@media (max-width: 1120px) {
+  .audit-log-grid .smis-ag-grid-toolbar {
+    grid-template-columns: minmax(180px, 1fr) auto auto auto;
+  }
+  .audit-log-grid .smis-ag-grid-search {
+    grid-column: 1 / 3;
+  }
+  .audit-log-grid .smis-ag-grid-count {
+    grid-column: 3 / -1;
+    justify-self: end;
+  }
+  .audit-log-grid .smis-ag-grid-columns {
+    justify-self: start;
+  }
+}
+@media (max-width: 600px) {
+  .audit-log-grid .smis-ag-grid-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .audit-log-grid .smis-ag-grid-search,
+  .audit-log-grid .smis-ag-grid-count {
+    grid-column: 1 / -1;
+  }
+  .audit-log-grid .smis-ag-grid-count {
+    justify-self: start;
+  }
+  .audit-log-grid .smis-ag-grid-toolbar > button,
+  .audit-log-grid .smis-ag-grid-columns {
+    width: 100%;
+    min-width: 0;
+  }
+  .audit-log-grid .smis-ag-grid-toolbar > button {
+    white-space: normal;
+    text-align: center;
+  }
+  .audit-log-grid .smis-ag-grid-columns summary {
+    width: 100%;
+  }
+}
+[data-theme="dark"] .audit-log-grid .smis-ag-grid-search input,
+[data-theme="dark"] .audit-log-grid .smis-ag-grid-toolbar > button,
+[data-theme="dark"] .audit-log-grid .smis-ag-grid-columns summary {
+  border-color: #475569;
+  background: #172338;
+  color: #e2e8f0;
+}
+[data-theme="dark"] .audit-log-grid .smis-ag-grid-toolbar > button:hover:not(:disabled) {
+  border-color: #16a34a;
+  background: #173526;
+  color: #bbf7d0;
+}
