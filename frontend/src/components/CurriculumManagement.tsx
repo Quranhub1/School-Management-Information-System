@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   addCurriculumCourse,
+  updateCurriculumCourse,
   createCourse,
   createCurriculum,
   updateCurriculum,
@@ -35,6 +36,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null)
   const [programmeForm, setProgrammeForm] = useState({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
+  const [editingMappingId, setEditingMappingId] = useState<string | null>(null)
   const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
   const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
   const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === authority)
@@ -265,17 +267,30 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update course status.') }
   }
 
+  function editMapping(item: CurriculumCourse) {
+    setEditingMappingId(item.id)
+    setMf({ courseId: item.courseId, yearOfStudy: String(item.yearOfStudy), semesterNumber: String(item.semesterNumber), isCore: item.isCore })
+  }
+
   async function saveMapping(e: React.FormEvent) {
     e.preventDefault()
     if (!selected) return
     setSaving(true)
     try {
-      await addCurriculumCourse(selected, {
-        courseId: mf.courseId,
+      const values = {
         yearOfStudy: Number(mf.yearOfStudy),
         semesterNumber: Number(mf.semesterNumber),
         isCore: mf.isCore,
-      })
+      }
+      if (editingMappingId) {
+        await updateCurriculumCourse(selected, editingMappingId, values)
+        setMessage('Curriculum course mapping updated.')
+      } else {
+        await addCurriculumCourse(selected, { courseId: mf.courseId, ...values })
+        setMessage('Course mapped to curriculum.')
+      }
+      setEditingMappingId(null)
+      setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
       await refreshMappings(selected)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to map course.')
@@ -418,7 +433,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
               ))}
             </select>
-            <select value={mf.courseId} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
+            <select value={mf.courseId} disabled={Boolean(editingMappingId)} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
               <option value="">Select course</option>
               {authorityCourses.map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
@@ -429,7 +444,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <label>
               <input type="checkbox" checked={mf.isCore} onChange={e => setMf({ ...mf, isCore: e.target.checked })} /> Core
             </label>
-            <button onClick={saveMapping} disabled={saving || !selected}>Map course</button>
+            <button onClick={saveMapping} disabled={saving || !selected || !mf.courseId}>{editingMappingId ? 'Save mapping' : 'Map course'}</button>{editingMappingId && <button type="button" className="secondary-button" onClick={() => { setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }) }}>Cancel edit</button>}
           </div>
 
           {selected && (
@@ -441,6 +456,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                     <th>Year</th>
                     <th>Semester</th>
                     <th>Core</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -452,6 +468,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                         <td>{m.yearOfStudy}</td>
                         <td>{m.semesterNumber}</td>
                         <td>{m.isCore ? 'Yes' : 'No'}</td>
+                        <td><button type="button" onClick={() => editMapping(m)}>Edit</button></td>
                       </tr>
                     )
                   })}
