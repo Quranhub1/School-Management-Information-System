@@ -10,7 +10,7 @@ import {
   type Curriculum,
   type CurriculumCourse,
 } from '../api/curriculumManagement'
-import { getProgrammes, type Programme } from '../api/programmes'
+import { createProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityActive, updateAcademicAuthority, type AcademicAuthority } from '../api/academicAuthorities'
 
@@ -26,6 +26,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [authority, setAuthority] = useState('SCHOOL_BASED')
   const [editingAuthority, setEditingAuthority] = useState<string | null>(null)
   const [authorityForm, setAuthorityForm] = useState({ code: '', name: '', description: '', sourceReference: '', sortOrder: '10' })
+  const [editingProgrammeId, setEditingProgrammeId] = useState<string | null>(null)
+  const [programmeForm, setProgrammeForm] = useState({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', type: '0' })
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
   const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
   const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
@@ -99,6 +101,67 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to update academic authority.')
     }
+  }
+
+  async function saveProgramme(e: React.FormEvent) {
+    e.preventDefault()
+    if (!authority) {
+      setError('Create or activate an academic authority before adding a programme.')
+      return
+    }
+    setSaving(true)
+    try {
+      const input: CreateProgrammeRequest = {
+        departmentId: null,
+        code: programmeForm.code,
+        name: programmeForm.name,
+        award: programmeForm.award,
+        awardTitle: programmeForm.awardTitle || undefined,
+        durationYears: Number(programmeForm.durationYears),
+        durationUnit: programmeForm.durationUnit,
+        studyMode: programmeForm.studyMode,
+        deliveryType: programmeForm.deliveryType,
+        regulator: authority,
+        approvalReference: programmeForm.approvalReference || undefined,
+        approvalDate: programmeForm.approvalDate || undefined,
+        type: Number(programmeForm.type),
+      }
+      if (editingProgrammeId) await updateProgramme(editingProgrammeId, input)
+      else await createProgramme(input)
+      setEditingProgrammeId(null)
+      setProgrammeForm({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', type: '0' })
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to save programme.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function toggleProgramme(item: Programme) {
+    try {
+      await setProgrammeActive(item.id, !item.isActive)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update programme status.')
+    }
+  }
+
+  function editProgramme(item: Programme) {
+    setEditingProgrammeId(item.id)
+    setProgrammeForm({
+      code: item.code,
+      name: item.name,
+      award: item.award,
+      awardTitle: item.awardTitle ?? '',
+      durationYears: String(item.durationYears),
+      durationUnit: item.durationUnit || 'Years',
+      studyMode: item.studyMode || 'Full-time',
+      deliveryType: item.deliveryType || 'Academic',
+      approvalReference: item.approvalReference ?? '',
+      approvalDate: item.approvalDate?.slice(0, 10) ?? '',
+      type: String(item.type),
+    })
   }
 
   async function saveCurriculum(e: React.FormEvent) {
@@ -200,6 +263,34 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <div className="table-wrap"><table><thead><tr><th>Code</th><th>Authority</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead><tbody>
           {authorities.map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.description || '—'}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => { setEditingAuthority(item.code); setAuthorityForm({ code: item.code, name: item.name, description: item.description ?? '', sourceReference: item.sourceReference ?? '', sortOrder: String(item.sortOrder) }) }}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleAuthority(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
           {authorities.length === 0 && <tr><td colSpan={5}>No authorities configured.</td></tr>}
+        </tbody></table></div>
+      </section>
+      <section className="catalogue-board" aria-label="Programme register">
+        <h3>Programmes under {authorities.find(item => item.code === authority)?.name ?? 'selected authority'}</h3>
+        <form className="student-form" onSubmit={saveProgramme}>
+          <div className="form-row">
+            <input required maxLength={40} placeholder="Programme code" value={programmeForm.code} onChange={e => setProgrammeForm({ ...programmeForm, code: e.target.value.toUpperCase() })} />
+            <input required placeholder="Programme name" value={programmeForm.name} onChange={e => setProgrammeForm({ ...programmeForm, name: e.target.value })} />
+            <select value={programmeForm.award} onChange={e => setProgrammeForm({ ...programmeForm, award: e.target.value })}><option>Certificate</option><option>Diploma</option><option>Advanced Diploma</option><option>National Certificate</option><option>National Technician Diploma</option><option>Short Course</option><option>Vocational Award</option></select>
+          </div>
+          <div className="form-row">
+            <input type="number" min="0" required placeholder="Duration" value={programmeForm.durationYears} onChange={e => setProgrammeForm({ ...programmeForm, durationYears: e.target.value })} />
+            <select value={programmeForm.durationUnit} onChange={e => setProgrammeForm({ ...programmeForm, durationUnit: e.target.value })}><option>Years</option><option>Months</option><option>Weeks</option></select>
+            <select value={programmeForm.type} onChange={e => setProgrammeForm({ ...programmeForm, type: e.target.value })}><option value="0">Full programme</option><option value="1">Short course</option></select>
+            <input placeholder="Award title (optional)" value={programmeForm.awardTitle} onChange={e => setProgrammeForm({ ...programmeForm, awardTitle: e.target.value })} />
+          </div>
+          <div className="form-row">
+            <select value={programmeForm.studyMode} onChange={e => setProgrammeForm({ ...programmeForm, studyMode: e.target.value })}><option>Full-time</option><option>Part-time</option><option>Evening</option><option>Weekend</option><option>Distance</option></select>
+            <select value={programmeForm.deliveryType} onChange={e => setProgrammeForm({ ...programmeForm, deliveryType: e.target.value })}><option>Academic</option><option>CompetencyBased</option><option>Modular</option><option>Blended</option></select>
+            <input placeholder="Approval reference" value={programmeForm.approvalReference} onChange={e => setProgrammeForm({ ...programmeForm, approvalReference: e.target.value })} />
+            <input type="date" aria-label="Approval date" value={programmeForm.approvalDate} onChange={e => setProgrammeForm({ ...programmeForm, approvalDate: e.target.value })} />
+          </div>
+          <button type="submit" disabled={saving || !authority}>{editingProgrammeId ? 'Save programme changes' : 'Add programme'}</button>
+          {editingProgrammeId && <button type="button" className="secondary-button" onClick={() => { setEditingProgrammeId(null); setProgrammeForm({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', type: '0' }) }}>Cancel edit</button>}
+        </form>
+        <div className="table-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Award</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.award}</td><td>{item.durationYears} {item.durationUnit}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editProgramme(item)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleProgramme(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).length === 0 && <tr><td colSpan={6}>No programmes are saved under this authority yet.</td></tr>}
         </tbody></table></div>
       </section>
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
