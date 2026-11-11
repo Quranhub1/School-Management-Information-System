@@ -16,7 +16,7 @@ public sealed class StreamsController(StreamService service) : ControllerBase
         => Ok(await service.GetByClassAsync(classId, ct));
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateStreamRequest request, CancellationToken ct)
+    public async Task<IActionResult> Update(Guid id, [FromBody] SchoolManagement.Application.Academic.UpdateStreamRequest request, CancellationToken ct)
     {
         var (success, error) = await service.UpdateAsync(id, request, ct);
         return success ? NoContent() : error == "Stream not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
