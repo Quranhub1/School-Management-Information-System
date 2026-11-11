@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import './AcademicStructures.css'
 import { createAcademicClass, getClassesByProgramme, setAcademicClassStatus, updateAcademicClass, type AcademicClass } from '../api/academicClasses'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getStreamsByClass, createStream, updateStream, type Stream } from '../api/streams'
