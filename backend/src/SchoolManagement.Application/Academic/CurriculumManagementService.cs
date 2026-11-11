@@ -8,6 +8,7 @@ public sealed record CreateCourseRequest(string Code, string Name, int CreditUni
 public sealed record UpdateCourseRequest(string Code, string Name, int CreditUnits, string? Description, string? CourseType, bool IsActive);
 public sealed record UpdateCurriculumRequest(string Version, string Title, int MinimumCredits, DateOnly EffectiveFrom, DateOnly? EffectiveTo, ProgrammeType ProgrammeType, bool IsActive);
 public sealed record AddCurriculumCourseRequest(Guid CourseId, int YearOfStudy, int SemesterNumber, bool IsCore);
+public sealed record UpdateCurriculumCourseRequest(int YearOfStudy, int SemesterNumber, bool IsCore);
 
 public sealed class CurriculumManagementService(
     ICurriculumRepository curricula,
@@ -82,6 +83,18 @@ public sealed class CurriculumManagementService(
         if (await courses.CodeExistsAsync(code, cancellationToken: ct)) return (false, $"Course code '{code}' already exists.", null);
         var course = new Course { Code = code, Name = name, CreditUnits = request.CreditUnits, Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(), CourseType = string.IsNullOrWhiteSpace(request.CourseType) ? null : request.CourseType.Trim() };
         await courses.AddAsync(course, ct); await courses.SaveChangesAsync(ct); return (true, null, course);
+    }
+
+    public async Task<(bool Success, string? Error)> UpdateMappingAsync(Guid curriculumId, Guid mappingId, UpdateCurriculumCourseRequest request, CancellationToken ct = default)
+    {
+        if (request.YearOfStudy < 1 || request.SemesterNumber < 1) return (false, "Year and semester numbers must be positive.");
+        var mapping = await mappings.GetByIdAsync(mappingId, ct);
+        if (mapping is null || mapping.CurriculumId != curriculumId) return (false, "Curriculum course mapping not found.");
+        mapping.YearOfStudy = request.YearOfStudy;
+        mapping.SemesterNumber = request.SemesterNumber;
+        mapping.IsCore = request.IsCore;
+        await mappings.SaveChangesAsync(ct);
+        return (true, null);
     }
 
     public async Task<(bool Success, string? Error, CurriculumCourse? Mapping)> AddMappingAsync(Guid curriculumId, AddCurriculumCourseRequest request, CancellationToken ct = default)
