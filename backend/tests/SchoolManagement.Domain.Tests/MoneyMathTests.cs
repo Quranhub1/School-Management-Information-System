@@ -38,6 +38,13 @@ public sealed class MoneyMathTests
     }
 
     [Fact]
+    public void Rejects_three_decimal_currencies_until_database_precision_is_upgraded()
+    {
+        Assert.Throws<NotSupportedException>(() => MoneyMath.EnsurePrecision(1.234m, "KWD"));
+        Assert.Equal(1.23m, MoneyMath.Round(1.234m, "KWD"));
+    }
+
+    [Fact]
     public void Refuses_to_combine_different_currencies()
     {
         Assert.Throws<InvalidOperationException>(() => MoneyMath.EnsureSameCurrency("UGX", "USD"));
