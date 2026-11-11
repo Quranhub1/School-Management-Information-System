@@ -930,3 +930,104 @@ Do not repeat this source edit unless the current file still needs the registrat
 - Database restore and EF migration commands can change production data/schema; verify the target and backup first.
 - The old conversation contained a database password example. It is intentionally **not reproduced** here; use a secure placeholder or secret configuration.
 - Historical service names and paths (`schoolmanagement`, `/opt/schoolmanagement/api`, `nginx`) belong to a particular Ubuntu deployment and must be checked on each server.
+
+
+---
+
+## 17. Additional recovered workstation diagnostics
+
+These commands were recovered from earlier SMIS setup and troubleshooting sessions.
+
+### Ubuntu: Wi-Fi adapter and network diagnostics
+
+List network devices and saved connections:
+
+```bash
+nmcli device status
+nmcli connection show
+```
+
+Check radio blocks and available wireless networks:
+
+```bash
+rfkill list
+nmcli device wifi list
+nmcli dev wifi list
+```
+
+Inspect wireless interfaces and USB network adapters:
+
+```bash
+iw dev
+lsusb
+```
+
+These were used while troubleshooting a USB wireless adapter that was disconnected and not discovering access points. Interface names vary by machine; inspect the output instead of copying an old interface name into commands.
+
+### Windows: inspect an HTTP API response
+
+PowerShell command used to request the public institution settings endpoint:
+
+```powershell
+Invoke-WebRequest 'http://127.0.0.1:5000/api/public/institution-settings/active' -UseBasicParsing
+```
+
+For a failed request, inspect the HTTP status and response body inside a try/catch rather than assuming the API is offline:
+
+```powershell
+try {
+    $response = Invoke-WebRequest 'http://127.0.0.1:5000/api/public/institution-settings/active' -UseBasicParsing
+    $response.StatusCode
+    $response.Content
+}
+catch {
+    $_.Exception.Message
+    if ($_.Exception.Response) {
+        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+        $reader.ReadToEnd()
+    }
+}
+```
+
+### Windows: run a guarded backend build
+
+This pattern restores packages, builds without restoring again, and stops if either command fails:
+
+```powershell
+dotnet restore .\backend\SchoolManagement.sln
+if ($LASTEXITCODE -ne 0) { throw "Backend restore failed" }
+
+dotnet build .\backend\SchoolManagement.sln --no-restore
+if ($LASTEXITCODE -ne 0) { throw "Backend build failed" }
+
+Write-Host "BACKEND BUILD SUCCEEDED"
+```
+
+### Windows: refresh the main branch before development
+
+```powershell
+Set-Location 'C:\Users\JOES TECH\School-Management-Information-System'
+git pull --ff-only origin main
+```
+
+---
+
+## 18. Installer and first-run deployment checklist
+
+The previously discussed Windows installer workflow requires these steps in order:
+
+1. Install the application.
+2. Complete mandatory server setup.
+3. Complete mandatory connection and resource testing.
+4. Finish setup.
+5. Launch the application.
+6. Sign in.
+
+The setup flow must not provide a Skip/Later route around mandatory server configuration and connection/resource testing.
+
+Windows installer targets previously discussed:
+
+- `win-x86`
+- `win-x64`
+
+Confirm the current Tauri configuration and release workflow before building either target; do not assume the target names alone are valid build commands.
