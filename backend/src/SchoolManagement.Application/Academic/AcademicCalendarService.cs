@@ -30,7 +30,7 @@ public sealed class AcademicCalendarService(IAcademicYearRepository years, ISeme
 
     public async Task<(bool Success, string? Error)> UpdateYearAsync(Guid id, UpdateAcademicYearRequest request, CancellationToken cancellationToken = default)
     {
-        var year = await years.GetByIdAsync(id, tracked: true, cancellationToken);
+        var year = await years.GetByIdAsync(id, tracked: true, cancellationToken: cancellationToken);
         if (year is null) return (false, "Academic year was not found.");
         var name = request.Name.Trim();
         if (string.IsNullOrWhiteSpace(name)) return (false, "Academic year name is required.");
@@ -48,7 +48,8 @@ public sealed class AcademicCalendarService(IAcademicYearRepository years, ISeme
     {
         var year = await years.GetByIdAsync(id, tracked: true, cancellationToken);
         if (year is null) return (false, "Academic year was not found.");
-        if (!isActive && await semesters.GetByAcademicYearAsync(id, cancellationToken) is var periods && periods.Any(period => period.IsCurrent))
+        var periods = await semesters.GetByAcademicYearAsync(id, cancellationToken);
+        if (!isActive && periods.Any(period => period.IsCurrent))
             return (false, "Select another current academic period before deactivating this academic year.");
         year.IsActive = isActive;
         if (!isActive) year.IsCurrent = false;
@@ -87,7 +88,7 @@ public sealed class AcademicCalendarService(IAcademicYearRepository years, ISeme
     {
         var year = await years.GetByIdAsync(academicYearId, cancellationToken: cancellationToken);
         if (year is null) return (false, "Academic year was not found.");
-        var semester = await semesters.GetByIdAsync(semesterId, tracked: true, cancellationToken);
+        var semester = await semesters.GetByIdAsync(semesterId, tracked: true, cancellationToken: cancellationToken);
         if (semester is null || semester.AcademicYearId != academicYearId) return (false, "Academic period was not found.");
         var name = request.Name.Trim();
         if (string.IsNullOrWhiteSpace(name)) return (false, "Period name is required.");
@@ -121,6 +122,7 @@ public sealed class AcademicCalendarService(IAcademicYearRepository years, ISeme
         var semester = await semesters.GetByIdAsync(semesterId, cancellationToken: cancellationToken);
         if (semester is null || semester.AcademicYearId != academicYearId) return (false, "Academic period was not found.");
         if (!semester.IsActive) return (false, "An inactive academic period cannot be made current.");
+        await years.SetCurrentAsync(academicYearId, cancellationToken);
         await semesters.SetCurrentAsync(academicYearId, semesterId, cancellationToken);
         return (true, null);
     }
