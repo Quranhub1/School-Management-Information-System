@@ -107,7 +107,7 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
     <section className="academic-workspace" aria-label="Academic management workspace">
       <div className="panel-heading">
         <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : view === 'calendar' ? 'Academic calendar' : view === 'examinations' ? 'Examinations & Results' : 'Programme management'}</h2></div>
-        <span>{view === 'records' ? `${transcript.length} course results` : `${programmes.length} programmes`}</span>
+        <span>{view === 'records' ? `${transcript.length} course results` : view === 'calendar' ? 'Calendar settings' : `${programmes.length} programmes`}</span>
       </div>
 
       <div className="form-row" role="tablist" aria-label="Academic management views">
