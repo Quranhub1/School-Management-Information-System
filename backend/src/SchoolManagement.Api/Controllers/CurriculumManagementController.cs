@@ -66,6 +66,13 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpGet("curricula/{curriculumId:guid}/courses")]
     public async Task<IActionResult> GetMappings(Guid curriculumId, CancellationToken ct) => Ok(await service.GetMappingsAsync(curriculumId, ct));
 
+    [HttpPut("curricula/{curriculumId:guid}/courses/{mappingId:guid}")]
+    public async Task<IActionResult> UpdateMapping(Guid curriculumId, Guid mappingId, [FromBody] UpdateCurriculumCourseRequest request, CancellationToken ct)
+    {
+        var (success, error) = await service.UpdateMappingAsync(curriculumId, mappingId, request, ct);
+        return success ? NoContent() : error == "Curriculum course mapping not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
+    }
+
     [HttpPost("curricula/{curriculumId:guid}/courses")]
     public async Task<IActionResult> AddMapping(Guid curriculumId, [FromBody] AddCurriculumCourseRequest request, CancellationToken ct)
     {
