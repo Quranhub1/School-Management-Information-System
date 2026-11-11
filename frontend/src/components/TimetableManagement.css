@@ -136,19 +136,6 @@
 
 /* Keep timetable actions visually separate when the global workspace button
    rules are applied. Buttons must not shrink into wrapped, touching controls. */
-.timetable-screen .timetable-action {
-  box-sizing: border-box;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  min-width: max-content;
-  min-height: 36px;
-  padding: 0 12px;
-  line-height: 1;
-  white-space: nowrap;
-}
 .timetable-screen .timetable-actions,
 .timetable-screen .timetable-form-footer,
 .timetable-screen .timetable-template-controls,
