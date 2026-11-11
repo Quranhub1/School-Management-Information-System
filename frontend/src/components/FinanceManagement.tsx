@@ -127,12 +127,25 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   }, [outstanding, query])
 
   const collectionByDate = useMemo(() => {
-    const map = new Map<string, number>()
+    const totals = new Map<string, Map<string, number>>()
     for (const payment of payments) {
-      const key = new Date(payment.paidAt).toLocaleDateString('en-UG', { month: 'short', day: 'numeric' })
-      map.set(key, (map.get(key) ?? 0) + Number(payment.amount || 0))
+      const paidAt = new Date(payment.paidAt)
+      if (Number.isNaN(paidAt.getTime())) continue
+      const dayKey = paidAt.toISOString().slice(0, 10)
+      const currency = (payment.currency || 'UGX').trim().toUpperCase()
+      const dayTotals = totals.get(dayKey) ?? new Map<string, number>()
+      dayTotals.set(currency, (dayTotals.get(currency) ?? 0) + Number(payment.amount || 0))
+      totals.set(dayKey, dayTotals)
     }
-    return [...map.entries()].slice(-7)
+    const days = [...totals.keys()].sort().slice(-7)
+    const currencies = [...new Set(days.flatMap(day => [...(totals.get(day)?.keys() ?? [])]))].sort()
+    return {
+      labels: days.map(day => new Date(day + 'T00:00:00').toLocaleDateString('en-UG', { month: 'short', day: 'numeric' })),
+      datasets: currencies.map(currency => ({
+        label: 'Collections (' + currency + ')',
+        data: days.map(day => totals.get(day)?.get(currency) ?? 0),
+      })),
+    }
   }, [payments])
 
   const collectionRate = dashboard && dashboard.totalBilled > 0
@@ -154,7 +167,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
               {tickerPayments.map((payment, index) => (
                 <span className="finance-fee-ticker-item" key={(payment.id || payment.receiptNumber || payment.reference || 'fee') + '-' + index}>
                   <strong>PAID</strong>
-                  <b>{money(Number(payment.amount))}</b>
+                  <b>{money(Number(payment.amount), payment.currency ?? "UGX")}</b>
                   <span>{payment.studentName || 'Student'}</span>
                   {payment.receiptNumber && <small>Receipt {payment.receiptNumber}</small>}
                   <i aria-hidden="true">◆</i>
@@ -280,7 +293,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
               <div className="finance-progress-track"><div style={{ width: collectionRate + '%' }} /></div>
               <div className="finance-mini-stats"><span>Paid <strong>{dashboard ? money(dashboard.totalPaid) : '—'}</strong></span><span>Balance <strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong></span><span>Invoices <strong>{dashboard?.invoiceCount.toLocaleString() ?? '—'}</strong></span></div>
               <div className="finance-bar-chart" aria-label="Recent daily collection activity">
-                {collectionByDate.length === 0 ? <div className="empty">No recent collection activity.</div> : <BarChart labels={collectionByDate.map(([day]) => day)} datasets={[{ label: 'Collections', data: collectionByDate.map(([, amount]) => amount), color: '#0d9488' }]} ariaLabel="Daily fee collections for the most recent seven payment dates" valueFormatter={money} />}
+                {collectionByDate.labels.length === 0 ? <div className="empty">No recent collection activity.</div> : <BarChart labels={collectionByDate.labels} datasets={collectionByDate.datasets} ariaLabel="Daily fee collections shown as separate series for each transaction currency" valueFormatter={value => new Intl.NumberFormat('en-UG', { maximumFractionDigits: 0 }).format(value)} />}
               </div>
             </section>
 

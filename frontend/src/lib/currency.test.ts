@@ -29,6 +29,10 @@ describe("currency formatting", () => {
     expect(formatCurrency("not-a-number")).toContain("0");
   });
 
+  it("formats large bigint amounts without converting through Number", () => {
+    expect(formatCurrency(900719925474099312345n, "UGX")).toContain("900,719,925,474,099,312,345");
+  });
+
   it("rejects malformed ISO currency codes", () => {
     expect(() => formatCurrency(10, "US")).toThrow(RangeError);
   });
