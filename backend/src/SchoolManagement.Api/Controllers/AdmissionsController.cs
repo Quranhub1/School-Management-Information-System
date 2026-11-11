@@ -18,6 +18,40 @@ namespace SchoolManagement.Api.Controllers;
 [Authorize(Policy = AdmissionsPolicies.Read)]
 public sealed class AdmissionsController(AdmissionsWorkflowService workflow, FinanceWorkflowService finance, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
+    [HttpGet("academic-catalogue")]
+    public async Task<IActionResult> GetAcademicCatalogue(CancellationToken cancellationToken)
+    {
+        var authorities = await db.AcademicAuthorities.AsNoTracking()
+            .Where(authority => authority.IsActive)
+            .OrderBy(authority => authority.SortOrder)
+            .ThenBy(authority => authority.Name)
+            .Select(authority => new { authority.Id, authority.Code, authority.Name, authority.SortOrder, authority.IsActive })
+            .ToListAsync(cancellationToken);
+
+        var programmes = await (
+            from programme in db.Programmes.AsNoTracking()
+            join authority in db.AcademicAuthorities.AsNoTracking()
+                on programme.Regulator equals authority.Code
+            where programme.IsActive && !programme.IsReferenceOnly && authority.IsActive &&
+                (programme.ApprovalStatus == "Institutional" || programme.ApprovalStatus == "Verified" || programme.ApprovalStatus == "Approved")
+            orderby authority.SortOrder, authority.Name, programme.Name
+            select new
+            {
+                programme.Id,
+                programme.Code,
+                programme.Name,
+                programme.Award,
+                programme.DurationYears,
+                programme.DurationUnit,
+                programme.Type,
+                Regulator = authority.Code,
+                AuthorityName = authority.Name
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(new { authorities, programmes });
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdmissionDto>>> GetAll(CancellationToken cancellationToken) => Ok(await workflow.GetAllAsync(cancellationToken));
     [HttpGet("{id:guid}")]

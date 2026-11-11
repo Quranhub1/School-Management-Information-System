@@ -28,8 +28,20 @@ public sealed class AcademicClassesController(AcademicClassService service) : Co
         return Created($"api/academic-classes/{result!.Id}", result);
     }
 
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAcademicClassRequest request, CancellationToken ct)
+    {
+        if (request.Id != id) return BadRequest(new { message = "The class ID in the route does not match the request." });
+        var (success, error) = await service.UpdateAsync(request, ct);
+        return success ? NoContent() : error == "Class not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
+    }
+
     [HttpPatch("{id:guid}/status")]
-    public IActionResult SetStatus(Guid id, [FromBody] SetClassStatusRequest request) => NoContent();
+    public async Task<IActionResult> SetStatus(Guid id, [FromBody] SetClassStatusRequest request, CancellationToken ct)
+    {
+        var (success, error) = await service.SetStatusAsync(id, request.Status, ct);
+        return success ? NoContent() : error == "Class not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
+    }
 }
 
 public sealed record SetClassStatusRequest(ClassStatus Status);

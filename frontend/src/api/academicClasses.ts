@@ -52,3 +52,25 @@ export const createAcademicClass = (input: CreateAcademicClassRequest) => {
   if (!input.programmeId.trim() || !input.academicPeriodId.trim()) throw new Error('Programme and period IDs are required.')
   return request<AcademicClass>('/api/academic-classes', { method: 'POST', body: JSON.stringify(input) })
 }
+
+export interface UpdateAcademicClassRequest {
+  id: string
+  code: string
+  name?: string
+  yearOfStudy: number
+  maxEnrolment?: number
+  status: number
+}
+
+export const updateAcademicClass = (id: string, input: UpdateAcademicClassRequest) => {
+  if (!id.trim() || input.id !== id) throw new Error('A matching class ID is required.')
+  if (!input.code.trim()) throw new Error('Class code is required.')
+  if (input.yearOfStudy < 1) throw new Error('Year of study must be at least 1.')
+  return request<void>(`/api/academic-classes/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+}
+
+export const setAcademicClassStatus = (id: string, status: number) => {
+  if (!id.trim()) throw new Error('Class ID is required.')
+  if (![0, 1, 2].includes(status)) throw new Error('Invalid class status.')
+  return request<void>(`/api/academic-classes/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) })
+}

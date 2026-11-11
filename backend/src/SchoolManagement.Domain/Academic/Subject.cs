@@ -7,10 +7,10 @@ namespace SchoolManagement.Domain.Academic;
 public sealed class Subject
 {
     public Guid Id { get; init; } = Guid.NewGuid();
-    public Guid ProgrammeId { get; init; }
-    public Guid CourseId { get; init; }
-    public int YearOfStudy { get; init; }
-    public int? PeriodSequence { get; init; }
+    public Guid ProgrammeId { get; set; }
+    public Guid CourseId { get; set; }
+    public int YearOfStudy { get; set; }
+    public int? PeriodSequence { get; set; }
     public bool IsCompulsory { get; set; } = true;
     public string? ElectiveGroup { get; set; }
     public bool IsActive { get; set; } = true;

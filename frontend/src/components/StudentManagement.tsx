@@ -10,9 +10,8 @@ import {
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { notify } from './GlobalNotifications'
-import { getProgrammes, type Programme } from '../api/programmes'
-import { getCurricula, type Curriculum } from '../api/curriculumManagement'
-import { VERIFIED_ACADEMIC_COURSES, resolveAcademicAuthority } from '../utils/academicAuthorities'
+import { getAdmissionsAcademicCatalogue, type AdmissionsProgrammeOption, type AdmissionsAuthorityOption } from '../api/admissionsCatalogue'
+import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { validateForm } from '../lib/validation'
 import { studentApplicationSubmissionSchema } from '../schemas'
 import { formatPersonName } from '../utils/personName'
@@ -20,7 +19,7 @@ import { formatPersonName } from '../utils/personName'
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
 type ApplicationForm = {
-  academicYear: string; intake: string; course: string; authority: string; entryStatus: string; programme: string;
+  academicYear: string; intake: string; course: string; programmeId: string; authority: string; entryStatus: string; programme: string;
   firstName: string; otherNames: string; lastName: string; dateOfBirth: string; gender: string;
   village: string; subCounty: string; district: string; phone: string; email: string;
   nationality: string; religion: string; countryOfResidence: string;
@@ -32,7 +31,7 @@ type ApplicationForm = {
   applicationFee: string; feePaid: string; approvedBy: string; approvalSignature: string; approvalDate: string;
 }
 const emptyApplication: ApplicationForm = {
-  academicYear: '', intake: '', course: '', authority: 'SCHOOL_BASED', entryStatus: 'Direct', programme: 'Day',
+  academicYear: '', intake: '', course: '', programmeId: '', authority: '', entryStatus: 'Direct', programme: 'Day',
   firstName: '', otherNames: '', lastName: '', dateOfBirth: '', gender: '', village: '', subCounty: '', district: '', phone: '', email: '',
   nationality: '', religion: '', countryOfResidence: '', seriousCondition: '', conditionDetails: '', regularMedication: '', medicationDetails: '', specialRequirements: '',
   fatherName: '', fatherAddress: '', fatherPhone: '', fatherOccupation: '', motherName: '', motherAddress: '', motherPhone: '', motherOccupation: '',
@@ -56,8 +55,8 @@ function Section({ number, title, children }: { number: string; title: string; c
 export function StudentManagement({ canManage = false, readOnly = false }: Props) {
   const { institution, loaded: institutionLoaded } = useInstitutionSettings()
   const [students, setStudents] = useState<Student[]>([])
-  const [academicProgrammes, setAcademicProgrammes] = useState<Programme[]>([])
-  const [academicCurricula, setAcademicCurricula] = useState<Curriculum[]>([])
+  const [academicProgrammes, setAcademicProgrammes] = useState<AdmissionsProgrammeOption[]>([])
+  const [academicAuthorities, setAcademicAuthorities] = useState<AdmissionsAuthorityOption[]>([])
   const [courseOptionsError, setCourseOptionsError] = useState('')
   const [view, setView] = useState<'application' | 'registry'>('application')
   const [application, setApplication] = useState<ApplicationForm>(emptyApplication)
@@ -97,21 +96,22 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   useEffect(() => { if (canManage || readOnly) void load() }, [canManage, readOnly])
   useEffect(() => {
     if (!canManage && !readOnly) return
-    Promise.all([getProgrammes(), getCurricula()]).then(([programmeRows, curriculumRows]) => {
-      setAcademicProgrammes(programmeRows.filter(p => p.isActive))
-      setAcademicCurricula(curriculumRows.filter(c => c.isActive))
-    }).catch(e => setCourseOptionsError(e instanceof Error ? e.message : 'Unable to load academic programmes.'))
+    getAdmissionsAcademicCatalogue().then(catalogue => {
+      const activeAuthorities = catalogue.authorities.filter(authority => authority.isActive)
+      setAcademicAuthorities(activeAuthorities)
+      setAcademicProgrammes(catalogue.programmes)
+      setApplication(current => current.authority && activeAuthorities.some(authority => authority.code === current.authority)
+        ? current
+        : { ...current, authority: activeAuthorities[0]?.code ?? '', course: '', programmeId: '' })
+      setCourseOptionsError('')
+    }).catch(e => setCourseOptionsError(e instanceof Error ? e.message : 'Unable to load academic programmes and authorities.'))
   }, [canManage, readOnly])
-  const authorityOf = (programmeId: string) => resolveAcademicAuthority(academicProgrammes.find(p => p.id === programmeId)?.regulator)
-  const availableCurricula = academicCurricula.filter(c => authorityOf(c.programmeId) === application.authority && !academicProgrammes.find(p => p.id === c.programmeId)?.isReferenceOnly)
-  const availableCourses = Array.from(new Set([
-    ...VERIFIED_ACADEMIC_COURSES.filter(course => course.authority === application.authority).map(course => course.name),
-    ...availableCurricula.map(c => c.title),
-    ...academicProgrammes.filter(p => !p.isReferenceOnly && authorityOf(p.id) === application.authority).map(p => p.name),
-  ])).sort((a, b) => a.localeCompare(b))
+  const availableProgrammes = academicProgrammes
+    .filter(programme => resolveAcademicAuthority(programme.regulator) === application.authority)
+    .sort((a, b) => a.name.localeCompare(b.name))
   function applicationPdfOptions() {
     const label = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, value => value.toUpperCase())
-    const values = Object.entries(application).map(([key, value]) => [
+    const values = Object.entries(application).filter(([key]) => key !== 'programmeId').map(([key, value]) => [
       { text: label(key), bold: true },
       typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value || '—'),
     ])
@@ -171,6 +171,12 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   async function submitApplication(event: FormEvent) {
     event.preventDefault(); setSaving(true); setError(''); setNotice('')
     try {
+      const selectedProgramme = academicProgrammes.find(programme =>
+        programme.id === application.programmeId &&
+        resolveAcademicAuthority(programme.regulator) === application.authority);
+      if (!selectedProgramme || selectedProgramme.name !== application.course) {
+        throw new Error('Select a valid active programme under the selected academic authority.');
+      }
       const validation = validateForm(studentApplicationSubmissionSchema, {
         studentNumber: studentNumber.trim(),
         academicYear: application.academicYear,
@@ -266,6 +272,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       <div className="application-view-switch"><button type="button" className={view === 'application' ? 'active' : ''} onClick={() => setView('application')} disabled={!canManage}>New application</button><button type="button" className={view === 'registry' ? 'active' : ''} onClick={() => setView('registry')}>Student registry <span>{students.length}</span></button></div>
     </div>
     {error && <div className="error" role="alert">{error}</div>}
+    {courseOptionsError && <div className="error" role="alert">{courseOptionsError}</div>}
     {Object.keys(validationErrors).length > 0 && <div className="error" role="alert"><strong>Application fields requiring attention</strong><ul>{Object.entries(validationErrors).map(([field, message]) => <li key={field}><strong>{field}:</strong> {message}</li>)}</ul></div>}
     {notice && <div className="info-banner" role="status">{notice}</div>}
     {view === 'application' && canManage && <form className="student-application-form" onSubmit={submitApplication}>
@@ -280,7 +287,8 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
         <div className="application-grid">
           <Field label="Academic year *"><input value={application.academicYear} aria-invalid={Boolean(validationErrors.academicYear)} onChange={e => setApp('academicYear', e.target.value)} placeholder="e.g. 2027" required /></Field>
           <Field label="Intake *"><input value={application.intake} aria-invalid={Boolean(validationErrors.intake)} onChange={e => setApp('intake', e.target.value)} placeholder="e.g. January / August" required /></Field>
-          <Field label="Course / programme applied for *"><input value={application.course} aria-invalid={Boolean(validationErrors.course)} onChange={e => setApp('course', e.target.value)} required /></Field>
+          <Field label="Academic authority *"><select required value={application.authority} onChange={e => { setApp('authority', e.target.value); setApp('course', ''); setApp('programmeId', '') }}><option value="">Select authority</option>{academicAuthorities.map(authority => <option key={authority.id} value={authority.code}>{authority.name}</option>)}</select></Field>
+          <Field label="Course / programme applied for *"><select value={application.programmeId} aria-invalid={Boolean(validationErrors.course)} onChange={e => { const selected = availableProgrammes.find(programme => programme.id === e.target.value); setApp('programmeId', selected?.id ?? ''); setApp('course', selected?.name ?? '') }} required disabled={!application.authority || availableProgrammes.length === 0}><option value="">Select programme</option>{availableProgrammes.map(programme => <option key={programme.id} value={programme.id}>{programme.code} — {programme.name}</option>)}</select></Field>
           <Field label="Entry status"><select value={application.entryStatus} onChange={e => setApp('entryStatus', e.target.value)}><option>Direct</option><option>Mature</option></select></Field>
           <Field label="Study programme"><select value={application.programme} onChange={e => setApp('programme', e.target.value)}><option>Day</option><option>Evening</option><option>Weekend</option></select></Field>
         </div>
@@ -343,7 +351,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
           <Field label="Approved / reviewed by"><input value={application.approvedBy} readOnly={!canManage} onChange={e => setApp('approvedBy', e.target.value)} /></Field><Field label="Official signature"><input value={application.approvalSignature} readOnly={!canManage} onChange={e => setApp('approvalSignature', e.target.value)} /></Field><Field label="Date"><input type="date" value={application.approvalDate} readOnly={!canManage} onChange={e => setApp('approvalDate', e.target.value)} /></Field>
         </div></div>
       </Section>
-      <div className="application-actions no-print"><button type="button" className="secondary-button" onClick={printApplicationPdf}>Print application</button><button type="button" className="secondary-button" onClick={downloadApplicationPdf}>Download PDF</button><button type="button" className="secondary-button" onClick={() => { setApplication(emptyApplication); setEducation([emptyEducation()]); setPhoto(null); setStudentNumber(''); }}>Clear form</button><button type="submit" disabled={saving || !institutionLoaded || !institution.isActive}>{saving ? 'Saving…' : 'Submit application'}</button></div>
+      <div className="application-actions no-print"><button type="button" className="secondary-button" onClick={printApplicationPdf}>Print application</button><button type="button" className="secondary-button" onClick={downloadApplicationPdf}>Download PDF</button><button type="button" className="secondary-button" onClick={() => { setApplication({ ...emptyApplication, authority: academicAuthorities[0]?.code ?? '' }); setEducation([emptyEducation()]); setPhoto(null); setStudentNumber(''); }}>Clear form</button><button type="submit" disabled={saving || !institutionLoaded || !institution.isActive}>{saving ? 'Saving…' : 'Submit application'}</button></div>
 
     </form>}
     {view === 'registry' && <section className="panel student-registry-panel"><div className="panel-heading"><div><p className="eyebrow">Student Management</p><h3>{readOnly ? 'Student registry · Read-only' : 'Student registry'}</h3></div><span>{students.length} students</span></div>

@@ -33,3 +33,39 @@ export const addCurriculumCourse = (id:string,input:{courseId:string;yearOfStudy
   if (input.yearOfStudy < 1 || input.semesterNumber < 1) throw new Error('Year and semester numbers must be positive.')
   return request<CurriculumCourse>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/courses`,{method:'POST',body:JSON.stringify(input)})
 }
+
+export interface UpdateCourseInput {
+  code: string
+  name: string
+  creditUnits: number
+  description?: string
+  courseType?: string
+  isActive: boolean
+}
+export interface UpdateCurriculumInput {
+  version: string
+  title: string
+  minimumCredits: number
+  effectiveFrom: string
+  effectiveTo?: string | null
+  programmeType: number
+  isActive: boolean
+}
+export const updateCourse = (id: string, input: UpdateCourseInput) => {
+  if (!id.trim() || !input.code.trim() || !input.name.trim()) throw new Error('Course ID, code and name are required.')
+  if (input.creditUnits < 0) throw new Error('Credit units cannot be negative.')
+  return request<void>(`/api/curriculum-management/courses/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+}
+export const setCourseActive = (id: string, isActive: boolean) => request<void>(`/api/curriculum-management/courses/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify({ isActive }) })
+export const updateCurriculum = (id: string, input: UpdateCurriculumInput) => {
+  if (!id.trim() || !input.version.trim() || !input.title.trim()) throw new Error('Curriculum ID, version and title are required.')
+  if (input.minimumCredits < 0) throw new Error('Minimum credits cannot be negative.')
+  return request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+}
+export const setCurriculumActive = (id: string, isActive: boolean) => request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify({ isActive }) })
+
+export const updateCurriculumCourse = (curriculumId: string, mappingId: string, input: { yearOfStudy: number; semesterNumber: number; isCore: boolean }) => {
+  if (!curriculumId.trim() || !mappingId.trim()) throw new Error('Curriculum and mapping IDs are required.')
+  if (input.yearOfStudy < 1 || input.semesterNumber < 1) throw new Error('Year and semester numbers must be positive.')
+  return request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/courses/${encodeURIComponent(mappingId)}`, { method: 'PUT', body: JSON.stringify(input) })
+}

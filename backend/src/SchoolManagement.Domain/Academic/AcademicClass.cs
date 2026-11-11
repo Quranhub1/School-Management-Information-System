@@ -9,10 +9,10 @@ public sealed class AcademicClass
     public Guid Id { get; init; } = Guid.NewGuid();
     public Guid ProgrammeId { get; init; }
     public Guid AcademicPeriodId { get; init; }
-    public required string Code { get; init; }
-    public string? Name { get; init; }
-    public int YearOfStudy { get; init; }
-    public int? MaxEnrolment { get; init; }
+    public required string Code { get; set; }
+    public string? Name { get; set; }
+    public int YearOfStudy { get; set; }
+    public int? MaxEnrolment { get; set; }
     public ClassStatus Status { get; set; } = ClassStatus.Active;
     public DateTimeOffset CreatedAtUtc { get; init; } = DateTimeOffset.UtcNow;
 }
