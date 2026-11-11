@@ -108,8 +108,17 @@ public sealed class CurriculumManagementService(
         if (curriculumId == Guid.Empty || request.CourseId == Guid.Empty) return (false, "Curriculum and course are required.", null);
         if (request.YearOfStudy < 1) return (false, "Year of study must be at least 1.", null);
         if (request.SemesterNumber < 1) return (false, "Semester number must be at least 1.", null);
-        if (await curricula.GetByIdAsync(curriculumId, ct) is null) return (false, "Curriculum not found.", null);
-        if (await courses.GetByIdAsync(request.CourseId, ct) is null) return (false, "Course not found.", null);
+        var curriculum = await curricula.GetByIdAsync(curriculumId, ct);
+        if (curriculum is null) return (false, "Curriculum not found.", null);
+        if (!curriculum.IsActive) return (false, "Activate the curriculum before adding courses.", null);
+        var programme = await programmes.GetByIdAsync(curriculum.ProgrammeId, ct);
+        if (programme is null) return (false, "The curriculum's programme was not found.", null);
+        if (!programme.IsActive || programme.IsReferenceOnly ||
+            (programme.ApprovalStatus != "Institutional" && programme.ApprovalStatus != "Verified" && programme.ApprovalStatus != "Approved"))
+            return (false, "Only active, institutionally approved or verified programmes can receive curriculum course mappings.", null);
+        var course = await courses.GetByIdAsync(request.CourseId, ct);
+        if (course is null) return (false, "Course not found.", null);
+        if (!course.IsActive) return (false, "Activate the course before adding it to a curriculum.", null);
         if (await mappings.ExistsAsync(curriculumId, request.CourseId, ct)) return (false, "Course is already mapped to this curriculum.", null);
         var mapping = new CurriculumCourse { CurriculumId = curriculumId, CourseId = request.CourseId, YearOfStudy = request.YearOfStudy, SemesterNumber = request.SemesterNumber, IsCore = request.IsCore };
         await mappings.AddAsync(mapping, ct); await mappings.SaveChangesAsync(ct); return (true, null, mapping);
