@@ -23,8 +23,7 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
         var result = await service.CreateYearAsync(request, cancellationToken);
         if (!result.Success) return BadRequest(new { message = result.Error });
         return Created($"api/academic-calendar/years/{result.Year!.Id}", result.Year);
-        public sealed record SetActiveRequest(bool IsActive);
-}
+    }
 
     [HttpPut("years/{id:guid}")]
     public async Task<IActionResult> UpdateYear(Guid id, [FromBody] UpdateYearRequest request, CancellationToken cancellationToken)
@@ -79,4 +78,5 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
         var result = await service.SetCurrentSemesterAsync(academicYearId, semesterId, cancellationToken);
         return result.Success ? NoContent() : BadRequest(new { message = result.Error });
     }
+    public sealed record SetActiveRequest(bool IsActive);
 }
