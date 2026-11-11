@@ -56,6 +56,21 @@ public partial class AddAcademicAuthorities : Migration
             GROUP BY p.""Regulator""
             ON CONFLICT (""Code"") DO NOTHING");
 
+        migrationBuilder.AlterColumn<string>(
+            name: "Regulator",
+            table: "Programmes",
+            type: "character varying(40)",
+            maxLength: 40,
+            nullable: true,
+            oldClrType: typeof(string),
+            oldType: "text",
+            oldNullable: true);
+
+        migrationBuilder.CreateIndex(
+            name: "IX_Programmes_Regulator",
+            table: "Programmes",
+            column: "Regulator");
+
         migrationBuilder.AddForeignKey(
             name: "FK_Programmes_AcademicAuthorities_Regulator",
             table: "Programmes",
@@ -68,6 +83,16 @@ public partial class AddAcademicAuthorities : Migration
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.DropForeignKey(name: "FK_Programmes_AcademicAuthorities_Regulator", table: "Programmes");
+        migrationBuilder.DropIndex(name: "IX_Programmes_Regulator", table: "Programmes");
+        migrationBuilder.AlterColumn<string>(
+            name: "Regulator",
+            table: "Programmes",
+            type: "text",
+            nullable: true,
+            oldClrType: typeof(string),
+            oldType: "character varying(40)",
+            oldMaxLength: 40,
+            oldNullable: true);
         migrationBuilder.DropTable(name: "AcademicAuthorities");
     }
 }
