@@ -103,13 +103,13 @@ Remaining work:
 
 ## Delivery sequence
 
-1. Complete and merge the database-driven authority/programme catalogue migration only after all CI checks pass and the existing database's applied migration history is reviewed.
-2. Complete Academic Structures and Calendar CRUD: academic years, periods, classes, streams and subjects.
-3. Complete Curriculum & Courses CRUD: departments, courses, curricula, curriculum mappings and programme associations.
-4. Complete enrolment and progression configuration and ensure student academic records remain historically consistent.
-5. Complete examination/assessment configuration, grading and audited result correction workflows.
+1. Integrate the database-driven authority/programme catalogue only after all CI checks pass and the school's applied migration history is reviewed.
+2. Completed in the stacked academic-maintenance branch: academic years, periods, classes, streams and subjects are editable through database-backed screens.
+3. Completed in the stacked academic-maintenance branch: departments, courses, curricula, curriculum mappings and programme associations are editable; admissions and curriculum selectors consume approved database records.
+4. Complete the formal admissions application handoff to Applicant, Admission and StudentEnrollment records, then complete enrolment, transfer, withdrawal and progression workflows.
+5. Complete examination/assessment configuration, grading and audited result-correction workflows.
 6. Complete timetable period scoping, publication/history and regression testing.
-7. Remove obsolete duplicate editors and hardcoded academic constants only after the database-backed replacement is verified.
+7. Add audit history for academic register changes and faculty maintenance controls if required by the institution.
 
 ## Non-negotiable data-safety rules
 
