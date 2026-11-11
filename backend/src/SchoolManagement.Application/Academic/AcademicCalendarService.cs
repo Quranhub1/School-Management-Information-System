@@ -117,6 +117,7 @@ public sealed class AcademicCalendarService(IAcademicYearRepository years, ISeme
     {
         var year = await years.GetByIdAsync(academicYearId, cancellationToken: cancellationToken);
         if (year is null) return (false, "Academic year was not found.");
+        if (!year.IsActive) return (false, "An inactive academic year cannot have a current period.");
         var semester = await semesters.GetByIdAsync(semesterId, cancellationToken: cancellationToken);
         if (semester is null || semester.AcademicYearId != academicYearId) return (false, "Academic period was not found.");
         if (!semester.IsActive) return (false, "An inactive academic period cannot be made current.");
