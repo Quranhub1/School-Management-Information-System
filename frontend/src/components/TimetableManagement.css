@@ -132,3 +132,67 @@
   .timetable-editable-grid th,.timetable-editable-grid td{padding:4px;height:70px}
   .timetable-editable-grid td:before{content:"";display:block}
 }
+
+
+/* Keep timetable actions visually separate when the global workspace button
+   rules are applied. Buttons must not shrink into wrapped, touching controls. */
+.timetable-screen .timetable-action {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: max-content;
+  min-height: 36px;
+  padding: 0 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.timetable-screen .timetable-actions,
+.timetable-screen .timetable-form-footer,
+.timetable-screen .timetable-template-controls,
+.timetable-screen .timetable-class-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 8px;
+  min-width: 0;
+}
+.timetable-screen .timetable-actions > .timetable-action,
+.timetable-screen .timetable-form-footer > .timetable-action,
+.timetable-screen .timetable-template-controls > .timetable-action,
+.timetable-screen .timetable-class-actions > .timetable-action {
+  margin: 0;
+}
+.timetable-screen .timetable-actions {
+  justify-content: flex-end;
+}
+.timetable-screen .timetable-view-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+.timetable-screen .timetable-document-print-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+@media (max-width: 1000px) {
+  .timetable-screen .timetable-actions {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 560px) {
+  .timetable-screen .timetable-actions,
+  .timetable-screen .timetable-form-footer,
+  .timetable-screen .timetable-template-controls,
+  .timetable-screen .timetable-class-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .timetable-screen .timetable-action {
+    max-width: 100%;
+  }
+}
