@@ -18,6 +18,7 @@ import {
 import { createProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityActive, updateAcademicAuthority, type AcademicAuthority } from '../api/academicAuthorities'
+import { createAcademicDepartment, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, updateAcademicDepartment, type AcademicDepartment, type FacultyOption } from '../api/academicDepartments'
 
 type Tab = 'full' | 'short'
 
@@ -27,6 +28,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [courses, setCourses] = useState<Course[]>([])
   const [programmes, setProgrammes] = useState<Programme[]>([])
   const [authorities, setAuthorities] = useState<AcademicAuthority[]>([])
+  const [departments, setDepartments] = useState<AcademicDepartment[]>([])
+  const [faculties, setFaculties] = useState<FacultyOption[]>([])
+  const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null)
+  const [departmentForm, setDepartmentForm] = useState({ facultyId: '', code: '', name: '' })
   const [selected, setSelected] = useState('')
   const [authority, setAuthority] = useState('SCHOOL_BASED')
   const [editingAuthority, setEditingAuthority] = useState<string | null>(null)
@@ -34,7 +39,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [editingProgrammeId, setEditingProgrammeId] = useState<string | null>(null)
   const [editingCurriculumId, setEditingCurriculumId] = useState<string | null>(null)
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null)
-  const [programmeForm, setProgrammeForm] = useState({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
+  const [programmeForm, setProgrammeForm] = useState({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
   const [editingMappingId, setEditingMappingId] = useState<string | null>(null)
   const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
@@ -61,12 +66,14 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   async function load() {
     try {
       setError('')
-      const [a, b, c, d] = await Promise.all([getCurricula(), getCourses(), getProgrammes(), getAcademicAuthorities(true)])
+      const [a, b, c, d, e, f] = await Promise.all([getCurricula(), getCourses(), getProgrammes(), getAcademicAuthorities(true), getAcademicDepartments(), getAcademicFaculties()])
       const courseMappings = (await Promise.all(a.map(curriculum => getCurriculumCourses(curriculum.id).catch(() => [])))).flat()
       setCurricula(a)
       setCourses(b)
       setProgrammes(c)
       setAuthorities(d)
+      setDepartments(e)
+      setFaculties(f)
       setAuthority(current => d.some(item => item.code === current) ? current : (d.find(item => item.isActive)?.code ?? ''))
       setAllMappings(courseMappings)
     } catch (e) {
@@ -83,6 +90,33 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         setError(e instanceof Error ? e.message : 'Unable to load mappings.')
       }
     }
+  }
+
+  async function saveDepartment(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true); setError('')
+    try {
+      if (editingDepartmentId) {
+        const existing = departments.find(item => item.id === editingDepartmentId)
+        await updateAcademicDepartment(editingDepartmentId, { ...departmentForm, isActive: existing?.isActive ?? true })
+        setMessage('Department updated.')
+      } else {
+        await createAcademicDepartment(departmentForm)
+        setMessage('Department created.')
+      }
+      setEditingDepartmentId(null)
+      setDepartmentForm({ facultyId: '', code: '', name: '' })
+      await load()
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to save department.') }
+    finally { setSaving(false) }
+  }
+
+  async function toggleDepartment(item: AcademicDepartment) {
+    try {
+      await setAcademicDepartmentActive(item.id, !item.isActive)
+      setDepartments(current => current.map(row => row.id === item.id ? { ...row, isActive: !row.isActive } : row))
+      setMessage(item.isActive ? 'Department deactivated.' : 'Department activated.')
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update department status.') }
   }
 
   async function saveAuthority(e: React.FormEvent) {
@@ -121,7 +155,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     setSaving(true)
     try {
       const input: CreateProgrammeRequest = {
-        departmentId: null,
+        departmentId: programmeForm.departmentId || null,
         code: programmeForm.code,
         name: programmeForm.name,
         award: programmeForm.award,
@@ -141,7 +175,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       if (editingProgrammeId) await updateProgramme(editingProgrammeId, input)
       else await createProgramme(input)
       setEditingProgrammeId(null)
-      setProgrammeForm({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
+      setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save programme.')
@@ -162,6 +196,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   function editProgramme(item: Programme) {
     setEditingProgrammeId(item.id)
     setProgrammeForm({
+      departmentId: item.departmentId ?? '',
       code: item.code,
       name: item.name,
       award: item.award,
@@ -340,10 +375,29 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {authorities.length === 0 && <tr><td colSpan={5}>No authorities configured.</td></tr>}
         </tbody></table></div>
       </section>
+      <section className="catalogue-board" aria-label="Department register">
+        <h3>Departments</h3>
+        <form className="student-form" onSubmit={saveDepartment}>
+          <div className="form-row">
+            <select required value={departmentForm.facultyId} onChange={e => setDepartmentForm({ ...departmentForm, facultyId: e.target.value })}>
+              <option value="">Select faculty</option>{faculties.filter(faculty => faculty.isActive).map(faculty => <option key={faculty.id} value={faculty.id}>{faculty.code} — {faculty.name}</option>)}
+            </select>
+            <input required maxLength={40} placeholder="Department code" value={departmentForm.code} onChange={e => setDepartmentForm({ ...departmentForm, code: e.target.value.toUpperCase() })} />
+            <input required maxLength={160} placeholder="Department name" value={departmentForm.name} onChange={e => setDepartmentForm({ ...departmentForm, name: e.target.value })} />
+            <button type="submit" disabled={saving || faculties.filter(faculty => faculty.isActive).length === 0}>{editingDepartmentId ? 'Save department' : 'Add department'}</button>
+            {editingDepartmentId && <button type="button" className="secondary-button" onClick={() => { setEditingDepartmentId(null); setDepartmentForm({ facultyId: '', code: '', name: '' }) }}>Cancel edit</button>}
+          </div>
+        </form>
+        <div className="table-wrap"><table><thead><tr><th>Code</th><th>Department</th><th>Faculty</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+          {departments.map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.facultyName}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => { setEditingDepartmentId(item.id); setDepartmentForm({ facultyId: item.facultyId, code: item.code, name: item.name }) }}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleDepartment(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+          {departments.length === 0 && <tr><td colSpan={5}>No departments configured.</td></tr>}
+        </tbody></table></div>
+      </section>
       <section className="catalogue-board" aria-label="Programme register">
         <h3>Programmes under {authorities.find(item => item.code === authority)?.name ?? 'selected authority'}</h3>
         <form className="student-form" onSubmit={saveProgramme}>
           <div className="form-row">
+            <select value={programmeForm.departmentId} onChange={e => setProgrammeForm({ ...programmeForm, departmentId: e.target.value })}><option value="">Unassigned department</option>{departments.filter(item => item.isActive).map(item => <option key={item.id} value={item.id}>{item.code} — {item.name}</option>)}</select>
             <input required maxLength={40} placeholder="Programme code" value={programmeForm.code} onChange={e => setProgrammeForm({ ...programmeForm, code: e.target.value.toUpperCase() })} />
             <input required placeholder="Programme name" value={programmeForm.name} onChange={e => setProgrammeForm({ ...programmeForm, name: e.target.value })} />
             <select value={programmeForm.award} onChange={e => setProgrammeForm({ ...programmeForm, award: e.target.value })}><option>Certificate</option><option>Diploma</option><option>Advanced Diploma</option><option>National Certificate</option><option>National Technician Diploma</option><option>Short Course</option><option>Vocational Award</option></select>
