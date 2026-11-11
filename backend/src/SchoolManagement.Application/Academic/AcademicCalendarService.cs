@@ -46,7 +46,7 @@ public sealed class AcademicCalendarService(IAcademicYearRepository years, ISeme
 
     public async Task<(bool Success, string? Error)> SetYearActiveAsync(Guid id, bool isActive, CancellationToken cancellationToken = default)
     {
-        var year = await years.GetByIdAsync(id, tracked: true, cancellationToken);
+        var year = await years.GetByIdAsync(id, tracked: true, cancellationToken: cancellationToken);
         if (year is null) return (false, "Academic year was not found.");
         var periods = await semesters.GetByAcademicYearAsync(id, cancellationToken);
         if (!isActive && periods.Any(period => period.IsCurrent))
@@ -106,7 +106,7 @@ public sealed class AcademicCalendarService(IAcademicYearRepository years, ISeme
 
     public async Task<(bool Success, string? Error)> SetPeriodActiveAsync(Guid academicYearId, Guid semesterId, bool isActive, CancellationToken cancellationToken = default)
     {
-        var semester = await semesters.GetByIdAsync(semesterId, tracked: true, cancellationToken);
+        var semester = await semesters.GetByIdAsync(semesterId, tracked: true, cancellationToken: cancellationToken);
         if (semester is null || semester.AcademicYearId != academicYearId) return (false, "Academic period was not found.");
         if (!isActive && semester.IsCurrent) return (false, "Select another current academic period before deactivating this period.");
         semester.IsActive = isActive;
