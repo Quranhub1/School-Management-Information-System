@@ -49,7 +49,7 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
 
     private static string NormalizeAuthorityCode(string? value)
     {
-        var code = (value ?? "SCHOOL_BASED").Trim().ToUpperInvariant().Replace('-', '_').Replace(' ', '_');
+        var code = (value ?? string.Empty).Trim().ToUpperInvariant().Replace('-', '_').Replace(' ', '_');
         return code is "SCHOOL" or "SCHOOLBASED" ? "SCHOOL_BASED" : code;
     }
 
