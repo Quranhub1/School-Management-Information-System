@@ -26,29 +26,32 @@ Remaining work:
 
 Current implementation:
 - Programmes, classes, streams, subjects, courses and academic periods have database APIs.
-- Classes and subjects can be created; streams can be created and listed.
-- Academic years and periods can be created and marked current through the academic-structure API.
+- Classes, streams and subjects are loaded from the existing database and can be created.
+- Classes now support edit, close and reopen with persisted updates.
+- Streams now support edit and activate/deactivate; stream creation maps the selected academic class ID to the persisted class relationship.
+- Subjects now support edit and activate/deactivate, including course, year, period sequence, compulsory/elective classification and elective group.
+- Academic years and periods now have a dedicated Academic Calendar screen for create, edit, activate/deactivate and current selection.
 
 Defects and gaps identified:
 - The Classes screen imported the academic-period API but never loaded academic years or periods. The period selector therefore remained empty, preventing class creation. This branch now loads active academic years, selects the current/first active year and loads its periods.
 - The class status endpoint previously returned HTTP 204 without changing the database. This branch now persists class status changes.
 - Class update service previously returned success without saving any changes. This branch now persists class code, name, year, capacity and status.
 - The Classes screen now exposes Edit, Close and Reopen actions.
-- Stream edit support exists at the academic-structure API level but is not yet exposed in the Classes/Streams screen.
-- Subject and course APIs currently expose list/create operations; safe edit/archive operations and corresponding UI are still needed.
-- Academic year and period APIs need full edit/retire controls, with validation that dates remain within the parent year and do not overlap.
+- Stream and subject edit/activation controls are now exposed in the Classes/Streams/Subjects screen. Capacity is intentionally not presented as editable until the persisted stream model supports it.
+- Course and curriculum APIs still need safe edit/archive operations and corresponding UI.
+- Academic year and period updates validate date containment, unique period names/sequences and non-overlapping periods. A current period cannot be deactivated until another period is selected; only one current period is maintained globally.
 
 ### 3. Academic Calendar
 
 Current implementation:
-- Academic years and periods are persisted in the database.
-- Current-year and current-period selection is supported.
+- A dedicated Academic Calendar screen is available from Academic Management.
+- Academic years and periods can be created, edited, activated/deactivated and selected as current.
+- Server-side validation protects date ranges, period sequence/name uniqueness and overlap rules.
+- A current period cannot be deactivated before current-period selection is moved; setting a current period also aligns the current academic year.
 - Timetable options are loaded from persisted semester records.
 
 Remaining work:
-- Provide a single clear calendar management workflow rather than overlapping calendar/structure controls.
-- Add year/period editing and safe deactivation.
-- Validate date ranges, period sequence uniqueness and overlapping periods.
+- Add audit history for calendar changes and verify period changes against every downstream workflow.
 - Preserve historical years and periods referenced by classes, registrations, assessments and timetables.
 
 ### 4. Classes, Streams and Student Enrolment
@@ -59,8 +62,7 @@ Current implementation:
 - Course registrations and student academic status have domain/API support.
 
 Remaining work:
-- Add stream edit/activation controls to the UI.
-- Add subject edit/activation controls.
+- Verify stream and subject edit/activation behavior against existing student records and downstream reports.
 - Audit enrolment screens and APIs for class/stream assignment, transfer, withdrawal and progression.
 - Use database-backed programme, year, period, class and stream selectors throughout.
 - Prevent destructive changes to classes/streams already referenced by student records.
@@ -115,4 +117,4 @@ Remaining work:
 
 ## Current branch scope
 
-This branch is intentionally stacked on the database-driven catalogue branch. It contains the first Academic Structures reliability slice: loading academic years/periods, persisting class edits/status changes, and exposing those class actions in the screen. It does not claim that all academic screens are complete yet.
+This branch is intentionally stacked on the database-driven catalogue branch. It now contains the first Academic Structures and Calendar maintenance slice: loading academic years/periods, calendar create/edit/activation/current selection, persisted class edits/status changes, and stream/subject edit/activation controls. It does not claim that all academic screens are complete yet; course/curriculum CRUD, enrolment/progression, assessment configuration and timetable history remain planned work.
