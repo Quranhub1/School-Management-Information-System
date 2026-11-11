@@ -484,7 +484,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<bool>("IsReferenceOnly").HasColumnType("boolean");
 
                     b.Property<string>("Regulator")
-                        .HasColumnType("text");
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
 
                     b.Property<string>("StudyMode")
                         .IsRequired()
@@ -496,6 +497,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Code").IsUnique();
+
+                    b.HasIndex("Regulator");
 
                     b.HasOne("SchoolManagement.Domain.Academic.AcademicAuthority", null).WithMany().HasForeignKey("Regulator").HasPrincipalKey("Code").OnDelete(DeleteBehavior.Restrict);
 
