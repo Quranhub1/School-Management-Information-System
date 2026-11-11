@@ -49,7 +49,7 @@ function getFormatter(currency: string, locale?: string): Intl.NumberFormat {
 /** Formats a monetary amount using the currency's ISO fraction-digit rules. */
 export function formatCurrency(
   amount: number | string | bigint | null | undefined,
-  currency = SYSTEM_CURRENCY,
+  currency: string = SYSTEM_CURRENCY,
   locale?: string,
 ): string {
   if (amount == null || amount === "") return getFormatter(currency, locale).format(0);
