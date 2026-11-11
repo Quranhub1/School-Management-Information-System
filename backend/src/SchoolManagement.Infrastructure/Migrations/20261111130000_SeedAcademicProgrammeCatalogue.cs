@@ -12,6 +12,7 @@ public partial class SeedAcademicProgrammeCatalogue : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.CreateIndex(name: "IX_Programmes_Code", table: "Programmes", column: "Code", unique: true);
         migrationBuilder.Sql(@"
 INSERT INTO ""Programmes"" (""Id"",""DepartmentId"",""Code"",""Name"",""Award"",""AwardTitle"",""DurationYears"",""DurationUnit"",""StudyMode"",""DeliveryType"",""Type"",""Regulator"",""ApprovalReference"",""ApprovalDate"",""ApprovalStatus"",""SourceReference"",""IsReferenceOnly"",""IsActive"")
 VALUES
@@ -105,6 +106,7 @@ ON CONFLICT (""Code"") DO NOTHING;
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.DropIndex(name: "IX_Programmes_Code", table: "Programmes");
         // Imported catalogue records are intentionally retained on rollback so existing admissions
         // and curriculum references are never deleted by a schema rollback.
     }
