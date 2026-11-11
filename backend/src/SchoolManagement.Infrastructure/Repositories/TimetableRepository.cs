@@ -27,7 +27,7 @@ public sealed class TimetableRepository(SchoolManagementDbContext db) : ITimetab
     public Task<TimetableEntry?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default) =>
-        db.TimetableEntries.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        db.TimetableEntries.FirstOrDefaultAsync(x => x.Id == id && x.IsActive, cancellationToken);
 
     public async Task<bool> HasRoomConflictAsync(
         DayOfWeek dayOfWeek,

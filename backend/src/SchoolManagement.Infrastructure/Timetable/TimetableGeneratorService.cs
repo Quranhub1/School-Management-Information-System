@@ -57,12 +57,6 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             .Where(x => teacherIds.Contains(x.Id))
             .ToListAsync(cancellationToken);
 
-        var rooms = await db.InstitutionSettings.AsNoTracking()
-            .Where(x => x.IsActive)
-            .SelectMany(x => new[] { x.LogoPath })
-            .Where(x => !string.IsNullOrEmpty(x))
-            .ToListAsync(cancellationToken);
-
         var existingEntries = await db.TimetableEntries.AsNoTracking()
             .Where(x => x.IsActive)
             .ToListAsync(cancellationToken);
@@ -142,17 +136,20 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
 
                     if (HasConflict(teacher.Id, teacherSchedules, day, startTime, endTime, out string teacherConflict))
                     {
+                        conflicts.Add($"Teacher {teacher.LastName}, {teacher.FirstName}: {teacherConflict}");
                         continue;
                     }
 
                     var room = teachingGroup.Capacity > 20 ? "Hall A" : "Room 101";
                     if (HasConflict(room, roomSchedules, day, startTime, endTime, out string roomConflict))
                     {
+                        conflicts.Add($"Room {room}: {roomConflict}");
                         continue;
                     }
 
                     if (HasConflict(teachingGroup.Id, groupSchedules, day, startTime, endTime, out string groupConflict))
                     {
+                        conflicts.Add($"Teaching group {teachingGroup.GroupCode}: {groupConflict}");
                         continue;
                     }
 
