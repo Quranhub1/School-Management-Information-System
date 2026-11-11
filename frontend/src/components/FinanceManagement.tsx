@@ -190,6 +190,19 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
               <article className="finance-kpi finance-kpi-blue"><span>Outstanding</span><strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong></article>
               <article className="finance-kpi finance-kpi-green"><span>Today's collection</span><strong>{dashboard ? money(dashboard.todayCollection) : '—'}</strong></article>
             </div>
+            {dashboard?.totalsByCurrency && dashboard.totalsByCurrency.length > 0 && (
+              <div className="finance-currency-summary" aria-label="Financial totals by currency">
+                <strong>Totals by currency</strong>
+                {dashboard.totalsByCurrency.map(total => (
+                  <span key={total.currency}>
+                    <b>{total.currency}</b>
+                    <span>Billed {money(total.billed, total.currency)}</span>
+                    <span>Paid {money(total.paid, total.currency)}</span>
+                    <span>Balance {money(total.balance, total.currency)}</span>
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="panel" style={{ marginTop: 20, padding: 20 }}>
               <h3>Outstanding Balances</h3>
               <div style={{ marginTop: 12 }}>
@@ -247,6 +260,19 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
             <article className="finance-kpi finance-kpi-red"><span>Outstanding</span><strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong><small>Receivables requiring follow-up</small></article>
             <article className="finance-kpi finance-kpi-orange"><span>Today's collection</span><strong>{dashboard ? money(dashboard.todayCollection) : '—'}</strong><small>Payments posted today</small></article>
           </div>
+            {dashboard?.totalsByCurrency && dashboard.totalsByCurrency.length > 0 && (
+              <div className="finance-currency-summary" aria-label="Financial totals by currency">
+                <strong>Totals by currency</strong>
+                {dashboard.totalsByCurrency.map(total => (
+                  <span key={total.currency}>
+                    <b>{total.currency}</b>
+                    <span>Billed {money(total.billed, total.currency)}</span>
+                    <span>Paid {money(total.paid, total.currency)}</span>
+                    <span>Balance {money(total.balance, total.currency)}</span>
+                  </span>
+                ))}
+              </div>
+            )}
 
           <div className="finance-overview-grid">
             <section className="finance-surface finance-collection-panel">
