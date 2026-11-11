@@ -2,7 +2,7 @@ import { getAccessToken } from './auth'
 
 export interface Programme {
   id: string
-  departmentId: string
+  departmentId?: string | null
   code: string
   name: string
   award: string
@@ -62,6 +62,10 @@ export function getProgrammes(): Promise<Programme[]> {
 
 export function createProgramme(input: CreateProgrammeRequest): Promise<Programme> {
   return request<Programme>('/api/programmes', { method: 'POST', body: JSON.stringify(input) })
+}
+
+export function updateProgramme(id: string, input: CreateProgrammeRequest): Promise<Programme> {
+  return request<Programme>(`/api/programmes/${id}`, { method: 'PUT', body: JSON.stringify(input) })
 }
 
 export function setProgrammeActive(id: string, active: boolean): Promise<void> {
