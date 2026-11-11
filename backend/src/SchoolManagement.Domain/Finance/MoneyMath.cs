@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace SchoolManagement.Domain.Finance;
 
 /// <summary>
@@ -17,11 +19,39 @@ public static class MoneyMath
             ["OMR"] = 3, ["TND"] = 3,
         };
 
+    private static readonly HashSet<string> SupportedCurrencyCodes = BuildSupportedCurrencyCodes();
+
+    private static HashSet<string> BuildSupportedCurrencyCodes()
+    {
+        var codes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // ISO 4217 codes not tied to a single country's current region.
+            "XAD", "XAG", "XAU", "XBA", "XBB", "XBC", "XBD", "XDR",
+            "XPD", "XPT", "XSU", "XTS", "XUA", "XXX"
+        };
+
+        foreach (var culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures))
+        {
+            try
+            {
+                var code = new RegionInfo(culture.Name).ISOCurrencySymbol;
+                if (!string.IsNullOrWhiteSpace(code))
+                    codes.Add(code);
+            }
+            catch (ArgumentException)
+            {
+                // Ignore cultures without a valid region mapping.
+            }
+        }
+
+        return codes;
+    }
+
     public static string NormalizeCurrency(string currency)
     {
         var code = currency?.Trim().ToUpperInvariant();
-        if (code is null || code.Length != 3 || code.Any(c => c is < 'A' or > 'Z'))
-            throw new ArgumentException("Currency must be a valid three-letter ISO 4217 code.", nameof(currency));
+        if (code is null || code.Length != 3 || code.Any(c => c is < 'A' or > 'Z') || !SupportedCurrencyCodes.Contains(code))
+            throw new ArgumentException($"'{currency}' is not a recognised ISO 4217 currency code.", nameof(currency));
         return code;
     }
 
