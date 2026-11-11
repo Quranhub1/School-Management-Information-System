@@ -15,7 +15,7 @@ public sealed class DefaultersController(SchoolManagementDbContext db) : Control
     public async Task<IActionResult> GetOverview(CancellationToken cancellationToken)
     {
         var totalOutstanding = await db.StudentInvoices.AsNoTracking()
-            .SumAsync(x => (decimal?)(x.Amount - x.PaidAmount), cancellationToken) ?? 0m;
+            .SumAsync(x => (decimal?)(x.Amount - x.DiscountAmount - x.PaidAmount), cancellationToken) ?? 0m;
 
         var totalDefaulters = await db.StudentInvoices.AsNoTracking()
             .Where(x => x.PaidAmount < x.Amount)
@@ -72,7 +72,7 @@ public sealed class DefaultersController(SchoolManagementDbContext db) : Control
             .Select(g => new
             {
                 studentId = g.Key,
-                totalBalance = g.Sum(x => x.Amount - x.PaidAmount),
+                totalBalance = g.Sum(x => x.Amount - x.DiscountAmount - x.PaidAmount),
                 currency = g.First().Currency,
                 oldestInvoice = g.Min(x => x.IssuedAt),
                 invoiceCount = g.Count(),
@@ -120,7 +120,7 @@ public sealed class DefaultersController(SchoolManagementDbContext db) : Control
                 x.FeeType,
                 x.Amount,
                 x.PaidAmount,
-                balance = x.Amount - x.PaidAmount,
+                balance = x.Amount - x.DiscountAmount - x.PaidAmount,
                 x.Currency,
                 x.Status,
                 x.IssuedAt,

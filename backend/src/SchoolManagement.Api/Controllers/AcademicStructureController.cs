@@ -21,7 +21,7 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
     public async Task<ActionResult<AcademicYear>> CreateYear(CreateAcademicYearRequest request, CancellationToken ct)
     {
         if (request.StartDate >= request.EndDate) return BadRequest("Start date must be before end date.");
-        if (await db.AcademicYears.AnyAsync(x => x.Name == request.Name, ct)) return Conflict("An academic year with this name already exists.");
+        if (await db.AcademicYears.AnyAsync(x => x.Name == request.Name && x.IsActive, ct)) return Conflict("An academic year with this name already exists.");
 
         if (request.IsCurrent)
         {

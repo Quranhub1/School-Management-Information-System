@@ -51,6 +51,8 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
                         ? a.EffectiveFrom <= periodEnd && (!a.EffectiveTo.HasValue || a.EffectiveTo.Value >= periodStart)
                         : a.EffectiveFrom >= periodStart && a.EffectiveFrom <= periodEnd))
                 .SumAsync(a => (decimal?)a.Amount, cancellationToken) ?? 0m;
+            var netPay = basicSalary + allowances - deductions;
+            if (netPay < 0) return BadRequest(new { message = "Deductions cannot exceed salary plus allowances." });
             db.PayrollRecords.Add(new Domain.Staff.PayrollRecord
             {
                 StaffMemberId = s.Id,
@@ -59,7 +61,7 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
                 BasicSalary = basicSalary,
                 Allowances = allowances,
                 Deductions = deductions,
-                NetPay = basicSalary + allowances - deductions,
+                NetPay = netPay,
                 Status = "Pending"
             });
         }

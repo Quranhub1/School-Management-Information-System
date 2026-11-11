@@ -29,7 +29,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
         var totalBilled = await invoices
             .SumAsync(x => (decimal?)(x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m), cancellationToken) ?? 0m;
         var totalPaid = await invoices
-            .SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
+            .SumAsync(x => (decimal?)(x.PaidAmount - (x.DiscountAmount > 0 ? x.DiscountAmount : 0m)), cancellationToken) ?? 0m;
 
         var todayUtc = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
         var tomorrowUtc = todayUtc.AddDays(1);

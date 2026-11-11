@@ -45,8 +45,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
         var value = studentId.Trim();
         var student = Guid.TryParse(value, out var parsedId)
-            ? await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
-            : await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
+            ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
+            : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
 
         if (student is null) return NotFound(new { message = "Student was not found." });
         if (!await campusAccess.CanAccessStudentAsync(User, student.Id, cancellationToken)) return Forbid();

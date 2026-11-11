@@ -92,13 +92,13 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
         var student = await db.Students.SingleOrDefaultAsync(x => x.AdmissionId == admission.Id, cancellationToken);
         if (student is null)
         {
-            if (await db.Students.AnyAsync(x => x.StudentNumber == studentNumber, cancellationToken)) return Conflict(new { message = "The student number is already in use." });
+            if (await db.Students.IgnoreQueryFilters().AnyAsync(x => x.StudentNumber == studentNumber, cancellationToken)) return Conflict(new { message = "The student number is already in use." });
             student = new Student { StudentNumber = studentNumber, FirstName = applicant.FirstName, LastName = applicant.LastName, OtherNames = applicant.OtherNames, DateOfBirth = applicant.DateOfBirth, Gender = applicant.Gender, NationalId = applicant.NationalId, PhoneNumber = applicant.PhoneNumber, Email = applicant.Email, AdmissionId = admission.Id, Status = "Active" };
             db.Students.Add(student);
         }
         else if (!string.Equals(student.StudentNumber, studentNumber, StringComparison.OrdinalIgnoreCase))
         {
-            if (await db.Students.AnyAsync(x => x.Id != student.Id && x.StudentNumber == studentNumber, cancellationToken)) return Conflict(new { message = "The student number is already in use." });
+            if (await db.Students.IgnoreQueryFilters().AnyAsync(x => x.Id != student.Id && x.StudentNumber == studentNumber, cancellationToken)) return Conflict(new { message = "The student number is already in use." });
             student.StudentNumber = studentNumber;
         }
 
