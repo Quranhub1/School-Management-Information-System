@@ -104,7 +104,7 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
             .ToListAsync(ct);
 
         if (otherAuthority.Any(regulator => !string.Equals(
-                ResolveAuthority(regulator), curriculum.Authority, StringComparison.OrdinalIgnoreCase)))
+                regulator, curriculum.Authority, StringComparison.OrdinalIgnoreCase)))
         {
             return Conflict(new
             {
