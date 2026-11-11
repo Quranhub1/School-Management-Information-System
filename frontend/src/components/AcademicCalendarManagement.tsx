@@ -121,7 +121,7 @@ export function AcademicCalendarManagement() {
   async function makeCurrentPeriod(period: AcademicPeriod) {
     setLoading(true); setError('')
     try {
-      await setCurrentAcademicPeriod(selectedYear, period.id); await loadPeriods()
+      await setCurrentAcademicPeriod(selectedYear, period.id); await loadPeriods(); await loadYears(selectedYear)
       setMessage('Current academic period updated.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to set current academic period.') }
     finally { setLoading(false) }
