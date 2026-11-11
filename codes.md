@@ -645,3 +645,288 @@ When a new command is confirmed on the development PC or school server, add it u
 - and any required placeholder values.
 
 Never store passwords, tokens, private keys, or production secrets in this file.
+
+
+---
+
+## 15. Recovered commands from earlier SMIS sessions
+
+This section records additional commands recovered from previous development and server-support conversations. These are historical commands, not assumptions that every machine still has the same configuration.
+
+### Windows: update and start the SMIS workstation
+
+PowerShell:
+
+```powershell
+Set-Location "C:\\Users\\JOES TECH\\School-Management-Information-System"
+git switch main
+git pull --ff-only origin main
+.\\Start-System.ps1
+```
+
+The `Start-System.ps1` script was used in the Windows workflow. Check that it exists before running:
+
+```powershell
+Test-Path ".\\Start-System.ps1"
+```
+
+Start the frontend development server without changing directory:
+
+```powershell
+npm --prefix frontend run dev
+```
+
+### Windows: repository verification and safe diagnostics
+
+```powershell
+git status
+git log -1 --oneline
+git branch --show-current
+git show HEAD:backend/src/SchoolManagement.Api/Controllers/CampusAssignmentsController.cs
+```
+
+Check the installed development tools:
+
+```powershell
+node --version
+npm --version
+dotnet --version
+psql --version
+rustc --version
+cargo --version
+```
+
+Check PostgreSQL and its command-line client:
+
+```powershell
+Get-Service *postgres*
+Test-Path "C:\\Program Files\\PostgreSQL\\18\\bin\\psql.exe"
+& "C:\\Program Files\\PostgreSQL\\18\\bin\\psql.exe" --version
+```
+
+Check Rust installation paths:
+
+```powershell
+Test-Path "$env:USERPROFILE\\.cargo\\bin\\rustc.exe"
+Test-Path "$env:USERPROFILE\\.cargo\\bin\\rustup.exe"
+```
+
+If Rust is installed for the current user but not on the current PowerShell PATH:
+
+```powershell
+$env:Path += ";$env:USERPROFILE\\.cargo\\bin"
+rustc --version
+cargo --version
+```
+
+### Windows: network and GitHub connectivity troubleshooting
+
+```powershell
+Test-NetConnection 1.1.1.1 -Port 443
+Resolve-DnsName github.com
+Test-NetConnection github.com -Port 443
+ipconfig /flushdns
+Clear-DnsClientCache
+```
+
+### Windows: remove a generated login stylesheet
+
+This exact command was used from the repository root to remove the generated file before rebuilding it:
+
+```powershell
+Remove-Item "frontend\\public\\assets\\css\\institution-login.css" -Force
+```
+
+Then rebuild the stylesheet from `frontend`:
+
+```powershell
+Set-Location "C:\\Users\\JOES TECH\\School-Management-Information-System\\frontend"
+npm run build:login-css
+```
+
+Only remove generated assets when you intend to regenerate them.
+
+### Ubuntu: refresh the local checkout from GitHub
+
+**Destructive reset — use only when you deliberately want the local tracked files to match remote main.** This discards local tracked-file changes. `git clean -fd` also deletes untracked files and directories.
+
+```bash
+cd ~/School-Management-Information-System
+git fetch origin
+git reset --hard origin/main
+git clean -fd
+git status
+git branch --show-current
+git log -1 --oneline
+```
+
+A non-destructive update is preferable when local work must be preserved:
+
+```bash
+cd ~/School-Management-Information-System
+git switch main
+git pull --ff-only origin main
+```
+
+### Ubuntu: backend source build and service diagnostics
+
+Build from the backend directory:
+
+```bash
+cd ~/School-Management-Information-System/backend
+dotnet restore
+dotnet build
+```
+
+The following service name was found on the Ubuntu deployment. An earlier attempt to restart `school-management-api` returned “unit not found”; the actual unit was `schoolmanagement`.
+
+```bash
+sudo systemctl restart schoolmanagement
+sudo systemctl status schoolmanagement --no-pager
+sudo journalctl -u schoolmanagement -n 50 --no-pager
+```
+
+Additional deployment diagnostics:
+
+```bash
+sudo journalctl -u schoolmanagement -n 150 --no-pager
+sudo systemctl cat schoolmanagement
+sudo coredumpctl info schoolmanagement --no-pager
+```
+
+The deployed API was observed under `/opt/schoolmanagement/api`. The running service used the published deployment, not the source-tree build output. Confirm the current service configuration before copying files or restarting it.
+
+### Ubuntu: deploy built frontend files
+
+Historical deployment workflow:
+
+```bash
+cd ~/School-Management-Information-System
+git fetch origin
+git checkout main
+git reset --hard origin/main
+```
+
+Build the backend and frontend:
+
+```bash
+cd ~/School-Management-Information-System/backend
+dotnet restore
+dotnet build
+```
+
+```bash
+cd ~/School-Management-Information-System/frontend
+npm install
+npm run build
+```
+
+A previous deployment used rsync to install built files:
+
+```bash
+sudo rsync -a --delete <BUILD-SOURCE>/ <DEPLOYMENT-DESTINATION>/
+```
+
+**Caution:** `--delete` removes destination files that are not present in the source. Confirm both paths carefully, ensure the source contains the complete intended build, and keep a rollback copy before using it on a live server.
+
+Restart the historical services after a verified deployment:
+
+```bash
+sudo systemctl restart schoolmanagement
+sudo systemctl restart nginx
+sudo systemctl status schoolmanagement --no-pager
+sudo systemctl status nginx --no-pager
+```
+
+### Ubuntu: PostgreSQL checks and database access
+
+```bash
+psql --version
+sudo systemctl status postgresql --no-pager
+sudo -u postgres psql -c "\\l"
+```
+
+Test application database credentials interactively (the password is entered at the prompt):
+
+```bash
+psql -h localhost -U school_management -d school_management -W
+```
+
+Exit the PostgreSQL prompt:
+
+```sql
+\\q
+```
+
+### Entity Framework Core: apply database migrations
+
+Historical command pattern used during deployment:
+
+```bash
+dotnet ef database update --connection "Host=127.0.0.1;Port=5432;Database=school_management;Username=school_management;Password=<SET-SECURELY>"
+```
+
+Use the correct startup project and migrations project for the current repository layout. Never paste a real production password into shell history, chat, source control, or this document. Prefer protected environment configuration or an approved secret store.
+
+### Local automatic database backups
+
+The Windows workstation backup arrangement recorded in the earlier conversation was:
+
+- Backup directory: `C:\\Users\\JOES TECH\\SMIS-Backups`
+- First automatic backup: approximately 2 minutes after backend startup.
+- Repeat interval: every 24 hours.
+- Retention: 30 most recent backups.
+- Backup tools: `pg_dump` and `pg_restore`.
+- Backups are local and outside the SMIS repository; they are not uploaded.
+
+Check that the folder exists:
+
+```powershell
+Test-Path "C:\\Users\\JOES TECH\\SMIS-Backups"
+Get-ChildItem "C:\\Users\\JOES TECH\\SMIS-Backups"
+```
+
+Check PostgreSQL backup utilities:
+
+```powershell
+Get-Command pg_dump
+Get-Command pg_restore
+pg_dump --version
+pg_restore --version
+```
+
+The automatic schedule is application/workstation behavior, not a command to launch a backup manually. Confirm the current backup service status and inspect the output folder rather than assuming a backup succeeded.
+
+### Ubuntu: inspect and edit API startup registration
+
+Historical source-editing workflow (from the backend directory):
+
+```bash
+cd ~/School-Management-Information-System/backend
+nano src/SchoolManagement.Api/Program.cs
+```
+
+A previous dependency-injection fix added this registration above the infrastructure registration:
+
+```csharp
+builder.Services.AddApplication();
+```
+
+Then compile:
+
+```bash
+dotnet build
+```
+
+Do not repeat this source edit unless the current file still needs the registration.
+
+---
+
+## 16. Command safety notes from the recovered history
+
+- `git reset --hard` discards tracked local modifications.
+- `git clean -fd` deletes untracked files and directories.
+- `rsync --delete` deletes destination-only files.
+- Database restore and EF migration commands can change production data/schema; verify the target and backup first.
+- The old conversation contained a database password example. It is intentionally **not reproduced** here; use a secure placeholder or secret configuration.
+- Historical service names and paths (`schoolmanagement`, `/opt/schoolmanagement/api`, `nginx`) belong to a particular Ubuntu deployment and must be checked on each server.
