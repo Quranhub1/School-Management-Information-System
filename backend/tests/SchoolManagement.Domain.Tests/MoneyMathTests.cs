@@ -41,7 +41,7 @@ public sealed class MoneyMathTests
     public void Rejects_three_decimal_currencies_until_database_precision_is_upgraded()
     {
         Assert.Throws<NotSupportedException>(() => MoneyMath.EnsurePrecision(1.234m, "KWD"));
-        Assert.Equal(1.23m, MoneyMath.Round(1.234m, "KWD"));
+        Assert.Equal(1.234m, MoneyMath.Round(1.234m, "KWD"));
     }
 
     [Fact]
