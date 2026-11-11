@@ -103,6 +103,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       setAcademicProgrammes(programmeRows.filter(p => p.isActive))
       setAcademicCurricula(curriculumRows.filter(c => c.isActive))
       setAcademicAuthorities(authorityRows)
+      setApplication(current => current.authority && authorityRows.some(item => item.code === current.authority) ? current : { ...current, authority: authorityRows[0]?.code ?? '', course: '' })
     }).catch(e => setCourseOptionsError(e instanceof Error ? e.message : 'Unable to load academic programmes.'))
   }, [canManage, readOnly])
   const authorityOf = (programmeId: string) => resolveAcademicAuthority(academicProgrammes.find(p => p.id === programmeId)?.regulator)
