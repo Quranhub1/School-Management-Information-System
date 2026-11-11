@@ -27,7 +27,7 @@ public sealed class TimetableRepository(SchoolManagementDbContext db) : ITimetab
     public Task<TimetableEntry?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default) =>
-        db.TimetableEntries.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        db.TimetableEntries.FirstOrDefaultAsync(x => x.Id == id && x.IsActive, cancellationToken);
 
     public async Task<bool> HasRoomConflictAsync(
         DayOfWeek dayOfWeek,
@@ -47,6 +47,50 @@ public sealed class TimetableRepository(SchoolManagementDbContext db) : ITimetab
                 && x.DayOfWeek == dayOfWeek
                 && x.Room != null
                 && x.Room == normalizedRoom
+                && x.StartTime < endTime
+                && startTime < x.EndTime);
+
+        if (excludeEntryId.HasValue)
+            query = query.Where(x => x.Id != excludeEntryId.Value);
+
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<bool> HasTeacherConflictAsync(
+        Guid teacherId,
+        DayOfWeek dayOfWeek,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        Guid? excludeEntryId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = db.TimetableEntries
+            .AsNoTracking()
+            .Where(x => x.IsActive
+                && x.TeacherId == teacherId
+                && x.DayOfWeek == dayOfWeek
+                && x.StartTime < endTime
+                && startTime < x.EndTime);
+
+        if (excludeEntryId.HasValue)
+            query = query.Where(x => x.Id != excludeEntryId.Value);
+
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<bool> HasGroupConflictAsync(
+        Guid groupId,
+        DayOfWeek dayOfWeek,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        Guid? excludeEntryId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = db.TimetableEntries
+            .AsNoTracking()
+            .Where(x => x.IsActive
+                && x.TeachingGroupId == groupId
+                && x.DayOfWeek == dayOfWeek
                 && x.StartTime < endTime
                 && startTime < x.EndTime);
 

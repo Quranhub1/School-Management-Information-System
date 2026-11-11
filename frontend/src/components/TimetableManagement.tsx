@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Clock3, LayoutGrid, List, Plus, Sparkles, Trash2, Pencil, Save } from 'lucide-react'
 import LoadingSpinner from './LoadingSpinner'
-import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, listTimetable, saveTimetableTemplate, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
+import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, listTimetable, saveTimetableTemplate, updateTimetableEntry, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
 import './TimetableManagement.css'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
@@ -29,6 +29,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [room, setRoom] = useState('')
   const [sessionType, setSessionType] = useState('Lecture')
   const [generatedResult, setGeneratedResult] = useState<GenerateTimetableResult | null>(null)
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
   const [showGenerator, setShowGenerator] = useState(false)
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [timetableCount, setTimetableCount] = useState('1')
@@ -150,24 +151,52 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     if (endTime <= startTime) { setError('End time must be later than start time.'); return }
     setLoading(true)
     try {
-      await createTimetableEntry({
-        teachingGroupId,
-        courseId,
-        teacherId,
-        dayOfWeek: Number(dayOfWeek),
-        startTime: startTime + ':00',
-        endTime: endTime + ':00',
-        room: room.trim() || undefined,
-        sessionType: sessionType.trim() || undefined,
-      })
+      if (editingEntryId) {
+        await updateTimetableEntry(editingEntryId, {
+          teachingGroupId,
+          courseId,
+          teacherId,
+          dayOfWeek: Number(dayOfWeek),
+          startTime: startTime + ':00',
+          endTime: endTime + ':00',
+          room: room.trim() || undefined,
+          sessionType: sessionType.trim() || undefined,
+        })
+        setEditingEntryId(null)
+      } else {
+        await createTimetableEntry({
+          teachingGroupId,
+          courseId,
+          teacherId,
+          dayOfWeek: Number(dayOfWeek),
+          startTime: startTime + ':00',
+          endTime: endTime + ':00',
+          room: room.trim() || undefined,
+          sessionType: sessionType.trim() || undefined,
+        })
+      }
       setShowScheduleForm(false)
       setError('')
       await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to create timetable entry.')
+      setError(e instanceof Error ? e.message : 'Unable to save timetable entry.')
     } finally {
       setLoading(false)
     }
+  }
+
+  function editEntry(entry: TimetableEntry) {
+    setTeachingGroupId(entry.teachingGroupId)
+    setCourseId(entry.courseId)
+    setTeacherId(entry.teacherId)
+    setDayOfWeek(String(entry.dayOfWeek))
+    setStartTime(timeLabel(entry.startTime))
+    setEndTime(timeLabel(entry.endTime))
+    setRoom(entry.room ?? '')
+    setSessionType(entry.sessionType ?? 'Lecture')
+    setEditingEntryId(entry.id)
+    setShowScheduleForm(true)
+    setError('')
   }
 
   function loadTemplate() {
@@ -321,7 +350,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     </section>}
 
     {!readOnly && showScheduleForm && <form className="timetable-form-panel" onSubmit={submit}>
-      <h3>Schedule a teaching session</h3>
+      <h3>{editingEntryId ? 'Edit teaching session' : 'Schedule a teaching session'}</h3>
       <div className="timetable-form-grid">
         <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)} required><option value="">Select group</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Course<select value={courseId} onChange={event => setCourseId(event.target.value)} required><option value="">Select course</option>{options.courses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
@@ -333,8 +362,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <label>Session type<select value={sessionType} onChange={event => setSessionType(event.target.value)}><option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option></select></label>
       </div>
       <div className="timetable-form-footer">
-        <button className="timetable-action primary" type="submit" disabled={loading || !options.teachingGroups.length || !options.courses.length || !options.teachers.length}>{loading ? 'Saving…' : 'Save session'}</button>
-        <button className="timetable-action" type="button" onClick={() => setShowScheduleForm(false)}>Cancel</button>
+        <button className="timetable-action primary" type="submit" disabled={loading || !options.teachingGroups.length || !options.courses.length || !options.teachers.length}>{loading ? 'Saving…' : editingEntryId ? 'Update session' : 'Save session'}</button>
+        <button className="timetable-action" type="button" onClick={() => { setShowScheduleForm(false); setEditingEntryId(null); }}>Cancel</button>
         {(!options.teachingGroups.length || !options.courses.length || !options.teachers.length) && <span className="timetable-day-empty">Add teaching groups, courses and staff before scheduling.</span>}
       </div>
     </form>}
@@ -396,7 +425,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   <span>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</span>
                   <span className="timetable-grid-time">{timeRange(entry)}</span>
                   {entry.room && <span>Venue: {entry.room}</span>}
-                  {!readOnly && <button className="timetable-event-remove" type="button" onClick={() => void remove(entry.id)}><Trash2 size={12} /> Remove</button>}
+                  {!readOnly && (
+                    <>
+                      <button className="timetable-event-remove" type="button" onClick={() => void editEntry(entry)}><Pencil size={12} /> Edit</button>
+                      <button className="timetable-event-remove" type="button" onClick={() => void remove(entry.id)}><Trash2 size={12} /> Remove</button>
+                    </>
+                  )}
                 </article>)}
                 {cellEntries.length === 0 && <span className="timetable-grid-dash">—</span>}
               </td>
@@ -407,7 +441,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <div className="timetable-document-footer"><span>Prepared for academic use</span><span>Academic Registrar: ____________________</span></div>
       <div className="timetable-document-print-actions"><button type="button" className="timetable-action" onClick={() => printInstitutionalPdf(timetablePdfOptions((availableSemesters.find(item => item.id === semesterId)?.label ?? 'Academic') + ' Timetable', orderedEntries, 'school-timetable'))}>Print timetable</button></div>
     </div> : <div className="timetable-table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Room</th><th>Type</th><th>Teaching group</th><th>Course</th><th>Teacher</th>{!readOnly && <th>Actions</th>}</tr></thead><tbody>
-      {orderedEntries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{timeRange(entry)}</td><td>{entry.room || '—'}</td><td>{entry.sessionType || '—'}</td><td>{groupLabels.get(entry.teachingGroupId) ?? 'Group not found'}</td><td>{courseLabels.get(entry.courseId) ?? 'Course not found'}</td><td>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</td>{!readOnly && <td><button className="timetable-action" type="button" onClick={() => void remove(entry.id)}><Trash2 /> Remove</button></td>}</tr>)}
+      {orderedEntries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{timeRange(entry)}</td><td>{entry.room || '—'}</td><td>{entry.sessionType || '—'}</td><td>{groupLabels.get(entry.teachingGroupId) ?? 'Group not found'}</td><td>{courseLabels.get(entry.courseId) ?? 'Course not found'}</td><td>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</td>{!readOnly && <td><button className="timetable-action" type="button" onClick={() => void editEntry(entry)}><Pencil size={14} /> Edit</button><button className="timetable-action" type="button" onClick={() => void remove(entry.id)}><Trash2 /> Remove</button></td>}</tr>)}
     </tbody></table></div>}
   </section>
 }

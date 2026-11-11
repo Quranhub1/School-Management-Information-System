@@ -11,7 +11,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/timetable")]
 [Authorize]
-public sealed class TimetableController(SchoolManagementDbContext db, TimetableGeneratorService generator) : ControllerBase
+public sealed class TimetableController(SchoolManagementDbContext db, TimetableGeneratorService generator, ITimetableRepository repository) : ControllerBase
 {
     [HttpGet("options")]
     [Authorize(Policy = TimetablePolicies.Read)]
@@ -43,9 +43,8 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [Authorize(Policy = TimetablePolicies.Read)]
     public async Task<IActionResult> Get([FromQuery] Guid? teachingGroupId, CancellationToken cancellationToken)
     {
-        var query = db.TimetableEntries.AsNoTracking().Where(x => x.IsActive);
-        if (teachingGroupId.HasValue) query = query.Where(x => x.TeachingGroupId == teachingGroupId.Value);
-        return Ok(await query.OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime).ToListAsync(cancellationToken));
+        var entries = await repository.GetActiveAsync(teachingGroupId, cancellationToken);
+        return Ok(entries.OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime).ToList());
     }
 
     [HttpGet("conflicts")]
@@ -69,11 +68,17 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     {
         if (request.EndTime <= request.StartTime) return BadRequest(new { message = "End time must be after start time." });
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == request.TeachingGroupId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teaching group not found." });
-        if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId, cancellationToken)) return BadRequest(new { message = "Course not found." });
-        if (!await db.StaffMembers.AnyAsync(x => x.Id == request.TeacherId, cancellationToken)) return BadRequest(new { message = "Teacher not found." });
+        if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Course not found." });
+        if (!await db.StaffMembers.AnyAsync(x => x.Id == request.TeacherId && x.IsActive && x.EmploymentStatus == "Active", cancellationToken)) return BadRequest(new { message = "Teacher not found." });
 
-        var conflict = await db.TimetableEntries.AnyAsync(x => x.IsActive && x.DayOfWeek == request.DayOfWeek && x.Room == request.Room && x.StartTime < request.EndTime && request.StartTime < x.EndTime, cancellationToken);
-        if (conflict) return Conflict(new { message = "The room is already booked for an overlapping session." });
+        var roomConflict = await repository.HasRoomConflictAsync(request.DayOfWeek, request.StartTime, request.EndTime, request.Room, cancellationToken: cancellationToken);
+        if (roomConflict) return Conflict(new { message = "The room is already booked for an overlapping session." });
+
+        var teacherConflict = await repository.HasTeacherConflictAsync(request.TeacherId, request.DayOfWeek, request.StartTime, request.EndTime, cancellationToken: cancellationToken);
+        if (teacherConflict) return Conflict(new { message = "The teacher is already scheduled for an overlapping session." });
+
+        var groupConflict = await repository.HasGroupConflictAsync(request.TeachingGroupId, request.DayOfWeek, request.StartTime, request.EndTime, cancellationToken: cancellationToken);
+        if (groupConflict) return Conflict(new { message = "The teaching group already has an overlapping session." });
 
         var entry = new Domain.Academic.TimetableEntry { TeachingGroupId = request.TeachingGroupId, CourseId = request.CourseId, TeacherId = request.TeacherId, StaffMemberId = request.TeacherId, DayOfWeek = request.DayOfWeek, StartTime = request.StartTime, EndTime = request.EndTime, Room = request.Room, SessionType = request.SessionType };
         db.TimetableEntries.Add(entry);
@@ -92,8 +97,14 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Course not found." });
         if (!await db.StaffMembers.AnyAsync(x => x.Id == request.TeacherId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teacher not found." });
 
-        var conflict = await db.TimetableEntries.AnyAsync(x => x.IsActive && x.Id != id && x.DayOfWeek == request.DayOfWeek && x.Room == request.Room && x.StartTime < request.EndTime && request.StartTime < x.EndTime, cancellationToken);
-        if (conflict) return Conflict(new { message = "The room is already booked for an overlapping session." });
+        var roomConflict = await repository.HasRoomConflictAsync(request.DayOfWeek, request.StartTime, request.EndTime, request.Room, excludeEntryId: id, cancellationToken: cancellationToken);
+        if (roomConflict) return Conflict(new { message = "The room is already booked for an overlapping session." });
+
+        var teacherConflict = await repository.HasTeacherConflictAsync(request.TeacherId, request.DayOfWeek, request.StartTime, request.EndTime, excludeEntryId: id, cancellationToken: cancellationToken);
+        if (teacherConflict) return Conflict(new { message = "The teacher is already scheduled for an overlapping session." });
+
+        var groupConflict = await repository.HasGroupConflictAsync(request.TeachingGroupId, request.DayOfWeek, request.StartTime, request.EndTime, excludeEntryId: id, cancellationToken: cancellationToken);
+        if (groupConflict) return Conflict(new { message = "The teaching group already has an overlapping session." });
 
         // Timetable fields are immutable in the domain model, so replace the row atomically.
         existing.IsActive = false;
@@ -214,7 +225,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [Authorize(Policy = TimetablePolicies.Management)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
-        var entry = await db.TimetableEntries.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var entry = await db.TimetableEntries.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, cancellationToken);
         if (entry is null) return NotFound();
         entry.IsActive = false;
         await db.SaveChangesAsync(cancellationToken);
