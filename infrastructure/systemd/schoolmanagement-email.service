@@ -1,0 +1,23 @@
+[Unit]
+Description=SMIS Institutional Email Service (Node.js / Nodemailer)
+After=network.target
+
+[Service]
+Type=simple
+User=schoolmanagement
+WorkingDirectory=/opt/schoolmanagement/email-service
+Environment=NODE_ENV=production
+Environment=PORT=5100
+Environment=EMAIL_SERVICE_HOST=127.0.0.1
+EnvironmentFile=/etc/schoolmanagement/email-service.env
+ExecStart=/usr/bin/node /opt/schoolmanagement/email-service/src/server.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/schoolmanagement
+
+[Install]
+WantedBy=multi-user.target

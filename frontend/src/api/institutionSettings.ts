@@ -139,3 +139,28 @@ export const addGalleryUrl = (url: string, title: string, caption: string) =>
 
 export const deleteGalleryItem = (id: string) =>
   authedRequest<void>(`/api/administration/institution-gallery/${id}`, { method: 'DELETE' })
+
+export interface InstitutionEmailSettings {
+  emailEnabled: boolean
+  emailSmtpHost: string | null
+  port: number
+  secureMode: 'SslOnConnect' | 'StartTls' | 'StartTlsWhenAvailable'
+  emailSmtpUsername: string | null
+  fromAddress: string | null
+  fromName: string | null
+  passwordConfigured: boolean
+}
+export interface SaveInstitutionEmailSettings {
+  enabled: boolean
+  host: string
+  port: number
+  secureMode: string
+  username: string
+  password?: string
+  fromAddress: string
+  fromName: string
+  clearPassword?: boolean
+}
+export const getInstitutionEmailSettings = () => authedRequest<InstitutionEmailSettings>('/api/administration/email-settings')
+export const saveInstitutionEmailSettings = (input: SaveInstitutionEmailSettings) => authedRequest<InstitutionEmailSettings>('/api/administration/email-settings', { method: 'PUT', body: JSON.stringify(input) })
+export const sendInstitutionEmailTest = (recipient: string) => authedRequest<{ sent: boolean; recipient: string }>('/api/administration/email-settings/test', { method: 'POST', body: JSON.stringify({ recipient }) })

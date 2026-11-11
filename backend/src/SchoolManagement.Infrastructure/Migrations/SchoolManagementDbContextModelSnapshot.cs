@@ -825,6 +825,36 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<bool>("EmailEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("EmailFromAddress")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("EmailFromName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("EmailSmtpHost")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int?>("EmailSmtpPort")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("EmailSmtpPasswordProtected")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("EmailSmtpSecureMode")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("EmailSmtpUsername")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
                     b.Property<string>("AccentColor")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -3127,6 +3157,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("character varying(10)");
 
                     b.Property<DateTimeOffset>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ReceiptEmailRequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ReceiptEmailLastAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ReceiptEmailSentAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PaymentMethod")

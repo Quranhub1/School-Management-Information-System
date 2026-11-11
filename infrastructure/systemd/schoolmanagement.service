@@ -1,7 +1,8 @@
 [Unit]
 Description=School Management Information System API
-After=network.target postgresql.service
+After=network.target postgresql.service schoolmanagement-email.service
 Requires=postgresql.service
+Wants=schoolmanagement-email.service
 
 [Service]
 Type=notify
@@ -11,7 +12,11 @@ ExecStart=/opt/schoolmanagement/api/schoolmanagement
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ConnectionStrings__SchoolManagement=Host=localhost;Port=5432;Database=school_management;Username=school_management;Password=__DB_PASS__
 Environment=Authentication__JwtKey=__JWT_KEY__
+Environment=EmailService__BaseUrl=http://127.0.0.1:5100
+Environment=EmailService__ApiKey=__EMAIL_SERVICE_API_KEY__
 Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+StateDirectory=schoolmanagement
+Environment=Security__DataProtectionKeysPath=/var/lib/schoolmanagement/DataProtectionKeys
 Restart=always
 RestartSec=10
 LimitNOFILE=65536

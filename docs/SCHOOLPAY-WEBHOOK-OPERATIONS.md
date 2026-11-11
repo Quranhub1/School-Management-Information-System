@@ -47,11 +47,6 @@ When the webhook identifies a student but does not specify an invoice, SMIS reco
 
 Direct MTN/Airtel initiation and staff-entered provider-reference confirmation are disabled. Those channels must reach SMIS through SchoolPay.
 
-
-## Shared ledger invariant
-
-Manual receipts and confirmed SchoolPay transactions use the same canonical finance posting path and update the same student invoices, payment allocations and ledger records. `PaymentSource` identifies where a payment originated; it does not create a separate student balance. A provider transaction is deduplicated before posting, and an unmatched or ambiguous student/invoice is left for reconciliation rather than being posted to an inferred account.
-
 ## Reconciliation
 
 SchoolPay documentation states that webhook delivery is single-attempt. SMIS therefore includes a background reconciliation worker that calls the authenticated `SchoolRangeTransactions` endpoint using the official MD5 formula `MD5(schoolCode + fromDate + apiPassword)` (uppercase hexadecimal). It checks a rolling date window, with a maximum 30-day lookback, and sends both regular and supplementary fee transactions through the same idempotent finance workflow as webhooks.
