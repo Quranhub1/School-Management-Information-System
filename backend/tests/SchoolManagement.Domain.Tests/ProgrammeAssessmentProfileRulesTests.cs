@@ -1,4 +1,5 @@
 using SchoolManagement.Domain.Assessment;
+using SchoolManagement.Domain.Academic;
 
 namespace SchoolManagement.Domain.Tests;
 
@@ -54,12 +55,21 @@ public sealed class ProgrammeAssessmentProfileRulesTests
     }
 
     [Fact]
-    public void Food_science_and_nutrition_has_dedicated_family()
+    public void Programme_stores_authority_source_and_reference_only_classification()
     {
-        var entry = SchoolManagement.Domain.Academic.ProgrammeCatalog.Uvtab
-            .Single(x => x.Code == "UVTAB-FSN-C");
+        var programme = new Programme
+        {
+            Code = "UVTAB-FSN-C",
+            Name = "Food Science and Nutrition",
+            Award = "Certificate",
+            Regulator = "UVTAB",
+            ApprovalStatus = "ReferenceOnly",
+            SourceReference = "SMIS programme import",
+            IsReferenceOnly = true
+        };
 
-        Assert.Equal("FoodScienceAndNutrition", entry.Family);
-        Assert.Equal("UVTAB", entry.Authority);
+        Assert.Equal("UVTAB", programme.Regulator);
+        Assert.Equal("ReferenceOnly", programme.ApprovalStatus);
+        Assert.True(programme.IsReferenceOnly);
     }
 }
