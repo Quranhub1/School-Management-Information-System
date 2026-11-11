@@ -26,6 +26,7 @@ public sealed class StreamService(IStreamRepository streams)
 
     public async Task<(bool Success, string? Error, SchoolManagement.Domain.Academic.Stream? Stream)> CreateAsync(CreateStreamRequest request, CancellationToken ct = default)
     {
+        if (request.AcademicClassId == Guid.Empty) return (false, "A valid academic class is required.", null);
         var code = request.Code.Trim();
         if (string.IsNullOrWhiteSpace(code)) return (false, "Stream code is required.", null);
 
