@@ -37,8 +37,35 @@ public partial class AddAcademicAuthorities : Migration
                 { new Guid("b70a4b18-67a6-49b8-99de-3b43fd2a5d02"), "UHPAB", "UHPAB", "Uganda Health Professions Assessment Board.", null, true, 2 },
                 { new Guid("b70a4b18-67a6-49b8-99de-3b43fd2a5d03"), "UVTAB", "UVTAB", "Uganda Vocational and Technical Assessment Board.", null, true, 3 }
             });
+
+        // Preserve existing programme classifications while converting their free-text regulator values to authority codes.
+        migrationBuilder.Sql(@"UPDATE ""Programmes""
+            SET ""Regulator"" = CASE
+                WHEN ""Regulator"" IS NULL OR btrim(""Regulator"") = '' THEN 'SCHOOL_BASED'
+                WHEN upper(replace(replace(btrim(""Regulator""), '-', '_'), ' ', '_')) IN ('SCHOOL', 'SCHOOLBASED') THEN 'SCHOOL_BASED'
+                ELSE left(upper(replace(replace(btrim(""Regulator""), '-', '_'), ' ', '_')), 40)
+            END");
+
+        migrationBuilder.Sql(@"INSERT INTO ""AcademicAuthorities"" (""Id"", ""Code"", ""Name"", ""Description"", ""SourceReference"", ""IsActive"", ""SortOrder"")
+            SELECT gen_random_uuid(), p.""Regulator"", p.""Regulator"", 'Imported from existing programme records', NULL, TRUE, 100
+            FROM ""Programmes"" p
+            WHERE p.""Regulator"" IS NOT NULL
+              AND NOT EXISTS (SELECT 1 FROM ""AcademicAuthorities"" a WHERE a.""Code"" = p.""Regulator"")
+            GROUP BY p.""Regulator""
+            ON CONFLICT (""Code"") DO NOTHING");
+
+        migrationBuilder.AddForeignKey(
+            name: "FK_Programmes_AcademicAuthorities_Regulator",
+            table: "Programmes",
+            column: "Regulator",
+            principalTable: "AcademicAuthorities",
+            principalColumn: "Code",
+            onDelete: ReferentialAction.Restrict);
     }
 
-    protected override void Down(MigrationBuilder migrationBuilder) =>
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropForeignKey(name: "FK_Programmes_AcademicAuthorities_Regulator", table: "Programmes");
         migrationBuilder.DropTable(name: "AcademicAuthorities");
+    }
 }
