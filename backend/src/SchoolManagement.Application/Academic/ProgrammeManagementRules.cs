@@ -46,11 +46,4 @@ public static class ProgrammeManagementRules
         return profile;
     }
 
-    public static ProgrammeCatalogEntry? FindCatalogEntry(string code, AssessmentAuthority authority)
-    {
-        var authorityName = authority.ToString();
-        return ProgrammeCatalog.All.FirstOrDefault(x =>
-            string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(x.Authority, authorityName, StringComparison.OrdinalIgnoreCase));
-    }
 }
