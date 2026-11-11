@@ -300,8 +300,6 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
   }, [classes, periods, selectedAcademicYear, periodFilter, classStatusFilter, classSearch])
 
   const selectedClassRecord = classes.find(item => item.id === selectedClass)
-  const activeClassCount = classes.filter(item => item.status === 0).length
-  const closedClassCount = classes.filter(item => item.status === 1).length
 
   return (
     <section className="academic-workspace academic-structures-screen" aria-label="Academic structures workspace">
@@ -327,7 +325,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
         <label>
           <span>Academic year</span>
           <select id="structure-academic-year" value={selectedAcademicYear} onChange={e => { setSelectedAcademicYear(e.target.value); setPeriodFilter('all') }}>
-            <option value="">All academic years</option>
+            <option value="">Select academic year</option>
             {academicYears.filter(year => year.isActive).map(year => <option key={year.id} value={year.id}>{year.name}{year.isCurrent ? ' (Current)' : ''}</option>)}
           </select>
         </label>
@@ -388,7 +386,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
                 <thead><tr><th>Class code</th><th>Class name</th><th>Year</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
                   {visibleClasses.length === 0 ? <tr><td colSpan={6} className="empty">No classes match the selected filters.</td></tr> : visibleClasses.map(item => (
-                    <tr key={item.id} className={selectedClass === item.id ? 'is-selected' : ''} onClick={() => void loadStreams(item.id)}>
+                    <tr key={item.id} className={selectedClass === item.id ? 'is-selected' : ''} >
                       <td><strong>{item.code}</strong></td><td>{item.name || '—'}</td><td>{item.yearOfStudy}</td><td>{item.maxEnrolment ?? 'Not set'}</td>
                       <td><span className={`academic-class-status status-${item.status}`}>{item.status === 0 ? 'Active' : item.status === 1 ? 'Closed' : 'Cancelled'}</span></td>
                       <td className="academic-structures-row-actions">
