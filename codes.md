@@ -1334,3 +1334,79 @@ The separate local Ollama model previously installed on the Ubuntu workstation w
 \`\`\`bash
 ollama list
 \`\`\`
+
+
+---
+
+## 23. Ollama installation and local AI troubleshooting
+
+These commands belong to the separate Joes AI/local development workstation. They are not required to run SMIS.
+
+### Ubuntu: install or verify Ollama
+
+Check whether the executable is available:
+
+\`\`\`bash
+which ollama
+ollama --version
+\`\`\`
+
+Historical official installer command:
+
+\`\`\`bash
+curl -fsSL https://ollama.com/install.sh | sh
+\`\`\`
+
+Review the official installation instructions and script before running it. After installation, verify the command and installed models:
+
+\`\`\`bash
+ollama --version
+ollama list
+\`\`\`
+
+### Ubuntu: run a small local model
+
+Previously tested model commands:
+
+\`\`\`bash
+ollama run qwen2.5:0.5b
+ollama run qwen2.5:1.5b
+ollama run qwen2.5-coder:1.5b
+\`\`\`
+
+The model must be downloaded before it can be used offline. Once downloaded, Ollama can serve the model locally without an internet connection.
+
+### Ubuntu: diagnose Open Interpreter installation
+
+Check Python, pip, and whether the application is installed or discoverable:
+
+\`\`\`bash
+python3 --version
+pip3 --version
+command -v interpreter
+python3 -m pip show open-interpreter
+pipx list
+\`\`\`
+
+Inspect downloaded installer files:
+
+\`\`\`bash
+ls -lah ~/Downloads
+ls -lh /tmp/openinterpreter-install.sh
+\`\`\`
+
+Check basic HTTPS connectivity to GitHub when downloads fail:
+
+\`\`\`bash
+curl -I https://github.com
+\`\`\`
+
+### Ubuntu: inspect the frontend asset manifest after deployment
+
+After a verified frontend deployment, this historical command extracts Vite asset references from the deployed HTML:
+
+\`\`\`bash
+grep -o 'assets/index-[^"]*' /opt/schoolmanagement/frontend/index.html
+\`\`\`
+
+Confirm the deployed HTML path before running it; the deployment directory can differ between servers.
