@@ -41,6 +41,8 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
             return (null, $"Programme code '{code}' already exists.");
 
         var authorityCode = NormalizeAuthorityCode(request.Regulator);
+        if (string.IsNullOrWhiteSpace(authorityCode))
+            return (null, "Select an academic authority from the authority register.");
         var authority = await authorities.GetByCodeAsync(authorityCode, cancellationToken);
         if (authority is null || !authority.IsActive)
             return (null, "Select an active academic authority from the authority register.");
@@ -49,8 +51,7 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
 
     private static string NormalizeAuthorityCode(string? value)
     {
-        var code = (value ?? "SCHOOL_BASED").Trim().ToUpperInvariant().Replace('-', '_').Replace(' ', '_');
-        return code is "SCHOOL" or "SCHOOLBASED" ? "SCHOOL_BASED" : code;
+        return (value ?? string.Empty).Trim().ToUpperInvariant().Replace('-', '_').Replace(' ', '_');
     }
 
     public async Task<(bool Success, string? Error, Programme? Programme)> CreateAsync(
