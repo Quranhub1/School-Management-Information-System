@@ -32,7 +32,7 @@ type ApplicationForm = {
   applicationFee: string; feePaid: string; approvedBy: string; approvalSignature: string; approvalDate: string;
 }
 const emptyApplication: ApplicationForm = {
-  academicYear: '', intake: '', course: '', authority: 'School-based', entryStatus: 'Direct', programme: 'Day',
+  academicYear: '', intake: '', course: '', authority: 'SCHOOL_BASED', entryStatus: 'Direct', programme: 'Day',
   firstName: '', otherNames: '', lastName: '', dateOfBirth: '', gender: '', village: '', subCounty: '', district: '', phone: '', email: '',
   nationality: '', religion: '', countryOfResidence: '', seriousCondition: '', conditionDetails: '', regularMedication: '', medicationDetails: '', specialRequirements: '',
   fatherName: '', fatherAddress: '', fatherPhone: '', fatherOccupation: '', motherName: '', motherAddress: '', motherPhone: '', motherOccupation: '',
