@@ -1031,3 +1031,91 @@ Windows installer targets previously discussed:
 - `win-x64`
 
 Confirm the current Tauri configuration and release workflow before building either target; do not assume the target names alone are valid build commands.
+
+
+---
+
+## 19. More commands recovered from November 2026 troubleshooting
+
+### Windows: restore a missing .NET API project dependency
+
+**Context:** On 8 November 2026, the API startup encountered missing Serilog assemblies. Run from the API project directory:
+
+```powershell
+dotnet restore SchoolManagement.Api.csproj
+```
+
+Inspect package references and central package management files:
+
+```powershell
+dotnet list SchoolManagement.Api.csproj package
+Select-String -Path SchoolManagement.Api.csproj -Pattern "Serilog"
+Get-ChildItem ..\..\ -Filter "Directory.Packages.props" -Recurse
+```
+
+After a successful restore, run the API using the development environment:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+dotnet run --no-restore
+```
+
+Do not add or change package versions until you have inspected the project and central package version declarations.
+
+### Windows: clean frontend dependency installation and PDFMake verification
+
+**Context:** On 8 November 2026, the frontend dependency tree and PDFMake assets were checked.
+
+Run from the frontend directory:
+
+```powershell
+npm ci
+npm ls pdfmake
+Test-Path "node_modules/pdfmake/build/pdfmake.min.js"
+npm run dev
+```
+
+Use `npm ci` only when `package-lock.json` matches `package.json`. It replaces the installed dependency tree based on the lockfile.
+
+### Windows: inspect the backend API project
+
+From the API project directory:
+
+```powershell
+Set-Location "C:\Users\JOES TECH\School-Management-Information-System\backend\src\SchoolManagement.Api"
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+dotnet run
+```
+
+The shorter `dotnet run` form was used in the November 2026 startup session. Use `--no-restore` only after dependencies have already been restored successfully.
+
+---
+
+## 20. Preserve local assets when updating the workstation
+
+A November 2026 Git status showed local, untracked asset directories:
+
+- `frontend/public/assets/fonts/`
+- `frontend/public/assets/pdfmake/`
+
+**User constraint:** Do not delete these directories during repository cleanup or synchronization.
+
+Inspect them before any cleanup or reset:
+
+PowerShell:
+
+```powershell
+Get-ChildItem "frontend\public\assets\fonts" -Recurse
+Get-ChildItem "frontend\public\assets\pdfmake" -Recurse
+git status --short
+```
+
+Ubuntu:
+
+```bash
+find frontend/public/assets/fonts -type f -print
+find frontend/public/assets/pdfmake -type f -print
+git status --short
+```
+
+Do not run `git clean -fd` or any broad cleanup command when these local assets are untracked and need to be retained. Back up or commit required assets before performing operations that could remove them.
