@@ -17,7 +17,7 @@ export interface AdmissionsProgrammeOption {
   award: string
   durationYears: number
   durationUnit: string
-  type: number
+  type: number | string
   regulator: string
   authorityName: string
 }
