@@ -37,6 +37,9 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
         if (string.IsNullOrWhiteSpace(request.Award)) return (null, "Award is required.");
         if (request.DurationYears < 0) return (null, "Duration cannot be negative.");
         if (request.DepartmentId == Guid.Empty) return (null, "Department selection is invalid.");
+        if (request.DepartmentId.HasValue &&
+            !await programmes.DepartmentIsActiveAsync(request.DepartmentId.Value, cancellationToken))
+            return (null, "Select an active department from the department register.");
         if (await programmes.CodeExistsAsync(code, excludingId, cancellationToken))
             return (null, $"Programme code '{code}' already exists.");
 
