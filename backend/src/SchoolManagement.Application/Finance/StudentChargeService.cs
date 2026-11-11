@@ -13,13 +13,15 @@ public sealed class StudentChargeService(IFinanceRepository finance, FiscalPerio
         if (string.IsNullOrWhiteSpace(description)) throw new ArgumentException("Description is required.", nameof(description));
         if (amount <= 0) throw new ArgumentOutOfRangeException(nameof(amount), "Charge amount must be greater than zero.");
         if (string.IsNullOrWhiteSpace(currency)) throw new ArgumentException("Currency is required.", nameof(currency));
+        currency = MoneyMath.NormalizeCurrency(currency);
+        MoneyMath.EnsurePrecision(amount, currency);
 
         var charge = new StudentCharge
         {
             StudentId = studentId,
             ChargeType = chargeType.Trim(),
             Description = description.Trim(),
-            Amount = decimal.Round(amount, 2, MidpointRounding.AwayFromZero),
+            Amount = amount,
             Currency = currency.Trim().ToUpperInvariant(),
             Status = "Posted",
             CreatedBy = string.IsNullOrWhiteSpace(createdBy) ? null : createdBy.Trim()
