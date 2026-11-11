@@ -17,7 +17,7 @@ Current implementation:
 - Courses support create, edit and activation/deactivation. Inactive courses remain visible in the register but are excluded from new curriculum mappings.
 - Curricula support create, edit and activation/deactivation, including version, minimum credits, effective dates and programme type.
 - Curriculum-course mappings can be listed, added and edited (year, semester and core/elective flag); mappings are retained and are not hard-deleted.
-- New mappings are validated against the database-backed authority, active/verified programme, active curriculum and active course. Courses cannot be shared across different authorities.
+- New curricula and mappings are validated against the database-backed authority, active programme, non-reference-only status and an approved programme status (Institutional, Verified or Approved), plus active curriculum and active course. Courses cannot be shared across different authorities.
 - Programme maintenance is centralized in Curriculum & Courses; the duplicate Programme tab has been removed from Academic Management.
 
 Remaining work:
@@ -64,7 +64,7 @@ Current implementation:
 - Streams are linked to classes.
 - The admissions form loads active academic authorities and active, verified programmes through an admissions-read endpoint, so Receptionist/Admissions roles do not need academic-management write permissions to read the catalogue.
 - Admissions uses database-backed authority and programme selectors, retains the selected programme ID in the application record and validates that the selected programme belongs to the selected authority.
-- Reference-only and inactive programmes are excluded from admissions choices; no hardcoded School-based default is used.
+- Reference-only, inactive and not-yet-approved programmes are excluded from admissions choices. Only Institutional, Verified or Approved programme statuses are selectable; no hardcoded School-based default is used.
 - Course registrations and student academic status have domain/API support.
 
 Remaining work:
