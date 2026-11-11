@@ -18,6 +18,7 @@ public sealed class SubjectService(ISubjectRepository subjects)
     {
         var existing = await subjects.GetByIdAsync(id, ct);
         if (existing is null) return (false, "Subject not found.");
+        if (request.CourseId == Guid.Empty) return (false, "A valid course is required.");
         if (request.YearOfStudy < 1) return (false, "Year of study must be at least 1.");
         if (request.PeriodSequence is < 1) return (false, "Period sequence must be at least 1.");
         if (await subjects.CourseExistsAsync(existing.ProgrammeId, request.CourseId, id, ct))
@@ -34,7 +35,9 @@ public sealed class SubjectService(ISubjectRepository subjects)
 
     public async Task<(bool Success, string? Error, Subject? Subject)> CreateAsync(CreateSubjectRequest request, CancellationToken ct = default)
     {
+        if (request.ProgrammeId == Guid.Empty || request.CourseId == Guid.Empty) return (false, "A valid programme and course are required.", null);
         if (request.YearOfStudy < 1) return (false, "Year of study must be at least 1.", null);
+        if (request.PeriodSequence is < 1) return (false, "Period sequence must be at least 1.", null);
         if (await subjects.CourseExistsAsync(request.ProgrammeId, request.CourseId, cancellationToken: ct))
             return (false, "This course is already assigned to the programme.", null);
 
