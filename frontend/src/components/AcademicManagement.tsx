@@ -113,8 +113,8 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
       <div className="form-row" role="tablist" aria-label="Academic management views">
         <button type="button" aria-selected={view === 'records'} onClick={() => setView('records')}>Academic Records</button>
         {!readOnly && <button type="button" aria-selected={view === 'programmes'} onClick={() => setView('programmes')}>Programmes</button>}
-        {!readOnly && <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>
-        <button type="button" aria-selected={view === 'calendar'} onClick={() => setView('calendar')}>Academic Calendar</button>}
+        {!readOnly && <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>}
+        {!readOnly && <button type="button" aria-selected={view === 'calendar'} onClick={() => setView('calendar')}>Academic Calendar</button>}
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
