@@ -7,7 +7,3 @@ export function resolveAcademicAuthority(regulator?: string | null): AcademicAut
   if (normalized === 'SCHOOL' || normalized === 'SCHOOL_BASED' || normalized === 'SCHOOLBASED') return 'SCHOOL_BASED'
   return normalized
 }
-
-// Kept only as a compatibility type during migration. Programme and admission
-// authority choices are now loaded from /api/academic-authorities.
-export const VERIFIED_ACADEMIC_COURSES: { authority: AcademicAuthority; name: string }[] = []
