@@ -4,7 +4,7 @@ import { getProgrammes, type Programme } from '../api/programmes'
 import { getStreamsByClass, createStream, type Stream } from '../api/streams'
 import { getCourses, type Course } from '../api/curriculumManagement'
 import { getSubjectsByProgramme, createSubject, type Subject } from '../api/subjects'
-import { getPeriodsForYear } from '../api/academicStructure'
+import { getAcademicYears, getPeriodsForYear, type AcademicPeriod, type AcademicYear } from '../api/academicStructure'
 
 interface AcademicStructuresProps {
   canManage: boolean
@@ -20,7 +20,9 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
   const [streams, setStreams] = useState<Stream[]>([])
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [courses, setCourses] = useState<Course[]>([])
-  const [periods, setPeriods] = useState<{ id: string; name: string }[]>([])
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState('')
+  const [periods, setPeriods] = useState<AcademicPeriod[]>([])
   const [selectedClass, setSelectedClass] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -33,12 +35,48 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
   useEffect(() => {
     if (!canManage) return
     void loadProgrammes()
+    void loadAcademicYears()
   }, [canManage])
+
+  useEffect(() => {
+    if (!selectedAcademicYear || !canManage) {
+      setPeriods([])
+      setClassForm(current => ({ ...current, periodId: '' }))
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    getPeriodsForYear(selectedAcademicYear)
+      .then(items => {
+        if (cancelled) return
+        setPeriods(items)
+        setClassForm(current => ({ ...current, periodId: items.some(period => period.id === current.periodId) ? current.periodId : '' }))
+      })
+      .catch(e => {
+        if (!cancelled) {
+          setPeriods([])
+          setError(e instanceof Error ? e.message : 'Unable to load academic periods.')
+        }
+      })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [selectedAcademicYear, canManage])
 
   useEffect(() => {
     if (!selectedProgramme || !canManage) return
     void loadProgrammeData(selectedProgramme)
   }, [selectedProgramme, canManage])
+
+  async function loadAcademicYears() {
+    try {
+      const items = await getAcademicYears()
+      setAcademicYears(items)
+      const preferred = items.find(year => year.isCurrent && year.isActive) ?? items.find(year => year.isActive)
+      if (preferred) setSelectedAcademicYear(current => current || preferred.id)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load academic years.')
+    }
+  }
 
   async function loadProgrammes() {
     try {
@@ -172,6 +210,13 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
 
       {view === 'classes' && selectedProgramme && (
         <>
+          <div className="form-row">
+            <label htmlFor="structure-academic-year">Academic year</label>
+            <select id="structure-academic-year" value={selectedAcademicYear} onChange={e => setSelectedAcademicYear(e.target.value)}>
+              <option value="">Select academic year</option>
+              {academicYears.filter(year => year.isActive).map(year => <option key={year.id} value={year.id}>{year.name}{year.isCurrent ? ' (Current)' : ''}</option>)}
+            </select>
+          </div>
           <form className="student-form" onSubmit={saveClass}>
             <div className="form-row">
               <input required value={classForm.code} onChange={e => setClassForm({ ...classForm, code: e.target.value })} placeholder="Class code (e.g. CS2026A)" />
@@ -184,7 +229,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
                 {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <input type="number" min="1" value={classForm.maxEnrolment} onChange={e => setClassForm({ ...classForm, maxEnrolment: e.target.value })} placeholder="Max enrolment" />
-              <button type="submit" disabled={loading}>Add Class</button>
+              <button type="submit" disabled={loading || !selectedAcademicYear || !classForm.periodId}>Add Class</button>
             </div>
           </form>
           <div className="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Year</th><th>Status</th></tr></thead>
