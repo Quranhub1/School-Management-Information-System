@@ -32,7 +32,8 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
             from programme in db.Programmes.AsNoTracking()
             join authority in db.AcademicAuthorities.AsNoTracking()
                 on programme.Regulator equals authority.Code
-            where programme.IsActive && !programme.IsReferenceOnly && authority.IsActive
+            where programme.IsActive && !programme.IsReferenceOnly && authority.IsActive &&
+                (programme.ApprovalStatus == "Institutional" || programme.ApprovalStatus == "Verified" || programme.ApprovalStatus == "Approved")
             orderby authority.SortOrder, authority.Name, programme.Name
             select new
             {
