@@ -10,10 +10,8 @@ import {
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { notify } from './GlobalNotifications'
-import { getProgrammes, type Programme } from '../api/programmes'
-import { getCurricula, type Curriculum } from '../api/curriculumManagement'
+import { getAdmissionsAcademicCatalogue, type AdmissionsProgrammeOption, type AdmissionsAuthorityOption } from '../api/admissionsCatalogue'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
-import { getAcademicAuthorities, type AcademicAuthority } from '../api/academicAuthorities'
 import { validateForm } from '../lib/validation'
 import { studentApplicationSubmissionSchema } from '../schemas'
 import { formatPersonName } from '../utils/personName'
@@ -57,8 +55,8 @@ function Section({ number, title, children }: { number: string; title: string; c
 export function StudentManagement({ canManage = false, readOnly = false }: Props) {
   const { institution, loaded: institutionLoaded } = useInstitutionSettings()
   const [students, setStudents] = useState<Student[]>([])
-  const [academicProgrammes, setAcademicProgrammes] = useState<Programme[]>([])
-  const [academicAuthorities, setAcademicAuthorities] = useState<AcademicAuthority[]>([])
+  const [academicProgrammes, setAcademicProgrammes] = useState<AdmissionsProgrammeOption[]>([])
+  const [academicAuthorities, setAcademicAuthorities] = useState<AdmissionsAuthorityOption[]>([])
   const [courseOptionsError, setCourseOptionsError] = useState('')
   const [view, setView] = useState<'application' | 'registry'>('application')
   const [application, setApplication] = useState<ApplicationForm>(emptyApplication)
@@ -98,10 +96,10 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   useEffect(() => { if (canManage || readOnly) void load() }, [canManage, readOnly])
   useEffect(() => {
     if (!canManage && !readOnly) return
-    Promise.all([getProgrammes(), getAcademicAuthorities()]).then(([programmeRows, authorityRows]) => {
-      const activeAuthorities = authorityRows.filter(authority => authority.isActive)
+    getAdmissionsAcademicCatalogue().then(catalogue => {
+      const activeAuthorities = catalogue.authorities.filter(authority => authority.isActive)
       setAcademicAuthorities(activeAuthorities)
-      setAcademicProgrammes(programmeRows.filter(programme => programme.isActive && !programme.isReferenceOnly))
+      setAcademicProgrammes(catalogue.programmes)
       setApplication(current => current.authority && activeAuthorities.some(authority => authority.code === current.authority)
         ? current
         : { ...current, authority: activeAuthorities[0]?.code ?? '', course: '' })
@@ -269,6 +267,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       <div className="application-view-switch"><button type="button" className={view === 'application' ? 'active' : ''} onClick={() => setView('application')} disabled={!canManage}>New application</button><button type="button" className={view === 'registry' ? 'active' : ''} onClick={() => setView('registry')}>Student registry <span>{students.length}</span></button></div>
     </div>
     {error && <div className="error" role="alert">{error}</div>}
+    {courseOptionsError && <div className="error" role="alert">{courseOptionsError}</div>}
     {Object.keys(validationErrors).length > 0 && <div className="error" role="alert"><strong>Application fields requiring attention</strong><ul>{Object.entries(validationErrors).map(([field, message]) => <li key={field}><strong>{field}:</strong> {message}</li>)}</ul></div>}
     {notice && <div className="info-banner" role="status">{notice}</div>}
     {view === 'application' && canManage && <form className="student-application-form" onSubmit={submitApplication}>
