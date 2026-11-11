@@ -33,7 +33,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null)
   const [departmentForm, setDepartmentForm] = useState({ facultyId: '', code: '', name: '' })
   const [selected, setSelected] = useState('')
-  const [authority, setAuthority] = useState('SCHOOL_BASED')
+  const [authority, setAuthority] = useState('')
   const [editingAuthority, setEditingAuthority] = useState<string | null>(null)
   const [authorityForm, setAuthorityForm] = useState({ code: '', name: '', description: '', sourceReference: '', sortOrder: '10' })
   const [editingProgrammeId, setEditingProgrammeId] = useState<string | null>(null)
