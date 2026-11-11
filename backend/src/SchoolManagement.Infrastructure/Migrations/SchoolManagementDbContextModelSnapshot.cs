@@ -497,7 +497,9 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("Code").IsUnique();
 
-                    b.HasOne("SchoolManagement.Domain.Academic.AcademicAuthority", null).WithMany().HasForeignKey("Regulator").HasPrincipalKey("Code").OnDelete(DeleteBehavior.Restrict);\n\n                    b.ToTable("Programmes");
+                    b.HasOne("SchoolManagement.Domain.Academic.AcademicAuthority", null).WithMany().HasForeignKey("Regulator").HasPrincipalKey("Code").OnDelete(DeleteBehavior.Restrict);
+
+                    b.ToTable("Programmes");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Semester", b =>
