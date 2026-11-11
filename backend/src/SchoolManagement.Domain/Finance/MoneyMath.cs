@@ -26,7 +26,7 @@ public static class MoneyMath
         var codes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             // ISO 4217 codes not tied to a single country's current region.
-            "XAD", "XAG", "XAU", "XBA", "XBB", "XBC", "XBD", "XDR",
+            "XAG", "XAU", "XBA", "XBB", "XBC", "XBD", "XDR",
             "XPD", "XPT", "XSU", "XTS", "XUA", "XXX"
         };
 
