@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { createMobileMoneyTransaction, confirmMobileMoneyTransaction, cancelMobileMoneyTransaction, getMobileMoneyTransactions, getStudentFinanceProfile, getInvoices, type MobileMoneyTransaction } from '../api/finance';
+import { useState, useEffect } from 'react';
+import { cancelMobileMoneyTransaction, getMobileMoneyTransactions, getStudentFinanceProfile, getInvoices, type MobileMoneyTransaction } from '../api/finance';
 
 interface Invoice {
   id: string;
@@ -18,8 +18,6 @@ export default function MobileMoneyPayments() {
   const [transactions, setTransactions] = useState<MobileMoneyTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState<MobileMoneyTransaction | null>(null);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [externalRef, setExternalRef] = useState('');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const studentSearchSequence = useRef(0);
 
@@ -68,49 +66,12 @@ export default function MobileMoneyPayments() {
     }
   };
 
-  const handleRequestPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!studentCode || !phoneNumber || !amount || parseFloat(amount) <= 0) return;
-    setLoading(true);
-    try {
-      const tx = await createMobileMoneyTransaction({
-        studentId,
-        studentInvoiceId: selectedInvoice || undefined,
-        provider,
-        phoneNumber,
-        amount: parseFloat(amount),
-      });
-      setSubmitted(tx);
-      setShowConfirm(false);
-      setExternalRef('');
-      await loadTransactions();
-    } catch (err) {
-      alert('Failed to initiate payment. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirm = async (id: string, ref: string) => {
-    try {
-      await confirmMobileMoneyTransaction(id, ref.trim());
-      await loadTransactions();
-      setSubmitted(null);
-      setShowConfirm(false);
-      setExternalRef('');
-    } catch (err) {
-      alert('Failed to confirm transaction.');
-    }
-  };
-
   const handleCancel = async (id: string) => {
     try {
       await cancelMobileMoneyTransaction(id);
       await loadTransactions();
       if (submitted && submitted.id === id) {
         setSubmitted(null);
-        setShowConfirm(false);
-        setExternalRef('');
       }
     } catch {
       alert('Failed to cancel transaction.');
@@ -152,132 +113,13 @@ export default function MobileMoneyPayments() {
           <p><strong>Provider:</strong> {submitted.provider} Mobile Money</p>
           <p><strong>Phone:</strong> {submitted.phoneNumber}</p>
           <p style={{ fontWeight: 600, color: '#92400e' }}>No MTN/Airtel payment prompt has been sent. Verify receipt in the operator portal before confirming here.</p>
-
-          {!showConfirm ? (
-            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-              <button className="secondary-button" onClick={() => setShowConfirm(true)}>
-                Confirm Received
-              </button>
-              <button className="secondary-button" onClick={() => handleCancel(submitted.id)}>
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div style={{ marginTop: '16px' }}>
-              <div className="form-row">
-                <input
-                  type="text"
-                  placeholder="Enter External Transaction Reference"
-                  value={externalRef}
-                  onChange={(e) => setExternalRef(e.target.value)}
-                  style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
-                />
-                <button
-                  className="secondary-button"
-                  onClick={() => handleConfirm(submitted.id, externalRef)}
-                  disabled={!externalRef.trim() || loading}
-                >
-                  Submit Confirmation
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="panel" style={{ marginBottom: '24px' }}>
-        <div className="panel-heading">
-          <h3>New Mobile Money Payment</h3>
-        </div>
-        <form onSubmit={handleRequestPayment}>
-          <div className="form-row">
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Student ID / Code</label>
-              <input
-                type="text"
-                value={studentCode}
-                onChange={(e) => handleStudentSearch(e.target.value)}
-                placeholder="Enter student code"
-                required
-                style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
-              />
-            </div>
-            <div style={{ flex: 2, marginLeft: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Student Name</label>
-              <input
-                type="text"
-                value={studentName}
-                readOnly
-                placeholder="Student name will appear here"
-                style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px', background: '#f9fafb' }}
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Phone Number</label>
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="2567XXXXXXXX"
-                required
-                pattern="^256[0-9]{9}$"
-                style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
-              />
-            </div>
-            <div style={{ flex: 1, marginLeft: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Provider</label>
-              <select
-                value={provider}
-                onChange={(e) => setProvider(e.target.value as 'MTN' | 'Airtel')}
-                style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
-              >
-                <option value="MTN">MTN Mobile Money</option>
-                <option value="Airtel">Airtel Money</option>
-              </select>
-            </div>
-            <div style={{ flex: 1, marginLeft: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Amount (UGX)</label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0"
-                min="0"
-                step="1"
-                required
-                style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>Select Invoice (Optional)</label>
-              <select
-                value={selectedInvoice}
-                onChange={(e) => setSelectedInvoice(e.target.value)}
-                style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px' }}
-              >
-                <option value="">No invoice selected</option>
-                {invoices.map((inv) => (
-                  <option key={inv.id} value={inv.id}>
-                    {inv.description} - {formatAmount(inv.amount)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div style={{ marginTop: '16px' }}>
-            <button type="submit" className="secondary-button" disabled={loading || !studentId || !amount}>
-              {loading ? 'Processing...' : 'Request Payment'}
+          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+            <button className="secondary-button" onClick={() => handleCancel(submitted.id)}>
+              Cancel
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+      )}
 
       <div className="panel" style={{ marginBottom: '24px' }}>
         <div className="panel-heading">
@@ -315,8 +157,8 @@ export default function MobileMoneyPayments() {
                       </span>
                     </td>
                     <td>
-                      <button className="secondary-button" onClick={() => { setSubmitted(tx); setShowConfirm(true); }}>
-                        Confirm
+                      <button className="secondary-button" onClick={() => { setSubmitted(tx); }}>
+                        Verify
                       </button>
                       <button className="secondary-button" onClick={() => handleCancel(tx.id)} style={{ marginLeft: '8px' }}>
                         Cancel
@@ -374,7 +216,7 @@ export default function MobileMoneyPayments() {
         </div>
       </div>
 
-      <p className="finance-muted">Manual verification only. Automatic MTN/Airtel STK prompts, callbacks and API synchronization are not connected.</p>
+      <p className="finance-muted">Manual verification only. Automatic MTN/Airtel STK prompts, callbacks and API synchronization are not connected. Direct MTN/Airtel initiation and staff-entered confirmation are disabled on the server — use SchoolPay for provider payments or record a Manual payment instead.</p>
     </div>
   );
 }

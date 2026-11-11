@@ -1,6 +1,8 @@
 /* Finance workspace refinement — compact, institutional and data-first. */
 .finance-workspace {
-  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  gap: 12px;
   color: var(--smis-text);
 }
 .finance-workspace .finance-workspace-header {
@@ -339,13 +341,7 @@
   .finance-workspace .finance-fee-ticker-item { padding-inline: 10px; }
 }
 
-
 /* Second-pass finance workspace: stronger hierarchy and denser operational layout. */
-.finance-workspace {
-  width: 100%;
-  min-width: 0;
-  gap: 12px;
-}
 .finance-workspace .finance-workspace-header {
   min-height: 48px;
   padding: 0 0 9px;
