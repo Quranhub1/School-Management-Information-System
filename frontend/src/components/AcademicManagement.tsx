@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { getStudentAcademicSummaries, getStudentTranscript } from '../api/academicRecords'
 import { ExaminationManagement } from './ExaminationManagement'
+import { AcademicCalendarManagement } from './AcademicCalendarManagement'
 import { createProgramme, getProgrammes, setProgrammeActive, type Programme } from '../api/programmes'
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
 
@@ -10,7 +11,7 @@ interface AcademicManagementProps {
   readOnly?: boolean
 }
 
-type AcademicView = 'records' | 'programmes' | 'examinations'
+type AcademicView = 'records' | 'programmes' | 'examinations' | 'calendar'
 
 export function AcademicManagement({ canManage = false, readOnly = false }: AcademicManagementProps) {
   const [view, setView] = useState<AcademicView>('records')
@@ -105,19 +106,22 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
   return (
     <section className="academic-workspace" aria-label="Academic management workspace">
       <div className="panel-heading">
-        <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : 'Programme management'}</h2></div>
+        <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : view === 'calendar' ? 'Academic calendar' : view === 'examinations' ? 'Examinations & Results' : 'Programme management'}</h2></div>
         <span>{view === 'records' ? `${transcript.length} course results` : `${programmes.length} programmes`}</span>
       </div>
 
       <div className="form-row" role="tablist" aria-label="Academic management views">
         <button type="button" aria-selected={view === 'records'} onClick={() => setView('records')}>Academic Records</button>
         {!readOnly && <button type="button" aria-selected={view === 'programmes'} onClick={() => setView('programmes')}>Programmes</button>}
-        {!readOnly && <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>}
+        {!readOnly && <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>
+        <button type="button" aria-selected={view === 'calendar'} onClick={() => setView('calendar')}>Academic Calendar</button>}
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
 
-      {view === 'examinations' ? (
+      {view === 'calendar' ? (
+        <AcademicCalendarManagement />
+      ) : view === 'examinations' ? (
         <div className="academic-examinations-workspace"><ExaminationManagement canManage={canManage} /></div>
       ) : view === 'records' ? (
         <>
