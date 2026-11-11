@@ -55,6 +55,21 @@ public sealed class StudentChargeServiceTests
         Assert.Empty(repository.LedgerEntries);
     }
 
+
+    [Fact]
+    public async Task CreateAsync_RejectsUnknownCurrencyCode()
+    {
+        var studentId = Guid.NewGuid();
+        var repository = new InMemoryFinanceRepository(studentId);
+        var service = new StudentChargeService(repository, new FiscalPeriodService(new StubFiscalPeriodRepository()));
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(studentId, "LibraryFine", "Lost book", 100m, "ZZZ", "admin"));
+
+        Assert.Empty(repository.Charges);
+        Assert.Empty(repository.JournalEntries);
+        Assert.Empty(repository.LedgerEntries);
+    }
+
     [Fact]
     public async Task VoidAsync_ReversesChargeAndRecordsNegativeLedgerEntry()
     {
