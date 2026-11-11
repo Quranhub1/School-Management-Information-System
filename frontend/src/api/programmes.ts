@@ -22,7 +22,7 @@ export interface Programme {
 }
 
 export interface CreateProgrammeRequest {
-  departmentId: string
+  departmentId?: string | null
   code: string
   name: string
   award: string
