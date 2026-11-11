@@ -15,6 +15,9 @@ export interface Programme {
   regulator?: string | null
   approvalReference?: string | null
   approvalDate?: string | null
+  approvalStatus: string
+  sourceReference?: string | null
+  isReferenceOnly: boolean
   isActive: boolean
 }
 
@@ -32,6 +35,9 @@ export interface CreateProgrammeRequest {
   regulator?: string
   approvalReference?: string
   approvalDate?: string
+  approvalStatus?: string
+  sourceReference?: string
+  isReferenceOnly?: boolean
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
