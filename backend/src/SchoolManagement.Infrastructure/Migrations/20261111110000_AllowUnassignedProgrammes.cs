@@ -21,7 +21,16 @@ public partial class AllowUnassignedProgrammes : Migration
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.Sql("UPDATE \"Programmes\" SET \"DepartmentId\" = (SELECT \"Id\" FROM \"Departments\" ORDER BY \"Id\" LIMIT 1) WHERE \"DepartmentId\" IS NULL AND EXISTS (SELECT 1 FROM \"Departments\")");
+        // Never assign unowned programmes to an arbitrary department during rollback.
+        // Stop if any records depend on the nullable state and require an explicit data decision.
+        migrationBuilder.Sql(@" 
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM ""Programmes"" WHERE ""DepartmentId"" IS NULL) THEN
+                    RAISE EXCEPTION 'Cannot restore Programmes.DepartmentId to NOT NULL while unassigned programmes exist. Assign them to verified departments or retain this migration.';
+                END IF;
+            END $$;");
+
         migrationBuilder.AlterColumn<Guid>(
             name: "DepartmentId",
             table: "Programmes",
