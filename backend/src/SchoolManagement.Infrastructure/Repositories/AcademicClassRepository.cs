@@ -14,7 +14,7 @@ public sealed class AcademicClassRepository(SchoolManagementDbContext db) : IAca
         await db.Set<AcademicClass>().AsNoTracking().Where(x => x.AcademicPeriodId == periodId).OrderBy(x => x.Code).ToListAsync(cancellationToken);
 
     public Task<AcademicClass?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Set<AcademicClass>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        db.Set<AcademicClass>().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<bool> CodeExistsAsync(Guid programmeId, Guid periodId, string code, Guid? excludingId = null, CancellationToken cancellationToken = default) =>
         db.Set<AcademicClass>().AnyAsync(x => x.ProgrammeId == programmeId && x.AcademicPeriodId == periodId && x.Code == code && (!excludingId.HasValue || x.Id != excludingId.Value), cancellationToken);
