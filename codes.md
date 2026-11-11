@@ -1131,10 +1131,10 @@ Do not run `git clean -fd` or any broad cleanup command when these local assets 
 
 Run from the repository or solution directory containing the tool manifest:
 
-\`\`\`powershell
+```powershell
 dotnet tool restore
 dotnet ef --version
-\`\`\`
+```
 
 If the EF command is not found, inspect the repository's tool manifest before installing a global tool. The local tool manifest is intended to keep the tool version consistent across developer machines.
 
@@ -1142,10 +1142,10 @@ If the EF command is not found, inspect the repository's tool manifest before in
 
 **Context:** A database audit script was launched from the user's Downloads folder.
 
-\`\`\`powershell
+```powershell
 Set-ExecutionPolicy -Scope Process Bypass
 & "$HOME\Downloads\smis-db-full-audit.ps1"
-\`\`\`
+```
 
 `-Scope Process` limits the execution-policy change to the current PowerShell process. Inspect the script before running it, especially if it connects to or modifies a database.
 
@@ -1153,10 +1153,10 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 Run from the frontend directory:
 
-\`\`\`powershell
+```powershell
 npm test -- --reporter=verbose
 Write-Host "Vitest exit code: $LASTEXITCODE"
-\`\`\`
+```
 
 A non-zero exit code means the test run failed; review the failing test names and stack traces rather than treating the command's completion as success.
 
@@ -1164,21 +1164,21 @@ A non-zero exit code means the test run failed; review the failing test names an
 
 From the repository root:
 
-\`\`\`powershell
+```powershell
 Get-ChildItem "frontend" -File | Where-Object { $_.Name -match '^(vite|vitest)\.config\.' } | ForEach-Object { Write-Host "`n--- $($_.FullName) ---"; Get-Content $_.FullName }
 Get-Content "frontend\playwright.config.js"
 Get-Content "frontend\playwright.config.cjs"
-\`\`\`
+```
 
 The Playwright configuration filenames may differ or only one may exist. Check the output and current repository files before assuming a particular config file is present.
 
 ### Git: inspect remote branches before integrating work
 
-\`\`\`powershell
+```powershell
 git fetch origin
 git branch -r
 git status --short --branch
-\`\`\`
+```
 
 Use the remote branch list to identify actual branch names. Do not invent branch names or merge every remote branch without reviewing its purpose and status.
 
@@ -1188,42 +1188,42 @@ Use the remote branch list to identify actual branch names. Do not invent branch
 
 Run the frontend build first:
 
-\`\`\`bash
+```bash
 cd ~/School-Management-Information-System/frontend
 npm run build
-\`\`\`
+```
 
 Then, from the frontend directory, deploy the generated Vite output:
 
-\`\`\`bash
+```bash
 sudo rsync -a --delete dist/ /opt/schoolmanagement/frontend/
-\`\`\`
+```
 
 **Destructive option:** `--delete` removes files from the destination that are absent from `dist/`. Verify both paths and keep a rollback copy before using this on a live server.
 
 Validate and reload Nginx:
 
-\`\`\`bash
+```bash
 sudo nginx -t
 sudo systemctl reload nginx
 sudo systemctl status nginx --no-pager
-\`\`\`
+```
 
 Check the previously used local health endpoint:
 
-\`\`\`bash
+```bash
 curl -sS -i http://127.0.0.1:8081/api/health
-\`\`\`
+```
 
 The port `8081` and health route are historical deployment details. Confirm the current Nginx proxy configuration and API health route before relying on them.
 
 ### Ubuntu: inspect deployment configuration and recent service logs
 
-\`\`\`bash
+```bash
 sudo systemctl cat schoolmanagement
 sudo systemctl status schoolmanagement --no-pager
 sudo journalctl -u schoolmanagement -n 100 --no-pager
 sudo nginx -t
-\`\`\`
+```
 
 Use these read-only checks before restarting or replacing deployed files.
