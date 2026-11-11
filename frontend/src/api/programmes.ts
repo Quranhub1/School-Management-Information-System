@@ -2,7 +2,7 @@ import { getAccessToken } from './auth'
 
 export interface Programme {
   id: string
-  departmentId: string
+  departmentId?: string | null
   code: string
   name: string
   award: string
@@ -15,11 +15,14 @@ export interface Programme {
   regulator?: string | null
   approvalReference?: string | null
   approvalDate?: string | null
+  approvalStatus: string
+  sourceReference?: string | null
+  isReferenceOnly: boolean
   isActive: boolean
 }
 
 export interface CreateProgrammeRequest {
-  departmentId: string
+  departmentId?: string | null
   code: string
   name: string
   award: string
@@ -32,6 +35,9 @@ export interface CreateProgrammeRequest {
   regulator?: string
   approvalReference?: string
   approvalDate?: string
+  approvalStatus?: string
+  sourceReference?: string
+  isReferenceOnly?: boolean
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
@@ -62,6 +68,10 @@ export function getProgrammes(): Promise<Programme[]> {
 
 export function createProgramme(input: CreateProgrammeRequest): Promise<Programme> {
   return request<Programme>('/api/programmes', { method: 'POST', body: JSON.stringify(input) })
+}
+
+export function updateProgramme(id: string, input: CreateProgrammeRequest): Promise<Programme> {
+  return request<Programme>(`/api/programmes/${id}`, { method: 'PUT', body: JSON.stringify(input) })
 }
 
 export function setProgrammeActive(id: string, active: boolean): Promise<void> {
