@@ -15,15 +15,44 @@ public sealed class StudentChargeServiceTests
         var fiscalPeriods = new StubFiscalPeriodRepository();
         var service = new StudentChargeService(repository, new FiscalPeriodService(fiscalPeriods));
 
-        var charge = await service.CreateAsync(studentId, "LibraryFine", "Lost textbook", 12500.567m, "ugx", "admin");
+        var charge = await service.CreateAsync(studentId, "LibraryFine", "Lost textbook", 12500.56m, "ugx", "admin");
 
         Assert.Equal("Posted", charge.Status);
-        Assert.Equal(12500.57m, charge.Amount);
+        Assert.Equal(12500.56m, charge.Amount);
         Assert.Equal("UGX", charge.Currency);
         Assert.Single(repository.Charges);
         Assert.Single(repository.JournalEntries);
         Assert.Single(repository.LedgerEntries);
-        Assert.Equal(12500.57m, repository.LedgerEntries[0].Amount);
+        Assert.Equal(12500.56m, repository.LedgerEntries[0].Amount);
+    }
+
+
+    [Fact]
+    public async Task CreateAsync_RejectsAmountWithExcessCurrencyPrecision()
+    {
+        var studentId = Guid.NewGuid();
+        var repository = new InMemoryFinanceRepository(studentId);
+        var service = new StudentChargeService(repository, new FiscalPeriodService(new StubFiscalPeriodRepository()));
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(studentId, "LibraryFine", "Lost book", 12500.567m, "UGX", "admin"));
+
+        Assert.Empty(repository.Charges);
+        Assert.Empty(repository.JournalEntries);
+        Assert.Empty(repository.LedgerEntries);
+    }
+
+    [Fact]
+    public async Task CreateAsync_RejectsCurrenciesUnsupportedByCurrentStorage()
+    {
+        var studentId = Guid.NewGuid();
+        var repository = new InMemoryFinanceRepository(studentId);
+        var service = new StudentChargeService(repository, new FiscalPeriodService(new StubFiscalPeriodRepository()));
+
+        await Assert.ThrowsAsync<NotSupportedException>(() => service.CreateAsync(studentId, "LibraryFine", "Lost book", 100m, "KWD", "admin"));
+
+        Assert.Empty(repository.Charges);
+        Assert.Empty(repository.JournalEntries);
+        Assert.Empty(repository.LedgerEntries);
     }
 
     [Fact]
