@@ -57,16 +57,20 @@ Remaining work:
 - Add audit history for calendar changes and verify period changes against every downstream workflow.
 - Preserve historical years and periods referenced by classes, registrations, assessments and timetables.
 
-### 4. Classes, Streams and Student Enrolment
+### 4. Classes, Streams, Admissions and Student Enrolment
 
 Current implementation:
 - Classes are linked to programmes and academic periods.
 - Streams are linked to classes.
+- The admissions form loads active academic authorities and active, verified programmes through an admissions-read endpoint, so Receptionist/Admissions roles do not need academic-management write permissions to read the catalogue.
+- Admissions uses database-backed authority and programme selectors, retains the selected programme ID in the application record and validates that the selected programme belongs to the selected authority.
+- Reference-only and inactive programmes are excluded from admissions choices; no hardcoded School-based default is used.
 - Course registrations and student academic status have domain/API support.
 
 Remaining work:
 - Verify stream and subject edit/activation behavior against existing student records and downstream reports.
 - Audit enrolment screens and APIs for class/stream assignment, transfer, withdrawal and progression.
+- Complete the handoff from the admission application form to the formal Applicant/Admission/StudentEnrollment workflow so the selected programme ID is the authoritative relational value, not only application-form metadata.
 - Use database-backed programme, year, period, class and stream selectors throughout.
 - Prevent destructive changes to classes/streams already referenced by student records.
 
