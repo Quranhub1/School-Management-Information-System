@@ -37,10 +37,18 @@ public static class MoneyMath
         return decimal.Round(amount, digits, MidpointRounding.AwayFromZero);
     }
 
+    public static void EnsureCurrencySupportedByCurrentStorage(string currency)
+    {
+        var code = NormalizeCurrency(currency);
+        if (GetFractionDigits(code) > 2)
+            throw new NotSupportedException($"{code} requires three fractional digits, but the current finance database stores amounts to two decimal places.");
+    }
+
     public static void EnsurePrecision(decimal amount, string currency)
     {
         if (amount != Round(amount, currency))
             throw new ArgumentException($"Amount has more fractional digits than {NormalizeCurrency(currency)} supports.", nameof(amount));
+        EnsureCurrencySupportedByCurrentStorage(currency);
     }
 
     public static decimal Add(decimal left, decimal right, string currency) =>
