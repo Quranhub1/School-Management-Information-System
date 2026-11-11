@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './AcademicStructures.css'
 import { createAcademicClass, getClassesByProgramme, setAcademicClassStatus, updateAcademicClass, type AcademicClass } from '../api/academicClasses'
 import { getProgrammes, type Programme } from '../api/programmes'
@@ -287,17 +287,15 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
     return <section className="panel"><h3>Academic Structures</h3><p className="empty">Your role does not have academic-management access.</p></section>
   }
 
-  const visibleClasses = useMemo(() => {
-    const periodIds = new Set(periods.map(period => period.id))
-    const query = classSearch.trim().toLocaleLowerCase()
-    return classes.filter(item => {
-      const matchesYear = !selectedAcademicYear || periods.length === 0 || periodIds.has(item.academicPeriodId)
-      const matchesPeriod = periodFilter === 'all' || item.academicPeriodId === periodFilter
-      const matchesStatus = classStatusFilter === 'all' || String(item.status) === classStatusFilter
-      const matchesSearch = !query || item.code.toLocaleLowerCase().includes(query) || (item.name ?? '').toLocaleLowerCase().includes(query)
-      return matchesYear && matchesPeriod && matchesStatus && matchesSearch
-    })
-  }, [classes, periods, selectedAcademicYear, periodFilter, classStatusFilter, classSearch])
+  const periodIds = new Set(periods.map(period => period.id))
+  const query = classSearch.trim().toLocaleLowerCase()
+  const visibleClasses = classes.filter(item => {
+    const matchesYear = !selectedAcademicYear || periods.length === 0 || periodIds.has(item.academicPeriodId)
+    const matchesPeriod = periodFilter === 'all' || item.academicPeriodId === periodFilter
+    const matchesStatus = classStatusFilter === 'all' || String(item.status) === classStatusFilter
+    const matchesSearch = !query || item.code.toLocaleLowerCase().includes(query) || (item.name ?? '').toLocaleLowerCase().includes(query)
+    return matchesYear && matchesPeriod && matchesStatus && matchesSearch
+  })
 
   const selectedClassRecord = classes.find(item => item.id === selectedClass)
 
