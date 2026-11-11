@@ -250,9 +250,10 @@ export async function getInvoiceFeeItems(invoiceId: string) { return request<any
 export interface OutstandingBalance { studentId: string; studentNumber: string; studentName: string; programmeName: string; amount: number; paidAmount: number; balance: number; currency: string; status: string }
 export async function getOutstandingBalances() { return request<OutstandingBalance[]>('/api/accounts-overview/outstanding') }
 
-export interface AccountsOverviewDashboard { totalRevenue: number; totalPayments: number; totalOutstanding: number; totalAdvances: number; totalBilled: number; totalPaid: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number; currency: string }
+export interface CurrencyTotal { currency: string; billed: number; paid: number; balance: number }
+export interface AccountsOverviewDashboard { totalRevenue: number; totalPayments: number; totalOutstanding: number; totalAdvances: number; totalBilled: number; totalPaid: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number; currency: string; totalsByCurrency?: CurrencyTotal[]; collectionsByCurrency?: { currency: string; amount: number }[] }
 export interface AccountsOverviewOutstanding { studentId: string; studentNumber: string; studentName: string; programmeName: string; balance: number; status: string; currency: string }
-export interface AccountsOverviewPayment { id: string; receiptNumber: string; studentName: string; invoiceNumber: string; amount: number; paymentMethod: string; paidAt: string }
+export interface AccountsOverviewPayment { id: string; receiptNumber: string; studentName: string; invoiceNumber: string; amount: number; currency?: string; paymentMethod: string; paidAt: string }
 export interface AccountsOverviewPayroll { id: string; staffName: string; staffNumber: string; basicSalary: number; allowances: number; deductions: number; netPay: number; status: string; paymentMethod: string }
 export async function getAccountsOverviewDashboard() { return request<AccountsOverviewDashboard>('/api/accounts-overview/dashboard') }
 export async function getAccountsOverviewOutstanding() { return request<AccountsOverviewOutstanding[]>('/api/accounts-overview/outstanding') }
@@ -264,7 +265,7 @@ export async function getAccountsOverviewPayroll(month?: number, year?: number) 
   return request<AccountsOverviewPayroll[]>(`/api/accounts-overview/payroll${query.toString() ? `?${query.toString()}` : ''}`)
 }
 
-export interface FinanceDashboard { revenue: number; payments: number; outstanding: number; totalOutstanding: number; currency: string; totalBilled: number; totalPaid: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number }
+export interface FinanceDashboard { revenue: number; payments: number; outstanding: number; totalOutstanding: number; currency: string; totalBilled: number; totalPaid: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number; totalsByCurrency?: CurrencyTotal[]; collectionsByCurrency?: { currency: string; amount: number }[] }
 export async function getDashboard() { return request<FinanceDashboard>('/api/accounts-overview/dashboard') }
 export async function getPayments(studentId?: string) {
   return request<any[]>(`/api/accounts-overview/payments${studentId ? `?studentId=${encodeURIComponent(studentId)}` : ''}`)
