@@ -33,7 +33,7 @@ public partial class AddAcademicAuthorities : Migration
             columns: new[] { "Id", "Code", "Name", "Description", "SourceReference", "IsActive", "SortOrder" },
             values: new object[,]
             {
-                { new Guid("b70a4b18-67a6-49b8-99de-3b43fd2a5d01"), "SCHOOL", "School-based", "Programmes developed and delivered under the institution's own approved academic framework.", null, true, 1 },
+                { new Guid("b70a4b18-67a6-49b8-99de-3b43fd2a5d01"), "SCHOOL_BASED", "School-based", "Programmes developed and delivered under the institution's own approved academic framework.", null, true, 1 },
                 { new Guid("b70a4b18-67a6-49b8-99de-3b43fd2a5d02"), "UHPAB", "UHPAB", "Uganda Health Professions Assessment Board.", null, true, 2 },
                 { new Guid("b70a4b18-67a6-49b8-99de-3b43fd2a5d03"), "UVTAB", "UVTAB", "Uganda Vocational and Technical Assessment Board.", null, true, 3 }
             });
