@@ -32,7 +32,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
   const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
   const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === authority)
-  const authorityProgrammes = programmes.filter(p => p.isActive && authorityOfProgramme(p.id) === authority)
+  const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && authorityOfProgramme(p.id) === authority)
   const authorityCurriculumIds = new Set(authorityCurricula.map(c => c.id))
   const authorityCourses = courses.filter(course => {
     const associations = allMappings.filter(mapping => mapping.courseId === course.id)
