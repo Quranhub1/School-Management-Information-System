@@ -171,6 +171,12 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   async function submitApplication(event: FormEvent) {
     event.preventDefault(); setSaving(true); setError(''); setNotice('')
     try {
+      const selectedProgramme = academicProgrammes.find(programme =>
+        programme.id === application.programmeId &&
+        resolveAcademicAuthority(programme.regulator) === application.authority);
+      if (!selectedProgramme || selectedProgramme.name !== application.course) {
+        throw new Error('Select a valid active programme under the selected academic authority.');
+      }
       const validation = validateForm(studentApplicationSubmissionSchema, {
         studentNumber: studentNumber.trim(),
         academicYear: application.academicYear,
