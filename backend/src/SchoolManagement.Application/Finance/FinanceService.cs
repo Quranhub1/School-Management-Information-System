@@ -15,7 +15,14 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var normalizedInvoiceNumber = invoiceNumber.Trim();
         if (await finance.InvoiceNumberExistsAsync(normalizedInvoiceNumber, cancellationToken)) throw new InvalidOperationException("Invoice number already exists.");
         var fee = await finance.GetActiveFeeStructureAsync(feeStructureId, cancellationToken) ?? throw new ArgumentException("Active fee structure was not found.");
+        fee.Currency = MoneyMath.NormalizeCurrency(fee.Currency);
+        foreach (var item in fee.Items)
+        {
+            MoneyMath.EnsureSameCurrency(fee.Currency, item.Currency);
+            MoneyMath.EnsurePrecision(item.Amount, fee.Currency);
+        }
         if (fee.Items.Count > 0) fee.RecalculateTotal();
+        MoneyMath.EnsurePrecision(fee.TotalAmount, fee.Currency);
         if (fee.TotalAmount <= 0) throw new ArgumentException("Fee structure amount must be greater than zero.");
         var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
         var revenueAccount = await GetAccountAsync(FinanceAccountCodes.TuitionRevenue, cancellationToken);
@@ -38,6 +45,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var normalizedReceipt = receiptNumber.Trim();
         if (await finance.ReceiptExistsAsync(normalizedReceipt, cancellationToken)) throw new InvalidOperationException("Receipt number already exists.");
         var invoice = await finance.GetInvoiceAsync(invoiceId, cancellationToken) ?? throw new ArgumentException("Invoice was not found.");
+        MoneyMath.EnsurePrecision(amount, invoice.Currency);
         var outstanding = invoice.OutstandingAmount;
         if (outstanding <= 0) throw new InvalidOperationException("Invoice is already fully paid.");
         if (amount > outstanding) throw new ArgumentException($"Payment exceeds the outstanding balance of {outstanding:0.00} {invoice.Currency}.");
@@ -68,7 +76,8 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         if (string.IsNullOrWhiteSpace(currency)) throw new ArgumentException("Currency is required.");
         var normalizedReceipt = receiptNumber.Trim();
         if (await finance.ReceiptExistsAsync(normalizedReceipt, cancellationToken)) throw new InvalidOperationException("Receipt number already exists.");
-        var normalizedCurrency = currency.Trim().ToUpperInvariant();
+        var normalizedCurrency = MoneyMath.NormalizeCurrency(currency);
+        MoneyMath.EnsurePrecision(amount, normalizedCurrency);
         var paymentAccount = await GetAccountAsync(PaymentAccountResolver.Resolve(paymentMethod), cancellationToken);
         var unappliedAccount = await GetAccountAsync(FinanceAccountCodes.StudentUnappliedPayments, cancellationToken);
         var payment = new Payment { StudentId = studentId, StudentInvoiceId = null, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = normalizedCurrency, PaymentMethod = paymentMethod.Trim(), PaymentSource = normalizedSource, ReceiptEmailRequestedAt = DateTimeOffset.UtcNow, SourceChannel = string.IsNullOrWhiteSpace(sourceChannel) ? (normalizedSource == "Manual" ? paymentMethod.Trim() : null) : sourceChannel.Trim(), ProviderTransactionId = string.IsNullOrWhiteSpace(providerTransactionId) ? null : providerTransactionId.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
