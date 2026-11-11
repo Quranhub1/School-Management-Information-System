@@ -54,6 +54,7 @@ export function formatCurrency(
 ): string {
   if (amount == null || amount === "") return getFormatter(currency, locale).format(0);
   const value = typeof amount === "bigint" ? amount : typeof amount === "string" ? Number(amount.trim()) : amount;
+  if (typeof value === "bigint") return getFormatter(currency, locale).format(value);
   if (!Number.isFinite(value)) return getFormatter(currency, locale).format(0);
   return getFormatter(currency, locale).format(value);
 }
