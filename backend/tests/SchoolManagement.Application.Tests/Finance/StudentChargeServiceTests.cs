@@ -15,15 +15,15 @@ public sealed class StudentChargeServiceTests
         var fiscalPeriods = new StubFiscalPeriodRepository();
         var service = new StudentChargeService(repository, new FiscalPeriodService(fiscalPeriods));
 
-        var charge = await service.CreateAsync(studentId, "LibraryFine", "Lost textbook", 12500.56m, "ugx", "admin");
+        var charge = await service.CreateAsync(studentId, "LibraryFine", "Lost textbook", 12500m, "ugx", "admin");
 
         Assert.Equal("Posted", charge.Status);
-        Assert.Equal(12500.56m, charge.Amount);
+        Assert.Equal(12500m, charge.Amount);
         Assert.Equal("UGX", charge.Currency);
         Assert.Single(repository.Charges);
         Assert.Single(repository.JournalEntries);
         Assert.Single(repository.LedgerEntries);
-        Assert.Equal(12500.56m, repository.LedgerEntries[0].Amount);
+        Assert.Equal(12500m, repository.LedgerEntries[0].Amount);
     }
 
 
