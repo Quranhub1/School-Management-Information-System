@@ -14,7 +14,7 @@ public sealed class SubjectRepository(SchoolManagementDbContext db) : ISubjectRe
         await db.Set<Subject>().AsNoTracking().Where(x => x.ProgrammeId == programmeId && x.YearOfStudy == yearOfStudy).ToListAsync(cancellationToken);
 
     public Task<Subject?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Set<Subject>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        db.Set<Subject>().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<bool> CourseExistsAsync(Guid programmeId, Guid courseId, Guid? excludingId = null, CancellationToken cancellationToken = default) =>
         db.Set<Subject>().AnyAsync(x => x.ProgrammeId == programmeId && x.CourseId == courseId && (!excludingId.HasValue || x.Id != excludingId.Value), cancellationToken);
