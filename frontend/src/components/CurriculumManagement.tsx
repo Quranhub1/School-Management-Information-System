@@ -10,114 +10,29 @@ import {
   type Curriculum,
   type CurriculumCourse,
 } from '../api/curriculumManagement'
-import { getProgrammes, type Programme } from '../api/programmes'
-import { resolveAcademicAuthority, type AcademicAuthority } from '../utils/academicAuthorities'
+import { createProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
+import { resolveAcademicAuthority } from '../utils/academicAuthorities'
+import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityActive, updateAcademicAuthority, type AcademicAuthority } from '../api/academicAuthorities'
 
 type Tab = 'full' | 'short'
 
-type CatalogueEntry = { name: string; award: string; duration: number | null; regulator: 'School-based' | 'UHPAB' | 'UVTAB'; family: string; review?: boolean }
-
-const SCHOOL_BASED_LONG_COURSES: CatalogueEntry[] = [
-  { name: 'Certificate in Public Health', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Public Health' },
-  { name: 'Certificate in Records and Information Management', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Records Management' },
-  { name: 'Certificate in Guidance and Counselling', award: 'Certificate', duration: 2, regulator: 'School-based', family: 'Counselling', review: true },
-  { name: 'Diploma in Public Health', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Public Health' },
-  { name: 'Diploma in Records and Information Management', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Records Management' },
-  { name: 'Diploma in Health Counselling and Guidance', award: 'Diploma', duration: 2, regulator: 'School-based', family: 'Counselling', review: true },
-]
-
-const SCHOOL_BASED_SHORT_COURSES: CatalogueEntry[] = [
-  { name: 'Bridging Programme', award: 'Bridging programme', duration: 0.75, regulator: 'School-based', family: 'Access programme', review: true },
-]
-
-const UHPAB_LONG_COURSES: CatalogueEntry[] = [
-  { name: 'Certificate in Enrolled Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing', review: true },
-  { name: 'Certificate in Enrolled Midwifery', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Midwifery', review: true },
-  { name: 'Certificate in Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing' },
-  { name: 'Certificate in Midwifery', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Midwifery' },
-  { name: 'Certificate in Mental Health Nursing', award: 'Certificate', duration: 2.5, regulator: 'UHPAB', family: 'Nursing' },
-  { name: 'Certificate in Emergency Care', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Allied Health' },
-  { name: 'Certificate in Environmental Health Sciences', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Allied Health' },
-  { name: 'Certificate in Medical Laboratory Techniques', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Laboratory' },
-  { name: 'Certificate in Medical Records and Health Informatics', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Health Informatics' },
-  { name: 'Certificate in Medical Theatre Techniques', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Allied Health' },
-  { name: 'Certificate in Pharmacy', award: 'Certificate', duration: 2, regulator: 'UHPAB', family: 'Pharmacy' },
-  { name: 'Certificate in Comprehensive Nursing (legacy intake)', award: 'Certificate', duration: null, regulator: 'UHPAB', family: 'Nursing', review: true },
-  { name: 'Diploma in Nursing', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
-  { name: 'Diploma in Midwifery', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Midwifery' },
-  { name: 'Diploma in Mental Health Nursing', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
-  { name: 'Diploma in Paediatrics and Child Health Nursing', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
-  { name: 'Diploma in Public Health Nursing', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
-  { name: 'Diploma in Medical Records and Health Informatics', award: 'Diploma', duration: 3, regulator: 'UHPAB', family: 'Health Informatics' },
-  { name: 'Diploma in Diagnostic Sonography', award: 'Diploma', duration: 3, regulator: 'UHPAB', family: 'Medical Imaging', review: true },
-  { name: 'Diploma in Human Nutrition and Dietetics', award: 'Diploma', duration: 2, regulator: 'UHPAB', family: 'Nutrition', review: true },
-  { name: 'Diploma in Clinical Medicine and Community Health', award: 'Diploma', duration: 3, regulator: 'UHPAB', family: 'Clinical Medicine', review: true },
-  { name: 'Diploma in Comprehensive Nursing (legacy intake)', award: 'Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing', review: true },
-  { name: 'Advanced Diploma in Palliative Care Nursing', award: 'Advanced Diploma', duration: null, regulator: 'UHPAB', family: 'Nursing' },
-]
-
-const UVTAB_LONG_COURSES: CatalogueEntry[] = [
-  { name: 'Certificate in Biomedical Engineering', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
-  { name: 'Diploma in Biomedical Engineering', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Biomedical Engineering', review: true },
-  { name: 'Certificate in Secretarial Studies and Office Management', award: 'Certificate', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
-  { name: 'Diploma in Secretarial Studies and Office Management', award: 'Diploma', duration: 2, regulator: 'UVTAB', family: 'Administration', review: true },
-  { name: 'Certificate in Food Science and Nutrition', award: 'Certificate', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
-  { name: 'Diploma in Food Science and Nutrition', award: 'Diploma', duration: null, regulator: 'UVTAB', family: 'Food Science & Nutrition', review: true },
-  { name: 'National Certificate — Technology Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Technology', review: true },
-  { name: 'Uganda Certificate in Practical Competencies (UCPC) — Technology', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Technology', review: true },
-  { name: 'National Certificate — Agriculture Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Agriculture', review: true },
-  { name: 'Uganda Certificate in Practical Competencies (UCPC) — Agriculture', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Agriculture', review: true },
-  { name: 'National Certificate — Home Science Education and Training', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Home Science', review: true },
-  { name: 'Uganda Certificate in Practical Competencies (UCPC) — Home Science', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Home Science', review: true },
-  { name: 'Hotel and Institutional Catering', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Hospitality', review: true },
-  { name: 'Cosmetology and Beauty', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Beauty', review: true },
-  { name: 'Fashion and Design', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Fashion', review: true },
-  { name: 'Leather Tanning', award: 'National Certificate', duration: 2, regulator: 'UVTAB', family: 'Manufacturing', review: true },
-  { name: 'Hotel and Institutional Catering — UCPC', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Hospitality', review: true },
-  { name: 'Cosmetology and Beauty — UCPC', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Beauty', review: true },
-  { name: 'Fashion and Design — UCPC', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Fashion', review: true },
-  { name: 'Leather Tanning — UCPC', award: 'UCPC', duration: 3, regulator: 'UVTAB', family: 'Manufacturing', review: true },
-  { name: 'National Technician Diploma — Technology', award: 'National Technician Diploma', duration: null, regulator: 'UVTAB', family: 'Technology', review: true },
-  { name: 'National Technician Diploma — Business', award: 'National Technician Diploma', duration: null, regulator: 'UVTAB', family: 'Business', review: true },
-  { name: 'National Technician Diploma — Agriculture', award: 'National Technician Diploma', duration: null, regulator: 'UVTAB', family: 'Agriculture', review: true },
-  { name: 'National Technician Diploma — Home Science', award: 'National Technician Diploma', duration: null, regulator: 'UVTAB', family: 'Home Science', review: true },
-  { name: 'Building and Construction trades', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Construction', review: true },
-  { name: 'Electrical Installation trades', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Electrical', review: true },
-  { name: 'Mechanical Engineering trades', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Engineering', review: true },
-  { name: 'Business-related programmes', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Business', review: true },
-  { name: 'Animal Production, Fisheries and Agribusiness', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Agriculture', review: true },
-  { name: 'Forestry, Beekeeping and Agroforestry', award: 'Vocational / Technical award', duration: null, regulator: 'UVTAB', family: 'Natural Resources', review: true },
-]
-
-const UHPAB_SHORT_COURSES: CatalogueEntry[] = [
-  { name: 'Advanced Diploma in Diagnostic Sonography', award: 'Advanced Diploma', duration: 1, regulator: 'UHPAB', family: 'Medical Imaging', review: true },
-  { name: 'Advanced Diploma in Health Promotion and Education', award: 'Advanced Diploma', duration: 2, regulator: 'UHPAB', family: 'Public Health', review: true },
-]
-
-const UVTAB_SHORT_COURSES: CatalogueEntry[] = [
-  { name: 'Diploma in Food Science and Technology', award: 'Diploma', duration: 2, regulator: 'UVTAB', family: 'Food Science & Technology', review: true },
-  { name: 'Worker-acquired skills assessment', award: 'Modular / skills award', duration: null, regulator: 'UVTAB', family: 'Skills assessment', review: true },
-  { name: 'Occupational skills Levels I–IV', award: 'Occupational award', duration: null, regulator: 'UVTAB', family: 'Modular TVET', review: true },
-  { name: 'Short modular vocational training package', award: 'Modular award', duration: null, regulator: 'UVTAB', family: 'Vocational', review: true },
-  { name: 'Worker-acquired skills assessment (PAS)', award: 'Worker PAS', duration: null, regulator: 'UVTAB', family: 'Informally acquired skills', review: true },
-  { name: 'Full Occupational Skills Levels I–IV', award: 'Occupational award', duration: null, regulator: 'UVTAB', family: 'Informally acquired skills', review: true },
-]
-
 export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [tab, setTab] = useState<Tab>('full')
-  const [catalogueSearch, setCatalogueSearch] = useState('')
-  const [awardFilter, setAwardFilter] = useState('all')
-  const [verificationFilter, setVerificationFilter] = useState<'all' | 'review' | 'reference'>('all')
   const [curricula, setCurricula] = useState<Curriculum[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [programmes, setProgrammes] = useState<Programme[]>([])
+  const [authorities, setAuthorities] = useState<AcademicAuthority[]>([])
   const [selected, setSelected] = useState('')
-  const [authority, setAuthority] = useState<AcademicAuthority>('School-based')
+  const [authority, setAuthority] = useState('')
+  const [editingAuthority, setEditingAuthority] = useState<string | null>(null)
+  const [authorityForm, setAuthorityForm] = useState({ code: '', name: '', description: '', sourceReference: '', sortOrder: '10' })
+  const [editingProgrammeId, setEditingProgrammeId] = useState<string | null>(null)
+  const [programmeForm, setProgrammeForm] = useState({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
   const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
   const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
   const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === authority)
-  const authorityProgrammes = programmes.filter(p => p.isActive && authorityOfProgramme(p.id) === authority)
+  const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && p.type === (tab === 'short' ? 1 : 0) && authorityOfProgramme(p.id) === authority)
   const authorityCurriculumIds = new Set(authorityCurricula.map(c => c.id))
   const authorityCourses = courses.filter(course => {
     const associations = allMappings.filter(mapping => mapping.courseId === course.id)
@@ -137,11 +52,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   async function load() {
     try {
       setError('')
-      const [a, b, c] = await Promise.all([getCurricula(), getCourses(), getProgrammes()])
+      const [a, b, c, d] = await Promise.all([getCurricula(), getCourses(), getProgrammes(), getAcademicAuthorities(true)])
       const courseMappings = (await Promise.all(a.map(curriculum => getCurriculumCourses(curriculum.id).catch(() => [])))).flat()
       setCurricula(a)
       setCourses(b)
       setProgrammes(c)
+      setAuthorities(d)
+      setAuthority(current => d.some(item => item.code === current) ? current : (d.find(item => item.isActive)?.code ?? ''))
       setAllMappings(courseMappings)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load curriculum data.')
@@ -157,6 +74,100 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         setError(e instanceof Error ? e.message : 'Unable to load mappings.')
       }
     }
+  }
+
+  async function saveAuthority(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const input = { ...authorityForm, sortOrder: Number(authorityForm.sortOrder) }
+      if (editingAuthority) await updateAcademicAuthority(editingAuthority, input)
+      else await createAcademicAuthority(input)
+      setAuthorityForm({ code: '', name: '', description: '', sourceReference: '', sortOrder: '10' })
+      setEditingAuthority(null)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to save academic authority.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function toggleAuthority(item: AcademicAuthority) {
+    try {
+      await setAcademicAuthorityActive(item.code, !item.isActive)
+      await load()
+      if (item.isActive && authority === item.code) setAuthority('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update academic authority.')
+    }
+  }
+
+  async function saveProgramme(e: React.FormEvent) {
+    e.preventDefault()
+    if (!authority) {
+      setError('Create or activate an academic authority before adding a programme.')
+      return
+    }
+    setSaving(true)
+    try {
+      const input: CreateProgrammeRequest = {
+        departmentId: null,
+        code: programmeForm.code,
+        name: programmeForm.name,
+        award: programmeForm.award,
+        awardTitle: programmeForm.awardTitle || undefined,
+        durationYears: Number(programmeForm.durationYears),
+        durationUnit: programmeForm.durationUnit,
+        studyMode: programmeForm.studyMode,
+        deliveryType: programmeForm.deliveryType,
+        regulator: authority,
+        approvalReference: programmeForm.approvalReference || undefined,
+        approvalDate: programmeForm.approvalDate || undefined,
+        approvalStatus: programmeForm.approvalStatus,
+        sourceReference: programmeForm.sourceReference || undefined,
+        isReferenceOnly: programmeForm.isReferenceOnly,
+        type: Number(programmeForm.type),
+      }
+      if (editingProgrammeId) await updateProgramme(editingProgrammeId, input)
+      else await createProgramme(input)
+      setEditingProgrammeId(null)
+      setProgrammeForm({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to save programme.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function toggleProgramme(item: Programme) {
+    try {
+      await setProgrammeActive(item.id, !item.isActive)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update programme status.')
+    }
+  }
+
+  function editProgramme(item: Programme) {
+    setEditingProgrammeId(item.id)
+    setProgrammeForm({
+      code: item.code,
+      name: item.name,
+      award: item.award,
+      awardTitle: item.awardTitle ?? '',
+      durationYears: String(item.durationYears),
+      durationUnit: item.durationUnit || 'Years',
+      studyMode: item.studyMode || 'Full-time',
+      deliveryType: item.deliveryType || 'Academic',
+      approvalReference: item.approvalReference ?? '',
+      approvalDate: item.approvalDate?.slice(0, 10) ?? '',
+      approvalStatus: item.approvalStatus || 'NeedsVerification',
+      sourceReference: item.sourceReference ?? '',
+      isReferenceOnly: item.isReferenceOnly,
+      type: String(item.type),
+    })
   }
 
   async function saveCurriculum(e: React.FormEvent) {
@@ -220,91 +231,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     }
   }
 
-  function applyCourseTemplate(course: CatalogueEntry, type: 'FullProgramme' | 'ShortCourse') {
-    const matchingProgramme = programmes.find(programme => programme.isActive
-      && authorityOfProgramme(programme.id) === authority
-      && programme.name.trim().toLocaleLowerCase() === course.name.trim().toLocaleLowerCase())
-    setCf({
-      programmeId: matchingProgramme?.id ?? '',
-      version: '1.0',
-      title: course.name,
-      minimumCredits: '',
-      effectiveFrom: new Date().toISOString().slice(0, 10),
-      effectiveTo: '',
-      type,
-    })
-  }
-
-  function renderCatalogue(entries: CatalogueEntry[], type: 'FullProgramme' | 'ShortCourse') {
-    const normalizedSearch = catalogueSearch.trim().toLocaleLowerCase()
-    const visibleEntries = entries.filter(course => {
-      const matchesSearch = !normalizedSearch || [course.name, course.award, course.family, course.regulator].some(value => value.toLocaleLowerCase().includes(normalizedSearch))
-      const matchesAward = awardFilter === 'all' || course.award === awardFilter
-      const matchesVerification = verificationFilter === 'all'
-        || (verificationFilter === 'review' && course.review)
-        || (verificationFilter === 'reference' && !course.review)
-      return matchesSearch && matchesAward && matchesVerification
-    })
-    const awardOptions = [...new Set(entries.map(course => course.award))].sort()
-    return (
-      <>
-      <div className="catalogue-filters" aria-label="Filter catalogue">
-        <input
-          type="search"
-          aria-label="Search programme catalogue"
-          placeholder="Search programme, award or area"
-          value={catalogueSearch}
-          onChange={e => setCatalogueSearch(e.target.value)}
-        />
-        <select aria-label="Filter by qualification level" value={awardFilter} onChange={e => setAwardFilter(e.target.value)}>
-          <option value="all">All qualification levels</option>
-          {awardOptions.map(award => <option key={award} value={award}>{award}</option>)}
-        </select>
-        <select aria-label="Filter by verification status" value={verificationFilter} onChange={e => setVerificationFilter(e.target.value as typeof verificationFilter)}>
-          <option value="all">All reference statuses</option>
-          <option value="review">Needs verification</option>
-          <option value="reference">Website/reference listing</option>
-        </select>
-        <span className="catalogue-result-count">{visibleEntries.length} of {entries.length}</span>
-      </div>
-      <div className="catalogue-table-wrap">
-        <table className="catalogue-table">
-          <thead>
-            <tr>
-              <th>Programme / course</th>
-              <th>Award</th>
-              <th>Duration</th>
-              <th>Area</th>
-              <th>Source status</th>
-              <th aria-label="Action"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleEntries.map(course => (
-              <tr key={course.name}>
-                <td className="catalogue-course-name">{course.name}</td>
-                <td>{course.award}</td>
-                <td>{course.duration === 0.75 ? '9 months*' : course.duration ? `${course.duration} years*` : 'Not confirmed'}</td>
-                <td>{course.family}</td>
-                <td>
-                  <span className={course.review ? 'catalogue-status needs-review' : 'catalogue-status'}>
-                    {course.review ? 'Needs verification' : 'Reference listing'}
-                  </span>
-                </td>
-                <td className="catalogue-action-cell">
-                  <button type="button" onClick={() => applyCourseTemplate(course, type)}>Use draft</button>
-                </td>
-              </tr>
-            ))}
-            {visibleEntries.length === 0 && <tr><td colSpan={6} className="catalogue-empty-cell">No entries match these filters.</td></tr>}
-          </tbody>
-        </table>
-        <p className="catalogue-footnote">* Indicative duration where listed. A reference listing is not confirmation of current accreditation or approval. Verify the programme and award against the awarding body's current documentation before publishing.</p>
-      </div>
-      </>
-    )
-  }
-
   if (!canManage) return null
 
   return (
@@ -320,11 +246,64 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       <div className="form-row academic-authority-picker">
         <label>Curriculum authority
-          <select value={authority} onChange={e => { setAuthority(e.target.value as typeof authority); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })); setCatalogueSearch(''); setAwardFilter('all'); setVerificationFilter('all') }}>
-            <option value="School-based">School-based curriculum</option><option value="UHPAB">UHPAB</option><option value="UVTAB">UVTAB</option>
+          <select value={authority} onChange={e => { setAuthority(e.target.value); setSelected(''); setMappings([]); setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' })) }}>
+            {authorities.filter(item => item.isActive).map(item => <option key={item.code} value={item.code}>{item.name}</option>)}
           </select>
         </label>
       </div>
+      <section className="catalogue-board" aria-label="Academic authority register">
+        <h3>Academic authorities</h3>
+        <form className="student-form" onSubmit={saveAuthority}>
+          <div className="form-row">
+            <input required maxLength={40} placeholder="Authority code" value={authorityForm.code} disabled={Boolean(editingAuthority)} onChange={e => setAuthorityForm({ ...authorityForm, code: e.target.value.toUpperCase() })} />
+            <input required maxLength={160} placeholder="Authority name" value={authorityForm.name} onChange={e => setAuthorityForm({ ...authorityForm, name: e.target.value })} />
+            <input type="number" placeholder="Sort order" value={authorityForm.sortOrder} onChange={e => setAuthorityForm({ ...authorityForm, sortOrder: e.target.value })} />
+          </div>
+          <div className="form-row">
+            <input placeholder="Description" value={authorityForm.description} onChange={e => setAuthorityForm({ ...authorityForm, description: e.target.value })} />
+            <input placeholder="Source / reference" value={authorityForm.sourceReference} onChange={e => setAuthorityForm({ ...authorityForm, sourceReference: e.target.value })} />
+          </div>
+          <button type="submit" disabled={saving}>{editingAuthority ? 'Save authority changes' : 'Add authority'}</button>
+          {editingAuthority && <button type="button" className="secondary-button" onClick={() => { setEditingAuthority(null); setAuthorityForm({ code: '', name: '', description: '', sourceReference: '', sortOrder: '10' }) }}>Cancel edit</button>}
+        </form>
+        <div className="table-wrap"><table><thead><tr><th>Code</th><th>Authority</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+          {authorities.map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.description || '—'}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => { setEditingAuthority(item.code); setAuthorityForm({ code: item.code, name: item.name, description: item.description ?? '', sourceReference: item.sourceReference ?? '', sortOrder: String(item.sortOrder) }) }}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleAuthority(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+          {authorities.length === 0 && <tr><td colSpan={5}>No authorities configured.</td></tr>}
+        </tbody></table></div>
+      </section>
+      <section className="catalogue-board" aria-label="Programme register">
+        <h3>Programmes under {authorities.find(item => item.code === authority)?.name ?? 'selected authority'}</h3>
+        <form className="student-form" onSubmit={saveProgramme}>
+          <div className="form-row">
+            <input required maxLength={40} placeholder="Programme code" value={programmeForm.code} onChange={e => setProgrammeForm({ ...programmeForm, code: e.target.value.toUpperCase() })} />
+            <input required placeholder="Programme name" value={programmeForm.name} onChange={e => setProgrammeForm({ ...programmeForm, name: e.target.value })} />
+            <select value={programmeForm.award} onChange={e => setProgrammeForm({ ...programmeForm, award: e.target.value })}><option>Certificate</option><option>Diploma</option><option>Advanced Diploma</option><option>National Certificate</option><option>National Technician Diploma</option><option>Short Course</option><option>Vocational Award</option></select>
+          </div>
+          <div className="form-row">
+            <input type="number" min="0" required placeholder="Duration" value={programmeForm.durationYears} onChange={e => setProgrammeForm({ ...programmeForm, durationYears: e.target.value })} />
+            <select value={programmeForm.durationUnit} onChange={e => setProgrammeForm({ ...programmeForm, durationUnit: e.target.value })}><option>Years</option><option>Months</option><option>Weeks</option></select>
+            <select value={programmeForm.type} onChange={e => setProgrammeForm({ ...programmeForm, type: e.target.value })}><option value="0">Full programme</option><option value="1">Short course</option></select>
+            <input placeholder="Award title (optional)" value={programmeForm.awardTitle} onChange={e => setProgrammeForm({ ...programmeForm, awardTitle: e.target.value })} />
+          </div>
+          <div className="form-row">
+            <select value={programmeForm.studyMode} onChange={e => setProgrammeForm({ ...programmeForm, studyMode: e.target.value })}><option>Full-time</option><option>Part-time</option><option>Evening</option><option>Weekend</option><option>Distance</option></select>
+            <select value={programmeForm.deliveryType} onChange={e => setProgrammeForm({ ...programmeForm, deliveryType: e.target.value })}><option>Academic</option><option>CompetencyBased</option><option>Modular</option><option>Blended</option></select>
+            <input placeholder="Approval reference" value={programmeForm.approvalReference} onChange={e => setProgrammeForm({ ...programmeForm, approvalReference: e.target.value })} />
+            <input type="date" aria-label="Approval date" value={programmeForm.approvalDate} onChange={e => setProgrammeForm({ ...programmeForm, approvalDate: e.target.value })} />
+          </div>
+          <div className="form-row">
+            <select value={programmeForm.approvalStatus} onChange={e => setProgrammeForm({ ...programmeForm, approvalStatus: e.target.value })}><option value="NeedsVerification">Needs verification</option><option value="ListedForReview">Listed for review</option><option value="Institutional">Institutional</option><option value="Verified">Verified</option><option value="Approved">Approved</option><option value="ReferenceOnly">Reference only</option></select>
+            <input placeholder="Programme source / reference" value={programmeForm.sourceReference} onChange={e => setProgrammeForm({ ...programmeForm, sourceReference: e.target.value })} />
+            <label><input type="checkbox" checked={programmeForm.isReferenceOnly} onChange={e => setProgrammeForm({ ...programmeForm, isReferenceOnly: e.target.checked })} /> Reference only — do not offer for admission</label>
+          </div>
+          <button type="submit" disabled={saving || !authority}>{editingProgrammeId ? 'Save programme changes' : 'Add programme'}</button>
+          {editingProgrammeId && <button type="button" className="secondary-button" onClick={() => { setEditingProgrammeId(null); setProgrammeForm({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' }) }}>Cancel edit</button>}
+        </form>
+        <div className="table-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Award</th><th>Duration</th><th>Verification</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.award}</td><td>{item.durationYears} {item.durationUnit}</td><td>{item.isReferenceOnly ? 'Reference only' : item.approvalStatus}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editProgramme(item)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleProgramme(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).length === 0 && <tr><td colSpan={7}>No programmes are saved under this authority yet.</td></tr>}
+        </tbody></table></div>
+      </section>
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
         <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => { setTab('full'); setCf(current => ({ ...current, type: 'FullProgramme' })) }}>Full Programmes</button>
         <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => { setTab('short'); setCf(current => ({ ...current, type: 'ShortCourse' })) }}>Short Courses</button>
@@ -332,19 +311,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       {tab === 'full' && (
         <>
-          <div className="catalogue-intro">
-            <h3>Long-course catalogue</h3>
-            
-          </div>
-          {authority === 'UHPAB' && <section className="catalogue-board" aria-labelledby="uhpab-long-title">
-            <h3 id="uhpab-long-title">UHPAB · Health programmes</h3>
-            {renderCatalogue(UHPAB_LONG_COURSES, 'FullProgramme')}
-          </section>}
-          {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue" aria-labelledby="uvtab-long-title">
-            <h3 id="uvtab-long-title">UVTAB · Vocational and technical programmes</h3>
-            {renderCatalogue(UVTAB_LONG_COURSES, 'FullProgramme')}
-          </section>}
-          {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_LONG_COURSES, 'FullProgramme')}
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
@@ -433,17 +399,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       {tab === 'short' && (
         <div className="short-course-section">
-          <div className="catalogue-intro">
-            <h3>Short and modular training</h3>
-            
-          </div>
-          {authority === 'UVTAB' && <section className="catalogue-board uvtab-catalogue">
-            <h3>UVTAB · Modular and occupational skills</h3>
-            {renderCatalogue(UVTAB_SHORT_COURSES, 'ShortCourse')}
-          </section>}
-          {authority === 'School-based' && renderCatalogue(SCHOOL_BASED_SHORT_COURSES, 'ShortCourse')}
-          {authority === 'UHPAB' && renderCatalogue(UHPAB_SHORT_COURSES, 'ShortCourse')}
-
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
             <form className="student-form" onSubmit={saveCurriculum}>

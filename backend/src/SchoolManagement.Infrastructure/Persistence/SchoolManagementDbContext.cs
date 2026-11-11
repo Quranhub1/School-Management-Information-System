@@ -48,6 +48,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Faculty> Faculties => Set<Faculty>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Programme> Programmes => Set<Programme>();
+    public DbSet<AcademicAuthority> AcademicAuthorities => Set<AcademicAuthority>();
     public DbSet<AcademicYear> AcademicYears => Set<AcademicYear>();
     public DbSet<Semester> Semesters => Set<Semester>();
     public DbSet<Intake> Intakes => Set<Intake>();
@@ -156,6 +157,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<SchoolManagement.Domain.Students.Student>().HasIndex(student => new { student.IsArchived, student.CampusId, student.StudentNumber });
         // Preserve the existing singular table name after exposing StudentCharge as a DbSet.
         m.Entity<StudentCharge>().ToTable("StudentCharge");
+        m.Entity<AcademicAuthority>(e => { e.HasKey(x => x.Id); e.Property(x => x.Code).HasMaxLength(40).IsRequired(); e.Property(x => x.Name).HasMaxLength(160).IsRequired(); e.Property(x => x.Description).HasMaxLength(1000); e.Property(x => x.SourceReference).HasMaxLength(500); e.HasIndex(x => x.Code).IsUnique(); });
+        m.Entity<Programme>().HasOne<AcademicAuthority>().WithMany().HasForeignKey(x => x.Regulator).HasPrincipalKey(x => x.Code).OnDelete(DeleteBehavior.Restrict);
+        m.Entity<Programme>(e => { e.Property(x => x.ApprovalStatus).HasMaxLength(40).IsRequired(); e.Property(x => x.SourceReference).HasMaxLength(500); e.Property(x => x.Regulator).HasMaxLength(40); e.HasIndex(x => x.Regulator); e.HasIndex(x => x.Code).IsUnique(); });
         m.Entity<InstitutionGalleryImage>(e => { e.HasKey(x => x.Id); e.Property(x => x.Title).HasMaxLength(200).IsRequired(); e.Property(x => x.Caption).HasMaxLength(1000); e.Property(x => x.Source).HasMaxLength(20).IsRequired(); e.Property(x => x.ExternalUrl).HasMaxLength(2000); e.Property(x => x.ContentType).HasMaxLength(100); e.Property(x => x.OriginalFileName).HasMaxLength(255); e.Property(x => x.ImageData).HasColumnType("bytea"); e.HasIndex(x => x.UploadedAt); });
         m.Entity<UserRole>(e =>
         {
