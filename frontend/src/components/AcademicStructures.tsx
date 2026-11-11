@@ -340,12 +340,12 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
                 <input required value={streamForm.code} onChange={e => setStreamForm({ ...streamForm, code: e.target.value })} placeholder="Stream code (e.g. A)" />
                 <input value={streamForm.name} onChange={e => setStreamForm({ ...streamForm, name: e.target.value })} placeholder="Name (optional)" />
                 
-                <button type="submit" disabled={loading}>{editingStreamId ? 'Save Stream' : 'Add Stream'}</button>{editingStreamId && <button type="button" className="secondary-button" onClick={() => { setEditingStreamId(null); setStreamForm({ code: '', name: '', capacity: '' }) }}>Cancel Edit</button>}
+                <button type="submit" disabled={loading}>{editingStreamId ? 'Save Stream' : 'Add Stream'}</button>{editingStreamId && <button type="button" className="secondary-button" onClick={() => { setEditingStreamId(null); setStreamForm({ code: '', name: '' }) }}>Cancel Edit</button>}
               </div>
             </form>
           )}
-          <div className="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Capacity</th><th>Active</th><th>Actions</th></tr></thead>
-            <tbody>{streams.length === 0 ? <tr><td colSpan={4} className="empty">No streams configured.</td></tr> : streams.map(s => <tr key={s.id}><td>{s.code}</td><td>{s.name || '—'}</td><td>{s.capacity ?? '—'}</td><td>{s.isActive ? 'Yes' : 'No'}</td><td><button type="button" onClick={() => editStream(s)}>Edit</button> <button type="button" className="secondary-button" disabled={loading} onClick={() => void toggleStream(s)}>{s.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}</tbody>
+          <div className="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Active</th><th>Actions</th></tr></thead>
+            <tbody>{streams.length === 0 ? <tr><td colSpan={4} className="empty">No streams configured.</td></tr> : streams.map(s => <tr key={s.id}><td>{s.code}</td><td>{s.name || '—'}</td><td>{s.isActive ? 'Yes' : 'No'}</td><td><button type="button" onClick={() => editStream(s)}>Edit</button> <button type="button" className="secondary-button" disabled={loading} onClick={() => void toggleStream(s)}>{s.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}</tbody>
           </table></div>
         </>
       )}
