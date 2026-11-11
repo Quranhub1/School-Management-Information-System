@@ -16,7 +16,10 @@ public sealed record CreateProgrammeRequest(
     string? Regulator,
     string? ApprovalReference,
     DateOnly? ApprovalDate,
-    ProgrammeType Type = ProgrammeType.FullProgramme);
+    ProgrammeType Type = ProgrammeType.FullProgramme,
+    string? ApprovalStatus = null,
+    string? SourceReference = null,
+    bool IsReferenceOnly = false);
 
 public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicAuthorityRepository authorities)
 {
@@ -70,6 +73,9 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
             Regulator = validation.Code,
             ApprovalReference = string.IsNullOrWhiteSpace(request.ApprovalReference) ? null : request.ApprovalReference.Trim(),
             ApprovalDate = request.ApprovalDate,
+            ApprovalStatus = string.IsNullOrWhiteSpace(request.ApprovalStatus) ? "NeedsVerification" : request.ApprovalStatus.Trim(),
+            SourceReference = string.IsNullOrWhiteSpace(request.SourceReference) ? null : request.SourceReference.Trim(),
+            IsReferenceOnly = request.IsReferenceOnly,
         };
         await programmes.AddAsync(programme, cancellationToken);
         await programmes.SaveChangesAsync(cancellationToken);
@@ -96,6 +102,9 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
         programme.Regulator = validation.Code;
         programme.ApprovalReference = string.IsNullOrWhiteSpace(request.ApprovalReference) ? null : request.ApprovalReference.Trim();
         programme.ApprovalDate = request.ApprovalDate;
+        programme.ApprovalStatus = string.IsNullOrWhiteSpace(request.ApprovalStatus) ? "NeedsVerification" : request.ApprovalStatus.Trim();
+        programme.SourceReference = string.IsNullOrWhiteSpace(request.SourceReference) ? null : request.SourceReference.Trim();
+        programme.IsReferenceOnly = request.IsReferenceOnly;
         await programmes.SaveChangesAsync(cancellationToken);
         return (true, null, programme);
     }
