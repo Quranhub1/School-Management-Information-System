@@ -29,6 +29,14 @@ public sealed class ProgrammesController(ProgrammeService service) : ControllerB
         return CreatedAtAction(nameof(GetById), new { id = result.Programme!.Id }, result.Programme);
     }
 
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] CreateProgrammeRequest request, CancellationToken cancellationToken)
+    {
+        var result = await service.UpdateAsync(id, request, cancellationToken);
+        if (!result.Success) return BadRequest(new { message = result.Error });
+        return Ok(result.Programme);
+    }
+
     [HttpPatch("{id:guid}/active")]
     public async Task<IActionResult> SetActive(Guid id, [FromBody] SetProgrammeActiveRequest request, CancellationToken cancellationToken)
     {
