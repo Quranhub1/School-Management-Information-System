@@ -9,19 +9,22 @@ Make every configurable academic register and workflow editable through SMIS scr
 ### 1. Curriculum & Courses
 
 Current implementation:
-- Academic authorities and programmes are loaded through the database APIs introduced in the programme-catalogue migration.
-- The screen supports authority creation, editing and activation/deactivation.
-- Programme records support create, edit and activation/deactivation.
-- Departments, courses and curricula can be created, edited and activated/deactivated through the Curriculum & Courses workspace.
-- Programme creation/editing now uses a database-backed department selector instead of a free-text department UUID.
-- Curriculum-course mappings can be listed, added and edited (year, semester and core/elective flag); mappings are not hard-deleted.
-- Authority separation is enforced when adding a course to another authority's curriculum.
+- Academic authorities and programmes are loaded through the database APIs introduced by the programme-catalogue migration.
+- The authority selector is initialized from active database records; there is no hardcoded School-based default or runtime authority catalogue.
+- Authorities support create, edit and activation/deactivation. Programme records support create, edit and activation/deactivation.
+- Departments support create, edit and activation/deactivation through the existing faculty register. Programme forms use a database-backed department selector instead of a free-text UUID.
+- A department cannot be moved to another faculty while programmes still reference it; those programme assignments must be changed explicitly first.
+- Courses support create, edit and activation/deactivation. Inactive courses remain visible in the register but are excluded from new curriculum mappings.
+- Curricula support create, edit and activation/deactivation, including version, minimum credits, effective dates and programme type.
+- Curriculum-course mappings can be listed, added and edited (year, semester and core/elective flag); mappings are retained and are not hard-deleted.
+- New mappings are validated against the database-backed authority, active/verified programme, active curriculum and active course. Courses cannot be shared across different authorities.
+- Programme maintenance is centralized in Curriculum & Courses; the duplicate Programme tab has been removed from Academic Management.
 
 Remaining work:
 - Add faculty creation/editing if the institution needs to configure faculties; the current department workflow selects from existing active faculty records.
 - Add explicit audit history for department, course, curriculum and mapping changes.
 - Review curriculum version/effective-date rules and protect curricula already referenced by registrations, results or transcripts.
-- Ensure the catalogue screen is the single programme-management entry point; remove the legacy duplicate programme editor from Academic Management after confirming no workflow depends on it.
+- Audit downstream programme/course/curriculum selectors to ensure they consume the same database records and respect active/reference-only status.
 
 ### 2. Academic Structures
 
