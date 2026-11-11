@@ -10,7 +10,7 @@ public partial class RepairStudentInvoiceFeeTypeSchema : Migration
     {
         migrationBuilder.Sql("""
             ALTER TABLE "StudentInvoices"
-            ADD COLUMN IF NOT EXISTS "FeeType" text NOT NULL DEFAULT 'Tuition';
+            ADD COLUMN IF NOT EXISTS "FeeType" varchar(50) NOT NULL DEFAULT 'Tuition';
             """);
     }
 
