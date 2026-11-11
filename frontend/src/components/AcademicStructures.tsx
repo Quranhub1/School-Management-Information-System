@@ -94,6 +94,8 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
   }
 
   async function loadProgrammeData(programmeId: string) {
+    setSelectedClass('')
+    setStreams([])
     setLoading(true)
     try {
       setError('')
