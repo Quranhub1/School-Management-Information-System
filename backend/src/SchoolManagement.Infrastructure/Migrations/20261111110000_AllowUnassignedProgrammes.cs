@@ -19,14 +19,16 @@ public partial class AllowUnassignedProgrammes : Migration
             oldClrType: typeof(Guid),
             oldType: "uuid");
 
-    protected override void Down(MigrationBuilder migrationBuilder) =>
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.Sql("UPDATE \"Programmes\" SET \"DepartmentId\" = (SELECT \"Id\" FROM \"Departments\" ORDER BY \"Id\" LIMIT 1) WHERE \"DepartmentId\" IS NULL AND EXISTS (SELECT 1 FROM \"Departments\")");
         migrationBuilder.AlterColumn<Guid>(
             name: "DepartmentId",
             table: "Programmes",
             type: "uuid",
             nullable: false,
-            defaultValue: Guid.Empty,
             oldClrType: typeof(Guid),
             oldType: "uuid",
             oldNullable: true);
+    }
 }
