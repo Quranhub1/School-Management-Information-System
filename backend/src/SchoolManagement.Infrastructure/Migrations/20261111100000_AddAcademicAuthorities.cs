@@ -28,15 +28,17 @@ public partial class AddAcademicAuthorities : Migration
 
         migrationBuilder.CreateIndex(name: "IX_AcademicAuthorities_Code", table: "AcademicAuthorities", column: "Code", unique: true);
 
-        migrationBuilder.InsertData(
-            table: "AcademicAuthorities",
-            columns: new[] { "Id", "Code", "Name", "Description", "SourceReference", "IsActive", "SortOrder" },
-            values: new object[,]
-            {
-                { new Guid("b70a4b18-67a6-49b8-99de-3b43fd2a5d01"), "SCHOOL_BASED", "School-based", "Programmes developed and delivered under the institution's own approved academic framework.", null, true, 1 },
-                { new Guid("b70a4b18-67a6-49b8-99de-3b43fd2a5d02"), "UHPAB", "UHPAB", "Uganda Health Professions Assessment Board.", null, true, 2 },
-                { new Guid("b70a4b18-67a6-49b8-99de-3b43fd2a5d03"), "UVTAB", "UVTAB", "Uganda Vocational and Technical Assessment Board.", null, true, 3 }
-            });
+        // Use SQL rather than InsertData because this hand-authored migration has no
+        // generated target-model designer; raw SQL keeps migration script generation reliable.
+        migrationBuilder.Sql(@"
+            INSERT INTO ""AcademicAuthorities""
+                (""Id"", ""Code"", ""Name"", ""Description"", ""SourceReference"", ""IsActive"", ""SortOrder"")
+            VALUES
+                ('b70a4b18-67a6-49b8-99de-3b43fd2a5d01', 'SCHOOL_BASED', 'School-based', 'Programmes developed and delivered under the institution''s own approved academic framework.', NULL, TRUE, 1),
+                ('b70a4b18-67a6-49b8-99de-3b43fd2a5d02', 'UHPAB', 'UHPAB', 'Uganda Health Professions Assessment Board.', NULL, TRUE, 2),
+                ('b70a4b18-67a6-49b8-99de-3b43fd2a5d03', 'UVTAB', 'UVTAB', 'Uganda Vocational and Technical Assessment Board.', NULL, TRUE, 3)
+            ON CONFLICT (""Code"") DO NOTHING");
+
 
         // Preserve existing programme classifications while converting their free-text regulator values to authority codes.
         migrationBuilder.Sql(@"UPDATE ""Programmes""
