@@ -52,3 +52,17 @@ export const createSubject = (input: CreateSubjectRequest) => {
   if (input.yearOfStudy < 1) throw new Error('Year of study must be at least 1.')
   return request<Subject>('/api/subjects', { method: 'POST', body: JSON.stringify(input) })
 }
+
+export interface UpdateSubjectRequest {
+  courseId: string
+  yearOfStudy: number
+  periodSequence?: number
+  isCompulsory: boolean
+  electiveGroup?: string
+  isActive: boolean
+}
+export const updateSubject = (id: string, input: UpdateSubjectRequest) => {
+  if (!id.trim() || !input.courseId.trim()) throw new Error('Subject ID and course are required.')
+  if (input.yearOfStudy < 1 || (input.periodSequence != null && input.periodSequence < 1)) throw new Error('Year and period sequence must be positive.')
+  return request<void>(`/api/subjects/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+}
