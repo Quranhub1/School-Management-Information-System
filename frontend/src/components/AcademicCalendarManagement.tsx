@@ -46,6 +46,7 @@ export function AcademicCalendarManagement() {
   async function saveYear(event: React.FormEvent) {
     event.preventDefault()
     setLoading(true); setError(''); setMessage('')
+    let preferredYear = editingYear ?? undefined
     try {
       if (editingYear) {
         await updateAcademicYear(editingYear, yearForm)
@@ -53,10 +54,10 @@ export function AcademicCalendarManagement() {
       } else {
         const created = await createAcademicYear(yearForm)
         setMessage('Academic year created.')
-        setSelectedYear(created.id)
+        preferredYear = created.id
       }
       setEditingYear(null); setYearForm(emptyYear)
-      await loadYears(editingYear ?? undefined)
+      await loadYears(preferredYear)
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to save academic year.') }
     finally { setLoading(false) }
   }
