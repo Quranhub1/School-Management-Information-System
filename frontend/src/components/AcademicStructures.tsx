@@ -32,7 +32,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
   const [message, setMessage] = useState('')
 
   const [classForm, setClassForm] = useState({ code: '', name: '', yearOfStudy: '1', periodId: '', maxEnrolment: '' })
-  const [streamForm, setStreamForm] = useState({ code: '', name: '', capacity: '' })
+  const [streamForm, setStreamForm] = useState({ code: '', name: '' })
   const [subjectForm, setSubjectForm] = useState({ courseId: '', yearOfStudy: '1', periodSequence: '', isCompulsory: true, electiveGroup: '' })
 
   useEffect(() => {
@@ -186,11 +186,11 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
         await updateStream(editingStreamId, { ...values, isActive: existing?.isActive ?? true })
         setMessage('Stream updated.')
       } else {
-        await createStream({ academicClassId: selectedClass, ...values, capacity: streamForm.capacity ? Number(streamForm.capacity) : undefined })
+        await createStream({ academicClassId: selectedClass, ...values })
         setMessage('Stream created.')
       }
       setEditingStreamId(null)
-      setStreamForm({ code: '', name: '', capacity: '' })
+      setStreamForm({ code: '', name: '' })
       if (selectedClass) await loadStreams(selectedClass)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to create stream.')
@@ -201,7 +201,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
 
   function editStream(item: Stream) {
     setEditingStreamId(item.id)
-    setStreamForm({ code: item.code, name: item.name ?? '', capacity: item.capacity == null ? '' : String(item.capacity) })
+    setStreamForm({ code: item.code, name: item.name ?? '' })
     setMessage('')
   }
 
@@ -339,7 +339,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
               <div className="form-row">
                 <input required value={streamForm.code} onChange={e => setStreamForm({ ...streamForm, code: e.target.value })} placeholder="Stream code (e.g. A)" />
                 <input value={streamForm.name} onChange={e => setStreamForm({ ...streamForm, name: e.target.value })} placeholder="Name (optional)" />
-                <input type="number" min="1" value={streamForm.capacity} onChange={e => setStreamForm({ ...streamForm, capacity: e.target.value })} placeholder="Capacity" />
+                
                 <button type="submit" disabled={loading}>{editingStreamId ? 'Save Stream' : 'Add Stream'}</button>{editingStreamId && <button type="button" className="secondary-button" onClick={() => { setEditingStreamId(null); setStreamForm({ code: '', name: '', capacity: '' }) }}>Cancel Edit</button>}
               </div>
             </form>
