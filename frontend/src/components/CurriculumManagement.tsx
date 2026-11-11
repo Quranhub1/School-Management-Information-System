@@ -489,7 +489,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             </select>
             <select value={mf.courseId} disabled={Boolean(editingMappingId)} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
               <option value="">Select course</option>
-              {authorityCourses.map(c => (
+              {authorityCourses.filter(c => c.isActive || c.id === mf.courseId).map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
               ))}
             </select>
