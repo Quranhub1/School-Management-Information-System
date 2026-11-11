@@ -1227,3 +1227,110 @@ sudo nginx -t
 ```
 
 Use these read-only checks before restarting or replacing deployed files.
+
+
+---
+
+## 22. Additional workstation hardware and local AI setup commands
+
+These commands were recovered from earlier workstation-preparation conversations. The local AI setup is a separate development utility, not a runtime dependency of SMIS.
+
+### Windows: inspect hardware before installing development tools
+
+Run in PowerShell:
+
+\`\`\`powershell
+Get-CimInstance Win32_ComputerSystem
+Get-CimInstance Win32_Processor
+Get-CimInstance Win32_VideoController
+Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"
+Get-CimInstance Win32_OperatingSystem
+Get-NetAdapter | Where-Object Status -eq "Up"
+\`\`\`
+
+For a quick memory and graphics check:
+
+\`\`\`powershell
+systeminfo | findstr /C:"Total Physical Memory"
+Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM
+\`\`\`
+
+### Windows: check Ollama and available local model resources
+
+\`\`\`powershell
+ollama --version
+ollama list
+\`\`\`
+
+A model download used in an earlier Windows test was:
+
+\`\`\`powershell
+ollama pull qwen2.5-coder:7b
+\`\`\`
+
+The local Ollama API was accessed at:
+
+\`\`\`text
+http://localhost:11434
+\`\`\`
+
+Check available RAM, CPU, GPU, and disk space before pulling a large model. Model size and hardware requirements vary.
+
+### Ubuntu: inspect CPU, memory, graphics, and storage
+
+\`\`\`bash
+free -h
+lscpu
+lspci | grep -Ei 'vga|3d|display'
+df -h
+\`\`\`
+
+### Ubuntu: install and test speech output
+
+The following commands were used while preparing the local Joes AI workstation:
+
+\`\`\`bash
+sudo apt update
+sudo apt install -y espeak-ng
+espeak-ng "Hello, I'm Joes AI."
+\`\`\`
+
+### Ubuntu: install Open Interpreter from a downloaded Debian package
+
+Historical package-download method:
+
+\`\`\`bash
+cd /tmp
+curl -fsSL https://openinterpreter.com/download/linux/deb -o Interpreter-linux-amd64.deb
+sudo apt install -y ./Interpreter-linux-amd64.deb
+interpreter --version
+\`\`\`
+
+This downloads a third-party installer package. Verify the publisher and current installation instructions before using it on a school server. It is intended for the separate local AI workstation, not the SMIS production server.
+
+### Ubuntu: install Open Interpreter using its installer script
+
+A separate historical installation method was:
+
+\`\`\`bash
+curl -fsSL https://www.openinterpreter.com/install | sh
+source ~/.bashrc
+hash -r
+interpreter --version
+i --version
+\`\`\`
+
+Use only one installation method unless you deliberately need to repair or replace an existing installation. Review remote installer scripts and publisher instructions before executing them.
+
+### Ubuntu: launch the local AI tool from the SMIS workspace
+
+\`\`\`bash
+cd ~/School-Management-Information-System
+interpreter
+\`\`\`
+
+The separate local Ollama model previously installed on the Ubuntu workstation was `qwen2.5-coder:1.5b`. Check the actual installed models with:
+
+\`\`\`bash
+ollama list
+\`\`\`
