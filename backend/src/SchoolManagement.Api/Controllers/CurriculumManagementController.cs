@@ -86,8 +86,11 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
             return NotFound(new { message = "The selected curriculum, programme or registered academic authority does not exist." });
         if (!curriculum.AuthorityIsActive)
             return Conflict(new { message = "The programme's academic authority is inactive. Activate it before changing curriculum mappings." });
-        if (!curriculum.Programme.IsActive || curriculum.Programme.IsReferenceOnly)
-            return Conflict(new { message = "Only active, verified programmes can receive curriculum course mappings." });
+        if (!curriculum.Programme.IsActive || curriculum.Programme.IsReferenceOnly ||
+            (curriculum.Programme.ApprovalStatus != "Institutional" &&
+             curriculum.Programme.ApprovalStatus != "Verified" &&
+             curriculum.Programme.ApprovalStatus != "Approved"))
+            return Conflict(new { message = "Only active, institutionally approved or verified programmes can receive curriculum course mappings." });
         if (!curriculum.Curriculum.IsActive)
             return Conflict(new { message = "Activate the curriculum before changing its course mappings." });
 
