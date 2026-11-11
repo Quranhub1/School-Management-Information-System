@@ -4,6 +4,8 @@ using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using AcademicYearRequest = SchoolManagement.Application.Academic.CreateAcademicYearRequest;
 using SemesterRequest = SchoolManagement.Application.Academic.CreateSemesterRequest;
+using UpdateYearRequest = SchoolManagement.Application.Academic.UpdateAcademicYearRequest;
+using UpdatePeriodRequest = SchoolManagement.Application.Academic.UpdateSemesterRequest;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -21,6 +23,21 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
         var result = await service.CreateYearAsync(request, cancellationToken);
         if (!result.Success) return BadRequest(new { message = result.Error });
         return Created($"api/academic-calendar/years/{result.Year!.Id}", result.Year);
+        public sealed record SetActiveRequest(bool IsActive);
+}
+
+    [HttpPut("years/{id:guid}")]
+    public async Task<IActionResult> UpdateYear(Guid id, [FromBody] UpdateYearRequest request, CancellationToken cancellationToken)
+    {
+        var result = await service.UpdateYearAsync(id, request, cancellationToken);
+        return result.Success ? NoContent() : result.Error == "Academic year was not found." ? NotFound(new { message = result.Error }) : BadRequest(new { message = result.Error });
+    }
+
+    [HttpPatch("years/{id:guid}/active")]
+    public async Task<IActionResult> SetYearActive(Guid id, [FromBody] SetActiveRequest request, CancellationToken cancellationToken)
+    {
+        var result = await service.SetYearActiveAsync(id, request.IsActive, cancellationToken);
+        return result.Success ? NoContent() : result.Error == "Academic year was not found." ? NotFound(new { message = result.Error }) : BadRequest(new { message = result.Error });
     }
 
     [HttpPatch("years/{id:guid}/current")]
@@ -40,6 +57,20 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
         var result = await service.CreateSemesterAsync(request, cancellationToken);
         if (!result.Success) return BadRequest(new { message = result.Error });
         return Created($"api/academic-calendar/periods/{result.Semester!.Id}", result.Semester);
+    }
+
+    [HttpPut("years/{academicYearId:guid}/periods/{semesterId:guid}")]
+    public async Task<IActionResult> UpdatePeriod(Guid academicYearId, Guid semesterId, [FromBody] UpdatePeriodRequest request, CancellationToken cancellationToken)
+    {
+        var result = await service.UpdateSemesterAsync(academicYearId, semesterId, request, cancellationToken);
+        return result.Success ? NoContent() : result.Error == "Academic year was not found." || result.Error == "Academic period was not found." ? NotFound(new { message = result.Error }) : BadRequest(new { message = result.Error });
+    }
+
+    [HttpPatch("years/{academicYearId:guid}/periods/{semesterId:guid}/active")]
+    public async Task<IActionResult> SetPeriodActive(Guid academicYearId, Guid semesterId, [FromBody] SetActiveRequest request, CancellationToken cancellationToken)
+    {
+        var result = await service.SetPeriodActiveAsync(academicYearId, semesterId, request.IsActive, cancellationToken);
+        return result.Success ? NoContent() : result.Error == "Academic period was not found." ? NotFound(new { message = result.Error }) : BadRequest(new { message = result.Error });
     }
 
     [HttpPatch("years/{academicYearId:guid}/periods/{semesterId:guid}/current")]
