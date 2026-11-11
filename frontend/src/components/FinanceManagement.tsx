@@ -3,6 +3,8 @@ import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { getSession } from '../api/auth'
 import { getDashboard, getOutstandingBalances, getPayments, type FinanceDashboard, type OutstandingBalance } from '../api/finance'
 import { formatCurrency } from '../lib/currency'
+import { parseApiResponse } from '../lib/validation'
+import { paymentListSchema } from '../schemas/finance.schema'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
 import { AccountingReportsWorkspace } from './AccountingReportsWorkspace'
 import { CashBankPositionReport } from './CashBankPositionReport'
@@ -61,7 +63,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
       ])
       setDashboard(summary)
       setOutstanding(balances)
-      setPayments(recentPayments as Payment[])
+      setPayments(parseApiResponse(paymentListSchema, recentPayments, 'payment list'))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load the finance dashboard.')
     } finally {
@@ -73,7 +75,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     void loadOverview()
     const refreshFeePayments = async () => {
       try {
-        setPayments(await getPayments() as Payment[])
+        setPayments(parseApiResponse(paymentListSchema, await getPayments(), 'payment list'))
       } catch {
         // Keep the last successful ticker data visible during temporary API failures.
       }
@@ -100,19 +102,19 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   ], [])
 
   const accountColumns = useMemo<ColDef<OutstandingBalance>[]>(() => [
-    { field: 'studentName', headerName: 'Student', minWidth: 190, cellRenderer: (params: ICellRendererParams<any>) => <div><strong>{params.value}</strong><small>{params.data?.studentNumber}</small></div> },
+    { field: 'studentName', headerName: 'Student', minWidth: 190, cellRenderer: (params: ICellRendererParams<OutstandingBalance>) => <div><strong>{params.value}</strong><small>{params.data?.studentNumber}</small></div> },
     { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
-    { field: 'balance', headerName: 'Balance (UGX)', minWidth: 150, cellRenderer: (params: ICellRendererParams<any>) => { const s = statusFor(Number(params.value ?? 0), params.data?.amount, params.data?.paidAmount); return <strong className={s.tone === 'danger' ? 'finance-value-danger' : 'finance-value-success'}>{money(Number(params.value ?? 0))}</strong> } },
-    { field: 'status', headerName: 'Status', minWidth: 130, cellRenderer: (params: ICellRendererParams<any>) => { const s = statusFor(Number(params.data?.balance ?? 0), params.data?.amount, params.data?.paidAmount); return <span className={'finance-status ' + s.tone}>{s.label}</span> } },
-    { headerName: 'Collection', minWidth: 170, sortable: false, filter: false, cellRenderer: (params: ICellRendererParams<any>) => { const amount = Number(params.data?.amount ?? 0); const paid = Number(params.data?.paidAmount ?? 0); const progress = amount > 0 ? Math.min(100, paid / amount * 100) : 0; return <div><div className="finance-row-progress"><span style={{ width: progress + '%' }} /></div><small>{progress.toFixed(0)}% collected</small></div> } },
+    { field: 'balance', headerName: 'Balance (UGX)', minWidth: 150, cellRenderer: (params: ICellRendererParams<OutstandingBalance>) => { const s = statusFor(Number(params.value ?? 0), params.data?.amount, params.data?.paidAmount); return <strong className={s.tone === 'danger' ? 'finance-value-danger' : 'finance-value-success'}>{money(Number(params.value ?? 0))}</strong> } },
+    { field: 'status', headerName: 'Status', minWidth: 130, cellRenderer: (params: ICellRendererParams<OutstandingBalance>) => { const s = statusFor(Number(params.data?.balance ?? 0), params.data?.amount, params.data?.paidAmount); return <span className={'finance-status ' + s.tone}>{s.label}</span> } },
+    { headerName: 'Collection', minWidth: 170, sortable: false, filter: false, cellRenderer: (params: ICellRendererParams<OutstandingBalance>) => { const amount = Number(params.data?.amount ?? 0); const paid = Number(params.data?.paidAmount ?? 0); const progress = amount > 0 ? Math.min(100, paid / amount * 100) : 0; return <div><div className="finance-row-progress"><span style={{ width: progress + '%' }} /></div><small>{progress.toFixed(0)}% collected</small></div> } },
   ], [])
 
   const collectionColumns = useMemo<ColDef<Payment>[]>(() => [
     { field: 'paidAt', headerName: 'Date', minWidth: 180, valueFormatter: params => params.value ? new Date(params.value).toLocaleString('en-UG') : '—' },
-    { field: 'receiptNumber', headerName: 'Receipt', minWidth: 160, cellRenderer: (params: ICellRendererParams<any>) => <div><strong>{params.value || '—'}</strong><small>{params.data?.reference || 'No reference'}</small></div> },
+    { field: 'receiptNumber', headerName: 'Receipt', minWidth: 160, cellRenderer: (params: ICellRendererParams<Payment>) => <div><strong>{params.value || '—'}</strong><small>{params.data?.reference || 'No reference'}</small></div> },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
     { field: 'invoiceNumber', headerName: 'Invoice', minWidth: 150, valueFormatter: params => params.value || '—' },
-    { field: 'amount', headerName: 'Amount (UGX)', minWidth: 160, cellRenderer: (params: ICellRendererParams<any>) => <strong className="finance-value-success">{money(Number(params.value ?? 0))}</strong> },
+    { field: 'amount', headerName: 'Amount (UGX)', minWidth: 160, cellRenderer: (params: ICellRendererParams<Payment>) => <strong className="finance-value-success">{money(Number(params.value ?? 0))}</strong> },
     { headerName: 'Status', minWidth: 120, sortable: false, filter: false, cellRenderer: () => <span className="finance-status success">Posted</span> },
   ], [])
 

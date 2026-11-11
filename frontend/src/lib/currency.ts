@@ -9,13 +9,24 @@
 export const SYSTEM_CURRENCY = "UGX" as const;
 export const SYSTEM_LOCALE = "en-UG" as const;
 
-const formatter = new Intl.NumberFormat(SYSTEM_LOCALE, {
-  style: "currency",
-  currency: SYSTEM_CURRENCY,
-  currencyDisplay: "code",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
+let formatter: Intl.NumberFormat
+try {
+  formatter = new Intl.NumberFormat(SYSTEM_LOCALE, {
+    style: "currency",
+    currency: SYSTEM_CURRENCY,
+    currencyDisplay: "code",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+} catch {
+  formatter = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: SYSTEM_CURRENCY,
+    currencyDisplay: "code",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+}
 
 export function formatCurrency(amount: number | string | null | undefined): string {
   const value = typeof amount === "string" ? Number(amount) : amount;

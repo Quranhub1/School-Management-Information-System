@@ -57,9 +57,8 @@ function institutionShortName(settings: InstitutionSettings): string {
   return settings.abbreviation?.trim() ?? ''
 }
 function LoginScreen({ institution }: { institution: InstitutionSettings }) {
-  const apiBaseUrl = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').replace(/\/$/, '')
-  const loginSrc = apiBaseUrl
-    ? `/institution-login.html?api=${encodeURIComponent(apiBaseUrl)}`
+  const loginSrc = API_BASE_URL
+    ? `/institution-login.html?api=${encodeURIComponent(API_BASE_URL)}`
     : '/institution-login.html'
 
   return (

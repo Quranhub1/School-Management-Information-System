@@ -118,7 +118,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       setError(message)
       notify(message, 'error', editingStaffId ? 'Staff update failed' : 'Staff save failed')
       // A duplicate may be an inactive record, so refresh the complete staff list too.
-      try { setStaff(await listStaff(false)) } catch { /* Preserve the original create error. */ }
+      try { setStaff(await listStaff(false)) } catch (e) { console.error('Staff list refresh failed', e) /* Preserve the original create error. */ }
     }
   }
   function beginEdit(person: StaffMember) {
@@ -214,10 +214,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         {canManage && <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>}
       </div>
 
+      const isDuplicateStaffNumber = /staff number is already registered|staff member with this staff number already exists/i.test(error)
       {success && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status" aria-live="polite">{success}</div>}
 
-      {error && (
-        <div
+      {error && (        <div
           className="mb-5 flex items-start justify-between gap-3 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-yellow-50 p-4 text-sm text-amber-950 shadow-md shadow-amber-900/5 ring-1 ring-amber-100"
           role="alert"
           aria-live="assertive"
@@ -232,12 +232,12 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
             <div className="min-w-0 pt-0.5">
               <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700">Warning</p>
               <h3 className="mb-1 text-base font-semibold tracking-tight text-slate-900">
-                {/staff number is already registered|staff member with this staff number already exists/i.test(error)
+                {isDuplicateStaffNumber
                   ? 'Staff member already registered'
                   : 'Action requires attention'}
               </h3>
               <p className="max-w-3xl leading-6 text-slate-700">
-                {/staff number is already registered|staff member with this staff number already exists/i.test(error)
+                {isDuplicateStaffNumber
                   ? 'This staff number is already in use. Please check the existing staff record or enter a unique staff number.'
                   : error}
               </p>
