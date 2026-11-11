@@ -170,6 +170,20 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Certificates");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.AcademicAuthority", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("Code").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(160).HasColumnType("character varying(160)");
+                    b.Property<string>("Description").HasMaxLength(1000).HasColumnType("character varying(1000)");
+                    b.Property<string>("SourceReference").HasMaxLength(500).HasColumnType("character varying(500)");
+                    b.Property<bool>("IsActive").HasColumnType("boolean");
+                    b.Property<int>("SortOrder").HasColumnType("integer");
+                    b.HasKey("Id");
+                    b.HasIndex("Code").IsUnique();
+                    b.ToTable("AcademicAuthorities");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Course", b =>
                 {
                     b.Property<Guid>("Id")
