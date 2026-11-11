@@ -11,7 +11,7 @@ public sealed class ProgrammeRepository(SchoolManagementDbContext db) : IProgram
         await db.Programmes.AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
 
     public Task<Programme?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        db.Programmes.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        db.Programmes.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<bool> CodeExistsAsync(string code, Guid? excludingId = null, CancellationToken cancellationToken = default) =>
         db.Programmes.AnyAsync(x => x.Code == code && (!excludingId.HasValue || x.Id != excludingId.Value), cancellationToken);
