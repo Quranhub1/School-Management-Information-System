@@ -13,7 +13,8 @@ public sealed record UpdateCurriculumCourseRequest(int YearOfStudy, int Semester
 public sealed class CurriculumManagementService(
     ICurriculumRepository curricula,
     ICourseRepository courses,
-    ICurriculumCourseRepository mappings)
+    ICurriculumCourseRepository mappings,
+    IProgrammeRepository programmes)
 {
     public Task<IReadOnlyList<Curriculum>> GetCurriculaAsync(CancellationToken ct = default) => curricula.GetAllAsync(ct);
     public Task<IReadOnlyList<Course>> GetCoursesAsync(CancellationToken ct = default) => courses.GetAllAsync(ct);
@@ -49,6 +50,11 @@ public sealed class CurriculumManagementService(
         var version = request.Version.Trim();
         var title = request.Title.Trim();
         if (request.ProgrammeId == Guid.Empty) return (false, "Programme is required.", null);
+        var programme = await programmes.GetByIdAsync(request.ProgrammeId, ct);
+        if (programme is null) return (false, "Programme not found.", null);
+        if (!programme.IsActive || programme.IsReferenceOnly ||
+            (programme.ApprovalStatus != "Institutional" && programme.ApprovalStatus != "Verified" && programme.ApprovalStatus != "Approved"))
+            return (false, "Only active, institutionally approved or verified programmes can receive a curriculum.", null);
         if (string.IsNullOrWhiteSpace(version)) return (false, "Curriculum version is required.", null);
         if (string.IsNullOrWhiteSpace(title)) return (false, "Curriculum title is required.", null);
         if (request.MinimumCredits < 0) return (false, "Minimum credits cannot be negative.", null);
