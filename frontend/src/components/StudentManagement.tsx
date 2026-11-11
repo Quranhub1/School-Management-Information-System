@@ -111,7 +111,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     .sort((a, b) => a.name.localeCompare(b.name))
   function applicationPdfOptions() {
     const label = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, value => value.toUpperCase())
-    const values = Object.entries(application).map(([key, value]) => [
+    const values = Object.entries(application).filter(([key]) => key !== 'programmeId').map(([key, value]) => [
       { text: label(key), bold: true },
       typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value || '—'),
     ])
