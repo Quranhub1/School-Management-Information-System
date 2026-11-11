@@ -74,6 +74,18 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
     void loadProgrammeData(selectedProgramme)
   }, [selectedProgramme, canManage])
 
+  useEffect(() => {
+    if (!selectedClass || !canManage) {
+      setStreams([])
+      return
+    }
+    let cancelled = false
+    getStreamsByClass(selectedClass)
+      .then(items => { if (!cancelled) setStreams(items) })
+      .catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load streams.') })
+    return () => { cancelled = true }
+  }, [selectedClass, canManage])
+
   async function loadAcademicYears() {
     try {
       const items = await getAcademicYears()
@@ -113,14 +125,9 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
     }
   }
 
-  async function loadStreams(classId: string) {
+  function loadStreams(classId: string) {
     setSelectedClass(classId)
-    if (!classId) { setStreams([]); return }
-    try {
-      setStreams(await getStreamsByClass(classId))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load streams.')
-    }
+    if (!classId) setStreams([])
   }
 
   async function saveClass(e: React.FormEvent) {
@@ -196,7 +203,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
       }
       setEditingStreamId(null)
       setStreamForm({ code: '', name: '' })
-      if (selectedClass) await loadStreams(selectedClass)
+      if (selectedClass) setStreams(await getStreamsByClass(selectedClass))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to create stream.')
     } finally {
@@ -348,9 +355,9 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
       {view === 'classes' && selectedProgramme && (
         <div className="academic-classes-layout">
           <div className="academic-structures-stats" aria-label="Class summary">
-            <article><span>Total classes</span><strong>{classes.length}</strong></article>
-            <article><span>Active</span><strong>{activeClassCount}</strong></article>
-            <article><span>Closed</span><strong>{closedClassCount}</strong></article>
+            <article><span>Total classes</span><strong>{visibleClasses.length}</strong></article>
+            <article><span>Active</span><strong>{visibleClasses.filter(item => item.status === 0).length}</strong></article>
+            <article><span>Closed</span><strong>{visibleClasses.filter(item => item.status === 1).length}</strong></article>
             <article><span>Streams in selected class</span><strong>{selectedClass ? streams.length : '—'}</strong></article>
           </div>
 
