@@ -37,6 +37,12 @@ public static class MoneyMath
         return decimal.Round(amount, digits, MidpointRounding.AwayFromZero);
     }
 
+    public static void EnsurePrecision(decimal amount, string currency)
+    {
+        if (amount != Round(amount, currency))
+            throw new ArgumentException($"Amount has more fractional digits than {NormalizeCurrency(currency)} supports.", nameof(amount));
+    }
+
     public static decimal Add(decimal left, decimal right, string currency) =>
         Round(checked(left + right), currency);
 
