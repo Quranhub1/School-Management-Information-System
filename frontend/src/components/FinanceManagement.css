@@ -761,3 +761,49 @@
   .finance-workspace .topbar-actions,
   .finance-workspace .form-actions { gap: 7px; }
 }
+
+
+.finance-currency-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 12px 0 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #d9e0e7);
+  background: var(--surface-muted, #f8fafc);
+  color: var(--text-primary, #1f2937);
+  font-size: 12px;
+}
+.finance-currency-summary > strong {
+  font-size: 12px;
+  font-weight: 700;
+}
+.finance-currency-summary > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding-right: 12px;
+  border-right: 1px solid var(--border, #d9e0e7);
+}
+.finance-currency-summary > span:last-child {
+  border-right: 0;
+}
+.finance-currency-summary b {
+  color: var(--text-primary, #111827);
+  font-weight: 700;
+}
+.finance-currency-summary span span {
+  color: var(--text-secondary, #64748b);
+}
+@media (max-width: 640px) {
+  .finance-currency-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .finance-currency-summary > span {
+    border-right: 0;
+    padding-right: 0;
+  }
+}
