@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createAcademicClass, getClassesByProgramme, setAcademicClassStatus, updateAcademicClass, type AcademicClass } from '../api/academicClasses'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getStreamsByClass, createStream, updateStream, type Stream } from '../api/streams'
@@ -30,6 +30,8 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [classSearch, setClassSearch] = useState('')
+  const [classStatusFilter, setClassStatusFilter] = useState('all')
 
   const [classForm, setClassForm] = useState({ code: '', name: '', yearOfStudy: '1', periodId: '', maxEnrolment: '' })
   const [streamForm, setStreamForm] = useState({ code: '', name: '' })
@@ -271,6 +273,15 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
     finally { setLoading(false) }
   }
 
+  const visibleClasses = useMemo(() => classes.filter(item => {
+    const matchesSearch = `${item.code} ${item.name ?? ''}`.toLowerCase().includes(classSearch.trim().toLowerCase())
+    const matchesStatus = classStatusFilter === 'all' || (classStatusFilter === 'active' && item.status === 0) || (classStatusFilter === 'closed' && item.status === 1) || (classStatusFilter === 'cancelled' && item.status === 2)
+    const matchesYear = !selectedAcademicYear || periods.some(period => period.id === item.academicPeriodId)
+    return matchesSearch && matchesStatus && matchesYear
+  }), [classes, classSearch, classStatusFilter, selectedAcademicYear, periods])
+  const activeClassCount = classes.filter(item => item.status === 0).length
+  const closedClassCount = classes.filter(item => item.status === 1).length
+
   if (!canManage) {
     return <section className="panel"><h3>Academic Structures</h3><p className="empty">Your role does not have academic-management access.</p></section>
   }
@@ -298,33 +309,109 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
       {loading && <p>Loading…</p>}
 
       {view === 'classes' && selectedProgramme && (
-        <>
-          <div className="form-row">
-            <label htmlFor="structure-academic-year">Academic year</label>
-            <select id="structure-academic-year" value={selectedAcademicYear} onChange={e => setSelectedAcademicYear(e.target.value)}>
-              <option value="">Select academic year</option>
-              {academicYears.filter(year => year.isActive).map(year => <option key={year.id} value={year.id}>{year.name}{year.isCurrent ? ' (Current)' : ''}</option>)}
-            </select>
+        <div className="classes-register">
+          <div className="classes-register__toolbar">
+            <div className="classes-register__filters">
+              <div className="classes-register__filter">
+                <label htmlFor="structure-academic-year">Academic year</label>
+                <select id="structure-academic-year" value={selectedAcademicYear} onChange={e => { setSelectedAcademicYear(e.target.value); setSelectedClass(''); setStreams([]) }}>
+                  <option value="">All academic years</option>
+                  {academicYears.filter(year => year.isActive).map(year => <option key={year.id} value={year.id}>{year.name}{year.isCurrent ? ' (Current)' : ''}</option>)}
+                </select>
+              </div>
+              <div className="classes-register__filter classes-register__filter--search">
+                <label htmlFor="class-register-search">Find a class</label>
+                <input id="class-register-search" type="search" value={classSearch} onChange={e => setClassSearch(e.target.value)} placeholder="Search class code or name" />
+              </div>
+              <div className="classes-register__filter">
+                <label htmlFor="class-status-filter">Status</label>
+                <select id="class-status-filter" value={classStatusFilter} onChange={e => setClassStatusFilter(e.target.value)}>
+                  <option value="all">All statuses</option><option value="active">Active</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div className="classes-register__actions">
+              <button type="button" className="classes-button classes-button--primary" onClick={() => { setEditingClassId(null); setClassForm({ code: '', name: '', yearOfStudy: '1', periodId: '', maxEnrolment: '' }); document.getElementById('class-editor-code')?.focus() }}>Add class</button>
+              <button type="button" className="classes-button classes-button--secondary" onClick={() => void loadProgrammeData(selectedProgramme)} disabled={loading}>Refresh</button>
+            </div>
           </div>
-          <form className="student-form" onSubmit={saveClass}>
-            <div className="form-row">
-              <input required value={classForm.code} onChange={e => setClassForm({ ...classForm, code: e.target.value })} placeholder="Class code (e.g. CS2026A)" />
-              <input value={classForm.name} onChange={e => setClassForm({ ...classForm, name: e.target.value })} placeholder="Display name (optional)" />
+
+          <div className="classes-register__summary" aria-label="Class summary">
+            <article><span>Total classes</span><strong>{classes.length}</strong></article>
+            <article><span>Active classes</span><strong>{activeClassCount}</strong></article>
+            <article><span>Closed classes</span><strong>{closedClassCount}</strong></article>
+            <article><span>Streams in selected class</span><strong>{selectedClass ? streams.length : '—'}</strong></article>
+          </div>
+
+          <div className="classes-register__editor">
+            <div className="classes-register__section-heading">
+              <div><h3>{editingClassId ? 'Edit class' : 'Class details'}</h3><p>{editingClassId ? 'Update the selected class information.' : 'Create a class or select a row to manage its streams.'}</p></div>
+              {editingClassId && <span className="classes-register__editing">Editing</span>}
             </div>
-            <div className="form-row">
-              <input type="number" min="1" value={classForm.yearOfStudy} onChange={e => setClassForm({ ...classForm, yearOfStudy: e.target.value })} placeholder="Year of study" />
-              <select value={classForm.periodId} onChange={e => setClassForm({ ...classForm, periodId: e.target.value })}>
-                <option value="">Select period</option>
-                {periods.filter(p => p.isActive).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-              <input type="number" min="1" value={classForm.maxEnrolment} onChange={e => setClassForm({ ...classForm, maxEnrolment: e.target.value })} placeholder="Max enrolment" />
-              <button type="submit" disabled={loading || (!editingClassId && (!selectedAcademicYear || !classForm.periodId))}>{editingClassId ? 'Save Class' : 'Add Class'}</button>{editingClassId && <button type="button" className="secondary-button" onClick={() => { setEditingClassId(null); setClassForm({ code: '', name: '', yearOfStudy: '1', periodId: '', maxEnrolment: '' }) }}>Cancel Edit</button>}
+            <form className="classes-register__form" onSubmit={saveClass}>
+              <div className="classes-register__field">
+                <label htmlFor="class-editor-code">Class code <span aria-hidden="true">*</span></label>
+                <input id="class-editor-code" required maxLength={40} value={classForm.code} onChange={e => setClassForm({ ...classForm, code: e.target.value })} placeholder="e.g. DPH-Y1" />
+              </div>
+              <div className="classes-register__field">
+                <label htmlFor="class-editor-name">Display name</label>
+                <input id="class-editor-name" maxLength={120} value={classForm.name} onChange={e => setClassForm({ ...classForm, name: e.target.value })} placeholder="e.g. Diploma in Public Health — Year 1" />
+              </div>
+              <div className="classes-register__field classes-register__field--small">
+                <label htmlFor="class-editor-year">Year of study</label>
+                <input id="class-editor-year" type="number" min="1" max="20" required value={classForm.yearOfStudy} onChange={e => setClassForm({ ...classForm, yearOfStudy: e.target.value })} />
+              </div>
+              <div className="classes-register__field">
+                <label htmlFor="class-editor-period">Academic period <span aria-hidden="true">*</span></label>
+                <select id="class-editor-period" required value={classForm.periodId} onChange={e => setClassForm({ ...classForm, periodId: e.target.value })}>
+                  <option value="">Select period</option>
+                  {periods.filter(period => period.isActive).map(period => <option key={period.id} value={period.id}>{period.name}</option>)}
+                </select>
+              </div>
+              <div className="classes-register__field classes-register__field--small">
+                <label htmlFor="class-editor-capacity">Maximum enrolment</label>
+                <input id="class-editor-capacity" type="number" min="1" value={classForm.maxEnrolment} onChange={e => setClassForm({ ...classForm, maxEnrolment: e.target.value })} placeholder="Optional" />
+              </div>
+              <div className="classes-register__form-actions">
+                <button type="submit" className="classes-button classes-button--primary" disabled={loading || !classForm.periodId}>{loading ? 'Saving…' : editingClassId ? 'Save changes' : 'Save class'}</button>
+                {editingClassId && <button type="button" className="classes-button classes-button--secondary" onClick={() => { setEditingClassId(null); setClassForm({ code: '', name: '', yearOfStudy: '1', periodId: '', maxEnrolment: '' }) }}>Cancel</button>}
+              </div>
+            </form>
+          </div>
+
+          <div className="classes-register__table-section">
+            <div className="classes-register__section-heading">
+              <div><h3>Class register</h3><p>{visibleClasses.length} of {classes.length} classes shown</p></div>
             </div>
-          </form>
-          <div className="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody>{classes.length === 0 ? <tr><td colSpan={5} className="empty">No classes configured.</td></tr> : classes.map(c => <tr key={c.id}><td>{c.code}</td><td>{c.name || '—'}</td><td>{c.yearOfStudy}</td><td>{c.status === 0 ? 'Active' : c.status === 1 ? 'Closed' : 'Cancelled'}</td><td><button type="button" onClick={() => editClass(c)}>Edit</button> <button type="button" className="secondary-button" disabled={c.status === 2 || loading} onClick={() => void toggleClassStatus(c)}>{c.status === 0 ? 'Close' : 'Reopen'}</button></td></tr>)}</tbody>
-          </table></div>
-        </>
+            <div className="table-wrap classes-register__table-wrap">
+              <table>
+                <thead><tr><th>Class code</th><th>Class name</th><th>Year</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {visibleClasses.length === 0 ? <tr><td colSpan={6} className="empty">{classes.length === 0 ? 'No classes have been configured for this programme.' : 'No classes match the selected filters.'}</td></tr> : visibleClasses.map(item => (
+                    <tr key={item.id} className={selectedClass === item.id ? 'classes-register__selected-row' : undefined}>
+                      <td><button type="button" className="classes-register__class-link" onClick={() => void loadStreams(item.id)} aria-pressed={selectedClass === item.id}>{item.code}</button></td>
+                      <td>{item.name || '—'}</td><td>{item.yearOfStudy}</td><td>{item.maxEnrolment ?? 'Not set'}</td>
+                      <td><span className={`classes-status classes-status--${item.status === 0 ? 'active' : item.status === 1 ? 'closed' : 'cancelled'}`}>{item.status === 0 ? 'Active' : item.status === 1 ? 'Closed' : 'Cancelled'}</span></td>
+                      <td><div className="classes-register__row-actions"><button type="button" className="classes-button classes-button--small classes-button--secondary" onClick={() => editClass(item)}>Edit</button><button type="button" className="classes-button classes-button--small classes-button--secondary" disabled={item.status === 2 || loading} onClick={() => void toggleClassStatus(item)}>{item.status === 0 ? 'Close' : 'Reopen'}</button></div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {selectedClass && (
+            <section className="classes-register__stream-panel" aria-label="Selected class streams">
+              <div className="classes-register__section-heading">
+                <div><h3>Streams · {classes.find(item => item.id === selectedClass)?.code ?? 'Selected class'}</h3><p>Manage the streams belonging to this class.</p></div>
+                <button type="button" className="classes-button classes-button--primary" onClick={() => { setView('streams'); setEditingStreamId(null); setStreamForm({ code: '', name: '' }) }}>Manage streams</button>
+              </div>
+              {streams.length === 0 ? <p className="classes-register__empty">No streams are configured for this class yet.</p> : (
+                <div className="classes-register__stream-list">{streams.map(stream => <div key={stream.id}><strong>{stream.code}</strong><span>{stream.name || 'No display name'}</span><span className={stream.isActive ? 'classes-status classes-status--active' : 'classes-status classes-status--closed'}>{stream.isActive ? 'Active' : 'Inactive'}</span></div>)}</div>
+              )}
+            </section>
+          )}
+        </div>
       )}
 
       {view === 'streams' && selectedProgramme && (
