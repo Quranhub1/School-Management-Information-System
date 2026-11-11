@@ -25,11 +25,14 @@ function createTransport(smtp) {
 }
 
 function money(amount, currency) {
-  return new Intl.NumberFormat("en-UG", {
-    style: "currency",
-    currency,
+  // Use the ISO currency code in receipts instead of locale-specific symbols
+  // (for example, en-UG renders UGX as "USh"). This keeps the ledger currency
+  // explicit and consistent across HTML receipts, PDFs and email text.
+  const formattedAmount = new Intl.NumberFormat("en-UG", {
     maximumFractionDigits: currency === "UGX" ? 0 : 2
   }).format(amount);
+
+  return `${formattedAmount} ${currency}`;
 }
 
 export function createReceiptPdf(institutionName, receipt) {
