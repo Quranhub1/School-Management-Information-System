@@ -20,6 +20,22 @@ public interface ITimetableRepository
         Guid? excludeEntryId = null,
         CancellationToken cancellationToken = default);
 
+    Task<bool> HasTeacherConflictAsync(
+        Guid teacherId,
+        DayOfWeek dayOfWeek,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        Guid? excludeEntryId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> HasGroupConflictAsync(
+        Guid groupId,
+        DayOfWeek dayOfWeek,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        Guid? excludeEntryId = null,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(TimetableEntry entry, CancellationToken cancellationToken = default);
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

@@ -56,6 +56,50 @@ public sealed class TimetableRepository(SchoolManagementDbContext db) : ITimetab
         return await query.AnyAsync(cancellationToken);
     }
 
+    public async Task<bool> HasTeacherConflictAsync(
+        Guid teacherId,
+        DayOfWeek dayOfWeek,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        Guid? excludeEntryId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = db.TimetableEntries
+            .AsNoTracking()
+            .Where(x => x.IsActive
+                && x.TeacherId == teacherId
+                && x.DayOfWeek == dayOfWeek
+                && x.StartTime < endTime
+                && startTime < x.EndTime);
+
+        if (excludeEntryId.HasValue)
+            query = query.Where(x => x.Id != excludeEntryId.Value);
+
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<bool> HasGroupConflictAsync(
+        Guid groupId,
+        DayOfWeek dayOfWeek,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        Guid? excludeEntryId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = db.TimetableEntries
+            .AsNoTracking()
+            .Where(x => x.IsActive
+                && x.TeachingGroupId == groupId
+                && x.DayOfWeek == dayOfWeek
+                && x.StartTime < endTime
+                && startTime < x.EndTime);
+
+        if (excludeEntryId.HasValue)
+            query = query.Where(x => x.Id != excludeEntryId.Value);
+
+        return await query.AnyAsync(cancellationToken);
+    }
+
     public async Task AddAsync(TimetableEntry entry, CancellationToken cancellationToken = default) =>
         await db.TimetableEntries.AddAsync(entry, cancellationToken);
 
