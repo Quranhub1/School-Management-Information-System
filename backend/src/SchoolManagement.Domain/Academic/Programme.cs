@@ -22,5 +22,8 @@ public sealed class Programme
     public string? Regulator { get; set; }
     public string? ApprovalReference { get; set; }
     public DateOnly? ApprovalDate { get; set; }
+    public string ApprovalStatus { get; set; } = "NeedsVerification";
+    public string? SourceReference { get; set; }
+    public bool IsReferenceOnly { get; set; }
     public bool IsActive { get; set; } = true;
 }
