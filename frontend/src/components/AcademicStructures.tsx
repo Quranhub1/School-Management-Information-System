@@ -264,7 +264,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
                 {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <input type="number" min="1" value={classForm.maxEnrolment} onChange={e => setClassForm({ ...classForm, maxEnrolment: e.target.value })} placeholder="Max enrolment" />
-              <button type="submit" disabled={loading || !selectedAcademicYear || !classForm.periodId}>{editingClassId ? 'Save Class' : 'Add Class'}</button>{editingClassId && <button type="button" className="secondary-button" onClick={() => { setEditingClassId(null); setClassForm({ code: '', name: '', yearOfStudy: '1', periodId: '', maxEnrolment: '' }) }}>Cancel Edit</button>}
+              <button type="submit" disabled={loading || (!editingClassId && (!selectedAcademicYear || !classForm.periodId))}>{editingClassId ? 'Save Class' : 'Add Class'}</button>{editingClassId && <button type="button" className="secondary-button" onClick={() => { setEditingClassId(null); setClassForm({ code: '', name: '', yearOfStudy: '1', periodId: '', maxEnrolment: '' }) }}>Cancel Edit</button>}
             </div>
           </form>
           <div className="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
