@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createAcademicClass, getClassesByProgramme, type AcademicClass } from '../api/academicClasses'
+import { createAcademicClass, getClassesByProgramme, setAcademicClassStatus, updateAcademicClass, type AcademicClass } from '../api/academicClasses'
 import { getProgrammes, type Programme } from '../api/programmes'
 import { getStreamsByClass, createStream, type Stream } from '../api/streams'
 import { getCourses, type Course } from '../api/curriculumManagement'
@@ -24,6 +24,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('')
   const [periods, setPeriods] = useState<AcademicPeriod[]>([])
   const [selectedClass, setSelectedClass] = useState('')
+  const [editingClassId, setEditingClassId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -120,19 +121,53 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
     if (!selectedProgramme || !classForm.code.trim() || !classForm.periodId) return
     setLoading(true)
     try {
-      await createAcademicClass({
-        programmeId: selectedProgramme,
-        academicPeriodId: classForm.periodId,
+      const values = {
         code: classForm.code.trim(),
         name: classForm.name.trim() || undefined,
         yearOfStudy: Number(classForm.yearOfStudy),
         maxEnrolment: classForm.maxEnrolment ? Number(classForm.maxEnrolment) : undefined,
-      })
+      }
+      if (editingClassId) {
+        const existing = classes.find(item => item.id === editingClassId)
+        await updateAcademicClass(editingClassId, { id: editingClassId, ...values, status: existing?.status ?? 0 })
+        setMessage('Class updated.')
+      } else {
+        await createAcademicClass({ programmeId: selectedProgramme, academicPeriodId: classForm.periodId, ...values })
+        setMessage('Class created.')
+      }
+      setEditingClassId(null)
       setClassForm({ ...classForm, code: '', name: '', maxEnrolment: '' })
-      setMessage('Class created.')
       if (selectedProgramme) await loadProgrammeData(selectedProgramme)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to create class.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function editClass(item: AcademicClass) {
+    setEditingClassId(item.id)
+    setClassForm({
+      code: item.code,
+      name: item.name ?? '',
+      yearOfStudy: String(item.yearOfStudy),
+      periodId: item.academicPeriodId,
+      maxEnrolment: item.maxEnrolment == null ? '' : String(item.maxEnrolment),
+    })
+    setSelectedAcademicYear(periods.find(period => period.id === item.academicPeriodId)?.academicYearId ?? selectedAcademicYear)
+    setMessage('')
+  }
+
+  async function toggleClassStatus(item: AcademicClass) {
+    const nextStatus = item.status === 0 ? 1 : 0
+    try {
+      setLoading(true)
+      setError('')
+      await setAcademicClassStatus(item.id, nextStatus)
+      setClasses(current => current.map(row => row.id === item.id ? { ...row, status: nextStatus } : row))
+      setMessage(nextStatus === 0 ? 'Class reactivated.' : 'Class closed.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update class status.')
     } finally {
       setLoading(false)
     }
@@ -229,11 +264,11 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
                 {periods.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <input type="number" min="1" value={classForm.maxEnrolment} onChange={e => setClassForm({ ...classForm, maxEnrolment: e.target.value })} placeholder="Max enrolment" />
-              <button type="submit" disabled={loading || !selectedAcademicYear || !classForm.periodId}>Add Class</button>
+              <button type="submit" disabled={loading || !selectedAcademicYear || !classForm.periodId}>{editingClassId ? 'Save Class' : 'Add Class'}</button>{editingClassId && <button type="button" className="secondary-button" onClick={() => { setEditingClassId(null); setClassForm({ code: '', name: '', yearOfStudy: '1', periodId: '', maxEnrolment: '' }) }}>Cancel Edit</button>}
             </div>
           </form>
-          <div className="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Year</th><th>Status</th></tr></thead>
-            <tbody>{classes.length === 0 ? <tr><td colSpan={4} className="empty">No classes configured.</td></tr> : classes.map(c => <tr key={c.id}><td>{c.code}</td><td>{c.name || '—'}</td><td>{c.yearOfStudy}</td><td>{c.status === 0 ? 'Active' : 'Closed'}</td></tr>)}</tbody>
+          <div className="table-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>{classes.length === 0 ? <tr><td colSpan={5} className="empty">No classes configured.</td></tr> : classes.map(c => <tr key={c.id}><td>{c.code}</td><td>{c.name || '—'}</td><td>{c.yearOfStudy}</td><td>{c.status === 0 ? 'Active' : c.status === 1 ? 'Closed' : 'Cancelled'}</td><td><button type="button" onClick={() => editClass(c)}>Edit</button> <button type="button" className="secondary-button" disabled={c.status === 2 || loading} onClick={() => void toggleClassStatus(c)}>{c.status === 0 ? 'Close' : 'Reopen'}</button></td></tr>)}</tbody>
           </table></div>
         </>
       )}
