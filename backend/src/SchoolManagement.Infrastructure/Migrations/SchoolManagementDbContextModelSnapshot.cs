@@ -479,6 +479,10 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("ApprovalStatus").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<string>("SourceReference").HasMaxLength(500).HasColumnType("character varying(500)");
+                    b.Property<bool>("IsReferenceOnly").HasColumnType("boolean");
+
                     b.Property<string>("Regulator")
                         .HasColumnType("text");
 
