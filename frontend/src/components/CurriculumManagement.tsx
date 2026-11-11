@@ -45,6 +45,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     return associations.length === 0 || associations.some(mapping => authorityCurriculumIds.has(mapping.curriculumId))
   })
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
 
   const [cf, setCf] = useState({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' as 'FullProgramme' | 'ShortCourse' })
@@ -237,6 +238,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
   function editCurriculum(item: Curriculum) {
     setEditingCurriculumId(item.id)
+    setTab(item.programmeType === 1 ? 'short' : 'full')
     setCf({
       programmeId: item.programmeId, version: item.version, title: item.title,
       minimumCredits: String(item.minimumCredits), effectiveFrom: item.effectiveFrom,
@@ -294,6 +296,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <span>{curricula.length} curricula · {courses.length} courses</span>
       </div>
       {error && <div className="error">{error}</div>}
+      {message && <p role="status">{message}</p>}
 
       <div className="form-row academic-authority-picker">
         <label>Curriculum authority
@@ -478,7 +481,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <option value="FullProgramme">Full Programme</option>
                 <option value="ShortCourse">Short Course</option>
               </select>
-              <button type="submit" disabled={saving}>Add short-course curriculum</button>
+              <button type="submit" disabled={saving}>{editingCurriculumId ? 'Save short-course curriculum' : 'Add short-course curriculum'}</button>{editingCurriculumId && <button type="button" className="secondary-button" onClick={() => { setEditingCurriculumId(null); setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'ShortCourse' }) }}>Cancel edit</button>}
             </form>
           </div>
         </div>
