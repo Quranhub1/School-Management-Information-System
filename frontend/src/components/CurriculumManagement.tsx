@@ -3,6 +3,10 @@ import {
   addCurriculumCourse,
   createCourse,
   createCurriculum,
+  updateCurriculum,
+  setCurriculumActive,
+  updateCourse,
+  setCourseActive,
   getCourses,
   getCurricula,
   getCurriculumCourses,
@@ -27,6 +31,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [editingAuthority, setEditingAuthority] = useState<string | null>(null)
   const [authorityForm, setAuthorityForm] = useState({ code: '', name: '', description: '', sourceReference: '', sortOrder: '10' })
   const [editingProgrammeId, setEditingProgrammeId] = useState<string | null>(null)
+  const [editingCurriculumId, setEditingCurriculumId] = useState<string | null>(null)
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null)
   const [programmeForm, setProgrammeForm] = useState({ code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
   const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
@@ -174,15 +180,23 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     e.preventDefault()
     setSaving(true)
     try {
-      await createCurriculum({
-        programmeId: cf.programmeId,
+      const values = {
         version: cf.version,
         title: cf.title,
         minimumCredits: Number(cf.minimumCredits),
         effectiveFrom: cf.effectiveFrom,
         effectiveTo: cf.effectiveTo || null,
         programmeType: cf.type === 'ShortCourse' ? 1 : 0,
-      })
+      }
+      if (editingCurriculumId) {
+        const existing = curricula.find(item => item.id === editingCurriculumId)
+        await updateCurriculum(editingCurriculumId, { ...values, isActive: existing?.isActive ?? true })
+        setMessage('Curriculum updated.')
+      } else {
+        await createCurriculum({ programmeId: cf.programmeId, ...values })
+        setMessage('Curriculum created.')
+      }
+      setEditingCurriculumId(null)
       setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' })
       await load()
     } catch (e) {
@@ -196,13 +210,22 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     e.preventDefault()
     setSaving(true)
     try {
-      await createCourse({
+      const values = {
         code: uf.code,
         name: uf.name,
         creditUnits: Number(uf.creditUnits),
         description: uf.description,
         courseType: uf.courseType,
-      })
+      }
+      if (editingCourseId) {
+        const existing = courses.find(item => item.id === editingCourseId)
+        await updateCourse(editingCourseId, { ...values, isActive: existing?.isActive ?? true })
+        setMessage('Course updated.')
+      } else {
+        await createCourse(values)
+        setMessage('Course created.')
+      }
+      setEditingCourseId(null)
       setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
       await load()
     } catch (e) {
@@ -210,6 +233,34 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     } finally {
       setSaving(false)
     }
+  }
+
+  function editCurriculum(item: Curriculum) {
+    setEditingCurriculumId(item.id)
+    setCf({
+      programmeId: item.programmeId, version: item.version, title: item.title,
+      minimumCredits: String(item.minimumCredits), effectiveFrom: item.effectiveFrom,
+      effectiveTo: item.effectiveTo ?? '', type: item.programmeType === 1 ? 'ShortCourse' : 'FullProgramme',
+    })
+  }
+
+  async function toggleCurriculum(item: Curriculum) {
+    try {
+      await setCurriculumActive(item.id, !item.isActive)
+      setCurricula(current => current.map(row => row.id === item.id ? { ...row, isActive: !row.isActive } : row))
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update curriculum status.') }
+  }
+
+  function editCourse(item: Course) {
+    setEditingCourseId(item.id)
+    setUf({ code: item.code, name: item.name, creditUnits: String(item.creditUnits), description: item.description ?? '', courseType: item.courseType ?? '' })
+  }
+
+  async function toggleCourse(item: Course) {
+    try {
+      await setCourseActive(item.id, !item.isActive)
+      setCourses(current => current.map(row => row.id === item.id ? { ...row, isActive: !row.isActive } : row))
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update course status.') }
   }
 
   async function saveMapping(e: React.FormEvent) {
@@ -304,6 +355,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).length === 0 && <tr><td colSpan={7}>No programmes are saved under this authority yet.</td></tr>}
         </tbody></table></div>
       </section>
+      <section className="catalogue-board" aria-label="Curriculum register">
+        <h3>Curriculum register</h3>
+        <div className="table-wrap"><table><thead><tr><th>Programme</th><th>Curriculum</th><th>Version</th><th>Effective from</th><th>Effective to</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+          {authorityCurricula.map(item => <tr key={item.id}><td>{programmes.find(p => p.id === item.programmeId)?.code ?? '—'}</td><td>{item.title}</td><td>{item.version}</td><td>{item.effectiveFrom}</td><td>{item.effectiveTo ?? '—'}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCurriculum(item)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCurriculum(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+          {authorityCurricula.length === 0 && <tr><td colSpan={7}>No curricula configured under this authority.</td></tr>}
+        </tbody></table></div>
+      </section>
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
         <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => { setTab('full'); setCf(current => ({ ...current, type: 'FullProgramme' })) }}>Full Programmes</button>
         <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => { setTab('short'); setCf(current => ({ ...current, type: 'ShortCourse' })) }}>Short Courses</button>
@@ -328,7 +386,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <option value="FullProgramme">Full Programme</option>
                 <option value="ShortCourse">Short Course</option>
               </select>
-              <button type="submit" disabled={saving}>Add curriculum</button>
+              <button type="submit" disabled={saving}>{editingCurriculumId ? 'Save curriculum' : 'Add curriculum'}</button>{editingCurriculumId && <button type="button" className="secondary-button" onClick={() => { setEditingCurriculumId(null); setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' }) }}>Cancel edit</button>}
             </form>
 
             <form className="student-form" onSubmit={saveCourse}>
@@ -342,8 +400,12 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <input placeholder="Course type" value={uf.courseType} onChange={e => setUf({ ...uf, courseType: e.target.value })} />
               </div>
               <input placeholder="Description (optional)" value={uf.description} onChange={e => setUf({ ...uf, description: e.target.value })} />
-              <button type="submit" disabled={saving}>Add course</button>
+              <button type="submit" disabled={saving}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
             </form>
+            <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+              {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses are available under this authority.</td></tr>}
+            </tbody></table></div>
           </div>
 
           <div className="form-row">
