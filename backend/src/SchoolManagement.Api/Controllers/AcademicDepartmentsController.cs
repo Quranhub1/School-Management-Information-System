@@ -50,6 +50,9 @@ public sealed class AcademicDepartmentsController(SchoolManagementDbContext db) 
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name)) return BadRequest(new { message = "Department code and name are required." });
         if (!await db.Faculties.AnyAsync(x => x.Id == request.FacultyId && x.IsActive, ct)) return BadRequest(new { message = "The selected faculty does not exist or is inactive." });
         if (await db.Departments.AnyAsync(x => x.Id != id && x.Code == code, ct)) return Conflict(new { message = $"Department code '{code}' already exists." });
+        if (department.FacultyId != request.FacultyId &&
+            await db.Programmes.AnyAsync(x => x.DepartmentId == id, ct))
+            return Conflict(new { message = "This department is linked to programmes. Reassign those programmes explicitly before moving the department to another faculty." });
         department.FacultyId = request.FacultyId;
         department.Code = code;
         department.Name = name;
