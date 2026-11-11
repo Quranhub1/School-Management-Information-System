@@ -78,21 +78,29 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     {
         var curriculum = await db.Curricula.AsNoTracking()
             .Where(x => x.Id == curriculumId)
-            .Join(db.Programmes.AsNoTracking(), x => x.ProgrammeId, p => p.Id,
-                (x, p) => new { Curriculum = x, Authority = ResolveAuthority(p.Regulator) })
+            .Join(db.Programmes.AsNoTracking(), x => x.ProgrammeId, p => p.Id, (x, p) => new { Curriculum = x, Programme = p })
+            .Join(db.AcademicAuthorities.AsNoTracking(), x => x.Programme.Regulator, authority => authority.Code,
+                (x, authority) => new { x.Curriculum, x.Programme, Authority = authority.Code, AuthorityIsActive = authority.IsActive })
             .SingleOrDefaultAsync(ct);
         if (curriculum is null)
-            return NotFound(new { message = "The selected curriculum or its programme does not exist." });
+            return NotFound(new { message = "The selected curriculum, programme or registered academic authority does not exist." });
+        if (!curriculum.AuthorityIsActive)
+            return Conflict(new { message = "The programme's academic authority is inactive. Activate it before changing curriculum mappings." });
+        if (!curriculum.Programme.IsActive || curriculum.Programme.IsReferenceOnly)
+            return Conflict(new { message = "Only active, verified programmes can receive curriculum course mappings." });
+        if (!curriculum.Curriculum.IsActive)
+            return Conflict(new { message = "Activate the curriculum before changing its course mappings." });
 
-        if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId, ct))
-            return NotFound(new { message = "The selected course does not exist." });
+        if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId && x.IsActive, ct))
+            return NotFound(new { message = "The selected active course does not exist." });
 
         var otherAuthority = await (
             from mapping in db.CurriculumCourses.AsNoTracking()
             join existingCurriculum in db.Curricula.AsNoTracking() on mapping.CurriculumId equals existingCurriculum.Id
             join programme in db.Programmes.AsNoTracking() on existingCurriculum.ProgrammeId equals programme.Id
+            join authority in db.AcademicAuthorities.AsNoTracking() on programme.Regulator equals authority.Code
             where mapping.CourseId == request.CourseId && mapping.CurriculumId != curriculumId
-            select programme.Regulator)
+            select authority.Code)
             .ToListAsync(ct);
 
         if (otherAuthority.Any(regulator => !string.Equals(
@@ -109,12 +117,4 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     }
 
     public sealed record SetActiveRequest(bool IsActive);
-
-    private static string ResolveAuthority(string? regulator)
-    {
-        var value = (regulator ?? string.Empty).Trim();
-        if (value.Contains("UHPAB", StringComparison.OrdinalIgnoreCase)) return "UHPAB";
-        if (value.Contains("UVTAB", StringComparison.OrdinalIgnoreCase)) return "UVTAB";
-        return "School-based";
-    }
 }
