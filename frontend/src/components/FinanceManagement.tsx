@@ -39,7 +39,7 @@ const statusFor = (balance: number, billed = 0, paid = 0) => {
   return { label: 'Outstanding', tone: 'danger' }
 }
 
-const money = (value: number, currency = "UGX") => formatCurrency(Number(value) || 0, currency)
+const money = (value: number, currency: string = "UGX") => formatCurrency(Number(value) || 0, currency)
 
 export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } = {}) {
   const isAssistantAccountant = getSession()?.roles?.includes('AssistantAccountant') ?? false
