@@ -15,6 +15,9 @@ public sealed class ProgrammeRepository(SchoolManagementDbContext db) : IProgram
 
     public Task<bool> CodeExistsAsync(string code, Guid? excludingId = null, CancellationToken cancellationToken = default) =>
         db.Programmes.AnyAsync(x => x.Code == code && (!excludingId.HasValue || x.Id != excludingId.Value), cancellationToken);
+    
+    public Task<bool> DepartmentIsActiveAsync(Guid departmentId, CancellationToken cancellationToken = default) =>
+        db.Departments.AnyAsync(x => x.Id == departmentId && x.IsActive, cancellationToken);
 
     public Task AddAsync(Programme programme, CancellationToken cancellationToken = default) =>
         db.Programmes.AddAsync(programme, cancellationToken).AsTask();

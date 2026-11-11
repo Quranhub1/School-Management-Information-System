@@ -41,3 +41,9 @@ export async function createStream(input: CreateStreamRequest) {
   const created = await request<unknown>('/api/streams', { method: 'POST', body: JSON.stringify(data) })
   return parseApiResponse(streamResponseSchema, created, 'created stream') as Stream
 }
+
+export interface UpdateStreamRequest { code: string; name?: string; isActive: boolean }
+export async function updateStream(id: string, input: UpdateStreamRequest) {
+  if (!id.trim() || !input.code.trim()) throw new Error('Stream ID and code are required.')
+  await request<void>(`/api/streams/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+}

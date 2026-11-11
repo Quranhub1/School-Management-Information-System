@@ -40,8 +40,28 @@ public sealed class AcademicClassService(IAcademicClassRepository classes)
     {
         var existing = await classes.GetByIdAsync(request.Id, ct);
         if (existing is null) return (false, "Class not found.");
-        if (await classes.CodeExistsAsync(existing.ProgrammeId, existing.AcademicPeriodId, request.Code.Trim(), request.Id, ct))
+        var code = request.Code.Trim();
+        if (string.IsNullOrWhiteSpace(code)) return (false, "Class code is required.");
+        if (request.YearOfStudy < 1) return (false, "Year of study must be at least 1.");
+        if (request.MaxEnrolment is < 1) return (false, "Maximum enrolment must be greater than zero.");
+        if (await classes.CodeExistsAsync(existing.ProgrammeId, existing.AcademicPeriodId, code, request.Id, ct))
             return (false, "A class with this code already exists.");
+        existing.Code = code;
+        existing.Name = request.Name?.Trim();
+        existing.YearOfStudy = request.YearOfStudy;
+        existing.MaxEnrolment = request.MaxEnrolment;
+        existing.Status = request.Status;
+        await classes.SaveChangesAsync(ct);
+        return (true, null);
+    }
+
+    public async Task<(bool Success, string? Error)> SetStatusAsync(Guid id, ClassStatus status, CancellationToken ct = default)
+    {
+        if (!Enum.IsDefined(status)) return (false, "The selected class status is invalid.");
+        var existing = await classes.GetByIdAsync(id, ct);
+        if (existing is null) return (false, "Class not found.");
+        existing.Status = status;
+        await classes.SaveChangesAsync(ct);
         return (true, null);
     }
 }

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { getStudentAcademicSummaries, getStudentTranscript } from '../api/academicRecords'
 import { ExaminationManagement } from './ExaminationManagement'
-import { createProgramme, getProgrammes, setProgrammeActive, type Programme } from '../api/programmes'
+import { AcademicCalendarManagement } from './AcademicCalendarManagement'
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
 
 interface AcademicManagementProps {
@@ -10,35 +10,15 @@ interface AcademicManagementProps {
   readOnly?: boolean
 }
 
-type AcademicView = 'records' | 'programmes' | 'examinations'
+type AcademicView = 'records' | 'examinations' | 'calendar'
 
 export function AcademicManagement({ canManage = false, readOnly = false }: AcademicManagementProps) {
   const [view, setView] = useState<AcademicView>('records')
   const [studentId, setStudentId] = useState('')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [summaries, setSummaries] = useState<AcademicResultSummary[]>([])
-  const [programmes, setProgrammes] = useState<Programme[]>([])
   const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [programmeForm, setProgrammeForm] = useState({
-    departmentId: '', code: '', name: '', award: '', awardTitle: '', durationYears: '2',
-    studyMode: 'Full-time', deliveryType: 'Academic', regulator: '', approvalReference: '', approvalDate: '',
-  })
-
-  useEffect(() => {
-    if (canManage) void loadProgrammes()
-  }, [canManage])
-
-  async function loadProgrammes() {
-    try {
-      setError('')
-      setProgrammes(await getProgrammes())
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Unable to load programmes.')
-    }
-  }
-
   async function loadRecords(event: FormEvent) {
     event.preventDefault()
     if ((!canManage && !readOnly) || !studentId.trim()) return
@@ -61,43 +41,6 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
     }
   }
 
-  async function saveProgramme(event: FormEvent) {
-    event.preventDefault()
-    setSaving(true)
-    setError('')
-    try {
-      await createProgramme({
-        departmentId: programmeForm.departmentId.trim(),
-        code: programmeForm.code.trim(),
-        name: programmeForm.name.trim(),
-        award: programmeForm.award.trim(),
-        awardTitle: programmeForm.awardTitle.trim() || undefined,
-        durationYears: Number(programmeForm.durationYears),
-        studyMode: programmeForm.studyMode,
-        deliveryType: programmeForm.deliveryType,
-        regulator: programmeForm.regulator.trim() || undefined,
-        approvalReference: programmeForm.approvalReference.trim() || undefined,
-        approvalDate: programmeForm.approvalDate || undefined,
-      })
-      setProgrammeForm({ ...programmeForm, code: '', name: '', award: '', awardTitle: '', regulator: '', approvalReference: '', approvalDate: '' })
-      await loadProgrammes()
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Unable to create programme.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function toggleProgramme(programme: Programme) {
-    try {
-      setError('')
-      await setProgrammeActive(programme.id, !programme.isActive)
-      setProgrammes((items) => items.map((item) => item.id === programme.id ? { ...item, isActive: !item.isActive } : item))
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Unable to update programme.')
-    }
-  }
-
   if (!canManage && !readOnly) {
     return <section className="panel"><h3>Academic Management</h3><p className="empty">Your role does not have academic-management access.</p></section>
   }
@@ -105,19 +48,21 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
   return (
     <section className="academic-workspace" aria-label="Academic management workspace">
       <div className="panel-heading">
-        <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : 'Programme management'}</h2></div>
-        <span>{view === 'records' ? `${transcript.length} course results` : `${programmes.length} programmes`}</span>
+        <div><p className="eyebrow">Academic Management</p><h2>{readOnly ? 'Student academic records · Read-only' : view === 'records' ? 'Student academic records' : view === 'calendar' ? 'Academic calendar' : 'Examinations & Results'}</h2></div>
+        <span>{view === 'records' ? `${transcript.length} course results` : view === 'calendar' ? 'Calendar settings' : 'Assessment plans'}</span>
       </div>
 
       <div className="form-row" role="tablist" aria-label="Academic management views">
         <button type="button" aria-selected={view === 'records'} onClick={() => setView('records')}>Academic Records</button>
-        {!readOnly && <button type="button" aria-selected={view === 'programmes'} onClick={() => setView('programmes')}>Programmes</button>}
         {!readOnly && <button type="button" aria-selected={view === 'examinations'} onClick={() => setView('examinations')}>Examinations & Results</button>}
+        {!readOnly && <button type="button" aria-selected={view === 'calendar'} onClick={() => setView('calendar')}>Academic Calendar</button>}
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
 
-      {view === 'examinations' ? (
+      {view === 'calendar' ? (
+        <AcademicCalendarManagement />
+      ) : view === 'examinations' ? (
         <div className="academic-examinations-workspace"><ExaminationManagement canManage={canManage} /></div>
       ) : view === 'records' ? (
         <>
@@ -143,19 +88,7 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
             </table>
           </div>
         </>
-      ) : (
-        <>
-          <form className="student-form" onSubmit={saveProgramme}>
-            <div className="form-row"><input required value={programmeForm.departmentId} onChange={(e) => setProgrammeForm({ ...programmeForm, departmentId: e.target.value })} placeholder="Department UUID" /><input required value={programmeForm.code} onChange={(e) => setProgrammeForm({ ...programmeForm, code: e.target.value })} placeholder="Programme code" /></div>
-            <div className="form-row"><input required value={programmeForm.name} onChange={(e) => setProgrammeForm({ ...programmeForm, name: e.target.value })} placeholder="Programme name" /><input required value={programmeForm.award} onChange={(e) => setProgrammeForm({ ...programmeForm, award: e.target.value })} placeholder="Award" /></div>
-            <div className="form-row"><input value={programmeForm.awardTitle} onChange={(e) => setProgrammeForm({ ...programmeForm, awardTitle: e.target.value })} placeholder="Award title (optional)" /><input type="number" min="1" value={programmeForm.durationYears} onChange={(e) => setProgrammeForm({ ...programmeForm, durationYears: e.target.value })} placeholder="Duration" /></div>
-            <div className="form-row"><select value={programmeForm.studyMode} onChange={(e) => setProgrammeForm({ ...programmeForm, studyMode: e.target.value })}><option>Full-time</option><option>Part-time</option><option>Evening</option><option>Weekend</option></select><select value={programmeForm.deliveryType} onChange={(e) => setProgrammeForm({ ...programmeForm, deliveryType: e.target.value })}><option>Academic</option><option>CBET</option><option>Blended</option><option>Practical</option></select><button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Add programme'}</button></div>
-          </form>
-          <div className="table-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Award</th><th>Duration</th><th>Mode</th><th>Delivery</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody>{programmes.length === 0 ? <tr><td colSpan={8} className="empty">No programmes configured.</td></tr> : programmes.map((programme) => <tr key={programme.id}><td>{programme.code}</td><td>{programme.name}</td><td>{programme.award}</td><td>{programme.durationYears} {programme.durationUnit}</td><td>{programme.studyMode}</td><td>{programme.deliveryType}</td><td>{programme.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => void toggleProgramme(programme)}>{programme.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}</tbody>
-          </table></div>
-        </>
-      )}
+      ) : null}
     </section>
   )
 }
