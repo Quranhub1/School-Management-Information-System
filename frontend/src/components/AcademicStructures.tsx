@@ -364,7 +364,7 @@ export function AcademicStructures({ canManage }: AcademicStructuresProps) {
               </div>
               <div className="classes-register__field">
                 <label htmlFor="class-editor-period">Academic period <span aria-hidden="true">*</span></label>
-                <select id="class-editor-period" required value={classForm.periodId} onChange={e => setClassForm({ ...classForm, periodId: e.target.value })}>
+                <select id="class-editor-period" required disabled={Boolean(editingClassId)} value={classForm.periodId} onChange={e => setClassForm({ ...classForm, periodId: e.target.value })}>
                   <option value="">Select period</option>
                   {periods.filter(period => period.isActive).map(period => <option key={period.id} value={period.id}>{period.name}</option>)}
                 </select>
