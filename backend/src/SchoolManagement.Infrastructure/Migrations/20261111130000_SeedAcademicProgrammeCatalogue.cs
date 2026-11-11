@@ -15,7 +15,7 @@ public partial class SeedAcademicProgrammeCatalogue : Migration
         // Existing programme rows are retained. Stop with a clear message if legacy duplicate codes
         // prevent the unique key required by the catalogue instead of deleting or rewriting records.
         migrationBuilder.Sql(@"
-            DO $
+            DO $check$
             BEGIN
                 IF EXISTS (
                     SELECT 1 FROM ""Programmes""
@@ -24,7 +24,7 @@ public partial class SeedAcademicProgrammeCatalogue : Migration
                 ) THEN
                     RAISE EXCEPTION 'Cannot create the unique programme-code index: duplicate codes already exist in Programmes. Resolve duplicates after reviewing their curriculum and student references, then retry this migration.';
                 END IF;
-            END $;");
+            END $check$;");
 
         migrationBuilder.CreateIndex(name: "IX_Programmes_Code", table: "Programmes", column: "Code", unique: true);
         migrationBuilder.Sql(@"
