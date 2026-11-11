@@ -12,13 +12,14 @@ Current implementation:
 - Academic authorities and programmes are loaded through the database APIs introduced in the programme-catalogue migration.
 - The screen supports authority creation, editing and activation/deactivation.
 - Programme records support create, edit and activation/deactivation.
-- Curricula and courses can be listed and created.
-- Curriculum-course mappings can be listed and added.
+- Departments, courses and curricula can be created, edited and activated/deactivated through the Curriculum & Courses workspace.
+- Programme creation/editing now uses a database-backed department selector instead of a free-text department UUID.
+- Curriculum-course mappings can be listed, added and edited (year, semester and core/elective flag); mappings are not hard-deleted.
 - Authority separation is enforced when adding a course to another authority's curriculum.
 
 Remaining work:
-- Add safe edit/archive operations for curricula, courses and curriculum-course mappings.
-- Make department management available from the screen and replace any free-text or UUID entry with database-backed selectors.
+- Add faculty creation/editing if the institution needs to configure faculties; the current department workflow selects from existing active faculty records.
+- Add explicit audit history for department, course, curriculum and mapping changes.
 - Review curriculum version/effective-date rules and protect curricula already referenced by registrations, results or transcripts.
 - Ensure the catalogue screen is the single programme-management entry point; remove the legacy duplicate programme editor from Academic Management after confirming no workflow depends on it.
 
@@ -37,8 +38,7 @@ Defects and gaps identified:
 - The class status endpoint previously returned HTTP 204 without changing the database. This branch now persists class status changes.
 - Class update service previously returned success without saving any changes. This branch now persists class code, name, year, capacity and status.
 - The Classes screen now exposes Edit, Close and Reopen actions.
-- Stream and subject edit/activation controls are now exposed in the Classes/Streams/Subjects screen. Capacity is intentionally not presented as editable until the persisted stream model supports it.
-- Course and curriculum APIs still need safe edit/archive operations and corresponding UI.
+- Stream and subject edit/activation controls are exposed in the Classes/Streams/Subjects screen. Capacity is intentionally not presented as editable until the persisted stream model supports it.
 - Academic year and period updates validate date containment, unique period names/sequences and non-overlapping periods. A current period cannot be deactivated until another period is selected; only one current period is maintained globally.
 
 ### 3. Academic Calendar
@@ -117,4 +117,4 @@ Remaining work:
 
 ## Current branch scope
 
-This branch is intentionally stacked on the database-driven catalogue branch. It now contains the first Academic Structures and Calendar maintenance slice: loading academic years/periods, calendar create/edit/activation/current selection, persisted class edits/status changes, and stream/subject edit/activation controls. It does not claim that all academic screens are complete yet; course/curriculum CRUD, enrolment/progression, assessment configuration and timetable history remain planned work.
+This branch is intentionally stacked on the database-driven catalogue branch. It now includes academic year/period management, class/stream/subject maintenance, department/course/curriculum maintenance, and editable curriculum-course mappings. It does not claim that all academic screens are complete yet; faculty setup, enrolment/progression, assessment configuration, result corrections and timetable history remain planned work.
