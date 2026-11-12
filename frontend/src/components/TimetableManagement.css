@@ -134,138 +134,69 @@
 }
 
 
-/* Keep timetable actions visually separate when the global workspace button
-   rules are applied. Buttons must not shrink into wrapped, touching controls. */
-.timetable-screen .timetable-actions,
-.timetable-screen .timetable-form-footer,
-.timetable-screen .timetable-template-controls,
-.timetable-screen .timetable-class-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: 10px;
-  row-gap: 8px;
-  min-width: 0;
-}
-.timetable-screen .timetable-actions > .timetable-action,
-.timetable-screen .timetable-form-footer > .timetable-action,
-.timetable-screen .timetable-template-controls > .timetable-action,
-.timetable-screen .timetable-class-actions > .timetable-action {
-  margin: 0;
-}
-.timetable-screen .timetable-actions {
-  justify-content: flex-end;
-}
-.timetable-screen .timetable-view-switch {
-  display: inline-flex;
-  flex: 0 0 auto;
-  gap: 4px;
-}
-.timetable-screen .timetable-document-print-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-@media (max-width: 1000px) {
-  .timetable-screen .timetable-actions {
-    justify-content: flex-start;
-  }
-}
-@media (max-width: 560px) {
-  .timetable-screen .timetable-actions,
-  .timetable-screen .timetable-form-footer,
-  .timetable-screen .timetable-template-controls,
-  .timetable-screen .timetable-class-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .timetable-screen .timetable-action {
-    max-width: 100%;
-  }
-}
-
-
-/* Header actions: readable, consistently sized controls with clear separation. */
+/* Timetable header actions: keep all three labels fully inside their buttons. */
 .timetable-screen .timetable-hero {
   align-items: flex-start;
+  flex-wrap: wrap;
 }
+
+.timetable-screen .timetable-hero > div:first-child {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
 .timetable-screen .timetable-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  flex: 1 1 620px;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  flex: 1 1 100%;
   width: 100%;
   min-width: 0;
-  gap: 10px;
+  gap: 12px;
   align-items: stretch;
   justify-content: stretch;
 }
+
 .timetable-screen .timetable-actions > .timetable-action {
+  box-sizing: border-box;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-width: 0;
-  min-height: 44px;
-  padding: 10px 14px;
+  min-height: 46px;
   margin: 0;
+  padding: 11px 20px;
+  gap: 9px;
   white-space: nowrap;
-  line-height: 1.2;
+  line-height: 1.25;
   flex: none;
+  overflow: visible;
 }
+
 .timetable-screen .timetable-actions > .timetable-action.primary {
   min-width: 0;
-  padding-inline: 14px;
+  padding-inline: 20px;
   background: #176b45;
   border-color: #176b45;
   color: #fff;
 }
+
 .timetable-screen .timetable-actions > .timetable-action.primary:hover {
   background: #105538;
   border-color: #105538;
 }
+
+.timetable-screen .timetable-actions > .timetable-action svg {
+  flex: 0 0 16px;
+}
+
 @media (max-width: 700px) {
   .timetable-screen .timetable-actions {
-    grid-template-columns: 1fr;
-    flex-basis: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
   }
+
   .timetable-screen .timetable-actions > .timetable-action {
     justify-content: center;
   }
-}
-
-
-/* Header actions: give each primary control a readable, consistent hit area. */
-.timetable-screen .timetable-hero { align-items: flex-start; }
-.timetable-screen .timetable-actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  flex: 1 1 620px;
-  width: 100%;
-  min-width: 0;
-  gap: 10px;
-  align-items: stretch;
-}
-.timetable-screen .timetable-actions > .timetable-action {
-  display: inline-flex;
-  width: 100%;
-  min-width: 0;
-  min-height: 44px;
-  padding: 10px 14px;
-  margin: 0;
-  white-space: nowrap;
-  line-height: 1.2;
-  flex: none;
-}
-.timetable-screen .timetable-actions > .timetable-action.primary {
-  min-width: 0;
-  padding-inline: 14px;
-  background: #176b45;
-  border-color: #176b45;
-  color: #fff;
-}
-.timetable-screen .timetable-actions > .timetable-action.primary:hover {
-  background: #105538;
-  border-color: #105538;
-}
-@media (max-width: 700px) {
-  .timetable-screen .timetable-actions { grid-template-columns: 1fr; flex-basis: 100%; }
-  .timetable-screen .timetable-actions > .timetable-action { justify-content: center; }
 }
