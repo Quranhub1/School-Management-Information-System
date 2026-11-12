@@ -18,7 +18,7 @@ import './FinanceManagement.css'
 
 type FinanceTab = 'overview' | 'student-accounts' | 'collections' | 'fees' | 'accounting' | 'allowances' | 'reports'
 
-type Payment = {
+export type Payment = {
   id?: string
   receiptNumber?: string
   amount: number
