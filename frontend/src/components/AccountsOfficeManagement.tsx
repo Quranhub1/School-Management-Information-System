@@ -1,5 +1,5 @@
 import React, { useEffect, useState, type FormEvent } from 'react'
-import type { Invoice } from '../api/finance'
+import type { Invoice, StaffAdvance, InvoiceFeeItem as ApiInvoiceFeeItem } from '../api/finance'
 import { formatPersonName } from '../utils/personName'
 import { getAccessToken } from '../api/auth'
 import { getInvoices, recordPayment, getPayments, issueCreditNote, getCreditNotes, addInvoiceNote, getInvoiceNotes, requestStaffAdvance, approveStaffAdvance, recoverStaffAdvance, getStaffAdvances, getInvoiceFeeItems } from '../api/finance'
@@ -26,12 +26,12 @@ type FeeBreakdownRow = {
 type InvoiceFeeItem = {
   id: string
   feeType: string
-  name: string
+  name?: string
   amount: number
-  paidAmount: number
-  balance: number
+  paidAmount?: number
+  balance?: number
   currency: string
-  status: string
+  status?: string
 }
 
 type PaymentHistoryRow = {
@@ -66,12 +66,21 @@ type StaffAdvanceRow = {
   id: string
   staffMemberId: string
   amount: number
-  currency: string
   reason: string
   status: string
   requestedAt: string
   approvedBy?: string
 }
+
+const toStaffAdvanceRows = (rows: StaffAdvance[]): StaffAdvanceRow[] =>
+  rows.map(row => ({
+    id: row.id,
+    staffMemberId: row.staffMemberId,
+    amount: row.amount,
+    reason: row.reason,
+    status: row.status,
+    requestedAt: row.createdAt,
+  }))
 
 const MOCK_ACADEMIC_YEARS: AcademicYear[] = [
   { id: '2025/2026', name: '2025/2026', startDate: '2025-09-01', endDate: '2026-08-31', isCurrent: true, isActive: true },
@@ -363,7 +372,7 @@ export function AccountsOfficeManagement() {
           setPayrollDetailData(data[0])
           try {
             const adv = await getStaffAdvances(data[0].staffMemberId)
-            if (!cancelled) setPayrollDetailAdvances(adv)
+            if (!cancelled) setPayrollDetailAdvances(toStaffAdvanceRows(adv))
           } catch {
             if (!cancelled) setPayrollDetailAdvances([])
           }
@@ -405,7 +414,7 @@ export function AccountsOfficeManagement() {
           setPaymentHistory(filtered)
           setCreditNotes(creditNotesData)
           setInvoiceNotes(notes)
-          setInvoiceFeeItems(feeItems)
+          setInvoiceFeeItems(feeItems.map((item: ApiInvoiceFeeItem) => ({ ...item, name: item.description ?? item.feeType, currency: invoice.currency })))
         }
       } catch {
         if (!cancelled) {
@@ -455,7 +464,7 @@ export function AccountsOfficeManagement() {
       setAdvancesLoading(true)
       try {
         const data = await getStaffAdvances()
-        if (!cancelled) setAdvances(data)
+        if (!cancelled) setAdvances(toStaffAdvanceRows(data))
       } catch {
         if (!cancelled) setAdvances([])
       } finally {
@@ -626,7 +635,7 @@ export function AccountsOfficeManagement() {
       setAdvanceAmount('')
       setAdvanceReason('')
       const data = await getStaffAdvances()
-      setAdvances(data)
+      setAdvances(toStaffAdvanceRows(data))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to request advance.')
     }
@@ -637,7 +646,7 @@ export function AccountsOfficeManagement() {
     try {
       await approveStaffAdvance(advanceId, 'Accounts Office', true)
       const data = await getStaffAdvances()
-      setAdvances(data)
+      setAdvances(toStaffAdvanceRows(data))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to approve advance.')
     } finally {
@@ -655,7 +664,7 @@ export function AccountsOfficeManagement() {
       }
       await recoverStaffAdvance(advanceId, currentPayroll.netPay)
       const data = await getStaffAdvances()
-      setAdvances(data)
+      setAdvances(toStaffAdvanceRows(data))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to recover advance.')
     } finally {
@@ -860,11 +869,11 @@ export function AccountsOfficeManagement() {
                                  <tr key={item.id}>
                                    <td><strong>{idx === 0 ? inv.feeType : ''}</strong></td>
                                    <td>UGX {item.amount.toLocaleString()}</td>
-                                   <td style={{ color: '#059669' }}>UGX {item.paidAmount.toLocaleString()}</td>
-                                   <td style={{ color: item.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {item.balance.toLocaleString()}</td>
+                                   <td style={{ color: '#059669' }}>UGX {item.paidAmount === undefined ? '—' : item.paidAmount.toLocaleString()}</td>
+                                   <td style={{ color: item.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{item.balance === undefined ? '—' : 'UGX ' + item.balance.toLocaleString()}</td>
                                    <td>
                                      <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: statusColor, color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
-                                       {getStatusLabel(item.balance, item.paidAmount)}
+                                       {item.balance === undefined || item.paidAmount === undefined ? 'Invoice-level balance' : getStatusLabel(item.balance, item.paidAmount)}
                                      </span>
                                    </td>
                                    <td>
