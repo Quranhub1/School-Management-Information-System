@@ -72,7 +72,7 @@ services:
       - ./superset_config.py:/app/pythonpath/superset_config.py:ro
     command: >-
       gunicorn
-      --bind 0.0.0.0:8088
+      --bind 127.0.0.1:8088
       --workers ${SUPERSET_WORKERS:-3}
       --timeout 120
       --limit-request-line 0
