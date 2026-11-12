@@ -15,7 +15,6 @@ public sealed class AuthController(AuthService auth, IConfiguration configuratio
 {
     [AllowAnonymous]
     [EnableRateLimiting("auth-login")]
-    [ValidateAntiForgeryToken]
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
     {
