@@ -870,7 +870,7 @@ export function AccountsOfficeManagement() {
                                    <td><strong>{idx === 0 ? inv.feeType : ''}</strong></td>
                                    <td>UGX {item.amount.toLocaleString()}</td>
                                    <td style={{ color: '#059669' }}>UGX {item.paidAmount === undefined ? '—' : item.paidAmount.toLocaleString()}</td>
-                                   <td style={{ color: item.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{item.balance === undefined ? '—' : 'UGX ' + item.balance.toLocaleString()}</td>
+                                   <td style={{ color: item.balance !== undefined && item.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{item.balance === undefined ? '—' : 'UGX ' + item.balance.toLocaleString()}</td>
                                    <td>
                                      <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: statusColor, color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
                                        {item.balance === undefined || item.paidAmount === undefined ? 'Invoice-level balance' : getStatusLabel(item.balance, item.paidAmount)}
