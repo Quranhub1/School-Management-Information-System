@@ -4,7 +4,7 @@
 .timetable-hero h2{margin:0;font-size:clamp(1.35rem,2.2vw,1.8rem);letter-spacing:-.025em;color:#172033}
 .timetable-hero p:not(.timetable-eyebrow){margin:6px 0 0;color:#5d6675;font-size:.86rem}
 .timetable-actions,.timetable-form-footer{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-.timetable-action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 13px;border:1px solid #c8ced8;border-radius:4px;background:#fff;color:#273247;font-size:.82rem;font-weight:600;font-family:inherit;cursor:pointer}
+.timetable-action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 20px;border:1px solid #c8ced8;border-radius:4px;background:#fff;color:#273247;font-size:.82rem;font-weight:600;font-family:inherit;cursor:pointer}
 .timetable-action svg{width:16px;height:16px}
 .timetable-action:hover{background:#f2f4f7}
 .timetable-action.primary{background:#176b45;border-color:#176b45;color:#fff}
