@@ -110,7 +110,7 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
     channel?.addEventListener('message', handleBroadcast)
 
     // The institution feed is deliberately live: it is refreshed frequently and on focus/visibility.
-    const refreshTimer = window.setInterval(() => { void refreshInstitution() }, 5000)
+    const refreshTimer = window.setInterval(() => { void refreshInstitution() }, 30000)
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') void refreshInstitution()

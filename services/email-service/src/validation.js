@@ -19,7 +19,7 @@ export const receiptEmailSchema = z.object({
   sender: senderSchema,
   recipient: z.string().trim().email().max(254),
   institutionName: z.string().trim().min(1).max(200),
-  institutionEmail: z.string().trim().max(254).optional().default(""),
+  institutionEmail: z.string().trim().email().max(254).optional().default(""),
   receipt: z.object({
     studentName: z.string().trim().min(1).max(200),
     studentNumber: z.string().trim().min(1).max(80),
@@ -44,5 +44,10 @@ export function constantTimeApiKeyMatch(provided, expected) {
   if (typeof provided !== "string" || typeof expected !== "string" || !expected) return false;
   const left = Buffer.from(provided, "utf8");
   const right = Buffer.from(expected, "utf8");
-  return left.length === right.length && timingSafeEqual(left, right);
+  const len = Math.max(left.length, right.length);
+  const paddedLeft = Buffer.alloc(len, 0);
+  const paddedRight = Buffer.alloc(len, 0);
+  left.copy(paddedLeft);
+  right.copy(paddedRight);
+  return timingSafeEqual(paddedLeft, paddedRight);
 }

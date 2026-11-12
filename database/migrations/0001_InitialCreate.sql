@@ -48,7 +48,7 @@ CREATE TABLE institutions (
 CREATE TABLE campuses (
     id uuid PRIMARY KEY,
     institution_id uuid NOT NULL REFERENCES institutions(id) ON DELETE CASCADE,
-    code varchar(50) NOT NULL,
+    code varchar(50) NOT NULL UNIQUE,
     name varchar(200) NOT NULL,
     address text,
     district varchar(120),
@@ -257,7 +257,7 @@ CREATE TABLE course_registrations (
     programme_course_id uuid NOT NULL REFERENCES programme_courses(id),
     academic_period_id uuid NOT NULL REFERENCES academic_periods(id),
     registration_date date NOT NULL,
-    attempt_number int NOT NULL DEFAULT 1,
+    attempt_number int NOT NULL DEFAULT 1 CHECK (attempt_number > 0),
     status varchar(40) NOT NULL DEFAULT 'Registered'
 );
 
@@ -364,7 +364,7 @@ CREATE TABLE student_assessments (
     score numeric(8,2),
     grade varchar(10),
     competency_status varchar(40),
-    assessor_id uuid REFERENCES staff_members(id),
+    assessor_id uuid,
     published boolean NOT NULL DEFAULT false,
     published_at_utc timestamptz,
     remarks text,
@@ -535,7 +535,7 @@ CREATE TABLE library_loans (
     issued_at_utc timestamptz NOT NULL DEFAULT now(),
     due_date date NOT NULL,
     returned_at_utc timestamptz,
-    fine_amount numeric(18,2) NOT NULL DEFAULT 0.00,
+    fine_amount numeric(18,2) NOT NULL DEFAULT 0.00 CHECK (fine_amount >= 0),
     status varchar(40) NOT NULL DEFAULT 'Active'
 );
 
@@ -571,5 +571,8 @@ CREATE INDEX ix_admissions_programme ON admissions(programme_id);
 CREATE INDEX ix_student_placements_student ON student_placements(student_id);
 CREATE INDEX ix_academic_periods_year ON academic_periods(academic_year_id);
 CREATE UNIQUE INDEX ix_academic_years_is_current ON academic_years(is_current) WHERE is_current = true;
+
+ALTER TABLE student_assessments ADD CONSTRAINT fk_student_assessments_assessor
+    FOREIGN KEY (assessor_id) REFERENCES staff_members(id);
 
 COMMIT;

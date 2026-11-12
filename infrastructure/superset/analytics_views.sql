@@ -7,107 +7,104 @@ CREATE SCHEMA IF NOT EXISTS analytics;
 
 CREATE OR REPLACE VIEW analytics.student_overview AS
 SELECT
-    s."Id" AS student_id,
-    s."StudentNumber" AS student_number,
-    s."Gender" AS gender,
-    s."Status" AS student_status,
-    s."CreatedAt" AS created_at
-FROM "Students" s;
+    s.id AS student_id,
+    s.student_number AS student_number,
+    s.sex AS gender,
+    s.status AS student_status,
+    s.created_at_utc AS created_at
+FROM students s;
 
 CREATE OR REPLACE VIEW analytics.enrollment_fact AS
 SELECT
-    e."Id" AS enrollment_id,
-    e."StudentId" AS student_id,
-    s."StudentNumber" AS student_number,
-    s."Gender" AS gender,
-    s."Status" AS student_status,
-    e."ProgrammeId" AS programme_id,
-    p."Code" AS programme_code,
-    p."Name" AS programme_name,
-    p."Award" AS award,
-    p."StudyMode" AS study_mode,
-    p."DeliveryType" AS delivery_type,
-    d."Code" AS department_code,
-    d."Name" AS department_name,
-    e."AdmissionDate" AS admission_date,
-    e."Status" AS enrollment_status,
-    e."CurrentYear" AS current_year
-FROM "StudentEnrollments" e
-JOIN "Students" s ON s."Id" = e."StudentId"
-JOIN "Programmes" p ON p."Id" = e."ProgrammeId"
-JOIN "Departments" d ON d."Id" = p."DepartmentId";
+    e.id AS enrollment_id,
+    e.student_id AS student_id,
+    s.student_number AS student_number,
+    s.sex AS gender,
+    s.status AS student_status,
+    e.programme_id AS programme_id,
+    p.code AS programme_code,
+    p.name AS programme_name,
+    p.award_type AS award,
+    p.study_mode AS study_mode,
+    p.delivery_type AS delivery_type,
+    d.code AS department_code,
+    d.name AS department_name,
+    e.admission_date AS admission_date,
+    e.status AS enrollment_status,
+    e.current_year AS current_year
+FROM student_enrollments e
+JOIN students s ON s.id = e.student_id
+JOIN programmes p ON p.id = e.programme_id
+JOIN departments d ON d.id = p.department_id;
 
 CREATE OR REPLACE VIEW analytics.attendance_fact AS
 SELECT
-    sa."Id" AS attendance_id,
-    sa."StudentId" AS student_id,
-    s."StudentNumber" AS student_number,
-    s."Gender" AS gender,
-    s."Status" AS student_status,
-    ast."Id" AS session_id,
-    ast."SessionDate" AS session_date,
-    ast."Status" AS session_status,
-    sa."Status" AS attendance_status,
-    sa."Remarks" AS remarks
-FROM "StudentAttendances" sa
-JOIN "Students" s ON s."Id" = sa."StudentId"
-JOIN "AttendanceSessions" ast ON ast."Id" = sa."AttendanceSessionId";
+    sa.id AS attendance_id,
+    sa.student_id AS student_id,
+    s.student_number AS student_number,
+    s.sex AS gender,
+    s.status AS student_status,
+    ast.id AS session_id,
+    ast.session_date AS session_date,
+    ast.session_type AS session_status,
+    sa.status AS attendance_status,
+    sa.remarks AS remarks
+FROM student_attendances sa
+JOIN students s ON s.id = sa.student_id
+JOIN attendance_sessions ast ON ast.id = sa.attendance_session_id;
 
 CREATE OR REPLACE VIEW analytics.payment_fact AS
 SELECT
-    p."Id" AS payment_id,
-    p."StudentInvoiceId" AS invoice_id,
-    i."StudentId" AS student_id,
-    s."StudentNumber" AS student_number,
-    p."ReceiptNumber" AS receipt_number,
-    p."Amount" AS amount,
-    p."Currency" AS currency,
-    p."PaymentMethod" AS payment_method,
-    p."PaidAt" AS paid_at,
-    i."Amount" AS invoice_amount,
-    i."PaidAmount" AS invoice_paid_amount,
-    i."Status" AS invoice_status
-FROM "Payments" p
-JOIN "StudentInvoices" i ON i."Id" = p."StudentInvoiceId"
-JOIN "Students" s ON s."Id" = i."StudentId";
+    p.id AS payment_id,
+    p.student_invoice_id AS invoice_id,
+    i.student_id AS student_id,
+    s.student_number AS student_number,
+    p.receipt_number AS receipt_number,
+    p.amount AS amount,
+    p.currency AS currency,
+    p.payment_method AS payment_method,
+    p.payment_date AS paid_at,
+    i.amount AS invoice_amount,
+    i.status AS invoice_status
+FROM payments p
+JOIN student_invoices i ON i.id = p.student_invoice_id
+JOIN students s ON s.id = i.student_id;
 
 CREATE OR REPLACE VIEW analytics.invoice_fact AS
 SELECT
-    i."Id" AS invoice_id,
-    i."StudentId" AS student_id,
-    s."StudentNumber" AS student_number,
-    i."InvoiceNumber" AS invoice_number,
-    i."Amount" AS amount,
-    i."PaidAmount" AS paid_amount,
-    GREATEST(i."Amount" - i."PaidAmount", 0) AS outstanding_amount,
-    i."Currency" AS currency,
-    i."Status" AS invoice_status,
-    i."IssuedAt" AS issued_at
-FROM "StudentInvoices" i
-JOIN "Students" s ON s."Id" = i."StudentId";
+    i.id AS invoice_id,
+    i.student_id AS student_id,
+    s.student_number AS student_number,
+    i.invoice_number AS invoice_number,
+    i.amount AS amount,
+    GREATEST(i.amount - i.paid_amount, 0) AS outstanding_amount,
+    i.currency AS currency,
+    i.status AS invoice_status,
+    i.issued_at_utc AS issued_at
+FROM student_invoices i
+JOIN students s ON s.id = i.student_id;
 
 CREATE OR REPLACE VIEW analytics.admission_fact AS
 SELECT
-    a."Id" AS applicant_id,
-    a."ApplicationNumber" AS application_number,
-    a."Gender" AS gender,
-    a."Status" AS application_status,
-    a."AppliedAt" AS applied_at
-FROM "Applicants" a;
+    a.id AS applicant_id,
+    a.application_number AS application_number,
+    a.sex AS gender,
+    a.status AS application_status,
+    a.application_date AS applied_at
+FROM applicants a;
 
 CREATE OR REPLACE VIEW analytics.library_loan_fact AS
 SELECT
-    l."Id" AS loan_id,
-    l."BookId" AS book_id,
-    l."StudentId" AS student_id,
-    s."StudentNumber" AS student_number,
-    l."IssuedAtUtc" AS issued_at_utc,
-    l."DueAtUtc" AS due_at_utc,
-    l."ReturnedAtUtc" AS returned_at_utc,
-    l."FineAmount" AS fine_amount,
-    (l."ReturnedAtUtc" IS NULL) AS is_active,
-    (l."ReturnedAtUtc" IS NULL AND CURRENT_TIMESTAMP > l."DueAtUtc") AS is_overdue
-FROM "LibraryLoans" l
-JOIN "Students" s ON s."Id" = l."StudentId";
+    l.id AS loan_id,
+    l.book_id AS book_id,
+    l.student_id AS student_id,
+    s.student_number AS student_number,
+    l.due_date AS due_date,
+    l.returned_at_utc AS returned_at_utc,
+    l.fine_amount AS fine_amount,
+    (l.returned_at_utc IS NULL) AS is_active,
+    (l.returned_at_utc IS NULL AND CURRENT_TIMESTAMP > l.due_date) AS is_overdue
+FROM library_loans l
+JOIN students s ON s.id = l.student_id;
 
 COMMENT ON SCHEMA analytics IS 'Read-only reporting views for Apache Superset';

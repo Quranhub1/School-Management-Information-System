@@ -2,7 +2,7 @@ import { getAccessToken } from './auth'
 import { readApiErrorMessage } from './errors'
 import { z } from 'zod'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
-import { approveStaffAdvanceRequestSchema, applyFeeStructureRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, feeStructureCreateRequestSchema, invoiceNoteRequestSchema, invoiceResponseSchema, mobileMoneyCreateRequestSchema, recordPaymentRequestSchema, recoverStaffAdvanceRequestSchema, staffAdvanceRequestSchema } from '../schemas'
+import { approveStaffAdvanceRequestSchema, applyFeeStructureRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, feeStructureCreateRequestSchema, invoiceNoteRequestSchema, invoiceResponseSchema, recordPaymentRequestSchema, recoverStaffAdvanceRequestSchema, staffAdvanceRequestSchema } from '../schemas'
 
 export interface Invoice {
   id: string
@@ -221,12 +221,6 @@ export const getBankStatementLines = (reconciliationId: string) =>
 export const closeBankReconciliation = (reconciliationId: string) =>
   request<BankReconciliation>(`/api/finance/administration/bank-reconciliations/${reconciliationId}/close`, { method: 'POST' })
 
-export const getReceivablesAgeing = (asOf?: string, currency = 'UGX') =>
-  request(`/api/finance/reports/receivables-ageing?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
-
-export const getReceivablesReconciliation = (asOf?: string, currency = 'UGX') =>
-  request(`/api/finance/reports/receivables-reconciliation?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
-
 export const getCashBankPosition = (params?: { from?: string; to?: string; currency?: string; campusId?: string; facultyId?: string; departmentId?: string; programmeId?: string }) => {
   const query = new URLSearchParams()
   if (params?.from) query.set('from', params.from)
@@ -287,21 +281,6 @@ export interface MobileMoneyTransaction {
   errorMessage?: string
   reference?: string
   createdAt?: string
-}
-export interface CreateMobileMoneyTransactionRequest {
-  studentId: string
-  studentInvoiceId?: string
-  provider: 'MTN' | 'Airtel'
-  phoneNumber: string
-  amount: number
-  currency?: string
-}
-export async function createMobileMoneyTransaction(body: CreateMobileMoneyTransactionRequest) {
-  const input = parseApiInput(mobileMoneyCreateRequestSchema, body, 'mobile money payment')
-  return request<MobileMoneyTransaction>('/api/finance/mobile-money', { method: 'POST', body: JSON.stringify(input) })
-}
-export async function confirmMobileMoneyTransaction(transactionId: string, externalRef: string) {
-  return request<MobileMoneyTransaction>(`/api/finance/mobile-money/${transactionId}/confirm`, { method: 'POST', body: JSON.stringify({ externalRef }) })
 }
 export async function cancelMobileMoneyTransaction(transactionId: string) {
   return request<void>(`/api/finance/mobile-money/${transactionId}`, { method: 'DELETE' })

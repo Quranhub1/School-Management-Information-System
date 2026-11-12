@@ -23,14 +23,14 @@ public sealed class AddStudentArchiveLifecycle : Migration
         migrationBuilder.AddColumn<string>(
             name: "StatusBeforeArchive", table: "Students", type: "text", nullable: true);
         migrationBuilder.CreateIndex(
-            name: "IX_Students_IsArchived_CampusId_StudentNumber",
+            name: "IX_Students_IsArchived_StudentNumber",
             table: "Students",
-            columns: new[] { "IsArchived", "CampusId", "StudentNumber" });
+            columns: new[] { "IsArchived", "StudentNumber" });
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropIndex(name: "IX_Students_IsArchived_CampusId_StudentNumber", table: "Students");
+        migrationBuilder.DropIndex(name: "IX_Students_IsArchived_StudentNumber", table: "Students");
         migrationBuilder.DropColumn(name: "IsArchived", table: "Students");
         migrationBuilder.DropColumn(name: "ArchivedAt", table: "Students");
         migrationBuilder.DropColumn(name: "ArchivedBy", table: "Students");

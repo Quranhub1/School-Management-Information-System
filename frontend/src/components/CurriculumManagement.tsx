@@ -454,7 +454,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <input required type="date" value={cf.effectiveFrom} onChange={e => setCf({ ...cf, effectiveFrom: e.target.value })} />
                 <input type="date" value={cf.effectiveTo} onChange={e => setCf({ ...cf, effectiveTo: e.target.value })} />
               </div>
-              <select value={cf.type} onChange={e => setCf({ ...cf, type: e.target.value as 'FullProgramme' | 'ShortCourse' })}>
+              <select value={cf.type} onChange={e => {
+                const val = e.target.value
+                setCf({ ...cf, type: val === 'ShortCourse' ? 'ShortCourse' : 'FullProgramme' })
+              }}>
                 <option value="FullProgramme">Full Programme</option>
                 <option value="ShortCourse">Short Course</option>
               </select>
@@ -548,7 +551,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <input required type="date" value={cf.effectiveFrom} onChange={e => setCf({ ...cf, effectiveFrom: e.target.value })} />
                 <input type="date" value={cf.effectiveTo} onChange={e => setCf({ ...cf, effectiveTo: e.target.value })} />
               </div>
-              <select value={cf.type} onChange={e => setCf({ ...cf, type: e.target.value as 'FullProgramme' | 'ShortCourse' })}>
+              <select value={cf.type} onChange={e => {
+                const val = e.target.value
+                setCf({ ...cf, type: val === 'ShortCourse' ? 'ShortCourse' : 'FullProgramme' })
+              }}>
                 <option value="FullProgramme">Full Programme</option>
                 <option value="ShortCourse">Short Course</option>
               </select>

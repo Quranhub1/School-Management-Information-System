@@ -13,6 +13,7 @@ import {
 } from '../api/finance'
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
+import { SYSTEM_CURRENCY } from '../lib/currency'
 
 type PaymentMethod = 'Cash' | 'Mobile Money' | 'Bank' | 'Card'
 
@@ -114,7 +115,7 @@ export function FinanceDashboard() {
       amount: Number(paymentModal.amount),
       receiptNumber: paymentModal.receiptNumber.trim(),
       paymentMethod: paymentModal.paymentMethod,
-      currency: 'UGX',
+      currency: SYSTEM_CURRENCY,
     })
     if (!validation.success) {
       setPaymentErrors(validation.errors)
@@ -324,7 +325,11 @@ export function FinanceDashboard() {
               <h3>Payment by Method</h3>
             </div>
             <div className="summary-grid">
-              {(Object.keys(paymentMethodTotals) as PaymentMethod[]).map(method => (
+              {Object.keys(paymentMethodTotals)
+                .filter((method): method is PaymentMethod =>
+                  method === 'Cash' || method === 'Mobile Money' || method === 'Bank' || method === 'Card'
+                )
+                .map(method => (
                 <div className="summary-card" key={method}>
                   <span>{method}</span>
                   <strong>UGX {(paymentMethodTotals[method] || 0).toLocaleString()}</strong>

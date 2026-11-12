@@ -19,3 +19,16 @@ export const expenseEntrySchema = z.object({
 });
 export type PaymentEntryInput = z.infer<typeof paymentEntrySchema>;
 export type ExpenseEntryInput = z.infer<typeof expenseEntrySchema>;
+export const paymentListSchema = z.array(z.object({
+  id: z.string().optional(),
+  receiptNumber: z.string().optional(),
+  amount: z.number(),
+  paymentMethod: z.string().optional(),
+  paymentSource: z.string().optional(),
+  sourceChannel: z.string().optional(),
+  providerTransactionId: z.string().optional(),
+  reference: z.string().optional(),
+  paidAt: z.string(),
+  studentName: z.string().optional(),
+  invoiceNumber: z.string().optional(),
+}));

@@ -90,6 +90,27 @@ public sealed class BankReconciliationController(BankReconciliationService servi
         }
     }
 
+    [HttpPost("lines/{lineId:guid}/match/{journalEntryId:guid}")]
+    public async Task<IActionResult> MatchLineByJournalEntry(Guid lineId, Guid journalEntryId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await service.MatchLineAsync(lineId, journalEntryId, cancellationToken));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("{reconciliationId:guid}/reconcile")]
     public async Task<IActionResult> Reconcile(Guid reconciliationId, CancellationToken cancellationToken)
     {

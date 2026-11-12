@@ -34,7 +34,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                     x.FeeType,
                     x.Amount,
                     x.PaidAmount,
-                    balance = x.Amount - x.DiscountAmount - x.PaidAmount,
+                    balance = Math.Max(0m, x.Amount - x.DiscountAmount - x.PaidAmount),
                     x.Currency,
                     x.Status,
                     x.IssuedAt
@@ -45,8 +45,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
         var value = studentId.Trim();
         var student = Guid.TryParse(value, out var parsedId)
-            ? await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
-            : await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
+            ? await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.Id == parsedId, cancellationToken)
+            : await db.Students.AsNoTracking().SingleOrDefaultAsync(x => x.StudentNumber == value, cancellationToken);
 
         if (student is null) return NotFound(new { message = "Student was not found." });
         if (!await campusAccess.CanAccessStudentAsync(User, student.Id, cancellationToken)) return Forbid();
@@ -154,7 +154,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 programmeName = fee == null ? invoice.FeeType : fee.Name,
                 amount = invoice.Amount,
                 paidAmount = invoice.PaidAmount,
-                balance = invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount,
+                balance = Math.Max(0m, invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount),
                 invoice.Currency,
                 invoice.Status
             });
@@ -312,7 +312,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 x.DiscountAmount,
                 NetAmount = x.Amount - x.DiscountAmount,
                 x.PaidAmount,
-                balance = x.Amount - x.DiscountAmount - x.PaidAmount,
+                balance = Math.Max(0m, x.Amount - x.DiscountAmount - x.PaidAmount),
                 x.Currency,
                 x.Status,
                 x.IssuedAt,
@@ -538,7 +538,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 var studentNumber = await db.Students.AsNoTracking().Where(x => x.Id == studentId).Select(x => x.StudentNumber).SingleOrDefaultAsync(cancellationToken);
                 if (studentNumber is null) { skipped++; continue; }
 
-                var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{studentNumber}-{Guid.NewGuid():N}"[..Math.Min(50, $"INV-{DateTime.UtcNow:yyyyMMdd}-{studentNumber}-{Guid.NewGuid():N}".Length)];
+                var guid = Guid.NewGuid();
+                var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{studentNumber}-{guid:N}"[..Math.Min(50, $"INV-{DateTime.UtcNow:yyyyMMdd}-{studentNumber}-{guid:N}".Length)];
                 await finance.CreateInvoiceAsync(studentId, fee.Id, invoiceNumber, cancellationToken);
                 applied++;
             }

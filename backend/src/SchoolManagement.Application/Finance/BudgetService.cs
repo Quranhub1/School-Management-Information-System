@@ -19,7 +19,7 @@ public sealed class BudgetService(IBudgetRepository budgets, IFinanceRepository 
         if (request.AcademicYearId == Guid.Empty) throw new ArgumentException("Academic year is required.");
         if (string.IsNullOrWhiteSpace(request.Name)) throw new ArgumentException("Budget name is required.");
         if (request.EndDate < request.StartDate) throw new ArgumentException("Budget end date cannot be before the start date.");
-        if (request.Lines.Count == 0) throw new ArgumentException("At least one budget line is required.");
+        if (request.Lines is null || request.Lines.Count == 0) throw new ArgumentException("At least one budget line is required.");
         if (request.Lines.Any(x => x.AllocatedAmount < 0)) throw new ArgumentException("Budget allocations cannot be negative.");
         if (request.Lines.Select(x => x.AccountId).Distinct().Count() != request.Lines.Count) throw new ArgumentException("Each account may appear only once in a budget.");
 

@@ -8,9 +8,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const receiptTemplate = path.resolve(here, "../templates/payment-receipt.ejs");
 const testTemplate = path.resolve(here, "../templates/test-email.ejs");
 
+const LOCALE = process.env.EMAIL_LOCALE || "en-UG";
+const TIMEZONE = process.env.EMAIL_TIMEZONE || "Africa/Kampala";
+
 function createTransport(smtp) {
   const secure = smtp.secureMode === "SslOnConnect";
-  const requireTLS = smtp.secureMode === "StartTls";
+  const requireTLS = smtp.secureMode === "StartTls" || smtp.secureMode === "StartTlsWhenAvailable";
   return nodemailer.createTransport({
     host: smtp.host,
     port: smtp.port,
@@ -28,8 +31,9 @@ function money(amount, currency) {
   // Use the ISO currency code in receipts instead of locale-specific symbols
   // (for example, en-UG renders UGX as "USh"). This keeps the ledger currency
   // explicit and consistent across HTML receipts, PDFs and email text.
-  const formattedAmount = new Intl.NumberFormat("en-UG", {
-    maximumFractionDigits: currency === "UGX" ? 0 : 2
+  const formattedAmount = new Intl.NumberFormat(LOCALE, {
+    maximumFractionDigits: currency === "UGX" ? 0 : 2,
+    timeZone: TIMEZONE
   }).format(amount);
 
   return `${formattedAmount} ${currency}`;
@@ -62,7 +66,7 @@ export function createReceiptPdf(institutionName, receipt) {
     line("Receipt number", receipt.receiptNumber);
     line("Transaction reference", receipt.transactionReference);
     line("Payment channel", receipt.channel);
-    line("Payment date", new Intl.DateTimeFormat("en-UG", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Kampala" }).format(new Date(receipt.paidAt)));
+    line("Payment date", new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium", timeStyle: "short", timeZone: TIMEZONE }).format(new Date(receipt.paidAt)));
     document.moveDown(0.8);
     document.font("Helvetica").fontSize(10).fillColor("#475569").text("AMOUNT RECEIVED");
     document.font("Helvetica-Bold").fontSize(20).fillColor("#166534").text(money(receipt.amount, receipt.currency));
@@ -85,7 +89,7 @@ export async function renderReceiptHtml(payload) {
     receipt: payload.receipt,
     amountText: money(payload.receipt.amount, payload.receipt.currency),
     balanceText: money(payload.receipt.balance, payload.receipt.currency),
-    paidAtText: new Intl.DateTimeFormat("en-UG", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Kampala" }).format(new Date(payload.receipt.paidAt))
+    paidAtText: new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium", timeStyle: "short", timeZone: TIMEZONE }).format(new Date(payload.receipt.paidAt))
   });
 }
 
@@ -97,7 +101,7 @@ export async function sendReceiptEmail(payload) {
     const result = await transport.sendMail({
       from: { name: payload.sender.name, address: payload.sender.address },
       to: payload.recipient,
-      subject: `Official fee receipt: ${payload.receipt.currency} ${payload.receipt.amount.toLocaleString("en-UG")} [Ref: ${payload.receipt.receiptNumber}]`,
+      subject: `Official fee receipt: ${payload.receipt.currency} ${payload.receipt.amount.toLocaleString(LOCALE)} [Ref: ${payload.receipt.receiptNumber}]`,
       text: `Dear Student / Parent, payment ${payload.receipt.receiptNumber} of ${money(payload.receipt.amount, payload.receipt.currency)} has been credited to ${payload.institutionName}. Remaining balance: ${money(payload.receipt.balance, payload.receipt.currency)}.`,
       html,
       attachments: [{ filename: `Receipt-${payload.receipt.receiptNumber}.pdf`, content: pdf, contentType: "application/pdf" }]

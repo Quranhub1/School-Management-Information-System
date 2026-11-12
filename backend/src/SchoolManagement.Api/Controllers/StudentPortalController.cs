@@ -14,10 +14,10 @@ namespace SchoolManagement.Api.Controllers;
 [Authorize(Policy = AuthorizationPolicies.StudentPortal)]
 public sealed class StudentPortalController(SchoolManagementDbContext db, ProgressionAssessment progression, IPdfReportGenerator pdf) : ControllerBase
 {
-    private Guid GetCurrentUserId()
+    private Guid? GetCurrentUserId()
     {
         var sub = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
-        return Guid.Parse(sub!);
+        return string.IsNullOrWhiteSpace(sub) ? null : Guid.Parse(sub);
     }
 
     [HttpGet("me")]

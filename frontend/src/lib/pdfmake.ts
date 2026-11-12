@@ -97,15 +97,21 @@ function safeFilename(filename: string | undefined, title: string): string {
 
 export function downloadInstitutionalPdf(options: InstitutionalPdfOptions): void {
   ensurePdfMakeReady()
-  pdfMake.createPdf!(buildDefinition(options)).download(safeFilename(options.filename, options.title))
+  const createPdf = pdfMake.createPdf
+  if (!createPdf) throw new Error('pdfMake.createPdf is not available')
+  createPdf(buildDefinition(options)).download(safeFilename(options.filename, options.title))
 }
 
 export function printInstitutionalPdf(options: InstitutionalPdfOptions): void {
   ensurePdfMakeReady()
-  pdfMake.createPdf!(buildDefinition(options)).print()
+  const createPdf = pdfMake.createPdf
+  if (!createPdf) throw new Error('pdfMake.createPdf is not available')
+  createPdf(buildDefinition(options)).print()
 }
 
 export function openInstitutionalPdf(options: InstitutionalPdfOptions): void {
   ensurePdfMakeReady()
-  pdfMake.createPdf!(buildDefinition(options)).open()
+  const createPdf = pdfMake.createPdf
+  if (!createPdf) throw new Error('pdfMake.createPdf is not available')
+  createPdf(buildDefinition(options)).open()
 }

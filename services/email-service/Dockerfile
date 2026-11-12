@@ -1,5 +1,5 @@
 FROM node:22-alpine
-ENV NODE_ENV=production PORT=5100 EMAIL_SERVICE_HOST=0.0.0.0
+ENV NODE_ENV=production PORT=5100 EMAIL_SERVICE_HOST=127.0.0.1
 WORKDIR /app
 COPY services/email-service/package.json ./package.json
 RUN npm install --omit=dev --no-audit --no-fund

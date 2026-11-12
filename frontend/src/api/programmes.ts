@@ -71,9 +71,9 @@ export function createProgramme(input: CreateProgrammeRequest): Promise<Programm
 }
 
 export function updateProgramme(id: string, input: CreateProgrammeRequest): Promise<Programme> {
-  return request<Programme>(`/api/programmes/${id}`, { method: 'PUT', body: JSON.stringify(input) })
+  return request<Programme>(`/api/programmes/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
 }
 
 export function setProgrammeActive(id: string, active: boolean): Promise<void> {
-  return request<void>(`/api/programmes/${id}/active`, { method: 'PATCH', body: JSON.stringify({ active }) })
+  return request<void>(`/api/programmes/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify({ active }) })
 }

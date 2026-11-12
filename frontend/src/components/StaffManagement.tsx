@@ -118,7 +118,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       setError(message)
       notify(message, 'error', editingStaffId ? 'Staff update failed' : 'Staff save failed')
       // A duplicate may be an inactive record, so refresh the complete staff list too.
-      try { setStaff(await listStaff(false)) } catch { /* Preserve the original create error. */ }
+      try { setStaff(await listStaff(false)) } catch (e) { console.error('Staff list refresh failed', e) /* Preserve the original create error. */ }
     }
   }
   function beginEdit(person: StaffMember) {
@@ -216,8 +216,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
 
       {success && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status" aria-live="polite">{success}</div>}
 
-      {error && (
-        <div
+      {error && (        <div
           className="mb-5 flex items-start justify-between gap-3 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-yellow-50 p-4 text-sm text-amber-950 shadow-md shadow-amber-900/5 ring-1 ring-amber-100"
           role="alert"
           aria-live="assertive"

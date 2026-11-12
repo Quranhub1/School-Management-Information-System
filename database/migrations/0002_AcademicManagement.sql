@@ -11,7 +11,7 @@ CREATE TABLE academic_classes (
     name varchar(200),
     year_of_study int NOT NULL DEFAULT 1,
     max_enrolment int,
-    status int NOT NULL DEFAULT 0,
+    status varchar(40) NOT NULL DEFAULT 'Active',
     created_at_utc timestamptz NOT NULL DEFAULT now(),
     UNIQUE (programme_id, academic_period_id, code)
 );
