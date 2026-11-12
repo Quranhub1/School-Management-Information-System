@@ -47,6 +47,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
 
   const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', courseUnitIds: [] as string[] })
   const duplicateErrorPattern = /staff number is already registered|staff member with this staff number already exists/i
+  const isDuplicateStaffNumber = duplicateErrorPattern.test(error)
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
   const [form, setForm] = useState(emptyStaffForm())
 
@@ -73,8 +74,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     const onStaffChanged = (event: Event) => {
       if (!(event instanceof CustomEvent)) return
       const detail = event.detail as { staff?: StaffMember } | undefined
-      if (detail?.staff) {
-        setStaff(current => [detail.staff, ...current.filter(item => item.id !== detail.staff.id)])
+      const changedStaff = detail?.staff
+      if (changedStaff) {
+        setStaff(current => [changedStaff, ...current.filter(item => item.id !== changedStaff.id)])
         return
       }
       void loadStaff()
@@ -220,7 +222,6 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
 
       {success && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status" aria-live="polite">{success}</div>}
 
-      const isDuplicateStaffNumber = /staff number is already registered|staff member with this staff number already exists/i.test(error)
 
       {error && (
         <div
