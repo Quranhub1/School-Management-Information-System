@@ -363,7 +363,7 @@ export function AccountsOfficeManagement() {
           setPayrollDetailData(data[0])
           try {
             const adv = await getStaffAdvances(data[0].staffMemberId)
-            if (!cancelled) setPayrollDetailAdvances(adv)
+            if (!cancelled) setPayrollDetailAdvances(adv.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
           } catch {
             if (!cancelled) setPayrollDetailAdvances([])
           }
@@ -405,7 +405,7 @@ export function AccountsOfficeManagement() {
           setPaymentHistory(filtered)
           setCreditNotes(creditNotesData)
           setInvoiceNotes(notes)
-          setInvoiceFeeItems(feeItems)
+          setInvoiceFeeItems(feeItems.map(f => ({ id: f.id, feeType: f.feeType, name: f.feeType, amount: f.amount, paidAmount: 0, balance: f.amount, currency: 'UGX', status: 'Pending' })))
         }
       } catch {
         if (!cancelled) {
@@ -455,7 +455,7 @@ export function AccountsOfficeManagement() {
       setAdvancesLoading(true)
       try {
         const data = await getStaffAdvances()
-        if (!cancelled) setAdvances(data)
+        if (!cancelled) setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
       } catch {
         if (!cancelled) setAdvances([])
       } finally {
@@ -626,7 +626,7 @@ export function AccountsOfficeManagement() {
       setAdvanceAmount('')
       setAdvanceReason('')
       const data = await getStaffAdvances()
-      setAdvances(data)
+      setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to request advance.')
     }
@@ -637,7 +637,7 @@ export function AccountsOfficeManagement() {
     try {
       await approveStaffAdvance(advanceId, 'Accounts Office', true)
       const data = await getStaffAdvances()
-      setAdvances(data)
+      setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to approve advance.')
     } finally {
@@ -655,7 +655,7 @@ export function AccountsOfficeManagement() {
       }
       await recoverStaffAdvance(advanceId, currentPayroll.netPay)
       const data = await getStaffAdvances()
-      setAdvances(data)
+      setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to recover advance.')
     } finally {

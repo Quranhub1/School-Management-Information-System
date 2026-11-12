@@ -384,7 +384,7 @@ export function FinanceDashboard() {
             <select
               aria-label="Payment method"
               value={paymentModal.paymentMethod}
-              onChange={e => setPaymentModal(prev => prev ? { ...prev, paymentMethod: (['Cash', 'Mobile Money', 'Bank', 'Card'] as PaymentMethod[]).includes(e.target.value) ? e.target.value as PaymentMethod : 'Cash' } : null)}
+              onChange={e => setPaymentModal(prev => prev ? { ...prev, paymentMethod: (['Cash', 'Mobile Money', 'Bank', 'Card'] as PaymentMethod[]).includes(e.target.value as PaymentMethod) ? e.target.value as PaymentMethod : 'Cash' } : null)}
             >
               <option>Cash</option>
               <option>Bank</option>
