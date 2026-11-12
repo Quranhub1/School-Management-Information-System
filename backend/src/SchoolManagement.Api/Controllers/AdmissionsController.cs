@@ -75,7 +75,6 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
 
     [Authorize(Policy = AdmissionsPolicies.Management)]
     [HttpPost("{id:guid}/admit")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Admit(Guid id, AdmitApplicantRequest request, CancellationToken cancellationToken)
     {
         var applicant = await db.Applicants.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
