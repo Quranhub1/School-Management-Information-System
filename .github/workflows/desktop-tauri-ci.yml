@@ -17,6 +17,9 @@ jobs:
   windows:
     name: Windows Installer (${{ matrix.target }})
     runs-on: windows-latest
+    # Keep generated linker inputs (including .natvis files) below Windows path limits.
+    env:
+      CARGO_TARGET_DIR: C:/t
     strategy:
       fail-fast: false
       matrix:
@@ -50,14 +53,14 @@ jobs:
       - name: Verify Windows installer exists
         shell: pwsh
         run: |
-          $files = Get-ChildItem 'frontend/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe'
+          $files = Get-ChildItem 'C:/t/${{ matrix.target }}/release/bundle/nsis/*.exe'
           if ($files.Count -lt 1) { throw 'Tauri did not produce a Windows NSIS installer.' }
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: SMIS-Windows-Installer-${{ matrix.target }}
           path: |
-            frontend/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            C:/t/${{ matrix.target }}/release/bundle/nsis/*.exe
           if-no-files-found: error
           retention-days: 14
 

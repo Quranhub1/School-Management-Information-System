@@ -227,6 +227,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
           role="alert"
           aria-live="assertive"
         >
+          role="alert"
+          aria-live="assertive"
+        >
           <div className="flex min-w-0 items-start gap-3">
             <span
               aria-hidden="true"

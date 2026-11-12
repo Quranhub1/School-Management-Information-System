@@ -89,22 +89,14 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     { field: 'studentName', headerName: 'Student', minWidth: 180 },
     { field: 'studentNumber', headerName: 'Student No.', minWidth: 140 },
     { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
-<<<<<<< HEAD
     { field: 'balance', headerName: 'Balance', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? "UGX") },
-=======
-    { field: 'balance', headerName: 'Balance (' + SYSTEM_CURRENCY + ')', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
->>>>>>> f1247b82 (fix(frontend): resolve critical and major issues across all screens)
     { field: 'status', headerName: 'Status', minWidth: 130 },
   ], [])
 
   const recentPaymentColumns = useMemo<ColDef<Payment>[]>(() => [
     { field: 'receiptNumber', headerName: 'Receipt', minWidth: 150, valueFormatter: params => params.value || '—' },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
-<<<<<<< HEAD
     { field: 'amount', headerName: 'Amount', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? "UGX") },
-=======
-    { field: 'amount', headerName: 'Amount (' + SYSTEM_CURRENCY + ')', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
->>>>>>> f1247b82 (fix(frontend): resolve critical and major issues across all screens)
     { field: 'paymentSource', headerName: 'Payment Source', minWidth: 130, valueFormatter: params => params.value || '—' },
     { field: 'sourceChannel', headerName: 'Channel', minWidth: 150, valueFormatter: params => params.value || '—' },
     { field: 'paidAt', headerName: 'Date', minWidth: 150, valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString(SYSTEM_LOCALE) : '—' },
@@ -123,11 +115,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     { field: 'receiptNumber', headerName: 'Receipt', minWidth: 160, cellRenderer: (params: ICellRendererParams<Payment>) => <div><strong>{params.value || '—'}</strong><small>{params.data?.reference || 'No reference'}</small></div> },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
     { field: 'invoiceNumber', headerName: 'Invoice', minWidth: 150, valueFormatter: params => params.value || '—' },
-<<<<<<< HEAD
     { field: 'amount', headerName: 'Amount', minWidth: 160, cellRenderer: (params: ICellRendererParams<any>) => <strong className="finance-value-success">{money(Number(params.value ?? 0), params.data?.currency ?? "UGX")}</strong> },
-=======
-    { field: 'amount', headerName: 'Amount (' + SYSTEM_CURRENCY + ')', minWidth: 160, cellRenderer: (params: ICellRendererParams<Payment>) => <strong className="finance-value-success">{money(Number(params.value ?? 0))}</strong> },
->>>>>>> f1247b82 (fix(frontend): resolve critical and major issues across all screens)
     { headerName: 'Status', minWidth: 120, sortable: false, filter: false, cellRenderer: () => <span className="finance-status success">Posted</span> },
   ], [])
 
@@ -143,7 +131,6 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   const collectionByDate = useMemo(() => {
     const totals = new Map<string, Map<string, number>>()
     for (const payment of payments) {
-<<<<<<< HEAD
       const paidAt = new Date(payment.paidAt)
       const collectionByDate = useMemo(() => {
         const map = new Map<string, number>()
