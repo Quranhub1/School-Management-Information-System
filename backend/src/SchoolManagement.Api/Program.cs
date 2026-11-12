@@ -171,7 +171,7 @@ app.UseHttpsRedirection();
 app.UseCors();
 app.UseMiddleware<SchoolManagement.Api.Middleware.InputSanitizationMiddleware>();
 app.UseRateLimiter();
-app.UseAntiforgeryTokens();
+app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapHealthChecks("/health").AllowAnonymous();
