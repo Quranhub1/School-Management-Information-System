@@ -259,6 +259,11 @@ export const getCashBankPosition = (params?: { from?: string; to?: string; curre
 }
 
 export async function getInvoiceNotes(invoiceId: string) { return request<InvoiceNote[]>(`/api/finance/invoices/${invoiceId}/notes`) }
+export async function addInvoiceNote(invoiceId: string, note: string, createdBy?: string) {
+  if (!invoiceId.trim()) throw new Error('Invoice ID is required.')
+  const input = parseApiInput(invoiceNoteRequestSchema, { note, createdBy }, 'add invoice note')
+  return request<void>(`/api/finance/invoices/${encodeURIComponent(invoiceId)}/notes`, { method: 'POST', body: JSON.stringify(input) })
+}
 export async function requestStaffAdvance(staffMemberId: string, amount: number, reason: string) { if (!staffMemberId.trim()) throw new Error('Staff member ID is required.'); const input = parseApiInput(staffAdvanceRequestSchema, { amount, reason }, 'request staff advance'); return request<any>(`/api/finance/staff/${encodeURIComponent(staffMemberId)}/advances`, { method: 'POST', body: JSON.stringify(input) }) }
 export async function approveStaffAdvance(advanceId: string, approvedBy: string, approved: boolean) { if (!advanceId.trim()) throw new Error('Staff advance ID is required.'); const input = parseApiInput(approveStaffAdvanceRequestSchema, { approvedBy, approved }, 'approve staff advance'); return request<void>(`/api/finance/staff/advances/${encodeURIComponent(advanceId)}/approve`, { method: 'PATCH', body: JSON.stringify(input) }) }
 export async function recoverStaffAdvance(advanceId: string, amount: number) { if (!advanceId.trim()) throw new Error('Staff advance ID is required.'); const input = parseApiInput(recoverStaffAdvanceRequestSchema, { amount }, 'recover staff advance'); return request<void>(`/api/finance/staff/advances/${encodeURIComponent(advanceId)}/recover`, { method: 'POST', body: JSON.stringify(input) }) }
