@@ -572,6 +572,17 @@ CREATE INDEX ix_student_placements_student ON student_placements(student_id);
 CREATE INDEX ix_academic_periods_year ON academic_periods(academic_year_id);
 CREATE UNIQUE INDEX ix_academic_years_is_current ON academic_years(is_current) WHERE is_current = true;
 
+CREATE INDEX idx_enrollments_student_programme ON student_enrollments(student_id, programme_id);
+CREATE INDEX idx_enrollments_student_status ON student_enrollments(student_id, status);
+CREATE INDEX idx_enrollments_programme_status ON student_enrollments(programme_id, status);
+CREATE INDEX idx_attendance_records_student_status ON attendance_records(student_id, status);
+CREATE INDEX idx_attendance_records_student_date ON attendance_records(student_id, session_date);
+CREATE INDEX idx_attendance_records_student_reg ON attendance_records(student_id, course_registration_id);
+CREATE INDEX idx_student_attendances_student_status ON student_attendances(student_id, status);
+CREATE INDEX idx_student_attendances_session_student ON student_attendances(attendance_session_id, student_id);
+CREATE INDEX idx_course_registrations_student_period ON course_registrations(student_id, academic_period_id);
+CREATE INDEX idx_student_invoices_student_period ON student_invoices(student_id, academic_period_id);
+
 ALTER TABLE student_assessments ADD CONSTRAINT fk_student_assessments_assessor
     FOREIGN KEY (assessor_id) REFERENCES staff_members(id);
 
