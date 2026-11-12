@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { SYSTEM_LOCALE } from '../lib/currency'
 import LoadingSpinner from './LoadingSpinner';
 import {
   getStudentMedicalRecords,
@@ -23,7 +24,7 @@ export function HealthRecordsManagement({ activeSubsection = null }: { activeSub
     else if (activeSubsection === 'medical-records' || activeSubsection === 'student') setTab('student')
   }, [activeSubsection])
 
-  const [form, setForm] = useState({
+    const [form, setForm] = useState({
     recordType: 'ClinicVisit',
     condition: '',
     treatment: '',
@@ -212,7 +213,7 @@ export function HealthRecordsManagement({ activeSubsection = null }: { activeSub
                       <td>{r.treatment || '-'}</td>
                       <td>{r.medication || '-'}</td>
                       <td>{r.attendedBy || '-'}</td>
-                      <td>{new Date(r.visitDate).toLocaleDateString('en-UG')}</td>
+                      <td>{new Date(r.visitDate).toLocaleDateString(SYSTEM_LOCALE)}</td>
                       <td>{r.notes || '-'}</td>
                     </tr>
                   ))
@@ -248,7 +249,7 @@ export function HealthRecordsManagement({ activeSubsection = null }: { activeSub
                     </td>
                     <td>{v.condition || '-'}</td>
                     <td>{v.treatment || '-'}</td>
-                    <td>{new Date(v.visitDate).toLocaleDateString('en-UG')}</td>
+                    <td>{new Date(v.visitDate).toLocaleDateString(SYSTEM_LOCALE)}</td>
                     <td>{v.attendedBy || '-'}</td>
                   </tr>
                 ))

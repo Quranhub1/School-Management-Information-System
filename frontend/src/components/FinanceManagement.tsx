@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { getSession } from '../api/auth'
 import { getDashboard, getOutstandingBalances, getPayments, type FinanceDashboard, type OutstandingBalance } from '../api/finance'
-import { formatCurrency } from '../lib/currency'
+import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
 import { parseApiResponse } from '../lib/validation'
 import { paymentListSchema } from '../schemas/finance.schema'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
@@ -89,17 +89,25 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     { field: 'studentName', headerName: 'Student', minWidth: 180 },
     { field: 'studentNumber', headerName: 'Student No.', minWidth: 140 },
     { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
+<<<<<<< HEAD
     { field: 'balance', headerName: 'Balance', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? "UGX") },
+=======
+    { field: 'balance', headerName: 'Balance (' + SYSTEM_CURRENCY + ')', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
+>>>>>>> f1247b82 (fix(frontend): resolve critical and major issues across all screens)
     { field: 'status', headerName: 'Status', minWidth: 130 },
   ], [])
 
   const recentPaymentColumns = useMemo<ColDef<Payment>[]>(() => [
     { field: 'receiptNumber', headerName: 'Receipt', minWidth: 150, valueFormatter: params => params.value || '—' },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
+<<<<<<< HEAD
     { field: 'amount', headerName: 'Amount', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? "UGX") },
+=======
+    { field: 'amount', headerName: 'Amount (' + SYSTEM_CURRENCY + ')', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
+>>>>>>> f1247b82 (fix(frontend): resolve critical and major issues across all screens)
     { field: 'paymentSource', headerName: 'Payment Source', minWidth: 130, valueFormatter: params => params.value || '—' },
     { field: 'sourceChannel', headerName: 'Channel', minWidth: 150, valueFormatter: params => params.value || '—' },
-    { field: 'paidAt', headerName: 'Date', minWidth: 150, valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('en-UG') : '—' },
+    { field: 'paidAt', headerName: 'Date', minWidth: 150, valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString(SYSTEM_LOCALE) : '—' },
   ], [])
 
   const accountColumns = useMemo<ColDef<OutstandingBalance>[]>(() => [
@@ -111,11 +119,15 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   ], [])
 
   const collectionColumns = useMemo<ColDef<Payment>[]>(() => [
-    { field: 'paidAt', headerName: 'Date', minWidth: 180, valueFormatter: params => params.value ? new Date(params.value).toLocaleString('en-UG') : '—' },
+    { field: 'paidAt', headerName: 'Date', minWidth: 180, valueFormatter: params => params.value ? new Date(params.value).toLocaleString(SYSTEM_LOCALE) : '—' },
     { field: 'receiptNumber', headerName: 'Receipt', minWidth: 160, cellRenderer: (params: ICellRendererParams<Payment>) => <div><strong>{params.value || '—'}</strong><small>{params.data?.reference || 'No reference'}</small></div> },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
     { field: 'invoiceNumber', headerName: 'Invoice', minWidth: 150, valueFormatter: params => params.value || '—' },
+<<<<<<< HEAD
     { field: 'amount', headerName: 'Amount', minWidth: 160, cellRenderer: (params: ICellRendererParams<any>) => <strong className="finance-value-success">{money(Number(params.value ?? 0), params.data?.currency ?? "UGX")}</strong> },
+=======
+    { field: 'amount', headerName: 'Amount (' + SYSTEM_CURRENCY + ')', minWidth: 160, cellRenderer: (params: ICellRendererParams<Payment>) => <strong className="finance-value-success">{money(Number(params.value ?? 0))}</strong> },
+>>>>>>> f1247b82 (fix(frontend): resolve critical and major issues across all screens)
     { headerName: 'Status', minWidth: 120, sortable: false, filter: false, cellRenderer: () => <span className="finance-status success">Posted</span> },
   ], [])
 
@@ -131,22 +143,16 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   const collectionByDate = useMemo(() => {
     const totals = new Map<string, Map<string, number>>()
     for (const payment of payments) {
+<<<<<<< HEAD
       const paidAt = new Date(payment.paidAt)
-      if (Number.isNaN(paidAt.getTime())) continue
-      const dayKey = paidAt.toISOString().slice(0, 10)
-      const currency = (payment.currency || 'UGX').trim().toUpperCase()
-      const dayTotals = totals.get(dayKey) ?? new Map<string, number>()
-      dayTotals.set(currency, (dayTotals.get(currency) ?? 0) + Number(payment.amount || 0))
-      totals.set(dayKey, dayTotals)
-    }
-    const days = [...totals.keys()].sort().slice(-7)
-    const currencies = [...new Set(days.flatMap(day => [...(totals.get(day)?.keys() ?? [])]))].sort()
-    return {
-      labels: days.map(day => new Date(day + 'T00:00:00').toLocaleDateString('en-UG', { month: 'short', day: 'numeric' })),
-      datasets: currencies.map(currency => ({
-        label: 'Collections (' + currency + ')',
-        data: days.map(day => totals.get(day)?.get(currency) ?? 0),
-      })),
+      const collectionByDate = useMemo(() => {
+        const map = new Map<string, number>()
+        for (const payment of payments) {
+          const key = new Date(payment.paidAt).toLocaleDateString(SYSTEM_LOCALE, { month: 'short', day: 'numeric' })
+          map.set(key, (map.get(key) ?? 0) + Number(payment.amount || 0))
+        }
+        return [...map.entries()].slice(-7)
+      }, [payments])
     }
   }, [payments])
 
@@ -187,7 +193,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
       <section className="finance-workspace" aria-label="Read-only finance overview">
         <div className="workspace-header finance-workspace-header">
           <div>
-            <p className="eyebrow">FINANCE & ACCOUNTS · UGX · READ ONLY</p>
+            <p className="eyebrow">FINANCE & ACCOUNTS · ' + SYSTEM_CURRENCY + ' · READ ONLY</p>
             <h2>Financial Oversight</h2>
           </div>
           <div className="page-actions">
@@ -238,9 +244,9 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
 
   return (
     <section className="finance-workspace" aria-label="Finance and accounting workspace">
-      <div className="workspace-header finance-workspace-header">
+        <div className="workspace-header finance-workspace-header">
         <div>
-          <p className="eyebrow">FINANCE & ACCOUNTS · UGX</p>
+          <p className="eyebrow">FINANCE & ACCOUNTS · ' + SYSTEM_CURRENCY + '</p>
           <h2>Finance & Accounting</h2>
           <p>Billing, collections and accounting controls.</p>
         </div>
@@ -253,14 +259,14 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
 
       <div className="finance-tab-strip" role="tablist" aria-label="Finance sections">
         {([
-          ['overview', 'Overview'],
-          ['student-accounts', 'Student Fees & Payments'],
-          ['collections', 'Collections'],
-          ...(isAssistantAccountant ? [] : [['fees', 'Fee Structures'], ['accounting', 'Accounting']] as [FinanceTab, string][]),
-          ['allowances', 'Staff Allowances'],
-          ['reports', 'Reports'],
-        ] as [FinanceTab, string][]).map(([key, label]) => (
-          <button key={key} role="tab" aria-selected={tab === key} className={tab === key ? 'active' : ''} onClick={() => setTab(key)}>{label}</button>
+          { key: 'overview', label: 'Overview' },
+          { key: 'student-accounts', label: 'Student Fees & Payments' },
+          { key: 'collections', label: 'Collections' },
+          ...(isAssistantAccountant ? [] : [{ key: 'fees', label: 'Fee Structures' }, { key: 'accounting', label: 'Accounting' }]),
+          { key: 'allowances', label: 'Staff Allowances' },
+          { key: 'reports', label: 'Reports' },
+        ] as { key: FinanceTab; label: string }[]).map((item) => (
+          <button key={item.key} role="tab" aria-selected={tab === item.key} className={tab === item.key ? 'active' : ''} onClick={() => setTab(item.key)}>{item.label}</button>
         ))}
       </div>
 
@@ -305,7 +311,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
                 <div><span>Open receivables</span><strong className="finance-value-danger">{dashboard?.outstandingCount.toLocaleString() ?? '—'}</strong></div>
                 <div><span>Payment records</span><strong>{dashboard?.paymentCount.toLocaleString() ?? '—'}</strong></div>
                 <div><span>Collection rate</span><strong className="finance-value-success">{collectionRate.toFixed(1)}%</strong></div>
-                <div><span>Currency</span><strong>UGX</strong></div>
+                <div><span>Currency</span><strong>' + SYSTEM_CURRENCY + '</strong></div>
               </div>
               <div className="finance-legend"><span><i className="finance-dot success" />Paid / collected</span><span><i className="finance-dot warning" />Partial</span><span><i className="finance-dot danger" />Outstanding</span></div>
             </section>

@@ -17,7 +17,7 @@ import {
   type ReceivablesAgeingReport,
   type ReceivablesReconciliationReport,
 } from '../api/finance'
-import { formatCurrency } from '../lib/currency'
+import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
 
 const money = (value: number) => formatCurrency(Number(value) || 0)
 
@@ -47,8 +47,8 @@ export function FinanceControlCenter({ onNavigate }: Props) {
     setRefreshing(true)
     const results = await Promise.allSettled([
       getDashboard(),
-      getFinanceReceivablesAgeing(undefined, 'UGX'),
-      getFinanceReceivablesReconciliation(undefined, 'UGX'),
+      getFinanceReceivablesAgeing(undefined, SYSTEM_CURRENCY),
+      getFinanceReceivablesReconciliation(undefined, SYSTEM_CURRENCY),
       getBankReconciliations(),
       getOutstandingBalances(),
       getAccountsOverviewPayments(),
@@ -160,7 +160,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
                 <span className="finance-live-payment-avatar">{payment.studentName?.slice(0, 1).toUpperCase() || 'P'}</span>
                 <span className="finance-live-payment-main">
                   <strong>{payment.studentName || 'Student payment'}</strong>
-                  <small>{payment.receiptNumber || 'Receipt pending'} · {new Date(payment.paidAt).toLocaleString('en-UG')}</small>
+                  <small>{payment.receiptNumber || 'Receipt pending'} · {new Date(payment.paidAt).toLocaleString(SYSTEM_LOCALE)}</small>
                 </span>
                 <strong className="finance-value-success">{money(payment.amount)}</strong>
               </button>

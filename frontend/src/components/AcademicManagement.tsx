@@ -77,14 +77,14 @@ export function AcademicManagement({ canManage = false, readOnly = false }: Acad
             {summaries.map((summary) => (
               <article className="summary-card" key={summary.id}>
                 <span>Semester</span><strong>{summary.semesterId}</strong>
-                <div className="metrics"><span>GPA <b>{summary.gpa.toFixed(2)}</b></span><span>CGPA <b>{summary.cgpa?.toFixed(2) ?? '—'}</b></span></div>
+                <div className="metrics"><span>GPA <b>{summary.gpa?.toFixed(2) ?? '—'}</b></span><span>CGPA <b>{summary.cgpa?.toFixed(2) ?? '—'}</b></span></div>
                 <small>{summary.standing}{summary.isApproved ? ' · Approved' : ' · Pending approval'}</small>
               </article>
             ))}
           </div>
           <div className="table-wrap">
             <table><thead><tr><th>Course</th><th>Title</th><th>Units</th><th>Score</th><th>Grade</th><th>Point</th><th>Status</th></tr></thead>
-              <tbody>{transcript.length === 0 ? <tr><td colSpan={7} className="empty">No academic records loaded.</td></tr> : transcript.map((entry) => <tr key={entry.id}><td>{entry.courseCode}</td><td>{entry.courseTitle}</td><td>{entry.creditUnits}</td><td>{entry.score}</td><td>{entry.grade ?? '—'}</td><td>{entry.gradePoint.toFixed(2)}</td><td>{entry.isPass ? 'Pass' : 'Fail'}</td></tr>)}</tbody>
+              <tbody>{transcript.length === 0 ? <tr><td colSpan={7} className="empty">No academic records loaded.</td></tr> : transcript.map((entry) => <tr key={entry.id}><td>{entry.courseCode}</td><td>{entry.courseTitle}</td><td>{entry.creditUnits}</td><td>{entry.score}</td><td>{entry.grade ?? '—'}</td><td>{entry.gradePoint?.toFixed(2) ?? '—'}</td><td>{entry.isPass ? 'Pass' : 'Fail'}</td></tr>)}</tbody>
             </table>
           </div>
         </>

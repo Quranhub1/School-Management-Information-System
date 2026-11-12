@@ -105,8 +105,9 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
       await finalizeAssessment(id);
       setNotice('Mark finalized successfully.');
       if (registrationId.trim()) setRegistrationAssessments(await getStudentAssessments(registrationId.trim()));
-    } catch (e) {
+        } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to finalize the mark.');
+      setRegistrationAssessments([]);
     } finally { setBusy(false); }
   }
   async function submitMark(event: FormEvent<HTMLFormElement>) {
@@ -132,10 +133,15 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
         maximumScore: parsedMaximum,
         ...(competencyLevel.trim() ? { competencyLevel: competencyLevel.trim() } : {}),
       });
+        setRegistrationAssessments([]);
       setNotice('Mark saved to the school database.');
       setScore('');
       setCompetencyLevel('');
-      setRegistrationAssessments(await getStudentAssessments(registrationId.trim()));
+      try {
+        setRegistrationAssessments(await getStudentAssessments(registrationId.trim()));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Unable to refresh marks.');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save the mark.');
     } finally { setBusy(false); }
@@ -165,12 +171,12 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
 
       <div className="library-workspace-tabs" role="tablist" aria-label="Examination sections">
         {([
-          ['sessions', 'Assessment plans'],
-          ['marks', 'Marks entry'],
-          ['report-cards', 'Student transcript'],
-          ['reports', 'Assessment report'],
-        ] as [View, string][]).map(([key, label]) => (
-          <button key={key} type="button" role="tab" aria-selected={view === key} className={view === key ? 'active' : ''} onClick={() => setView(key)}>{label}</button>
+          { key: 'sessions', label: 'Assessment plans' },
+          { key: 'marks', label: 'Marks entry' },
+          { key: 'report-cards', label: 'Student transcript' },
+          { key: 'reports', label: 'Assessment report' },
+        ] as { key: View; label: string }[]).map((item) => (
+          <button key={item.key} type="button" role="tab" aria-selected={view === item.key} className={view === item.key ? 'active' : ''} onClick={() => setView(item.key)}>{item.label}</button>
         ))}
       </div>
 

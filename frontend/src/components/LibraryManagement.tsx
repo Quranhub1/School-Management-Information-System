@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { validateForm } from '../lib/validation';
 import { libraryBookCreateRequestSchema, libraryLoanCreateRequestSchema } from '../schemas';
+import { SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency';
 import {
   addBook,
   getBookBarcode,
@@ -27,7 +28,7 @@ const dateInput = () => {
 };
 
 const formatDate = (value: string) =>
-  new Intl.DateTimeFormat('en-UG', {
+  new Intl.DateTimeFormat(SYSTEM_LOCALE, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -101,8 +102,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     [loans],
   );
   const visibleLoans = tab === 'overdue' ? overdue : loans;
-  const selectedMember = members.find(
-    (m) => m.studentNumber === issue.memberNumber,
+  const selectedMember = useMemo(
+    () => members.find((m) => m.studentNumber === issue.memberNumber),
+    [members, issue.memberNumber],
   );
 
   async function submitProgrammeRequirement(e: FormEvent) {
@@ -118,7 +120,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         programmeId: requirementForm.programmeId,
         name: requirementForm.name.trim(),
         amount: Number(requirementForm.amount),
-        currency: 'UGX',
+        currency: SYSTEM_CURRENCY,
       });
       setRequirements(await listProgrammeRequirements());
       setRequirementForm(current => ({ ...current, amount: '' }));
@@ -225,11 +227,10 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         {canManage && (
           <button
             className="library-primary"
-            onClick={() =>
-              document
-                .getElementById('library-add-book')
-                ?.scrollIntoView({ behavior: 'smooth' })
-            }
+            onClick={() => {
+              const el = document.getElementById('library-add-book')
+              if (el) el.scrollIntoView({ behavior: 'smooth' })
+            }}
           >
             ＋ Add New Book
           </button>
@@ -297,7 +298,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           <table><thead><tr><th>Programme</th><th>Requirement</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>{requirements.map(item => <tr key={item.id}>
               <td>{programmes.find(p => p.id === item.programmeId)?.name ?? item.programmeId}</td>
-              <td>{item.name}</td><td>{item.currency} {item.totalAmount.toLocaleString('en-UG')}</td>
+              <td>{item.name}</td>              <td>{item.currency} {item.totalAmount.toLocaleString(SYSTEM_LOCALE)}</td>
               <td>{item.isActive ? 'Active' : 'Inactive'}</td>
               <td><button type="button" className="secondary-button" disabled={busy} onClick={() => void toggleProgrammeRequirement(item.id, !item.isActive)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td>
             </tr>)}
@@ -465,11 +466,10 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           )}
           <button
             className="quick-search"
-            onClick={() =>
-              document
-                .getElementById('library-books')
-                ?.scrollIntoView({ behavior: 'smooth' })
-            }
+            onClick={() => {
+              const el = document.getElementById('library-books')
+              if (el) el.scrollIntoView({ behavior: 'smooth' })
+            }}
           >
             ▣ Browse Book Catalogue
           </button>
