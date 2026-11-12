@@ -1,12 +1,13 @@
 import { formatPersonName } from '../utils/personName'
 import { showConfirmDialog } from '../utils/confirmDialog'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 import { notify } from './GlobalNotifications'
 import { validateForm } from '../lib/validation'
 import { staffCreateRequestSchema } from '../schemas'
+import { SYSTEM_CURRENCY } from '../lib/currency'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
 
@@ -27,7 +28,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [payroll, setPayroll] = useState<PayrollRecord[]>([])
   const [payrollMonth, setPayrollMonth] = useState(new Date().getMonth() + 1)
   const [payrollYear, setPayrollYear] = useState(new Date().getFullYear())
-  const selectedPayroll = payroll.filter(p => p.month === payrollMonth && p.year === payrollYear)
+  const selectedPayroll = useMemo(() => payroll.filter(p => p.month === payrollMonth && p.year === payrollYear), [payroll, payrollMonth, payrollYear])
 
   useEffect(() => {
     const nextTab: Tab | undefined = activeSubsection === 'staff' ? 'staff'
@@ -45,12 +46,13 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
 
   const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', courseUnitIds: [] as string[] })
-  const [form, setForm] = useState(emptyStaffForm)
+  const duplicateErrorPattern = /staff number is already registered|staff member with this staff number already exists/i
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
 
   useEffect(() => {
     const handler = (event: Event) => {
-      const detail = (event as CustomEvent<{ module?: string; subsection?: string }>).detail
+      if (!(event instanceof CustomEvent)) return
+      const detail = event.detail as { module?: string; subsection?: string } | undefined
       if (detail?.module !== 'staff' || !detail.subsection) return
       const nextTab: Tab | undefined = detail.subsection === 'staff' ? 'staff'
         : detail.subsection === 'payroll' ? 'payroll'
@@ -68,9 +70,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     void listStaffCourseUnits().then(setCourseUnits).catch(e => setError(e instanceof Error ? e.message : 'Unable to load course units.'))
     void listStaffDepartments().then(setDepartments).catch(e => setError(e instanceof Error ? e.message : 'Unable to load departments.'))
     const onStaffChanged = (event: Event) => {
-      const detail = (event as CustomEvent<{ staff?: StaffMember }>).detail
+      if (!(event instanceof CustomEvent)) return
+      const detail = event.detail as { staff?: StaffMember } | undefined
       if (detail?.staff) {
-        setStaff(current => [detail.staff!, ...current.filter(item => item.id !== detail.staff!.id)])
+        setStaff(current => [detail.staff, ...current.filter(item => item.id !== detail.staff.id)])
         return
       }
       void loadStaff()
@@ -216,8 +219,14 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
 
       {success && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status" aria-live="polite">{success}</div>}
 
-      {error && (        <div
+      const isDuplicateStaffNumber = /staff number is already registered|staff member with this staff number already exists/i.test(error)
+
+      {error && (
+        <div
           className="mb-5 flex items-start justify-between gap-3 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-yellow-50 p-4 text-sm text-amber-950 shadow-md shadow-amber-900/5 ring-1 ring-amber-100"
+          role="alert"
+          aria-live="assertive"
+        >
           role="alert"
           aria-live="assertive"
         >
@@ -231,12 +240,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
             <div className="min-w-0 pt-0.5">
               <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700">Warning</p>
               <h3 className="mb-1 text-base font-semibold tracking-tight text-slate-900">
-                {/staff number is already registered|staff member with this staff number already exists/i.test(error)
-                  ? 'Staff member already registered'
-                  : 'Action requires attention'}
+                {isDuplicateStaffNumber ? 'Staff member already registered' : 'Action requires attention'}
               </h3>
               <p className="max-w-3xl leading-6 text-slate-700">
-                {/staff number is already registered|staff member with this staff number already exists/i.test(error)
+                {isDuplicateStaffNumber
                   ? 'This staff number is already in use. Please check the existing staff record or enter a unique staff number.'
                   : error}
               </p>
@@ -343,7 +350,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         <div className="payroll-workspace">
           <div className="summary-grid" style={{ marginBottom: 22 }}>
             <div className="summary-card"><span>Payroll period</span><strong>{new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} {payrollYear}</strong></div>
-            <div className="summary-card"><span>Total net payroll</span><strong>UGX {selectedPayroll.reduce((sum, p) => sum + p.netPay, 0).toLocaleString()}</strong></div>
+            <div className="summary-card"><span>Total net payroll</span><strong>{SYSTEM_CURRENCY} {selectedPayroll.reduce((sum, p) => sum + p.netPay, 0).toLocaleString()}</strong></div>
             <div className="summary-card"><span>Paid records</span><strong style={{ color: '#047857' }}>{selectedPayroll.filter(p => p.status === 'Paid').length}</strong></div>
             <div className="summary-card"><span>Pending records</span><strong style={{ color: '#b45309' }}>{selectedPayroll.filter(p => p.status === 'Pending').length}</strong></div>
           </div>
@@ -378,13 +385,13 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   const cellStyle: React.CSSProperties = { padding: '14px', borderBottom: '1px solid #e8edf3', verticalAlign: 'middle', color: '#334155', whiteSpace: 'nowrap' }
                   return (
                     <tr key={p.id} style={{ background: index % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                      <td style={cellStyle}><span style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 8px', borderRadius: 4, background: '#e2e8f0', color: '#0f172a', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, fontWeight: 800, letterSpacing: '0.02em' }}>PAY-{String(index + 1).padStart(4, '0')}</span></td>
+                      <td style={cellStyle}><span style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 8px', borderRadius: 4, background: '#e2e8f0', color: '#0f172a', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, fontWeight: 800, letterSpacing: '0.02em' }}>PAY-{p.id}</span></td>
                       <td style={{ ...cellStyle, whiteSpace: 'normal', minWidth: 180 }}><strong style={{ display: 'block', color: '#0f172a', fontSize: 13 }}>{person ? `${formatPersonName(person.lastName, person.firstName)}` : 'Staff record unavailable'}</strong>{person && <span style={{ display: 'block', marginTop: 4, color: '#64748b', fontSize: 11 }}>Staff No. {person.staffNumber}</span>}</td>
                       <td style={cellStyle}><span style={{ color: '#0f172a', fontWeight: 600 }}>{new Date(2000, p.month - 1).toLocaleString('default', { month: 'short' })}</span><span style={{ color: '#64748b' }}> {p.year}</span></td>
-                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>UGX {p.basicSalary.toLocaleString()}</td>
-                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>UGX {p.allowances.toLocaleString()}</td>
-                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>UGX {p.deductions.toLocaleString()}</td>
-                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}><strong style={{ color: '#0f172a', fontSize: 13 }}>UGX {p.netPay.toLocaleString()}</strong></td>
+                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.basicSalary.toLocaleString()}</td>
+                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.allowances.toLocaleString()}</td>
+                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{SYSTEM_CURRENCY} {p.deductions.toLocaleString()}</td>
+                      <td style={{ ...cellStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}><strong style={{ color: '#0f172a', fontSize: 13 }}>{SYSTEM_CURRENCY} {p.netPay.toLocaleString()}</strong></td>
                       <td style={{ ...cellStyle, textAlign: 'center' }}><span className="badge" style={{ display: 'inline-block', minWidth: 72, padding: '5px 9px', borderRadius: 4, background: p.status === 'Paid' ? '#d1fae5' : '#fef3c7', color: p.status === 'Paid' ? '#065f46' : '#92400e', fontSize: 11, fontWeight: 800, textAlign: 'center' }}>{p.status}</span></td>
                       {canProcessPayroll && <td style={{ ...cellStyle, textAlign: 'center' }}>{p.status === 'Pending' && <button className="secondary-button" onClick={() => void handleMarkPaid(p.id)} style={{ whiteSpace: 'nowrap', borderRadius: 4, padding: '7px 11px', fontWeight: 700 }}>Mark Paid</button>}{p.status === 'Paid' && <span style={{ color: '#047857', fontSize: 12, fontWeight: 700 }}>Completed</span>}</td>}
                     </tr>

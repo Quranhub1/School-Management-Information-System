@@ -1,8 +1,9 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { getFinanceStudents, getFeeStructures, getInvoices, getPayments, getStudentFinanceProfile, getStudentFinancialStatement, recordPayment, type FinanceStudentRegisterEntry, type FeeStructure, type Invoice, type StudentFinanceProfile, type StudentFinancialStatement } from '../api/finance'
-import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
+import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
+import type { Payment } from './FinanceManagement'
 
 type Props = { initialSearch?: string }
 const money = (n: number) => formatCurrency(n)
@@ -22,7 +23,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([])
   const [registerLoading, setRegisterLoading] = useState(true)
   const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [payments, setPayments] = useState<any[]>([])
+  const [payments, setPayments] = useState<Payment[]>([])
   const [statement, setStatement] = useState<StudentFinancialStatement | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -276,7 +277,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
         <div className="panel-heading"><div><p className="eyebrow">INVOICE LINE ITEMS</p><h3>Detailed Financial Statement</h3></div></div>
         {statement?.invoices.map(invoice => <div className="finance-invoice-detail" key={invoice.id}>
           <div className="panel-heading">
-            <div><strong>{invoice.invoiceNumber} · {invoice.feeType}</strong><small>{new Date(invoice.issuedAt).toLocaleDateString('en-UG')}</small></div>
+            <div><strong>{invoice.invoiceNumber} · {invoice.feeType}</strong><small>{new Date(invoice.issuedAt).toLocaleDateString(SYSTEM_LOCALE)}</small></div>
             <div><strong>{money(invoice.netAmount)}</strong><small>Paid {money(invoice.paidAmount)} · Balance {money(invoice.balance)}</small></div>
           </div>
           <div className="table-wrap"><table><thead><tr><th>Code</th><th>Fee item</th><th>Amount billed</th></tr></thead><tbody>
@@ -289,11 +290,11 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
       </div>
       <div className="panel finance-inner-panel">
         <div className="panel-heading"><div><p className="eyebrow">TRANSACTIONS</p><h3>Payment History</h3></div></div>
-        {payments.length===0 ? <p className="empty">No payments recorded for this student.</p> : <div className="finance-timeline">{payments.map((p,i)=><div className="finance-timeline-item" key={p.id ?? i}><span className="finance-timeline-dot" /><div><strong>{money(Number(p.amount))}</strong><span>{p.paymentSource}{p.sourceChannel && ' · ' + p.sourceChannel} · Receipt {p.receiptNumber}</span><small>{new Date(p.paidAt).toLocaleString('en-UG')}{p.reference ? ' · Ref: ' + p.reference : ''}</small></div></div>)}</div>}
+        {payments.length===0 ? <p className="empty">No payments recorded for this student.</p> : <div className="finance-timeline">{payments.map((p,i)=><div className="finance-timeline-item" key={p.id ?? i}><span className="finance-timeline-dot" /><div><strong>{money(Number(p.amount))}</strong><span>{p.paymentSource}{p.sourceChannel && ' · ' + p.sourceChannel} · Receipt {p.receiptNumber}</span><small>{new Date(p.paidAt).toLocaleString(SYSTEM_LOCALE)}{p.reference ? ' · Ref: ' + p.reference : ''}</small></div></div>)}</div>}
       </div>
       <div className="panel finance-inner-panel">
         <div className="panel-heading"><div><p className="eyebrow">INVOICES</p><h3>Billable Items</h3></div></div>
-        <div className="table-wrap"><table><thead><tr><th>Invoice</th><th>Fee Type</th><th>Issued</th><th>Billed</th><th>Paid</th><th>Balance</th><th /></tr></thead><tbody>{invoices.map(inv=><tr key={inv.id}><td><strong>{inv.invoiceNumber}</strong></td><td>{inv.feeType}</td><td>{new Date(inv.issuedAt).toLocaleDateString('en-UG')}</td><td>{money(inv.amount)}</td><td style={{color:'#059669'}}>{money(inv.paidAmount)}</td><td style={{fontWeight:800}}>{money(inv.balance)}</td><td>{inv.balance>0 && <button className="secondary-button" onClick={()=>setPaymentInvoice(inv)}>Record Payment</button>}</td></tr>)}</tbody></table></div>
+        <div className="table-wrap"><table><thead><tr><th>Invoice</th><th>Fee Type</th><th>Issued</th><th>Billed</th><th>Paid</th><th>Balance</th><th /></tr></thead><tbody>{invoices.map(inv=><tr key={inv.id}><td><strong>{inv.invoiceNumber}</strong></td><td>{inv.feeType}</td><td>{new Date(inv.issuedAt).toLocaleDateString(SYSTEM_LOCALE)}</td><td>{money(inv.amount)}</td><td style={{color:'#059669'}}>{money(inv.paidAmount)}</td><td style={{fontWeight:800}}>{money(inv.balance)}</td><td>{inv.balance>0 && <button className="secondary-button" onClick={()=>setPaymentInvoice(inv)}>Record Payment</button>}</td></tr>)}</tbody></table></div>
       </div>
     </>}
     {paymentInvoice && <div className="modal-backdrop"><form className="auth-card" onSubmit={submitPayment}><p className="eyebrow">PAYMENT</p><h3>{paymentInvoice.feeType} · {paymentInvoice.invoiceNumber}</h3><p>Outstanding: {money(paymentInvoice.balance)}</p>{Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={paymentInvoice.balance} step="1" value={paymentAmount} onChange={e=>setPaymentAmount(e.target.value)} placeholder="Amount" required /><input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e=>setReceiptNumber(e.target.value)} placeholder="Receipt number" required /><label>Manual source<select value={sourceChannel} onChange={e=>setSourceChannel(e.target.value)}><option>Cash</option><option>Cheque</option></select></label><input value={reference} onChange={e=>setReference(e.target.value)} placeholder="Manual receipt / cheque reference" /><div className="topbar-actions"><button type="button" className="secondary-button" onClick={()=>setPaymentInvoice(null)}>Cancel</button><button type="submit">Post Payment</button></div></form></div>}

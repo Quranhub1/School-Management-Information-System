@@ -40,8 +40,12 @@ function loadFromStorage(): InstitutionSettings {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
-      const parsed = JSON.parse(stored) as InstitutionSettings
-      if (isValidInstitution(parsed)) return parsed
+      try {
+        const parsed = JSON.parse(stored)
+        if (isValidInstitution(parsed)) return parsed
+      } catch {
+        // Ignore parse errors
+      }
     }
   } catch {
     // Ignore parse errors

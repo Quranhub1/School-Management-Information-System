@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { getSession } from '../api/auth'
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
 import { authorizeStaffAllowance, listStaffAllowances, recordStaffAllowance, type StaffAllowance } from '../api/staffAllowances'
+import { SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
 
 const ALLOWANCE_TYPES = ['Transport', 'Housing', 'Medical', 'Responsibility', 'Acting', 'Communication', 'Airtime', 'Meal', 'Travel', 'Duty', 'Overtime', 'Other']
 
@@ -39,7 +40,7 @@ export function StaffAllowancesWorkspace() {
 
   useEffect(() => {
     void load()
-    const refreshStaff = () => { void listStaff().then(setStaff).catch(() => {}) }
+    const refreshStaff = () => { void listStaff().then(setStaff).catch(e => console.error('Staff refresh failed', e)) }
     window.addEventListener(STAFF_CHANGED_EVENT, refreshStaff)
     return () => window.removeEventListener(STAFF_CHANGED_EVENT, refreshStaff)
   }, [])
@@ -48,16 +49,21 @@ export function StaffAllowancesWorkspace() {
     event.preventDefault()
     setSaving(true); setError(''); setMessage('')
     try {
-      await authorizeStaffAllowance({
-        staffMemberId,
-        allowanceType,
-        amount: Number(amount),
-        effectiveFrom,
-        frequency,
-        currency: 'UGX',
-        reason,
-        reference
-      })
+    const parsedAmount = Number(amount)
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setError('Amount must be a valid positive number.')
+      return
+    }
+    await authorizeStaffAllowance({
+      staffMemberId,
+      allowanceType,
+      amount: parsedAmount,
+      effectiveFrom,
+      frequency,
+      currency: SYSTEM_CURRENCY,
+      reason,
+      reference
+    })
       setAmount(''); setReason(''); setReference('')
       setMessage('Allowance authorized and sent to the recording queue.')
       await load()
@@ -140,7 +146,7 @@ export function StaffAllowancesWorkspace() {
                 <tr key={a.id}>
                   <td><strong>{a.staffName}</strong><br /><small>{a.staffNumber}</small></td>
                   <td>{a.allowanceType}</td>
-                  <td>UGX {a.amount.toLocaleString('en-UG')}</td>
+                  <td>{SYSTEM_CURRENCY} {a.amount.toLocaleString(SYSTEM_LOCALE)}</td>
                   <td>{a.effectiveFrom}</td>
                   <td>{a.frequency}</td>
                   <td>{a.status}</td>

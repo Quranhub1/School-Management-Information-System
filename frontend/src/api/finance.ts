@@ -35,6 +35,31 @@ export interface RecordPaymentRequest {
   currency?: string
 }
 
+export interface InvoiceNote {
+  id: string
+  invoiceId: string
+  note: string
+  createdBy?: string
+  createdAt: string
+}
+
+export interface StaffAdvance {
+  id: string
+  staffMemberId: string
+  amount: number
+  reason: string
+  status: string
+  createdAt: string
+}
+
+export interface InvoiceFeeItem {
+  id: string
+  invoiceId: string
+  feeType: string
+  amount: number
+  description?: string
+}
+
 export interface BudgetLine {
   id: string
   budgetId: string
@@ -233,13 +258,12 @@ export const getCashBankPosition = (params?: { from?: string; to?: string; curre
   return request<CashBankPositionReport>(`/api/finance/reports/cash-bank-position?${query}`)
 }
 
-export async function addInvoiceNote(invoiceId: string, note: string, createdBy?: string) { return request<void>('/api/finance/invoices/' + invoiceId + '/notes', { method: 'POST', body: JSON.stringify({ note, createdBy }) }) }
-export async function getInvoiceNotes(invoiceId: string) { return request<any[]>(`/api/finance/invoices/${invoiceId}/notes`) }
+export async function getInvoiceNotes(invoiceId: string) { return request<InvoiceNote[]>(`/api/finance/invoices/${invoiceId}/notes`) }
 export async function requestStaffAdvance(staffMemberId: string, amount: number, reason: string) { if (!staffMemberId.trim()) throw new Error('Staff member ID is required.'); const input = parseApiInput(staffAdvanceRequestSchema, { amount, reason }, 'request staff advance'); return request<any>(`/api/finance/staff/${encodeURIComponent(staffMemberId)}/advances`, { method: 'POST', body: JSON.stringify(input) }) }
 export async function approveStaffAdvance(advanceId: string, approvedBy: string, approved: boolean) { if (!advanceId.trim()) throw new Error('Staff advance ID is required.'); const input = parseApiInput(approveStaffAdvanceRequestSchema, { approvedBy, approved }, 'approve staff advance'); return request<void>(`/api/finance/staff/advances/${encodeURIComponent(advanceId)}/approve`, { method: 'PATCH', body: JSON.stringify(input) }) }
 export async function recoverStaffAdvance(advanceId: string, amount: number) { if (!advanceId.trim()) throw new Error('Staff advance ID is required.'); const input = parseApiInput(recoverStaffAdvanceRequestSchema, { amount }, 'recover staff advance'); return request<void>(`/api/finance/staff/advances/${encodeURIComponent(advanceId)}/recover`, { method: 'POST', body: JSON.stringify(input) }) }
-export async function getStaffAdvances(staffMemberId?: string) { return request<any[]>(`/api/finance/staff/advances${staffMemberId ? `?staffMemberId=${encodeURIComponent(staffMemberId)}` : ''}`) }
-export async function getInvoiceFeeItems(invoiceId: string) { return request<any[]>(`/api/finance/invoices/${invoiceId}/fee-items`) }
+export async function getStaffAdvances(staffMemberId?: string) { return request<StaffAdvance[]>(`/api/finance/staff/advances${staffMemberId ? `?staffMemberId=${encodeURIComponent(staffMemberId)}` : ''}`) }
+export async function getInvoiceFeeItems(invoiceId: string) { return request<InvoiceFeeItem[]>(`/api/finance/invoices/${invoiceId}/fee-items`) }
 
 export interface OutstandingBalance { studentId: string; studentNumber: string; studentName: string; programmeName: string; amount: number; paidAmount: number; balance: number; currency: string; status: string }
 export async function getOutstandingBalances() { return request<OutstandingBalance[]>('/api/accounts-overview/outstanding') }

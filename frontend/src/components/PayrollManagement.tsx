@@ -3,11 +3,12 @@ import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { AgGridTable } from './AgGridTable';
 import LoadingSpinner from './LoadingSpinner';
 import { listPayroll, markPayrollPaid, updatePayrollAllowances, type PayrollRecord } from '../api/payroll';
+import { SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency';
 import './PayrollManagement.css';
 
-const money = (amount: number) => `UGX ${amount.toLocaleString('en-UG', { maximumFractionDigits: 0 })}`;
+const money = (amount: number) => `${SYSTEM_CURRENCY} ${amount.toLocaleString(SYSTEM_LOCALE, { maximumFractionDigits: 0 })}`;
 const periodLabel = (month: number, year: number) =>
-  new Date(year, month - 1, 1).toLocaleDateString('en-UG', { month: 'short', year: 'numeric' });
+  new Date(year, month - 1, 1).toLocaleDateString(SYSTEM_LOCALE, { month: 'short', year: 'numeric' });
 const payrollCode = (id: string) => `PAY-${id.replace(/-/g, '').toUpperCase()}`;
 
 export function PayrollManagement() {
@@ -50,10 +51,10 @@ export function PayrollManagement() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update allowances.'); }
   }
 
-  const pendingCount = records.filter(record => record.status.toLowerCase() === 'pending').length;
-  const totalNetPay = records.reduce((sum, record) => sum + record.netPay, 0);
-  const totalPaid = records.filter(record => record.status.toLowerCase() === 'paid')
-    .reduce((sum, record) => sum + record.netPay, 0);
+  const pendingCount = useMemo(() => records.filter(record => record.status.toLowerCase() === 'pending').length, [records]);
+  const totalNetPay = useMemo(() => records.reduce((sum, record) => sum + record.netPay, 0), [records]);
+  const totalPaid = useMemo(() => records.filter(record => record.status.toLowerCase() === 'paid')
+    .reduce((sum, record) => sum + record.netPay, 0), [records]);
 
   const columns = useMemo<ColDef<PayrollRecord>[]>(() => [
     { headerName: 'No.', colId: 'rowNumber', width: 76, sortable: false, filter: false, valueGetter: params => params.node?.rowIndex == null ? '' : String(params.node.rowIndex + 1).padStart(2, '0') },
@@ -94,14 +95,14 @@ export function PayrollManagement() {
     {error && <div className="error payroll-error" role="alert">{error}</div>}
 
     {!loading && <div className="payroll-summary" aria-label="Payroll summary">
-      <div className="payroll-stat"><span>Payroll records</span><strong>{records.length.toLocaleString('en-UG')}</strong></div>
-      <div className="payroll-stat"><span>Awaiting payment</span><strong>{pendingCount.toLocaleString('en-UG')}</strong></div>
+      <div className="payroll-stat"><span>Payroll records</span><strong>{records.length.toLocaleString(SYSTEM_LOCALE)}</strong></div>
+      <div className="payroll-stat"><span>Awaiting payment</span><strong>{pendingCount.toLocaleString(SYSTEM_LOCALE)}</strong></div>
       <div className="payroll-stat"><span>Total net payroll</span><strong>{money(totalNetPay)}</strong></div>
       <div className="payroll-stat"><span>Total paid</span><strong>{money(totalPaid)}</strong></div>
     </div>}
 
     {loading ? <div className="payroll-loading"><LoadingSpinner label="Loading payroll…" /></div> : <div className="payroll-table-wrap">
-      <AgGridTable rows={records} columns={columns} height={560} pageSize={25} exportFileName="kshs-payroll" />
+      <AgGridTable rows={records} columns={columns} height={560} pageSize={25} exportFileName="ugx-payroll" />
       {records.length === 0 && <div className="payroll-empty"><strong>No payroll records yet</strong><span>Generate payroll for a month to see staff salary records here.</span></div>}
     </div>}
   </section>;

@@ -72,7 +72,10 @@ export function useStudentRiskQuery() {
 export function useStudent360Query(id: string | null) {
   return useQuery({
     queryKey: modernQueryKeys.student360(id ?? ''),
-    queryFn: () => getStudent360(id!),
+    queryFn: () => {
+      if (!id) throw new Error('Student ID is required')
+      return getStudent360(id)
+    },
     enabled: Boolean(id),
     staleTime: 30_000,
     meta: { persist: false },

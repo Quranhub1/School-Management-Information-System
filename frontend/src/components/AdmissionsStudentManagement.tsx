@@ -50,7 +50,8 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
   // Keep the sidebar's Students > Records destination synchronized with this workspace.
   useEffect(() => {
     const handleSubsectionNavigation = (event: Event) => {
-      const detail = (event as CustomEvent<{ module?: string; subsection?: string }>).detail
+      if (!(event instanceof CustomEvent)) return
+      const detail = event.detail as { module?: string; subsection?: string } | undefined
       if (detail?.module !== 'students' || !detail.subsection) return
       if (detail.subsection === 'records') setSection('biodata')
       else if (detail.subsection === 'registration') setSection('admissions')
@@ -210,7 +211,7 @@ export function AdmissionsStudentManagement({ canManage = false, readOnly = fals
           <section className="panel" aria-label="Student ID card queue">
             <div className="panel-heading">
               <div><p className="eyebrow">STUDENT SERVICES</p><h3>ID Card Queue</h3></div>
-              <label>Card type<select value={cardType} onChange={event => { setCardType(event.target.value as 'campus' | 'library'); setCardQueueNotice('') }}><option value="campus">Campus ID</option><option value="library">Library ID</option></select></label>
+              <label>Card type<select value={cardType} onChange={event => { const val = event.target.value; setCardType(val === 'library' ? 'library' : 'campus'); setCardQueueNotice('') }}><option value="campus">Campus ID</option><option value="library">Library ID</option></select></label>
             </div>
             {cardQueueError && <div className="error" role="alert">{cardQueueError}</div>}
             {cardQueueNotice && <div className="info-banner" role="status">{cardQueueNotice}</div>}
