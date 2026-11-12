@@ -22,6 +22,7 @@ type Payment = {
   id?: string
   receiptNumber?: string
   amount: number
+  currency?: string
   paymentMethod?: string
   paymentSource?: string
   sourceChannel?: string
@@ -40,7 +41,7 @@ const statusFor = (balance: number, billed = 0, paid = 0) => {
   return { label: 'Outstanding', tone: 'danger' }
 }
 
-const money = (value: number) => formatCurrency(Number(value) || 0)
+const money = (value: number, currency: string = "UGX") => formatCurrency(Number(value) || 0, currency)
 
 export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } = {}) {
   const isAssistantAccountant = getSession()?.roles?.includes('AssistantAccountant') ?? false
@@ -88,14 +89,14 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     { field: 'studentName', headerName: 'Student', minWidth: 180 },
     { field: 'studentNumber', headerName: 'Student No.', minWidth: 140 },
     { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
-    { field: 'balance', headerName: 'Balance (UGX)', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
+    { field: 'balance', headerName: 'Balance', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? "UGX") },
     { field: 'status', headerName: 'Status', minWidth: 130 },
   ], [])
 
   const recentPaymentColumns = useMemo<ColDef<Payment>[]>(() => [
     { field: 'receiptNumber', headerName: 'Receipt', minWidth: 150, valueFormatter: params => params.value || '—' },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
-    { field: 'amount', headerName: 'Amount (UGX)', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0)) },
+    { field: 'amount', headerName: 'Amount', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? "UGX") },
     { field: 'paymentSource', headerName: 'Payment Source', minWidth: 130, valueFormatter: params => params.value || '—' },
     { field: 'sourceChannel', headerName: 'Channel', minWidth: 150, valueFormatter: params => params.value || '—' },
     { field: 'paidAt', headerName: 'Date', minWidth: 150, valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString('en-UG') : '—' },
@@ -104,9 +105,9 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   const accountColumns = useMemo<ColDef<OutstandingBalance>[]>(() => [
     { field: 'studentName', headerName: 'Student', minWidth: 190, cellRenderer: (params: ICellRendererParams<OutstandingBalance>) => <div><strong>{params.value}</strong><small>{params.data?.studentNumber}</small></div> },
     { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
-    { field: 'balance', headerName: 'Balance (UGX)', minWidth: 150, cellRenderer: (params: ICellRendererParams<OutstandingBalance>) => { const s = statusFor(Number(params.value ?? 0), params.data?.amount, params.data?.paidAmount); return <strong className={s.tone === 'danger' ? 'finance-value-danger' : 'finance-value-success'}>{money(Number(params.value ?? 0))}</strong> } },
-    { field: 'status', headerName: 'Status', minWidth: 130, cellRenderer: (params: ICellRendererParams<OutstandingBalance>) => { const s = statusFor(Number(params.data?.balance ?? 0), params.data?.amount, params.data?.paidAmount); return <span className={'finance-status ' + s.tone}>{s.label}</span> } },
-    { headerName: 'Collection', minWidth: 170, sortable: false, filter: false, cellRenderer: (params: ICellRendererParams<OutstandingBalance>) => { const amount = Number(params.data?.amount ?? 0); const paid = Number(params.data?.paidAmount ?? 0); const progress = amount > 0 ? Math.min(100, paid / amount * 100) : 0; return <div><div className="finance-row-progress"><span style={{ width: progress + '%' }} /></div><small>{progress.toFixed(0)}% collected</small></div> } },
+    { field: 'balance', headerName: 'Balance', minWidth: 150, cellRenderer: (params: ICellRendererParams<any>) => { const s = statusFor(Number(params.value ?? 0), params.data?.amount, params.data?.paidAmount); return <strong className={s.tone === 'danger' ? 'finance-value-danger' : 'finance-value-success'}>{money(Number(params.value ?? 0), params.data?.currency ?? "UGX")}</strong> } },
+    { field: 'status', headerName: 'Status', minWidth: 130, cellRenderer: (params: ICellRendererParams<any>) => { const s = statusFor(Number(params.data?.balance ?? 0), params.data?.amount, params.data?.paidAmount); return <span className={'finance-status ' + s.tone}>{s.label}</span> } },
+    { headerName: 'Collection', minWidth: 170, sortable: false, filter: false, cellRenderer: (params: ICellRendererParams<any>) => { const amount = Number(params.data?.amount ?? 0); const paid = Number(params.data?.paidAmount ?? 0); const progress = amount > 0 ? Math.min(100, paid / amount * 100) : 0; return <div><div className="finance-row-progress"><span style={{ width: progress + '%' }} /></div><small>{progress.toFixed(0)}% collected</small></div> } },
   ], [])
 
   const collectionColumns = useMemo<ColDef<Payment>[]>(() => [
@@ -114,7 +115,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     { field: 'receiptNumber', headerName: 'Receipt', minWidth: 160, cellRenderer: (params: ICellRendererParams<Payment>) => <div><strong>{params.value || '—'}</strong><small>{params.data?.reference || 'No reference'}</small></div> },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
     { field: 'invoiceNumber', headerName: 'Invoice', minWidth: 150, valueFormatter: params => params.value || '—' },
-    { field: 'amount', headerName: 'Amount (UGX)', minWidth: 160, cellRenderer: (params: ICellRendererParams<Payment>) => <strong className="finance-value-success">{money(Number(params.value ?? 0))}</strong> },
+    { field: 'amount', headerName: 'Amount', minWidth: 160, cellRenderer: (params: ICellRendererParams<any>) => <strong className="finance-value-success">{money(Number(params.value ?? 0), params.data?.currency ?? "UGX")}</strong> },
     { headerName: 'Status', minWidth: 120, sortable: false, filter: false, cellRenderer: () => <span className="finance-status success">Posted</span> },
   ], [])
 
@@ -128,12 +129,25 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   }, [outstanding, query])
 
   const collectionByDate = useMemo(() => {
-    const map = new Map<string, number>()
+    const totals = new Map<string, Map<string, number>>()
     for (const payment of payments) {
-      const key = new Date(payment.paidAt).toLocaleDateString('en-UG', { month: 'short', day: 'numeric' })
-      map.set(key, (map.get(key) ?? 0) + Number(payment.amount || 0))
+      const paidAt = new Date(payment.paidAt)
+      if (Number.isNaN(paidAt.getTime())) continue
+      const dayKey = paidAt.toISOString().slice(0, 10)
+      const currency = (payment.currency || 'UGX').trim().toUpperCase()
+      const dayTotals = totals.get(dayKey) ?? new Map<string, number>()
+      dayTotals.set(currency, (dayTotals.get(currency) ?? 0) + Number(payment.amount || 0))
+      totals.set(dayKey, dayTotals)
     }
-    return [...map.entries()].slice(-7)
+    const days = [...totals.keys()].sort().slice(-7)
+    const currencies = [...new Set(days.flatMap(day => [...(totals.get(day)?.keys() ?? [])]))].sort()
+    return {
+      labels: days.map(day => new Date(day + 'T00:00:00').toLocaleDateString('en-UG', { month: 'short', day: 'numeric' })),
+      datasets: currencies.map(currency => ({
+        label: 'Collections (' + currency + ')',
+        data: days.map(day => totals.get(day)?.get(currency) ?? 0),
+      })),
+    }
   }, [payments])
 
   const collectionRate = dashboard && dashboard.totalBilled > 0
@@ -155,7 +169,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
               {tickerPayments.map((payment, index) => (
                 <span className="finance-fee-ticker-item" key={(payment.id || payment.receiptNumber || payment.reference || 'fee') + '-' + index}>
                   <strong>PAID</strong>
-                  <b>{money(Number(payment.amount))}</b>
+                  <b>{money(Number(payment.amount), payment.currency ?? "UGX")}</b>
                   <span>{payment.studentName || 'Student'}</span>
                   {payment.receiptNumber && <small>Receipt {payment.receiptNumber}</small>}
                   <i aria-hidden="true">◆</i>
@@ -191,6 +205,19 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
               <article className="finance-kpi finance-kpi-blue"><span>Outstanding</span><strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong></article>
               <article className="finance-kpi finance-kpi-green"><span>Today's collection</span><strong>{dashboard ? money(dashboard.todayCollection) : '—'}</strong></article>
             </div>
+            {dashboard?.totalsByCurrency && dashboard.totalsByCurrency.length > 0 && (
+              <div className="finance-currency-summary" aria-label="Financial totals by currency">
+                <strong>Totals by currency</strong>
+                {dashboard.totalsByCurrency.map(total => (
+                  <span key={total.currency}>
+                    <b>{total.currency}</b>
+                    <span>Billed {money(total.billed, total.currency)}</span>
+                    <span>Paid {money(total.paid, total.currency)}</span>
+                    <span>Balance {money(total.balance, total.currency)}</span>
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="panel" style={{ marginTop: 20, padding: 20 }}>
               <h3>Outstanding Balances</h3>
               <div style={{ marginTop: 12 }}>
@@ -248,6 +275,19 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
             <article className="finance-kpi finance-kpi-red"><span>Outstanding</span><strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong><small>Receivables requiring follow-up</small></article>
             <article className="finance-kpi finance-kpi-orange"><span>Today's collection</span><strong>{dashboard ? money(dashboard.todayCollection) : '—'}</strong><small>Payments posted today</small></article>
           </div>
+            {dashboard?.totalsByCurrency && dashboard.totalsByCurrency.length > 0 && (
+              <div className="finance-currency-summary" aria-label="Financial totals by currency">
+                <strong>Totals by currency</strong>
+                {dashboard.totalsByCurrency.map(total => (
+                  <span key={total.currency}>
+                    <b>{total.currency}</b>
+                    <span>Billed {money(total.billed, total.currency)}</span>
+                    <span>Paid {money(total.paid, total.currency)}</span>
+                    <span>Balance {money(total.balance, total.currency)}</span>
+                  </span>
+                ))}
+              </div>
+            )}
 
           <div className="finance-overview-grid">
             <section className="finance-surface finance-collection-panel">
@@ -255,7 +295,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
               <div className="finance-progress-track"><div style={{ width: collectionRate + '%' }} /></div>
               <div className="finance-mini-stats"><span>Paid <strong>{dashboard ? money(dashboard.totalPaid) : '—'}</strong></span><span>Balance <strong>{dashboard ? money(dashboard.totalOutstanding) : '—'}</strong></span><span>Invoices <strong>{dashboard?.invoiceCount.toLocaleString() ?? '—'}</strong></span></div>
               <div className="finance-bar-chart" aria-label="Recent daily collection activity">
-                {collectionByDate.length === 0 ? <div className="empty">No recent collection activity.</div> : <BarChart labels={collectionByDate.map(([day]) => day)} datasets={[{ label: 'Collections', data: collectionByDate.map(([, amount]) => amount), color: '#0d9488' }]} ariaLabel="Daily fee collections for the most recent seven payment dates" valueFormatter={money} />}
+                {collectionByDate.labels.length === 0 ? <div className="empty">No recent collection activity.</div> : <BarChart labels={collectionByDate.labels} datasets={collectionByDate.datasets} ariaLabel="Daily fee collections shown as separate series for each transaction currency" valueFormatter={value => new Intl.NumberFormat('en-UG', { maximumFractionDigits: 0 }).format(value)} />}
               </div>
             </section>
 

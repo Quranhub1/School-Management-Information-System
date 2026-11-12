@@ -68,23 +68,36 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             invoices = invoices.Where(x => db.Students.Any(s => s.Id == x.StudentId && s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value)));
             payments = payments.Where(x => db.Students.Any(s => s.Id == x.StudentId && s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value)));
         }
-        var totalBilled = await invoices.SumAsync(x => (decimal?)(x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m), cancellationToken) ?? 0m;
-        var totalPaid = await invoices.SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
+        var invoiceTotals = await invoices.GroupBy(x => x.Currency)
+            .Select(group => new
+            {
+                currency = group.Key,
+                billed = group.Sum(x => x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m),
+                paid = group.Sum(x => x.PaidAmount)
+            }).ToListAsync(cancellationToken);
         var todayUtc = DateTimeOffset.UtcNow.Date;
         var tomorrowUtc = todayUtc.AddDays(1);
-        var todayPayments = await payments.Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
-            .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
+        var collectionTotals = await payments.Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
+            .GroupBy(p => p.Currency)
+            .Select(group => new { currency = group.Key, amount = group.Sum(x => x.Amount) })
+            .ToListAsync(cancellationToken);
+        var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == "UGX");
+        var totalBilled = defaultCurrencyTotals?.billed ?? 0m;
+        var totalPaid = defaultCurrencyTotals?.paid ?? 0m;
+        var todayCollection = collectionTotals.FirstOrDefault(x => x.currency == "UGX")?.amount ?? 0m;
 
         return Ok(new
         {
             totalBilled,
             totalPaid,
             totalOutstanding = Math.Max(0m, totalBilled - totalPaid),
-            todayCollection = todayPayments,
+            todayCollection,
+            currency = "UGX",
+            totalsByCurrency = invoiceTotals.Select(x => new { x.currency, x.billed, x.paid, balance = Math.Max(0m, x.billed - x.paid) }),
+            collectionsByCurrency = collectionTotals,
             invoiceCount = await invoices.LongCountAsync(cancellationToken),
             paymentCount = await payments.LongCountAsync(cancellationToken),
-            outstandingCount = await invoices.LongCountAsync(x => x.Amount - x.DiscountAmount - x.PaidAmount > 0, cancellationToken),
-            currency = "UGX"
+            outstandingCount = await invoices.LongCountAsync(x => x.Amount - x.DiscountAmount - x.PaidAmount > 0, cancellationToken)
         });
     }
 
@@ -111,6 +124,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 x.payment.Id,
                 x.payment.ReceiptNumber,
                 x.payment.Amount,
+                x.payment.Currency,
                 x.payment.PaymentMethod,
                 x.payment.PaymentSource,
                 x.payment.Reference,
