@@ -64,6 +64,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     [HttpPost]
     [Authorize(Policy = TimetablePolicies.Management)]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateTimetableEntryRequest request, CancellationToken cancellationToken)
     {
         if (request.EndTime <= request.StartTime) return BadRequest(new { message = "End time must be after start time." });
@@ -88,6 +89,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     [HttpPut("{id:guid}")]
     [Authorize(Policy = TimetablePolicies.Management)]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Update(Guid id, CreateTimetableEntryRequest request, CancellationToken cancellationToken)
     {
         if (request.EndTime <= request.StartTime) return BadRequest(new { message = "End time must be after start time." });
@@ -129,6 +131,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     [HttpPut("template/{teachingGroupId:guid}")]
     [Authorize(Policy = TimetablePolicies.Management)]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveTemplate(Guid teachingGroupId, SaveTimetableTemplateRequest request, CancellationToken cancellationToken)
     {
         if (request.TeachingGroupId != teachingGroupId)
@@ -215,6 +218,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     [HttpPost("generate")]
     [Authorize(Policy = TimetablePolicies.Management)]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Generate(GenerateTimetableRequest request, CancellationToken cancellationToken)
     {
         var result = await generator.GenerateAsync(request, cancellationToken);
@@ -223,6 +227,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = TimetablePolicies.Management)]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
         var entry = await db.TimetableEntries.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, cancellationToken);
