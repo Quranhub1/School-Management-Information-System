@@ -214,7 +214,6 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         {canManage && <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>}
       </div>
 
-      const isDuplicateStaffNumber = /staff number is already registered|staff member with this staff number already exists/i.test(error)
       {success && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status" aria-live="polite">{success}</div>}
 
       {error && (        <div
@@ -232,12 +231,12 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
             <div className="min-w-0 pt-0.5">
               <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700">Warning</p>
               <h3 className="mb-1 text-base font-semibold tracking-tight text-slate-900">
-                {isDuplicateStaffNumber
+                {/staff number is already registered|staff member with this staff number already exists/i.test(error)
                   ? 'Staff member already registered'
                   : 'Action requires attention'}
               </h3>
               <p className="max-w-3xl leading-6 text-slate-700">
-                {isDuplicateStaffNumber
+                {/staff number is already registered|staff member with this staff number already exists/i.test(error)
                   ? 'This staff number is already in use. Please check the existing staff record or enter a unique staff number.'
                   : error}
               </p>
