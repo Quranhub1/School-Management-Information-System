@@ -182,21 +182,21 @@ export function FinanceDashboard() {
           <div className="summary-grid">
             <div className="summary-card">
               <span>Total Billed</span>
-              <strong>' + SYSTEM_CURRENCY + ' ' + dashboard.totalBilled.toLocaleString()</strong>
+              <strong>{SYSTEM_CURRENCY} {dashboard.totalBilled.toLocaleString()}</strong>
             </div>
             <div className="summary-card">
               <span>Total Paid</span>
-              <strong style={{ color: '#059669' }}>' + SYSTEM_CURRENCY + ' ' + dashboard.totalPaid.toLocaleString()</strong>
+              <strong style={{ color: '#059669' }}>{SYSTEM_CURRENCY} {dashboard.totalPaid.toLocaleString()}</strong>
             </div>
             <div className="summary-card">
               <span>Outstanding Balance</span>
                 <strong style={{ color: dashboard.totalOutstanding > 0 ? '#dc2626' : '#059669' }}>
-                  ' + SYSTEM_CURRENCY + ' ' + dashboard.totalOutstanding.toLocaleString()
+                  {SYSTEM_CURRENCY} {dashboard.totalOutstanding.toLocaleString()}
                 </strong>
             </div>
             <div className="summary-card">
               <span>Today's Collection</span>
-              <strong>' + SYSTEM_CURRENCY + ' ' + dashboard.todayCollection.toLocaleString()}</strong>
+              <strong>{SYSTEM_CURRENCY} {dashboard.todayCollection.toLocaleString()}</strong>
             </div>
             <div className="summary-card">
               <span>Invoice Count</span>
@@ -309,7 +309,7 @@ export function FinanceDashboard() {
                     {recentPayments.map(payment => (
                       <tr key={payment.id}>
                         <td>{payment.receiptNumber}</td>
-                        <td style={{ color: '#059669' }}>' + SYSTEM_CURRENCY + ' ' + payment.amount.toLocaleString()}</td>
+                        <td style={{ color: '#059669' }}>{SYSTEM_CURRENCY} {payment.amount.toLocaleString()}</td>
                         <td>{payment.paymentMethod}</td>
                         <td>{new Date(payment.paidAt).toLocaleDateString(SYSTEM_LOCALE)}</td>
                       </tr>
@@ -332,7 +332,7 @@ export function FinanceDashboard() {
                 .map(method => (
                 <div className="summary-card" key={method}>
                   <span>{method}</span>
-                  <strong>' + SYSTEM_CURRENCY + ' ' + (paymentMethodTotals[method] || 0).toLocaleString()}</strong>
+                  <strong>{SYSTEM_CURRENCY} {(paymentMethodTotals[method] || 0).toLocaleString()}</strong>
                 </div>
               ))}
             </div>
