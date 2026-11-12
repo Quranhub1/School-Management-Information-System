@@ -48,6 +48,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', courseUnitIds: [] as string[] })
   const duplicateErrorPattern = /staff number is already registered|staff member with this staff number already exists/i
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
+  const [form, setForm] = useState(emptyStaffForm())
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -224,9 +225,6 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       {error && (
         <div
           className="mb-5 flex items-start justify-between gap-3 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-yellow-50 p-4 text-sm text-amber-950 shadow-md shadow-amber-900/5 ring-1 ring-amber-100"
-          role="alert"
-          aria-live="assertive"
-        >
           role="alert"
           aria-live="assertive"
         >

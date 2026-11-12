@@ -10,6 +10,9 @@ vi.mock('../api/library', () => ({
   issueBook: vi.fn().mockResolvedValue(null),
   returnBook: vi.fn().mockResolvedValue(null),
   getBookBarcode: vi.fn().mockResolvedValue(null),
+  listProgrammeRequirements: vi.fn().mockResolvedValue([]),
+  setProgrammeRequirement: vi.fn().mockResolvedValue(null),
+  setProgrammeRequirementActive: vi.fn().mockResolvedValue(null),
 }))
 
 vi.mock('../api/programmes', () => ({

@@ -5,7 +5,6 @@ import {
   admissionResponseSchema,
   createAdmissionRequestSchema,
   createInvoiceRequestSchema,
-  createInvoiceRequestSchema as _dupCreateInvoice,
   feeStructureCreateRequestSchema,
   invoiceResponseSchema,
   libraryBookCreateRequestSchema,
@@ -16,8 +15,7 @@ import {
   studentResponseSchema,
   streamCreateRequestSchema,
   streamResponseSchema,
-  timetableEntryCreateRequestSchema as _timetableEntryCreate,
-} from '../api-contracts.schema'
+} from '../../schemas/api-contracts.schema'
 
 describe('API contracts — admissions', () => {
   it('validates a create admission request', () => {
@@ -40,6 +38,8 @@ describe('API contracts — admissions', () => {
       id: 'adm-1',
       applicantId: 'app-1',
       programmeId: 'prog-1',
+      academicYearId: 'year-1',
+      intakeId: 'intake-1',
       status: 'Submitted',
     }
     expect(admissionResponseSchema.parse(admission)).toEqual(admission)
@@ -195,7 +195,8 @@ describe('API contracts — zod schema integrity', () => {
       streamResponseSchema,
     ]
     for (const schema of schemas) {
-      expect(schema).toBeInstanceOf(z.ZodTypeAny)
+      expect(schema).toBeDefined()
+      expect(typeof schema.safeParse).toBe('function')
     }
   })
 })

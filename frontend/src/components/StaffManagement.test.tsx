@@ -14,6 +14,7 @@ vi.mock('../api/staff', () => ({
   listLeave: vi.fn().mockResolvedValue([]),
   requestLeave: vi.fn().mockResolvedValue(null),
   approveLeave: vi.fn().mockResolvedValue(null),
+  STAFF_CHANGED_EVENT: 'smis:staff-changed',
 }))
 
 vi.mock('../api/payroll', () => ({

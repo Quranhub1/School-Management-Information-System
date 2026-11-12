@@ -129,17 +129,15 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   }, [outstanding, query])
 
   const collectionByDate = useMemo(() => {
-    const totals = new Map<string, Map<string, number>>()
+    const map = new Map<string, number>()
     for (const payment of payments) {
-      const paidAt = new Date(payment.paidAt)
-      const collectionByDate = useMemo(() => {
-        const map = new Map<string, number>()
-        for (const payment of payments) {
-          const key = new Date(payment.paidAt).toLocaleDateString(SYSTEM_LOCALE, { month: 'short', day: 'numeric' })
-          map.set(key, (map.get(key) ?? 0) + Number(payment.amount || 0))
-        }
-        return [...map.entries()].slice(-7)
-      }, [payments])
+      const key = new Date(payment.paidAt).toLocaleDateString(SYSTEM_LOCALE, { month: 'short', day: 'numeric' })
+      map.set(key, (map.get(key) ?? 0) + Number(payment.amount || 0))
+    }
+    const entries = [...map.entries()].slice(-7)
+    return {
+      labels: entries.map(([key]) => key),
+      datasets: [{ label: 'Collections', data: entries.map(([, value]) => value), color: '#2563eb' }],
     }
   }, [payments])
 

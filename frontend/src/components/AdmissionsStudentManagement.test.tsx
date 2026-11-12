@@ -11,6 +11,10 @@ vi.mock('../api/admissions', () => ({
   listIntakes: vi.fn().mockResolvedValue([]),
 }))
 
+vi.mock('./InstitutionSettingsContext', () => ({
+  useInstitutionSettings: vi.fn(() => ({ institution: { id: 'inst-1', name: 'Test Institution', primaryColor: '#2563eb' }, loaded: true })),
+}))
+
 import { AdmissionsStudentManagement } from './AdmissionsStudentManagement'
 
 describe('AdmissionsStudentManagement', () => {

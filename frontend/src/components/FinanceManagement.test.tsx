@@ -17,6 +17,14 @@ vi.mock('../api/finance', () => ({
   }),
   getOutstandingBalances: vi.fn().mockResolvedValue([]),
   getPayments: vi.fn().mockResolvedValue([]),
+  getFinanceReceivablesAgeing: vi.fn().mockResolvedValue([]),
+  getFinanceReceivablesReconciliation: vi.fn().mockResolvedValue([]),
+  getFinanceAccounts: vi.fn().mockResolvedValue([]),
+  getBankReconciliations: vi.fn().mockResolvedValue([]),
+  getFinanceStudents: vi.fn().mockResolvedValue([]),
+  getBudgets: vi.fn().mockResolvedValue([]),
+  getAccountsOverviewPayments: vi.fn().mockResolvedValue([]),
+  getFeeStructures: vi.fn().mockResolvedValue([]),
 }))
 
 import { FinanceManagement } from './FinanceManagement'
