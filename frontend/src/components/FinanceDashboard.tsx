@@ -182,16 +182,16 @@ export function FinanceDashboard() {
           <div className="summary-grid">
             <div className="summary-card">
               <span>Total Billed</span>
-              <strong>' + SYSTEM_CURRENCY + ' ' + dashboard.totalBilled.toLocaleString()</strong>
+              <strong>{SYSTEM_CURRENCY} {dashboard.totalBilled.toLocaleString()}</strong>
             </div>
             <div className="summary-card">
               <span>Total Paid</span>
-              <strong style={{ color: '#059669' }}>' + SYSTEM_CURRENCY + ' ' + dashboard.totalPaid.toLocaleString()</strong>
+              <strong style={{ color: '#059669' }}>{SYSTEM_CURRENCY} {dashboard.totalPaid.toLocaleString()}</strong>
             </div>
             <div className="summary-card">
               <span>Outstanding Balance</span>
                 <strong style={{ color: dashboard.totalOutstanding > 0 ? '#dc2626' : '#059669' }}>
-                  ' + SYSTEM_CURRENCY + ' ' + dashboard.totalOutstanding.toLocaleString()
+                  {SYSTEM_CURRENCY} {dashboard.totalOutstanding.toLocaleString()}
                 </strong>
             </div>
             <div className="summary-card">
