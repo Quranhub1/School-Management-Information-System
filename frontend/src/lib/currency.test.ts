@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   SYSTEM_CURRENCY,
   SYSTEM_LOCALE,
+  configureSystemCurrency,
   addMoney,
   formatCurrency,
   fromMinorUnits,
@@ -13,6 +14,14 @@ describe("currency formatting", () => {
   it("keeps UGX as the system default", () => {
     expect(SYSTEM_CURRENCY).toBe("UGX");
     expect(SYSTEM_LOCALE).toBe("en-UG");
+  });
+
+  it("uses the server-configured system currency as the default formatter currency", () => {
+    configureSystemCurrency("USD", "en-US");
+    expect(SYSTEM_CURRENCY).toBe("USD");
+    expect(SYSTEM_LOCALE).toBe("en-US");
+    expect(formatCurrency(1250)).toContain("USD");
+    configureSystemCurrency("UGX", "en-UG");
   });
 
   it("formats currencies using their ISO fraction-digit rules", () => {
