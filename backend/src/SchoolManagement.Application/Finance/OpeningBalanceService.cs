@@ -44,6 +44,7 @@ public sealed class OpeningBalanceService(IFinanceRepository finance, FiscalPeri
         var entry = new JournalEntry
         {
             EntryNumber = entryNumber,
+            Currency = "UGX",
             EntryDate = period.StartDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
             Description = $"Opening balances - {period.Name}",
             Status = "Posted",
