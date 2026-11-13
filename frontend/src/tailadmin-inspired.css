@@ -707,3 +707,63 @@ h1, h2, h3, h4, h5, h6,
     width: calc(100vw - 24px);
   }
 }
+
+
+/* System currency guidance: give the lower-screen notes clear hierarchy. */
+.app-shell .system-currency-default-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #2563eb;
+  border-radius: 4px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.55;
+}
+.app-shell .system-currency-default-note > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #2563eb;
+}
+.app-shell .system-currency-report-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 10px;
+  padding: 13px 14px;
+  border: 1px solid #fcd34d;
+  border-left: 4px solid #d97706;
+  border-radius: 4px;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.app-shell .system-currency-report-note > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #b45309;
+}
+.app-shell .system-currency-report-note strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #92400e;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.app-shell .system-currency-report-note p {
+  margin: 0;
+  color: inherit;
+}
+@media (max-width: 600px) {
+  .app-shell .system-currency-default-note,
+  .app-shell .system-currency-report-note {
+    padding: 11px 12px;
+    font-size: 0.8125rem;
+  }
+}
