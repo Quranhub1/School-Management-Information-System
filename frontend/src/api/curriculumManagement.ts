@@ -69,3 +69,15 @@ export const updateCurriculumCourse = (curriculumId: string, mappingId: string, 
   if (input.yearOfStudy < 1 || input.semesterNumber < 1) throw new Error('Year and semester numbers must be positive.')
   return request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/courses/${encodeURIComponent(mappingId)}`, { method: 'PUT', body: JSON.stringify(input) })
 }
+
+export const deleteCurriculumCourse = (curriculumId: string, mappingId: string) =>
+  request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/courses/${encodeURIComponent(mappingId)}`, { method: 'DELETE' })
+
+export const updateCurriculumSemester = (curriculumId: string, year: number, semester: number, input: { yearOfStudy: number; semesterNumber: number }) => {
+  if (!curriculumId.trim() || year < 1 || semester < 1 || input.yearOfStudy < 1 || input.semesterNumber < 1)
+    throw new Error('Curriculum, year and semester numbers must be positive.')
+  return request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/semesters/${year}/${semester}`, { method: 'PUT', body: JSON.stringify(input) })
+}
+
+export const deleteCurriculumSemester = (curriculumId: string, year: number, semester: number) =>
+  request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/semesters/${year}/${semester}`, { method: 'DELETE' })
