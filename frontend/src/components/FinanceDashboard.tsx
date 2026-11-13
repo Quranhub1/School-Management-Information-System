@@ -138,7 +138,7 @@ export function FinanceDashboard() {
   }
 
   function exportOutstandingCSV() {
-    const headers = ['Student Number', 'Name', 'Programme', 'Balance (UGX)', 'Status']
+    const headers = ['Student Number', 'Name', 'Programme', 'Balance ({SYSTEM_CURRENCY})', 'Status']
     const rows = outstandingBalances.map(o => [
       o.studentNumber,
       o.studentName,
