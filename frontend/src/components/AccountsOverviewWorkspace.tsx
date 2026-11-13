@@ -17,7 +17,7 @@ async function request<T>(path: string): Promise<T> {
 
 type Dashboard = { totalBilled: number; totalPaid: number; totalOutstanding: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number }
 type Outstanding = { studentId: string; studentNumber: string; studentName: string; programmeName: string; balance: number; currency: string; status: string }
-type Payment = { id: string; receiptNumber: string; amount: number; paymentMethod: string; paymentSource: string; sourceChannel?: string; providerTransactionId?: string; reference?: string; paidAt: string; studentName: string; invoiceNumber?: string }
+type Payment = { id: string; receiptNumber: string; amount: number; currency?: string; paymentMethod: string; paymentSource: string; sourceChannel?: string; providerTransactionId?: string; reference?: string; paidAt: string; studentName: string; invoiceNumber?: string }
 type Payroll = { id: string; staffName: string; staffNumber: string; month: number; year: number; basicSalary: number; allowances: number; deductions: number; netPay: number; status: string; paymentMethod?: string }
 
 type Tab = 'dashboard' | 'outstanding' | 'payments' | 'payroll'
