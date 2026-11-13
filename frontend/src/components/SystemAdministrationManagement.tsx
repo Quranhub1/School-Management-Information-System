@@ -66,9 +66,9 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
     ) : selected === 'settings' ? (
       <section className="panel" aria-labelledby="system-settings-title">
         <div className="panel-heading"><div><p className="eyebrow">CONFIGURATION</p><h2 id="system-settings-title">System settings</h2></div><Settings2 size={22} /></div>
-        <div className="summary-grid" style={{ padding: 18, margin: 0 }}>
-          <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
-          <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
+        <div className="summary-grid system-settings-actions-grid" style={{ padding: 18, margin: 0 }}>
+          <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><button className="secondary-button system-settings-open-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
+          <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><button className="secondary-button system-settings-open-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
         </div>
         <section className="panel" aria-labelledby="system-currency-title" style={{ marginTop: 18, padding: 18 }}>
           <div className="panel-heading"><div><p className="eyebrow">FINANCIAL CONFIGURATION</p><h3 id="system-currency-title">System currency</h3></div></div>
@@ -117,7 +117,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
             <UsersRound size={24} />
             <h2 style={{ margin: '12px 0 6px', fontSize: '1.05rem' }}>User administration</h2>
             
-            <button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button>
+            <button className="secondary-button system-settings-open-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button>
           </article>
         </div>
       </>
