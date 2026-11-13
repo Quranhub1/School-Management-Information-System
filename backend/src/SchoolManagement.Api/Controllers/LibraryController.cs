@@ -222,10 +222,19 @@ public sealed class LibraryController(
                 .Where(x => x.StudentId == studentId && x.FeeType == "LibraryBook");
             if (!await libraryInvoices.AnyAsync(ct))
                 return Conflict(new { message = "No Library book-fee invoice exists for this student. The Librarian must configure the course requirement first." });
-            var outstanding = await libraryInvoices
-                .SumAsync(x => (decimal?)(x.Amount - x.DiscountAmount - x.PaidAmount), ct) ?? 0m;
-            if (outstanding > 0)
-                return Conflict(new { message = $"Library book fee is not fully paid. Outstanding: {outstanding:N0} UGX." });
+            var invoiceBalances = await libraryInvoices
+                .Select(x => new { x.Currency, Outstanding = x.Amount - x.DiscountAmount - x.PaidAmount })
+                .ToListAsync(ct);
+            var outstandingByCurrency = invoiceBalances
+                .GroupBy(x => string.IsNullOrWhiteSpace(x.Currency) ? "UGX" : x.Currency.Trim().ToUpperInvariant())
+                .Select(group => new { Currency = group.Key, Amount = group.Sum(x => x.Outstanding) })
+                .Where(x => x.Amount > 0m)
+                .ToList();
+            if (outstandingByCurrency.Count > 0)
+            {
+                var amounts = string.Join(", ", outstandingByCurrency.Select(x => $"{x.Currency} {x.Amount:N0}"));
+                return Conflict(new { message = $"Library book fee is not fully paid. Outstanding: {amounts}." });
+            }
         }
         else if (string.IsNullOrWhiteSpace(request.Reference))
         {
