@@ -4232,6 +4232,11 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<int>("Month")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
                     b.Property<decimal>("NetPay")
                         .HasColumnType("numeric");
 
