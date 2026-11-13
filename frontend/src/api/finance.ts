@@ -369,7 +369,7 @@ export const getBudgetVsActual = (budgetId: string, params?: { from?: string; to
   return request<BudgetVsActualRow[]>(`/api/finance/administration/budgets/${budgetId}/vs-actual${query.toString() ? `?${query}` : ''}`)
 }
 export const getFinanceReceivablesAgeing = (asOf?: string, currency = SYSTEM_CURRENCY) => request<ReceivablesAgeingReport>(`/api/finance/reports/receivables-ageing?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
-export const getFinanceReceivablesReconciliation = (asOf?: string, currency = 'UGX') => request<ReceivablesReconciliationReport>(`/api/finance/reports/receivables-reconciliation?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
+export const getFinanceReceivablesReconciliation = (asOf?: string, currency = SYSTEM_CURRENCY) => request<ReceivablesReconciliationReport>(`/api/finance/reports/receivables-reconciliation?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
 
 
 export interface FinanceOverdueSummary { asOf: string; currency: string; installmentCount: number; studentCount: number; totalOutstanding: number }
