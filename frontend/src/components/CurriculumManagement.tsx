@@ -15,7 +15,7 @@ import {
   type Curriculum,
   type CurriculumCourse,
 } from '../api/curriculumManagement'
-import { createProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
+import { createProgramme, deleteProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityActive, updateAcademicAuthority, type AcademicAuthority } from '../api/academicAuthorities'
 import { createAcademicDepartment, createAcademicFaculty, getAcademicCampuses, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, setAcademicFacultyActive, updateAcademicDepartment, updateAcademicFaculty, type AcademicDepartment, type CampusOption, type FacultyOption } from '../api/academicDepartments'
@@ -219,6 +219,24 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to update programme status.')
+    }
+  }
+
+  async function removeProgramme(item: Programme) {
+    const confirmed = window.confirm(`Delete programme ${item.code} — ${item.name}? This cannot be undone.`)
+    if (!confirmed) return
+    setError('')
+    setMessage('')
+    try {
+      await deleteProgramme(item.id)
+      if (editingProgrammeId === item.id) {
+        setEditingProgrammeId(null)
+        setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
+      }
+      setMessage(`Programme ${item.code} deleted successfully.`)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to delete programme.')
     }
   }
 
@@ -487,7 +505,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {editingProgrammeId && <button type="button" className="secondary-button" onClick={() => { setEditingProgrammeId(null); setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' }) }}>Cancel edit</button>}
         </form>
         <div className="table-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Award</th><th>Duration</th><th>Verification</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.award}</td><td>{item.durationYears} {item.durationUnit}</td><td>{item.isReferenceOnly ? 'Reference only' : item.approvalStatus}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editProgramme(item)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleProgramme(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.award}</td><td>{item.durationYears} {item.durationUnit}</td><td>{item.isReferenceOnly ? 'Reference only' : item.approvalStatus}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><details className="programme-row-actions"><summary aria-label={`Actions for ${item.name}`}>Actions</summary><div className="programme-row-actions-menu"><button type="button" onClick={() => editProgramme(item)}>Edit</button><button type="button" className="secondary-button" onClick={() => void toggleProgramme(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button><button type="button" className="danger-button" onClick={() => void removeProgramme(item)}>Delete</button></div></details></td></tr>)}
           {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).length === 0 && <tr><td colSpan={7}>No programmes are saved under this authority yet.</td></tr>}
         </tbody></table></div>
       </section>
