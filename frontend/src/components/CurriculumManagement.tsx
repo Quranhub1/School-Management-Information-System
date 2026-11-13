@@ -680,7 +680,8 @@ const [editingSemesterId, setEditingSemesterId] = useState<string | null>(null)
             </form>
 
             <form className="student-form" onSubmit={saveCourse}>
-              <h3>Course / unit catalogue</h3>
+              <h3>Course units</h3>
+              <p className="course-units-hint">Course units created here appear in Timetable Management for scheduling with a tutor/teacher.</p>
               <div className="form-row">
                 <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
                 <input required placeholder="Unit name" value={uf.name} onChange={e => setUf({ ...uf, name: e.target.value })} />
@@ -690,11 +691,11 @@ const [editingSemesterId, setEditingSemesterId] = useState<string | null>(null)
                 <input placeholder="Course type" value={uf.courseType} onChange={e => setUf({ ...uf, courseType: e.target.value })} />
               </div>
               <input placeholder="Description (optional)" value={uf.description} onChange={e => setUf({ ...uf, description: e.target.value })} />
-              <button type="submit" disabled={saving}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
+              <button type="submit" disabled={saving}>{editingCourseId ? 'Save course unit' : 'Add course unit'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
             </form>
             <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
               {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button> <button type="button" className="secondary-button" onClick={() => void deleteCourseItem(course)}>Delete</button></td></tr>)}
-              {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses are available under this authority.</td></tr>}
+              {authorityCourses.length === 0 && <tr><td colSpan={6}>No course units are available under this authority.</td></tr>}
             </tbody></table></div>
           </div>
 
