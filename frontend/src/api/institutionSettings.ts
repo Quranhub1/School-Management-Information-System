@@ -86,6 +86,8 @@ export interface GalleryItem {
   source: 'upload' | 'url'
 }
 
+export interface SystemCurrencySettings { code: string; locale: string; fractionDigits: number }
+export const getPublicSystemCurrencySettings = () => request<SystemCurrencySettings>('/api/public/institution-settings/currency')
 export const getPublicInstitutionSettings = () => request<InstitutionSettings>('/api/public/institution-settings/active')
 export const getInstitutionSettings = () => authedRequest<InstitutionSettings[]>('/api/administration/institution-settings')
 export const getActiveInstitutionSettings = () => authedRequest<InstitutionSettings>('/api/administration/institution-settings/active')
