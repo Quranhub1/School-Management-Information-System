@@ -53,6 +53,16 @@ function getFormatter(currency: string, locale?: string): Intl.NumberFormat {
   return formatter;
 }
 
+/** Returns the ISO 4217 fraction precision used by currency-aware amount inputs. */
+export function getCurrencyFractionDigits(currency: string = SYSTEM_CURRENCY, locale?: string): number {
+  return getFormatter(currency, locale).resolvedOptions().maximumFractionDigits;
+}
+
+/** HTML input step matching the selected currency's minor-unit precision. */
+export function getCurrencyInputStep(currency: string = SYSTEM_CURRENCY): string {
+  return (10 ** -getCurrencyFractionDigits(currency)).toString();
+}
+
 /** Formats a monetary amount using the currency's ISO fraction-digit rules. */
 export function formatCurrency(
   amount: number | string | bigint | null | undefined,
