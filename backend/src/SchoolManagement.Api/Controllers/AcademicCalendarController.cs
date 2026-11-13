@@ -88,4 +88,3 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
 }
 
 public sealed record SetActiveRequest(bool IsActive);
-}
