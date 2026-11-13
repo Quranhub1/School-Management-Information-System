@@ -302,6 +302,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> GetStudentFinancialStatement(Guid studentId, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
 
         var invoices = await db.StudentInvoices.AsNoTracking()
             .Where(x => x.StudentId == studentId)
@@ -590,7 +591,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
 
     [HttpGet("reports/cash-bank-position")]
-    public async Task<IActionResult> CashBankPosition([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] string currency = "UGX", [FromQuery] Guid? campusId = null, [FromQuery] Guid? facultyId = null, [FromQuery] Guid? departmentId = null, [FromQuery] Guid? programmeId = null, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> CashBankPosition([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] string? currency = null, [FromQuery] Guid? campusId = null, [FromQuery] Guid? facultyId = null, [FromQuery] Guid? departmentId = null, [FromQuery] Guid? programmeId = null, CancellationToken cancellationToken = default)
     {
         currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
         var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
@@ -882,7 +883,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public sealed record FeeStructureItemRequest(string Code, string Name, decimal Amount, Guid? IncomeAccountId = null, int SortOrder = 0, bool IsOptional = false);
     public sealed record CreateFeeStructureRequest(string Name, string FeeType, string? Currency, Guid? ProgrammeId, Guid? AcademicYearId, IReadOnlyCollection<FeeStructureItemRequest> Items);
     public sealed record ApplyFeeStructureRequest(IReadOnlyCollection<Guid>? StudentIds = null, bool AllActiveStudents = false);
-    public sealed record CreateStudentChargeRequest(string ChargeType, string Description, decimal Amount, string Currency = "UGX");
+    public sealed record CreateStudentChargeRequest(string ChargeType, string Description, decimal Amount, string? Currency = null);
     public sealed record VoidStudentChargeRequest(string Reason);
     public sealed record CreateCreditNoteRequest(decimal Amount, string Reason);
     public sealed record CancelCreditNoteRequest(string Reason);
