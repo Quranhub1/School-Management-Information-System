@@ -1,7 +1,7 @@
 # SMIS Production Acceptance Runbook
 
 **Release:** `v0.2.0`  
-**System currency:** UGX  
+**Default system currency:** UGX  
 **Rule:** CI/build success is supporting evidence only. Every target-environment gate requires an observed result and evidence.
 
 ## 1. Test environment
@@ -28,7 +28,7 @@ Never use production data for acceptance testing. Use a dedicated test database 
 - [ ] Confirm `/api/health` returns healthy from the deployment host.
 - [ ] Confirm the API systemd service is active and logs contain no startup exceptions.
 - [ ] Confirm production JWT/database/attendance secrets are supplied by the environment, not committed files.
-- [ ] Confirm institutional currency is UGX.
+- [ ] Confirm the configured system currency is correct (UGX by default) and that new records inherit it without rewriting historical transaction currencies.
 
 ## 3. Authentication and authorization
 

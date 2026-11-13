@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { formatCurrency, getCurrencyInputStep, SYSTEM_CURRENCY } from '../lib/currency'
 import LoadingSpinner from './LoadingSpinner';
 import { createBulkPayment, getOutstandingBalances, type OutstandingBalance } from '../api/finance'
 import { validateForm } from '../lib/validation'
@@ -79,7 +80,11 @@ export function BulkPayments() {
   }
 
   const selectedStudents = students.filter(s => s.selected)
-  const totalToCollect = selectedStudents.reduce((sum, s) => sum + (Number(s.amountToPay) || 0), 0)
+  const totalsByCurrency = selectedStudents.reduce<Record<string, number>>((totals, student) => {
+    const currency = student.currency || SYSTEM_CURRENCY
+    totals[currency] = (totals[currency] || 0) + (Number(student.amountToPay) || 0)
+    return totals
+  }, {})
 
   async function submitBulkPayment(event: FormEvent) {
     event.preventDefault()
@@ -177,7 +182,7 @@ export function BulkPayments() {
                     <th>Student ID</th>
                     <th>Student Name</th>
                     <th>Programme</th>
-                    <th>Balance (UGX)</th>
+                    <th>Balance</th>
                     <th>Amount to Pay</th>
                     <th>Receipt Number</th>
                   </tr>
@@ -189,8 +194,8 @@ export function BulkPayments() {
                       <td><strong>{student.studentNumber}</strong></td>
                       <td>{student.studentName}</td>
                       <td>{student.programmeName}</td>
-                      <td style={{ color: student.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {student.balance.toLocaleString()}</td>
-                      <td><input type="number" min="0" max={student.balance} step="1" value={student.amountToPay} onChange={e => handleAmountChange(student.studentId, e.target.value)} placeholder="0" disabled={!student.selected} /></td>
+                      <td style={{ color: student.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{formatCurrency(student.balance, student.currency || SYSTEM_CURRENCY)}</td>
+                      <td><input type="number" min="0" max={student.balance} step={getCurrencyInputStep(student.currency || SYSTEM_CURRENCY)} value={student.amountToPay} onChange={e => handleAmountChange(student.studentId, e.target.value)} placeholder="0" disabled={!student.selected} /></td>
                       <td><input value={student.receiptNumber} onChange={e => handleReceiptChange(student.studentId, e.target.value)} disabled={!student.selected} /></td>
                     </tr>
                   ))}
@@ -203,10 +208,12 @@ export function BulkPayments() {
                 <span>Total Students Selected</span>
                 <strong>{selectedStudents.length}</strong>
               </div>
-              <div className="summary-card">
-                <span>Total Amount to Collect</span>
-                <strong style={{ color: totalToCollect > 0 ? '#1c1917' : '#78716c' }}>UGX {totalToCollect.toLocaleString()}</strong>
-              </div>
+              {Object.entries(totalsByCurrency).map(([currency, total]) => (
+                <div className="summary-card" key={currency}>
+                  <span>Total to Collect · {currency}</span>
+                  <strong style={{ color: total > 0 ? '#1c1917' : '#78716c' }}>{formatCurrency(total, currency)}</strong>
+                </div>
+              ))}
             </div>
 
             <div className="topbar-actions" style={{ marginTop: 18 }}>

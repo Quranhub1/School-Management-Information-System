@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure.Persistence;
 
@@ -16,7 +17,8 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class SchoolPayController(
     ISchoolPayService schoolPay,
     IOptions<SchoolPayOptions> schoolPayOptions,
-    SchoolManagementDbContext db) : ControllerBase
+    SchoolManagementDbContext db,
+    InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpPost("webhook")]
     [AllowAnonymous]
@@ -28,6 +30,7 @@ public sealed class SchoolPayController(
             return BadRequest("Unsupported SchoolPay webhook payment type.");
 
         var payment = request.Payment;
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
         if (string.IsNullOrWhiteSpace(payment.SchoolPayReceiptNumber))
             return BadRequest("SchoolPay receipt number is required.");
         if (string.IsNullOrWhiteSpace(payment.SourceChannelTransactionId))
@@ -68,7 +71,7 @@ public sealed class SchoolPayController(
                 student.Id,
                 null,
                 payment.Amount,
-                "UGX",
+                systemCurrency,
                 null,
                 payment.StudentName,
                 payment.SourcePaymentChannel,

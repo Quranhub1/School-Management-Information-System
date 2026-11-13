@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { getPublicInstitutionSettings, type InstitutionSettings } from '../api/institutionSettings'
+import { getPublicInstitutionSettings, getPublicSystemCurrencySettings, type InstitutionSettings } from '../api/institutionSettings'
+import { configureSystemCurrency } from '../lib/currency'
 
 const STORAGE_KEY = 'smis:institution-settings'
 
@@ -74,8 +75,9 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
 
   const refreshInstitution = async () => {
     try {
-      const settings = await getPublicInstitutionSettings()
+      const [settings, currency] = await Promise.all([getPublicInstitutionSettings(), getPublicSystemCurrencySettings()])
       if (!isValidInstitution(settings)) return false
+      configureSystemCurrency(currency.code, currency.locale)
       setInstitution(settings)
       setLoaded(true)
       return true
@@ -104,6 +106,13 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
       else void refreshInstitution()
     }
     window.addEventListener('smis:institution-settings-updated', handleSettingsUpdated)
+    const handleCurrencyUpdated = () => {
+      void getPublicSystemCurrencySettings().then(value => {
+        configureSystemCurrency(value.code, value.locale)
+        setInstitutionState(current => ({ ...current }))
+      }).catch(() => undefined)
+    }
+    window.addEventListener('smis:system-currency-updated', handleCurrencyUpdated)
 
     const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('smis-institution-settings') : null
     const handleBroadcast = (event: MessageEvent<InstitutionSettings>) => {
@@ -127,6 +136,7 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
       cancelled = true
       window.clearInterval(refreshTimer)
       window.removeEventListener('smis:institution-settings-updated', handleSettingsUpdated)
+      window.removeEventListener('smis:system-currency-updated', handleCurrencyUpdated)
       document.removeEventListener('visibilitychange', handleVisibility)
       window.removeEventListener('focus', handleFocus)
       channel?.removeEventListener('message', handleBroadcast)

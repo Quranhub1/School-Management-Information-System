@@ -1,4 +1,5 @@
 import { formatPersonName } from '../utils/personName'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   getPrincipalDashboard,
@@ -101,11 +102,11 @@ export function PrincipalDashboard() {
                 </div>
                 <div className="summary-card">
                   <span>Total Invoiced</span>
-                  <strong>UGX {dashboard.totalInvoiced.toLocaleString()}</strong>
+                  <strong>{formatCurrency(dashboard.totalInvoiced, SYSTEM_CURRENCY)}</strong>
                 </div>
                 <div className="summary-card">
                   <span>Total Collected</span>
-                  <strong style={{ color: '#059669' }}>UGX {dashboard.totalPaid.toLocaleString()}</strong>
+                  <strong style={{ color: '#059669' }}>{formatCurrency(dashboard.totalPaid, SYSTEM_CURRENCY)}</strong>
                 </div>
               </div>
 
@@ -188,7 +189,7 @@ export function PrincipalDashboard() {
                           <tr key={idx}>
                             <td><strong>{item.studentNumber}</strong> {item.studentName}</td>
                             <td>{item.programmeName}</td>
-                            <td style={{ color: '#dc2626', fontWeight: 700 }}>{item.currency} {item.balance.toLocaleString()}</td>
+                            <td style={{ color: '#dc2626', fontWeight: 700 }}>{formatCurrency(item.balance, item.currency || SYSTEM_CURRENCY)}</td>
                           </tr>
                         ))
                       )}
@@ -223,7 +224,7 @@ export function PrincipalDashboard() {
                           <tr key={payment.id}>
                             <td><strong>{payment.receiptNumber}</strong></td>
                             <td>{payment.studentName}</td>
-                            <td style={{ color: '#059669', fontWeight: 700 }}>UGX {payment.amount.toLocaleString()}</td>
+                            <td style={{ color: '#059669', fontWeight: 700 }}>{formatCurrency(payment.amount, payment.currency ?? SYSTEM_CURRENCY)}</td>
                             <td>{payment.paymentMethod}</td>
                             <td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td>
                           </tr>
@@ -247,8 +248,8 @@ export function PrincipalDashboard() {
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 999, padding: '6px 10px', background: '#d1fae5', color: '#065f46', fontWeight: 800, fontSize: '.75rem' }}>VIEW ONLY</span>
               </div>
               <div className="summary-grid" style={{ marginBottom: 22 }}>
-                <div className="summary-card"><span>Total Invoiced</span><strong>UGX {dashboard.totalInvoiced.toLocaleString()}</strong></div>
-                <div className="summary-card"><span>Total Collected</span><strong style={{ color: '#059669' }}>UGX {dashboard.totalPaid.toLocaleString()}</strong></div>
+                <div className="summary-card"><span>Total Invoiced</span><strong>{formatCurrency(dashboard.totalInvoiced, SYSTEM_CURRENCY)}</strong></div>
+                <div className="summary-card"><span>Total Collected</span><strong style={{ color: '#059669' }}>{formatCurrency(dashboard.totalPaid, SYSTEM_CURRENCY)}</strong></div>
                 <div className="summary-card"><span>Outstanding Invoices</span><strong style={{ color: '#dc2626' }}>{dashboard.outstandingInvoices}</strong></div>
                 <div className="summary-card"><span>Invoices Issued</span><strong>{dashboard.totalInvoices}</strong></div>
                 <div className="summary-card"><span>Pending Payroll Records</span><strong>{dashboard.pendingPayroll}</strong></div>
@@ -260,7 +261,7 @@ export function PrincipalDashboard() {
                   <thead><tr><th>Student No.</th><th>Student</th><th>Fee / Programme</th><th>Balance</th><th>Currency</th></tr></thead>
                   <tbody>
                     {dashboard.outstandingBalances.length === 0 ? <tr><td colSpan={5} className="empty">No outstanding balances</td></tr> : dashboard.outstandingBalances.map((item, idx) => (
-                      <tr key={item.studentId + '-' + idx}><td><strong>{item.studentNumber}</strong></td><td>{item.studentName}</td><td>{item.programmeName}</td><td>{item.balance.toLocaleString()}</td><td>{item.currency}</td></tr>
+                      <tr key={item.studentId + '-' + idx}><td><strong>{item.studentNumber}</strong></td><td>{item.studentName}</td><td>{item.programmeName}</td><td>{formatCurrency(item.balance, item.currency || SYSTEM_CURRENCY)}</td><td>{item.currency}</td></tr>
                     ))}
                   </tbody>
                 </table>
@@ -271,7 +272,7 @@ export function PrincipalDashboard() {
                   <thead><tr><th>Receipt No.</th><th>Student</th><th>Amount</th><th>Method</th><th>Date</th></tr></thead>
                   <tbody>
                     {dashboard.recentPayments.length === 0 ? <tr><td colSpan={5} className="empty">No recent payments</td></tr> : dashboard.recentPayments.map(payment => (
-                      <tr key={payment.id}><td><strong>{payment.receiptNumber}</strong></td><td>{payment.studentName}</td><td>UGX {payment.amount.toLocaleString()}</td><td>{payment.paymentMethod}</td><td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td></tr>
+                      <tr key={payment.id}><td><strong>{payment.receiptNumber}</strong></td><td>{payment.studentName}</td><td>{formatCurrency(payment.amount, payment.currency || SYSTEM_CURRENCY)}</td><td>{payment.paymentMethod}</td><td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td></tr>
                     ))}
                   </tbody>
                 </table>

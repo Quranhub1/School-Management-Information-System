@@ -26,7 +26,7 @@ Do not add a second chart library, custom SVG chart, CSS-drawn data plot, or emb
 
 1. Chart values must come from the module's existing API/database response. Never introduce demonstration, random, or hard-coded business figures.
 2. Keep aggregation and permission checks in the existing API/service layer. A chart is a presentation layer, not an authorization boundary.
-3. Format monetary values in Uganda Shillings (UGX) using the existing `en-UG` conventions.
+3. Format monetary values using the active system currency and the shared currency formatter. Preserve a row's recorded transaction currency where the data is multi-currency.
 4. Every chart must have a descriptive title, an accessible text label, useful tooltips and an understandable empty state.
 5. Tooltips and legends must identify the series/category and value. Do not rely on colour alone.
 6. Charts must resize with their parent container and remain usable at desktop, tablet and phone widths.

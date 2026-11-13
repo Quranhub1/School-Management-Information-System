@@ -41,7 +41,7 @@ const statusFor = (balance: number, billed = 0, paid = 0) => {
   return { label: 'Outstanding', tone: 'danger' }
 }
 
-const money = (value: number, currency: string = "UGX") => formatCurrency(Number(value) || 0, currency)
+const money = (value: number, currency: string = SYSTEM_CURRENCY) => formatCurrency(Number(value) || 0, currency)
 
 export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } = {}) {
   const isAssistantAccountant = getSession()?.roles?.includes('AssistantAccountant') ?? false
@@ -89,14 +89,14 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     { field: 'studentName', headerName: 'Student', minWidth: 180 },
     { field: 'studentNumber', headerName: 'Student No.', minWidth: 140 },
     { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
-    { field: 'balance', headerName: 'Balance', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? "UGX") },
+    { field: 'balance', headerName: 'Balance', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY) },
     { field: 'status', headerName: 'Status', minWidth: 130 },
   ], [])
 
   const recentPaymentColumns = useMemo<ColDef<Payment>[]>(() => [
     { field: 'receiptNumber', headerName: 'Receipt', minWidth: 150, valueFormatter: params => params.value || '—' },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
-    { field: 'amount', headerName: 'Amount', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? "UGX") },
+    { field: 'amount', headerName: 'Amount', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY) },
     { field: 'paymentSource', headerName: 'Payment Source', minWidth: 130, valueFormatter: params => params.value || '—' },
     { field: 'sourceChannel', headerName: 'Channel', minWidth: 150, valueFormatter: params => params.value || '—' },
     { field: 'paidAt', headerName: 'Date', minWidth: 150, valueFormatter: params => params.value ? new Date(params.value).toLocaleDateString(SYSTEM_LOCALE) : '—' },
@@ -105,7 +105,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   const accountColumns = useMemo<ColDef<OutstandingBalance>[]>(() => [
     { field: 'studentName', headerName: 'Student', minWidth: 190, cellRenderer: (params: ICellRendererParams<OutstandingBalance>) => <div><strong>{params.value}</strong><small>{params.data?.studentNumber}</small></div> },
     { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
-    { field: 'balance', headerName: 'Balance', minWidth: 150, cellRenderer: (params: ICellRendererParams<any>) => { const s = statusFor(Number(params.value ?? 0), params.data?.amount, params.data?.paidAmount); return <strong className={s.tone === 'danger' ? 'finance-value-danger' : 'finance-value-success'}>{money(Number(params.value ?? 0), params.data?.currency ?? "UGX")}</strong> } },
+    { field: 'balance', headerName: 'Balance', minWidth: 150, cellRenderer: (params: ICellRendererParams<any>) => { const s = statusFor(Number(params.value ?? 0), params.data?.amount, params.data?.paidAmount); return <strong className={s.tone === 'danger' ? 'finance-value-danger' : 'finance-value-success'}>{money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY)}</strong> } },
     { field: 'status', headerName: 'Status', minWidth: 130, cellRenderer: (params: ICellRendererParams<any>) => { const s = statusFor(Number(params.data?.balance ?? 0), params.data?.amount, params.data?.paidAmount); return <span className={'finance-status ' + s.tone}>{s.label}</span> } },
     { headerName: 'Collection', minWidth: 170, sortable: false, filter: false, cellRenderer: (params: ICellRendererParams<any>) => { const amount = Number(params.data?.amount ?? 0); const paid = Number(params.data?.paidAmount ?? 0); const progress = amount > 0 ? Math.min(100, paid / amount * 100) : 0; return <div><div className="finance-row-progress"><span style={{ width: progress + '%' }} /></div><small>{progress.toFixed(0)}% collected</small></div> } },
   ], [])
@@ -115,7 +115,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     { field: 'receiptNumber', headerName: 'Receipt', minWidth: 160, cellRenderer: (params: ICellRendererParams<Payment>) => <div><strong>{params.value || '—'}</strong><small>{params.data?.reference || 'No reference'}</small></div> },
     { field: 'studentName', headerName: 'Student', minWidth: 180, valueFormatter: params => params.value || '—' },
     { field: 'invoiceNumber', headerName: 'Invoice', minWidth: 150, valueFormatter: params => params.value || '—' },
-    { field: 'amount', headerName: 'Amount', minWidth: 160, cellRenderer: (params: ICellRendererParams<any>) => <strong className="finance-value-success">{money(Number(params.value ?? 0), params.data?.currency ?? "UGX")}</strong> },
+    { field: 'amount', headerName: 'Amount', minWidth: 160, cellRenderer: (params: ICellRendererParams<any>) => <strong className="finance-value-success">{money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY)}</strong> },
     { headerName: 'Status', minWidth: 120, sortable: false, filter: false, cellRenderer: () => <span className="finance-status success">Posted</span> },
   ], [])
 
@@ -129,15 +129,26 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   }, [outstanding, query])
 
   const collectionByDate = useMemo(() => {
-    const map = new Map<string, number>()
+    const totalsByCurrency = new Map<string, Map<string, number>>()
+    const dateLabels = new Map<string, string>()
     for (const payment of payments) {
-      const key = new Date(payment.paidAt).toLocaleDateString(SYSTEM_LOCALE, { month: 'short', day: 'numeric' })
-      map.set(key, (map.get(key) ?? 0) + Number(payment.amount || 0))
+      const paidAt = new Date(payment.paidAt)
+      if (!Number.isFinite(paidAt.getTime())) continue
+      const dateKey = [paidAt.getFullYear(), String(paidAt.getMonth() + 1).padStart(2, '0'), String(paidAt.getDate()).padStart(2, '0')].join('-')
+      const label = paidAt.toLocaleDateString(SYSTEM_LOCALE, { month: 'short', day: 'numeric' })
+      const currency = (payment.currency || SYSTEM_CURRENCY).toUpperCase()
+      dateLabels.set(dateKey, label)
+      const currencyTotals = totalsByCurrency.get(currency) ?? new Map<string, number>()
+      currencyTotals.set(dateKey, (currencyTotals.get(dateKey) ?? 0) + Number(payment.amount || 0))
+      totalsByCurrency.set(currency, currencyTotals)
     }
-    const entries = [...map.entries()].slice(-7)
+    const dateKeys = [...dateLabels.keys()].sort().slice(-7)
     return {
-      labels: entries.map(([key]) => key),
-      datasets: [{ label: 'Collections', data: entries.map(([, value]) => value), color: '#2563eb' }],
+      labels: dateKeys.map(key => dateLabels.get(key) ?? key),
+      datasets: [...totalsByCurrency.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([currency, totals]) => ({
+        label: currency + ' collections',
+        data: dateKeys.map(key => totals.get(key) ?? 0),
+      })),
     }
   }, [payments])
 
@@ -160,7 +171,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
               {tickerPayments.map((payment, index) => (
                 <span className="finance-fee-ticker-item" key={(payment.id || payment.receiptNumber || payment.reference || 'fee') + '-' + index}>
                   <strong>PAID</strong>
-                  <b>{money(Number(payment.amount), payment.currency ?? "UGX")}</b>
+                  <b>{money(Number(payment.amount), payment.currency ?? SYSTEM_CURRENCY)}</b>
                   <span>{payment.studentName || 'Student'}</span>
                   {payment.receiptNumber && <small>Receipt {payment.receiptNumber}</small>}
                   <i aria-hidden="true">◆</i>
@@ -325,7 +336,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
       {tab === 'accounting' && (
         <section className="finance-accounting-layout">
           <div className="finance-surface"><div className="finance-surface-heading"><div><span className="eyebrow">ACCOUNTING</span><h3>Accounts & payroll control</h3><p>Receivables, payments, payroll and finance administration are grouped here for the bursar and accounts office.</p></div></div><AccountsOverviewWorkspace /></div>
-          <div className="finance-surface" style={{ marginTop: 18 }}><div className="finance-surface-heading"><div><span className="eyebrow">DOUBLE-ENTRY ACCOUNTING</span><h3>Core accounting reports</h3><p>Chart of accounts, general ledger, trial balance, income statement and balance sheet, all presented in UGX.</p></div></div><AccountingReportsWorkspace /></div>
+          <div className="finance-surface" style={{ marginTop: 18 }}><div className="finance-surface-heading"><div><span className="eyebrow">DOUBLE-ENTRY ACCOUNTING</span><h3>Core accounting reports</h3><p>Chart of accounts, general ledger, trial balance, income statement and balance sheet, all presented in {SYSTEM_CURRENCY}.</p></div></div><AccountingReportsWorkspace /></div>
         </section>
       )}
 
@@ -333,7 +344,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
 
       {tab === 'reports' && (
         <section className="finance-surface">
-          <div className="finance-surface-heading"><div><span className="eyebrow">FINANCIAL REPORTING</span><h3>Financial reports</h3><p>Period-based finance reporting with UGX presentation and reconciliation visibility.</p></div></div>
+          <div className="finance-surface-heading"><div><span className="eyebrow">FINANCIAL REPORTING</span><h3>Financial reports</h3><p>Period-based finance reporting with {SYSTEM_CURRENCY} presentation and reconciliation visibility.</p></div></div>
           <CashBankPositionReport />
         </section>
       )}

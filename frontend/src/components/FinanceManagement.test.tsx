@@ -16,6 +16,7 @@ vi.mock('../api/finance', () => ({
     overdueCount: 0,
   }),
   getOutstandingBalances: vi.fn().mockResolvedValue([]),
+  getFinanceOverdueSummary: vi.fn().mockResolvedValue({ totalOutstanding: 0, installmentCount: 0, studentCount: 0, currency: 'UGX' }),
   getPayments: vi.fn().mockResolvedValue([]),
   getFinanceReceivablesAgeing: vi.fn().mockResolvedValue([]),
   getFinanceReceivablesReconciliation: vi.fn().mockResolvedValue([]),

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import LoadingSpinner from './LoadingSpinner';
 import { AgGridTable } from './AgGridTable'
 import type { ColDef } from 'ag-grid-community'
@@ -27,7 +28,7 @@ export function DefaulterManagement() {
   const defaulterColumns: ColDef<Defaulter>[] = [
     { field: 'studentNumber', headerName: 'Student number', minWidth: 150 },
     { field: 'studentName', headerName: 'Student name', minWidth: 200 },
-    { field: 'totalBalance', headerName: 'Outstanding balance', minWidth: 170, valueFormatter: p => `${p.data?.currency ?? ''} ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
+    { field: 'totalBalance', headerName: 'Outstanding balance', minWidth: 170, valueFormatter: p => formatCurrency(Number(p.value ?? 0), p.data?.currency ?? SYSTEM_CURRENCY) },
     { field: 'severity', headerName: 'Severity', minWidth: 130 },
     { field: 'invoiceCount', headerName: 'Invoices', minWidth: 110 },
     { field: 'oldestInvoice', headerName: 'Oldest invoice', minWidth: 150, valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-UG') : '' },
@@ -35,7 +36,7 @@ export function DefaulterManagement() {
   ]
   const actionColumns: ColDef<FollowUpAction>[] = [
     { field: 'studentName', headerName: 'Student', minWidth: 200 },
-    { field: 'totalBalance', headerName: 'Outstanding balance', minWidth: 180, valueFormatter: p => `UGX ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
+    { field: 'totalBalance', headerName: 'Outstanding balance', minWidth: 180, valueFormatter: p => formatCurrency(Number(p.value ?? 0), p.data?.currency ?? SYSTEM_CURRENCY) },
     { field: 'severity', headerName: 'Severity', minWidth: 130 },
     { field: 'suggestedActions', headerName: 'Suggested actions', minWidth: 300, valueFormatter: p => Array.isArray(p.value) ? p.value.join(' • ') : '' },
   ]
@@ -43,8 +44,8 @@ export function DefaulterManagement() {
   const invoiceColumns: ColDef<InvoiceRow>[] = [
     { field: 'invoiceNumber', headerName: 'Invoice', minWidth: 150 },
     { field: 'feeType', headerName: 'Fee type', minWidth: 160 },
-    { field: 'amount', headerName: 'Amount', valueFormatter: p => `${p.data?.currency ?? ''} ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
-    { field: 'paidAmount', headerName: 'Paid', valueFormatter: p => `${p.data?.currency ?? ''} ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
+    { field: 'amount', headerName: 'Amount', valueFormatter: p => formatCurrency(Number(p.value ?? 0), p.data?.currency ?? SYSTEM_CURRENCY) },
+    { field: 'paidAmount', headerName: 'Paid', valueFormatter: p => formatCurrency(Number(p.value ?? 0), p.data?.currency ?? SYSTEM_CURRENCY) },
     { field: 'balance', headerName: 'Balance', valueFormatter: p => `${p.data?.currency ?? ''} ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
     { field: 'status', headerName: 'Status' },
     { field: 'issuedAt', headerName: 'Issued', valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-UG') : '' },
@@ -132,7 +133,7 @@ export function DefaulterManagement() {
         <div className="summary-grid" style={{ marginBottom: 22 }}>
           <div className="summary-card">
             <span>Total Outstanding</span>
-            <strong style={{ color: '#dc2626' }}>UGX {overview.totalOutstanding.toLocaleString()}</strong>
+            <strong style={{ color: '#dc2626' }}>{formatCurrency(overview.totalOutstanding, SYSTEM_CURRENCY)}</strong>
           </div>
           <div className="summary-card">
             <span>Total Defaulters</span>
@@ -176,10 +177,14 @@ export function DefaulterManagement() {
             <button className="secondary-button" onClick={() => setSelectedStudent(null)}>Close</button>
           </div>
           <div className="summary-grid" style={{ marginBottom: 22 }}>
-            <div className="summary-card">
-              <span>Total Balance</span>
-              <strong style={{ color: '#dc2626' }}>UGX {selectedStudent.totalBalance.toLocaleString()}</strong>
-            </div>
+            {(selectedStudent.balancesByCurrency?.length
+              ? selectedStudent.balancesByCurrency
+              : [{ currency: selectedStudent.invoices[0]?.currency ?? SYSTEM_CURRENCY, balance: selectedStudent.totalBalance }]).map(item => (
+              <div className="summary-card" key={item.currency}>
+                <span>Outstanding balance · {item.currency}</span>
+                <strong style={{ color: '#dc2626' }}>{formatCurrency(item.balance, item.currency)}</strong>
+              </div>
+            ))}
           </div>
           <AgGridTable rows={selectedStudent.invoices} columns={invoiceColumns} height={380} exportFileName={`defaulter-invoices-${selectedStudent.studentNumber}`} getRowId={p => p.data.id} />
         </div>

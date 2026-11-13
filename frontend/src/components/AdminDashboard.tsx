@@ -1,4 +1,5 @@
 import { formatPersonName } from '../utils/personName'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { useEffect, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
 import { getSession } from '../api/auth'
@@ -26,7 +27,7 @@ const chartColors = {
 }
 
 const numberFormat = new Intl.NumberFormat('en-UG')
-const moneyFormat = (value: number) => `UGX ${numberFormat.format(Math.round(value || 0))}`
+const moneyFormat = (value: number) => formatCurrency(value, SYSTEM_CURRENCY)
 
 type StudentSearchResult = { id: string; studentNumber: string; name: string; status: string }
 type StaffSearchResult = { id: string; staffNumber: string; name: string; department: string; status: string }
@@ -74,7 +75,7 @@ export function AdminDashboard() {
     if (studentsRes.status === 'fulfilled') { const rows = studentsRes.value; setStudents({ total: rows.length, active: rows.filter(s => s.status?.trim().toLowerCase() === 'active').length }) } else errors.students = reason(studentsRes.reason)
     if (staffRes.status === 'fulfilled') { const rows = staffRes.value; setStaff({ total: rows.length, active: rows.filter(s => s.isActive).length }) }
     if (invoicesRes.status === 'fulfilled') {
-      const rows = invoicesRes.value
+      const rows = invoicesRes.value.filter(inv => (inv.currency ?? SYSTEM_CURRENCY).toUpperCase() === SYSTEM_CURRENCY)
       const totalBilled = rows.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0)
       const totalPaid = rows.reduce((sum, inv) => sum + (Number(inv.paidAmount) || 0), 0)
       const outstanding = rows.reduce((sum, inv) => sum + (Number.isFinite(Number(inv.balance)) ? Math.max(0, Number(inv.balance)) : Math.max(0, (Number(inv.amount) || 0) - (Number(inv.paidAmount) || 0))), 0)
@@ -181,7 +182,7 @@ export function AdminDashboard() {
             <div className="admin-kpi-card"><span className="admin-kpi-icon teal">ST</span><div><span>Students</span><strong>{numberFormat.format(students.total)}</strong><small>{numberFormat.format(students.active)} active</small></div></div>
             <div className="admin-kpi-card"><span className="admin-kpi-icon green">SF</span><div><span>Staff members</span><strong>{numberFormat.format(staff.total)}</strong><small>{numberFormat.format(staff.active)} active</small></div></div>
             <div className="admin-kpi-card"><span className="admin-kpi-icon blue">US</span><div><span>System users</span><strong>{numberFormat.format(users.total)}</strong><small>{numberFormat.format(users.active)} active accounts</small></div></div>
-            <div className="admin-kpi-card"><span className="admin-kpi-icon amber">UGX</span><div><span>Fees collected</span><strong>{moneyFormat(finance.totalPaid)}</strong><small>{numberFormat.format(finance.invoices)} invoices</small></div></div>
+            <div className="admin-kpi-card"><span className="admin-kpi-icon amber">{SYSTEM_CURRENCY}</span><div><span>Fees collected</span><strong>{moneyFormat(finance.totalPaid)}</strong><small>{numberFormat.format(finance.invoices)} invoices</small></div></div>
           </div>
 
           <div className="admin-section-title">

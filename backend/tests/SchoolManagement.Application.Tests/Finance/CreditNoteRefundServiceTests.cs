@@ -52,6 +52,11 @@ public sealed class CreditNoteRefundServiceTests
         Assert.Equal("Correction approved", cancelled.CancellationReason);
         Assert.NotNull(cancelled.CancelledAt);
         Assert.Equal(2, finance.JournalEntries.Count);
+        Assert.Equal(2, finance.LedgerEntries.Count);
+        Assert.Equal(-25000m, finance.LedgerEntries[0].Amount);
+        Assert.Equal(25000m, finance.LedgerEntries[1].Amount);
+        Assert.Equal("CreditNoteCancellation", finance.LedgerEntries[1].EntryType);
+        Assert.Equal($"CANCEL-{creditNote.CreditNoteNumber}", finance.LedgerEntries[1].Reference);
         var reversal = finance.JournalEntries.Single(x => x.ReversalOfJournalEntryId == finance.JournalEntries.Single(y => y.SourceType == "CreditNote").Id);
         Assert.Equal("JournalReversal", reversal.SourceType);
         Assert.Equal(finance.JournalEntries.Single(x => x.SourceType == "CreditNote").Lines.Single(x => x.Debit > 0).AccountId, reversal.Lines.Single(x => x.Credit > 0).AccountId);
@@ -87,6 +92,8 @@ public sealed class CreditNoteRefundServiceTests
         Assert.Equal("Cancelled", first.Status);
         Assert.Equal("Applied", second.Status);
         Assert.Equal(2, adjustments.CreditNotes.Count);
+        Assert.Equal(3, finance.LedgerEntries.Count);
+        Assert.Equal(-50000m, finance.LedgerEntries.Sum(x => x.Amount));
     }
 
     [Fact]

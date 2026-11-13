@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
 
@@ -10,11 +11,12 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/accounts-overview")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
-public sealed class AccountsOverviewController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
+public sealed class AccountsOverviewController(SchoolManagementDbContext db, CampusAccessService campusAccess, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
     {
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
 
@@ -27,7 +29,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
         }
 
         var invoiceTotals = await invoices
-            .GroupBy(x => x.Currency)
+            .GroupBy(x => x.Currency.Trim().ToUpper())
             .Select(group => new
             {
                 currency = group.Key,
@@ -36,18 +38,19 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             })
             .ToListAsync(cancellationToken);
 
-        var todayUtc = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
-        var tomorrowUtc = todayUtc.AddDays(1);
+        var ugandaDate = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        var todayStartUtc = new DateTimeOffset(ugandaDate.ToDateTime(TimeOnly.MinValue), TimeSpan.FromHours(3)).ToUniversalTime();
+        var tomorrowStartUtc = todayStartUtc.AddDays(1);
         var collectionTotals = await payments
-            .Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
-            .GroupBy(p => p.Currency)
+            .Where(p => p.PaidAt >= todayStartUtc && p.PaidAt < tomorrowStartUtc)
+            .GroupBy(p => p.Currency.Trim().ToUpper())
             .Select(group => new { currency = group.Key, amount = group.Sum(x => x.Amount) })
             .ToListAsync(cancellationToken);
 
-        var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == "UGX");
+        var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == systemCurrency);
         var totalBilled = defaultCurrencyTotals?.billed ?? 0m;
         var totalPaid = defaultCurrencyTotals?.paid ?? 0m;
-        var todayCollection = collectionTotals.FirstOrDefault(x => x.currency == "UGX")?.amount ?? 0m;
+        var todayCollection = collectionTotals.FirstOrDefault(x => x.currency == systemCurrency)?.amount ?? 0m;
 
         return Ok(new
         {
@@ -55,7 +58,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             totalPaid,
             totalOutstanding = Math.Max(0m, totalBilled - totalPaid),
             todayCollection,
-            currency = "UGX",
+            currency = systemCurrency,
             totalsByCurrency = invoiceTotals.Select(x => new
             {
                 x.currency,
@@ -69,6 +72,43 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             outstandingCount = await invoices.LongCountAsync(
                 x => x.Amount - x.DiscountAmount - x.PaidAmount > 0,
                 cancellationToken)
+        });
+    }
+
+    [HttpGet("overdue")]
+    public async Task<IActionResult> GetOverdue(CancellationToken cancellationToken)
+    {
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
+        var asOf = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        var query =
+            from installment in db.Set<SchoolManagement.Domain.Finance.InvoiceInstallment>().AsNoTracking()
+            join invoice in db.StudentInvoices.AsNoTracking()
+                on installment.StudentInvoiceId equals invoice.Id
+            where installment.DueDate < asOf
+                && installment.Amount > installment.PaidAmount
+                && invoice.Currency.Trim().ToUpper() == systemCurrency
+            select new
+            {
+                invoice.StudentId,
+                outstanding = installment.Amount - installment.PaidAmount
+            };
+
+        if (accessibleCampuses is not null)
+            query = query.Where(x => db.Students.Any(student =>
+                student.Id == x.StudentId && student.CampusId.HasValue &&
+                accessibleCampuses.Contains(student.CampusId.Value)));
+
+        var overdueRows = await query.ToListAsync(cancellationToken);
+        return Ok(new
+        {
+            asOf,
+            currency = systemCurrency,
+            installmentCount = overdueRows.Count,
+            studentCount = overdueRows.Select(x => x.StudentId).Distinct().Count(),
+            totalOutstanding = overdueRows.Sum(x => x.outstanding)
         });
     }
 
@@ -214,6 +254,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
                 x.payroll.Allowances,
                 x.payroll.Deductions,
                 x.payroll.NetPay,
+                x.payroll.Currency,
                 x.payroll.Status,
                 x.payroll.PaymentDate,
                 x.payroll.PaymentMethod,

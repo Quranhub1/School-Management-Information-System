@@ -4865,3 +4865,57 @@ table { font-variant-numeric: tabular-nums; }
   color: #065f46 !important;
   -webkit-text-fill-color: #065f46 !important;
 }
+
+
+/* High-clarity labels for solid green action controls.
+   Keep the foreground explicitly white, opaque and semibold across nested
+   spans/icons while preserving each control's existing background and layout. */
+.app-shell :is(
+  button, a[role="button"], [role="button"]
+):is(
+  .primary-button, .library-primary, .create-account-button,
+  .timetable-action.primary, .btn-success, .button-success,
+  [data-variant="success"], [class*="green"], [class*="emerald"],
+  [class*="teal"], [class*="success"]
+),
+.app-shell :is(
+  button, a[role="button"], [role="button"]
+):is(
+  .primary-button, .library-primary, .create-account-button,
+  .timetable-action.primary, .btn-success, .button-success,
+  [data-variant="success"], [class*="green"], [class*="emerald"],
+  [class*="teal"], [class*="success"]
+) :where(span, strong, b, small, em, label) {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .18);
+}
+
+/* Apply the same readable label treatment to known solid-green screen actions
+   whose backgrounds are defined by component-specific selectors. */
+.app-shell .archive-action-panel .form-actions button,
+.app-shell .archive-search-form button[type="submit"],
+.app-shell .audit-log-screen > .library-search > button,
+.app-shell .guild-page .guild-header .page-actions button.primary-button,
+.app-shell .guild-page .guild-primary-tabs button.active,
+.app-shell .alumni-tabs button.active,
+.app-shell .student-lifecycle-tabs button.active {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+.app-shell .archive-action-panel .form-actions button *,
+.app-shell .archive-search-form button[type="submit"] *,
+.app-shell .audit-log-screen > .library-search > button *,
+.app-shell .guild-page .guild-header .page-actions button.primary-button *,
+.app-shell .guild-page .guild-primary-tabs button.active *,
+.app-shell .alumni-tabs button.active *,
+.app-shell .student-lifecycle-tabs button.active * {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}

@@ -10,6 +10,19 @@ namespace SchoolManagement.Api.Controllers;
 [Authorize(Policy = AuthorizationPolicies.Administration)]
 public sealed class InstitutionSettingsController(InstitutionSettingsService service, IHttpClientFactory httpClientFactory) : ControllerBase
 {
+    [HttpGet("system-currency")]
+    public async Task<IActionResult> GetSystemCurrency(CancellationToken ct) => Ok(await service.GetSystemCurrencyAsync(ct));
+
+    [HttpPut("system-currency")]
+    public async Task<IActionResult> UpdateSystemCurrency([FromBody] SystemCurrencyRequest request, CancellationToken ct)
+    {
+        try { return Ok(await service.UpdateSystemCurrencyAsync(request.Code, ct)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+    }
+
+    public sealed record SystemCurrencyRequest(string Code);
+
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {

@@ -48,6 +48,7 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
         var journal = new JournalEntry
         {
             EntryNumber = creditNote.CreditNoteNumber,
+            Currency = invoice.Currency,
             Description = $"Credit note {creditNote.CreditNoteNumber} for invoice {invoice.InvoiceNumber}",
             Status = "Posted",
             PostedAt = DateTimeOffset.UtcNow,
@@ -93,6 +94,9 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
         if (string.Equals(creditNote.Status, "Refunded", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"Credit note '{creditNote.CreditNoteNumber}' has already been refunded and cannot be cancelled.");
 
+        var invoice = await finance.GetInvoiceAsync(creditNote.StudentInvoiceId, cancellationToken)
+            ?? throw new InvalidOperationException($"Invoice for credit note '{creditNote.CreditNoteNumber}' was not found.");
+
         var sourceEntries = await finance.GetPostedJournalEntriesAsync(null, null, null, cancellationToken);
         var sourceJournal = sourceEntries.SingleOrDefault(x =>
             string.Equals(x.SourceType, "CreditNote", StringComparison.OrdinalIgnoreCase) && x.SourceId == creditNote.Id);
@@ -106,6 +110,19 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
         await reversalService.ReverseAsync(sourceJournal.Id, reason, cancelledBy, cancellationToken, saveChanges: false);
 
         creditNote.Cancel(cancelledBy, reason, DateTimeOffset.UtcNow);
+        // The original credit note reduced the student subledger balance. Restore that
+        // amount with a compensating entry in the same unit of work as the journal
+        // reversal and cancellation state change.
+        await finance.AddPaymentLedgerEntryAsync(new PaymentLedgerEntry
+        {
+            StudentId = invoice.StudentId,
+            StudentInvoiceId = invoice.Id,
+            EntryType = "CreditNoteCancellation",
+            Description = $"Cancellation of credit note {creditNote.CreditNoteNumber}: {reason.Trim()}",
+            Amount = creditNote.Amount,
+            Currency = invoice.Currency,
+            Reference = $"CANCEL-{creditNote.CreditNoteNumber}"
+        }, cancellationToken);
         await finance.SaveChangesAsync(cancellationToken);
         return creditNote;
     }
@@ -142,6 +159,7 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
         var journal = new JournalEntry
         {
             EntryNumber = refundNumber,
+            Currency = payment.Currency,
             Description = $"Student refund {refundNumber}",
             Status = "Posted",
             PostedAt = DateTimeOffset.UtcNow,

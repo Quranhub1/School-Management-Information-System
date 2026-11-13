@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { getSession } from '../api/auth'
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
 import { authorizeStaffAllowance, listStaffAllowances, recordStaffAllowance, type StaffAllowance } from '../api/staffAllowances'
-import { SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
+import { formatCurrency, getCurrencyInputStep, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
 
 const ALLOWANCE_TYPES = ['Transport', 'Housing', 'Medical', 'Responsibility', 'Acting', 'Communication', 'Airtime', 'Meal', 'Travel', 'Duty', 'Overtime', 'Other']
 
@@ -113,8 +113,8 @@ export function StaffAllowancesWorkspace() {
             <label>Allowance Type
               <select value={allowanceType} onChange={e => setAllowanceType(e.target.value)}>{ALLOWANCE_TYPES.map(x => <option key={x}>{x}</option>)}</select>
             </label>
-            <label>Amount (UGX)
-              <input type="number" min="0.01" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required />
+            <label>Amount ({SYSTEM_CURRENCY})
+              <input type="number" min={getCurrencyInputStep(SYSTEM_CURRENCY)} step={getCurrencyInputStep(SYSTEM_CURRENCY)} value={amount} onChange={e => setAmount(e.target.value)} required />
             </label>
             <label>Effective From
               <input type="date" value={effectiveFrom} onChange={e => setEffectiveFrom(e.target.value)} required />
@@ -146,7 +146,7 @@ export function StaffAllowancesWorkspace() {
                 <tr key={a.id}>
                   <td><strong>{a.staffName}</strong><br /><small>{a.staffNumber}</small></td>
                   <td>{a.allowanceType}</td>
-                  <td>{SYSTEM_CURRENCY} {a.amount.toLocaleString(SYSTEM_LOCALE)}</td>
+                  <td>{formatCurrency(a.amount, a.currency || SYSTEM_CURRENCY)}</td>
                   <td>{a.effectiveFrom}</td>
                   <td>{a.frequency}</td>
                   <td>{a.status}</td>

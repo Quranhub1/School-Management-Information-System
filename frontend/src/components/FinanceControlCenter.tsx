@@ -8,6 +8,7 @@ import {
   getFeeStructures,
   getFinanceReceivablesAgeing,
   getFinanceReceivablesReconciliation,
+  getFinanceOverdueSummary,
   getOutstandingBalances,
   type AccountsOverviewPayment,
   type BankReconciliation,
@@ -39,6 +40,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
   const [payments, setPayments] = useState<AccountsOverviewPayment[]>([])
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([])
   const [outstandingCount, setOutstandingCount] = useState(0)
+  const [overdueAmount, setOverdueAmount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [errorCount, setErrorCount] = useState(0)
@@ -51,17 +53,19 @@ export function FinanceControlCenter({ onNavigate }: Props) {
       getFinanceReceivablesReconciliation(undefined, SYSTEM_CURRENCY),
       getBankReconciliations(),
       getOutstandingBalances(),
+      getFinanceOverdueSummary(),
       getAccountsOverviewPayments(),
       getFeeStructures(),
       getBudgets({ activeOnly: true }),
     ])
     let failures = 0
-    const [d, a, r, b, o, p, fees, budgets] = results
+    const [d, a, r, b, o, overdueResult, p, fees, budgets] = results
     if (d.status === 'fulfilled') setDashboard(d.value); else failures++
     if (a.status === 'fulfilled') setAgeing(a.value); else failures++
     if (r.status === 'fulfilled') setReconciliation(r.value); else failures++
     if (b.status === 'fulfilled') setBankReconciliations(b.value); else failures++
-    if (o.status === 'fulfilled') setOutstandingCount(o.value.length); else failures++
+    if (o.status === 'fulfilled') setOutstandingCount(new Set(o.value.map(item => item.studentId)).size); else failures++
+    if (overdueResult.status === 'fulfilled') setOverdueAmount(overdueResult.value.totalOutstanding); else failures++
     if (p.status === 'fulfilled') setPayments(p.value); else failures++
     if (fees.status === 'fulfilled') setFeeStructures(fees.value); else failures++
     if (budgets.status === 'fulfilled') {
@@ -78,10 +82,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
 
   useEffect(() => { void load() }, [])
 
-  const overdue = useMemo(() => {
-    if (!ageing) return 0
-    return ageing.buckets.filter(x => x.bucket !== 'Current').reduce((sum, x) => sum + x.outstandingAmount, 0)
-  }, [ageing])
+  const overdue = overdueAmount
 
   const collectionRate = dashboard && dashboard.totalBilled > 0
     ? Math.min(100, Math.max(0, dashboard.totalPaid / dashboard.totalBilled * 100))
@@ -139,7 +140,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
         <button type="button" className="finance-control-kpi" onClick={() => onNavigate('reports')}>
           <span>Overdue arrears</span>
           <strong>{money(overdue)}</strong>
-          <small>Receivables beyond current billing</small>
+          <small>Scheduled instalments past due</small>
         </button>
         <button type="button" className="finance-control-kpi" onClick={() => onNavigate('accounting')}>
           <span>Control balance</span>
@@ -175,7 +176,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
             <strong className={alertCount ? 'finance-value-danger' : 'finance-value-success'}>{alertCount} control alerts</strong>
           </div>
           <div className="finance-alert-list">
-            <button type="button" onClick={() => onNavigate('student-accounts')}><span><strong>Arrears follow-up</strong><small>Students with overdue balances</small></span><strong>{money(overdue)}</strong></button>
+            <button type="button" onClick={() => onNavigate('student-accounts')}><span><strong>Overdue instalments</strong><small>Scheduled student payments past due</small></span><strong>{money(overdue)}</strong></button>
             <button type="button" onClick={() => onNavigate('reports')}><span><strong>Bank reconciliation</strong><small>Open reconciliations</small></span><strong>{openBankItems}</strong></button>
             <button type="button" onClick={() => onNavigate('accounting')}><span><strong>Receivables control</strong><small>Subledger versus control account</small></span><strong>{reconciliation?.isReconciled ? 'OK' : 'Review'}</strong></button>
             <button type="button" onClick={() => onNavigate('accounting')}><span><strong>Budget pressure</strong><small>Actual against approved budget</small></span><strong>{budgetUtilization === null ? '—' : budgetUtilization.toFixed(1) + '%'}</strong></button>
@@ -223,7 +224,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
             <div><span>Active fee structures</span><strong>{feeStructures.filter(x => x.isActive).length}</strong></div>
             <div><span>Fee structures loaded</span><strong>{feeStructures.length}</strong></div>
             <div><span>Invoices issued</span><strong>{dashboard?.invoiceCount.toLocaleString() ?? '—'}</strong></div>
-            <div><span>Outstanding accounts</span><strong className="finance-value-danger">{dashboard?.outstandingCount.toLocaleString() ?? '—'}</strong></div>
+            <div><span>Outstanding invoices</span><strong className="finance-value-danger">{dashboard?.outstandingCount.toLocaleString() ?? '—'}</strong></div>
           </div>
           
         </section>

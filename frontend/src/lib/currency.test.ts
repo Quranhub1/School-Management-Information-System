@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   SYSTEM_CURRENCY,
   SYSTEM_LOCALE,
+  configureSystemCurrency,
   addMoney,
   formatCurrency,
+  getCurrencyFractionDigits,
+  getCurrencyInputStep,
   fromMinorUnits,
   subtractMoney,
   toMinorUnits,
@@ -15,12 +18,27 @@ describe("currency formatting", () => {
     expect(SYSTEM_LOCALE).toBe("en-UG");
   });
 
+  it("uses the server-configured system currency as the default formatter currency", () => {
+    configureSystemCurrency("USD", "en-US");
+    expect(SYSTEM_CURRENCY).toBe("USD");
+    expect(SYSTEM_LOCALE).toBe("en-US");
+    expect(formatCurrency(1250)).toContain("USD");
+    configureSystemCurrency("UGX", "en-UG");
+  });
+
   it("formats currencies using their ISO fraction-digit rules", () => {
     expect(formatCurrency(125000)).toContain("UGX");
     expect(formatCurrency(125000)).toContain("125,000");
     expect(formatCurrency("150.50", "USD", "en-US")).toContain("150.50");
     expect(formatCurrency("25000", "KES", "en-KE")).toContain("25,000");
     expect(formatCurrency("12.345", "KWD", "en-US")).toContain("12.345");
+  });
+
+  it("uses ISO minor-unit precision for amount input steps", () => {
+    expect(getCurrencyFractionDigits("UGX")).toBe(0);
+    expect(getCurrencyFractionDigits("USD")).toBe(2);
+    expect(getCurrencyInputStep("UGX")).toBe("1");
+    expect(getCurrencyInputStep("USD")).toBe("0.01");
   });
 
   it("handles missing and invalid numeric amounts without NaN output", () => {
