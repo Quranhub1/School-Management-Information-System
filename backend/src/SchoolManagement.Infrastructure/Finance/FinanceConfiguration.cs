@@ -95,6 +95,7 @@ public sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journal
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.EntryNumber).IsUnique();
         builder.Property(x => x.EntryNumber).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Currency).HasMaxLength(3).IsRequired();
         builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
         builder.Property(x => x.SourceType).HasMaxLength(80);
         builder.HasIndex(x => new { x.SourceType, x.SourceId });
