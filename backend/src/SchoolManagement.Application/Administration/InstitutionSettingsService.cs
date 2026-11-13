@@ -40,8 +40,41 @@ public sealed record CreateInstitutionSettingsRequest(
     string? LogoContentType = null
 );
 
+public sealed record SystemCurrencySettingsDto(string Code, string Locale, int FractionDigits);
+
 public sealed class InstitutionSettingsService(IInstitutionSettingsRepository repository)
 {
+    private static readonly IReadOnlyDictionary<string, (string Locale, int FractionDigits)> SupportedSystemCurrencies =
+        new Dictionary<string, (string, int)>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["UGX"] = ("en-UG", 0), ["USD"] = ("en-US", 2), ["KES"] = ("en-KE", 2),
+            ["EUR"] = ("en-IE", 2), ["GBP"] = ("en-GB", 2), ["TZS"] = ("sw-TZ", 0),
+            ["RWF"] = ("rw-RW", 0), ["ZAR"] = ("en-ZA", 2), ["AED"] = ("en-AE", 2)
+        };
+
+    public async Task<SystemCurrencySettingsDto> GetSystemCurrencyAsync(CancellationToken ct = default)
+    {
+        var settings = await repository.GetActiveAsync(ct);
+        return settings is null
+            ? new SystemCurrencySettingsDto("UGX", "en-UG", 0)
+            : new SystemCurrencySettingsDto(settings.SystemCurrencyCode, settings.SystemCurrencyLocale, settings.SystemCurrencyFractionDigits);
+    }
+
+    public async Task<SystemCurrencySettingsDto> UpdateSystemCurrencyAsync(string code, CancellationToken ct = default)
+    {
+        var normalized = code?.Trim().ToUpperInvariant() ?? string.Empty;
+        if (!SupportedSystemCurrencies.TryGetValue(normalized, out var metadata))
+            throw new ArgumentException("Select a supported system currency.", nameof(code));
+
+        var settings = await repository.GetActiveAsync(ct)
+            ?? throw new InvalidOperationException("Save institution settings before configuring the system currency.");
+        settings.SystemCurrencyCode = normalized;
+        settings.SystemCurrencyLocale = metadata.Locale;
+        settings.SystemCurrencyFractionDigits = metadata.FractionDigits;
+        settings.UpdatedAt = DateTimeOffset.UtcNow;
+        await repository.SaveChangesAsync(ct);
+        return new SystemCurrencySettingsDto(settings.SystemCurrencyCode, settings.SystemCurrencyLocale, settings.SystemCurrencyFractionDigits);
+    }
     public async Task<IReadOnlyList<InstitutionSettingsDto>> GetAllAsync(CancellationToken ct = default)
     {
         var items = await repository.GetAllAsync(ct);
