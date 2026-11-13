@@ -203,7 +203,7 @@ export function AgGridTable<TData extends object>({
             headerHeight={40}
             pagination
             paginationPageSize={pageSize}
-            paginationPageSizeSelector={[10, 25, 50, 100]}
+            paginationPageSizeSelector={[...new Set([pageSize, 10, 25, 50, 100])].sort((a, b) => a - b)}
             animateRows={false}
             loading={loading}
             quickFilterText={debouncedFilter}
