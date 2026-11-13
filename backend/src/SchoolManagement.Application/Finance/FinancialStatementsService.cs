@@ -12,6 +12,7 @@ public sealed class FinancialStatementsService(IFinanceRepository finance)
 {
     public async Task<IncomeStatement> GetIncomeStatementAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default, string currency = "UGX")
     {
+        currency = MoneyMath.NormalizeCurrency(currency);
         var entries = (await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken)).Where(x => string.Equals(x.Currency, currency, StringComparison.OrdinalIgnoreCase));
         var lines = Flatten(entries).Where(x => IsType(x.Account.AccountType, "Revenue", "Income", "Expense", "Expenses"));
         var rows = lines.GroupBy(x => x.Account.Id).Select(g => ToRow(g.Select(x => x.Account).First(), g.Sum(x => x.Line.Debit - x.Line.Credit))).OrderBy(x => x.AccountCode).ToList();
@@ -22,6 +23,7 @@ public sealed class FinancialStatementsService(IFinanceRepository finance)
 
     public async Task<BalanceSheet> GetBalanceSheetAsync(DateOnly? to = null, CancellationToken cancellationToken = default, string currency = "UGX")
     {
+        currency = MoneyMath.NormalizeCurrency(currency);
         var entries = (await finance.GetPostedJournalEntriesAsync(null, to, null, cancellationToken)).Where(x => string.Equals(x.Currency, currency, StringComparison.OrdinalIgnoreCase));
         var rows = Flatten(entries).Where(x => IsType(x.Account.AccountType, "Asset", "Assets", "Liability", "Liabilities", "Equity")).GroupBy(x => x.Account.Id)
             .Select(g => ToRow(g.Select(x => x.Account).First(), g.Sum(x => x.Line.Debit - x.Line.Credit))).OrderBy(x => x.AccountCode).ToList();
@@ -33,6 +35,7 @@ public sealed class FinancialStatementsService(IFinanceRepository finance)
 
     public async Task<CashBankSummary> GetCashAndBankSummaryAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default, string currency = "UGX")
     {
+        currency = MoneyMath.NormalizeCurrency(currency);
         var entries = (await finance.GetPostedJournalEntriesAsync(from, to, null, cancellationToken)).Where(x => string.Equals(x.Currency, currency, StringComparison.OrdinalIgnoreCase));
         var rows = Flatten(entries).Where(x => IsType(x.Account.AccountType, "Asset", "Assets") &&
             (x.Account.Name.Contains("cash", StringComparison.OrdinalIgnoreCase) || x.Account.Name.Contains("bank", StringComparison.OrdinalIgnoreCase)));
