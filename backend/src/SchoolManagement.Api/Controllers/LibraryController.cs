@@ -21,7 +21,8 @@ public sealed class LibraryController(
     FinanceWorkflowService finance,
     IConfiguration configuration,
     SchoolManagementDbContext db,
-    CampusAccessService campusAccess) : ControllerBase
+    CampusAccessService campusAccess,
+    InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("books")]
     [Authorize(Policy = LibraryPolicies.Read)]
