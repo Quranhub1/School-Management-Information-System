@@ -3,6 +3,7 @@ import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { getSession } from '../api/auth'
 import { getDashboard, getOutstandingBalances, getPayments, type FinanceDashboard, type OutstandingBalance } from '../api/finance'
 import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
+import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 import { parseApiResponse } from '../lib/validation'
 import { paymentListSchema } from '../schemas/finance.schema'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
@@ -44,6 +45,8 @@ const statusFor = (balance: number, billed = 0, paid = 0) => {
 const money = (value: number, currency: string = SYSTEM_CURRENCY) => formatCurrency(Number(value) || 0, currency)
 
 export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } = {}) {
+  // Subscribe to system-settings updates so the live currency module value is rendered immediately.
+  useOptionalInstitutionSettings()
   const isAssistantAccountant = getSession()?.roles?.includes('AssistantAccountant') ?? false
   const [tab, setTab] = useState<FinanceTab>('overview')
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null)
@@ -189,7 +192,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
       <section className="finance-workspace" aria-label="Read-only finance overview">
         <div className="workspace-header finance-workspace-header">
           <div>
-            <p className="eyebrow">FINANCE & ACCOUNTS · ' + SYSTEM_CURRENCY + ' · READ ONLY</p>
+            <p className="eyebrow">FINANCE & ACCOUNTS · {SYSTEM_CURRENCY} · READ ONLY</p>
             <h2>Financial Oversight</h2>
           </div>
           <div className="page-actions">
@@ -242,7 +245,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     <section className="finance-workspace" aria-label="Finance and accounting workspace">
         <div className="workspace-header finance-workspace-header">
         <div>
-          <p className="eyebrow">FINANCE & ACCOUNTS · ' + SYSTEM_CURRENCY + '</p>
+          <p className="eyebrow">FINANCE & ACCOUNTS · {SYSTEM_CURRENCY}</p>
           <h2>Finance & Accounting</h2>
           <p>Billing, collections and accounting controls.</p>
         </div>
@@ -307,7 +310,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
                 <div><span>Open receivables</span><strong className="finance-value-danger">{dashboard?.outstandingCount.toLocaleString() ?? '—'}</strong></div>
                 <div><span>Payment records</span><strong>{dashboard?.paymentCount.toLocaleString() ?? '—'}</strong></div>
                 <div><span>Collection rate</span><strong className="finance-value-success">{collectionRate.toFixed(1)}%</strong></div>
-                <div><span>Currency</span><strong>' + SYSTEM_CURRENCY + '</strong></div>
+                <div><span>Currency</span><strong>{SYSTEM_CURRENCY}</strong></div>
               </div>
               <div className="finance-legend"><span><i className="finance-dot success" />Paid / collected</span><span><i className="finance-dot warning" />Partial</span><span><i className="finance-dot danger" />Outstanding</span></div>
             </section>

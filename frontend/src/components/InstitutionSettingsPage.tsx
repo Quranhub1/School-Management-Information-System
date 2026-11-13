@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CheckCircle2 } from 'lucide-react'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { InstitutionEmailSettingsPanel } from './InstitutionEmailSettingsPanel'
 import { createInstitutionSettings, deleteGalleryItem, getActiveInstitutionSettings, getGallery, uploadGalleryImage, uploadInstitutionLogo, uploadInstitutionLogoFromUrl, type CreateInstitutionSettingsRequest, type GalleryItem, type InstitutionSettings } from '../api/institutionSettings'
@@ -51,6 +52,12 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
     void load()
     void loadGallery()
   }, [])
+
+  useEffect(() => {
+    if (!success) return
+    const timeout = window.setTimeout(() => setSuccess(''), 4500)
+    return () => window.clearTimeout(timeout)
+  }, [success])
 
   async function load() {
     setLoading(true)
@@ -236,7 +243,7 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
       </div>
 
       {error && <div className="error" role="alert">{error}</div>}
-      {success && <div className="success" role="status">{success}</div>}
+      {success && <div className="institution-settings-toast" role="status" aria-live="polite"><CheckCircle2 size={19} aria-hidden="true" /><span>{success}</span><button type="button" aria-label="Dismiss notification" onClick={() => setSuccess('')}>×</button></div>}
 
       <div className="library-workspace-tabs" role="tablist" aria-label="Settings sections">
         <button role="tab" aria-selected={tab === 'general'} className={tab === 'general' ? 'active' : ''} onClick={() => setTab('general')}>General Information</button>

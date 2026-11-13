@@ -19,6 +19,7 @@ import {
   type ReceivablesReconciliationReport,
 } from '../api/finance'
 import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
+import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 
 const money = (value: number) => formatCurrency(Number(value) || 0)
 
@@ -32,6 +33,9 @@ const channelCards = [
 ]
 
 export function FinanceControlCenter({ onNavigate }: Props) {
+  // Context changes when the administrator changes the system currency.
+  useOptionalInstitutionSettings()
+  const systemCurrency = SYSTEM_CURRENCY
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null)
   const [ageing, setAgeing] = useState<ReceivablesAgeingReport | null>(null)
   const [reconciliation, setReconciliation] = useState<ReceivablesReconciliationReport | null>(null)
@@ -80,7 +84,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
     setRefreshing(false)
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => { void load() }, [systemCurrency])
 
   const overdue = overdueAmount
 
