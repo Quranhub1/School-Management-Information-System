@@ -54,7 +54,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setEntries(loadedEntries)
       setOptions(loadedOptions)
       setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
-      setProgrammeId(current => current || loadedOptions.programmes[0]?.id || '')
+      setProgrammeId(current => current || loadedOptions.programmes?.[0]?.id || '')
       setCurriculumId(current => current || loadedOptions.curricula.find(item => item.programmeId === (loadedOptions.programmes[0]?.id ?? ''))?.id || '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
@@ -204,6 +204,14 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   function editEntry(entry: TimetableEntry) {
+    const group = options.teachingGroups.find(item => item.id === entry.teachingGroupId)
+    const mapping = options.curriculumCourses.find(item => item.courseId === entry.courseId && item.programmeId === group?.programmeId)
+    const curriculum = options.curricula.find(item => item.id === mapping?.curriculumId)
+    setProgrammeId(group?.programmeId ?? '')
+    setCurriculumId(curriculum?.id ?? '')
+    setYearOfStudy(mapping ? String(mapping.yearOfStudy) : '')
+    setCurriculumSemester(mapping ? String(mapping.semesterNumber) : '')
+    setSemesterId(group?.semesterId ?? semesterId)
     setTeachingGroupId(entry.teachingGroupId)
     setCourseId(entry.courseId)
     setTeacherId(entry.teacherId)
@@ -382,7 +390,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     {!readOnly && showScheduleForm && <form className="timetable-form-panel" onSubmit={submit}>
       <h3>{editingEntryId ? 'Edit teaching session' : 'Schedule a teaching session'}</h3>
       <div className="timetable-form-grid">
-        <label>Teaching group<select value={teachingGroupId} onChange={event => { const next = event.target.value; setTeachingGroupId(next); setCourseId(options.teachingGroups.find(item => item.id === next)?.courseId ?? ''); }} required><option value="">Select group</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Teaching group<select value={teachingGroupId} onChange={event => { const next = event.target.value; setTeachingGroupId(next); setCourseId(options.teachingGroups.find(item => item.id === next)?.courseId ?? ''); }} required><option value="">Select group</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Course<select value={courseId} onChange={event => setCourseId(event.target.value)} required><option value="">Select course</option>{selectedGroupCourses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Teacher / staff<select value={teacherId} onChange={event => setTeacherId(event.target.value)} required><option value="">Select teacher</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Day<select value={dayOfWeek} onChange={event => setDayOfWeek(event.target.value)}>{days.map((day, index) => <option key={day} value={index}>{day}</option>)}</select></label>
