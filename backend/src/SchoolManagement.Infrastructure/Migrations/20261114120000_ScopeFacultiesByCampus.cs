@@ -12,22 +12,40 @@ public partial class ScopeFacultiesByCampus : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.Sql(@"UPDATE faculties AS faculty SET campus_id = (SELECT campus.id FROM campuses AS campus WHERE campus.institution_id = faculty.institution_id ORDER BY campus.is_active DESC, campus.name LIMIT 1) WHERE faculty.campus_id IS NULL AND EXISTS (SELECT 1 FROM campuses AS campus WHERE campus.institution_id = faculty.institution_id);");
-        migrationBuilder.DropIndex(name: "ix_faculties_code", table: "faculties");
+        migrationBuilder.Sql(@"
+            UPDATE ""Faculties"" AS faculty
+            SET ""CampusId"" = (
+                SELECT campus.""Id""
+                FROM ""Campuses"" AS campus
+                WHERE campus.""InstitutionId"" = faculty.""InstitutionId""
+                ORDER BY campus.""IsActive"" DESC, campus.""Name""
+                LIMIT 1
+            )
+            WHERE faculty.""CampusId"" IS NULL
+              AND EXISTS (
+                  SELECT 1
+                  FROM ""Campuses"" AS campus
+                  WHERE campus.""InstitutionId"" = faculty.""InstitutionId""
+              );
+        ");
+
         migrationBuilder.CreateIndex(
-            name: "ix_faculties_campus_code",
-            table: "faculties",
-            columns: new[] { "campus_id", "code" },
+            name: "IX_Faculties_CampusId_Code",
+            table: "Faculties",
+            columns: new[] { "CampusId", "Code" },
             unique: true);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropIndex(name: "ix_faculties_campus_code", table: "faculties");
+        migrationBuilder.DropIndex(
+            name: "IX_Faculties_CampusId_Code",
+            table: "Faculties");
+
         migrationBuilder.CreateIndex(
-            name: "ix_faculties_code",
-            table: "faculties",
-            columns: new[] { "institution_id", "code" },
+            name: "IX_Faculties_InstitutionId_Code",
+            table: "Faculties",
+            columns: new[] { "InstitutionId", "Code" },
             unique: true);
     }
 }
