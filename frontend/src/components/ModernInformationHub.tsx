@@ -1,4 +1,4 @@
-import { SYSTEM_CURRENCY } from '../lib/currency'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { useState } from 'react'
 import { ArrowRight, ArrowUpRight, BellRing, BookOpenCheck, BrainCircuit, CalendarClock, CheckCircle2, CircleDollarSign, GraduationCap, RefreshCw, Search, ShieldAlert, UsersRound, Wallet, X } from 'lucide-react'
 import { modernQueryKeys, useModernDashboardQuery, useStudentRiskQuery, useStudent360Query, useWorkflowSummaryQuery } from '../api/modern'
@@ -8,7 +8,7 @@ import { DoughnutChart, BarChart } from './charts'
 import './ModernInformationHub.css'
 
 const number = (n: number) => new Intl.NumberFormat('en-UG', { maximumFractionDigits: 0 }).format(Number.isFinite(n) ? n : 0)
-const money = (n: number) => number(n)
+const money = (n: number) => formatCurrency(n, SYSTEM_CURRENCY)
 type Destination = 'students' | 'finance' | 'admissions' | 'reports' | 'timetable'
 function goTo(module: Destination) {
   window.dispatchEvent(new CustomEvent('smis:navigate-module', { detail: module === 'admissions' ? 'students' : module }))
@@ -56,7 +56,7 @@ export function ModernInformationHub() {
   const metrics = dashboard ? [
     { label: 'Active students', value: number(dashboard.activeStudents), note: `${number(dashboard.totalStudents)} total records`, icon: UsersRound, tone: 'blue' },
     { label: 'Pending admissions', value: number(dashboard.pendingAdmissions), note: 'Applications awaiting action', icon: GraduationCap, tone: 'violet' },
-    { label: 'Fees outstanding', value: `${SYSTEM_CURRENCY} ${money(dashboard.outstanding)}`, note: `${SYSTEM_CURRENCY} ${money(dashboard.totalPaid)} collected`, icon: Wallet, tone: 'amber' },
+    { label: 'Fees outstanding', value: money(dashboard.outstanding), note: `${money(dashboard.totalPaid)} collected`, icon: Wallet, tone: 'amber' },
     { label: 'Attendance rate', value: `${number(dashboard.attendanceRate)}%`, note: 'Institution-wide', icon: CalendarClock, tone: 'green' },
   ] : []
 
