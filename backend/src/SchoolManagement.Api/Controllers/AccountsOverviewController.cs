@@ -27,7 +27,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
         }
 
         var invoiceTotals = await invoices
-            .GroupBy(x => x.Currency)
+            .GroupBy(x => x.Currency.Trim().ToUpper())
             .Select(group => new
             {
                 currency = group.Key,
@@ -36,11 +36,12 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             })
             .ToListAsync(cancellationToken);
 
-        var todayUtc = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
-        var tomorrowUtc = todayUtc.AddDays(1);
+        var ugandaDate = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        var todayStartUtc = new DateTimeOffset(ugandaDate.ToDateTime(TimeOnly.MinValue), TimeSpan.FromHours(3)).ToUniversalTime();
+        var tomorrowStartUtc = todayStartUtc.AddDays(1);
         var collectionTotals = await payments
-            .Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
-            .GroupBy(p => p.Currency)
+            .Where(p => p.PaidAt >= todayStartUtc && p.PaidAt < tomorrowStartUtc)
+            .GroupBy(p => p.Currency.Trim().ToUpper())
             .Select(group => new { currency = group.Key, amount = group.Sum(x => x.Amount) })
             .ToListAsync(cancellationToken);
 
