@@ -8,6 +8,13 @@ export interface SystemCurrencySettings {
   fractionDigits: number
 }
 
+class ApiRequestError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message)
+    this.name = 'ApiRequestError'
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit, authenticated = true): Promise<T> {
   const headers = new Headers(init?.headers)
   headers.set('Accept', 'application/json')
@@ -19,15 +26,24 @@ async function request<T>(path: string, init?: RequestInit, authenticated = true
   const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers, cache: 'no-store' })
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null
-    throw new Error(body?.message ?? `Request failed with status ${response.status}`)
+    throw new ApiRequestError(body?.message ?? `Request failed with status ${response.status}`, response.status)
   }
   return response.json() as Promise<T>
 }
 
 // Currency metadata is intentionally public and read-only so the application can
 // initialize its display defaults before an administrator session is available.
-export const getSystemCurrencySettings = () =>
-  request<SystemCurrencySettings>('/api/public/institution-settings/currency', undefined, false)
+export const getSystemCurrencySettings = async () => {
+  try {
+    return await request<SystemCurrencySettings>('/api/public/institution-settings/currency', undefined, false)
+  } catch (error) {
+    // Some deployments may still enforce the previous authenticated policy on
+    // this read route. Retry through the administrator endpoint with the
+    // current session token rather than failing the System settings screen.
+    if (!(error instanceof ApiRequestError) || error.status !== 401) throw error
+    return request<SystemCurrencySettings>('/api/administration/institution-settings/system-currency')
+  }
+}
 
 // Changing the system default remains restricted to authorized administrators.
 export const saveSystemCurrencySettings = (code: string) =>
