@@ -380,11 +380,12 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <form className="student-form" onSubmit={saveDepartment}>
           <div className="form-row">
             <select required value={departmentForm.facultyId} onChange={e => setDepartmentForm({ ...departmentForm, facultyId: e.target.value })}>
-              <option value="">Select faculty</option>{faculties.filter(faculty => faculty.isActive).map(faculty => <option key={faculty.id} value={faculty.id}>{faculty.code} — {faculty.name}</option>)}
+              <option value="">Select faculty</option>{faculties.map(faculty => <option key={faculty.id} value={faculty.id} disabled={!faculty.isActive}>{faculty.code} — {faculty.name}{!faculty.isActive ? ' (inactive)' : ''}</option>)}
             </select>
+            {faculties.length === 0 && <p className="empty">No faculties configured. Add a faculty first before creating departments.</p>}
             <input required maxLength={40} placeholder="Department code" value={departmentForm.code} onChange={e => setDepartmentForm({ ...departmentForm, code: e.target.value.toUpperCase() })} />
             <input required maxLength={160} placeholder="Department name" value={departmentForm.name} onChange={e => setDepartmentForm({ ...departmentForm, name: e.target.value })} />
-            <button type="submit" disabled={saving || faculties.filter(faculty => faculty.isActive).length === 0}>{editingDepartmentId ? 'Save department' : 'Add department'}</button>
+            <button type="submit" disabled={saving || faculties.length === 0}>{editingDepartmentId ? 'Save department' : 'Add department'}</button>
             {editingDepartmentId && <button type="button" className="secondary-button" onClick={() => { setEditingDepartmentId(null); setDepartmentForm({ facultyId: '', code: '', name: '' }) }}>Cancel edit</button>}
           </div>
         </form>
