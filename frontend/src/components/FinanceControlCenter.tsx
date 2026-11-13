@@ -224,7 +224,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
             <div><span>Active fee structures</span><strong>{feeStructures.filter(x => x.isActive).length}</strong></div>
             <div><span>Fee structures loaded</span><strong>{feeStructures.length}</strong></div>
             <div><span>Invoices issued</span><strong>{dashboard?.invoiceCount.toLocaleString() ?? '—'}</strong></div>
-            <div><span>Outstanding accounts</span><strong className="finance-value-danger">{dashboard?.outstandingCount.toLocaleString() ?? '—'}</strong></div>
+            <div><span>Outstanding invoices</span><strong className="finance-value-danger">{dashboard?.outstandingCount.toLocaleString() ?? '—'}</strong></div>
           </div>
           
         </section>
