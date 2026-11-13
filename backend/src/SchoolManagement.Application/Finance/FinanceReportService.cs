@@ -13,6 +13,26 @@ public sealed record BalanceSheetReport(IReadOnlyList<BalanceSheetRow> Assets, I
 
 public sealed class FinanceReportService(IFinanceRepository finance, FiscalPeriodService fiscalPeriods)
 {
+    private static readonly TimeZoneInfo UgandaTimeZone = ResolveUgandaTimeZone();
+
+    public static DateOnly GetUgandaToday(DateTimeOffset utcNow) =>
+        DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(utcNow, UgandaTimeZone).DateTime);
+
+    private static TimeZoneInfo ResolveUgandaTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Africa/Kampala");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("E. Africa Standard Time");
+        }
+        catch (InvalidTimeZoneException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("E. Africa Standard Time");
+        }
+    }
     public static void ValidateReportRange(DateOnly from, DateOnly to, FiscalPeriod period)
     {
         if (to < from) throw new ArgumentException("Report end date cannot be before the start date.");
@@ -60,7 +80,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
 
     public async Task<BalanceSheetReport> GetBalanceSheetAsync(DateOnly? asOf = null, CancellationToken cancellationToken = default, Guid? campusId = null, Guid? facultyId = null, Guid? departmentId = null, Guid? programmeId = null)
     {
-        var effectiveAsOf = asOf ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var effectiveAsOf = asOf ?? GetUgandaToday(DateTimeOffset.UtcNow);
         var containingPeriod = await fiscalPeriods.GetContainingAsync(effectiveAsOf, cancellationToken);
         var entries = await finance.GetPostedJournalEntriesAsync(null, effectiveAsOf, null, cancellationToken);
         var totals = BuildBalanceSheetRows(entries, campusId, facultyId, departmentId, programmeId);
@@ -136,7 +156,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
             ValidateReportRange(effectiveFrom, effectiveTo, period);
             return (effectiveFrom, effectiveTo);
         }
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = GetUgandaToday(DateTimeOffset.UtcNow);
         var currentPeriod = await fiscalPeriods.GetContainingAsync(today, cancellationToken);
         return currentPeriod is null ? (null, null) : (currentPeriod.StartDate, today);
     }
@@ -175,7 +195,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
             ValidateReportRange(effectiveFrom, effectiveTo, period);
             return (effectiveFrom, effectiveTo);
         }
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = GetUgandaToday(DateTimeOffset.UtcNow);
         var currentPeriod = await fiscalPeriods.GetContainingAsync(today, cancellationToken);
         return currentPeriod is null ? (null, null) : (currentPeriod.StartDate, today);
     }
