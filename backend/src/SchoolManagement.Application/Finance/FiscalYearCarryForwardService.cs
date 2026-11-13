@@ -19,7 +19,7 @@ public sealed class FiscalYearCarryForwardService(
     IFiscalPeriodRepository periods,
     OpeningBalanceService openingBalances)
 {
-    public async Task<JournalEntry> CarryForwardAsync(
+    public async Task<IReadOnlyList<JournalEntry>> CarryForwardAsync(
         CarryForwardRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -50,15 +50,23 @@ public sealed class FiscalYearCarryForwardService(
             null,
             cancellationToken);
 
-        var lines = BuildOpeningBalanceLines(sourceEntries);
-        if (lines.Count == 0)
+        var carriedEntries = new List<JournalEntry>();
+        foreach (var currencyGroup in sourceEntries.GroupBy(x => string.IsNullOrWhiteSpace(x.Currency) ? "UGX" : x.Currency.Trim().ToUpperInvariant()))
+        {
+            var lines = BuildOpeningBalanceLines(currencyGroup);
+            if (lines.Count == 0) continue;
+            carriedEntries.Add(await openingBalances.CreateAsync(
+                target.Id,
+                lines,
+                request.PerformedBy.Trim(),
+                cancellationToken,
+                currencyGroup.Key));
+        }
+
+        if (carriedEntries.Count == 0)
             throw new InvalidOperationException($"Fiscal period '{source.Name}' has no balance-sheet balances to carry forward.");
 
-        return await openingBalances.CreateAsync(
-            target.Id,
-            lines,
-            request.PerformedBy.Trim(),
-            cancellationToken);
+        return carriedEntries;
     }
 
     public static IReadOnlyList<OpeningBalanceLineRequest> BuildOpeningBalanceLines(
