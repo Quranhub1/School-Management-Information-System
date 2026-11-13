@@ -4805,3 +4805,63 @@ table { font-variant-numeric: tabular-nums; }
 .system-admin-workspace .settings-grid > article.panel > button svg {
   flex: 0 0 auto;
 }
+
+
+/* System-wide green action contrast.
+   Apply to the button and every nested label element so component-level and
+   utility text colours cannot override the accessible foreground. */
+.app-shell :is(
+  button.primary-button,
+  button.btn,
+  button.library-primary,
+  button.create-account-button,
+  button.timetable-action.primary,
+  .archive-action-panel .form-actions button,
+  .archive-search-form button[type="submit"],
+  .guild-page .guild-header .page-actions button.primary-button,
+  .guild-page .guild-primary-tabs button.active,
+  .alumni-tabs button.active,
+  .student-lifecycle-tabs button.active,
+  .audit-log-screen > .library-search > button,
+  button.btn-success,
+  button.button-success,
+  button[class*="success"],
+  button[class*="green"],
+  button[class*="emerald"],
+  button[class*="teal"],
+  button[class*="bg-green"],
+  button[data-variant="success"]
+):not(.quick-issue),
+.app-shell :is(
+  button.primary-button,
+  button.btn,
+  button.library-primary,
+  button.create-account-button,
+  button.timetable-action.primary,
+  .archive-action-panel .form-actions button,
+  .archive-search-form button[type="submit"],
+  .guild-page .guild-header .page-actions button.primary-button,
+  .guild-page .guild-primary-tabs button.active,
+  .alumni-tabs button.active,
+  .student-lifecycle-tabs button.active,
+  .audit-log-screen > .library-search > button,
+  button.btn-success,
+  button.button-success,
+  button[class*="success"],
+  button[class*="green"],
+  button[class*="emerald"],
+  button[class*="teal"],
+  button[class*="bg-green"],
+  button[data-variant="success"]
+):not(.quick-issue) *:not(svg):not(svg *) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+/* Preserve dark text on the intentionally pale-green quick-issue control. */
+.app-shell button.quick-issue,
+.app-shell button.quick-issue *:not(svg):not(svg *) {
+  color: #065f46 !important;
+  -webkit-text-fill-color: #065f46 !important;
+}
