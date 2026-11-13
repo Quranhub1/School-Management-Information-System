@@ -165,7 +165,7 @@ export function AccountsOverview() {
                         <td>{item.studentName}</td>
                         <td>{item.programmeName}</td>
                         <td style={{ color: '#dc2626', fontWeight: 700 }}>
-                          {item.currency} {item.balance.toLocaleString()}
+                          {formatCurrency(item.balance, item.currency || SYSTEM_CURRENCY)}
                         </td>
                         <td>{item.status}</td>
                       </tr>
