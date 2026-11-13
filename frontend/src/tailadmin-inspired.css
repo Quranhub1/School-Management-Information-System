@@ -656,3 +656,54 @@ h1, h2, h3, h4, h5, h6,
   justify-content: center;
   white-space: nowrap;
 }
+
+/* Currency save confirmation: compact, dismissible toast popup. */
+.system-currency-toast {
+  position: fixed;
+  top: 82px;
+  right: 24px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(440px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px solid #86efac;
+  border-left: 4px solid #16a34a;
+  border-radius: 4px;
+  background: #f0fdf4;
+  color: #166534;
+  box-shadow: 0 10px 28px rgb(15 23 42 / 16%);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  animation: system-currency-toast-in 180ms ease-out;
+}
+.system-currency-toast > svg {
+  flex: 0 0 auto;
+}
+.system-currency-toast > span {
+  flex: 1;
+  min-width: 0;
+}
+.system-currency-toast > button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0 2px;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+@keyframes system-currency-toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 600px) {
+  .system-currency-toast {
+    top: 68px;
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
+}
