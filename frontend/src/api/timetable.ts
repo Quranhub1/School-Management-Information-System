@@ -17,10 +17,13 @@ export type TimetableEntry = {
 
 export type CreateTimetableEntry = Omit<TimetableEntry, 'id' | 'isActive' | 'generatedAt' | 'generationSource'>
 export type TimetableOptions = {
-  teachingGroups: { id: string; label: string }[]
+  teachingGroups: { id: string; label: string; programmeId: string; semesterId: string; courseId: string }[]
   courses: { id: string; label: string }[]
   teachers: { id: string; label: string }[]
   semesters: { id: string; label: string; academicYearId: string; isCurrent: boolean; isActive: boolean }[]
+  programmes: { id: string; label: string }[]
+  curricula: { id: string; programmeId: string; label: string }[]
+  curriculumCourses: { curriculumId: string; programmeId: string; courseId: string; courseLabel: string; yearOfStudy: number; semesterNumber: number; isCore: boolean }[]
 }
 export type GenerateTimetableResult = {
   entries: TimetableEntry[]

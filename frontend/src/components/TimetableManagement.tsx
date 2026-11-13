@@ -8,7 +8,7 @@ import { useInstitutionSettings } from './InstitutionSettingsContext'
 
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const weekOrder = [1, 2, 3, 4, 5, 6, 0]
-const emptyOptions: TimetableOptions = { teachingGroups: [], courses: [], teachers: [], semesters: [] }
+const emptyOptions: TimetableOptions = { teachingGroups: [], courses: [], teachers: [], semesters: [], programmes: [], curricula: [], curriculumCourses: [] }
 const defaultTemplateSlots = [{ startTime: '08:00', endTime: '09:00' }, { startTime: '09:00', endTime: '10:00' }, { startTime: '10:30', endTime: '11:30' }, { startTime: '11:30', endTime: '12:30' }, { startTime: '13:30', endTime: '14:30' }, { startTime: '14:30', endTime: '15:30' }, { startTime: '15:30', endTime: '16:30' }]
 type TemplateCell = { id?: string; courseId: string; teacherId: string; room: string; sessionType: string }
 const timeLabel = (value: string) => value.slice(0, 5)
@@ -20,6 +20,10 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [semesterId, setSemesterId] = useState('')
+  const [programmeId, setProgrammeId] = useState('')
+  const [curriculumId, setCurriculumId] = useState('')
+  const [yearOfStudy, setYearOfStudy] = useState('')
+  const [curriculumSemester, setCurriculumSemester] = useState('')
   const [teachingGroupId, setTeachingGroupId] = useState('')
   const [courseId, setCourseId] = useState('')
   const [teacherId, setTeacherId] = useState('')
@@ -50,6 +54,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setEntries(loadedEntries)
       setOptions(loadedOptions)
       setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
+      setProgrammeId(current => current || loadedOptions.programmes[0]?.id || '')
+      setCurriculumId(current => current || loadedOptions.curricula.find(item => item.programmeId === (loadedOptions.programmes[0]?.id ?? ''))?.id || '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
     }
@@ -64,6 +70,17 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const courseLabels = useMemo(() => new Map(options.courses.map(item => [item.id, item.label])), [options.courses])
   const teacherLabels = useMemo(() => new Map(options.teachers.map(item => [item.id, item.label])), [options.teachers])
   const availableSemesters = options.semesters
+  const programmeCurricula = options.curricula.filter(item => item.programmeId === programmeId)
+  const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? programmeCurricula[0]
+  const curriculumMappings = options.curriculumCourses.filter(item => item.curriculumId === selectedCurriculum?.id)
+  const studyYears = [...new Set(curriculumMappings.map(item => item.yearOfStudy))].sort((a, b) => a - b)
+  const curriculumSemesters = [...new Set(curriculumMappings.filter(item => !yearOfStudy || item.yearOfStudy === Number(yearOfStudy)).map(item => item.semesterNumber))].sort((a, b) => a - b)
+  const eligibleMappings = curriculumMappings.filter(item => (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) && (!curriculumSemester || item.semesterNumber === Number(curriculumSemester)))
+  const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
+  const availableCourses = options.courses.filter(item => eligibleCourseIds.has(item.id))
+  const availableGroups = options.teachingGroups.filter(item => item.programmeId === programmeId && item.semesterId === semesterId && eligibleCourseIds.has(item.courseId))
+  const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
+  const selectedGroupCourses = selectedGroup ? options.courses.filter(item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)) : []
   const activeEntries = useMemo(() => entries.filter(item => item.isActive), [entries])
   const distinctGroups = useMemo(() => new Set(activeEntries.map(item => item.teachingGroupId)).size, [activeEntries])
   const distinctTeachers = useMemo(() => new Set(activeEntries.map(item => item.teacherId)).size, [activeEntries])
@@ -124,8 +141,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setGeneratedTimetables([])
     if (!semesterId) { setError('Select an academic period before generating a timetable.'); return }
     const selectedGroups = teachingGroupId
-      ? options.teachingGroups.filter(group => group.id === teachingGroupId)
-      : options.teachingGroups.slice(0, Math.max(1, Math.min(options.teachingGroups.length, Number(timetableCount) || 1)))
+      ? availableGroups.filter(group => group.id === teachingGroupId)
+      : availableGroups.slice(0, Math.max(1, Math.min(availableGroups.length, Number(timetableCount) || 1)))
     if (selectedGroups.length === 0) { setError('Create teaching groups before generating timetables.'); return }
     setLoading(true)
     try {
@@ -147,7 +164,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     setError('')
-    if (!teachingGroupId || !courseId || !teacherId) { setError('Select a teaching group, course and teacher from the saved records.'); return }
+    if (!teachingGroupId || !courseId || !teacherId) { setError('Select a programme curriculum, academic period, teaching group and teacher.'); return }
+    if (!eligibleCourseIds.has(courseId) || options.teachingGroups.find(item => item.id === teachingGroupId)?.courseId !== courseId) { setError('The selected course unit does not belong to this teaching group and curriculum selection.'); return }
     if (endTime <= startTime) { setError('End time must be later than start time.'); return }
     setLoading(true)
     try {
@@ -200,7 +218,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   function loadTemplate() {
-    if (!templateGroupId) { setError('Choose a class or teaching group before opening the editable template.'); return }
+    if (!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)) { setError('Choose a teaching group from the selected programme curriculum and academic period.'); return }
     const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
     const slots = [...defaultTemplateSlots.map(slot => ({ ...slot }))]
     for (const entry of groupEntries) {
@@ -301,14 +319,26 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <div className="timetable-metric"><span>Practical sessions</span><strong>{practicalCount}</strong></div>
     </div>
 
+    {!readOnly && (showGenerator || showTemplateEditor || showScheduleForm) && <section className="timetable-form-panel timetable-curriculum-guide" aria-label="Programme curriculum selection">
+      <h3>Programme curriculum guide</h3>
+      <div className="timetable-form-grid">
+        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); setCurriculumId(options.curricula.find(item => item.programmeId === next)?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{options.programmes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Curriculum<select value={selectedCurriculum?.id ?? ''} onChange={event => { setCurriculumId(event.target.value); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select curriculum</option>{programmeCurricula.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Year of study<select value={yearOfStudy} onChange={event => { setYearOfStudy(event.target.value); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All years</option>{studyYears.map(item => <option key={item} value={item}>Year {item}</option>)}</select></label>
+        <label>Curriculum semester<select value={curriculumSemester} onChange={event => { setCurriculumSemester(event.target.value); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All semesters</option>{curriculumSemesters.map(item => <option key={item} value={item}>Semester {item}</option>)}</select></label>
+        <label>Academic period<select value={semesterId} onChange={event => { setSemesterId(event.target.value); setTeachingGroupId(''); setTemplateGroupId(''); setTemplateLoadedGroupId(''); }}><option value="">Select academic period</option>{availableSemesters.map(item => <option key={item.id} value={item.id}>{item.label}{item.isCurrent ? ' (Current)' : ''}</option>)}</select></label>
+      </div>
+      <p className="timetable-generator-help">{eligibleMappings.length} curriculum course unit(s) match this selection. {availableGroups.length} operational teaching group(s) are available for the selected academic period.</p>
+      {eligibleMappings.length === 0 && <p className="timetable-day-empty">No course units are mapped to this programme, year and semester. Add them under Curriculum &amp; Courses; unrelated courses will not be shown.</p>}
+      {eligibleMappings.length > 0 && availableGroups.length === 0 && <p className="timetable-day-empty">The curriculum has course units, but no active course offerings and teaching groups match this academic period. Set up the offerings and groups before scheduling.</p>}
+    </section>}
     {!readOnly && showGenerator && <form className="timetable-form-panel" onSubmit={handleGenerate}>
       <h3>Generate a timetable</h3>
       <div className="timetable-form-grid">
-        <label>Academic period<select value={semesterId} onChange={event => setSemesterId(event.target.value)} required><option value="">Select period</option>{availableSemesters.map(item => <option key={item.id} value={item.id}>{item.label}{item.isCurrent ? ' (Current)' : ''}{!item.isActive ? ' (Inactive)' : ''}</option>)}</select></label>
-        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        {!teachingGroupId && <label>Number of timetables<input type="number" min="1" max={Math.max(1, options.teachingGroups.length)} value={timetableCount} onChange={event => setTimetableCount(event.target.value)} required /></label>}
+        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        {!teachingGroupId && <label>Number of timetables<input type="number" min="1" max={Math.max(1, availableGroups.length)} value={timetableCount} onChange={event => setTimetableCount(event.target.value)} required /></label>}
       </div>
-      {!teachingGroupId && <p className="timetable-generator-help">Generates one separate timetable for each of the first N teaching groups. Available groups: {options.teachingGroups.length}.</p>}
+      {!teachingGroupId && <p className="timetable-generator-help">Generates one separate timetable for each of the first N teaching groups. Available groups: {availableGroups.length}.</p>}
       <div className="timetable-form-footer">
         <button className="timetable-action primary" type="submit" disabled={loading || availableSemesters.length === 0}>{loading ? 'Generating…' : 'Generate schedule'}</button>
         {availableSemesters.length === 0 && <span className="timetable-day-empty">No academic periods were returned. Create a period under Academic Periods, then reload this screen.</span>}
@@ -325,7 +355,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <div className="timetable-template-editor-heading">
         <div><p className="timetable-eyebrow">Fillable timetable template</p><h3>Edit the timetable grid</h3><p>Select a class, then fill each period with a course, teacher and venue. Existing sessions for that class are loaded into the grid.</p></div>
         <div className="timetable-template-controls">
-          <label>Class / teaching group<select value={templateGroupId} onChange={event => { setTemplateGroupId(event.target.value); setTemplateLoadedGroupId(''); setTemplateCells({}); setTemplateSlots(defaultTemplateSlots) }}><option value="">Select class</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          <label>Class / teaching group<select value={templateGroupId} onChange={event => { setTemplateGroupId(event.target.value); setTemplateLoadedGroupId(''); setTemplateCells({}); setTemplateSlots(defaultTemplateSlots) }}><option value="">Select class</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
           <button className="timetable-action" type="button" onClick={loadTemplate} disabled={!templateGroupId}><Pencil size={15}/> Load class</button>
         </div>
       </div>
@@ -336,7 +366,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             const key = day + '-' + slotIndex
             const cell = templateCells[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture' }
             return <td key={slotIndex}>
-              <select aria-label={`${days[day]} ${slot.startTime} course`} value={cell.courseId} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}><option value="">— Course —</option>{options.courses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+              <select aria-label={`${days[day]} ${slot.startTime} course`} value={cell.courseId} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}><option value="">— Course —</option>{(options.teachingGroups.find(item => item.id === templateGroupId) ? options.courses.filter(item => item.id === options.teachingGroups.find(group => group.id === templateGroupId)?.courseId && eligibleCourseIds.has(item.id)) : availableCourses).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
               <select aria-label={`${days[day]} ${slot.startTime} teacher`} value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}><option value="">— Teacher —</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
               <input aria-label={`${days[day]} ${slot.startTime} venue`} value={cell.room} onChange={event => changeTemplateCell(key, 'room', event.target.value)} placeholder="Venue"/>
               <select aria-label={`${days[day]} ${slot.startTime} session type`} value={cell.sessionType} onChange={event => changeTemplateCell(key, 'sessionType', event.target.value)}><option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option></select>
@@ -346,14 +376,14 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         </table>
       </div>}
       {templateGroupId && templateLoadedGroupId !== templateGroupId && <p className="timetable-generator-help">Click “Load class” to fill the template with that class’s saved sessions before editing.</p>}
-      <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !options.courses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={printTimetableTemplate}>Print template</button></div>
+      <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !availableCourses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={printTimetableTemplate}>Print template</button></div>
     </section>}
 
     {!readOnly && showScheduleForm && <form className="timetable-form-panel" onSubmit={submit}>
       <h3>{editingEntryId ? 'Edit teaching session' : 'Schedule a teaching session'}</h3>
       <div className="timetable-form-grid">
-        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)} required><option value="">Select group</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        <label>Course<select value={courseId} onChange={event => setCourseId(event.target.value)} required><option value="">Select course</option>{options.courses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Teaching group<select value={teachingGroupId} onChange={event => { const next = event.target.value; setTeachingGroupId(next); setCourseId(options.teachingGroups.find(item => item.id === next)?.courseId ?? ''); }} required><option value="">Select group</option>{options.teachingGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Course<select value={courseId} onChange={event => setCourseId(event.target.value)} required><option value="">Select course</option>{selectedGroupCourses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Teacher / staff<select value={teacherId} onChange={event => setTeacherId(event.target.value)} required><option value="">Select teacher</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Day<select value={dayOfWeek} onChange={event => setDayOfWeek(event.target.value)}>{days.map((day, index) => <option key={day} value={index}>{day}</option>)}</select></label>
         <label>Start time<input type="time" value={startTime} onChange={event => setStartTime(event.target.value)} required /></label>

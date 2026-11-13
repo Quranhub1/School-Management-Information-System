@@ -25,8 +25,14 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             return new GeneratedTimetableResult([], [], ["Semester not found."], 0, [], false);
         }
 
+        var curriculumOfferingIds = await (
+            from offering in db.CourseOfferings.AsNoTracking()
+            join curriculum in db.Curricula.AsNoTracking() on offering.ProgrammeId equals curriculum.ProgrammeId
+            join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
+            where offering.SemesterId == semesterId && offering.IsActive && curriculum.IsActive && mapping.CourseId == offering.CourseId
+            select offering.Id).Distinct().ToListAsync(cancellationToken);
         var courseOfferings = await db.CourseOfferings.AsNoTracking()
-            .Where(x => x.SemesterId == semesterId && x.IsActive)
+            .Where(x => x.SemesterId == semesterId && x.IsActive && curriculumOfferingIds.Contains(x.Id))
             .ToListAsync(cancellationToken);
 
         var courseOfferingIds = courseOfferings.Select(x => x.Id).ToHashSet();
