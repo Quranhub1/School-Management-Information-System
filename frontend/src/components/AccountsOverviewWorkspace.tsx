@@ -25,7 +25,7 @@ const outstandingColumns: ColDef<Outstanding>[] = [
   { field: 'studentNumber', headerName: 'Student Number' },
   { field: 'studentName', headerName: 'Student Name' },
   { field: 'programmeName', headerName: 'Programme' },
-  { field: 'balance', headerName: 'Balance (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'balance', headerName: 'Balance ({SYSTEM_CURRENCY})', valueFormatter: p => money(Number(p.value) || 0) },
   { field: 'status', headerName: 'Status' },
 ]
 const paymentColumns: ColDef<Payment>[] = [
@@ -34,7 +34,7 @@ const paymentColumns: ColDef<Payment>[] = [
   { field: 'studentName', headerName: 'Student' },
   { field: 'paymentSource', headerName: 'Payment Source' },
   { field: 'sourceChannel', headerName: 'Channel' },
-  { field: 'amount', headerName: 'Amount (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'amount', headerName: 'Amount ({SYSTEM_CURRENCY})', valueFormatter: p => money(Number(p.value) || 0) },
 ]
 const payrollColumns: ColDef<Payroll>[] = [
   { field: 'staffNumber', headerName: 'Staff Number' },
