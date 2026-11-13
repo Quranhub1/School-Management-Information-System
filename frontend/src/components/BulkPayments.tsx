@@ -206,7 +206,7 @@ export function BulkPayments() {
               </div>
               <div className="summary-card">
                 <span>Total Amount to Collect</span>
-                <strong style={{ color: totalToCollect > 0 ? '#1c1917' : '#78716c' }}>{formatCurrency(totalToCollect, BULK_PAYMENT_STUDENTS[0]?.currency || SYSTEM_CURRENCY)}</strong>
+                <strong style={{ color: totalToCollect > 0 ? '#1c1917' : '#78716c' }}>{formatCurrency(totalToCollect, MOCK_STUDENTS[0]?.currency || SYSTEM_CURRENCY)}</strong>
               </div>
             </div>
 
