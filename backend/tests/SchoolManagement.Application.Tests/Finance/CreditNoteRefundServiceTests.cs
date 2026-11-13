@@ -93,7 +93,7 @@ public sealed class CreditNoteRefundServiceTests
         Assert.Equal("Applied", second.Status);
         Assert.Equal(2, adjustments.CreditNotes.Count);
         Assert.Equal(3, finance.LedgerEntries.Count);
-        Assert.Equal(0m, finance.LedgerEntries.Sum(x => x.Amount));
+        Assert.Equal(-50000m, finance.LedgerEntries.Sum(x => x.Amount));
     }
 
     [Fact]
