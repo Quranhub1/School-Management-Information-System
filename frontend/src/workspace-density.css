@@ -507,3 +507,68 @@
 .app-shell .curriculum-management .programme-row-actions-menu .danger-button:hover {
   background: #912018;
 }
+
+
+/* Compact programme curriculum semester editor. */
+.app-shell .curriculum-management .curriculum-semester-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+.app-shell .curriculum-management .curriculum-semester {
+  margin: 0;
+  padding: 10px !important;
+}
+.app-shell .curriculum-management .curriculum-semester > .panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 8px !important;
+}
+.app-shell .curriculum-management .curriculum-semester > .panel-heading h3 {
+  margin: 0;
+}
+.app-shell .curriculum-management .curriculum-semester-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.app-shell .curriculum-management .curriculum-semester-actions button,
+.app-shell .curriculum-management .curriculum-semester td button {
+  min-height: 30px;
+  padding: 5px 9px !important;
+  border-radius: 3px !important;
+  white-space: nowrap;
+}
+.app-shell .curriculum-management .curriculum-semester .danger-button,
+.app-shell .curriculum-management .curriculum-semester td .danger-button {
+  color: #fff;
+  background: #b42318;
+  border: 1px solid #b42318;
+}
+.app-shell .curriculum-management .curriculum-semester-edit {
+  align-items: end;
+  gap: 8px;
+  margin: 8px 0;
+}
+.app-shell .curriculum-management .curriculum-semester-edit label {
+  display: grid;
+  gap: 4px;
+  min-width: 100px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.app-shell .curriculum-management .curriculum-semester-edit input {
+  min-height: 32px;
+}
+@media (max-width: 640px) {
+  .app-shell .curriculum-management .curriculum-semester > .panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .app-shell .curriculum-management .curriculum-semester-actions {
+    width: 100%;
+  }
+}
