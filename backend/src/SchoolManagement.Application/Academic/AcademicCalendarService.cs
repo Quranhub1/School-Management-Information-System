@@ -132,7 +132,7 @@ public sealed class AcademicCalendarService(IAcademicYearRepository years, ISeme
         var semester = await semesters.GetByIdAsync(semesterId, tracked: true, cancellationToken: cancellationToken);
         if (semester is null || semester.AcademicYearId != academicYearId) return false;
         if (semester.IsCurrent) return false;
-        semesters.Remove(semesterId, cancellationToken);
+        await semesters.DeleteAsync(semesterId, cancellationToken);
         await semesters.SaveChangesAsync(cancellationToken);
         return true;
     }

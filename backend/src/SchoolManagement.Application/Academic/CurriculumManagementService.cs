@@ -128,7 +128,7 @@ public sealed class CurriculumManagementService(
     {
         var course = await courses.GetByIdAsync(id, ct);
         if (course is null) return false;
-        courses.Remove(course);
+        await courses.DeleteAsync(id, ct);
         await courses.SaveChangesAsync(ct);
         return true;
     }
@@ -137,7 +137,7 @@ public sealed class CurriculumManagementService(
     {
         var mapping = await mappings.GetByIdAsync(mappingId, ct);
         if (mapping is null || mapping.CurriculumId != curriculumId) return false;
-        mappings.Remove(mappingId, ct);
+        await mappings.RemoveAsync(mappingId, ct);
         await mappings.SaveChangesAsync(ct);
         return true;
     }

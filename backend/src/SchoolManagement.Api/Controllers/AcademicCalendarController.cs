@@ -85,7 +85,6 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
         var deleted = await service.DeleteSemesterAsync(academicYearId, semesterId, cancellationToken);
         return deleted ? NoContent() : NotFound();
     }
-}
 
-public sealed record SetActiveRequest(bool IsActive);
+    public sealed record SetActiveRequest(bool IsActive);
 }
