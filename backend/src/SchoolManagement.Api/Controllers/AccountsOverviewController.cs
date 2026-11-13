@@ -73,6 +73,42 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
         });
     }
 
+    [HttpGet("overdue")]
+    public async Task<IActionResult> GetOverdue(CancellationToken cancellationToken)
+    {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
+        var asOf = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        var query =
+            from installment in db.Set<SchoolManagement.Domain.Finance.InvoiceInstallment>().AsNoTracking()
+            join invoice in db.StudentInvoices.AsNoTracking()
+                on installment.StudentInvoiceId equals invoice.Id
+            where installment.DueDate < asOf
+                && installment.Amount > installment.PaidAmount
+                && invoice.Currency.Trim().ToUpper() == "UGX"
+            select new
+            {
+                invoice.StudentId,
+                outstanding = installment.Amount - installment.PaidAmount
+            };
+
+        if (accessibleCampuses is not null)
+            query = query.Where(x => db.Students.Any(student =>
+                student.Id == x.StudentId && student.CampusId.HasValue &&
+                accessibleCampuses.Contains(student.CampusId.Value)));
+
+        var overdueRows = await query.ToListAsync(cancellationToken);
+        return Ok(new
+        {
+            asOf,
+            currency = "UGX",
+            installmentCount = overdueRows.Count,
+            studentCount = overdueRows.Select(x => x.StudentId).Distinct().Count(),
+            totalOutstanding = overdueRows.Sum(x => x.outstanding)
+        });
+    }
+
     [HttpGet("outstanding")]
     public async Task<IActionResult> GetOutstanding(CancellationToken cancellationToken)
     {
