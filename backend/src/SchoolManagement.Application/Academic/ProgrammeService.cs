@@ -120,8 +120,7 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
         if (programme is null) return (false, false, null);
         if (await programmes.HasCurriculaAsync(id, cancellationToken))
             return (true, false, "This programme is linked to one or more curricula. Deactivate it instead, or remove its curriculum records first.");
-        programmes.Remove(programme);
-        await programmes.SaveChangesAsync(cancellationToken);
+        await programmes.DeleteAsync(id, cancellationToken);
         return (true, true, null);
     }
 

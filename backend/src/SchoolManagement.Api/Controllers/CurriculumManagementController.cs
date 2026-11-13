@@ -66,15 +66,18 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpGet("curricula/{curriculumId:guid}/courses")]
     public async Task<IActionResult> GetMappings(Guid curriculumId, CancellationToken ct) => Ok(await service.GetMappingsAsync(curriculumId, ct));
 
+    [HttpDelete("courses/{id:guid}")]
+    public async Task<IActionResult> DeleteCourse(Guid id, CancellationToken ct)
+    {
+        var deleted = await service.DeleteCourseAsync(id, ct);
+        return deleted ? NoContent() : NotFound();
+    }
+
     [HttpDelete("curricula/{curriculumId:guid}/courses/{mappingId:guid}")]
     public async Task<IActionResult> DeleteMapping(Guid curriculumId, Guid mappingId, CancellationToken ct)
     {
-        var mapping = await db.CurriculumCourses.FirstOrDefaultAsync(
-            x => x.CurriculumId == curriculumId && x.Id == mappingId, ct);
-        if (mapping is null) return NotFound(new { message = "Course unit is not assigned to this curriculum." });
-        db.CurriculumCourses.Remove(mapping);
-        await db.SaveChangesAsync(ct);
-        return NoContent();
+        var deleted = await service.DeleteMappingAsync(curriculumId, mappingId, ct);
+        return deleted ? NoContent() : NotFound();
     }
 
     [HttpPut("curricula/{curriculumId:guid}/semesters/{year:int}/{semester:int}")]

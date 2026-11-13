@@ -11,5 +11,6 @@ public interface IProgrammeRepository
     Task AddAsync(Programme programme, CancellationToken cancellationToken = default);
     Task<bool> HasCurriculaAsync(Guid programmeId, CancellationToken cancellationToken = default);
     void Remove(Programme programme);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

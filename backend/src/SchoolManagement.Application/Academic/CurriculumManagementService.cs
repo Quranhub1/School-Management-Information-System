@@ -123,4 +123,22 @@ public sealed class CurriculumManagementService(
         var mapping = new CurriculumCourse { CurriculumId = curriculumId, CourseId = request.CourseId, YearOfStudy = request.YearOfStudy, SemesterNumber = request.SemesterNumber, IsCore = request.IsCore };
         await mappings.AddAsync(mapping, ct); await mappings.SaveChangesAsync(ct); return (true, null, mapping);
     }
+
+    public async Task<bool> DeleteCourseAsync(Guid id, CancellationToken ct = default)
+    {
+        var course = await courses.GetByIdAsync(id, ct);
+        if (course is null) return false;
+        await courses.DeleteAsync(id, ct);
+        await courses.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> DeleteMappingAsync(Guid curriculumId, Guid mappingId, CancellationToken ct = default)
+    {
+        var mapping = await mappings.GetByIdAsync(mappingId, ct);
+        if (mapping is null || mapping.CurriculumId != curriculumId) return false;
+        await mappings.RemoveAsync(mappingId, ct);
+        await mappings.SaveChangesAsync(ct);
+        return true;
+    }
 }
