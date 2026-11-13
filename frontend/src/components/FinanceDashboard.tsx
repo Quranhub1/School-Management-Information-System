@@ -145,7 +145,7 @@ export function FinanceDashboard() {
       o.studentName,
       o.programmeName,
       o.currency ?? SYSTEM_CURRENCY,
-      o.balance.toLocaleString(),
+      formatCurrency(o.balance, o.currency || SYSTEM_CURRENCY),
       o.status,
     ])
     const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
