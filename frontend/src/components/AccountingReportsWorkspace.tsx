@@ -40,7 +40,7 @@ export function AccountingReportsWorkspace() {
     try {
       if (tab === 'accounts') setAccounts(await request<Account[]>('/api/finance/administration/accounts'))
       if (tab === 'ledger') setLedger(await request<LedgerRow[]>(`/api/finance/reports/general-ledger?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency })}`))
-      if (tab === 'trial-balance') setTrial(await request<TrialRow[]>(`/api/finance/reports/trial-balance?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency: SYSTEM_CURRENCY })}`))
+      if (tab === 'trial-balance') setTrial(await request<TrialRow[]>(`/api/finance/reports/trial-balance?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency })}`))
       if (tab === 'income-statement') setIncome(await request<IncomeReport>(`/api/finance/reports/income-statement?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency: SYSTEM_CURRENCY })}`))
       if (tab === 'balance-sheet') setBalance(await request<BalanceReport>(`/api/finance/reports/balance-sheet?${new URLSearchParams({ ...(asOf ? { asOf } : {}), currency: SYSTEM_CURRENCY })}`))
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load accounting data.') }
