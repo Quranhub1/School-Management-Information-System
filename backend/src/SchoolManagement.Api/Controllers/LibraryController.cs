@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Administration;
-using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Library;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure.Persistence;
