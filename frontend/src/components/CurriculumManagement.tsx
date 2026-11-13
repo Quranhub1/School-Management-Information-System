@@ -404,6 +404,40 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {authorities.length === 0 && <tr><td colSpan={5}>No authorities configured.</td></tr>}
         </tbody></table></div>
       </section>
+      <section className="catalogue-board" aria-label="Faculty register">
+        <h3>Faculties</h3>
+        <div className="form-row">
+          <label>Campus
+            <select value={selectedCampusId} onChange={async event => {
+              const campusId = event.target.value
+              setSelectedCampusId(campusId)
+              setEditingFacultyId(null); setFacultyForm({ code: '', name: '', description: '' })
+              setEditingDepartmentId(null); setDepartmentForm({ facultyId: '', code: '', name: '' })
+              if (!campusId) { setFaculties([]); setDepartments([]); return }
+              try {
+                const [nextFaculties, nextDepartments] = await Promise.all([getAcademicFaculties(campusId), getAcademicDepartments(campusId)])
+                setFaculties(nextFaculties); setDepartments(nextDepartments)
+              } catch (loadError) { setError(loadError instanceof Error ? loadError.message : 'Unable to load campus academic structure.') }
+            }}>
+              <option value="">Select campus</option>
+              {campuses.map(campus => <option key={campus.id} value={campus.id}>{campus.name} ({campus.code})</option>)}
+            </select>
+          </label>
+        </div>
+        <form className="student-form" onSubmit={saveFaculty}>
+          <div className="form-row">
+            <input required maxLength={40} placeholder="Faculty code" value={facultyForm.code} onChange={event => setFacultyForm({ ...facultyForm, code: event.target.value.toUpperCase() })} />
+            <input required maxLength={160} placeholder="Faculty name" value={facultyForm.name} onChange={event => setFacultyForm({ ...facultyForm, name: event.target.value })} />
+            <input placeholder="Description (optional)" value={facultyForm.description} onChange={event => setFacultyForm({ ...facultyForm, description: event.target.value })} />
+            <button type="submit" disabled={saving || !selectedCampusId}>{editingFacultyId ? 'Save faculty' : 'Add faculty'}</button>
+            {editingFacultyId && <button type="button" className="secondary-button" onClick={() => { setEditingFacultyId(null); setFacultyForm({ code: '', name: '', description: '' }) }}>Cancel edit</button>}
+          </div>
+        </form>
+        <div className="table-wrap"><table><thead><tr><th>Code</th><th>Faculty</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+          {faculties.map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.description || '—'}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => { setEditingFacultyId(item.id); setFacultyForm({ code: item.code, name: item.name, description: item.description ?? '' }) }}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleFaculty(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+          {faculties.length === 0 && <tr><td colSpan={5}>{selectedCampusId ? 'No faculties configured for this campus.' : 'Select a campus to manage faculties.'}</td></tr>}
+        </tbody></table></div>
+      </section>
       <section className="catalogue-board" aria-label="Department register">
         <h3>Departments</h3>
         <form className="student-form" onSubmit={saveDepartment}>
