@@ -785,3 +785,121 @@ h1, h2, h3, h4, h5, h6,
 .app-shell .system-settings-actions-grid .system-settings-open-button svg {
   flex: 0 0 auto;
 }
+
+
+/* Financial configuration: clear hierarchy, readable type and deliberate control spacing. */
+.app-shell .system-currency-panel {
+  margin-top: 20px;
+  padding: 24px !important;
+  border: 1px solid #ded5c3 !important;
+  border-radius: 8px !important;
+  background: #fffdf7 !important;
+  box-shadow: 0 3px 12px rgba(41, 39, 31, .045) !important;
+}
+.system-admin-workspace .system-currency-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.system-admin-workspace .system-currency-heading .eyebrow {
+  margin: 0 0 7px;
+  color: #66735f;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  line-height: 1.4;
+}
+.system-admin-workspace .system-currency-heading h3 {
+  margin: 0;
+  color: #29271f;
+  font-family: "Plus Jakarta Sans Variable", "Inter Variable", sans-serif;
+  font-size: 21px;
+  font-weight: 780;
+  letter-spacing: -.035em;
+  line-height: 1.3;
+}
+.system-admin-workspace .system-currency-description {
+  margin: 7px 0 0;
+  color: #766f60;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.system-admin-workspace .system-currency-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid #c9dfcf;
+  border-radius: 4px;
+  background: #edf6ef;
+  color: #176b38;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+.system-admin-workspace .system-currency-divider {
+  height: 1px;
+  margin: 20px 0;
+  background: #e9e1d2;
+}
+.system-admin-workspace .system-currency-controls {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(160px, 210px);
+  align-items: end;
+  gap: 16px;
+}
+.system-admin-workspace .system-currency-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  color: #39352b;
+  font-size: 12px;
+  font-weight: 750;
+}
+.app-shell .system-currency-field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 38px 10px 12px;
+  border: 1px solid #cfc5b2 !important;
+  border-radius: 3px !important;
+  background-color: #fff !important;
+  color: #29271f !important;
+  font-family: "Inter Variable", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.app-shell .system-currency-field select:focus-visible {
+  outline: 3px solid rgba(22, 101, 52, .18);
+  outline-offset: 1px;
+  border-color: #15803d !important;
+}
+.app-shell .system-currency-save {
+  width: 100%;
+  min-height: 44px !important;
+  padding: 10px 18px !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  letter-spacing: .015em !important;
+  white-space: nowrap;
+}
+.system-admin-workspace .system-currency-note {
+  margin: 15px 0 0;
+  color: #766f60;
+  font-size: 11px;
+  line-height: 1.55;
+}
+.system-admin-workspace .system-currency-feedback {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .app-shell .system-currency-panel { padding: 18px !important; }
+  .system-admin-workspace .system-currency-controls { grid-template-columns: 1fr; }
+  .system-admin-workspace .system-currency-save { width: 100%; }
+}
