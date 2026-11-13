@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import LoadingSpinner from './LoadingSpinner';
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { getAccountsOverviewDashboard, getAccountsOverviewOutstanding, getAccountsOverviewPayments, getAccountsOverviewPayroll, type AccountsOverviewDashboard, type AccountsOverviewOutstanding, type AccountsOverviewPayment, type AccountsOverviewPayroll } from '../api/finance'
 
 export function AccountsOverview() {
@@ -116,12 +117,12 @@ export function AccountsOverview() {
               <div className="summary-card">
                 <span>Outstanding Balance</span>
                 <strong style={{ color: dashboard.totalOutstanding > 0 ? '#dc2626' : '#059669' }}>
-                  UGX {dashboard.totalOutstanding.toLocaleString()}
+                  {formatCurrency(dashboard.totalOutstanding, SYSTEM_CURRENCY)}
                 </strong>
               </div>
               <div className="summary-card">
                 <span>Today's Collection</span>
-                <strong>UGX {dashboard.todayCollection.toLocaleString()}</strong>
+                <strong>{formatCurrency(dashboard.todayCollection, SYSTEM_CURRENCY)}</strong>
               </div>
               <div className="summary-card">
                 <span>Invoice Count</span>
@@ -229,7 +230,7 @@ export function AccountsOverview() {
                         <td>{payment.receiptNumber}</td>
                         <td>{payment.studentName}</td>
                         <td>{payment.invoiceNumber}</td>
-                        <td style={{ color: '#059669', fontWeight: 700 }}>UGX {payment.amount.toLocaleString()}</td>
+                        <td style={{ color: '#059669', fontWeight: 700 }}>{formatCurrency(payment.amount, SYSTEM_CURRENCY)}</td>
                         <td>{payment.paymentMethod}</td>
                         <td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td>
                       </tr>
