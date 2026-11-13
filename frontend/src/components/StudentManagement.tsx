@@ -15,6 +15,7 @@ import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { validateForm } from '../lib/validation'
 import { studentApplicationSubmissionSchema } from '../schemas'
 import { formatPersonName } from '../utils/personName'
+import { SYSTEM_CURRENCY } from '../lib/currency'
 
 interface Props { canManage?: boolean; readOnly?: boolean }
 type EducationRow = { school: string; location: string; from: string; to: string; qualification: string; grade: string; language: string }
@@ -347,7 +348,7 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       </Section>
       <Section number="08" title="Official use only">
         <div className="application-official-only"><strong>Please do not write in this section.</strong><div className="application-grid">
-          <Field label="Application fee (UGX)"><input value={application.applicationFee} readOnly={!canManage} onChange={e => setApp('applicationFee', e.target.value)} /></Field><Field label="Payment status"><input value={application.feePaid} readOnly={!canManage} onChange={e => setApp('feePaid', e.target.value)} /></Field>
+          <Field label="Application fee ({SYSTEM_CURRENCY})"><input value={application.applicationFee} readOnly={!canManage} onChange={e => setApp('applicationFee', e.target.value)} /></Field><Field label="Payment status"><input value={application.feePaid} readOnly={!canManage} onChange={e => setApp('feePaid', e.target.value)} /></Field>
           <Field label="Approved / reviewed by"><input value={application.approvedBy} readOnly={!canManage} onChange={e => setApp('approvedBy', e.target.value)} /></Field><Field label="Official signature"><input value={application.approvalSignature} readOnly={!canManage} onChange={e => setApp('approvalSignature', e.target.value)} /></Field><Field label="Date"><input type="date" value={application.approvalDate} readOnly={!canManage} onChange={e => setApp('approvalDate', e.target.value)} /></Field>
         </div></div>
       </Section>
