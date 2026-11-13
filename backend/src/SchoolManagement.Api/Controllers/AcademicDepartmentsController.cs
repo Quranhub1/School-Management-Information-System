@@ -130,9 +130,9 @@ public sealed class AcademicDepartmentsController(SchoolManagementDbContext db) 
         return await db.Institutions.FirstOrDefaultAsync(x => x.Code == (string.IsNullOrWhiteSpace(code) ? "SCHOOL" : code) || x.Name == settings.InstitutionName, ct);
     }
 
-    private async Task<bool> IsCampusInActiveInstitution(Guid campusId, CancellationToken ct)
+    private async Task<bool> IsCampusInActiveInstitution(Guid? campusId, CancellationToken ct)
     {
-        if (campusId == Guid.Empty) return false;
+        if (!campusId.HasValue || campusId.Value == Guid.Empty) return false;
         var institution = await GetActiveInstitution(ct);
         return institution is not null && await db.Campuses.AnyAsync(x => x.Id == campusId && x.InstitutionId == institution.Id && x.IsActive, ct);
     }
