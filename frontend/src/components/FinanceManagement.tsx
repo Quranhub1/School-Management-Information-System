@@ -189,7 +189,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
       <section className="finance-workspace" aria-label="Read-only finance overview">
         <div className="workspace-header finance-workspace-header">
           <div>
-            <p className="eyebrow">FINANCE & ACCOUNTS · ' + SYSTEM_CURRENCY + ' · READ ONLY</p>
+            <p className="eyebrow">{`FINANCE & ACCOUNTS · ${SYSTEM_CURRENCY} · READ ONLY`}</p>
             <h2>Financial Oversight</h2>
           </div>
           <div className="page-actions">
@@ -242,7 +242,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     <section className="finance-workspace" aria-label="Finance and accounting workspace">
         <div className="workspace-header finance-workspace-header">
         <div>
-          <p className="eyebrow">FINANCE & ACCOUNTS · ' + SYSTEM_CURRENCY + '</p>
+          <p className="eyebrow">{`FINANCE & ACCOUNTS · ${SYSTEM_CURRENCY}`}</p>
           <h2>Finance & Accounting</h2>
           <p>Billing, collections and accounting controls.</p>
         </div>
@@ -307,7 +307,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
                 <div><span>Open receivables</span><strong className="finance-value-danger">{dashboard?.outstandingCount.toLocaleString() ?? '—'}</strong></div>
                 <div><span>Payment records</span><strong>{dashboard?.paymentCount.toLocaleString() ?? '—'}</strong></div>
                 <div><span>Collection rate</span><strong className="finance-value-success">{collectionRate.toFixed(1)}%</strong></div>
-                <div><span>Currency</span><strong>' + SYSTEM_CURRENCY + '</strong></div>
+                <div><span>Currency</span><strong>{SYSTEM_CURRENCY}</strong></div>
               </div>
               <div className="finance-legend"><span><i className="finance-dot success" />Paid / collected</span><span><i className="finance-dot warning" />Partial</span><span><i className="finance-dot danger" />Outstanding</span></div>
             </section>
