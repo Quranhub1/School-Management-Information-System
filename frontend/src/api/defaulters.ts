@@ -23,6 +23,7 @@ export interface DefaulterDetail {
   studentNumber: string | null
   studentName: string | null
   totalBalance: number
+  balancesByCurrency?: Array<{ currency: string; balance: number }>
   invoices: Array<{
     id: string
     invoiceNumber: string
@@ -41,6 +42,7 @@ export interface FollowUpAction {
   studentId: string
   studentName: string | null
   totalBalance: number
+  currency: string
   severity: string
   suggestedActions: string[]
 }
