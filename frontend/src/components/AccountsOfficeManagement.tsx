@@ -412,7 +412,7 @@ export function AccountsOfficeManagement() {
           setPaymentHistory(filtered)
           setCreditNotes(creditNotesData)
           setInvoiceNotes(notes)
-          setInvoiceFeeItems(feeItems.map(f => ({ id: f.id, feeType: f.feeType, name: f.feeType, amount: f.amount, paidAmount: 0, balance: f.amount, currency: selectedInvoice.currency || SYSTEM_CURRENCY, status: 'Pending' })))
+          setInvoiceFeeItems(feeItems.map(f => ({ id: f.id, feeType: f.feeType, name: f.feeType, amount: f.amount, paidAmount: 0, balance: f.amount, currency: selectedInvoice?.currency || SYSTEM_CURRENCY, status: 'Pending' })))
         }
       } catch {
         if (!cancelled) {
