@@ -41,7 +41,7 @@ const statusFor = (balance: number, billed = 0, paid = 0) => {
   return { label: 'Outstanding', tone: 'danger' }
 }
 
-const money = (value: number, currency: string = "UGX") => formatCurrency(Number(value) || 0, currency)
+const money = (value: number, currency: string = SYSTEM_CURRENCY) => formatCurrency(Number(value) || 0, currency)
 
 export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } = {}) {
   const isAssistantAccountant = getSession()?.roles?.includes('AssistantAccountant') ?? false
@@ -89,7 +89,7 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
     { field: 'studentName', headerName: 'Student', minWidth: 180 },
     { field: 'studentNumber', headerName: 'Student No.', minWidth: 140 },
     { field: 'programmeName', headerName: 'Programme', minWidth: 180 },
-    { field: 'balance', headerName: 'Balance', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? "UGX") },
+    { field: 'balance', headerName: 'Balance', minWidth: 150, valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY) },
     { field: 'status', headerName: 'Status', minWidth: 130 },
   ], [])
 
