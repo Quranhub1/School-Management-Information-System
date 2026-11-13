@@ -134,7 +134,7 @@
 }
 
 
-/* Timetable header actions: keep all three labels fully inside their buttons. */
+/* Timetable header actions: let each button grow to fit its full label. */
 .timetable-screen .timetable-hero {
   align-items: flex-start;
   flex-wrap: wrap;
@@ -146,14 +146,13 @@
 }
 
 .timetable-screen .timetable-actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   flex: 1 1 100%;
   width: 100%;
   min-width: 0;
-  gap: 12px;
+  gap: 10px;
   align-items: stretch;
-  justify-content: stretch;
 }
 
 .timetable-screen .timetable-actions > .timetable-action {
@@ -161,21 +160,24 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  min-width: 0;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: max-content;
+  max-width: 100%;
   min-height: 46px;
   margin: 0;
-  padding: 11px 20px;
+  padding: 11px 22px;
   gap: 9px;
   white-space: nowrap;
   line-height: 1.25;
-  flex: none;
-  overflow: visible;
+  text-align: center;
+}
+
+.timetable-screen .timetable-actions > .timetable-action svg {
+  flex: 0 0 16px;
 }
 
 .timetable-screen .timetable-actions > .timetable-action.primary {
-  min-width: 0;
-  padding-inline: 24px;
   background: #176b45;
   border-color: #176b45;
   color: #fff;
@@ -186,17 +188,11 @@
   border-color: #105538;
 }
 
-.timetable-screen .timetable-actions > .timetable-action svg {
-  flex: 0 0 16px;
-}
-
-@media (max-width: 700px) {
-  .timetable-screen .timetable-actions {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 9px;
-  }
-
+/* Phones: stack full-width, and let long labels wrap instead of overflowing. */
+@media (max-width: 560px) {
   .timetable-screen .timetable-actions > .timetable-action {
-    justify-content: center;
+    flex: 1 1 100%;
+    min-width: 0;
+    white-space: normal;
   }
 }
