@@ -289,7 +289,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           <label>Book / requirement
             <input value={requirementForm.name} onChange={e => setRequirementForm(v => ({ ...v, name: e.target.value }))} required />
           </label>
-          <label>Amount (UGX)
+          <label>Amount ({SYSTEM_CURRENCY})
             <input type="number" min="1" step="1" value={requirementForm.amount} onChange={e => setRequirementForm(v => ({ ...v, amount: e.target.value }))} required />
           </label>
           <button className="library-primary" type="submit" disabled={busy}>Save requirement</button>
