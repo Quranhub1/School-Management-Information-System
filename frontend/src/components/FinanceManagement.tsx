@@ -3,7 +3,7 @@ import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { getSession } from '../api/auth'
 import { getDashboard, getOutstandingBalances, getPayments, type FinanceDashboard, type OutstandingBalance } from '../api/finance'
 import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
-import { useInstitutionSettings } from './InstitutionSettingsContext'
+import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 import { parseApiResponse } from '../lib/validation'
 import { paymentListSchema } from '../schemas/finance.schema'
 import { AccountsOverviewWorkspace } from './AccountsOverviewWorkspace'
@@ -46,7 +46,7 @@ const money = (value: number, currency: string = SYSTEM_CURRENCY) => formatCurre
 
 export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } = {}) {
   // Subscribe to system-settings updates so the live currency module value is rendered immediately.
-  useInstitutionSettings()
+  useOptionalInstitutionSettings()
   const isAssistantAccountant = getSession()?.roles?.includes('AssistantAccountant') ?? false
   const [tab, setTab] = useState<FinanceTab>('overview')
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null)
