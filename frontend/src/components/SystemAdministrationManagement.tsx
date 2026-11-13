@@ -51,7 +51,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
         <h1>System Administration</h1>
         
       </div>
-      <span className="status"><ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} /> Administrator area</span>
+      <span className="status"><ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} /></span>
     </header>
 
     <nav className="library-workspace-tabs" aria-label="System administration sections" style={{ marginBottom: 18 }}>
@@ -72,7 +72,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
         </div>
         <section className="panel" aria-labelledby="system-currency-title" style={{ marginTop: 18, padding: 18 }}>
           <div className="panel-heading"><div><p className="eyebrow">FINANCIAL CONFIGURATION</p><h3 id="system-currency-title">System currency</h3></div></div>
-          <p>Choose the default currency used when a new financial record does not specify its own currency. Existing invoices, payments and ledger entries keep their recorded currency.</p>
+          <p>Choose the default currency for new financial records.</p>
           {currencyError && <p className="error" role="alert">{currencyError}</p>}
           {currencySuccess && <p className="success" role="status">{currencySuccess}</p>}
           <div className="form-row" style={{ alignItems: 'end' }}>
@@ -91,17 +91,16 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
             </label>
             <button className="primary-button" disabled={currencyLoading || currencySaving} onClick={() => void saveCurrency()}>{currencySaving ? 'Saving…' : 'Save currency'}</button>
           </div>
-          <small>New transactions use this default unless a specific transaction currency is selected. This setting does not perform exchange-rate conversion.</small>
-          <p className="warning" role="note" style={{ marginTop: 12 }}>Financial reports now keep journal balances separate by currency. No exchange-rate conversion is performed; choose the matching currency when reviewing a report. Bank statement reconciliation remains UGX-only.</p>
+          <small>New transactions use this default unless a specific currency is selected.</small>
         </section>
         
       </section>
     ) : (
       <>
         <div className="summary-grid">
-          <article className="summary-card"><Activity size={22} /><span>Workspace</span><strong>System controls</strong></article>
-          <article className="summary-card"><ShieldCheck size={22} /><span>Security</span><strong>Role-protected</strong></article>
-          <article className="summary-card"><FileSearch size={22} /><span>Audit trail</span><strong>Available</strong></article>
+          <article className="summary-card"><Activity size={22} /><strong>System controls</strong></article>
+          <article className="summary-card"><ShieldCheck size={22} /><strong>Role-protected</strong></article>
+          <article className="summary-card"><FileSearch size={22} /><strong>Audit trail</strong></article>
         </div>
         <div className="settings-grid">
           {tools.map(tool => {
@@ -110,7 +109,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
               <Icon size={24} />
               <h2 style={{ margin: '12px 0 6px', fontSize: '1.05rem' }}>{tool.title}</h2>
               
-              <button className="secondary-button" onClick={() => onNavigate('system-administration', tool.key)}>Open section <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button>
+              <button className="secondary-button" onClick={() => onNavigate('system-administration', tool.key)}>{tool.title} <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button>
             </article>
           })}
           <article className="panel" style={{ padding: 18 }}>
