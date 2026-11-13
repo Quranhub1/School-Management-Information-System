@@ -97,9 +97,7 @@ public sealed class CashBankPositionReportService(
         Guid? departmentId = null,
         Guid? programmeId = null)
     {
-        if (string.IsNullOrWhiteSpace(currency) || currency.Trim().Length != 3)
-            throw new ArgumentException("A valid three-letter currency code is required.", nameof(currency));
-        currency = currency.Trim().ToUpperInvariant();
+        currency = MoneyMath.NormalizeCurrency(currency);
 
         var (effectiveFrom, effectiveTo) = await ResolveRangeAsync(from, to, cancellationToken);
         var openingEntries = (await finance.GetPostedJournalEntriesAsync(null, effectiveFrom.AddDays(-1), null, cancellationToken)).Where(x => string.Equals(x.Currency, currency, StringComparison.OrdinalIgnoreCase)).ToArray();
