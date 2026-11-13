@@ -114,6 +114,17 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
         return (true, null, programme);
     }
 
+    public async Task<(bool Found, bool Deleted, string? Error)> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var programme = await programmes.GetByIdAsync(id, cancellationToken);
+        if (programme is null) return (false, false, null);
+        if (await programmes.HasCurriculaAsync(id, cancellationToken))
+            return (true, false, "This programme is linked to one or more curricula. Deactivate it instead, or remove its curriculum records first.");
+        programmes.Remove(programme);
+        await programmes.SaveChangesAsync(cancellationToken);
+        return (true, true, null);
+    }
+
     public async Task<bool> SetActiveAsync(Guid id, bool active, CancellationToken cancellationToken = default)
     {
         var programme = await programmes.GetByIdAsync(id, cancellationToken);
