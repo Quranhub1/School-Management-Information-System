@@ -29,7 +29,9 @@ export function AccountingReportsWorkspace() {
   const [ledger, setLedger] = useState<LedgerRow[]>([])
   const [trial, setTrial] = useState<TrialRow[]>([])
   const [income, setIncome] = useState<IncomeReport | null>(null)
-  const [balance, setBalance] = useState<BalanceReport | null>(null)\n  const [receivableInvoices, setReceivableInvoices] = useState<ReceivableInvoiceRow[]>([])\n  const [receivableSearch, setReceivableSearch] = useState('')
+  const [balance, setBalance] = useState<BalanceReport | null>(null)
+  const [receivableInvoices, setReceivableInvoices] = useState<ReceivableInvoiceRow[]>([])
+  const [receivableSearch, setReceivableSearch] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [asOf, setAsOf] = useState('')
@@ -43,7 +45,8 @@ export function AccountingReportsWorkspace() {
       if (tab === 'ledger') setLedger(await request<LedgerRow[]>(`/api/finance/reports/general-ledger?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}`))
       if (tab === 'trial-balance') setTrial(await request<TrialRow[]>(`/api/finance/reports/trial-balance?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}`))
       if (tab === 'income-statement') setIncome(await request<IncomeReport>(`/api/finance/reports/income-statement?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}`))
-      if (tab === 'balance-sheet') setBalance(await request<BalanceReport>(`/api/finance/reports/balance-sheet?${new URLSearchParams({ ...(asOf ? { asOf } : {}) })}`))\n      if (tab === 'student-receivables') setReceivableInvoices(await request<ReceivableInvoiceRow[]>('/api/finance/reports/outstanding-balances'))
+      if (tab === 'balance-sheet') setBalance(await request<BalanceReport>(`/api/finance/reports/balance-sheet?${new URLSearchParams({ ...(asOf ? { asOf } : {}) })}`))
+      if (tab === 'student-receivables') setReceivableInvoices(await request<ReceivableInvoiceRow[]>('/api/finance/reports/outstanding-balances'))
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load accounting data.') }
     finally { setLoading(false) }
   }
@@ -100,7 +103,8 @@ export function AccountingReportsWorkspace() {
     </div>
     {error && <div className="error" role="alert">{error}</div>}
     {tab !== 'accounts' && tab !== 'balance-sheet' && tab !== 'student-receivables' && <div className="filter-toolbar"><label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label><button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Running…' : 'Run report'}</button></div>}
-    {tab === 'student-receivables' && <div className="filter-toolbar"><label>Search student<input type="search" value={receivableSearch} onChange={e => setReceivableSearch(e.target.value)} placeholder="Student number, name or programme" /></label><button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Running…' : 'Refresh report'}</button></div>}\n    {tab === 'balance-sheet' && <div className="filter-toolbar"><label>As of<input type="date" value={asOf} onChange={e => setAsOf(e.target.value)} /></label><button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Running…' : 'Run report'}</button></div>}
+    {tab === 'student-receivables' && <div className="filter-toolbar"><label>Search student<input type="search" value={receivableSearch} onChange={e => setReceivableSearch(e.target.value)} placeholder="Student number, name or programme" /></label><button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Running…' : 'Refresh report'}</button></div>}
+    {tab === 'balance-sheet' && <div className="filter-toolbar"><label>As of<input type="date" value={asOf} onChange={e => setAsOf(e.target.value)} /></label><button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Running…' : 'Run report'}</button></div>}
     {loading ? <p className="empty">Loading accounting data…</p> : tab === 'accounts' ? <div className="table-wrap"><table><thead><tr><th>Code</th><th>Account</th><th>Type</th><th>Status</th></tr></thead><tbody>{accounts.map(a => <tr key={a.id}><td><strong>{a.code}</strong></td><td>{a.name}</td><td>{a.accountType}</td><td><span className="finance-status success">Active</span></td></tr>)}{accounts.length === 0 && <tr><td colSpan={4} className="empty">No finance accounts configured.</td></tr>}</tbody></table></div>
     : tab === 'ledger' ? <div className="table-wrap"><table><thead><tr><th>Date</th><th>Entry</th><th>Account</th><th>Description</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead><tbody>{ledger.map((x,i) => <tr key={x.entryNumber + '-' + i}><td>{new Date(x.date).toLocaleDateString('en-UG')}</td><td><strong>{x.entryNumber}</strong></td><td>{x.accountCode}<small>{x.accountName}</small></td><td>{x.description}</td><td>{money(x.debit)}</td><td>{money(x.credit)}</td><td><strong>{money(x.balance)}</strong></td></tr>)}{ledger.length === 0 && <tr><td colSpan={7} className="empty">No posted ledger entries for this period.</td></tr>}</tbody></table></div>
     : tab === 'trial-balance' ? <div className="table-wrap"><table><thead><tr><th>Code</th><th>Account</th><th>Type</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead><tbody>{trial.map(x => <tr key={x.accountCode + x.accountName}><td><strong>{x.accountCode}</strong></td><td>{x.accountName}</td><td>{x.accountType}</td><td>{money(x.debit)}</td><td>{money(x.credit)}</td><td><strong>{money(x.balance)}</strong></td></tr>)}{trial.length === 0 && <tr><td colSpan={6} className="empty">No trial-balance rows for this period.</td></tr>}</tbody></table></div>
