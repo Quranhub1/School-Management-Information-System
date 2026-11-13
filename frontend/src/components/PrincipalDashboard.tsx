@@ -1,4 +1,5 @@
 import { formatPersonName } from '../utils/personName'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   getPrincipalDashboard,
