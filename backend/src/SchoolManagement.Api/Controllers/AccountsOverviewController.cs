@@ -27,7 +27,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
         }
 
         var invoiceTotals = await invoices
-            .GroupBy(x => x.Currency)
+            .GroupBy(x => x.Currency.Trim().ToUpper())
             .Select(group => new
             {
                 currency = group.Key,
@@ -36,11 +36,12 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             })
             .ToListAsync(cancellationToken);
 
-        var todayUtc = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
-        var tomorrowUtc = todayUtc.AddDays(1);
+        var ugandaDate = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        var todayStartUtc = new DateTimeOffset(ugandaDate.ToDateTime(TimeOnly.MinValue), TimeSpan.FromHours(3)).ToUniversalTime();
+        var tomorrowStartUtc = todayStartUtc.AddDays(1);
         var collectionTotals = await payments
-            .Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
-            .GroupBy(p => p.Currency)
+            .Where(p => p.PaidAt >= todayStartUtc && p.PaidAt < tomorrowStartUtc)
+            .GroupBy(p => p.Currency.Trim().ToUpper())
             .Select(group => new { currency = group.Key, amount = group.Sum(x => x.Amount) })
             .ToListAsync(cancellationToken);
 
@@ -69,6 +70,42 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             outstandingCount = await invoices.LongCountAsync(
                 x => x.Amount - x.DiscountAmount - x.PaidAmount > 0,
                 cancellationToken)
+        });
+    }
+
+    [HttpGet("overdue")]
+    public async Task<IActionResult> GetOverdue(CancellationToken cancellationToken)
+    {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
+        var asOf = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        var query =
+            from installment in db.Set<SchoolManagement.Domain.Finance.InvoiceInstallment>().AsNoTracking()
+            join invoice in db.StudentInvoices.AsNoTracking()
+                on installment.StudentInvoiceId equals invoice.Id
+            where installment.DueDate < asOf
+                && installment.Amount > installment.PaidAmount
+                && invoice.Currency.Trim().ToUpper() == "UGX"
+            select new
+            {
+                invoice.StudentId,
+                outstanding = installment.Amount - installment.PaidAmount
+            };
+
+        if (accessibleCampuses is not null)
+            query = query.Where(x => db.Students.Any(student =>
+                student.Id == x.StudentId && student.CampusId.HasValue &&
+                accessibleCampuses.Contains(student.CampusId.Value)));
+
+        var overdueRows = await query.ToListAsync(cancellationToken);
+        return Ok(new
+        {
+            asOf,
+            currency = "UGX",
+            installmentCount = overdueRows.Count,
+            studentCount = overdueRows.Select(x => x.StudentId).Distinct().Count(),
+            totalOutstanding = overdueRows.Sum(x => x.outstanding)
         });
     }
 

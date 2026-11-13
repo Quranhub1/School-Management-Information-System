@@ -68,17 +68,18 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             invoices = invoices.Where(x => db.Students.Any(s => s.Id == x.StudentId && s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value)));
             payments = payments.Where(x => db.Students.Any(s => s.Id == x.StudentId && s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value)));
         }
-        var invoiceTotals = await invoices.GroupBy(x => x.Currency)
+        var invoiceTotals = await invoices.GroupBy(x => x.Currency.Trim().ToUpper())
             .Select(group => new
             {
                 currency = group.Key,
                 billed = group.Sum(x => x.Amount > x.DiscountAmount ? x.Amount - x.DiscountAmount : 0m),
                 paid = group.Sum(x => x.PaidAmount)
             }).ToListAsync(cancellationToken);
-        var todayUtc = DateTimeOffset.UtcNow.Date;
-        var tomorrowUtc = todayUtc.AddDays(1);
-        var collectionTotals = await payments.Where(p => p.PaidAt >= todayUtc && p.PaidAt < tomorrowUtc)
-            .GroupBy(p => p.Currency)
+        var ugandaDate = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        var todayStartUtc = new DateTimeOffset(ugandaDate.ToDateTime(TimeOnly.MinValue), TimeSpan.FromHours(3)).ToUniversalTime();
+        var tomorrowStartUtc = todayStartUtc.AddDays(1);
+        var collectionTotals = await payments.Where(p => p.PaidAt >= todayStartUtc && p.PaidAt < tomorrowStartUtc)
+            .GroupBy(p => p.Currency.Trim().ToUpper())
             .Select(group => new { currency = group.Key, amount = group.Sum(x => x.Amount) })
             .ToListAsync(cancellationToken);
         var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == "UGX");
