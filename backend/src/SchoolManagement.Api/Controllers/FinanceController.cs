@@ -476,13 +476,15 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             if (request.Items.GroupBy(x => x.Code.Trim(), StringComparer.OrdinalIgnoreCase).Any(g => g.Count() > 1)) return BadRequest(new { message = "Fee item codes must be unique." });
 
             var defaultCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
+            var currency = SchoolManagement.Domain.Finance.MoneyMath.NormalizeCurrency(string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency);
+            foreach (var item in request.Items) SchoolManagement.Domain.Finance.MoneyMath.EnsurePrecision(item.Amount, currency);
             var structure = new SchoolManagement.Domain.Finance.FeeStructure
             {
                 ProgrammeId = request.ProgrammeId ?? Guid.Empty,
                 AcademicYearId = request.AcademicYearId ?? Guid.Empty,
                 Name = request.Name.Trim(),
                 FeeType = request.FeeType.Trim(),
-                Currency = string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency.Trim().ToUpperInvariant()
+                Currency = currency
             };
 
             foreach (var item in request.Items.OrderBy(x => x.SortOrder))
@@ -492,7 +494,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                     FeeStructureId = structure.Id,
                     Code = item.Code.Trim(),
                     Name = item.Name.Trim(),
-                    Amount = decimal.Round(item.Amount, 2, MidpointRounding.AwayFromZero),
+                    Amount = item.Amount,
                     Currency = structure.Currency,
                     IncomeAccountId = item.IncomeAccountId,
                     SortOrder = item.SortOrder,
@@ -507,6 +509,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             return Created($"/api/finance/administration/fee-structures/{structure.Id}", structure);
         }
         catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (NotSupportedException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
