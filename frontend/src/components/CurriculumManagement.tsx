@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import {
   addCurriculumCourse,
   updateCurriculumCourse,
+  deleteCurriculumCourse,
+  updateCurriculumSemester,
+  deleteCurriculumSemester,
   createCourse,
   createCurriculum,
   updateCurriculum,
@@ -58,6 +61,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const [semesterEdit, setSemesterEdit] = useState<{ year: number; semester: number; nextYear: string; nextSemester: string } | null>(null)
 
   const [cf, setCf] = useState({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' as 'FullProgramme' | 'ShortCourse' })
   const [uf, setUf] = useState({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
@@ -381,6 +385,66 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     }
   }
 
+  async function removeCourseUnit(mapping: CurriculumCourse) {
+    const course = courses.find(item => item.id === mapping.courseId)
+    if (!window.confirm(`Remove ${course?.code ?? 'this course unit'} from this curriculum? The course remains in the catalogue and historical registrations are not deleted.`)) return
+    try {
+      await deleteCurriculumCourse(selected, mapping.id)
+      if (editingMappingId === mapping.id) {
+        setEditingMappingId(null)
+        setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+      }
+      setMessage('Course unit removed from this curriculum.')
+      await refreshMappings(selected)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to remove course unit.')
+    }
+  }
+
+  function beginSemesterEdit(year: number, semester: number) {
+    setSemesterEdit({ year, semester, nextYear: String(year), nextSemester: String(semester) })
+  }
+
+  async function saveSemesterEdit() {
+    if (!selected || !semesterEdit) return
+    setSaving(true)
+    try {
+      await updateCurriculumSemester(selected, semesterEdit.year, semesterEdit.semester, {
+        yearOfStudy: Number(semesterEdit.nextYear),
+        semesterNumber: Number(semesterEdit.nextSemester),
+      })
+      setSemesterEdit(null)
+      setMessage('Semester updated. All its course units were moved together.')
+      await refreshMappings(selected)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update semester.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function removeSemester(year: number, semester: number, count: number) {
+    if (!window.confirm(`Delete Year ${year}, Semester ${semester} and remove its ${count} course-unit assignment(s) from this curriculum? The course catalogue and historical registrations will remain.`)) return
+    try {
+      await deleteCurriculumSemester(selected, year, semester)
+      if (semesterEdit?.year === year && semesterEdit.semester === semester) setSemesterEdit(null)
+      setMessage(`Year ${year}, Semester ${semester} deleted from this curriculum.`)
+      await refreshMappings(selected)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to delete semester.')
+    }
+  }
+
+  const semesterGroups = Array.from(
+    mappings.reduce((groups, mapping) => {
+      const key = `${mapping.yearOfStudy}-${mapping.semesterNumber}`
+      const group = groups.get(key) ?? { year: mapping.yearOfStudy, semester: mapping.semesterNumber, mappings: [] as CurriculumCourse[] }
+      group.mappings.push(mapping)
+      groups.set(key, group)
+      return groups
+    }, new Map<string, { year: number; semester: number; mappings: CurriculumCourse[] }>()).values()
+  ).sort((left, right) => left.year - right.year || left.semester - right.semester)
+
   if (!canManage) return null
 
   return (
@@ -583,36 +647,56 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <label>
               <input type="checkbox" checked={mf.isCore} onChange={e => setMf({ ...mf, isCore: e.target.checked })} /> Core
             </label>
-            <button onClick={saveMapping} disabled={saving || !selected || !mf.courseId}>{editingMappingId ? 'Save mapping' : 'Map course'}</button>{editingMappingId && <button type="button" className="secondary-button" onClick={() => { setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }) }}>Cancel edit</button>}
+            <button onClick={saveMapping} disabled={saving || !selected || !mf.courseId}>{editingMappingId ? 'Save course-unit placement' : 'Add course unit to semester'}</button>{editingMappingId && <button type="button" className="secondary-button" onClick={() => { setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }) }}>Cancel edit</button>}
           </div>
 
           {selected && (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Course</th>
-                    <th>Year</th>
-                    <th>Semester</th>
-                    <th>Core</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mappings.map(m => {
-                    const course = courses.find(c => c.id === m.courseId)
-                    return (
-                      <tr key={m.id}>
-                        <td>{course?.code} — {course?.name}</td>
-                        <td>{m.yearOfStudy}</td>
-                        <td>{m.semesterNumber}</td>
-                        <td>{m.isCore ? 'Yes' : 'No'}</td>
-                        <td><button type="button" onClick={() => editMapping(m)}>Edit</button></td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+            <div className="curriculum-semester-list">
+              {semesterGroups.map(group => (
+                <section className="catalogue-board curriculum-semester" key={`${group.year}-${group.semester}`}>
+                  <div className="panel-heading">
+                    <h3>Year {group.year} · Semester {group.semester}</h3>
+                    <div className="curriculum-semester-actions">
+                      <button type="button" className="secondary-button" onClick={() => beginSemesterEdit(group.year, group.semester)}>Edit semester</button>
+                      <button type="button" className="danger-button" onClick={() => void removeSemester(group.year, group.semester, group.mappings.length)}>Delete semester</button>
+                    </div>
+                  </div>
+                  {semesterEdit?.year === group.year && semesterEdit.semester === group.semester && (
+                    <div className="form-row curriculum-semester-edit">
+                      <label>Year
+                        <input type="number" min="1" value={semesterEdit.nextYear} onChange={event => setSemesterEdit({ ...semesterEdit, nextYear: event.target.value })} />
+                      </label>
+                      <label>Semester
+                        <input type="number" min="1" value={semesterEdit.nextSemester} onChange={event => setSemesterEdit({ ...semesterEdit, nextSemester: event.target.value })} />
+                      </label>
+                      <button type="button" onClick={() => void saveSemesterEdit()} disabled={saving || Number(semesterEdit.nextYear) < 1 || Number(semesterEdit.nextSemester) < 1}>Save semester</button>
+                      <button type="button" className="secondary-button" onClick={() => setSemesterEdit(null)}>Cancel</button>
+                    </div>
+                  )}
+                  <div className="table-wrap">
+                    <table>
+                      <thead><tr><th>Course unit</th><th>Credit units</th><th>Core / Elective</th><th>Actions</th></tr></thead>
+                      <tbody>
+                        {group.mappings.map(mapping => {
+                          const course = courses.find(item => item.id === mapping.courseId)
+                          return (
+                            <tr key={mapping.id}>
+                              <td>{course?.code ?? '—'} — {course?.name ?? 'Unknown course'}</td>
+                              <td>{course?.creditUnits ?? '—'}</td>
+                              <td>{mapping.isCore ? 'Core' : 'Elective'}</td>
+                              <td>
+                                <button type="button" onClick={() => editMapping(mapping)}>Edit</button>
+                                <button type="button" className="danger-button" onClick={() => void removeCourseUnit(mapping)}>Remove</button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              ))}
+              {semesterGroups.length === 0 && <p className="empty">No semesters have been configured for this curriculum. Add a course unit above and assign its year and semester to create the first semester group.</p>}
             </div>
           )}
         </>
