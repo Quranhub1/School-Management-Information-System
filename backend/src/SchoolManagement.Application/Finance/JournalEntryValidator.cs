@@ -15,6 +15,9 @@ public static class JournalEntryValidator
         if (string.IsNullOrWhiteSpace(entry.EntryNumber))
             throw new ArgumentException("Journal entry number is required.", nameof(entry));
 
+        if (entry.Currency is null || entry.Currency.Trim().Length != 3 || !entry.Currency.Trim().All(char.IsLetter))
+            throw new ArgumentException("Journal entry currency must be a three-letter ISO code.", nameof(entry));
+
         if (entry.Lines is null || entry.Lines.Count < 2)
             throw new InvalidOperationException("A journal entry must contain at least two lines.");
 
