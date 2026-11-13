@@ -48,6 +48,7 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
         var journal = new JournalEntry
         {
             EntryNumber = creditNote.CreditNoteNumber,
+            Currency = invoice.Currency,
             Description = $"Credit note {creditNote.CreditNoteNumber} for invoice {invoice.InvoiceNumber}",
             Status = "Posted",
             PostedAt = DateTimeOffset.UtcNow,
@@ -158,6 +159,7 @@ public sealed class CreditNoteRefundService(IFinanceRepository finance, IFinance
         var journal = new JournalEntry
         {
             EntryNumber = refundNumber,
+            Currency = payment.Currency,
             Description = $"Student refund {refundNumber}",
             Status = "Posted",
             PostedAt = DateTimeOffset.UtcNow,
