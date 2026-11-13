@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, Archive, ArrowRight, Database, FileSearch, LockKeyhole, Settings2, ShieldCheck, UsersRound } from 'lucide-react'
+import { Activity, AlertTriangle, Archive, ArrowRight, Database, FileSearch, Info, LockKeyhole, Settings2, ShieldCheck, UsersRound } from 'lucide-react'
 import { getSystemCurrencySettings, saveSystemCurrencySettings, type SystemCurrencySettings } from '../api/systemSettings'
 import { AuditLogManagement } from './AuditLog'
 import { BackupRestore } from './BackupRestore'
@@ -97,8 +97,8 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
             </label>
             <button className="primary-button" disabled={currencyLoading || currencySaving} onClick={() => void saveCurrency()}>{currencySaving ? 'Saving…' : 'Save currency'}</button>
           </div>
-          <small>New transactions use this default unless a specific transaction currency is selected. This setting does not perform exchange-rate conversion.</small>
-          <p className="warning" role="note" style={{ marginTop: 12 }}>Financial reports now keep journal balances separate by currency. No exchange-rate conversion is performed; choose the matching currency when reviewing a report. Bank statement reconciliation remains UGX-only.</p>
+          <div className="system-currency-default-note"><Info size={18} aria-hidden="true" /><span>New transactions use this default unless a specific transaction currency is selected. This setting does not perform exchange-rate conversion.</span></div>
+          <div className="system-currency-report-note" role="note"><AlertTriangle size={19} aria-hidden="true" /><div><strong>Financial reporting note</strong><p>Journal balances remain separate by currency. No exchange-rate conversion is performed; choose the matching currency when reviewing a report. Bank statement reconciliation remains UGX-only.</p></div></div>
         </section>
         
       </section>
