@@ -35,7 +35,7 @@ export function DefaulterManagement() {
   ]
   const actionColumns: ColDef<FollowUpAction>[] = [
     { field: 'studentName', headerName: 'Student', minWidth: 200 },
-    { field: 'totalBalance', headerName: 'Outstanding balance', minWidth: 180, valueFormatter: p => `UGX ${Number(p.value ?? 0).toLocaleString('en-UG')}` },
+    { field: 'totalBalance', headerName: 'Outstanding balance', minWidth: 180, valueFormatter: p => formatCurrency(Number(p.value ?? 0), SYSTEM_CURRENCY) },
     { field: 'severity', headerName: 'Severity', minWidth: 130 },
     { field: 'suggestedActions', headerName: 'Suggested actions', minWidth: 300, valueFormatter: p => Array.isArray(p.value) ? p.value.join(' • ') : '' },
   ]
@@ -132,7 +132,7 @@ export function DefaulterManagement() {
         <div className="summary-grid" style={{ marginBottom: 22 }}>
           <div className="summary-card">
             <span>Total Outstanding</span>
-            <strong style={{ color: '#dc2626' }}>UGX {overview.totalOutstanding.toLocaleString()}</strong>
+            <strong style={{ color: '#dc2626' }}>{formatCurrency(overview.totalOutstanding, SYSTEM_CURRENCY)}</strong>
           </div>
           <div className="summary-card">
             <span>Total Defaulters</span>
