@@ -32,6 +32,7 @@ public sealed class FiscalPeriodClosingService(IFinanceRepository finance, IFisc
             var entry = new JournalEntry
             {
                 EntryNumber = entryNumber,
+                Currency = "UGX",
                 EntryDate = period.EndDate.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc),
                 Description = $"Fiscal period closing - {period.Name}",
                 Status = "Posted",
