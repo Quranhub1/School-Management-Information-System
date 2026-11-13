@@ -48,7 +48,7 @@ public sealed class InstitutionSettingsService(IInstitutionSettingsRepository re
         new Dictionary<string, (string, int)>(StringComparer.OrdinalIgnoreCase)
         {
             ["UGX"] = ("en-UG", 0), ["USD"] = ("en-US", 2), ["KES"] = ("en-KE", 2),
-            ["EUR"] = ("en-IE", 2), ["GBP"] = ("en-GB", 2), ["TZS"] = ("sw-TZ", 0),
+            ["EUR"] = ("en-IE", 2), ["GBP"] = ("en-GB", 2), ["TZS"] = ("sw-TZ", 2),
             ["RWF"] = ("rw-RW", 0), ["ZAR"] = ("en-ZA", 2), ["AED"] = ("en-AE", 2)
         };
 
