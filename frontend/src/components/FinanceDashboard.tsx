@@ -34,6 +34,7 @@ type PaymentRecord = {
   id: string
   receiptNumber: string
   amount: number
+  currency?: string
   paymentMethod: string
   paidAt: string
 }
