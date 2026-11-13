@@ -4807,23 +4807,31 @@ table { font-variant-numeric: tabular-nums; }
 }
 
 
-/* Global green action-button contrast: keep labels and inline icons white on
-   institutional green fills, regardless of component-level text colour rules. */
+/* Global green action-button contrast.
+   Solid green actions use white text; pale-green utility actions retain a
+   dark green label so both treatments meet readable contrast. */
 .app-shell .content :is(
   button.primary-button,
+  button.btn,
+  button.library-primary,
   button.create-account-button,
   button.timetable-action.primary,
   .archive-action-panel .form-actions button,
   .archive-search-form button[type="submit"],
   .guild-page .guild-header .page-actions button.primary-button,
+  .guild-page .guild-primary-tabs button.active,
+  .alumni-tabs button.active,
+  .student-lifecycle-tabs button.active,
   .audit-log-screen > .library-search > button,
   button.btn-success,
   button.button-success,
-  button[class*="success-button"],
-  button[class*="green-button"],
+  button[class*="success"],
+  button[class*="green"],
+  button[class*="emerald"],
+  button[class*="teal"],
   button[class*="bg-green"],
   button[data-variant="success"]
-) {
+):not(.quick-issue) {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff;
   text-shadow: none;
@@ -4831,19 +4839,33 @@ table { font-variant-numeric: tabular-nums; }
 
 .app-shell .content :is(
   button.primary-button,
+  button.btn,
+  button.library-primary,
   button.create-account-button,
   button.timetable-action.primary,
   .archive-action-panel .form-actions button,
   .archive-search-form button[type="submit"],
   .guild-page .guild-header .page-actions button.primary-button,
+  .guild-page .guild-primary-tabs button.active,
+  .alumni-tabs button.active,
+  .student-lifecycle-tabs button.active,
   .audit-log-screen > .library-search > button,
   button.btn-success,
   button.button-success,
-  button[class*="success-button"],
-  button[class*="green-button"],
+  button[class*="success"],
+  button[class*="green"],
+  button[class*="emerald"],
+  button[class*="teal"],
   button[class*="bg-green"],
   button[data-variant="success"]
-) > :not(svg) {
+):not(.quick-issue) > :not(svg) {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff;
+}
+
+/* Pale green library action: dark green text has stronger contrast here. */
+.app-shell .content button.quick-issue,
+.app-shell .content button.quick-issue > :not(svg) {
+  color: #065f46 !important;
+  -webkit-text-fill-color: #065f46;
 }
