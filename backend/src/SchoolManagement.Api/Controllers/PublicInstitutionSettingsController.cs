@@ -13,7 +13,7 @@ public sealed class PublicInstitutionSettingsController(InstitutionSettingsServi
     public async Task<IActionResult> GetActive(CancellationToken ct)
     {
         var result = await service.GetActiveAsync(ct);
-        Response.Headers.CacheControl = "no-store, no-cache, must-revalidate";
+        Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate";
         Response.Headers.Pragma = "no-cache";
         return result is null ? NotFound() : Ok(result);
     }
