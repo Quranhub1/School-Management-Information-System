@@ -21,7 +21,7 @@ export interface FacultyOption { id: string; campusId: string; code: string; nam
 export interface FacultyInput { campusId: string; code: string; name: string; description?: string }
 export interface AcademicDepartment { id: string; facultyId: string; facultyName: string; code: string; name: string; isActive: boolean }
 export interface DepartmentInput { facultyId: string; code: string; name: string }
-export const getAcademicCampuses = () => request<CampusOption[]>('/api/academic-departments/campuses')
+export const getAcademicCampuses = () => request<CampusOption[]>('/api/academic-departments/campuses', { method: 'PUT' })
 export const getAcademicFaculties = (campusId: string) => request<FacultyOption[]>(`/api/academic-departments/faculties?campusId=${encodeURIComponent(campusId)}`)
 export const createAcademicFaculty = (input: FacultyInput) => request<FacultyOption>('/api/academic-departments/faculties', { method: 'POST', body: JSON.stringify(input) })
 export const updateAcademicFaculty = (id: string, input: FacultyInput & { isActive: boolean }) => request<void>(`/api/academic-departments/faculties/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
