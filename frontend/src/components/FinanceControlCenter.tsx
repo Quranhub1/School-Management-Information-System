@@ -19,7 +19,7 @@ import {
   type ReceivablesReconciliationReport,
 } from '../api/finance'
 import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
-import { useInstitutionSettings } from './InstitutionSettingsContext'
+import { useOptionalInstitutionSettings } from './InstitutionSettingsContext'
 
 const money = (value: number) => formatCurrency(Number(value) || 0)
 
@@ -34,7 +34,7 @@ const channelCards = [
 
 export function FinanceControlCenter({ onNavigate }: Props) {
   // Context changes when the administrator changes the system currency.
-  useInstitutionSettings()
+  useOptionalInstitutionSettings()
   const systemCurrency = SYSTEM_CURRENCY
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null)
   const [ageing, setAgeing] = useState<ReceivablesAgeingReport | null>(null)
