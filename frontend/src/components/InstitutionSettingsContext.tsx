@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { getPublicInstitutionSettings, type InstitutionSettings } from '../api/institutionSettings'
+import { getPublicInstitutionSettings, getPublicSystemCurrencySettings, type InstitutionSettings } from '../api/institutionSettings'
+import { configureSystemCurrency } from '../lib/currency'
 
 const STORAGE_KEY = 'smis:institution-settings'
 
@@ -74,8 +75,9 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
 
   const refreshInstitution = async () => {
     try {
-      const settings = await getPublicInstitutionSettings()
+      const [settings, currency] = await Promise.all([getPublicInstitutionSettings(), getPublicSystemCurrencySettings()])
       if (!isValidInstitution(settings)) return false
+      configureSystemCurrency(currency.code, currency.locale)
       setInstitution(settings)
       setLoaded(true)
       return true
