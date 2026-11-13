@@ -15,6 +15,23 @@ public sealed class JournalEntryValidatorTests
     }
 
     [Fact]
+    public void Validate_rejects_invalid_currency_code()
+    {
+        var entry = CreateEntry(100m, 100m);
+        entry = new JournalEntry
+        {
+            EntryNumber = entry.EntryNumber,
+            Currency = "US",
+            Status = entry.Status,
+            PostedAt = entry.PostedAt,
+            PostedBy = entry.PostedBy,
+            Lines = entry.Lines
+        };
+
+        Assert.Throws<ArgumentException>(() => JournalEntryValidator.Validate(entry));
+    }
+
+    [Fact]
     public void Validate_rejects_unbalanced_entry()
     {
         var entry = CreateEntry(100m, 90m);
