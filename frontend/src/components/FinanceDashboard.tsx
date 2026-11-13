@@ -191,21 +191,21 @@ export function FinanceDashboard() {
           <div className="summary-grid">
             <div className="summary-card">
               <span>Total Billed</span>
-              <strong>{SYSTEM_CURRENCY} {dashboard.totalBilled.toLocaleString()}</strong>
+              <strong>{formatCurrency(dashboard.totalBilled, SYSTEM_CURRENCY)</strong>
             </div>
             <div className="summary-card">
               <span>Total Paid</span>
-              <strong style={{ color: '#059669' }}>{SYSTEM_CURRENCY} {dashboard.totalPaid.toLocaleString()}</strong>
+              <strong style={{ color: '#059669' }}>{formatCurrency(dashboard.totalPaid, SYSTEM_CURRENCY)</strong>
             </div>
             <div className="summary-card">
               <span>Outstanding Balance</span>
                 <strong style={{ color: dashboard.totalOutstanding > 0 ? '#dc2626' : '#059669' }}>
-                  {SYSTEM_CURRENCY} {dashboard.totalOutstanding.toLocaleString()}
+                  {formatCurrency(dashboard.totalOutstanding, SYSTEM_CURRENCY)
                 </strong>
             </div>
             <div className="summary-card">
               <span>Today's Collection</span>
-              <strong>{SYSTEM_CURRENCY + ' ' + dashboard.todayCollection.toLocaleString()}</strong>
+              <strong>{formatCurrency(dashboard.todayCollection, SYSTEM_CURRENCY)}</strong>
             </div>
             <div className="summary-card">
               <span>Invoice Count</span>
@@ -341,7 +341,7 @@ export function FinanceDashboard() {
                 .map(method => (
                 <div className="summary-card" key={method}>
                   <span>{method}</span>
-                  <strong>{SYSTEM_CURRENCY + ' ' + (paymentMethodTotals[method] || 0).toLocaleString()}</strong>
+                  <strong>{formatCurrency(paymentMethodTotals[method] || 0, SYSTEM_CURRENCY)}</strong>
                 </div>
               ))}
             </div>
