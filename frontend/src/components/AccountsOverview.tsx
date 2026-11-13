@@ -230,7 +230,7 @@ export function AccountsOverview() {
                         <td>{payment.receiptNumber}</td>
                         <td>{payment.studentName}</td>
                         <td>{payment.invoiceNumber}</td>
-                        <td style={{ color: '#059669', fontWeight: 700 }}>{formatCurrency(payment.amount, SYSTEM_CURRENCY)}</td>
+                        <td style={{ color: '#059669', fontWeight: 700 }}>{formatCurrency(payment.amount, payment.currency ?? SYSTEM_CURRENCY)}</td>
                         <td>{payment.paymentMethod}</td>
                         <td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td>
                       </tr>
