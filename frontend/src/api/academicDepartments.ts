@@ -16,11 +16,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? undefined as T : response.json() as Promise<T>
 }
 
-export interface FacultyOption { id: string; code: string; name: string; isActive: boolean }
+export interface CampusOption { id: string; code: string; name: string; isActive: boolean }
+export interface FacultyOption { id: string; campusId: string; code: string; name: string; description?: string | null; isActive: boolean }
+export interface FacultyInput { campusId: string; code: string; name: string; description?: string }
 export interface AcademicDepartment { id: string; facultyId: string; facultyName: string; code: string; name: string; isActive: boolean }
 export interface DepartmentInput { facultyId: string; code: string; name: string }
-export const getAcademicFaculties = () => request<FacultyOption[]>('/api/academic-departments/faculties')
-export const getAcademicDepartments = () => request<AcademicDepartment[]>('/api/academic-departments')
+export const getAcademicCampuses = () => request<CampusOption[]>('/api/academic-departments/campuses')
+export const getAcademicFaculties = (campusId: string) => request<FacultyOption[]>(`/api/academic-departments/faculties?campusId=${encodeURIComponent(campusId)}`)
+export const createAcademicFaculty = (input: FacultyInput) => request<FacultyOption>('/api/academic-departments/faculties', { method: 'POST', body: JSON.stringify(input) })
+export const updateAcademicFaculty = (id: string, input: FacultyInput & { isActive: boolean }) => request<void>(`/api/academic-departments/faculties/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+export const setAcademicFacultyActive = (id: string, isActive: boolean) => request<void>(`/api/academic-departments/faculties/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify({ isActive }) })
+export const getAcademicDepartments = (campusId: string) => request<AcademicDepartment[]>(`/api/academic-departments?campusId=${encodeURIComponent(campusId)}`)
 export const createAcademicDepartment = (input: DepartmentInput) => request<AcademicDepartment>('/api/academic-departments', { method: 'POST', body: JSON.stringify(input) })
 export const updateAcademicDepartment = (id: string, input: DepartmentInput & { isActive: boolean }) => request<void>(`/api/academic-departments/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
 export const setAcademicDepartmentActive = (id: string, isActive: boolean) => request<void>(`/api/academic-departments/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify({ isActive }) })
