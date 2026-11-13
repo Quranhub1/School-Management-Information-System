@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Domain.Finance;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Infrastructure.Persistence;
@@ -11,7 +12,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance/staff-allowances")]
 [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
-public sealed class StaffAllowancesController(SchoolManagementDbContext db) : ControllerBase
+public sealed class StaffAllowancesController(SchoolManagementDbContext db, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] Guid? staffMemberId = null, [FromQuery] string? status = null, CancellationToken cancellationToken = default)
@@ -66,7 +67,7 @@ public sealed class StaffAllowancesController(SchoolManagementDbContext db) : Co
             StaffMemberId = request.StaffMemberId,
             AllowanceType = request.AllowanceType.Trim(),
             Amount = decimal.Round(request.Amount, 2, MidpointRounding.AwayFromZero),
-            Currency = string.IsNullOrWhiteSpace(request.Currency) ? "UGX" : request.Currency.Trim().ToUpperInvariant(),
+            Currency = string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency.Trim().ToUpperInvariant(),
             EffectiveFrom = request.EffectiveFrom,
             EffectiveTo = request.EffectiveTo,
             Frequency = string.IsNullOrWhiteSpace(request.Frequency) ? "Monthly" : request.Frequency.Trim(),
@@ -129,6 +130,6 @@ public sealed record CreateAllowanceRequest(
     DateOnly EffectiveFrom,
     DateOnly? EffectiveTo = null,
     string Frequency = "Monthly",
-    string Currency = "UGX",
+    string? Currency = null,
     string? Reason = null,
     string? Reference = null);
