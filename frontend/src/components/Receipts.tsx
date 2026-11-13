@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { searchPayments, getPaymentReceipt, type PaymentSearchResult, type FeeReceipt } from '../api/receipts'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
