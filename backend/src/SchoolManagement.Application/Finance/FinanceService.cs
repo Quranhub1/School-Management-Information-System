@@ -52,7 +52,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var paymentAccount = await GetAccountAsync(PaymentAccountResolver.Resolve(paymentMethod), cancellationToken);
         var receivableAccount = await GetAccountAsync(FinanceAccountCodes.StudentReceivables, cancellationToken);
         var payment = new Payment { StudentId = invoice.StudentId, StudentInvoiceId = invoice.Id, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = invoice.Currency, PaymentMethod = paymentMethod.Trim(), PaymentSource = normalizedSource, ReceiptEmailRequestedAt = DateTimeOffset.UtcNow, SourceChannel = string.IsNullOrWhiteSpace(sourceChannel) ? (normalizedSource == "Manual" ? paymentMethod.Trim() : null) : sourceChannel.Trim(), ProviderTransactionId = string.IsNullOrWhiteSpace(providerTransactionId) ? null : providerTransactionId.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
-        var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Payment receipt {normalizedReceipt} for invoice {invoice.InvoiceNumber}", payment.Amount, paymentAccount.Id, receivableAccount.Id, "Payment", payment.Id);
+        var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Payment receipt {normalizedReceipt} for invoice {invoice.InvoiceNumber}", payment.Amount, paymentAccount.Id, receivableAccount.Id, "Payment", payment.Id, payment.Currency);
         await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         invoice.PaidAmount += amount;
         invoice.Status = invoice.PaidAmount >= invoice.NetAmount ? "Paid" : "PartiallyPaid";
@@ -81,7 +81,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         var paymentAccount = await GetAccountAsync(PaymentAccountResolver.Resolve(paymentMethod), cancellationToken);
         var unappliedAccount = await GetAccountAsync(FinanceAccountCodes.StudentUnappliedPayments, cancellationToken);
         var payment = new Payment { StudentId = studentId, StudentInvoiceId = null, ReceiptNumber = normalizedReceipt, Amount = amount, Currency = normalizedCurrency, PaymentMethod = paymentMethod.Trim(), PaymentSource = normalizedSource, ReceiptEmailRequestedAt = DateTimeOffset.UtcNow, SourceChannel = string.IsNullOrWhiteSpace(sourceChannel) ? (normalizedSource == "Manual" ? paymentMethod.Trim() : null) : sourceChannel.Trim(), ProviderTransactionId = string.IsNullOrWhiteSpace(providerTransactionId) ? null : providerTransactionId.Trim(), Reference = string.IsNullOrWhiteSpace(reference) ? null : reference.Trim() };
-        var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Unallocated student payment {normalizedReceipt}", payment.Amount, paymentAccount.Id, unappliedAccount.Id, "Payment", payment.Id);
+        var journalEntry = CreateJournalEntry($"PAY-{normalizedReceipt}", $"Unallocated student payment {normalizedReceipt}", payment.Amount, paymentAccount.Id, unappliedAccount.Id, "Payment", payment.Id, payment.Currency);
         await AddPostedJournalEntryAsync(journalEntry, cancellationToken);
         await finance.AddPaymentAsync(payment, cancellationToken);
         await finance.AddPaymentLedgerEntryAsync(new PaymentLedgerEntry { StudentId = studentId, PaymentId = payment.Id, EntryType = "Payment", Description = $"Payment {payment.ReceiptNumber}", Amount = -amount, Currency = payment.Currency, Reference = payment.Reference ?? payment.ReceiptNumber }, cancellationToken);
@@ -161,7 +161,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
             var allocation = new PaymentAllocation { PaymentId = payment.Id, StudentInvoiceId = invoice.Id, AllocatedAmount = request.Amount, Currency = payment.Currency, Notes = string.IsNullOrWhiteSpace(request.Notes) ? "Manual allocation" : request.Notes.Trim() };
             payment.Allocations.Add(allocation);
             await finance.AddPaymentAllocationAsync(allocation, cancellationToken);
-            var allocationJournal = CreateJournalEntry($"ALLOC-{allocation.Id:N}", $"Allocate payment {payment.ReceiptNumber} to invoice {invoice.InvoiceNumber}", request.Amount, unappliedAccount.Id, receivableAccount.Id, "PaymentAllocation", allocation.Id);
+            var allocationJournal = CreateJournalEntry($"ALLOC-{allocation.Id:N}", $"Allocate payment {payment.ReceiptNumber} to invoice {invoice.InvoiceNumber}", request.Amount, unappliedAccount.Id, receivableAccount.Id, "PaymentAllocation", allocation.Id, payment.Currency);
             await AddPostedJournalEntryAsync(allocationJournal, cancellationToken);
         }
         await finance.SaveChangesAsync(cancellationToken);
@@ -214,7 +214,7 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
 
     private async Task<JournalEntry> CreateItemizedInvoiceJournalAsync(StudentInvoice invoice, Guid receivableAccountId, Guid defaultRevenueAccountId, CancellationToken cancellationToken)
     {
-        var entry = new JournalEntry { EntryNumber = $"INV-{invoice.InvoiceNumber}", Description = $"Student invoice {invoice.InvoiceNumber}", SourceType = "StudentInvoice", SourceId = invoice.Id };
+        var entry = new JournalEntry { EntryNumber = $"INV-{invoice.InvoiceNumber}", Currency = invoice.Currency, Description = $"Student invoice {invoice.InvoiceNumber}", SourceType = "StudentInvoice", SourceId = invoice.Id };
         entry.Lines.Add(new JournalEntryLine { AccountId = receivableAccountId, Description = $"Receivable - {invoice.InvoiceNumber}", Debit = invoice.Amount });
         if (invoice.Lines.Count == 0) { entry.Lines.Add(new JournalEntryLine { AccountId = defaultRevenueAccountId, Description = "Student fees", Credit = invoice.Amount }); return entry; }
         foreach (var group in invoice.Lines.GroupBy(x => x.IncomeAccountId))
@@ -233,9 +233,9 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
         throw new ArgumentException("Unsupported payment source. Use SchoolPay or Manual.");
     }
 
-    private static JournalEntry CreateJournalEntry(string entryNumber, string description, decimal amount, Guid debitAccountId, Guid creditAccountId, string sourceType, Guid sourceId)
+    private static JournalEntry CreateJournalEntry(string entryNumber, string description, decimal amount, Guid debitAccountId, Guid creditAccountId, string sourceType, Guid sourceId, string currency)
     {
-        var entry = new JournalEntry { EntryNumber = entryNumber, Description = description, SourceType = sourceType, SourceId = sourceId, Lines = [new JournalEntryLine { AccountId = debitAccountId, Description = description, Debit = amount, Credit = 0 }, new JournalEntryLine { AccountId = creditAccountId, Description = description, Debit = 0, Credit = amount }] };
+        var entry = new JournalEntry { EntryNumber = entryNumber, Currency = currency, Description = description, SourceType = sourceType, SourceId = sourceId, Lines = [new JournalEntryLine { AccountId = debitAccountId, Description = description, Debit = amount, Credit = 0 }, new JournalEntryLine { AccountId = creditAccountId, Description = description, Debit = 0, Credit = amount }] };
         JournalEntryValidator.Validate(entry);
         return entry;
     }
