@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
@@ -11,7 +12,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
-public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
+public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDiscountService discounts, InvoiceInstallmentService installments, StudentChargeService charges, CreditNoteRefundService adjustments, FinanceReportService reports, CashBankPositionReportService cashBankPosition, ReceivablesReportService receivables, JournalReversalService reversals, SchoolManagementDbContext db, CampusAccessService campusAccess, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices([FromQuery] string? studentId, CancellationToken cancellationToken)
@@ -59,6 +60,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboardCompatibility(CancellationToken cancellationToken)
     {
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
         var invoices = db.StudentInvoices.AsNoTracking().AsQueryable();
@@ -82,7 +84,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             .GroupBy(p => p.Currency.Trim().ToUpper())
             .Select(group => new { currency = group.Key, amount = group.Sum(x => x.Amount) })
             .ToListAsync(cancellationToken);
-        var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == "UGX");
+        var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == systemCurrency);
         var totalBilled = defaultCurrencyTotals?.billed ?? 0m;
         var totalPaid = defaultCurrencyTotals?.paid ?? 0m;
         var todayCollection = collectionTotals.FirstOrDefault(x => x.currency == "UGX")?.amount ?? 0m;
@@ -93,7 +95,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             totalPaid,
             totalOutstanding = Math.Max(0m, totalBilled - totalPaid),
             todayCollection,
-            currency = "UGX",
+            currency = systemCurrency,
             totalsByCurrency = invoiceTotals.Select(x => new { x.currency, x.billed, x.paid, balance = Math.Max(0m, x.billed - x.paid) }),
             collectionsByCurrency = collectionTotals,
             invoiceCount = await invoices.LongCountAsync(cancellationToken),
