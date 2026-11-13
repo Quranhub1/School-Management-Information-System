@@ -656,3 +656,164 @@ h1, h2, h3, h4, h5, h6,
   justify-content: center;
   white-space: nowrap;
 }
+
+/* Currency save confirmation: compact, dismissible toast popup. */
+.system-currency-toast {
+  position: fixed;
+  top: 82px;
+  right: 24px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(440px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px solid #86efac;
+  border-left: 4px solid #16a34a;
+  border-radius: 4px;
+  background: #f0fdf4;
+  color: #166534;
+  box-shadow: 0 10px 28px rgb(15 23 42 / 16%);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  animation: system-currency-toast-in 180ms ease-out;
+}
+.system-currency-toast > svg {
+  flex: 0 0 auto;
+}
+.system-currency-toast > span {
+  flex: 1;
+  min-width: 0;
+}
+.system-currency-toast > button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0 2px;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+@keyframes system-currency-toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 600px) {
+  .system-currency-toast {
+    top: 68px;
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
+}
+
+
+/* System currency guidance: give the lower-screen notes clear hierarchy. */
+.app-shell .system-currency-default-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #2563eb;
+  border-radius: 4px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.55;
+}
+.app-shell .system-currency-default-note > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #2563eb;
+}
+.app-shell .system-currency-report-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 10px;
+  padding: 13px 14px;
+  border: 1px solid #fcd34d;
+  border-left: 4px solid #d97706;
+  border-radius: 4px;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.app-shell .system-currency-report-note > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #b45309;
+}
+.app-shell .system-currency-report-note strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #92400e;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.app-shell .system-currency-report-note p {
+  margin: 0;
+  color: inherit;
+}
+@media (max-width: 600px) {
+  .app-shell .system-currency-default-note,
+  .app-shell .system-currency-report-note {
+    padding: 11px 12px;
+    font-size: 0.8125rem;
+  }
+}
+
+
+/* Institution settings confirmations use the same dismissible popup treatment. */
+.institution-settings-toast {
+  position: fixed;
+  top: 82px;
+  right: 24px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(440px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px solid #86efac;
+  border-left: 4px solid #16a34a;
+  border-radius: 4px;
+  background: #f0fdf4;
+  color: #166534;
+  box-shadow: 0 10px 28px rgb(15 23 42 / 16%);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  animation: system-currency-toast-in 180ms ease-out;
+}
+.institution-settings-toast > svg {
+  flex: 0 0 auto;
+}
+.institution-settings-toast > span {
+  flex: 1;
+  min-width: 0;
+}
+.institution-settings-toast > button {
+  flex: 0 0 auto;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 2px !important;
+  min-width: 24px;
+  min-height: 28px;
+  font-size: 1.35rem !important;
+  line-height: 1;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .institution-settings-toast {
+    top: 68px;
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
+}
