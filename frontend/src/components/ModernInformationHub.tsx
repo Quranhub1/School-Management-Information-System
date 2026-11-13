@@ -118,7 +118,7 @@ export function ModernInformationHub() {
     </div>
     {selected && <div className="student360-modal" role="dialog" aria-modal="true" aria-label="Student profile"><div className="student360-card dashboard-student-modal">
       <button className="close-button" onClick={() => setSelectedStudentId(null)} aria-label="Close student profile">×</button><p className="eyebrow">STUDENT PROFILE</p><h3>{selected.name}</h3><p>{selected.studentNumber} · {selected.status}</p>
-      <div className="student360-grid"><div><span>Attendance</span><b>{selected.attendanceRate}%</b></div><div><span>Assessment</span><b>{selected.averageAssessment}%</b></div><div><span>Fees outstanding</span><b>UGX {money(selected.outstanding)}</b></div><div><span>Placements</span><b>{selected.completedPlacements}/{selected.placementCount}</b></div><div><span>Certificates</span><b>{selected.certificateCount}</b></div><div><span>Admission documents</span><b>{selected.admissionDocumentCount}</b></div></div>
+      <div className="student360-grid"><div><span>Attendance</span><b>{selected.attendanceRate}%</b></div><div><span>Assessment</span><b>{selected.averageAssessment}%</b></div><div><span>Fees outstanding</span><b>{SYSTEM_CURRENCY} {money(selected.outstanding)}</b></div><div><span>Placements</span><b>{selected.completedPlacements}/{selected.placementCount}</b></div><div><span>Certificates</span><b>{selected.certificateCount}</b></div><div><span>Admission documents</span><b>{selected.admissionDocumentCount}</b></div></div>
       <div className="student360-details"><p><b>Phone:</b> {selected.phone || 'Not recorded'}</p><p><b>Email:</b> {selected.email || 'Not recorded'}</p><p><b>Gender:</b> {selected.gender || 'Not recorded'}</p></div>
     </div></div>}
   </section>
