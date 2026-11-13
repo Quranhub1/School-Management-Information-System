@@ -286,8 +286,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <p>Review the weekly teaching schedule, rooms and staff assignments in one place.</p>
       </div>
       <div className="timetable-actions">
-        {!readOnly && <button className="timetable-action" type="button" onClick={() => setShowGenerator(value => !value)} aria-expanded={showGenerator}><Sparkles /> {showGenerator ? 'Hide generator' : 'Generate timetable'}</button>}
-        {!readOnly && <button className="timetable-action" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}><Pencil /> {showTemplateEditor ? 'Close template editor' : 'Edit timetable template'}</button>}
+        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowGenerator(value => !value)} aria-expanded={showGenerator}><Sparkles /> {showGenerator ? 'Hide generator' : 'Generate timetable'}</button>}
+        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}><Pencil /> {showTemplateEditor ? 'Close template editor' : 'Edit timetable template'}</button>}
         {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowScheduleForm(value => !value)} aria-expanded={showScheduleForm}><Plus /> {showScheduleForm ? 'Close form' : 'Schedule session'}</button>}
       </div>
     </header>

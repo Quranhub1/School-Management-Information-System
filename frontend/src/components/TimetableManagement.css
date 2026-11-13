@@ -212,7 +212,7 @@
 }
 .timetable-screen .timetable-actions > .timetable-action.primary {
   min-width: 0;
-  padding-inline: 14px;
+  padding-inline: 24px;
   background: #176b45;
   border-color: #176b45;
   color: #fff;
@@ -256,7 +256,7 @@
 }
 .timetable-screen .timetable-actions > .timetable-action.primary {
   min-width: 0;
-  padding-inline: 14px;
+  padding-inline: 24px;
   background: #176b45;
   border-color: #176b45;
   color: #fff;
