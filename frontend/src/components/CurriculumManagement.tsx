@@ -630,7 +630,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </div>
 
           <div className="form-row">
-            <select value={selected} onChange={e => { setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
+            <select value={selected} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
               <option value="">Select curriculum</option>
               {authorityCurricula.map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
