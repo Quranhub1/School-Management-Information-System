@@ -19,7 +19,8 @@ public sealed class OpeningBalanceService(IFinanceRepository finance, FiscalPeri
         Guid fiscalPeriodId,
         IReadOnlyCollection<OpeningBalanceLineRequest> lines,
         string performedBy,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string currency = "UGX")
     {
         if (fiscalPeriodId == Guid.Empty) throw new ArgumentException("Fiscal period is required.", nameof(fiscalPeriodId));
         if (lines.Count < 2) throw new ArgumentException("At least two opening-balance lines are required.", nameof(lines));
@@ -37,14 +38,16 @@ public sealed class OpeningBalanceService(IFinanceRepository finance, FiscalPeri
         var totalCredit = lines.Sum(x => x.Credit);
         if (totalDebit != totalCredit) throw new ArgumentException($"Opening balances must balance. Debit={totalDebit:0.00}, Credit={totalCredit:0.00}.");
 
-        var entryNumber = $"OPEN-{period.Id:N}";
+        currency = string.IsNullOrWhiteSpace(currency) ? throw new ArgumentException("Currency is required.", nameof(currency)) : currency.Trim().ToUpperInvariant();
+        if (currency.Length != 3 || !currency.All(char.IsLetter)) throw new ArgumentException("Currency must be a three-letter ISO code.", nameof(currency));
+        var entryNumber = currency == "UGX" ? $"OPEN-{period.Id:N}" : $"OPEN-{period.Id:N}-{currency}";
         if (await finance.JournalEntryNumberExistsAsync(entryNumber, cancellationToken))
             throw new InvalidOperationException($"Opening balances have already been posted for fiscal period '{period.Name}'.");
 
         var entry = new JournalEntry
         {
             EntryNumber = entryNumber,
-            Currency = "UGX",
+            Currency = currency,
             EntryDate = period.StartDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
             Description = $"Opening balances - {period.Name}",
             Status = "Posted",
