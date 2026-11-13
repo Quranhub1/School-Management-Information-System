@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SchoolManagement.Application.Finance;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.BackgroundServices;
@@ -91,6 +92,8 @@ public sealed class SchoolPayReconciliationWorker(
             using var scope = scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<SchoolManagementDbContext>();
             var schoolPay = scope.ServiceProvider.GetRequiredService<ISchoolPayService>();
+            var institutionSettings = scope.ServiceProvider.GetRequiredService<InstitutionSettingsService>();
+            var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
             if (!string.Equals(transaction.TransactionCompletionStatus, "Completed", StringComparison.OrdinalIgnoreCase))
                 continue;
 
@@ -131,7 +134,7 @@ public sealed class SchoolPayReconciliationWorker(
                     students[0].Id,
                     null,
                     transaction.Amount,
-                    "UGX",
+                    systemCurrency,
                     null,
                     transaction.StudentName,
                     transaction.SourcePaymentChannel,
