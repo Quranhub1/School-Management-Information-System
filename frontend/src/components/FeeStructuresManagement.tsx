@@ -37,7 +37,7 @@ export function FeeStructuresManagement() {
         programmeId: programmeId.trim(),
         academicYearId: academicYearId.trim(),
         name: name.trim(),
-        currency: 'UGX',
+        currency: SYSTEM_CURRENCY,
         feeType,
         items: [{ code: feeType.toUpperCase().replace(/\s+/g, '-'), name: name.trim(), amount: Number(totalAmount), sortOrder: 0, isOptional: false }],
       })
@@ -89,7 +89,7 @@ export function FeeStructuresManagement() {
           <label>Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Standard Tuition" required /></label>
           <label>Programme ID<input value={programmeId} onChange={e => setProgrammeId(e.target.value)} placeholder="Programme ID" required /></label>
           <label>Academic Year ID<input value={academicYearId} onChange={e => setAcademicYearId(e.target.value)} placeholder="Academic Year ID" required /></label>
-          <label>Total Amount (UGX)<input type="number" min="0" step="0.01" value={totalAmount} onChange={e => setTotalAmount(e.target.value)} placeholder="0.00" required /></label>
+          <label>Total Amount ({SYSTEM_CURRENCY})<input type="number" min="0" step="0.01" value={totalAmount} onChange={e => setTotalAmount(e.target.value)} placeholder="0.00" required /></label>
         </div>
         <div className="topbar-actions">
           <button type="submit">Create Fee Structure</button>
