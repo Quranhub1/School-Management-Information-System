@@ -107,11 +107,11 @@ export function AccountsOverview() {
             <div className="summary-grid">
               <div className="summary-card">
                 <span>Total Billed</span>
-                <strong>UGX {dashboard.totalBilled.toLocaleString()}</strong>
+                <strong>{formatCurrency(dashboard.totalBilled, SYSTEM_CURRENCY)}</strong>
               </div>
               <div className="summary-card">
                 <span>Total Paid</span>
-                <strong style={{ color: '#059669' }}>UGX {dashboard.totalPaid.toLocaleString()}</strong>
+                <strong style={{ color: '#059669' }}>{formatCurrency(dashboard.totalPaid, SYSTEM_CURRENCY)}</strong>
               </div>
               <div className="summary-card">
                 <span>Outstanding Balance</span>
