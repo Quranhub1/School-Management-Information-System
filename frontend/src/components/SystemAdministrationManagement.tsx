@@ -26,7 +26,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
     let cancelled = false
     setCurrencyLoading(true)
     getSystemCurrencySettings().then(value => { if (!cancelled) setCurrency(value) })
-      .catch(error => { if (!cancelled) setCurrencyError(error instanceof Error ? error.message : 'Unable to load system currency.') })
+      .catch(error => { if (!cancelled) notify(error instanceof Error ? error.message : 'Unable to load system currency.', 'error', 'Currency load failed') })
       .finally(() => { if (!cancelled) setCurrencyLoading(false) })
     return () => { cancelled = true }
   }, [selected])
@@ -68,12 +68,20 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
           <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><button className="secondary-button system-settings-open-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
           <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><button className="secondary-button system-settings-open-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
         </div>
-        <section className="panel" aria-labelledby="system-currency-title" style={{ marginTop: 18, padding: 18 }}>
-          <div className="panel-heading"><div><p className="eyebrow">FINANCIAL CONFIGURATION</p><h3 id="system-currency-title">System currency</h3></div></div>
-          <p>Choose the default currency for new financial records.</p>
-          <div className="form-row" style={{ alignItems: 'end' }}>
-            <label style={{ flex: 1 }}>Default currency
-              <select value={currency.code} disabled={currencyLoading || currencySaving} onChange={event => setCurrency(current => ({ ...current, code: event.target.value }))}>
+        <section className="panel system-currency-panel" aria-labelledby="system-currency-title">
+          <div className="system-currency-heading">
+            <div>
+              <p className="eyebrow">FINANCIAL CONFIGURATION</p>
+              <h3 id="system-currency-title">System currency</h3>
+              <p className="system-currency-description">Set the currency used as the default across new financial records.</p>
+            </div>
+            <span className="system-currency-code" aria-label={`Current currency: ${currency.code}`}>{currency.code}</span>
+          </div>
+          <div className="system-currency-divider" />
+          <div className="system-currency-controls">
+            <label className="system-currency-field" htmlFor="system-default-currency">
+              <span>Default currency</span>
+              <select id="system-default-currency" value={currency.code} disabled={currencyLoading || currencySaving} onChange={event => { setCurrency(current => ({ ...current, code: event.target.value })); }}>
                 <option value="UGX">UGX — Uganda Shilling (default)</option>
                 <option value="USD">USD — US Dollar</option>
                 <option value="KES">KES — Kenyan Shilling</option>
@@ -85,9 +93,9 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
                 <option value="AED">AED — UAE Dirham</option>
               </select>
             </label>
-            <button className="primary-button" disabled={currencyLoading || currencySaving} onClick={() => void saveCurrency()}>{currencySaving ? 'Saving…' : 'Save currency'}</button>
+            <button className="primary-button system-currency-save" disabled={currencyLoading || currencySaving} onClick={() => void saveCurrency()}>{currencySaving ? 'Saving…' : 'Save currency'}</button>
           </div>
-          <small>New transactions use this default unless a specific currency is selected.</small>
+          <p className="system-currency-note">This setting is used for new transactions unless a different currency is explicitly selected. Existing transaction currencies are preserved.</p>
         </section>
         
       </section>
