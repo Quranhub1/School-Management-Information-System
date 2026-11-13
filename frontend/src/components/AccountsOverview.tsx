@@ -68,14 +68,14 @@ export function AccountsOverview() {
   }
 
   function exportOutstandingCSV() {
-    const headers = ['Student Number', 'Name', 'Programme', 'Balance', 'Status']
-    const rows = outstanding.map(o => [o.studentNumber, o.studentName, o.programmeName, o.balance.toLocaleString(), o.status])
+    const headers = ['Student Number', 'Name', 'Programme', 'Currency', 'Balance', 'Status']
+    const rows = outstanding.map(o => [o.studentNumber, o.studentName, o.programmeName, o.currency || SYSTEM_CURRENCY, formatCurrency(o.balance, o.currency || SYSTEM_CURRENCY), o.status])
     exportCSV('outstanding_balances.csv', headers, rows)
   }
 
   function exportPaymentsCSV() {
-    const headers = ['Receipt No.', 'Student Name', 'Invoice', 'Amount', 'Payment Method', 'Date']
-    const rows = payments.map(p => [p.receiptNumber, p.studentName, p.invoiceNumber, p.amount.toLocaleString(), p.paymentMethod, p.paidAt])
+    const headers = ['Receipt No.', 'Student Name', 'Invoice', 'Currency', 'Amount', 'Payment Method', 'Date']
+    const rows = payments.map(p => [p.receiptNumber, p.studentName, p.invoiceNumber, p.currency || SYSTEM_CURRENCY, formatCurrency(p.amount, p.currency || SYSTEM_CURRENCY), p.paymentMethod, p.paidAt])
     exportCSV('recent_payments.csv', headers, rows)
   }
 
