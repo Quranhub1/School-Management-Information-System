@@ -183,12 +183,16 @@
   color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.025em;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.55);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
 }
 
 .timetable-screen .timetable-actions > .timetable-action.primary:hover {
   background: #105538;
   border-color: #105538;
+  color: #ffffff;
+  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.55);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
 }
 
 /* Phones: stack full-width, and let long labels wrap instead of overflowing. */
