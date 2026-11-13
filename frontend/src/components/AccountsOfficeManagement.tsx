@@ -155,10 +155,10 @@ export function AccountsOfficeManagement() {
         { text: staffName, bold: true, fontSize: 13, margin: [0, 4, 0, 4] },
         { text: 'Payroll period: ' + monthNames[payrollDetailData.month - 1] + ' ' + payrollDetailData.year, margin: [0, 0, 0, 12] },
         { table: { widths: ['*', 'auto'], body: [
-          [{ text: 'Basic salary', bold: true }, money(payrollDetailData.basicSalary)],
-          [{ text: 'Allowances', bold: true }, money(payrollDetailData.allowances)],
-          [{ text: 'Deductions', bold: true }, money(payrollDetailData.deductions)],
-          [{ text: 'Net pay', bold: true }, { text: money(payrollDetailData.netPay), bold: true }],
+          [{ text: 'Basic salary', bold: true }, money(payrollDetailData.basicSalary, payrollDetailData.currency || SYSTEM_CURRENCY)],
+          [{ text: 'Allowances', bold: true }, money(payrollDetailData.allowances, payrollDetailData.currency || SYSTEM_CURRENCY)],
+          [{ text: 'Deductions', bold: true }, money(payrollDetailData.deductions, payrollDetailData.currency || SYSTEM_CURRENCY)],
+          [{ text: 'Net pay', bold: true }, { text: money(payrollDetailData.netPay, payrollDetailData.currency || SYSTEM_CURRENCY), bold: true }],
           [{ text: 'Status', bold: true }, payrollDetailData.status],
           [{ text: 'Payment method', bold: true }, payrollDetailData.paymentMethod || '—'],
           [{ text: 'Reference', bold: true }, payrollDetailData.reference || '—'],
@@ -655,9 +655,10 @@ export function AccountsOfficeManagement() {
   async function handleRecoverAdvance(advanceId: string) {
     setAdvanceActionId(advanceId)
     try {
-      const currentPayroll = payrollRecords.find(r => r.status === 'Paid' || r.status === 'Approved')
+      const advance = advances.find(item => item.id === advanceId)
+      const currentPayroll = payrollRecords.find(r => (r.status === 'Paid' || r.status === 'Approved') && (r.currency || SYSTEM_CURRENCY) === (advance?.currency || SYSTEM_CURRENCY))
       if (!currentPayroll) {
-        setError('No approved/paid payroll record available for recovery.')
+        setError('No approved/paid payroll record is available in the advance currency.')
         return
       }
       await recoverStaffAdvance(advanceId, currentPayroll.netPay)
@@ -757,7 +758,7 @@ export function AccountsOfficeManagement() {
       ['Staff Name', 'Staff No.', 'Basic Salary', 'Allowances', 'Deductions', 'Net Pay', 'Status', 'Payment Method'],
       ...filteredPayroll.map(r => {
         const staff = staffMap[r.staffMemberId]
-        return [staff ? formatPersonName(staff.lastName, staff.firstName) : '—', staff?.staffNumber || '—', r.basicSalary, r.allowances, r.deductions, r.netPay, r.status, r.paymentMethod || '']
+        return [staff ? formatPersonName(staff.lastName, staff.firstName) : '—', staff?.staffNumber || '—', r.currency || SYSTEM_CURRENCY, r.basicSalary, r.allowances, r.deductions, r.netPay, r.status, r.paymentMethod || '']
       }),
     ]
     const csv = rows.map(r => r.join(',')).join('\n')
@@ -1185,7 +1186,7 @@ export function AccountsOfficeManagement() {
                       {staffPaymentHistory.map(r => (
                         <tr key={r.id}>
                           <td>{monthNames[r.month - 1]} {r.year}</td>
-                          <td style={{ color: '#059669', fontWeight: 700 }}>{money(r.netPay)}</td>
+                          <td style={{ color: '#059669', fontWeight: 700 }}>{money(r.netPay, r.currency || SYSTEM_CURRENCY)}</td>
                           <td>{r.paymentMethod || '—'}</td>
                           <td>{r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('en-UG') : '—'}</td>
                           <td>{r.reference || '—'}</td>
@@ -1227,10 +1228,10 @@ export function AccountsOfficeManagement() {
                       <tr key={record.id}>
                         <td><button type="button" className="secondary-button" style={{ background: 'transparent', padding: 0, color: '#2563eb', textDecoration: 'underline' }} onClick={() => setPayrollDetailId(record.id)}>{staff ? formatPersonName(staff.lastName, staff.firstName) : '—'}</button></td>
                         <td>{staff?.staffNumber || '—'}</td>
-                        <td>{money(record.basicSalary)}</td>
-                        <td>{money(record.allowances)}</td>
-                        <td>{money(record.deductions)}</td>
-                        <td style={{ fontWeight: 700 }}>{money(record.netPay)}</td>
+                        <td>{money(record.basicSalary, record.currency || SYSTEM_CURRENCY)}</td>
+                        <td>{money(record.allowances, record.currency || SYSTEM_CURRENCY)}</td>
+                        <td>{money(record.deductions, record.currency || SYSTEM_CURRENCY)}</td>
+                        <td style={{ fontWeight: 700 }}>{money(record.netPay, record.currency || SYSTEM_CURRENCY)}</td>
                         <td>
                           <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: statusColor, color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
                             {record.status}
