@@ -155,7 +155,7 @@ export function Receipts({ canManage }: ReceiptsProps) {
             </div>
             <div className="receipt-row">
               <span>Amount Paid:</span>
-              <strong>{receipt.currency} {receipt.amount.toLocaleString()}</strong>
+              <strong>{formatCurrency(receipt.amount, receipt.currency || SYSTEM_CURRENCY)}</strong>
             </div>
             <div className="receipt-row">
               <span>Method:</span>
