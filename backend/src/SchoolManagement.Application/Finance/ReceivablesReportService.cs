@@ -80,7 +80,7 @@ public sealed class ReceivablesReportService(IFinanceRepository finance)
         var invoices = await finance.GetAllStudentInvoicesAsync(cancellationToken);
         var creditNotes = await finance.GetAllCreditNotesAsync(cancellationToken);
         var payments = await finance.GetPaymentsAsync(cancellationToken: cancellationToken);
-        var journals = await finance.GetPostedJournalEntriesAsync(null, date, null, cancellationToken);
+        var journals = (await finance.GetPostedJournalEntriesAsync(null, date, null, cancellationToken)).Where(x => string.Equals(x.Currency, normalizedCurrency, StringComparison.OrdinalIgnoreCase)).ToArray();
 
         var eligibleInvoices = invoices.Where(x =>
             string.Equals(x.Currency, normalizedCurrency, StringComparison.OrdinalIgnoreCase) &&
