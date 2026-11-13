@@ -20,6 +20,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
   const selected = activeSubsection ?? 'overview'
   const [currency, setCurrency] = useState<SystemCurrencySettings>({ code: 'UGX', locale: 'en-UG', fractionDigits: 0 })
   const [currencyLoading, setCurrencyLoading] = useState(false)
+  const [currencySaving, setCurrencySaving] = useState(false)
 
   useEffect(() => {
     if (selected !== 'settings') return
@@ -81,7 +82,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
           <div className="system-currency-controls">
             <label className="system-currency-field" htmlFor="system-default-currency">
               <span>Default currency</span>
-              <select id="system-default-currency" value={currency.code} disabled={currencyLoading || currencySaving} onChange={event => { setCurrency(current => ({ ...current, code: event.target.value })); }}>
+              <select id="system-default-currency" value={currency.code} disabled={currencyLoading} onChange={event => { setCurrency(current => ({ ...current, code: event.target.value })); }}>
                 <option value="UGX">UGX — Uganda Shilling (default)</option>
                 <option value="USD">USD — US Dollar</option>
                 <option value="KES">KES — Kenyan Shilling</option>
