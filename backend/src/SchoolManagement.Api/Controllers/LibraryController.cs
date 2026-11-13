@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Library;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure.Persistence;
@@ -78,7 +80,7 @@ public sealed class LibraryController(
         if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId && x.IsActive, ct))
             return BadRequest(new { message = "The selected programme is not active." });
 
-        var currency = string.IsNullOrWhiteSpace(request.Currency) ? "UGX" : request.Currency.Trim().ToUpperInvariant();
+        var currency = string.IsNullOrWhiteSpace(request.Currency) ? (await institutionSettings.GetSystemCurrencyAsync(ct)).Code : request.Currency.Trim().ToUpperInvariant();
         // Keep one active Library requirement per programme so a student is never
         // billed twice for competing versions of the same course book policy.
         var previousRequirements = await db.FeeStructures
