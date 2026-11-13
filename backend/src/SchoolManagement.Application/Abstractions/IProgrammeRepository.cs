@@ -9,5 +9,7 @@ public interface IProgrammeRepository
     Task<bool> CodeExistsAsync(string code, Guid? excludingId = null, CancellationToken cancellationToken = default);
     Task<bool> DepartmentIsActiveAsync(Guid departmentId, CancellationToken cancellationToken = default);
     Task AddAsync(Programme programme, CancellationToken cancellationToken = default);
+    Task<bool> HasCurriculaAsync(Guid programmeId, CancellationToken cancellationToken = default);
+    void Remove(Programme programme);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
