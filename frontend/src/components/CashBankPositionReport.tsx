@@ -60,9 +60,9 @@ export function CashBankPositionReport() {
           </div>
 
           <div className="summary-grid" style={{ marginBottom: 18 }}>
-            <div className="summary-card"><span>Cash Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1010')?.closingBalance ?? 0)}</strong></div>
-            <div className="summary-card"><span>Bank Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1020')?.closingBalance ?? 0)}</strong></div>
-            <div className="summary-card"><span>Mobile Money Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1030')?.closingBalance ?? 0)}</strong></div>
+            <div className="summary-card"><span>Cash Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1010')?.closingBalance ?? 0, report.currency)}</strong></div>
+            <div className="summary-card"><span>Bank Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1020')?.closingBalance ?? 0, report.currency)}</strong></div>
+            <div className="summary-card"><span>Mobile Money Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1030')?.closingBalance ?? 0, report.currency)}</strong></div>
             <div className="summary-card"><span>Net Movement</span><strong>{formatCurrency(report.netMovement, report.currency)}</strong></div>
           </div>
 
