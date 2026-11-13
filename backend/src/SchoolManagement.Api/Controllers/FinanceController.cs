@@ -582,7 +582,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
 
     [HttpGet("reports/receivables-reconciliation")]
-    public async Task<IActionResult> ReceivablesReconciliation([FromQuery] DateOnly? asOf, [FromQuery] string currency = "UGX", CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ReceivablesReconciliation([FromQuery] DateOnly? asOf, [FromQuery] string? currency = null, CancellationToken cancellationToken = default)
     {
         if (!await CanViewUnscopedFinancialReportAsync(cancellationToken)) return Forbid();
         currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
