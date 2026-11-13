@@ -53,3 +53,7 @@ export const createAcademicPeriod = (input: AcademicPeriodInput) => request<Acad
 export const updateAcademicPeriod = (yearId: string, periodId: string, input: AcademicPeriodUpdate) => request<void>(`/api/academic-calendar/years/${encodeURIComponent(yearId)}/periods/${encodeURIComponent(periodId)}`, { method: 'PUT', body: JSON.stringify(input) })
 export const setAcademicPeriodActive = (yearId: string, periodId: string, isActive: boolean) => request<void>(`/api/academic-calendar/years/${encodeURIComponent(yearId)}/periods/${encodeURIComponent(periodId)}/active`, { method: 'PATCH', body: JSON.stringify({ isActive }) })
 export const setCurrentAcademicPeriod = (yearId: string, periodId: string) => request<void>(`/api/academic-calendar/years/${encodeURIComponent(yearId)}/periods/${encodeURIComponent(periodId)}/current`, { method: 'PATCH' })
+export const deleteAcademicPeriod = (yearId: string, periodId: string) => {
+  if (!yearId.trim() || !periodId.trim()) throw new Error('Year and period IDs are required.')
+  return request<void>(`/api/academic-calendar/years/${encodeURIComponent(yearId)}/periods/${encodeURIComponent(periodId)}`, { method: 'DELETE' })
+}

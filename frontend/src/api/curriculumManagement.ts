@@ -69,3 +69,13 @@ export const updateCurriculumCourse = (curriculumId: string, mappingId: string, 
   if (input.yearOfStudy < 1 || input.semesterNumber < 1) throw new Error('Year and semester numbers must be positive.')
   return request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/courses/${encodeURIComponent(mappingId)}`, { method: 'PUT', body: JSON.stringify(input) })
 }
+
+export const deleteCourse = (id: string) => {
+  if (!id.trim()) throw new Error('Course ID is required.')
+  return request<void>(`/api/curriculum-management/courses/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+export const deleteCurriculumCourse = (curriculumId: string, mappingId: string) => {
+  if (!curriculumId.trim() || !mappingId.trim()) throw new Error('Curriculum and mapping IDs are required.')
+  return request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/courses/${encodeURIComponent(mappingId)}`, { method: 'DELETE' })
+}

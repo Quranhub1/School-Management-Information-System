@@ -15,10 +15,11 @@ import {
   type Curriculum,
   type CurriculumCourse,
 } from '../api/curriculumManagement'
-import { createProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
+import { createProgramme, getProgrammes, setProgrammeActive, updateProgramme, deleteProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityActive, updateAcademicAuthority, type AcademicAuthority } from '../api/academicAuthorities'
 import { createAcademicDepartment, createAcademicFaculty, getAcademicCampuses, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, setAcademicFacultyActive, updateAcademicDepartment, updateAcademicFaculty, type AcademicDepartment, type CampusOption, type FacultyOption } from '../api/academicDepartments'
+import { createAcademicYear, getAcademicYears, getAcademicPeriods, createAcademicPeriod, updateAcademicPeriod, setAcademicPeriodActive, setCurrentAcademicPeriod, deleteAcademicPeriod, type AcademicYear, type AcademicPeriod } from '../api/academicCalendar'
 
 type Tab = 'full' | 'short'
 
@@ -44,9 +45,14 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [editingCurriculumId, setEditingCurriculumId] = useState<string | null>(null)
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null)
   const [programmeForm, setProgrammeForm] = useState({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
-  const [mappings, setMappings] = useState<CurriculumCourse[]>([])
-  const [editingMappingId, setEditingMappingId] = useState<string | null>(null)
-  const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
+const [mappings, setMappings] = useState<CurriculumCourse[]>([])
+const [editingMappingId, setEditingMappingId] = useState<string | null>(null)
+const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
+const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
+const [selectedYearId, setSelectedYearId] = useState('')
+const [semesters, setSemesters] = useState<AcademicPeriod[]>([])
+const [semesterForm, setSemesterForm] = useState({ name: '', sequence: '1', startDate: '', endDate: '' })
+const [editingSemesterId, setEditingSemesterId] = useState<string | null>(null)
   const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
   const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === authority)
   const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && p.type === (tab === 'short' ? 1 : 0) && ['Institutional', 'Verified', 'Approved'].includes(p.approvalStatus) && authorityOfProgramme(p.id) === authority)
@@ -70,9 +76,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   async function load() {
     try {
       setError('')
-      const [a, b, c, d, campusList] = await Promise.all([getCurricula(), getCourses(), getProgrammes(), getAcademicAuthorities(true), getAcademicCampuses()])
+      const [a, b, c, d, campusList, years] = await Promise.all([getCurricula(), getCourses(), getProgrammes(), getAcademicAuthorities(true), getAcademicCampuses(), getAcademicYears()])
       const campusId = selectedCampusId && campusList.some(item => item.id === selectedCampusId) ? selectedCampusId : (campusList.find(item => item.isActive)?.id ?? '')
+      const yearId = selectedYearId && years.some(item => item.id === selectedYearId) ? selectedYearId : (years.find(item => item.isActive)?.id ?? '')
       const [e, f] = campusId ? await Promise.all([getAcademicDepartments(campusId), getAcademicFaculties(campusId)]) : [[], []]
+      const [periods] = yearId ? await Promise.all([getAcademicPeriods(yearId)]) : [[]]
       const courseMappings = (await Promise.all(a.map(curriculum => getCurriculumCourses(curriculum.id).catch(() => [])))).flat()
       setCurricula(a)
       setCourses(b)
@@ -82,6 +90,9 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       setCampuses(campusList)
       setSelectedCampusId(campusId)
       setFaculties(f)
+      setAcademicYears(years)
+      setSelectedYearId(yearId)
+      setSemesters(periods)
       setAuthority(current => d.some(item => item.code === current) ? current : (d.find(item => item.isActive)?.code ?? ''))
       setAllMappings(courseMappings)
     } catch (e) {
@@ -219,6 +230,111 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to update programme status.')
+    }
+  }
+
+  async function deleteProgrammeItem(item: Programme) {
+    if (!confirm(`Delete programme "${item.name}"? This cannot be undone.`)) return
+    setSaving(true)
+    try {
+      await deleteProgramme(item.id)
+      setProgrammes(current => current.filter(p => p.id !== item.id))
+      setMessage('Programme deleted.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to delete programme.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteCourseItem(item: Course) {
+    if (!confirm(`Delete course "${item.name}"? This cannot be undone.`)) return
+    setSaving(true)
+    try {
+      await deleteCourse(item.id)
+      setCourses(current => current.filter(c => c.id !== item.id))
+      setMappings(current => current.filter(m => m.courseId !== item.id))
+      setMessage('Course deleted.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to delete course.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteMappingItem(item: CurriculumCourse) {
+    if (!selected) return
+    if (!confirm(`Remove this course from the curriculum?`)) return
+    setSaving(true)
+    try {
+      await deleteCurriculumCourse(selected, item.id)
+      setMappings(current => current.filter(m => m.id !== item.id))
+      setMessage('Curriculum course mapping removed.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to remove mapping.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function saveSemester(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedYearId) { setError('Select an academic year first.'); return }
+    setSaving(true)
+    try {
+      const input = {
+        academicYearId: selectedYearId,
+        name: semesterForm.name.trim(),
+        sequence: Number(semesterForm.sequence),
+        startDate: semesterForm.startDate,
+        endDate: semesterForm.endDate,
+      }
+      if (!input.name) { setError('Semester name is required.'); return }
+      if (!input.startDate || !input.endDate) { setError('Start and end dates are required.'); return }
+      if (input.startDate >= input.endDate) { setError('Start date must be before end date.'); return }
+      if (editingSemesterId) {
+        await updateAcademicPeriod(selectedYearId, editingSemesterId, { name: input.name, sequence: input.sequence, startDate: input.startDate, endDate: input.endDate })
+        setMessage('Semester updated.')
+      } else {
+        await createAcademicPeriod({ academicYearId: input.academicYearId, name: input.name, sequence: input.sequence, startDate: input.startDate, endDate: input.endDate })
+        setMessage('Semester created.')
+      }
+      setEditingSemesterId(null)
+      setSemesterForm({ name: '', sequence: '1', startDate: '', endDate: '' })
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to save semester.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function editSemester(item: AcademicPeriod) {
+    setEditingSemesterId(item.id)
+    setSemesterForm({ name: item.name, sequence: String(item.sequence), startDate: item.startDate, endDate: item.endDate })
+  }
+
+  async function toggleSemester(item: AcademicPeriod) {
+    try {
+      await setAcademicPeriodActive(selectedYearId, item.id, !item.isActive)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update semester status.')
+    }
+  }
+
+  async function deleteSemesterItem(item: AcademicPeriod) {
+    if (!selectedYearId) return
+    if (!confirm(`Delete semester "${item.name}"? This cannot be undone.`)) return
+    setSaving(true)
+    try {
+      await deleteAcademicPeriod(selectedYearId, item.id)
+      setSemesters(current => current.filter(s => s.id !== item.id))
+      setMessage('Semester deleted.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to delete semester.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -457,6 +573,41 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {departments.length === 0 && <tr><td colSpan={5}>No departments configured.</td></tr>}
         </tbody></table></div>
       </section>
+      <section className="catalogue-board" aria-label="Academic calendar — semesters">
+        <h3>Academic semesters</h3>
+        <div className="form-row">
+          <label>Academic year
+            <select value={selectedYearId} onChange={async event => {
+              const yearId = event.target.value
+              setSelectedYearId(yearId)
+              setEditingSemesterId(null); setSemesterForm({ name: '', sequence: '1', startDate: '', endDate: '' })
+              if (!yearId) { setSemesters([]); return }
+              try {
+                const periods = await getAcademicPeriods(yearId)
+                setSemesters(periods)
+              } catch (loadError) { setError(loadError instanceof Error ? loadError.message : 'Unable to load semesters.') }
+            }}>
+              <option value="">Select academic year</option>
+              {academicYears.map(year => <option key={year.id} value={year.id}>{year.name}</option>)}
+            </select>
+          </label>
+        </div>
+        <form className="student-form" onSubmit={saveSemester}>
+          <div className="form-row">
+            <input required maxLength={80} placeholder="Semester name (e.g. Semester 1)" value={semesterForm.name} disabled={Boolean(editingSemesterId) === false && !selectedYearId} onChange={e => setSemesterForm({ ...semesterForm, name: e.target.value })} />
+            <input type="number" min="1" placeholder="Sequence" value={semesterForm.sequence} onChange={e => setSemesterForm({ ...semesterForm, sequence: e.target.value })} />
+            <input type="date" required value={semesterForm.startDate} onChange={e => setSemesterForm({ ...semesterForm, startDate: e.target.value })} />
+            <input type="date" required value={semesterForm.endDate} onChange={e => setSemesterForm({ ...semesterForm, endDate: e.target.value })} />
+          </div>
+          <button type="submit" disabled={saving || !selectedYearId}>{editingSemesterId ? 'Save semester' : 'Add semester'}</button>
+          {editingSemesterId && <button type="button" className="secondary-button" onClick={() => { setEditingSemesterId(null); setSemesterForm({ name: '', sequence: '1', startDate: '', endDate: '' }) }}>Cancel edit</button>}
+        </form>
+        <div className="table-wrap"><table><thead><tr><th>Name</th><th>Sequence</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+          {semesters.map(item => <tr key={item.id}><td>{item.name}</td><td>{item.sequence}</td><td>{item.startDate}</td><td>{item.endDate}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editSemester(item)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleSemester(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button> <button type="button" className="secondary-button" onClick={() => void deleteSemesterItem(item)}>Delete</button></td></tr>)}
+          {!selectedYearId && <tr><td colSpan={6}>Select an academic year to manage semesters.</td></tr>}
+          {selectedYearId && semesters.length === 0 && <tr><td colSpan={6}>No semesters configured for this year.</td></tr>}
+        </tbody></table></div>
+      </section>
       <section className="catalogue-board" aria-label="Programme register">
         <h3>Programmes under {authorities.find(item => item.code === authority)?.name ?? 'selected authority'}</h3>
         <form className="student-form" onSubmit={saveProgramme}>
@@ -487,7 +638,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {editingProgrammeId && <button type="button" className="secondary-button" onClick={() => { setEditingProgrammeId(null); setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' }) }}>Cancel edit</button>}
         </form>
         <div className="table-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Award</th><th>Duration</th><th>Verification</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.award}</td><td>{item.durationYears} {item.durationUnit}</td><td>{item.isReferenceOnly ? 'Reference only' : item.approvalStatus}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editProgramme(item)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleProgramme(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.award}</td><td>{item.durationYears} {item.durationUnit}</td><td>{item.isReferenceOnly ? 'Reference only' : item.approvalStatus}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editProgramme(item)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleProgramme(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button> <button type="button" className="secondary-button" onClick={() => void deleteProgrammeItem(item)}>Delete</button></td></tr>)}
           {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).length === 0 && <tr><td colSpan={7}>No programmes are saved under this authority yet.</td></tr>}
         </tbody></table></div>
       </section>
@@ -542,7 +693,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <button type="submit" disabled={saving}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
             </form>
             <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button> <button type="button" className="secondary-button" onClick={() => void deleteCourseItem(course)}>Delete</button></td></tr>)}
               {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses are available under this authority.</td></tr>}
             </tbody></table></div>
           </div>
@@ -589,7 +740,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                         <td>{m.yearOfStudy}</td>
                         <td>{m.semesterNumber}</td>
                         <td>{m.isCore ? 'Yes' : 'No'}</td>
-                        <td><button type="button" onClick={() => editMapping(m)}>Edit</button></td>
+                        <td><button type="button" onClick={() => editMapping(m)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void deleteMappingItem(m)}>Delete</button></td>
                       </tr>
                     )
                   })}

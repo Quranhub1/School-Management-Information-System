@@ -43,6 +43,13 @@ public sealed class ProgrammesController(ProgrammeService service) : ControllerB
         var updated = await service.SetActiveAsync(id, request.Active, cancellationToken);
         return updated ? NoContent() : NotFound();
     }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var deleted = await service.DeleteAsync(id, cancellationToken);
+        return deleted ? NoContent() : NotFound();
+    }
 }
 
 public sealed record SetProgrammeActiveRequest(bool Active);

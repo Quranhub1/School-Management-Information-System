@@ -8,5 +8,6 @@ public interface ICourseRepository
     Task<Course?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> CodeExistsAsync(string code, Guid? excludingId = null, CancellationToken cancellationToken = default);
     Task AddAsync(Course course, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -122,4 +122,13 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
         await programmes.SaveChangesAsync(cancellationToken);
         return true;
     }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var programme = await programmes.GetByIdAsync(id, cancellationToken);
+        if (programme is null) return false;
+        programmes.Remove(programme);
+        await programmes.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 }

@@ -78,5 +78,14 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
         var result = await service.SetCurrentSemesterAsync(academicYearId, semesterId, cancellationToken);
         return result.Success ? NoContent() : BadRequest(new { message = result.Error });
     }
-    public sealed record SetActiveRequest(bool IsActive);
+
+    [HttpDelete("years/{academicYearId:guid}/periods/{semesterId:guid}")]
+    public async Task<IActionResult> DeletePeriod(Guid academicYearId, Guid semesterId, CancellationToken cancellationToken)
+    {
+        var deleted = await service.DeleteSemesterAsync(academicYearId, semesterId, cancellationToken);
+        return deleted ? NoContent() : NotFound();
+    }
+}
+
+public sealed record SetActiveRequest(bool IsActive);
 }

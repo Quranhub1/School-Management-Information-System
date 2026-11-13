@@ -119,5 +119,19 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
         return result.Success ? Ok(result.Mapping) : BadRequest(new { message = result.Error });
     }
 
+    [HttpDelete("courses/{id:guid}")]
+    public async Task<IActionResult> DeleteCourse(Guid id, CancellationToken ct)
+    {
+        var deleted = await service.DeleteCourseAsync(id, ct);
+        return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpDelete("curricula/{curriculumId:guid}/courses/{mappingId:guid}")]
+    public async Task<IActionResult> DeleteMapping(Guid curriculumId, Guid mappingId, CancellationToken ct)
+    {
+        var deleted = await service.DeleteMappingAsync(curriculumId, mappingId, ct);
+        return deleted ? NoContent() : NotFound();
+    }
+
     public sealed record SetActiveRequest(bool IsActive);
 }
