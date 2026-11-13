@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { CalendarDays, FileText, Megaphone, Plus, ShieldCheck, UsersRound, WalletCards } from 'lucide-react'
+import { SYSTEM_CURRENCY } from '../lib/currency'
 import { GuildElectoralCommission } from './GuildElectoralCommission'
 import { CalendarView } from './CalendarView'
 
