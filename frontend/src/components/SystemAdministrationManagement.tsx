@@ -36,7 +36,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
     try {
       const saved = await saveSystemCurrencySettings(currency.code)
       setCurrency(saved)
-      notify('System currency saved. It will become the default for new amounts and displays that use the system default.', 'success', 'Currency saved')
+      notify('System currency saved successfully.', 'success', 'Currency saved')
       window.dispatchEvent(new CustomEvent('smis:system-currency-updated', { detail: saved }))
     } catch (error) { notify(error instanceof Error ? error.message : 'Unable to save system currency.', 'error', 'Currency save failed') }
     finally { setCurrencySaving(false) }
