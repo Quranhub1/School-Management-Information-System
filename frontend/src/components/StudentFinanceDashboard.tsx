@@ -6,7 +6,7 @@ import { recordPaymentRequestSchema } from '../schemas'
 import type { Payment } from './FinanceManagement'
 
 type Props = { initialSearch?: string }
-const money = (n: number, currency = SYSTEM_CURRENCY) => formatCurrency(n, currency)
+const money = (n: number, currency: string = SYSTEM_CURRENCY) => formatCurrency(n, currency)
 const PAYMENT_CURRENCIES = ['UGX', 'USD', 'KES', 'EUR', 'GBP', 'TZS', 'RWF', 'ZAR', 'AED'] as const
 const statusFor = (balance: number, billed: number, paid: number) => {
   if (balance < 0) return { label: '+ Credit Balance', color: '#3B82F6', bg: '#EFF6FF', progress: 100 }
@@ -259,7 +259,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
               <tr className="finance-register-group-row">
                 <td colSpan={feeTypeColumns.length + registerCurrencies.length * 3 + 2} style={{ padding: '10px', background: '#f1f5f9', fontWeight: 800, borderTop: '1px solid #cbd5e1' }}>{group.label} <span style={{ color: '#64748b', fontWeight: 500 }}>· {group.rows.length} students</span></td>
               </tr>
-              {group.rows.map(({ student, billedByFee, billed, paid, balance, invoiceCount }) => <tr key={student.id} onClick={() => { setQuery(student.studentNumber); void loadStudent(student.studentNumber) }} style={{ cursor: 'pointer' }} title="Open detailed student account">
+              {group.rows.map(({ student, billedByFee, totalsByCurrency, invoiceCount }) => <tr key={student.id} onClick={() => { setQuery(student.studentNumber); void loadStudent(student.studentNumber) }} style={{ cursor: 'pointer' }} title="Open detailed student account">
                 <td style={{ padding: '9px 10px', fontWeight: 700, position: 'sticky', left: 0, background: '#fff' }}>{student.studentNumber}</td>
                 <td style={{ padding: '9px 10px', whiteSpace: 'nowrap' }}>{student.name}<small style={{ display: 'block', color: '#64748b' }}>{student.status} · {student.enrollmentStatus || 'Enrollment not recorded'} · {invoiceCount} invoices</small></td>
                 {feeTypeColumns.map(column => <td key={column.key} style={{ padding: '9px 10px', textAlign: 'right', whiteSpace: 'nowrap' }}>{money(billedByFee[column.key] ?? 0, column.currency)}</td>)}
