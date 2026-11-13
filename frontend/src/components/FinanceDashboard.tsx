@@ -138,11 +138,12 @@ export function FinanceDashboard() {
   }
 
   function exportOutstandingCSV() {
-    const headers = ['Student Number', 'Name', 'Programme', `Balance (${SYSTEM_CURRENCY})`, 'Status']
+    const headers = ['Student Number', 'Name', 'Programme', 'Currency', 'Balance', 'Status']
     const rows = outstandingBalances.map(o => [
       o.studentNumber,
       o.studentName,
       o.programmeName,
+      o.currency ?? SYSTEM_CURRENCY,
       o.balance.toLocaleString(),
       o.status,
     ])
@@ -157,6 +158,7 @@ export function FinanceDashboard() {
   }
 
   const paymentMethodTotals = payments.reduce<Record<string, number>>((acc, payment) => {
+    if ((payment.currency ?? SYSTEM_CURRENCY).toUpperCase() !== SYSTEM_CURRENCY) return acc
     acc[payment.paymentMethod] = (acc[payment.paymentMethod] || 0) + payment.amount
     return acc
   }, {})
