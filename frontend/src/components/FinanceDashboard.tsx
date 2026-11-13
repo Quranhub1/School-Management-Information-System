@@ -163,6 +163,12 @@ export function FinanceDashboard() {
     return acc
   }, {})
 
+  const quickPayBalancesByCurrency = (quickPayResult?.invoices ?? []).reduce<Record<string, number>>((totals, invoice) => {
+    const currency = invoice.currency ?? SYSTEM_CURRENCY
+    totals[currency] = (totals[currency] ?? 0) + invoice.balance
+    return totals
+  }, {})
+
   const recentPayments = payments.slice(0, 10)
 
   return (
@@ -241,7 +247,7 @@ export function FinanceDashboard() {
                 <div className="summary-card">
                   <span>Current Balance</span>
                   <strong style={{ color: quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0) > 0 ? '#dc2626' : '#059669' }}>
-                    {formatCurrency(quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0), quickPayResult.invoices[0]?.currency ?? SYSTEM_CURRENCY)}
+                    {Object.entries(quickPayBalancesByCurrency).map(([currency, balance]) => <span key={currency}>{formatCurrency(balance, currency)} </span>)}
                   </strong>
                 </div>
                 <div className="summary-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
