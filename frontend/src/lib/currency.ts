@@ -5,8 +5,15 @@
  * carrying different currency codes unless an explicit FX conversion has
  * first been applied and recorded by the backend.
  */
-export const SYSTEM_CURRENCY = "UGX" as const;
-export const SYSTEM_LOCALE = "en-UG" as const;
+export let SYSTEM_CURRENCY = "UGX";
+export let SYSTEM_LOCALE = "en-UG";
+
+export function configureSystemCurrency(code: string, locale: string): void {
+  const normalized = code.trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(normalized) || !locale.trim()) return;
+  SYSTEM_CURRENCY = normalized;
+  SYSTEM_LOCALE = locale.trim();
+}
 
 const DEFAULT_LOCALES: Record<string, string> = {
   UGX: "en-UG",
