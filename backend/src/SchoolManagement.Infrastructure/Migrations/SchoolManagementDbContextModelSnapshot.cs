@@ -2987,6 +2987,11 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("EntryDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
                     b.Property<string>("EntryNumber")
                         .IsRequired()
                         .HasMaxLength(50)
