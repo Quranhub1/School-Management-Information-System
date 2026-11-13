@@ -92,6 +92,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
             <button className="primary-button" disabled={currencyLoading || currencySaving} onClick={() => void saveCurrency()}>{currencySaving ? 'Saving…' : 'Save currency'}</button>
           </div>
           <small>New transactions use this default unless a specific transaction currency is selected. This setting does not perform exchange-rate conversion.</small>
+          <p className="warning" role="note" style={{ marginTop: 12 }}>Accounting limitation: the general ledger and cash/bank position report are still UGX-based because journal entries do not yet store a currency code. Keep UGX selected until multi-currency journal support is implemented. Individual invoices and payments can still retain their own transaction currencies.</p>
         </section>
         
       </section>
