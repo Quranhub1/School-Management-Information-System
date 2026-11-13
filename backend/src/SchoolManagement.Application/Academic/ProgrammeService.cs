@@ -127,7 +127,7 @@ public sealed class ProgrammeService(IProgrammeRepository programmes, IAcademicA
     {
         var programme = await programmes.GetByIdAsync(id, cancellationToken);
         if (programme is null) return false;
-        programmes.Remove(programme);
+        await programmes.DeleteAsync(id, cancellationToken);
         await programmes.SaveChangesAsync(cancellationToken);
         return true;
     }

@@ -8,6 +8,8 @@ import {
   setCurriculumActive,
   updateCourse,
   setCourseActive,
+  deleteCourse,
+  deleteCurriculumCourse,
   getCourses,
   getCurricula,
   getCurriculumCourses,
