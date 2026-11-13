@@ -7,7 +7,7 @@ import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
 import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } from '../api/payroll'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
-import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
+import { formatCurrency, getCurrencyInputStep, SYSTEM_CURRENCY } from '../lib/currency'
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
 
@@ -983,7 +983,7 @@ export function AccountsOfficeManagement() {
                 <form onSubmit={handleIssueCreditNote}>
                   <div className="form-row">
                     <label>Credit Note Number<input value={creditNoteNumber} onChange={e => setCreditNoteNumber(e.target.value)} placeholder="CN-001" required /></label>
-                    <label>Amount ({selectedInvoice?.currency || SYSTEM_CURRENCY})<input type="number" min="0.01" step="0.01" placeholder="0.00" value={creditNoteAmount} onChange={e => setCreditNoteAmount(e.target.value)} required /></label>
+                    <label>Amount ({selectedInvoice?.currency || SYSTEM_CURRENCY})<input type="number" min={getCurrencyInputStep(selectedInvoice?.currency || SYSTEM_CURRENCY)} step={getCurrencyInputStep(selectedInvoice?.currency || SYSTEM_CURRENCY)} placeholder="0.00" value={creditNoteAmount} onChange={e => setCreditNoteAmount(e.target.value)} required /></label>
                     <label>Reason<input value={creditNoteReason} onChange={e => setCreditNoteReason(e.target.value)} placeholder="Reason for credit note" /></label>
                     <label>Issued By<input value={creditNoteIssuedBy} onChange={e => setCreditNoteIssuedBy(e.target.value)} placeholder="Issued by" /></label>
                   </div>
@@ -1090,7 +1090,7 @@ export function AccountsOfficeManagement() {
                       {editingFees.map(row => (
                         <tr key={row.id}>
                           <td><strong>{row.feeType}</strong></td>
-                          <td><input type="number" min="0" step="0.01" value={editDraft[row.id] ?? row.amount} onChange={e => handleEditAmount(row.id, e.target.value)} /></td>
+                          <td><input type="number" min="0" step={getCurrencyInputStep(row.currency || SYSTEM_CURRENCY)} value={editDraft[row.id] ?? row.amount} onChange={e => handleEditAmount(row.id, e.target.value)} /></td>
                           <td style={{ color: '#059669' }}>{money(row.paid, row.currency || SYSTEM_CURRENCY)}</td>
                           <td style={{ color: Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid) > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{money(Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid), row.currency || SYSTEM_CURRENCY)}</td>
                         </tr>
@@ -1119,7 +1119,7 @@ export function AccountsOfficeManagement() {
                 <h3>{selectedInvoice.feeType} — {selectedInvoice.invoiceNumber}</h3>
                 <p>Outstanding: {money(selectedInvoice.balance, selectedInvoice.currency)}</p>
                 {Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
-                <label>Payment Amount ({selectedInvoice.currency || SYSTEM_CURRENCY})<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={selectedInvoice.balance} step="1" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
+                <label>Payment Amount ({selectedInvoice.currency || SYSTEM_CURRENCY})<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min={getCurrencyInputStep(selectedInvoice.currency || SYSTEM_CURRENCY)} max={selectedInvoice.balance} step={getCurrencyInputStep(selectedInvoice.currency || SYSTEM_CURRENCY)} placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
                 <label>Receipt Number<input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>
                 <label>Manual Source<select value={sourceChannel} onChange={e => setSourceChannel(e.target.value)}><option>Cash</option><option>Cheque</option></select></label>
                 <div className="topbar-actions">
@@ -1280,7 +1280,7 @@ export function AccountsOfficeManagement() {
                   <option value="">Select staff</option>
                   {Object.values(staffMap).map(s => <option key={s.id} value={s.id}>{formatPersonName(s.lastName, s.firstName)} ({s.staffNumber})</option>)}
                 </select></label>
-                <label>Amount ({SYSTEM_CURRENCY})<input type="number" min="0" step="0.01" placeholder="0.00" value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} required /></label>
+                <label>Amount ({SYSTEM_CURRENCY})<input type="number" min="0" step={getCurrencyInputStep(SYSTEM_CURRENCY)} placeholder="0.00" value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} required /></label>
                 <label>Reason<input value={advanceReason} onChange={e => setAdvanceReason(e.target.value)} placeholder="Reason for advance" /></label>
               </div>
               <div className="topbar-actions" style={{ marginBottom: 15 }}>
