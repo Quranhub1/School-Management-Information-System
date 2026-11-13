@@ -636,9 +636,10 @@
   border: 1px solid var(--finance-action-bg);
   background: var(--finance-action-bg);
   color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   box-shadow: none;
-  font-weight: 650;
 }
 
 .finance-workspace button:not(.secondary-button):not(.danger-button):not(.delete-button):not(.finance-tab-strip button):not([role="tab"]):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button):hover:not(:disabled) {
