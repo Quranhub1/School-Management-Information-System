@@ -632,7 +632,7 @@
 
 /* Standard primary actions use a fixed dark green, not an arbitrary institution colour. */
 .finance-workspace button:not(.secondary-button):not(.danger-button):not(.delete-button):not(.finance-tab-strip button):not([role="tab"]):not(.finance-control-kpi):not(.finance-live-payment):not(.finance-alert-list button) {
-  padding: 8px 13px;
+  padding: 8px 20px;
   border: 1px solid var(--finance-action-bg);
   background: var(--finance-action-bg);
   color: var(--finance-action-text);
