@@ -147,7 +147,7 @@
 
 .timetable-screen .timetable-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, minmax(max-content, 1fr));
   flex: 1 1 100%;
   width: 100%;
   min-width: 0;
