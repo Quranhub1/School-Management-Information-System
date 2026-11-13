@@ -48,6 +48,7 @@ export interface StaffAdvance {
   id: string
   staffMemberId: string
   amount: number
+  currency?: string
   reason: string
   status: string
   createdAt: string
