@@ -123,7 +123,7 @@ public sealed class AcademicDepartmentsController(SchoolManagementDbContext db) 
         department.IsActive = request.IsActive; await db.SaveChangesAsync(ct); return NoContent();
     }
 
-    private async Task<SchoolManagement.Domain.Administration.Institution?> GetActiveInstitution(CancellationToken ct)
+    private async Task<SchoolManagement.Domain.Academic.Institution?> GetActiveInstitution(CancellationToken ct)
     {
         var settings = await db.InstitutionSettings.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Id).FirstOrDefaultAsync(ct);
         if (settings is null) return null;
