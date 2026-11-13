@@ -87,7 +87,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == systemCurrency);
         var totalBilled = defaultCurrencyTotals?.billed ?? 0m;
         var totalPaid = defaultCurrencyTotals?.paid ?? 0m;
-        var todayCollection = collectionTotals.FirstOrDefault(x => x.currency == "UGX")?.amount ?? 0m;
+        var todayCollection = collectionTotals.FirstOrDefault(x => x.currency == systemCurrency)?.amount ?? 0m;
 
         return Ok(new
         {
@@ -370,7 +370,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         return Ok(new
         {
             studentId,
-            currency = totalsByCurrency.Count == 1 ? totalsByCurrency[0].currency : totalsByCurrency.Count == 0 ? "UGX" : "MULTI",
+            currency = totalsByCurrency.Count == 1 ? totalsByCurrency[0].currency : totalsByCurrency.Count == 0 ? systemCurrency : "MULTI",
             totalsByCurrency,
             invoices,
             payments,
