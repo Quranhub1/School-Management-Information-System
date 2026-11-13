@@ -26,13 +26,13 @@ public sealed class DefaultersController(SchoolManagementDbContext db, Instituti
             .Distinct()
             .LongCountAsync(cancellationToken);
 
-        var criticalCount = await db.StudentInvoices.AsNoTracking()
+        var criticalCount = await invoices
             .Where(x => x.PaidAmount < x.Amount && x.IssuedAt.Date < DateTime.UtcNow.AddDays(-60))
             .Select(x => x.StudentId)
             .Distinct()
             .LongCountAsync(cancellationToken);
 
-        var warningCount = await db.StudentInvoices.AsNoTracking()
+        var warningCount = await invoices
             .Where(x => x.PaidAmount < x.Amount && x.IssuedAt.Date >= DateTime.UtcNow.AddDays(-60) && x.IssuedAt.Date < DateTime.UtcNow.AddDays(-30))
             .Select(x => x.StudentId)
             .Distinct()
@@ -180,6 +180,7 @@ public sealed class DefaultersController(SchoolManagementDbContext db, Instituti
                 d.studentId,
                 studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant(),
                 d.totalBalance,
+                d.currency,
                 severity,
                 suggestedActions = severity switch
                 {
