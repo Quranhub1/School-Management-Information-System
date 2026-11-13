@@ -4805,3 +4805,45 @@ table { font-variant-numeric: tabular-nums; }
 .system-admin-workspace .settings-grid > article.panel > button svg {
   flex: 0 0 auto;
 }
+
+
+/* Global green action-button contrast: keep labels and inline icons white on
+   institutional green fills, regardless of component-level text colour rules. */
+.app-shell .content :is(
+  button.primary-button,
+  button.create-account-button,
+  button.timetable-action.primary,
+  .archive-action-panel .form-actions button,
+  .archive-search-form button[type="submit"],
+  .guild-page .guild-header .page-actions button.primary-button,
+  .audit-log-screen > .library-search > button,
+  button.btn-success,
+  button.button-success,
+  button[class*="success-button"],
+  button[class*="green-button"],
+  button[class*="bg-green"],
+  button[data-variant="success"]
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
+  text-shadow: none;
+}
+
+.app-shell .content :is(
+  button.primary-button,
+  button.create-account-button,
+  button.timetable-action.primary,
+  .archive-action-panel .form-actions button,
+  .archive-search-form button[type="submit"],
+  .guild-page .guild-header .page-actions button.primary-button,
+  .audit-log-screen > .library-search > button,
+  button.btn-success,
+  button.button-success,
+  button[class*="success-button"],
+  button[class*="green-button"],
+  button[class*="bg-green"],
+  button[data-variant="success"]
+) > :not(svg) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
+}
