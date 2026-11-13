@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -9,15 +10,17 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/defaulters")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
-public sealed class DefaultersController(SchoolManagementDbContext db) : ControllerBase
+public sealed class DefaultersController(SchoolManagementDbContext db, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("overview")]
     public async Task<IActionResult> GetOverview(CancellationToken cancellationToken)
     {
-        var totalOutstanding = await db.StudentInvoices.AsNoTracking()
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
+        var invoices = db.StudentInvoices.AsNoTracking().Where(x => x.Currency == systemCurrency);
+        var totalOutstanding = await invoices
             .SumAsync(x => (decimal?)(x.Amount - x.DiscountAmount - x.PaidAmount), cancellationToken) ?? 0m;
 
-        var totalDefaulters = await db.StudentInvoices.AsNoTracking()
+        var totalDefaulters = await invoices
             .Where(x => x.PaidAmount < x.Amount)
             .Select(x => x.StudentId)
             .Distinct()
@@ -68,12 +71,12 @@ public sealed class DefaultersController(SchoolManagementDbContext db) : Control
         }
 
         var defaulters = await query
-            .GroupBy(x => x.StudentId)
+            .GroupBy(x => new { x.StudentId, x.Currency })
             .Select(g => new
             {
-                studentId = g.Key,
+                studentId = g.Key.StudentId,
                 totalBalance = g.Sum(x => x.Amount - x.DiscountAmount - x.PaidAmount),
-                currency = g.First().Currency,
+                currency = g.Key.Currency,
                 oldestInvoice = g.Min(x => x.IssuedAt),
                 invoiceCount = g.Count(),
                 severity = g.Min(x => x.IssuedAt) < DateTime.UtcNow.AddDays(-60) ? "Critical" :
@@ -138,7 +141,8 @@ public sealed class DefaultersController(SchoolManagementDbContext db) : Control
             studentId,
             studentNumber = student?.StudentNumber,
             studentName = student is null ? null : $"{student.LastName} {student.FirstName} {student.OtherNames}".Trim().ToUpperInvariant(),
-            totalBalance = invoices.Sum(x => x.balance),
+            totalBalance = invoices.GroupBy(x => x.Currency).Count() == 1 ? invoices.Sum(x => x.balance) : 0m,
+            balancesByCurrency = invoices.GroupBy(x => x.Currency).Select(group => new { currency = group.Key, balance = group.Sum(x => x.balance) }),
             invoices
         });
     }
@@ -148,12 +152,13 @@ public sealed class DefaultersController(SchoolManagementDbContext db) : Control
     {
         var defaulters = await db.StudentInvoices.AsNoTracking()
             .Where(x => x.PaidAmount < x.Amount)
-            .GroupBy(x => x.StudentId)
+             .GroupBy(x => new { x.StudentId, x.Currency })
             .Select(g => new
             {
-                studentId = g.Key,
+                studentId = g.Key.StudentId,
+                currency = g.Key.Currency,
                 oldestInvoice = g.Min(x => x.IssuedAt),
-                totalBalance = g.Sum(x => x.Amount - x.PaidAmount)
+                totalBalance = g.Sum(x => x.Amount - x.DiscountAmount - x.PaidAmount)
             })
             .OrderBy(x => x.oldestInvoice)
             .ThenByDescending(x => x.totalBalance)
