@@ -309,7 +309,7 @@ export function FinanceDashboard() {
                     {recentPayments.map(payment => (
                       <tr key={payment.id}>
                         <td>{payment.receiptNumber}</td>
-                        <td style={{ color: '#059669' }}>{SYSTEM_CURRENCY + ' ' + payment.amount.toLocaleString()}</td>
+                        <td style={{ color: '#059669' }}>{formatCurrency(payment.amount, payment.currency ?? SYSTEM_CURRENCY)}</td>
                         <td>{payment.paymentMethod}</td>
                         <td>{new Date(payment.paidAt).toLocaleDateString(SYSTEM_LOCALE)}</td>
                       </tr>
