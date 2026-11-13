@@ -452,13 +452,13 @@ h1, h2, h3, h4, h5, h6,
   color: #ffffff !important;
   font-weight: 700;
   letter-spacing: 0.025em;
-  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.65);
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.45);
 }
 .app-shell .content button:not(.secondary-button):not(.link-button):not(.sidebar-item):not(.library-tabs button):not(.library-workspace-tabs button):not(.admin-dashboard-tabs button):not(.inventory-register-tab):not([role="tab"]):not([aria-pressed]):not(.icon-button):not(.close-button):not(.btn-danger):not(.danger-button):not(.delete-button):not([class*="danger"]):not([class*="delete"]):not([class*="destructive"]):hover:not(:disabled) {
   border-color: #14532d !important;
   background: #166534 !important;
   color: #ffffff !important;
-  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.65);
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.45);
 }
 .app-shell .content button:not(.secondary-button):not(.link-button):not(.sidebar-item):not(.library-tabs button):not(.library-workspace-tabs button):not(.admin-dashboard-tabs button):not(.inventory-register-tab):not([role="tab"]):not([aria-pressed]):not(.icon-button):not(.close-button):not(.btn-danger):not(.danger-button):not(.delete-button):not([class*="danger"]):not([class*="delete"]):not([class*="destructive"]):focus-visible {
   outline: 3px solid rgba(22, 163, 74, .28) !important;
