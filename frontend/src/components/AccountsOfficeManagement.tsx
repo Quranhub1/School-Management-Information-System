@@ -7,6 +7,7 @@ import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
 import { listPayroll, markPayrollPaid, generatePayroll, type PayrollRecord } from '../api/payroll'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
 
@@ -20,6 +21,7 @@ type FeeBreakdownRow = {
   amount: number
   paid: number
   balance: number
+  currency?: string
   status: string
 }
 
@@ -39,6 +41,7 @@ type PaymentHistoryRow = {
   receiptNumber: string
   paidAt: string
   amount: number
+  currency?: string
   paymentMethod: string
   paymentSource: string
   sourceChannel?: string
@@ -49,6 +52,7 @@ type CreditNoteRow = {
   id: string
   creditNoteNumber: string
   amount: number
+  currency?: string
   reason: string
   issuedBy?: string
   issuedAt: string
@@ -89,6 +93,8 @@ const MOCK_INVOICES: Invoice[] = [
   { id: 'inv2', studentId: 'S001', invoiceNumber: 'INV-2025-002', feeType: 'Functional', amount: 500000, paidAmount: 0, balance: 500000, currency: 'UGX', status: 'Unpaid', issuedAt: '2025-09-20' },
   { id: 'inv3', studentId: 'S001', invoiceNumber: 'INV-2025-003', feeType: 'Guild', amount: 200000, paidAmount: 200000, balance: 0, currency: 'UGX', status: 'Paid', issuedAt: '2025-09-20' },
 ]
+
+const money = (amount: number, currency: string = SYSTEM_CURRENCY) => formatCurrency(amount, currency)
 
 export function AccountsOfficeManagement() {
   const [mainTab, setMainTab] = useState<MainTab>('student-fees')
@@ -149,10 +155,10 @@ export function AccountsOfficeManagement() {
         { text: staffName, bold: true, fontSize: 13, margin: [0, 4, 0, 4] },
         { text: 'Payroll period: ' + monthNames[payrollDetailData.month - 1] + ' ' + payrollDetailData.year, margin: [0, 0, 0, 12] },
         { table: { widths: ['*', 'auto'], body: [
-          [{ text: 'Basic salary', bold: true }, 'UGX ' + payrollDetailData.basicSalary.toLocaleString('en-UG')],
-          [{ text: 'Allowances', bold: true }, 'UGX ' + payrollDetailData.allowances.toLocaleString('en-UG')],
-          [{ text: 'Deductions', bold: true }, 'UGX ' + payrollDetailData.deductions.toLocaleString('en-UG')],
-          [{ text: 'Net pay', bold: true }, { text: 'UGX ' + payrollDetailData.netPay.toLocaleString('en-UG'), bold: true }],
+          [{ text: 'Basic salary', bold: true }, money(payrollDetailData.basicSalary)],
+          [{ text: 'Allowances', bold: true }, money(payrollDetailData.allowances)],
+          [{ text: 'Deductions', bold: true }, money(payrollDetailData.deductions)],
+          [{ text: 'Net pay', bold: true }, { text: money(payrollDetailData.netPay), bold: true }],
           [{ text: 'Status', bold: true }, payrollDetailData.status],
           [{ text: 'Payment method', bold: true }, payrollDetailData.paymentMethod || '—'],
           [{ text: 'Reference', bold: true }, payrollDetailData.reference || '—'],
@@ -161,7 +167,7 @@ export function AccountsOfficeManagement() {
         { text: 'Staff advances', style: 'sectionHeading', margin: [0, 16, 0, 6] },
         { table: { headerRows: 1, widths: ['auto', '*', 'auto', 'auto'], body: [
           [{ text: 'Amount', style: 'tableHeader' }, { text: 'Reason', style: 'tableHeader' }, { text: 'Status', style: 'tableHeader' }, { text: 'Requested', style: 'tableHeader' }],
-          ...payrollDetailAdvances.map(advance => ['UGX ' + advance.amount.toLocaleString('en-UG'), advance.reason, advance.status, new Date(advance.requestedAt).toLocaleDateString('en-UG')]),
+          ...payrollDetailAdvances.map(advance => [money(advance.amount, advance.currency), advance.reason, advance.status, new Date(advance.requestedAt).toLocaleDateString('en-UG')]),
         ] }, layout: 'lightHorizontalLines' },
       ],
     }
@@ -363,7 +369,7 @@ export function AccountsOfficeManagement() {
           setPayrollDetailData(data[0])
           try {
             const adv = await getStaffAdvances(data[0].staffMemberId)
-            if (!cancelled) setPayrollDetailAdvances(adv.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
+            if (!cancelled) setPayrollDetailAdvances(adv.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: a.currency || SYSTEM_CURRENCY, reason: a.reason, status: a.status, requestedAt: a.createdAt })))
           } catch {
             if (!cancelled) setPayrollDetailAdvances([])
           }
@@ -405,7 +411,7 @@ export function AccountsOfficeManagement() {
           setPaymentHistory(filtered)
           setCreditNotes(creditNotesData)
           setInvoiceNotes(notes)
-          setInvoiceFeeItems(feeItems.map(f => ({ id: f.id, feeType: f.feeType, name: f.feeType, amount: f.amount, paidAmount: 0, balance: f.amount, currency: 'UGX', status: 'Pending' })))
+          setInvoiceFeeItems(feeItems.map(f => ({ id: f.id, feeType: f.feeType, name: f.feeType, amount: f.amount, paidAmount: 0, balance: f.amount, currency: selectedInvoice.currency || SYSTEM_CURRENCY, status: 'Pending' })))
         }
       } catch {
         if (!cancelled) {
@@ -686,9 +692,15 @@ export function AccountsOfficeManagement() {
     return true
   })
 
-  const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0)
-  const totalPaid = invoices.reduce((sum, inv) => sum + inv.paidAmount, 0)
-  const totalBalance = invoices.reduce((sum, inv) => sum + inv.balance, 0)
+  const totalsByCurrency = invoices.reduce<Record<string, { amount: number; paid: number; balance: number }>>((totals, invoice) => {
+    const currency = invoice.currency || SYSTEM_CURRENCY
+    const current = totals[currency] ?? { amount: 0, paid: 0, balance: 0 }
+    current.amount += invoice.amount
+    current.paid += invoice.paidAmount
+    current.balance += invoice.balance
+    totals[currency] = current
+    return totals
+  }, {})
 
   function getStatusColor(balance: number, paid: number): string {
     if (balance === 0) return '#059669'
@@ -710,9 +722,9 @@ export function AccountsOfficeManagement() {
 
   function exportFeeStatement() {
     const rows = [
-      ['Fee Type', 'Invoice No.', 'Amount (UGX)', 'Paid (UGX)', 'Balance (UGX)', 'Status'],
-      ...invoices.map(inv => [inv.feeType, inv.invoiceNumber, inv.amount, inv.paidAmount, inv.balance, getStatusLabel(inv.balance, inv.paidAmount)]),
-      ['Total', '', totalAmount, totalPaid, totalBalance, ''],
+      ['Fee Type', 'Invoice No.', 'Currency', 'Amount', 'Paid', 'Balance', 'Status'],
+      ...invoices.map(inv => [inv.feeType, inv.invoiceNumber, inv.currency, inv.amount, inv.paidAmount, inv.balance, getStatusLabel(inv.balance, inv.paidAmount)]),
+      ...Object.entries(totalsByCurrency).map(([currency, totals]) => [`Total (${currency})`, '', currency, totals.amount, totals.paid, totals.balance, '']),
     ]
     const csv = rows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -726,8 +738,8 @@ export function AccountsOfficeManagement() {
 
   function exportPaymentHistory() {
     const rows = [
-      ['Receipt No.', 'Date', 'Amount (UGX)', 'Payment Source', 'Source Channel', 'Reference'],
-      ...filteredPayments.map(p => [p.receiptNumber, p.paidAt, p.amount, p.paymentSource, p.sourceChannel || '', p.reference || '']),
+      ['Receipt No.', 'Date', 'Currency', 'Amount', 'Payment Source', 'Source Channel', 'Reference'],
+      ...filteredPayments.map(p => [p.receiptNumber, p.paidAt, p.currency || SYSTEM_CURRENCY, p.amount, p.paymentSource, p.sourceChannel || '', p.reference || '']),
     ]
     const csv = rows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -809,22 +821,14 @@ export function AccountsOfficeManagement() {
           {selectedStudentId && (
             <>
               <div className="summary-grid" style={{ marginBottom: 22 }}>
-                <div className="summary-card">
-                  <span>Total Fees</span>
-                  <strong>UGX {totalAmount.toLocaleString()}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Total Paid</span>
-                  <strong style={{ color: '#059669' }}>UGX {totalPaid.toLocaleString()}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Outstanding Balance</span>
-                  <strong style={{ color: totalBalance > 0 ? '#dc2626' : '#059669' }}>UGX {totalBalance.toLocaleString()}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Invoices</span>
-                  <strong>{invoices.length}</strong>
-                </div>
+                {Object.entries(totalsByCurrency).map(([currency, totals]) => (
+                  <React.Fragment key={currency}>
+                    <div className="summary-card"><span>Total Fees · {currency}</span><strong>{money(totals.amount, currency)}</strong></div>
+                    <div className="summary-card"><span>Total Paid · {currency}</span><strong style={{ color: '#059669' }}>{money(totals.paid, currency)}</strong></div>
+                    <div className="summary-card"><span>Outstanding · {currency}</span><strong style={{ color: totals.balance > 0 ? '#dc2626' : '#059669' }}>{money(totals.balance, currency)}</strong></div>
+                  </React.Fragment>
+                ))}
+                <div className="summary-card"><span>Invoices</span><strong>{invoices.length}</strong></div>
               </div>
 
               <div className="topbar-actions" style={{ marginBottom: 10 }}>
@@ -859,9 +863,9 @@ export function AccountsOfficeManagement() {
                                itemsForInvoice.map((item, idx) => (
                                  <tr key={item.id}>
                                    <td><strong>{idx === 0 ? inv.feeType : ''}</strong></td>
-                                   <td>UGX {item.amount.toLocaleString()}</td>
-                                   <td style={{ color: '#059669' }}>UGX {item.paidAmount.toLocaleString()}</td>
-                                   <td style={{ color: item.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {item.balance.toLocaleString()}</td>
+                                   <td>{money(item.amount, item.currency)}</td>
+                                   <td style={{ color: '#059669' }}>{money(item.paidAmount, item.currency)}</td>
+                                   <td style={{ color: item.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{money(item.balance, item.currency)}</td>
                                    <td>
                                      <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: statusColor, color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
                                        {getStatusLabel(item.balance, item.paidAmount)}
@@ -877,9 +881,9 @@ export function AccountsOfficeManagement() {
                              ) : (
                                <tr key={inv.id}>
                                  <td><strong>{inv.feeType}</strong></td>
-                                 <td>UGX {inv.amount.toLocaleString()}</td>
-                                 <td style={{ color: '#059669' }}>UGX {inv.paidAmount.toLocaleString()}</td>
-                                 <td style={{ color: inv.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {inv.balance.toLocaleString()}</td>
+                                 <td>{money(inv.amount, inv.currency)}</td>
+                                 <td style={{ color: '#059669' }}>{money(inv.paidAmount, inv.currency)}</td>
+                                 <td style={{ color: inv.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{money(inv.balance, inv.currency)}</td>
                                  <td>
                                    <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: statusColor, color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
                                      {getStatusLabel(inv.balance, inv.paidAmount)}
@@ -895,14 +899,16 @@ export function AccountsOfficeManagement() {
                            </React.Fragment>
                          )
                        })}
-                       <tr>
-                         <td><strong>Total</strong></td>
-                         <td><strong>UGX {totalAmount.toLocaleString()}</strong></td>
-                         <td style={{ color: '#059669' }}><strong>UGX {totalPaid.toLocaleString()}</strong></td>
-                         <td style={{ color: totalBalance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}><strong>UGX {totalBalance.toLocaleString()}</strong></td>
-                         <td><strong>{totalBalance === 0 ? 'Fully Paid' : 'Outstanding'}</strong></td>
-                         <td></td>
-                       </tr>
+                       {Object.entries(totalsByCurrency).map(([currency, totals]) => (
+                          <tr key={currency}>
+                            <td><strong>Total · {currency}</strong></td>
+                            <td><strong>{money(totals.amount, currency)}</strong></td>
+                            <td style={{ color: '#059669' }}><strong>{money(totals.paid, currency)}</strong></td>
+                            <td style={{ color: totals.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}><strong>{money(totals.balance, currency)}</strong></td>
+                            <td><strong>{totals.balance === 0 ? 'Fully Paid' : 'Outstanding'}</strong></td>
+                            <td></td>
+                          </tr>
+                        ))}
                      </tbody>
                    </table>
                  )}
@@ -949,7 +955,7 @@ export function AccountsOfficeManagement() {
                           <tr key={p.id}>
                             <td>{p.receiptNumber}</td>
                             <td>{new Date(p.paidAt).toLocaleDateString('en-UG')}</td>
-                            <td style={{ color: '#059669' }}>UGX {p.amount.toLocaleString()}</td>
+                            <td style={{ color: '#059669' }}>{money(p.amount, p.currency || SYSTEM_CURRENCY)}</td>
                             <td>{p.paymentSource}</td>
                             <td>{p.sourceChannel || '—'}</td>
                             <td>{p.reference || '—'}</td>
@@ -976,7 +982,7 @@ export function AccountsOfficeManagement() {
                 <form onSubmit={handleIssueCreditNote}>
                   <div className="form-row">
                     <label>Credit Note Number<input value={creditNoteNumber} onChange={e => setCreditNoteNumber(e.target.value)} placeholder="CN-001" required /></label>
-                    <label>Amount (UGX)<input type="number" min="0.01" step="0.01" placeholder="0.00" value={creditNoteAmount} onChange={e => setCreditNoteAmount(e.target.value)} required /></label>
+                    <label>Amount ({selectedInvoice?.currency || SYSTEM_CURRENCY})<input type="number" min="0.01" step="0.01" placeholder="0.00" value={creditNoteAmount} onChange={e => setCreditNoteAmount(e.target.value)} required /></label>
                     <label>Reason<input value={creditNoteReason} onChange={e => setCreditNoteReason(e.target.value)} placeholder="Reason for credit note" /></label>
                     <label>Issued By<input value={creditNoteIssuedBy} onChange={e => setCreditNoteIssuedBy(e.target.value)} placeholder="Issued by" /></label>
                   </div>
@@ -1005,7 +1011,7 @@ export function AccountsOfficeManagement() {
                         {creditNotes.map(cn => (
                           <tr key={cn.id}>
                             <td>{cn.creditNoteNumber}</td>
-                            <td style={{ color: '#059669' }}>UGX {cn.amount.toLocaleString()}</td>
+                            <td style={{ color: '#059669' }}>{money(cn.amount, cn.currency || selectedInvoice?.currency || SYSTEM_CURRENCY)}</td>
                             <td>{cn.reason}</td>
                             <td>{cn.issuedBy || '—'}</td>
                             <td>{new Date(cn.issuedAt).toLocaleDateString('en-UG')}</td>
@@ -1084,8 +1090,8 @@ export function AccountsOfficeManagement() {
                         <tr key={row.id}>
                           <td><strong>{row.feeType}</strong></td>
                           <td><input type="number" min="0" step="0.01" value={editDraft[row.id] ?? row.amount} onChange={e => handleEditAmount(row.id, e.target.value)} /></td>
-                          <td style={{ color: '#059669' }}>UGX {row.paid.toLocaleString()}</td>
-                          <td style={{ color: Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid) > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid).toLocaleString()}</td>
+                          <td style={{ color: '#059669' }}>{money(row.paid, row.currency || SYSTEM_CURRENCY)}</td>
+                          <td style={{ color: Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid) > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{money(Math.max(0, (editDraft[row.id] ?? row.amount) - row.paid), row.currency || SYSTEM_CURRENCY)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1110,7 +1116,7 @@ export function AccountsOfficeManagement() {
               <form className="auth-card" onSubmit={submitPayment} onClick={e => e.stopPropagation()}>
                 <p className="eyebrow">Payment</p>
                 <h3>{selectedInvoice.feeType} — {selectedInvoice.invoiceNumber}</h3>
-                <p>Outstanding: UGX {selectedInvoice.balance.toLocaleString()}</p>
+                <p>Outstanding: {money(selectedInvoice.balance, selectedInvoice.currency)}</p>
                 {Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
                 <label>Payment Amount (UGX)<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={selectedInvoice.balance} step="1" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
                 <label>Receipt Number<input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>
@@ -1178,7 +1184,7 @@ export function AccountsOfficeManagement() {
                       {staffPaymentHistory.map(r => (
                         <tr key={r.id}>
                           <td>{monthNames[r.month - 1]} {r.year}</td>
-                          <td style={{ color: '#059669', fontWeight: 700 }}>UGX {r.netPay.toLocaleString()}</td>
+                          <td style={{ color: '#059669', fontWeight: 700 }}>{money(r.netPay)}</td>
                           <td>{r.paymentMethod || '—'}</td>
                           <td>{r.paymentDate ? new Date(r.paymentDate).toLocaleDateString('en-UG') : '—'}</td>
                           <td>{r.reference || '—'}</td>
@@ -1220,10 +1226,10 @@ export function AccountsOfficeManagement() {
                       <tr key={record.id}>
                         <td><button type="button" className="secondary-button" style={{ background: 'transparent', padding: 0, color: '#2563eb', textDecoration: 'underline' }} onClick={() => setPayrollDetailId(record.id)}>{staff ? formatPersonName(staff.lastName, staff.firstName) : '—'}</button></td>
                         <td>{staff?.staffNumber || '—'}</td>
-                        <td>UGX {record.basicSalary.toLocaleString()}</td>
-                        <td>UGX {record.allowances.toLocaleString()}</td>
-                        <td>UGX {record.deductions.toLocaleString()}</td>
-                        <td style={{ fontWeight: 700 }}>UGX {record.netPay.toLocaleString()}</td>
+                        <td>{money(record.basicSalary)}</td>
+                        <td>{money(record.allowances)}</td>
+                        <td>{money(record.deductions)}</td>
+                        <td style={{ fontWeight: 700 }}>{money(record.netPay)}</td>
                         <td>
                           <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '999px', background: statusColor, color: 'white', fontSize: '.72rem', fontWeight: 800 }}>
                             {record.status}
@@ -1303,7 +1309,7 @@ export function AccountsOfficeManagement() {
                       return (
                         <tr key={adv.id}>
                           <td>{staff ? formatPersonName(staff.lastName, staff.firstName) : '—'}</td>
-                          <td style={{ color: '#059669' }}>UGX {adv.amount.toLocaleString()}</td>
+                          <td style={{ color: '#059669' }}>{money(adv.amount, adv.currency)}</td>
                           <td>{adv.reason}</td>
                           <td>{new Date(adv.requestedAt).toLocaleDateString('en-UG')}</td>
                           <td>{adv.status}</td>
@@ -1336,10 +1342,10 @@ export function AccountsOfficeManagement() {
                   <>
                     <h3>{staffMap[payrollDetailData.staffMemberId] ? formatPersonName(staffMap[payrollDetailData.staffMemberId].lastName, staffMap[payrollDetailData.staffMemberId].firstName) : 'Staff Member'}</h3>
                     <p>Period: {monthNames[payrollDetailData.month - 1]} {payrollDetailData.year}</p>
-                    <p>Basic Salary: UGX {payrollDetailData.basicSalary.toLocaleString()}</p>
-                    <p>Allowances: UGX {payrollDetailData.allowances.toLocaleString()}</p>
-                    <p>Deductions: UGX {payrollDetailData.deductions.toLocaleString()}</p>
-                    <p style={{ fontWeight: 700 }}>Net Pay: UGX {payrollDetailData.netPay.toLocaleString()}</p>
+                    <p>Basic Salary: {money(payrollDetailData.basicSalary)}</p>
+                    <p>Allowances: {money(payrollDetailData.allowances)}</p>
+                    <p>Deductions: {money(payrollDetailData.deductions)}</p>
+                    <p style={{ fontWeight: 700 }}>Net Pay: {money(payrollDetailData.netPay)}</p>
                     <p>Status: {payrollDetailData.status}</p>
                     <p>Payment Method: {payrollDetailData.paymentMethod || '—'}</p>
                     <p>Reference: {payrollDetailData.reference || '—'}</p>
