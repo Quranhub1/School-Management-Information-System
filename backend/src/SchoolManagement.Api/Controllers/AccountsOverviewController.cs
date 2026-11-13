@@ -50,7 +50,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
         var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == systemCurrency);
         var totalBilled = defaultCurrencyTotals?.billed ?? 0m;
         var totalPaid = defaultCurrencyTotals?.paid ?? 0m;
-        var todayCollection = collectionTotals.FirstOrDefault(x => x.currency == "UGX")?.amount ?? 0m;
+        var todayCollection = collectionTotals.FirstOrDefault(x => x.currency == systemCurrency)?.amount ?? 0m;
 
         return Ok(new
         {
@@ -78,6 +78,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
     [HttpGet("overdue")]
     public async Task<IActionResult> GetOverdue(CancellationToken cancellationToken)
     {
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
 
@@ -104,7 +105,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
         return Ok(new
         {
             asOf,
-            currency = "UGX",
+            currency = systemCurrency,
             installmentCount = overdueRows.Count,
             studentCount = overdueRows.Select(x => x.StudentId).Distinct().Count(),
             totalOutstanding = overdueRows.Sum(x => x.outstanding)
