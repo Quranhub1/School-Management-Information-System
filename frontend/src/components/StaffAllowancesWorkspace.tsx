@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { getSession } from '../api/auth'
 import { listStaff, STAFF_CHANGED_EVENT, type StaffMember } from '../api/staff'
 import { authorizeStaffAllowance, listStaffAllowances, recordStaffAllowance, type StaffAllowance } from '../api/staffAllowances'
-import { SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
+import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
 
 const ALLOWANCE_TYPES = ['Transport', 'Housing', 'Medical', 'Responsibility', 'Acting', 'Communication', 'Airtime', 'Meal', 'Travel', 'Duty', 'Overtime', 'Other']
 
@@ -146,7 +146,7 @@ export function StaffAllowancesWorkspace() {
                 <tr key={a.id}>
                   <td><strong>{a.staffName}</strong><br /><small>{a.staffNumber}</small></td>
                   <td>{a.allowanceType}</td>
-                  <td>{SYSTEM_CURRENCY} {a.amount.toLocaleString(SYSTEM_LOCALE)}</td>
+                  <td>{formatCurrency(a.amount, a.currency || SYSTEM_CURRENCY)}</td>
                   <td>{a.effectiveFrom}</td>
                   <td>{a.frequency}</td>
                   <td>{a.status}</td>
