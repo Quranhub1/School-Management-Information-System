@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Payroll;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -10,7 +11,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/staff/payroll")]
 [Authorize(Policy = AuthorizationPolicies.PayrollRead)]
-public sealed class PayrollController(SchoolManagementDbContext db, IConfiguration configuration) : ControllerBase
+public sealed class PayrollController(SchoolManagementDbContext db, IConfiguration configuration, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] Guid? staffMemberId = null, CancellationToken cancellationToken = default)
@@ -35,6 +36,7 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
         if (request.Month is < 1 or > 12) return BadRequest(new { message = "Month must be between 1 and 12." });
         if (request.Year < 2000) return BadRequest(new { message = "Year is invalid." });
 
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
         var staff = await db.StaffMembers.AsNoTracking().Where(x => x.IsActive).ToListAsync(cancellationToken);
         var basicSalary = configuration.GetValue<decimal>("PayrollDefaults:BasicSalary", 50000m);
         var deductions = configuration.GetValue<decimal>("PayrollDefaults:Deductions", 5000m);
@@ -47,6 +49,7 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
             if (existing) continue;
             var allowances = await db.StaffAllowances.AsNoTracking()
                 .Where(a => a.StaffMemberId == s.Id
+                    && a.Currency == systemCurrency
                     && (a.Status == "Authorized" || a.Status == "Recorded")
                     && (a.Frequency == "Monthly"
                         ? a.EffectiveFrom <= periodEnd && (!a.EffectiveTo.HasValue || a.EffectiveTo.Value >= periodStart)
@@ -63,6 +66,7 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
                 Allowances = allowances,
                 Deductions = deductions,
                 NetPay = netPay,
+                Currency = systemCurrency,
                 Status = "Pending"
             });
         }
