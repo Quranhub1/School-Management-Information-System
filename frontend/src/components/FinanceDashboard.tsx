@@ -138,7 +138,7 @@ export function FinanceDashboard() {
   }
 
   function exportOutstandingCSV() {
-    const headers = ['Student Number', 'Name', 'Programme', 'Balance ({SYSTEM_CURRENCY})', 'Status']
+    const headers = ['Student Number', 'Name', 'Programme', `Balance (${SYSTEM_CURRENCY})`, 'Status']
     const rows = outstandingBalances.map(o => [
       o.studentNumber,
       o.studentName,
@@ -239,7 +239,7 @@ export function FinanceDashboard() {
                 <div className="summary-card">
                   <span>Current Balance</span>
                   <strong style={{ color: quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0) > 0 ? '#dc2626' : '#059669' }}>
-                    UGX {quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0).toLocaleString()}
+                    {formatCurrency(quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0), quickPayResult.invoices[0]?.currency ?? SYSTEM_CURRENCY)}
                   </strong>
                 </div>
                 <div className="summary-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
