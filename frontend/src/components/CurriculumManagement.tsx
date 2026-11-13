@@ -412,7 +412,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               const campusId = event.target.value
               setSelectedCampusId(campusId)
               setEditingFacultyId(null); setFacultyForm({ code: '', name: '', description: '' })
-              setEditingDepartmentId(null); setDepartmentForm({ facultyId: '', code: '', name: '' })
+              setEditingDepartmentId(null); setDepartmentForm({ facultyId: '', code: '', name: '' }); setProgrammeForm(current => ({ ...current, departmentId: '' }))
               if (!campusId) { setFaculties([]); setDepartments([]); return }
               try {
                 const [nextFaculties, nextDepartments] = await Promise.all([getAcademicFaculties(campusId), getAcademicDepartments(campusId)])
