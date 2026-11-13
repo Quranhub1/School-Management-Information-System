@@ -298,6 +298,6 @@ public sealed class LibraryController(
     }
 }
 
-public sealed record SetLibraryProgrammeRequirementRequest(Guid ProgrammeId, string Name, decimal Amount, string? Currency = "UGX");
+public sealed record SetLibraryProgrammeRequirementRequest(Guid ProgrammeId, string Name, decimal Amount, string? Currency = null);
 
 public sealed record LibraryClearanceRequest(string Method, string? Reference = null);
