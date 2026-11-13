@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
 import { readApiErrorMessage } from '../api/errors'
-import { formatCurrency } from '../lib/currency'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 
 type Account = { id: string; code: string; name: string; accountType: string }
 type LedgerRow = { accountCode: string; accountName: string; accountType: string; date: string; entryNumber: string; description: string; debit: number; credit: number; balance: number }
@@ -12,7 +12,7 @@ type BalanceReport = { assets: StatementRow[]; liabilities: StatementRow[]; equi
 
 type Tab = 'accounts' | 'ledger' | 'trial-balance' | 'income-statement' | 'balance-sheet'
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
-const money = (n: number) => formatCurrency(Number(n) || 0)
+const money = (n: number) => formatCurrency(Number(n) || 0, SYSTEM_CURRENCY)
 
 async function request<T>(path: string): Promise<T> {
   const token = getAccessToken()
@@ -38,10 +38,10 @@ export function AccountingReportsWorkspace() {
     setLoading(true); setError('')
     try {
       if (tab === 'accounts') setAccounts(await request<Account[]>('/api/finance/administration/accounts'))
-      if (tab === 'ledger') setLedger(await request<LedgerRow[]>(`/api/finance/reports/general-ledger?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}`))
-      if (tab === 'trial-balance') setTrial(await request<TrialRow[]>(`/api/finance/reports/trial-balance?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}`))
-      if (tab === 'income-statement') setIncome(await request<IncomeReport>(`/api/finance/reports/income-statement?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}`))
-      if (tab === 'balance-sheet') setBalance(await request<BalanceReport>(`/api/finance/reports/balance-sheet?${new URLSearchParams({ ...(asOf ? { asOf } : {}) })}`))
+      if (tab === 'ledger') setLedger(await request<LedgerRow[]>(`/api/finance/reports/general-ledger?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency: SYSTEM_CURRENCY })}`))
+      if (tab === 'trial-balance') setTrial(await request<TrialRow[]>(`/api/finance/reports/trial-balance?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency: SYSTEM_CURRENCY })}`))
+      if (tab === 'income-statement') setIncome(await request<IncomeReport>(`/api/finance/reports/income-statement?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency: SYSTEM_CURRENCY })}`))
+      if (tab === 'balance-sheet') setBalance(await request<BalanceReport>(`/api/finance/reports/balance-sheet?${new URLSearchParams({ ...(asOf ? { asOf } : {}), currency: SYSTEM_CURRENCY })}`))
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load accounting data.') }
     finally { setLoading(false) }
   }
