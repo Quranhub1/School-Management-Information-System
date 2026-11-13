@@ -191,16 +191,16 @@ export function FinanceDashboard() {
           <div className="summary-grid">
             <div className="summary-card">
               <span>Total Billed</span>
-              <strong>{formatCurrency(dashboard.totalBilled, SYSTEM_CURRENCY)</strong>
+              <strong>{formatCurrency(dashboard.totalBilled, SYSTEM_CURRENCY)}</strong>
             </div>
             <div className="summary-card">
               <span>Total Paid</span>
-              <strong style={{ color: '#059669' }}>{formatCurrency(dashboard.totalPaid, SYSTEM_CURRENCY)</strong>
+              <strong style={{ color: '#059669' }}>{formatCurrency(dashboard.totalPaid, SYSTEM_CURRENCY)}</strong>
             </div>
             <div className="summary-card">
               <span>Outstanding Balance</span>
                 <strong style={{ color: dashboard.totalOutstanding > 0 ? '#dc2626' : '#059669' }}>
-                  {formatCurrency(dashboard.totalOutstanding, SYSTEM_CURRENCY)
+                  {formatCurrency(dashboard.totalOutstanding, SYSTEM_CURRENCY)}
                 </strong>
             </div>
             <div className="summary-card">
