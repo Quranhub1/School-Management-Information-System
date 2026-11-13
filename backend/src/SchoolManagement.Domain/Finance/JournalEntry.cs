@@ -18,6 +18,7 @@ public sealed class JournalEntry
 
     public void ValidateForPosting()
     {
+        MoneyMath.NormalizeCurrency(Currency);
         if (Lines.Count < 2)
             throw new InvalidOperationException("A journal entry must contain at least two lines.");
 
