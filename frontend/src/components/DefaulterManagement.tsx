@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import LoadingSpinner from './LoadingSpinner';
 import { AgGridTable } from './AgGridTable'
 import type { ColDef } from 'ag-grid-community'
@@ -178,7 +179,7 @@ export function DefaulterManagement() {
           <div className="summary-grid" style={{ marginBottom: 22 }}>
             <div className="summary-card">
               <span>Total Balance</span>
-              <strong style={{ color: '#dc2626' }}>UGX {selectedStudent.totalBalance.toLocaleString()}</strong>
+              <strong style={{ color: '#dc2626' }}>{formatCurrency(selectedStudent.totalBalance, SYSTEM_CURRENCY)}</strong>
             </div>
           </div>
           <AgGridTable rows={selectedStudent.invoices} columns={invoiceColumns} height={380} exportFileName={`defaulter-invoices-${selectedStudent.studentNumber}`} getRowId={p => p.data.id} />
