@@ -47,6 +47,15 @@ export function AccountingReportsWorkspace() {
     finally { setLoading(false) }
   }
 
+  useEffect(() => {
+    const handleCurrencyUpdate = (event: Event) => {
+      const updated = (event as CustomEvent<{ code?: string }>).detail?.code
+      if (updated) setCurrency(updated.toUpperCase())
+    }
+    window.addEventListener('smis:system-currency-updated', handleCurrencyUpdate)
+    return () => window.removeEventListener('smis:system-currency-updated', handleCurrencyUpdate)
+  }, [])
+
   useEffect(() => { void load() }, [tab, currency])
 
   return <section className="accounting-reports-workspace">
