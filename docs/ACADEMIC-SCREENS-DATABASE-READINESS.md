@@ -16,13 +16,13 @@ Current implementation:
 - A department cannot be moved to another faculty while programmes still reference it; those programme assignments must be changed explicitly first.
 - Courses support create, edit and activation/deactivation. Inactive courses remain visible in the register but are excluded from new curriculum mappings.
 - Curricula support create, edit and activation/deactivation, including version, minimum credits, effective dates and programme type.
-- Curriculum-course mappings can be listed, added and edited (year, semester and core/elective flag); mappings are retained and are not hard-deleted.
+- Curriculum-course mappings can be listed, added, edited and removed from a curriculum. Course units are grouped by year and semester; each semester group can be renumbered/moved or removed as a whole. Removing a mapping or semester does not delete the shared course-catalogue record or historical student registrations.
 - New curricula and mappings are validated against the database-backed authority, active programme, non-reference-only status and an approved programme status (Institutional, Verified or Approved), plus active curriculum and active course. Courses cannot be shared across different authorities.
 - Programme maintenance is centralized in Curriculum & Courses; the duplicate Programme tab has been removed from Academic Management.
 
 Remaining work:
 - Add faculty creation/editing if the institution needs to configure faculties; the current department workflow selects from existing active faculty records.
-- Add explicit audit history for department, course, curriculum and mapping changes.
+- Add explicit audit history for department, course, curriculum, semester-group and mapping changes.
 - Review curriculum version/effective-date rules and protect curricula already referenced by registrations, results or transcripts.
 - Audit downstream programme/course/curriculum selectors to ensure they consume the same database records and respect active/reference-only status.
 
