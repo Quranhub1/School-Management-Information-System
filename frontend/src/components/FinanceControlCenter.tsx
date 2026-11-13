@@ -111,7 +111,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
     <section className="finance-control-center" aria-label="Accountant control center">
       <div className="finance-control-heading">
         <div>
-          <span className="eyebrow">ACCOUNTANT · BURSAR CONTROL CENTER</span>
+          <span className="eyebrow">ACCOUNTANT CONTROL CENTER</span>
           <h3>Institution financial control</h3>
           <p>Monitor money owed, money received, reconciliation, billing, budgets and exceptions from one operational screen.</p>
         </div>
