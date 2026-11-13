@@ -52,7 +52,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     try {
       const [loadedEntries, loadedOptions] = await Promise.all([listTimetable(), getTimetableOptions()])
       setEntries(loadedEntries)
-      setOptions(loadedOptions)
+      setOptions({ ...emptyOptions, ...loadedOptions, programmes: loadedOptions.programmes ?? [], curricula: loadedOptions.curricula ?? [], curriculumCourses: loadedOptions.curriculumCourses ?? [] })
       setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
       setProgrammeId(current => current || loadedOptions.programmes?.[0]?.id || '')
       setCurriculumId(current => current || loadedOptions.curricula.find(item => item.programmeId === (loadedOptions.programmes[0]?.id ?? ''))?.id || '')
