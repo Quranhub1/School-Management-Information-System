@@ -107,4 +107,24 @@ public sealed class FinanceStatementDimensionTests
         Assert.Contains(rows, x => x.CampusId == campusA && x.Balance == 300000m);
         Assert.Contains(rows, x => x.CampusId == campusB && x.Balance == 200000m);
     }
+    [Fact]
+    public void GetUgandaToday_UsesKampalaCalendarDateWhenUtcDateHasNotRolledOver()
+    {
+        var utcInstant = new DateTimeOffset(2026, 11, 12, 22, 30, 0, TimeSpan.Zero);
+
+        var result = FinanceReportService.GetUgandaToday(utcInstant);
+
+        Assert.Equal(new DateOnly(2026, 11, 13), result);
+    }
+
+    [Fact]
+    public void GetUgandaToday_UsesKampalaCalendarDateAfterUtcMidnight()
+    {
+        var utcInstant = new DateTimeOffset(2026, 11, 13, 0, 30, 0, TimeSpan.Zero);
+
+        var result = FinanceReportService.GetUgandaToday(utcInstant);
+
+        Assert.Equal(new DateOnly(2026, 11, 13), result);
+    }
+
 }

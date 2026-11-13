@@ -51,7 +51,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
         <h1>System Administration</h1>
         
       </div>
-      <span className="status"><ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} /> Administrator area</span>
+      <span className="status"><ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} /></span>
     </header>
 
     <nav className="library-workspace-tabs" aria-label="System administration sections" style={{ marginBottom: 18 }}>
@@ -66,13 +66,13 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
     ) : selected === 'settings' ? (
       <section className="panel" aria-labelledby="system-settings-title">
         <div className="panel-heading"><div><p className="eyebrow">CONFIGURATION</p><h2 id="system-settings-title">System settings</h2></div><Settings2 size={22} /></div>
-        <div className="summary-grid" style={{ padding: 18, margin: 0 }}>
-          <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
-          <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
+        <div className="summary-grid system-settings-actions-grid" style={{ padding: 18, margin: 0 }}>
+          <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><button className="secondary-button system-settings-open-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
+          <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><button className="secondary-button system-settings-open-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
         </div>
         <section className="panel" aria-labelledby="system-currency-title" style={{ marginTop: 18, padding: 18 }}>
           <div className="panel-heading"><div><p className="eyebrow">FINANCIAL CONFIGURATION</p><h3 id="system-currency-title">System currency</h3></div></div>
-          <p>Choose the default currency used when a new financial record does not specify its own currency. Existing invoices, payments and ledger entries keep their recorded currency.</p>
+          <p>Choose the default currency for new financial records.</p>
           {currencyError && <p className="error" role="alert">{currencyError}</p>}
           {currencySuccess && <p className="success" role="status">{currencySuccess}</p>}
           <div className="form-row" style={{ alignItems: 'end' }}>
@@ -91,8 +91,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
             </label>
             <button className="primary-button" disabled={currencyLoading || currencySaving} onClick={() => void saveCurrency()}>{currencySaving ? 'Saving…' : 'Save currency'}</button>
           </div>
-          <small>New transactions use this default unless a specific transaction currency is selected. This setting does not perform exchange-rate conversion.</small>
-          <p className="warning" role="note" style={{ marginTop: 12 }}>Financial reports now keep journal balances separate by currency. No exchange-rate conversion is performed; choose the matching currency when reviewing a report. Bank statement reconciliation remains UGX-only.</p>
+          <small>New transactions use this default unless a specific currency is selected.</small>
         </section>
         
       </section>
@@ -109,6 +108,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
           <article className="health-card"><ShieldCheck size={20} /><div><span>Security</span><strong>Role-protected</strong></div></article>
           <article className="health-card"><Activity size={20} /><div><span>Audit trail</span><strong>Available</strong></div></article>
           <article className="health-card"><Archive size={20} /><div><span>Backups</span><strong>Ready</strong></div></article>
+        </div>
         </div>
         <div className="settings-grid">
           {tools.map(tool => {
