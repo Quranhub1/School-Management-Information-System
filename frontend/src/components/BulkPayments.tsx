@@ -80,7 +80,11 @@ export function BulkPayments() {
   }
 
   const selectedStudents = students.filter(s => s.selected)
-  const totalToCollect = selectedStudents.reduce((sum, s) => sum + (Number(s.amountToPay) || 0), 0)
+  const totalsByCurrency = selectedStudents.reduce<Record<string, number>>((totals, student) => {
+    const currency = student.currency || SYSTEM_CURRENCY
+    totals[currency] = (totals[currency] || 0) + (Number(student.amountToPay) || 0)
+    return totals
+  }, {})
 
   async function submitBulkPayment(event: FormEvent) {
     event.preventDefault()
@@ -204,10 +208,12 @@ export function BulkPayments() {
                 <span>Total Students Selected</span>
                 <strong>{selectedStudents.length}</strong>
               </div>
-              <div className="summary-card">
-                <span>Total Amount to Collect</span>
-                <strong style={{ color: totalToCollect > 0 ? '#1c1917' : '#78716c' }}>{formatCurrency(totalToCollect, MOCK_STUDENTS[0]?.currency || SYSTEM_CURRENCY)}</strong>
-              </div>
+              {Object.entries(totalsByCurrency).map(([currency, total]) => (
+                <div className="summary-card" key={currency}>
+                  <span>Total to Collect · {currency}</span>
+                  <strong style={{ color: total > 0 ? '#1c1917' : '#78716c' }}>{formatCurrency(total, currency)}</strong>
+                </div>
+              ))}
             </div>
 
             <div className="topbar-actions" style={{ marginTop: 18 }}>
