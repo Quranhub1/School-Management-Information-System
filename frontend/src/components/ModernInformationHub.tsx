@@ -55,7 +55,7 @@ export function ModernInformationHub() {
   const metrics = dashboard ? [
     { label: 'Active students', value: number(dashboard.activeStudents), note: `${number(dashboard.totalStudents)} total records`, icon: UsersRound, tone: 'blue' },
     { label: 'Pending admissions', value: number(dashboard.pendingAdmissions), note: 'Applications awaiting action', icon: GraduationCap, tone: 'violet' },
-    { label: 'Fees outstanding', value: `UGX ${money(dashboard.outstanding)}`, note: `UGX ${money(dashboard.totalPaid)} collected`, icon: Wallet, tone: 'amber' },
+    { label: 'Fees outstanding', value: `${SYSTEM_CURRENCY} ${money(dashboard.outstanding)}`, note: `${SYSTEM_CURRENCY} ${money(dashboard.totalPaid)} collected`, icon: Wallet, tone: 'amber' },
     { label: 'Attendance rate', value: `${number(dashboard.attendanceRate)}%`, note: 'Institution-wide', icon: CalendarClock, tone: 'green' },
   ] : []
 
