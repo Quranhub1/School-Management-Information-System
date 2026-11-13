@@ -61,7 +61,7 @@ export function FinanceControlCenter({ onNavigate }: Props) {
     if (a.status === 'fulfilled') setAgeing(a.value); else failures++
     if (r.status === 'fulfilled') setReconciliation(r.value); else failures++
     if (b.status === 'fulfilled') setBankReconciliations(b.value); else failures++
-    if (o.status === 'fulfilled') setOutstandingCount(o.value.length); else failures++
+    if (o.status === 'fulfilled') setOutstandingCount(new Set(o.value.map(item => item.studentId)).size); else failures++
     if (p.status === 'fulfilled') setPayments(p.value); else failures++
     if (fees.status === 'fulfilled') setFeeStructures(fees.value); else failures++
     if (budgets.status === 'fulfilled') {
