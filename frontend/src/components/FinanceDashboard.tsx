@@ -13,7 +13,7 @@ import {
 } from '../api/finance'
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
-import { SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
+import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
 
 type PaymentMethod = 'Cash' | 'Mobile Money' | 'Bank' | 'Card'
 
