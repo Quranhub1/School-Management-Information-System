@@ -1344,10 +1344,10 @@ export function AccountsOfficeManagement() {
                   <>
                     <h3>{staffMap[payrollDetailData.staffMemberId] ? formatPersonName(staffMap[payrollDetailData.staffMemberId].lastName, staffMap[payrollDetailData.staffMemberId].firstName) : 'Staff Member'}</h3>
                     <p>Period: {monthNames[payrollDetailData.month - 1]} {payrollDetailData.year}</p>
-                    <p>Basic Salary: {money(payrollDetailData.basicSalary)}</p>
-                    <p>Allowances: {money(payrollDetailData.allowances)}</p>
-                    <p>Deductions: {money(payrollDetailData.deductions)}</p>
-                    <p style={{ fontWeight: 700 }}>Net Pay: {money(payrollDetailData.netPay)}</p>
+                    <p>Basic Salary: {money(payrollDetailData.basicSalary, payrollDetailData.currency || SYSTEM_CURRENCY)}</p>
+                    <p>Allowances: {money(payrollDetailData.allowances, payrollDetailData.currency || SYSTEM_CURRENCY)}</p>
+                    <p>Deductions: {money(payrollDetailData.deductions, payrollDetailData.currency || SYSTEM_CURRENCY)}</p>
+                    <p style={{ fontWeight: 700 }}>Net Pay: {money(payrollDetailData.netPay, payrollDetailData.currency || SYSTEM_CURRENCY)}</p>
                     <p>Status: {payrollDetailData.status}</p>
                     <p>Payment Method: {payrollDetailData.paymentMethod || '—'}</p>
                     <p>Reference: {payrollDetailData.reference || '—'}</p>
