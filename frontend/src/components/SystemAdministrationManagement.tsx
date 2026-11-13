@@ -98,25 +98,40 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
       </section>
     ) : (
       <>
-        <div className="summary-grid">
-          <article className="summary-card"><Activity size={22} /><span>Workspace</span><strong>System controls</strong></article>
-          <article className="summary-card"><ShieldCheck size={22} /><span>Security</span><strong>Role-protected</strong></article>
-          <article className="summary-card"><FileSearch size={22} /><span>Audit trail</span><strong>Available</strong></article>
+        <div className="hero-panel">
+          <div>
+            <p className="eyebrow">Welcome back, administrator</p>
+            <h2>System control center</h2>
+            <p>Manage system configuration, security, audit logs, backups and institution settings from one place.</p>
+          </div>
+        </div>
+        <div className="health-grid">
+          <article className="health-card"><ShieldCheck size={20} /><div><span>Security</span><strong>Role-protected</strong></div></article>
+          <article className="health-card"><Activity size={20} /><div><span>Audit trail</span><strong>Available</strong></div></article>
+          <article className="health-card"><Archive size={20} /><div><span>Backups</span><strong>Ready</strong></div></article>
         </div>
         <div className="settings-grid">
           {tools.map(tool => {
             const Icon = tool.icon
             return <article className="panel" key={tool.key} style={{ padding: 18 }}>
-              <Icon size={24} />
-              <h2 style={{ margin: '12px 0 6px', fontSize: '1.05rem' }}>{tool.title}</h2>
-              
+              <div className="tool-header">
+                <div className="tool-icon"><Icon size={20} /></div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.05rem' }}>{tool.title}</h2>
+                  <p style={{ margin: '4px 0 0', fontSize: '.82rem', color: '#6b7280' }}>{tool.description}</p>
+                </div>
+              </div>
               <button className="secondary-button" onClick={() => onNavigate('system-administration', tool.key)}>Open section <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button>
             </article>
           })}
           <article className="panel" style={{ padding: 18 }}>
-            <UsersRound size={24} />
-            <h2 style={{ margin: '12px 0 6px', fontSize: '1.05rem' }}>User administration</h2>
-            
+            <div className="tool-header">
+              <div className="tool-icon"><UsersRound size={20} /></div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.05rem' }}>User administration</h2>
+                <p style={{ margin: '4px 0 0', fontSize: '.82rem', color: '#6b7280' }}>Manage staff accounts, roles and permissions.</p>
+              </div>
+            </div>
             <button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button>
           </article>
         </div>
