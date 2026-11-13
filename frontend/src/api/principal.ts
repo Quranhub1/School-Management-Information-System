@@ -42,6 +42,7 @@ export interface PrincipalDashboard {
     id: string
     receiptNumber: string
     amount: number
+    currency?: string
     paymentMethod: string
     paidAt: string
     studentName: string
