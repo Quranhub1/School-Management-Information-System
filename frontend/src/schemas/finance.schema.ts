@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { identifierSchema, isoDateSchema, positiveUgxAmountSchema, requiredTextSchema } from "./common.schema";
+import { identifierSchema, isoDateSchema, positiveMoneyAmountSchema, requiredTextSchema } from "./common.schema";
 
 export const paymentEntrySchema = z.object({
   studentId: identifierSchema,
