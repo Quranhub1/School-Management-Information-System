@@ -74,10 +74,10 @@ export function updateProgramme(id: string, input: CreateProgrammeRequest): Prom
   return request<Programme>(`/api/programmes/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
 }
 
-export function setProgrammeActive(id: string, active: boolean): Promise<void> {
-  return request<void>(`/api/programmes/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify({ active }) })
-}
-
 export function deleteProgramme(id: string): Promise<void> {
   return request<void>(`/api/programmes/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+export function setProgrammeActive(id: string, active: boolean): Promise<void> {
+  return request<void>(`/api/programmes/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify({ active }) })
 }

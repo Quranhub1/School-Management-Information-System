@@ -22,6 +22,11 @@ public sealed class ProgrammeRepository(SchoolManagementDbContext db) : IProgram
     public Task AddAsync(Programme programme, CancellationToken cancellationToken = default) =>
         db.Programmes.AddAsync(programme, cancellationToken).AsTask();
 
+    public Task<bool> HasCurriculaAsync(Guid programmeId, CancellationToken cancellationToken = default) =>
+        db.Curricula.AnyAsync(x => x.ProgrammeId == programmeId, cancellationToken);
+
+    public void Remove(Programme programme) => db.Programmes.Remove(programme);
+
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var programme = await db.Programmes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);

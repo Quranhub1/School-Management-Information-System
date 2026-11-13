@@ -66,6 +66,51 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpGet("curricula/{curriculumId:guid}/courses")]
     public async Task<IActionResult> GetMappings(Guid curriculumId, CancellationToken ct) => Ok(await service.GetMappingsAsync(curriculumId, ct));
 
+    [HttpDelete("courses/{id:guid}")]
+    public async Task<IActionResult> DeleteCourse(Guid id, CancellationToken ct)
+    {
+        var deleted = await service.DeleteCourseAsync(id, ct);
+        return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpDelete("curricula/{curriculumId:guid}/courses/{mappingId:guid}")]
+    public async Task<IActionResult> DeleteMapping(Guid curriculumId, Guid mappingId, CancellationToken ct)
+    {
+        var deleted = await service.DeleteMappingAsync(curriculumId, mappingId, ct);
+        return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpPut("curricula/{curriculumId:guid}/semesters/{year:int}/{semester:int}")]
+    public async Task<IActionResult> UpdateSemester(Guid curriculumId, int year, int semester,
+        [FromBody] UpdateCurriculumSemesterRequest request, CancellationToken ct)
+    {
+        if (request.YearOfStudy < 1 || request.SemesterNumber < 1)
+            return BadRequest(new { message = "Year and semester numbers must be positive." });
+        var mappings = await db.CurriculumCourses.Where(x =>
+            x.CurriculumId == curriculumId && x.YearOfStudy == year && x.SemesterNumber == semester).ToListAsync(ct);
+        if (mappings.Count == 0) return NotFound(new { message = "Semester not found in this curriculum." });
+        foreach (var mapping in mappings)
+        {
+            mapping.YearOfStudy = request.YearOfStudy;
+            mapping.SemesterNumber = request.SemesterNumber;
+        }
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    [HttpDelete("curricula/{curriculumId:guid}/semesters/{year:int}/{semester:int}")]
+    public async Task<IActionResult> DeleteSemester(Guid curriculumId, int year, int semester, CancellationToken ct)
+    {
+        var mappings = await db.CurriculumCourses.Where(x =>
+            x.CurriculumId == curriculumId && x.YearOfStudy == year && x.SemesterNumber == semester).ToListAsync(ct);
+        if (mappings.Count == 0) return NotFound(new { message = "Semester not found in this curriculum." });
+        db.CurriculumCourses.RemoveRange(mappings);
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    public sealed record UpdateCurriculumSemesterRequest(int YearOfStudy, int SemesterNumber);
+
     [HttpPut("curricula/{curriculumId:guid}/courses/{mappingId:guid}")]
     public async Task<IActionResult> UpdateMapping(Guid curriculumId, Guid mappingId, [FromBody] UpdateCurriculumCourseRequest request, CancellationToken ct)
     {
@@ -117,20 +162,6 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
 
         var result = await service.AddMappingAsync(curriculumId, request, ct);
         return result.Success ? Ok(result.Mapping) : BadRequest(new { message = result.Error });
-    }
-
-    [HttpDelete("courses/{id:guid}")]
-    public async Task<IActionResult> DeleteCourse(Guid id, CancellationToken ct)
-    {
-        var deleted = await service.DeleteCourseAsync(id, ct);
-        return deleted ? NoContent() : NotFound();
-    }
-
-    [HttpDelete("curricula/{curriculumId:guid}/courses/{mappingId:guid}")]
-    public async Task<IActionResult> DeleteMapping(Guid curriculumId, Guid mappingId, CancellationToken ct)
-    {
-        var deleted = await service.DeleteMappingAsync(curriculumId, mappingId, ct);
-        return deleted ? NoContent() : NotFound();
     }
 
     public sealed record SetActiveRequest(bool IsActive);
