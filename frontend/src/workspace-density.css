@@ -459,3 +459,51 @@
 @media (max-width: 480px) {
   .app-shell .curriculum-management .catalogue-filters { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* Programme register row actions */
+.app-shell .curriculum-management .programme-row-actions {
+  position: relative;
+  display: inline-block;
+}
+.app-shell .curriculum-management .programme-row-actions > summary {
+  cursor: pointer;
+  list-style: none;
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.app-shell .curriculum-management .programme-row-actions > summary::-webkit-details-marker {
+  display: none;
+}
+.app-shell .curriculum-management .programme-row-actions-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+  padding: 6px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 4px;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 12%);
+}
+.app-shell .curriculum-management .programme-row-actions-menu button {
+  width: 100%;
+  text-align: left;
+  white-space: nowrap;
+}
+.app-shell .curriculum-management .programme-row-actions-menu .danger-button {
+  color: #fff;
+  background: #b42318;
+  border: 1px solid #b42318;
+}
+.app-shell .curriculum-management .programme-row-actions-menu .danger-button:hover {
+  background: #912018;
+}
