@@ -283,6 +283,7 @@ export function AccountsOfficeManagement() {
             amount: inv.amount,
             paid: inv.paidAmount,
             balance: inv.balance,
+            currency: inv.currency,
             status: inv.status,
           }))
           setEditingFees(breakdown)
@@ -461,7 +462,7 @@ export function AccountsOfficeManagement() {
       setAdvancesLoading(true)
       try {
         const data = await getStaffAdvances()
-        if (!cancelled) setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
+        if (!cancelled) setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: a.currency || SYSTEM_CURRENCY, reason: a.reason, status: a.status, requestedAt: a.createdAt })))
       } catch {
         if (!cancelled) setAdvances([])
       } finally {
@@ -632,7 +633,7 @@ export function AccountsOfficeManagement() {
       setAdvanceAmount('')
       setAdvanceReason('')
       const data = await getStaffAdvances()
-      setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
+      setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: a.currency || SYSTEM_CURRENCY, reason: a.reason, status: a.status, requestedAt: a.createdAt })))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to request advance.')
     }
@@ -643,7 +644,7 @@ export function AccountsOfficeManagement() {
     try {
       await approveStaffAdvance(advanceId, 'Accounts Office', true)
       const data = await getStaffAdvances()
-      setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
+      setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: a.currency || SYSTEM_CURRENCY, reason: a.reason, status: a.status, requestedAt: a.createdAt })))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to approve advance.')
     } finally {
@@ -661,7 +662,7 @@ export function AccountsOfficeManagement() {
       }
       await recoverStaffAdvance(advanceId, currentPayroll.netPay)
       const data = await getStaffAdvances()
-      setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: 'UGX', reason: a.reason, status: a.status, requestedAt: a.createdAt })))
+      setAdvances(data.map(a => ({ id: a.id, staffMemberId: a.staffMemberId, amount: a.amount, currency: a.currency || SYSTEM_CURRENCY, reason: a.reason, status: a.status, requestedAt: a.createdAt })))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to recover advance.')
     } finally {
@@ -1118,7 +1119,7 @@ export function AccountsOfficeManagement() {
                 <h3>{selectedInvoice.feeType} — {selectedInvoice.invoiceNumber}</h3>
                 <p>Outstanding: {money(selectedInvoice.balance, selectedInvoice.currency)}</p>
                 {Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
-                <label>Payment Amount (UGX)<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={selectedInvoice.balance} step="1" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
+                <label>Payment Amount ({selectedInvoice.currency || SYSTEM_CURRENCY})<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={selectedInvoice.balance} step="1" placeholder="Amount" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} required /></label>
                 <label>Receipt Number<input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e => setReceiptNumber(e.target.value)} required /></label>
                 <label>Manual Source<select value={sourceChannel} onChange={e => setSourceChannel(e.target.value)}><option>Cash</option><option>Cheque</option></select></label>
                 <div className="topbar-actions">
@@ -1279,7 +1280,7 @@ export function AccountsOfficeManagement() {
                   <option value="">Select staff</option>
                   {Object.values(staffMap).map(s => <option key={s.id} value={s.id}>{formatPersonName(s.lastName, s.firstName)} ({s.staffNumber})</option>)}
                 </select></label>
-                <label>Amount (UGX)<input type="number" min="0" step="0.01" placeholder="0.00" value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} required /></label>
+                <label>Amount ({SYSTEM_CURRENCY})<input type="number" min="0" step="0.01" placeholder="0.00" value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} required /></label>
                 <label>Reason<input value={advanceReason} onChange={e => setAdvanceReason(e.target.value)} placeholder="Reason for advance" /></label>
               </div>
               <div className="topbar-actions" style={{ marginBottom: 15 }}>
@@ -1367,7 +1368,7 @@ export function AccountsOfficeManagement() {
                           <tbody>
                             {payrollDetailAdvances.map(adv => (
                               <tr key={adv.id}>
-                                <td style={{ color: '#059669' }}>UGX {adv.amount.toLocaleString()}</td>
+                                <td style={{ color: '#059669' }}>{money(adv.amount, adv.currency)}</td>
                                 <td>{adv.reason}</td>
                                 <td>{adv.status}</td>
                                 <td>{new Date(adv.requestedAt).toLocaleDateString('en-UG')}</td>
