@@ -19,6 +19,14 @@ public sealed class PublicInstitutionSettingsController(InstitutionSettingsServi
     }
 
     [AllowAnonymous]
+    [HttpGet("currency")]
+    public async Task<IActionResult> GetSystemCurrency(CancellationToken ct)
+    {
+        Response.Headers.CacheControl = "no-store, no-cache, must-revalidate";
+        return Ok(await service.GetSystemCurrencyAsync(ct));
+    }
+
+    [AllowAnonymous]
     [HttpGet("logo")]
     public async Task<IActionResult> Logo(CancellationToken ct)
     {
