@@ -170,7 +170,7 @@ Administrator login
 → admission
 → enrollment
 → course registration
-→ UGX billing
+→ billing in the configured system currency
 → installment schedule
 → payment 1
 → payment allocation/balance
