@@ -55,7 +55,7 @@ function getFormatter(currency: string, locale?: string): Intl.NumberFormat {
 
 /** Returns the ISO 4217 fraction precision used by currency-aware amount inputs. */
 export function getCurrencyFractionDigits(currency: string = SYSTEM_CURRENCY, locale?: string): number {
-  return getFormatter(currency, locale).resolvedOptions().maximumFractionDigits;
+  return getFormatter(currency, locale).resolvedOptions().maximumFractionDigits ?? 2;
 }
 
 /** HTML input step matching the selected currency's minor-unit precision. */
