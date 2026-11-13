@@ -3,6 +3,7 @@ import { Activity, Archive, ArrowRight, Database, FileSearch, LockKeyhole, Setti
 import { getSystemCurrencySettings, saveSystemCurrencySettings, type SystemCurrencySettings } from '../api/systemSettings'
 import { AuditLogManagement } from './AuditLog'
 import { BackupRestore } from './BackupRestore'
+import { notify } from './GlobalNotifications'
 
 type SystemAdministrationManagementProps = {
   activeSubsection?: string | null
@@ -21,7 +22,6 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
   const [currencyLoading, setCurrencyLoading] = useState(false)
   const [currencySaving, setCurrencySaving] = useState(false)
   const [currencyError, setCurrencyError] = useState('')
-  const [currencySuccess, setCurrencySuccess] = useState('')
 
   useEffect(() => {
     if (selected !== 'settings') return
@@ -34,11 +34,11 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
   }, [selected])
 
   async function saveCurrency() {
-    setCurrencySaving(true); setCurrencyError(''); setCurrencySuccess('')
+    setCurrencySaving(true); setCurrencyError('')
     try {
       const saved = await saveSystemCurrencySettings(currency.code)
       setCurrency(saved)
-      setCurrencySuccess('System currency saved successfully.')
+      notify('System currency saved successfully.')
       window.dispatchEvent(new CustomEvent('smis:system-currency-updated', { detail: saved }))
     } catch (error) { setCurrencyError(error instanceof Error ? error.message : 'Unable to save system currency.') }
     finally { setCurrencySaving(false) }
@@ -81,11 +81,10 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
           </div>
           <div className="system-currency-divider" />
           {currencyError && <p className="error system-currency-feedback" role="alert">{currencyError}</p>}
-          {currencySuccess && <p className="success system-currency-feedback" role="status">{currencySuccess}</p>}
           <div className="system-currency-controls">
             <label className="system-currency-field" htmlFor="system-default-currency">
               <span>Default currency</span>
-              <select id="system-default-currency" value={currency.code} disabled={currencyLoading || currencySaving} onChange={event => { setCurrency(current => ({ ...current, code: event.target.value })); setCurrencySuccess('') }}>
+              <select id="system-default-currency" value={currency.code} disabled={currencyLoading || currencySaving} onChange={event => { setCurrency(current => ({ ...current, code: event.target.value })) }}>
                 <option value="UGX">UGX — Uganda Shilling (default)</option>
                 <option value="USD">USD — US Dollar</option>
                 <option value="KES">KES — Kenyan Shilling</option>
