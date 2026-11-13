@@ -130,7 +130,7 @@ export function Receipts({ canManage }: ReceiptsProps) {
                   <td><strong>{p.receiptNumber}</strong></td>
                   <td>{p.studentName}</td>
                   <td>{p.invoiceNumber}</td>
-                  <td style={{ color: '#059669', fontWeight: 700 }}>UGX {p.amount.toLocaleString()}</td>
+                  <td style={{ color: '#059669', fontWeight: 700 }}>{formatCurrency(p.amount, p.currency ?? SYSTEM_CURRENCY)}</td>
                   <td>{p.paymentMethod}</td>
                   <td>{new Date(p.paidAt).toLocaleDateString('en-UG')}</td>
                   <td><button className="secondary-button" onClick={() => viewReceipt(p.id)}>View Receipt</button></td>
