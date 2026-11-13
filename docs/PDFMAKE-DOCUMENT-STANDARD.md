@@ -30,7 +30,7 @@ Document definitions should be built from live, authorized API data already avai
 - Use A4 portrait by default; use landscape for wide tables and timetables.
 - Use repeated table headers for multi-page tabular documents.
 - Include a descriptive filename, document title, page numbering, and appropriate metadata.
-- Use `en-UG` date and number formatting where the document represents Ugandan institutional records; use UGX for school finance unless an explicitly approved multi-currency feature is introduced.
+- Use `en-UG` date and number formatting where the document represents Ugandan institutional records; use the active system currency for system-default finance totals and each transaction's recorded currency for receipts and multi-currency details.
 - Ensure the generated document remains readable when printed in grayscale.
 - Keep sensitive fields to the minimum required and preserve the same authorization checks as the screen/API.
 

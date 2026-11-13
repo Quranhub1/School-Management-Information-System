@@ -4,6 +4,7 @@ export interface PaymentSearchResult {
   id: string
   receiptNumber: string
   amount: number
+  currency: string
   paymentMethod: string
   reference: string
   paidAt: string

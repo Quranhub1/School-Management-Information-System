@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Domain.Finance;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Infrastructure.Persistence;
@@ -11,7 +12,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance/staff-allowances")]
 [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
-public sealed class StaffAllowancesController(SchoolManagementDbContext db) : ControllerBase
+public sealed class StaffAllowancesController(SchoolManagementDbContext db, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] Guid? staffMemberId = null, [FromQuery] string? status = null, CancellationToken cancellationToken = default)
@@ -49,9 +50,14 @@ public sealed class StaffAllowancesController(SchoolManagementDbContext db) : Co
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     public async Task<IActionResult> AuthorizeAllowance(CreateAllowanceRequest request, CancellationToken cancellationToken)
     {
+        var defaultCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
         if (request.StaffMemberId == Guid.Empty) return BadRequest(new { message = "Staff member is required." });
         if (string.IsNullOrWhiteSpace(request.AllowanceType)) return BadRequest(new { message = "Allowance type is required." });
         if (request.Amount <= 0) return BadRequest(new { message = "Allowance amount must be greater than zero." });
+        string currency;
+        try { currency = MoneyMath.NormalizeCurrency(string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency); MoneyMath.EnsurePrecision(request.Amount, currency); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (NotSupportedException ex) { return BadRequest(new { message = ex.Message }); }
         if (request.EffectiveFrom == default) return BadRequest(new { message = "Effective date is required." });
         if (request.EffectiveTo.HasValue && request.EffectiveTo.Value < request.EffectiveFrom) return BadRequest(new { message = "Effective-to date cannot be before effective-from date." });
 
@@ -65,8 +71,8 @@ public sealed class StaffAllowancesController(SchoolManagementDbContext db) : Co
         {
             StaffMemberId = request.StaffMemberId,
             AllowanceType = request.AllowanceType.Trim(),
-            Amount = decimal.Round(request.Amount, 2, MidpointRounding.AwayFromZero),
-            Currency = string.IsNullOrWhiteSpace(request.Currency) ? "UGX" : request.Currency.Trim().ToUpperInvariant(),
+            Amount = request.Amount,
+            Currency = currency,
             EffectiveFrom = request.EffectiveFrom,
             EffectiveTo = request.EffectiveTo,
             Frequency = string.IsNullOrWhiteSpace(request.Frequency) ? "Monthly" : request.Frequency.Trim(),
@@ -129,6 +135,6 @@ public sealed record CreateAllowanceRequest(
     DateOnly EffectiveFrom,
     DateOnly? EffectiveTo = null,
     string Frequency = "Monthly",
-    string Currency = "UGX",
+    string? Currency = null,
     string? Reason = null,
     string? Reference = null);

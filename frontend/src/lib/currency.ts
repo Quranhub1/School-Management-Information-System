@@ -5,8 +5,15 @@
  * carrying different currency codes unless an explicit FX conversion has
  * first been applied and recorded by the backend.
  */
-export const SYSTEM_CURRENCY = "UGX" as const;
-export const SYSTEM_LOCALE = "en-UG" as const;
+export let SYSTEM_CURRENCY = "UGX";
+export let SYSTEM_LOCALE = "en-UG";
+
+export function configureSystemCurrency(code: string, locale: string): void {
+  const normalized = code.trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(normalized) || !locale.trim()) return;
+  SYSTEM_CURRENCY = normalized;
+  SYSTEM_LOCALE = locale.trim();
+}
 
 const DEFAULT_LOCALES: Record<string, string> = {
   UGX: "en-UG",
@@ -44,6 +51,16 @@ function getFormatter(currency: string, locale?: string): Intl.NumberFormat {
     formatterCache.set(key, formatter);
   }
   return formatter;
+}
+
+/** Returns the ISO 4217 fraction precision used by currency-aware amount inputs. */
+export function getCurrencyFractionDigits(currency: string = SYSTEM_CURRENCY, locale?: string): number {
+  return getFormatter(currency, locale).resolvedOptions().maximumFractionDigits ?? 2;
+}
+
+/** HTML input step matching the selected currency's minor-unit precision. */
+export function getCurrencyInputStep(currency: string = SYSTEM_CURRENCY): string {
+  return (10 ** -getCurrencyFractionDigits(currency)).toString();
 }
 
 /** Formats a monetary amount using the currency's ISO fraction-digit rules. */

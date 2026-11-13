@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { searchPayments, getPaymentReceipt, type PaymentSearchResult, type FeeReceipt } from '../api/receipts'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
@@ -130,7 +131,7 @@ export function Receipts({ canManage }: ReceiptsProps) {
                   <td><strong>{p.receiptNumber}</strong></td>
                   <td>{p.studentName}</td>
                   <td>{p.invoiceNumber}</td>
-                  <td style={{ color: '#059669', fontWeight: 700 }}>UGX {p.amount.toLocaleString()}</td>
+                  <td style={{ color: '#059669', fontWeight: 700 }}>{formatCurrency(p.amount, p.currency ?? SYSTEM_CURRENCY)}</td>
                   <td>{p.paymentMethod}</td>
                   <td>{new Date(p.paidAt).toLocaleDateString('en-UG')}</td>
                   <td><button className="secondary-button" onClick={() => viewReceipt(p.id)}>View Receipt</button></td>
@@ -154,7 +155,7 @@ export function Receipts({ canManage }: ReceiptsProps) {
             </div>
             <div className="receipt-row">
               <span>Amount Paid:</span>
-              <strong>{receipt.currency} {receipt.amount.toLocaleString()}</strong>
+              <strong>{formatCurrency(receipt.amount, receipt.currency || SYSTEM_CURRENCY)}</strong>
             </div>
             <div className="receipt-row">
               <span>Method:</span>

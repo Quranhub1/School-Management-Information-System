@@ -39,7 +39,7 @@ The table is a content standard, not a claim that all listed dashboards have alr
 - All frontend charts must use the shared Chart.js layer in `frontend/src/components/charts/`; do not add custom SVG/CSS plots, another charting library, or embedded third-party dashboard charts. See [the Chart.js visualisation standard](CHARTJS-VISUALISATION-STANDARD.md).
 - Use KPI cards for concise totals and status counts; use tables for actionable detail and drill-down.
 - Prefer institution-configured academic periods, dates and eligibility thresholds instead of hardcoded assumptions.
-- Use Uganda's institutional context and UGX formatting where finance is shown.
+- Use the active system currency for system-default finance totals, and each record's transaction currency for multi-currency detail.
 - Every chart must have a meaningful title, readable labels/legend, useful empty state and accessible text alternative or summary.
 - Charts must not fabricate zeroes when data failed to load. Distinguish genuine zero from unavailable data.
 - Do not render charts that duplicate no meaningful decision or expose sensitive data without permission.

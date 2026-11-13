@@ -1,3 +1,4 @@
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { useState } from 'react'
 import { ArrowRight, ArrowUpRight, BellRing, BookOpenCheck, BrainCircuit, CalendarClock, CheckCircle2, CircleDollarSign, GraduationCap, RefreshCw, Search, ShieldAlert, UsersRound, Wallet, X } from 'lucide-react'
 import { modernQueryKeys, useModernDashboardQuery, useStudentRiskQuery, useStudent360Query, useWorkflowSummaryQuery } from '../api/modern'
@@ -7,7 +8,7 @@ import { DoughnutChart, BarChart } from './charts'
 import './ModernInformationHub.css'
 
 const number = (n: number) => new Intl.NumberFormat('en-UG', { maximumFractionDigits: 0 }).format(Number.isFinite(n) ? n : 0)
-const money = (n: number) => number(n)
+const money = (n: number) => formatCurrency(n, SYSTEM_CURRENCY)
 type Destination = 'students' | 'finance' | 'admissions' | 'reports' | 'timetable'
 function goTo(module: Destination) {
   window.dispatchEvent(new CustomEvent('smis:navigate-module', { detail: module === 'admissions' ? 'students' : module }))
@@ -55,7 +56,7 @@ export function ModernInformationHub() {
   const metrics = dashboard ? [
     { label: 'Active students', value: number(dashboard.activeStudents), note: `${number(dashboard.totalStudents)} total records`, icon: UsersRound, tone: 'blue' },
     { label: 'Pending admissions', value: number(dashboard.pendingAdmissions), note: 'Applications awaiting action', icon: GraduationCap, tone: 'violet' },
-    { label: 'Fees outstanding', value: `UGX ${money(dashboard.outstanding)}`, note: `UGX ${money(dashboard.totalPaid)} collected`, icon: Wallet, tone: 'amber' },
+    { label: 'Fees outstanding', value: money(dashboard.outstanding), note: `${money(dashboard.totalPaid)} collected`, icon: Wallet, tone: 'amber' },
     { label: 'Attendance rate', value: `${number(dashboard.attendanceRate)}%`, note: 'Institution-wide', icon: CalendarClock, tone: 'green' },
   ] : []
 
@@ -89,7 +90,7 @@ export function ModernInformationHub() {
       </article>
     </div>
     {dashboard && <div className="dashboard-chart-grid">
-      <DoughnutChart title="Fee collection position" description="Collected fees compared with outstanding balances" segments={[{ label: 'Collected', value: Math.max(0, dashboard.totalPaid), color: '#0d9488', displayValue: `UGX ${money(dashboard.totalPaid)}` }, { label: 'Outstanding', value: Math.max(0, dashboard.outstanding), color: '#f59e0b', displayValue: `UGX ${money(dashboard.outstanding)}` }]} centerValue={`UGX ${money(dashboard.totalPaid)}`} centerCaption="collected" valueFormatter={value => `UGX ${money(value)}`} />
+      <DoughnutChart title="Fee collection position" description="Collected fees compared with outstanding balances" segments={[{ label: 'Collected', value: Math.max(0, dashboard.totalPaid), color: '#0d9488', displayValue: `${SYSTEM_CURRENCY} ${money(dashboard.totalPaid)}` }, { label: 'Outstanding', value: Math.max(0, dashboard.outstanding), color: '#f59e0b', displayValue: `${SYSTEM_CURRENCY} ${money(dashboard.outstanding)}` }]} centerValue={`${SYSTEM_CURRENCY} ${money(dashboard.totalPaid)}`} centerCaption="collected" valueFormatter={value => `${SYSTEM_CURRENCY} ${money(value)}`} />
     </div>}
     <div className="dashboard-bottom-grid">
       <article className="dashboard-panel dashboard-risk-panel">
@@ -117,7 +118,7 @@ export function ModernInformationHub() {
     </div>
     {selected && <div className="student360-modal" role="dialog" aria-modal="true" aria-label="Student profile"><div className="student360-card dashboard-student-modal">
       <button className="close-button" onClick={() => setSelectedStudentId(null)} aria-label="Close student profile">×</button><p className="eyebrow">STUDENT PROFILE</p><h3>{selected.name}</h3><p>{selected.studentNumber} · {selected.status}</p>
-      <div className="student360-grid"><div><span>Attendance</span><b>{selected.attendanceRate}%</b></div><div><span>Assessment</span><b>{selected.averageAssessment}%</b></div><div><span>Fees outstanding</span><b>UGX {money(selected.outstanding)}</b></div><div><span>Placements</span><b>{selected.completedPlacements}/{selected.placementCount}</b></div><div><span>Certificates</span><b>{selected.certificateCount}</b></div><div><span>Admission documents</span><b>{selected.admissionDocumentCount}</b></div></div>
+      <div className="student360-grid"><div><span>Attendance</span><b>{selected.attendanceRate}%</b></div><div><span>Assessment</span><b>{selected.averageAssessment}%</b></div><div><span>Fees outstanding</span><b>{SYSTEM_CURRENCY} {money(selected.outstanding)}</b></div><div><span>Placements</span><b>{selected.completedPlacements}/{selected.placementCount}</b></div><div><span>Certificates</span><b>{selected.certificateCount}</b></div><div><span>Admission documents</span><b>{selected.admissionDocumentCount}</b></div></div>
       <div className="student360-details"><p><b>Phone:</b> {selected.phone || 'Not recorded'}</p><p><b>Email:</b> {selected.email || 'Not recorded'}</p><p><b>Gender:</b> {selected.gender || 'Not recorded'}</p></div>
     </div></div>}
   </section>

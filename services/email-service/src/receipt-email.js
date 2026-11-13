@@ -27,16 +27,22 @@ function createTransport(smtp) {
   });
 }
 
+const CURRENCY_LOCALES = {
+  UGX: "en-UG", USD: "en-US", KES: "en-KE", EUR: "en-IE", GBP: "en-GB",
+  TZS: "sw-TZ", RWF: "rw-RW", ZAR: "en-ZA", AED: "en-AE"
+};
+
 function money(amount, currency) {
-  // Use the ISO currency code in receipts instead of locale-specific symbols
-  // (for example, en-UG renders UGX as "USh"). This keeps the ledger currency
-  // explicit and consistent across HTML receipts, PDFs and email text.
-  const formattedAmount = new Intl.NumberFormat(LOCALE, {
-    maximumFractionDigits: currency === "UGX" ? 0 : 2,
+  // Keep the transaction's ISO code visible and let Intl apply that currency's
+  // own fraction-digit rules (including zero- and three-decimal currencies).
+  const code = String(currency || "UGX").trim().toUpperCase();
+  const locale = CURRENCY_LOCALES[code] || LOCALE;
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: code,
+    currencyDisplay: "code",
     timeZone: TIMEZONE
   }).format(amount);
-
-  return `${formattedAmount} ${currency}`;
 }
 
 export function createReceiptPdf(institutionName, receipt) {
@@ -101,7 +107,7 @@ export async function sendReceiptEmail(payload) {
     const result = await transport.sendMail({
       from: { name: payload.sender.name, address: payload.sender.address },
       to: payload.recipient,
-      subject: `Official fee receipt: ${payload.receipt.currency} ${payload.receipt.amount.toLocaleString(LOCALE)} [Ref: ${payload.receipt.receiptNumber}]`,
+      subject: `Official fee receipt: ${money(payload.receipt.amount, payload.receipt.currency)} [Ref: ${payload.receipt.receiptNumber}]`,
       text: `Dear Student / Parent, payment ${payload.receipt.receiptNumber} of ${money(payload.receipt.amount, payload.receipt.currency)} has been credited to ${payload.institutionName}. Remaining balance: ${money(payload.receipt.balance, payload.receipt.currency)}.`,
       html,
       attachments: [{ filename: `Receipt-${payload.receipt.receiptNumber}.pdf`, content: pdf, contentType: "application/pdf" }]

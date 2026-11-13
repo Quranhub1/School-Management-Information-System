@@ -7,7 +7,7 @@ Use Kilo Code to run a real end-to-end acceptance test of the School Management 
 - Student name: **Kaigwa Akram**
 - Assessment/admission number supplied for the test: **U075/042**
 - Reporting/admission date: **2026-09-09**
-- Currency: **UGX (Ugandan Shilling)**
+- Currency: **UGX (Ugandan Shilling) by default; the configured system currency is authoritative**
 - Administrator login: **admin / admin123** for a test environment only
 
 ## Safety rules
@@ -82,7 +82,7 @@ For the newly admitted student:
 7. Verify an unauthorized/restricted user cannot modify assessment records unless their role permits it.
 
 ## Phase 6 — Fees and installment payments
-Use **UGX only**.
+Use the fee structure's recorded currency. Do not combine different currencies or invent an exchange-rate conversion.
 
 1. Open Finance/Student Fees for Kaigwa Akram.
 2. Apply a valid fee charge for the selected academic period/programme.
@@ -99,7 +99,7 @@ Use **UGX only**.
 7. Verify the student's finance history and applicable reports reflect the payments.
 8. Verify cancellation/reversal rules prevent an unauthorized or duplicate reversal.
 
-Use test amounts appropriate to the configured fee structure; do not invent a USD/EUR conversion. The system currency is UGX.
+Use test amounts appropriate to the configured fee structure; do not invent a USD/EUR conversion. The default system currency is UGX; use the active System Administration currency setting for this test environment.
 
 ## Phase 7 — Downstream student journey
 Verify the admitted student can be found/used by the enabled modules that apply to the programme:
