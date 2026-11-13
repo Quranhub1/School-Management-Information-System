@@ -24,6 +24,12 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
   const [currencySuccess, setCurrencySuccess] = useState('')
 
   useEffect(() => {
+    if (!currencySuccess) return
+    const timeout = window.setTimeout(() => setCurrencySuccess(''), 4500)
+    return () => window.clearTimeout(timeout)
+  }, [currencySuccess])
+
+  useEffect(() => {
     if (selected !== 'settings') return
     let cancelled = false
     setCurrencyLoading(true)
@@ -74,7 +80,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
           <div className="panel-heading"><div><p className="eyebrow">FINANCIAL CONFIGURATION</p><h3 id="system-currency-title">System currency</h3></div></div>
           <p>Choose the default currency used when a new financial record does not specify its own currency. Existing invoices, payments and ledger entries keep their recorded currency.</p>
           {currencyError && <p className="error" role="alert">{currencyError}</p>}
-          {currencySuccess && <p className="success" role="status">{currencySuccess}</p>}
+          {currencySuccess && <div className="system-currency-toast" role="status" aria-live="polite"><ShieldCheck size={19} aria-hidden="true" /><span>{currencySuccess}</span><button type="button" aria-label="Dismiss notification" onClick={() => setCurrencySuccess('')}>×</button></div>}
           <div className="form-row" style={{ alignItems: 'end' }}>
             <label style={{ flex: 1 }}>Default currency
               <select value={currency.code} disabled={currencyLoading || currencySaving} onChange={event => setCurrency(current => ({ ...current, code: event.target.value }))}>
