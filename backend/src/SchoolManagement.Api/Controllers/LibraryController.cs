@@ -80,7 +80,17 @@ public sealed class LibraryController(
         if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId && x.IsActive, ct))
             return BadRequest(new { message = "The selected programme is not active." });
 
-        var currency = string.IsNullOrWhiteSpace(request.Currency) ? (await institutionSettings.GetSystemCurrencyAsync(ct)).Code : request.Currency.Trim().ToUpperInvariant();
+        string currency;
+        try
+        {
+            var defaultCurrency = (await institutionSettings.GetSystemCurrencyAsync(ct)).Code;
+            currency = SchoolManagement.Domain.Finance.MoneyMath.NormalizeCurrency(string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency);
+            SchoolManagement.Domain.Finance.MoneyMath.EnsurePrecision(request.Amount, currency);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
         // Keep one active Library requirement per programme so a student is never
         // billed twice for competing versions of the same course book policy.
         var previousRequirements = await db.FeeStructures
@@ -118,7 +128,7 @@ public sealed class LibraryController(
             FeeStructureId = structure.Id,
             Code = "LIB-BOOK",
             Name = request.Name.Trim(),
-            Amount = decimal.Round(request.Amount, 2, MidpointRounding.AwayFromZero),
+            Amount = request.Amount,
             Currency = currency,
             SortOrder = 1,
             IsOptional = false
