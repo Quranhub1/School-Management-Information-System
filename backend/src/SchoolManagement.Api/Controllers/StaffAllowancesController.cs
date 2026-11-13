@@ -50,6 +50,7 @@ public sealed class StaffAllowancesController(SchoolManagementDbContext db, Inst
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     public async Task<IActionResult> AuthorizeAllowance(CreateAllowanceRequest request, CancellationToken cancellationToken)
     {
+        var defaultCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
         if (request.StaffMemberId == Guid.Empty) return BadRequest(new { message = "Staff member is required." });
         if (string.IsNullOrWhiteSpace(request.AllowanceType)) return BadRequest(new { message = "Allowance type is required." });
         if (request.Amount <= 0) return BadRequest(new { message = "Allowance amount must be greater than zero." });
