@@ -814,7 +814,14 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     {
         if (!await CanViewUnscopedFinancialReportAsync(cancellationToken)) return Forbid();
         currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
-        return Ok(await reports.GetStudentReceivablesAsync(cancellationToken, currency));
+        try
+        {
+            return Ok(await reports.GetStudentReceivablesAsync(cancellationToken, currency));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
 
