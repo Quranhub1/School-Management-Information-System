@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
+import { formatCurrency, getCurrencyInputStep, SYSTEM_CURRENCY } from '../lib/currency'
 import LoadingSpinner from './LoadingSpinner';
 import { createBulkPayment, getOutstandingBalances, type OutstandingBalance } from '../api/finance'
 import { validateForm } from '../lib/validation'
@@ -195,7 +195,7 @@ export function BulkPayments() {
                       <td>{student.studentName}</td>
                       <td>{student.programmeName}</td>
                       <td style={{ color: student.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{formatCurrency(student.balance, student.currency || SYSTEM_CURRENCY)}</td>
-                      <td><input type="number" min="0" max={student.balance} step="1" value={student.amountToPay} onChange={e => handleAmountChange(student.studentId, e.target.value)} placeholder="0" disabled={!student.selected} /></td>
+                      <td><input type="number" min="0" max={student.balance} step={getCurrencyInputStep(student.currency || SYSTEM_CURRENCY)} value={student.amountToPay} onChange={e => handleAmountChange(student.studentId, e.target.value)} placeholder="0" disabled={!student.selected} /></td>
                       <td><input value={student.receiptNumber} onChange={e => handleReceiptChange(student.studentId, e.target.value)} disabled={!student.selected} /></td>
                     </tr>
                   ))}
