@@ -760,29 +760,32 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         try { var user = User.Identity?.Name; if (string.IsNullOrWhiteSpace(user)) return Unauthorized(new { message = "Authenticated user identity is required for a reversal." }); return Ok(await reversals.ReverseAsync(journalEntryId, request.Reason, user, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
     [HttpGet("reports/general-ledger")]
-    public async Task<IActionResult> GeneralLedger([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? accountId, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GeneralLedger([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? accountId, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, [FromQuery] string? currency, CancellationToken cancellationToken)
     {
         var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
         if (scope.Error is not null) return scope.Error;
-        return Ok(await reports.GetGeneralLedgerAsync(from, to, accountId, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
+        currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
+        return Ok(await reports.GetGeneralLedgerAsync(from, to, accountId, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId, currency));
     }
 
     [HttpGet("reports/trial-balance")]
-    public async Task<IActionResult> TrialBalance([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken)
+    public async Task<IActionResult> TrialBalance([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, [FromQuery] string? currency, CancellationToken cancellationToken)
     {
         var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
         if (scope.Error is not null) return scope.Error;
-        return Ok(await reports.GetTrialBalanceAsync(from, to, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
+        currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
+        return Ok(await reports.GetTrialBalanceAsync(from, to, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId, currency));
     }
 
     [HttpGet("reports/income-statement")]
-    public async Task<IActionResult> IncomeStatement([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken)
+    public async Task<IActionResult> IncomeStatement([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, [FromQuery] string? currency, CancellationToken cancellationToken)
     {
         var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
         if (scope.Error is not null) return scope.Error;
         try
         {
-            return Ok(await reports.GetIncomeStatementAsync(from, to, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
+            currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
+            return Ok(await reports.GetIncomeStatementAsync(from, to, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId, currency));
         }
         catch (ArgumentException ex)
         {
@@ -791,13 +794,14 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
 
     [HttpGet("reports/balance-sheet")]
-    public async Task<IActionResult> BalanceSheet([FromQuery] DateOnly? asOf, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, CancellationToken cancellationToken)
+    public async Task<IActionResult> BalanceSheet([FromQuery] DateOnly? asOf, [FromQuery] Guid? campusId, [FromQuery] Guid? facultyId, [FromQuery] Guid? departmentId, [FromQuery] Guid? programmeId, [FromQuery] string? currency, CancellationToken cancellationToken)
     {
         var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
         if (scope.Error is not null) return scope.Error;
         try
         {
-            return Ok(await reports.GetBalanceSheetAsync(asOf, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId));
+            currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
+            return Ok(await reports.GetBalanceSheetAsync(asOf, cancellationToken, scope.CampusId, facultyId, departmentId, programmeId, currency));
         }
         catch (ArgumentException ex)
         {
@@ -806,10 +810,11 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
 
     [HttpGet("reports/student-receivables")]
-    public async Task<IActionResult> StudentReceivables(CancellationToken cancellationToken)
+    public async Task<IActionResult> StudentReceivables([FromQuery] string? currency, CancellationToken cancellationToken)
     {
         if (!await CanViewUnscopedFinancialReportAsync(cancellationToken)) return Forbid();
-        return Ok(await reports.GetStudentReceivablesAsync(cancellationToken));
+        currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
+        return Ok(await reports.GetStudentReceivablesAsync(cancellationToken, currency));
     }
 
 
