@@ -177,7 +177,7 @@ export function BulkPayments() {
                     <th>Student ID</th>
                     <th>Student Name</th>
                     <th>Programme</th>
-                    <th>Balance (UGX)</th>
+                    <th>Balance</th>
                     <th>Amount to Pay</th>
                     <th>Receipt Number</th>
                   </tr>
@@ -189,7 +189,7 @@ export function BulkPayments() {
                       <td><strong>{student.studentNumber}</strong></td>
                       <td>{student.studentName}</td>
                       <td>{student.programmeName}</td>
-                      <td style={{ color: student.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>UGX {student.balance.toLocaleString()}</td>
+                      <td style={{ color: student.balance > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>{formatCurrency(student.balance, student.currency || SYSTEM_CURRENCY)}</td>
                       <td><input type="number" min="0" max={student.balance} step="1" value={student.amountToPay} onChange={e => handleAmountChange(student.studentId, e.target.value)} placeholder="0" disabled={!student.selected} /></td>
                       <td><input value={student.receiptNumber} onChange={e => handleReceiptChange(student.studentId, e.target.value)} disabled={!student.selected} /></td>
                     </tr>
@@ -205,7 +205,7 @@ export function BulkPayments() {
               </div>
               <div className="summary-card">
                 <span>Total Amount to Collect</span>
-                <strong style={{ color: totalToCollect > 0 ? '#1c1917' : '#78716c' }}>UGX {totalToCollect.toLocaleString()}</strong>
+                <strong style={{ color: totalToCollect > 0 ? '#1c1917' : '#78716c' }}>{formatCurrency(totalToCollect, BULK_PAYMENT_STUDENTS[0]?.currency || SYSTEM_CURRENCY)}</strong>
               </div>
             </div>
 
