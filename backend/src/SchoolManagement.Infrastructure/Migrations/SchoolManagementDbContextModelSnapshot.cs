@@ -850,6 +850,19 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("SystemCurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<int>("SystemCurrencyFractionDigits")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SystemCurrencyLocale")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<bool>("EmailEnabled")
                         .HasColumnType("boolean");
 
