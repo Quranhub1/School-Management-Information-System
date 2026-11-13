@@ -66,6 +66,7 @@ public sealed class StudentChargeService(IFinanceRepository finance, FiscalPerio
         var entry = new JournalEntry
         {
             EntryNumber = $"VOID-CHG-{charge.Id:N}",
+            Currency = charge.Currency,
             Description = $"Void student charge {charge.Id:N}: {reason.Trim()}",
             Status = "Posted",
             PostedAt = DateTimeOffset.UtcNow,
@@ -113,6 +114,7 @@ public sealed class StudentChargeService(IFinanceRepository finance, FiscalPerio
         new()
         {
             EntryNumber = $"CHG-{charge.Id:N}",
+            Currency = charge.Currency,
             Description = $"Student charge: {charge.Description}",
             Status = "Posted",
             PostedAt = DateTimeOffset.UtcNow,
