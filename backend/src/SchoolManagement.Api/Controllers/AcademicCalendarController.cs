@@ -86,5 +86,3 @@ public sealed class AcademicCalendarController(AcademicCalendarService service) 
         return deleted ? NoContent() : NotFound();
     }
 }
-
-public sealed record SetActiveRequest(bool IsActive);
