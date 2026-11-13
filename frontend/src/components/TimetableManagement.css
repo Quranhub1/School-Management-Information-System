@@ -196,3 +196,36 @@
     white-space: normal;
   }
 }
+
+
+/* The shared button normalizer treats SVG + text-node buttons as icon-only
+   because :only-child ignores text nodes. Restore intrinsic label sizing for
+   the three timetable header actions without changing other icon controls. */
+.app-shell .content .timetable-screen .timetable-actions > button.timetable-action {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: max-content;
+  max-width: 100%;
+  min-height: 46px;
+  padding: 11px 22px;
+  gap: 9px;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.app-shell .content .timetable-screen .timetable-actions > button.timetable-action > svg {
+  flex: 0 0 16px;
+}
+
+@media (max-width: 560px) {
+  .app-shell .content .timetable-screen .timetable-actions > button.timetable-action {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+  }
+}
