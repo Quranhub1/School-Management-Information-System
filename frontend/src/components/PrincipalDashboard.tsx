@@ -101,11 +101,11 @@ export function PrincipalDashboard() {
                 </div>
                 <div className="summary-card">
                   <span>Total Invoiced</span>
-                  <strong>UGX {dashboard.totalInvoiced.toLocaleString()}</strong>
+                  <strong>{formatCurrency(dashboard.totalInvoiced, SYSTEM_CURRENCY)}</strong>
                 </div>
                 <div className="summary-card">
                   <span>Total Collected</span>
-                  <strong style={{ color: '#059669' }}>UGX {dashboard.totalPaid.toLocaleString()}</strong>
+                  <strong style={{ color: '#059669' }}>{formatCurrency(dashboard.totalPaid, SYSTEM_CURRENCY)}</strong>
                 </div>
               </div>
 
@@ -223,7 +223,7 @@ export function PrincipalDashboard() {
                           <tr key={payment.id}>
                             <td><strong>{payment.receiptNumber}</strong></td>
                             <td>{payment.studentName}</td>
-                            <td style={{ color: '#059669', fontWeight: 700 }}>UGX {payment.amount.toLocaleString()}</td>
+                            <td style={{ color: '#059669', fontWeight: 700 }}>{formatCurrency(payment.amount, payment.currency ?? SYSTEM_CURRENCY)}</td>
                             <td>{payment.paymentMethod}</td>
                             <td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td>
                           </tr>
