@@ -90,7 +90,8 @@ public sealed class AcademicDepartmentsController(SchoolManagementDbContext db) 
         var code = request.Code.Trim().ToUpperInvariant(); var name = request.Name.Trim();
         if (request.FacultyId == Guid.Empty) return BadRequest(new { message = "Select a faculty." });
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name)) return BadRequest(new { message = "Department code and name are required." });
-        if (!await db.Faculties.AnyAsync(x => x.Id == request.FacultyId && x.IsActive, ct)) return BadRequest(new { message = "The selected faculty does not exist or is inactive." });
+        var targetFaculty = await db.Faculties.FirstOrDefaultAsync(x => x.Id == request.FacultyId && x.IsActive, ct);
+        if (targetFaculty is null || !await IsCampusInActiveInstitution(targetFaculty.CampusId, ct)) return BadRequest(new { message = "The selected faculty does not exist, is inactive, or belongs to another institution." });
         if (await db.Departments.AnyAsync(x => x.Code == code && x.FacultyId == request.FacultyId, ct)) return Conflict(new { message = $"Department code '{code}' already exists in this faculty." });
         var department = new Department { FacultyId = request.FacultyId, Code = code, Name = name };
         db.Departments.Add(department); await db.SaveChangesAsync(ct);
@@ -105,7 +106,8 @@ public sealed class AcademicDepartmentsController(SchoolManagementDbContext db) 
         var code = request.Code.Trim().ToUpperInvariant(); var name = request.Name.Trim();
         if (request.FacultyId == Guid.Empty) return BadRequest(new { message = "Select a faculty." });
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name)) return BadRequest(new { message = "Department code and name are required." });
-        if (!await db.Faculties.AnyAsync(x => x.Id == request.FacultyId && x.IsActive, ct)) return BadRequest(new { message = "The selected faculty does not exist or is inactive." });
+        var targetFaculty = await db.Faculties.FirstOrDefaultAsync(x => x.Id == request.FacultyId && x.IsActive, ct);
+        if (targetFaculty is null || !await IsCampusInActiveInstitution(targetFaculty.CampusId, ct)) return BadRequest(new { message = "The selected faculty does not exist, is inactive, or belongs to another institution." });
         if (await db.Departments.AnyAsync(x => x.Id != id && x.FacultyId == request.FacultyId && x.Code == code, ct)) return Conflict(new { message = $"Department code '{code}' already exists in this faculty." });
         if (department.FacultyId != request.FacultyId && await db.Programmes.AnyAsync(x => x.DepartmentId == id, ct))
             return Conflict(new { message = "This department is linked to programmes. Reassign those programmes explicitly before moving the department to another faculty." });
