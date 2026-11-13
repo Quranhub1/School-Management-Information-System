@@ -474,13 +474,14 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
             if (request.Items.Any(x => x.Amount <= 0)) return BadRequest(new { message = "Every fee item must have a positive amount." });
             if (request.Items.GroupBy(x => x.Code.Trim(), StringComparer.OrdinalIgnoreCase).Any(g => g.Count() > 1)) return BadRequest(new { message = "Fee item codes must be unique." });
 
+            var defaultCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
             var structure = new SchoolManagement.Domain.Finance.FeeStructure
             {
                 ProgrammeId = request.ProgrammeId ?? Guid.Empty,
                 AcademicYearId = request.AcademicYearId ?? Guid.Empty,
                 Name = request.Name.Trim(),
                 FeeType = request.FeeType.Trim(),
-                Currency = (request.Currency ?? "UGX").Trim().ToUpperInvariant()
+                Currency = string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency.Trim().ToUpperInvariant()
             };
 
             foreach (var item in request.Items.OrderBy(x => x.SortOrder))
@@ -573,9 +574,10 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         return Ok(await finance.GetStudentLedgerAsync(studentId, cancellationToken));
     }
     [HttpGet("reports/receivables-ageing")]
-    public async Task<IActionResult> ReceivablesAgeing([FromQuery] DateOnly? asOf, [FromQuery] string currency = "UGX", CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ReceivablesAgeing([FromQuery] DateOnly? asOf, [FromQuery] string? currency = null, CancellationToken cancellationToken = default)
     {
         if (!await CanViewUnscopedFinancialReportAsync(cancellationToken)) return Forbid();
+        currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
         try { return Ok(await receivables.GetAgeingAsync(asOf, currency, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
@@ -583,12 +585,14 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> ReceivablesReconciliation([FromQuery] DateOnly? asOf, [FromQuery] string currency = "UGX", CancellationToken cancellationToken = default)
     {
         if (!await CanViewUnscopedFinancialReportAsync(cancellationToken)) return Forbid();
+        currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
         try { return Ok(await receivables.GetReconciliationAsync(asOf, currency, cancellationToken)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpGet("reports/cash-bank-position")]
     public async Task<IActionResult> CashBankPosition([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] string currency = "UGX", [FromQuery] Guid? campusId = null, [FromQuery] Guid? facultyId = null, [FromQuery] Guid? departmentId = null, [FromQuery] Guid? programmeId = null, CancellationToken cancellationToken = default)
     {
+        currency = string.IsNullOrWhiteSpace(currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : currency;
         var scope = await ResolveReportCampusAsync(campusId, cancellationToken);
         if (scope.Error is not null) return scope.Error;
         try
@@ -612,7 +616,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public async Task<IActionResult> CreateStudentCharge(Guid studentId, CreateStudentChargeRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
-        try { var charge = await charges.CreateAsync(studentId, request.ChargeType, request.Description, request.Amount, request.Currency, User.Identity?.Name, cancellationToken); return Created($"/api/finance/students/{studentId}/charges/{charge.Id}", charge); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        try { var charge = await charges.CreateAsync(studentId, request.ChargeType, request.Description, request.Amount, (string.IsNullOrWhiteSpace(request.Currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : request.Currency), User.Identity?.Name, cancellationToken); return Created($"/api/finance/students/{studentId}/charges/{charge.Id}", charge); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("charges/{chargeId:guid}/void")]
@@ -728,7 +732,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
         if (string.Equals(request.PaymentMethod, "SchoolPay", StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { message = "SchoolPay payments must be received through the verified SchoolPay notification workflow." });
-        try { return Ok(await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, request.Currency, request.Reference, cancellationToken, request.SourceChannel)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        try { return Ok(await finance.RecordUnallocatedPaymentAsync(studentId, request.ReceiptNumber, request.Amount, request.PaymentMethod, (string.IsNullOrWhiteSpace(request.Currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : request.Currency), request.Reference, cancellationToken, request.SourceChannel)); } catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); } catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/allocate")]
@@ -872,7 +876,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
         return await campusAccess.GetAccessibleCampusIdsAsync(User, ct) is null;
     }
 
-    public sealed record CreateMobileMoneyTransactionRequest(Guid StudentId, Guid? StudentInvoiceId, string Provider, string PhoneNumber, decimal Amount, string Currency = "UGX");
+    public sealed record CreateMobileMoneyTransactionRequest(Guid StudentId, Guid? StudentInvoiceId, string Provider, string PhoneNumber, decimal Amount, string? Currency = null);
     public sealed record ConfirmMobileMoneyTransactionRequest(string ExternalRef);
     public sealed record CreateInvoiceRequest(Guid StudentId, Guid FeeStructureId, string InvoiceNumber);
     public sealed record FeeStructureItemRequest(string Code, string Name, decimal Amount, Guid? IncomeAccountId = null, int SortOrder = 0, bool IsOptional = false);
@@ -886,7 +890,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     public sealed record RequestDiscountRequest(string DiscountType, decimal? Percentage, decimal? Amount, string Reason);
     public sealed record CreateInstallmentScheduleRequest(IReadOnlyCollection<InvoiceInstallmentService.InstallmentRequest> Installments);
     public sealed record RecordPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Reference, string? SourceChannel = null);
-    public sealed record RecordUnallocatedPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string Currency = "UGX", string? Reference = null, string? SourceChannel = null);
+    public sealed record RecordUnallocatedPaymentRequest(decimal Amount, string ReceiptNumber, string PaymentMethod, string? Currency = null, string? Reference = null, string? SourceChannel = null);
     public sealed record AllocatePaymentRequest(IReadOnlyCollection<PaymentAllocationRequest> Allocations);
     public sealed record ReverseJournalEntryRequest(string Reason);
 }
