@@ -5,6 +5,8 @@ import {
   configureSystemCurrency,
   addMoney,
   formatCurrency,
+  getCurrencyFractionDigits,
+  getCurrencyInputStep,
   fromMinorUnits,
   subtractMoney,
   toMinorUnits,
@@ -30,6 +32,13 @@ describe("currency formatting", () => {
     expect(formatCurrency("150.50", "USD", "en-US")).toContain("150.50");
     expect(formatCurrency("25000", "KES", "en-KE")).toContain("25,000");
     expect(formatCurrency("12.345", "KWD", "en-US")).toContain("12.345");
+  });
+
+  it("uses ISO minor-unit precision for amount input steps", () => {
+    expect(getCurrencyFractionDigits("UGX")).toBe(0);
+    expect(getCurrencyFractionDigits("USD")).toBe(2);
+    expect(getCurrencyInputStep("UGX")).toBe("1");
+    expect(getCurrencyInputStep("USD")).toBe("0.01");
   });
 
   it("handles missing and invalid numeric amounts without NaN output", () => {
