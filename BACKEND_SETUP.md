@@ -67,7 +67,7 @@ export Authentication__JwtKey='REPLACE_WITH_A_RANDOM_SECRET_AT_LEAST_32_CHARACTE
 export ASPNETCORE_ENVIRONMENT='Production'
 ```
 
-The institutional currency is **UGX (Ugandan Shilling)**.
+The institutional system currency defaults to **UGX (Ugandan Shilling)** and can be changed by an authorized System Administrator under **System Administration → System settings → System currency**. Existing transactions retain their recorded currency.
 
 ## 5. Database migration
 
