@@ -121,7 +121,8 @@ public sealed class FinanceService(SchoolManagement.Application.Abstractions.IFi
                     unappliedAccount.Id,
                     receivableAccount.Id,
                     "PaymentAllocation",
-                    allocation.Id);
+                    allocation.Id,
+                    payment.Currency);
                 await AddPostedJournalEntryAsync(allocationJournal, cancellationToken);
                 remaining -= allocationAmount;
             }
