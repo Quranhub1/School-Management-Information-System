@@ -26,7 +26,7 @@ const outstandingColumns: ColDef<Outstanding>[] = [
   { field: 'studentNumber', headerName: 'Student Number' },
   { field: 'studentName', headerName: 'Student Name' },
   { field: 'programmeName', headerName: 'Programme' },
-  { field: 'balance', headerName: `Balance (${SYSTEM_CURRENCY})`, valueFormatter: p => formatCurrency(Number(p.value) || 0, p.data?.currency ?? SYSTEM_CURRENCY) },
+  { field: 'balance', headerName: 'Balance', valueFormatter: p => formatCurrency(Number(p.value) || 0, p.data?.currency ?? SYSTEM_CURRENCY) },
   { field: 'status', headerName: 'Status' },
 ]
 const paymentColumns: ColDef<Payment>[] = [
@@ -35,7 +35,7 @@ const paymentColumns: ColDef<Payment>[] = [
   { field: 'studentName', headerName: 'Student' },
   { field: 'paymentSource', headerName: 'Payment Source' },
   { field: 'sourceChannel', headerName: 'Channel' },
-  { field: 'amount', headerName: `Amount (${SYSTEM_CURRENCY})`, valueFormatter: p => formatCurrency(Number(p.value) || 0, p.data?.currency ?? SYSTEM_CURRENCY) },
+  { field: 'amount', headerName: 'Amount', valueFormatter: p => formatCurrency(Number(p.value) || 0, p.data?.currency ?? SYSTEM_CURRENCY) },
 ]
 const payrollColumns: ColDef<Payroll>[] = [
   { field: 'staffNumber', headerName: 'Staff Number' },
