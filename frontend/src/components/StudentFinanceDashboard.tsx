@@ -7,6 +7,7 @@ import type { Payment } from './FinanceManagement'
 
 type Props = { initialSearch?: string }
 const money = (n: number, currency = SYSTEM_CURRENCY) => formatCurrency(n, currency)
+const PAYMENT_CURRENCIES = ['UGX', 'USD', 'KES', 'EUR', 'GBP', 'TZS', 'RWF', 'ZAR', 'AED'] as const
 const statusFor = (balance: number, billed: number, paid: number) => {
   if (balance < 0) return { label: '+ Credit Balance', color: '#3B82F6', bg: '#EFF6FF', progress: 100 }
   if (balance === 0 && billed > 0) return { label: '✓ Fully Paid', color: '#10B981', bg: '#ECFDF5', progress: 100 }
@@ -29,6 +30,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
   const [error, setError] = useState('')
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null)
   const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentCurrency, setPaymentCurrency] = useState<string>(SYSTEM_CURRENCY)
   const [receiptNumber, setReceiptNumber] = useState('')
   const [sourceChannel, setSourceChannel] = useState('Cash')
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
@@ -177,8 +179,13 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
       paymentMethod: sourceChannel,
       sourceChannel,
       reference: reference.trim(),
-      currency: paymentInvoice.currency || SYSTEM_CURRENCY,
+      currency: paymentCurrency,
     })
+    if (paymentCurrency !== (paymentInvoice.currency?.trim().toUpperCase() || SYSTEM_CURRENCY)) {
+      setPaymentErrors({ currency: `Select ${paymentInvoice.currency || SYSTEM_CURRENCY} to match this invoice.` })
+      setError('Payment currency must match the invoice currency. No currency conversion is applied.')
+      return
+    }
     if (!validation.success) {
       setPaymentErrors(validation.errors)
       setError('Payment was not posted. Correct the payment fields shown below.')
@@ -187,7 +194,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
     setPaymentErrors({})
     try {
       await recordPayment(paymentInvoice.id, validation.data)
-      setPaymentInvoice(null); setPaymentAmount(''); setReceiptNumber(''); setReference('')
+      setPaymentInvoice(null); setPaymentAmount(''); setPaymentCurrency(SYSTEM_CURRENCY); setReceiptNumber(''); setReference('')
       await loadStudent(profile?.studentNumber ?? query)
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to record payment.') }
   }
@@ -311,9 +318,9 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
       </div>
       <div className="panel finance-inner-panel">
         <div className="panel-heading"><div><p className="eyebrow">INVOICES</p><h3>Billable Items</h3></div></div>
-        <div className="table-wrap"><table><thead><tr><th>Invoice</th><th>Fee Type</th><th>Currency</th><th>Issued</th><th>Billed</th><th>Paid</th><th>Balance</th><th /></tr></thead><tbody>{invoices.map(inv=><tr key={inv.id}><td><strong>{inv.invoiceNumber}</strong></td><td>{inv.feeType}</td><td>{inv.currency}</td><td>{new Date(inv.issuedAt).toLocaleDateString(SYSTEM_LOCALE)}</td><td>{money(inv.amount, inv.currency)}</td><td style={{color:'#059669'}}>{money(inv.paidAmount, inv.currency)}</td><td style={{fontWeight:800}}>{money(inv.balance, inv.currency)}</td><td>{inv.balance>0 && <button className="secondary-button" onClick={()=>setPaymentInvoice(inv)}>Record Payment</button>}</td></tr>)}</tbody></table></div>
+        <div className="table-wrap"><table><thead><tr><th>Invoice</th><th>Fee Type</th><th>Currency</th><th>Issued</th><th>Billed</th><th>Paid</th><th>Balance</th><th /></tr></thead><tbody>{invoices.map(inv=><tr key={inv.id}><td><strong>{inv.invoiceNumber}</strong></td><td>{inv.feeType}</td><td>{inv.currency}</td><td>{new Date(inv.issuedAt).toLocaleDateString(SYSTEM_LOCALE)}</td><td>{money(inv.amount, inv.currency)}</td><td style={{color:'#059669'}}>{money(inv.paidAmount, inv.currency)}</td><td style={{fontWeight:800}}>{money(inv.balance, inv.currency)}</td><td>{inv.balance>0 && <button className="secondary-button" onClick={()=>{setPaymentCurrency(SYSTEM_CURRENCY);setPaymentErrors({});setError('');setPaymentInvoice(inv)}}>Record Payment</button>}</td></tr>)}</tbody></table></div>
       </div>
     </>}
-    {paymentInvoice && <div className="modal-backdrop"><form className="auth-card" onSubmit={submitPayment}><p className="eyebrow">PAYMENT</p><h3>{paymentInvoice.feeType} · {paymentInvoice.invoiceNumber} ({paymentInvoice.currency})</h3><p>Outstanding: {money(paymentInvoice.balance, paymentInvoice.currency)}</p>{Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={paymentInvoice.balance} step="1" value={paymentAmount} onChange={e=>setPaymentAmount(e.target.value)} placeholder="Amount" required /><input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e=>setReceiptNumber(e.target.value)} placeholder="Receipt number" required /><label>Manual source<select value={sourceChannel} onChange={e=>setSourceChannel(e.target.value)}><option>Cash</option><option>Cheque</option></select></label><input value={reference} onChange={e=>setReference(e.target.value)} placeholder="Manual receipt / cheque reference" /><div className="topbar-actions"><button type="button" className="secondary-button" onClick={()=>setPaymentInvoice(null)}>Cancel</button><button type="submit">Post Payment</button></div></form></div>}
+    {paymentInvoice && <div className="modal-backdrop"><form className="auth-card" onSubmit={submitPayment}><p className="eyebrow">PAYMENT</p><h3>{paymentInvoice.feeType} · {paymentInvoice.invoiceNumber} ({paymentInvoice.currency})</h3><p>Outstanding: {money(paymentInvoice.balance, paymentInvoice.currency)}</p><label>Payment currency<select value={paymentCurrency} onChange={e=>setPaymentCurrency(e.target.value)}>{PAYMENT_CURRENCIES.map(currency=><option key={currency} value={currency}>{currency}</option>)}</select></label>{paymentErrors.currency && <p className="field-error" role="alert">{paymentErrors.currency}</p>}<small>Default is UGX. Select the invoice currency ({paymentInvoice.currency || SYSTEM_CURRENCY}) to post this payment. Currency conversion is not performed.</small>{Object.keys(paymentErrors).length > 0 && <div className="error" role="alert"><ul>{Object.entries(paymentErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}<input aria-invalid={Boolean(paymentErrors.amount)} type="number" min="1" max={paymentInvoice.balance} step="1" value={paymentAmount} onChange={e=>setPaymentAmount(e.target.value)} placeholder="Amount" required /><input aria-invalid={Boolean(paymentErrors.receiptNumber)} value={receiptNumber} onChange={e=>setReceiptNumber(e.target.value)} placeholder="Receipt number" required /><label>Manual source<select value={sourceChannel} onChange={e=>setSourceChannel(e.target.value)}><option>Cash</option><option>Cheque</option></select></label><input value={reference} onChange={e=>setReference(e.target.value)} placeholder="Manual receipt / cheque reference" /><div className="topbar-actions"><button type="button" className="secondary-button" onClick={()=>setPaymentInvoice(null)}>Cancel</button><button type="submit">Post Payment</button></div></form></div>}
   </section>
 }
