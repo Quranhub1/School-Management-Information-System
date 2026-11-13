@@ -74,7 +74,7 @@ export function GuildManagement({ canOpenCalendar = false, canOpenNotices = fals
         <div className="guild-kpi"><span><UsersRound size={16} /> Executive</span><strong>{executiveCount}</strong><small>President and Vice President</small></div>
         <div className="guild-kpi"><span><UsersRound size={16} /> Portfolios</span><strong>{portfolios.length}</strong><small>Active governance areas</small></div>
         <div className="guild-kpi"><span><FileText size={16} /> Records</span><strong>12</strong><small>Meetings, resolutions and notices</small></div>
-        <div className="guild-kpi"><span><WalletCards size={16} /> Finance</span><strong>UGX</strong><small>Guild budget and accountability</small></div>
+        <div className="guild-kpi"><span><WalletCards size={16} /> Finance</span><strong>{SYSTEM_CURRENCY}</strong><small>Guild budget and accountability</small></div>
       </div>
 
       <div className="guild-layout">
