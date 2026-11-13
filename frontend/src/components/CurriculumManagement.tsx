@@ -18,7 +18,7 @@ import {
 import { createProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityActive, updateAcademicAuthority, type AcademicAuthority } from '../api/academicAuthorities'
-import { createAcademicDepartment, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, updateAcademicDepartment, type AcademicDepartment, type FacultyOption } from '../api/academicDepartments'
+import { createAcademicDepartment, createAcademicFaculty, getAcademicCampuses, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, setAcademicFacultyActive, updateAcademicDepartment, updateAcademicFaculty, type AcademicDepartment, type CampusOption, type FacultyOption } from '../api/academicDepartments'
 
 type Tab = 'full' | 'short'
 
@@ -30,6 +30,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [authorities, setAuthorities] = useState<AcademicAuthority[]>([])
   const [departments, setDepartments] = useState<AcademicDepartment[]>([])
   const [faculties, setFaculties] = useState<FacultyOption[]>([])
+  const [campuses, setCampuses] = useState<CampusOption[]>([])
+  const [selectedCampusId, setSelectedCampusId] = useState('')
+  const [editingFacultyId, setEditingFacultyId] = useState<string | null>(null)
+  const [facultyForm, setFacultyForm] = useState({ code: '', name: '', description: '' })
   const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null)
   const [departmentForm, setDepartmentForm] = useState({ facultyId: '', code: '', name: '' })
   const [selected, setSelected] = useState('')
@@ -66,13 +70,17 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   async function load() {
     try {
       setError('')
-      const [a, b, c, d, e, f] = await Promise.all([getCurricula(), getCourses(), getProgrammes(), getAcademicAuthorities(true), getAcademicDepartments(), getAcademicFaculties()])
+      const [a, b, c, d, campusList] = await Promise.all([getCurricula(), getCourses(), getProgrammes(), getAcademicAuthorities(true), getAcademicCampuses()])
+      const campusId = selectedCampusId && campusList.some(item => item.id === selectedCampusId) ? selectedCampusId : (campusList.find(item => item.isActive)?.id ?? '')
+      const [e, f] = campusId ? await Promise.all([getAcademicDepartments(campusId), getAcademicFaculties(campusId)]) : [[], []]
       const courseMappings = (await Promise.all(a.map(curriculum => getCurriculumCourses(curriculum.id).catch(() => [])))).flat()
       setCurricula(a)
       setCourses(b)
       setProgrammes(c)
       setAuthorities(d)
       setDepartments(e)
+      setCampuses(campusList)
+      setSelectedCampusId(campusId)
       setFaculties(f)
       setAuthority(current => d.some(item => item.code === current) ? current : (d.find(item => item.isActive)?.code ?? ''))
       setAllMappings(courseMappings)
@@ -90,6 +98,27 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         setError(e instanceof Error ? e.message : 'Unable to load mappings.')
       }
     }
+  }
+
+  async function saveFaculty(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedCampusId) { setError('Add or select an active campus first.'); return }
+    setSaving(true); setError('')
+    try {
+      const input = { campusId: selectedCampusId, ...facultyForm }
+      if (editingFacultyId) {
+        const existing = faculties.find(item => item.id === editingFacultyId)
+        await updateAcademicFaculty(editingFacultyId, { ...input, isActive: existing?.isActive ?? true })
+        setMessage('Faculty updated.')
+      } else { await createAcademicFaculty(input); setMessage('Faculty created.') }
+      setEditingFacultyId(null); setFacultyForm({ code: '', name: '', description: '' }); await load()
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to save faculty.') }
+    finally { setSaving(false) }
+  }
+
+  async function toggleFaculty(item: FacultyOption) {
+    try { await setAcademicFacultyActive(item.id, !item.isActive); setFaculties(current => current.map(row => row.id === item.id ? { ...row, isActive: !row.isActive } : row)) }
+    catch (e) { setError(e instanceof Error ? e.message : 'Unable to update faculty status.') }
   }
 
   async function saveDepartment(e: React.FormEvent) {
@@ -385,7 +414,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             {faculties.length === 0 && <p className="empty">No faculties configured. Add a faculty first before creating departments.</p>}
             <input required maxLength={40} placeholder="Department code" value={departmentForm.code} onChange={e => setDepartmentForm({ ...departmentForm, code: e.target.value.toUpperCase() })} />
             <input required maxLength={160} placeholder="Department name" value={departmentForm.name} onChange={e => setDepartmentForm({ ...departmentForm, name: e.target.value })} />
-            <button type="submit" disabled={saving || faculties.length === 0}>{editingDepartmentId ? 'Save department' : 'Add department'}</button>
+            <button type="submit" disabled={saving || faculties.length === 0 || !selectedCampusId}>{editingDepartmentId ? 'Save department' : 'Add department'}</button>
             {editingDepartmentId && <button type="button" className="secondary-button" onClick={() => { setEditingDepartmentId(null); setDepartmentForm({ facultyId: '', code: '', name: '' }) }}>Cancel edit</button>}
           </div>
         </form>
