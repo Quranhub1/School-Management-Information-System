@@ -109,7 +109,6 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
           <article className="health-card"><Activity size={20} /><div><span>Audit trail</span><strong>Available</strong></div></article>
           <article className="health-card"><Archive size={20} /><div><span>Backups</span><strong>Ready</strong></div></article>
         </div>
-        </div>
         <div className="settings-grid">
           {tools.map(tool => {
             const Icon = tool.icon
