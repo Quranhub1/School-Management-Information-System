@@ -37,9 +37,10 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
         if (request.Year < 2000) return BadRequest(new { message = "Year is invalid." });
 
         var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
+        SchoolManagement.Domain.Finance.MoneyMath.EnsureCurrencySupportedByCurrentStorage(systemCurrency);
         var staff = await db.StaffMembers.AsNoTracking().Where(x => x.IsActive).ToListAsync(cancellationToken);
-        var basicSalary = configuration.GetValue<decimal>("PayrollDefaults:BasicSalary", 50000m);
-        var deductions = configuration.GetValue<decimal>("PayrollDefaults:Deductions", 5000m);
+        var basicSalary = SchoolManagement.Domain.Finance.MoneyMath.Round(configuration.GetValue<decimal>("PayrollDefaults:BasicSalary", 50000m), systemCurrency);
+        var deductions = SchoolManagement.Domain.Finance.MoneyMath.Round(configuration.GetValue<decimal>("PayrollDefaults:Deductions", 5000m), systemCurrency);
         var periodStart = new DateOnly(request.Year, request.Month, 1);
         var periodEnd = periodStart.AddMonths(1).AddDays(-1);
 
@@ -55,7 +56,8 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
                         ? a.EffectiveFrom <= periodEnd && (!a.EffectiveTo.HasValue || a.EffectiveTo.Value >= periodStart)
                         : a.EffectiveFrom >= periodStart && a.EffectiveFrom <= periodEnd))
                 .SumAsync(a => (decimal?)a.Amount, cancellationToken) ?? 0m;
-            var netPay = basicSalary + allowances - deductions;
+            allowances = SchoolManagement.Domain.Finance.MoneyMath.Round(allowances, systemCurrency);
+            var netPay = SchoolManagement.Domain.Finance.MoneyMath.Subtract(SchoolManagement.Domain.Finance.MoneyMath.Add(basicSalary, allowances, systemCurrency), deductions, systemCurrency);
             if (netPay < 0) return BadRequest(new { message = "Deductions cannot exceed salary plus allowances." });
             db.PayrollRecords.Add(new Domain.Staff.PayrollRecord
             {
