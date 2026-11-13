@@ -106,7 +106,12 @@ export function InstitutionSettingsProvider({ children }: { children: ReactNode 
       else void refreshInstitution()
     }
     window.addEventListener('smis:institution-settings-updated', handleSettingsUpdated)
-    const handleCurrencyUpdated = () => { void getPublicSystemCurrencySettings().then(value => configureSystemCurrency(value.code, value.locale)).catch(() => undefined) }
+    const handleCurrencyUpdated = () => {
+      void getPublicSystemCurrencySettings().then(value => {
+        configureSystemCurrency(value.code, value.locale)
+        setInstitutionState(current => ({ ...current }))
+      }).catch(() => undefined)
+    }
     window.addEventListener('smis:system-currency-updated', handleCurrencyUpdated)
 
     const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('smis-institution-settings') : null
