@@ -37,6 +37,15 @@ public sealed class ProgrammesController(ProgrammeService service) : ControllerB
         return Ok(result.Programme);
     }
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await service.DeleteAsync(id, cancellationToken);
+        if (!result.Found) return NotFound(new { message = "Programme was not found." });
+        if (!result.Deleted) return Conflict(new { message = result.Error });
+        return NoContent();
+    }
+
     [HttpPatch("{id:guid}/active")]
     public async Task<IActionResult> SetActive(Guid id, [FromBody] SetProgrammeActiveRequest request, CancellationToken cancellationToken)
     {
