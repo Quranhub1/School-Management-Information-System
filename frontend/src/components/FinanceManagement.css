@@ -638,8 +638,7 @@
   color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.025em;
-  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.55);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.65);
   box-shadow: none;
 }
 
@@ -647,8 +646,7 @@
   border-color: var(--finance-action-hover);
   background: var(--finance-action-hover);
   color: #fff;
-  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.55);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+  -webkit-text-stroke: 0.4px rgba(255, 255, 255, 0.65);
   box-shadow: none;
 }
 
