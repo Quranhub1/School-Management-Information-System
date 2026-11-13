@@ -83,6 +83,11 @@ export default function MobileMoneyPayments() {
 
   const pendingTransactions = transactions.filter((t) => t.status === 'Pending');
   const completedTransactions = transactions.filter((t) => t.status === 'Completed');
+  const completedTotalsByCurrency = completedTransactions.reduce<Record<string, number>>((totals, transaction) => {
+    const currency = transaction.currency || SYSTEM_CURRENCY
+    totals[currency] = (totals[currency] ?? 0) + transaction.amount
+    return totals
+  }, {});
 
   return (
     <div className="panel">
@@ -99,10 +104,12 @@ export default function MobileMoneyPayments() {
           <div className="summary-label">Completed Transactions</div>
           <div className="summary-value">{completedTransactions.length}</div>
         </div>
-        <div className="summary-card">
-          <div className="summary-label">Total Completed ({SYSTEM_CURRENCY})</div>
-          <div className="summary-value">{formatAmount(completedTransactions.reduce((sum, t) => sum + t.amount, 0))}</div>
-        </div>
+        {Object.entries(completedTotalsByCurrency).map(([currency, total]) => (
+          <div className="summary-card" key={currency}>
+            <div className="summary-label">Total Completed ({currency})</div>
+            <div className="summary-value">{formatAmount(total, currency)}</div>
+          </div>
+        ))}
       </div>
 
       {submitted && (
