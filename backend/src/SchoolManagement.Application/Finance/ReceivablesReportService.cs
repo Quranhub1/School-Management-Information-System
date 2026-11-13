@@ -143,8 +143,7 @@ public sealed class ReceivablesReportService(IFinanceRepository finance)
                 : "Difference requires review of invoices, allocations, credit notes, refunds, opening balances or other receivable postings.");
     }
 
-    private static string NormalizeCurrency(string currency) =>
-        string.IsNullOrWhiteSpace(currency) ? throw new ArgumentException("Currency is required.", nameof(currency)) : currency.Trim().ToUpperInvariant();
+    private static string NormalizeCurrency(string currency) => MoneyMath.NormalizeCurrency(currency);
 
     private sealed record AgeingBucket(string Name, int InvoiceCount, decimal OutstandingAmount);
 }
