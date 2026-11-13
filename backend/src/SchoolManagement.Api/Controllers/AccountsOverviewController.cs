@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
 
@@ -10,11 +11,12 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/accounts-overview")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
-public sealed class AccountsOverviewController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
+public sealed class AccountsOverviewController(SchoolManagementDbContext db, CampusAccessService campusAccess, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
     {
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
 
@@ -45,7 +47,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             .Select(group => new { currency = group.Key, amount = group.Sum(x => x.Amount) })
             .ToListAsync(cancellationToken);
 
-        var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == "UGX");
+        var defaultCurrencyTotals = invoiceTotals.FirstOrDefault(x => x.currency == systemCurrency);
         var totalBilled = defaultCurrencyTotals?.billed ?? 0m;
         var totalPaid = defaultCurrencyTotals?.paid ?? 0m;
         var todayCollection = collectionTotals.FirstOrDefault(x => x.currency == "UGX")?.amount ?? 0m;
@@ -56,7 +58,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
             totalPaid,
             totalOutstanding = Math.Max(0m, totalBilled - totalPaid),
             todayCollection,
-            currency = "UGX",
+            currency = systemCurrency,
             totalsByCurrency = invoiceTotals.Select(x => new
             {
                 x.currency,
@@ -86,7 +88,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
                 on installment.StudentInvoiceId equals invoice.Id
             where installment.DueDate < asOf
                 && installment.Amount > installment.PaidAmount
-                && invoice.Currency.Trim().ToUpper() == "UGX"
+                && invoice.Currency.Trim().ToUpper() == systemCurrency
             select new
             {
                 invoice.StudentId,
