@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createFeeStructure, getFeeStructures, type FeeStructure } from '../api/finance'
 import { getAccessToken } from '../api/auth'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 
 export function FeeStructuresManagement() {
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([])
@@ -119,7 +120,7 @@ export function FeeStructuresManagement() {
                   <td><strong>{fs.feeType}</strong></td>
                   <td>{fs.name}</td>
                   <td>{fs.academicYearId}</td>
-                  <td>UGX {fs.totalAmount.toLocaleString()}</td>
+                  <td>{formatCurrency(fs.totalAmount, fs.currency || SYSTEM_CURRENCY)}</td>
                   <td>{fs.isActive ? 'Active' : 'Inactive'}</td>
                   <td>
                     <button className="secondary-button" onClick={() => void toggleActive(fs.id, fs.isActive)}>
