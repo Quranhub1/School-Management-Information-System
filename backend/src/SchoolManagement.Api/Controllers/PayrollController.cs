@@ -99,10 +99,24 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
         if (request.Allowances < 0 || request.Deductions < 0) return BadRequest(new { message = "Allowances and deductions cannot be negative." });
         var record = await db.PayrollRecords.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (record is null) return NotFound();
+        try
+        {
+            SchoolManagement.Domain.Finance.MoneyMath.EnsurePrecision(request.Allowances, record.Currency);
+            SchoolManagement.Domain.Finance.MoneyMath.EnsurePrecision(request.Deductions, record.Currency);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        var netPay = SchoolManagement.Domain.Finance.MoneyMath.Subtract(
+            SchoolManagement.Domain.Finance.MoneyMath.Add(record.BasicSalary, request.Allowances, record.Currency),
+            request.Deductions,
+            record.Currency);
+        if (netPay < 0) return BadRequest(new { message = "Deductions cannot exceed salary plus allowances." });
 
         db.Entry(record).Property(x => x.Allowances).CurrentValue = request.Allowances;
         db.Entry(record).Property(x => x.Deductions).CurrentValue = request.Deductions;
-        db.Entry(record).Property(x => x.NetPay).CurrentValue = record.BasicSalary + request.Allowances - request.Deductions;
+        db.Entry(record).Property(x => x.NetPay).CurrentValue = netPay;
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
