@@ -3,6 +3,7 @@ import { Activity, Archive, ArrowRight, Database, FileSearch, LockKeyhole, Setti
 import { getSystemCurrencySettings, saveSystemCurrencySettings, type SystemCurrencySettings } from '../api/systemSettings'
 import { AuditLogManagement } from './AuditLog'
 import { BackupRestore } from './BackupRestore'
+import { notify } from './GlobalNotifications'
 
 type SystemAdministrationManagementProps = {
   activeSubsection?: string | null
@@ -19,9 +20,6 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
   const selected = activeSubsection ?? 'overview'
   const [currency, setCurrency] = useState<SystemCurrencySettings>({ code: 'UGX', locale: 'en-UG', fractionDigits: 0 })
   const [currencyLoading, setCurrencyLoading] = useState(false)
-  const [currencySaving, setCurrencySaving] = useState(false)
-  const [currencyError, setCurrencyError] = useState('')
-  const [currencySuccess, setCurrencySuccess] = useState('')
 
   useEffect(() => {
     if (selected !== 'settings') return
@@ -34,13 +32,13 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
   }, [selected])
 
   async function saveCurrency() {
-    setCurrencySaving(true); setCurrencyError(''); setCurrencySuccess('')
+    setCurrencySaving(true)
     try {
       const saved = await saveSystemCurrencySettings(currency.code)
       setCurrency(saved)
-      setCurrencySuccess('System currency saved. It will become the default for new amounts and displays that use the system default.')
+      notify('System currency saved. It will become the default for new amounts and displays that use the system default.', 'success', 'Currency saved')
       window.dispatchEvent(new CustomEvent('smis:system-currency-updated', { detail: saved }))
-    } catch (error) { setCurrencyError(error instanceof Error ? error.message : 'Unable to save system currency.') }
+    } catch (error) { notify(error instanceof Error ? error.message : 'Unable to save system currency.', 'error', 'Currency save failed') }
     finally { setCurrencySaving(false) }
   }
 
@@ -73,8 +71,6 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
         <section className="panel" aria-labelledby="system-currency-title" style={{ marginTop: 18, padding: 18 }}>
           <div className="panel-heading"><div><p className="eyebrow">FINANCIAL CONFIGURATION</p><h3 id="system-currency-title">System currency</h3></div></div>
           <p>Choose the default currency for new financial records.</p>
-          {currencyError && <p className="error" role="alert">{currencyError}</p>}
-          {currencySuccess && <p className="success" role="status">{currencySuccess}</p>}
           <div className="form-row" style={{ alignItems: 'end' }}>
             <label style={{ flex: 1 }}>Default currency
               <select value={currency.code} disabled={currencyLoading || currencySaving} onChange={event => setCurrency(current => ({ ...current, code: event.target.value }))}>
