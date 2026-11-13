@@ -207,7 +207,7 @@ public sealed class FinanceReportService(IFinanceRepository finance, FiscalPerio
     }
 
     private static bool IsCurrency(JournalEntry entry, string currency) => string.Equals(entry.Currency, currency, StringComparison.OrdinalIgnoreCase);
-    private static string NormalizeCurrency(string currency) => string.IsNullOrWhiteSpace(currency) ? throw new ArgumentException("Currency is required.", nameof(currency)) : currency.Trim().ToUpperInvariant();
+    private static string NormalizeCurrency(string currency) => MoneyMath.NormalizeCurrency(currency);
     private static string Normalize(string? type) => (type ?? string.Empty).Trim().ToLowerInvariant();
     private static bool IsAsset(string? type) => Normalize(type) is "asset" or "assets";
     private static bool IsLiability(string? type) => Normalize(type) is "liability" or "liabilities";
