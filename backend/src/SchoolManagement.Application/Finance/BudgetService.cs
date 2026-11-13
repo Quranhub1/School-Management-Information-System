@@ -21,6 +21,8 @@ public sealed class BudgetService(IBudgetRepository budgets, IFinanceRepository 
         if (request.EndDate < request.StartDate) throw new ArgumentException("Budget end date cannot be before the start date.");
         if (request.Lines is null || request.Lines.Count == 0) throw new ArgumentException("At least one budget line is required.");
         if (request.Lines.Any(x => x.AllocatedAmount < 0)) throw new ArgumentException("Budget allocations cannot be negative.");
+        var currency = MoneyMath.NormalizeCurrency(request.Currency);
+        foreach (var line in request.Lines) MoneyMath.EnsurePrecision(line.AllocatedAmount, currency);
         if (request.Lines.Select(x => x.AccountId).Distinct().Count() != request.Lines.Count) throw new ArgumentException("Each account may appear only once in a budget.");
 
         var lines = new List<BudgetLine>();
@@ -37,7 +39,7 @@ public sealed class BudgetService(IBudgetRepository budgets, IFinanceRepository 
             DepartmentId = request.DepartmentId,
             AcademicYearId = request.AcademicYearId,
             Name = request.Name.Trim(),
-            Currency = string.IsNullOrWhiteSpace(request.Currency) ? "UGX" : request.Currency.Trim().ToUpperInvariant(),
+            Currency = currency,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             TotalAmount = lines.Sum(x => x.AllocatedAmount),
