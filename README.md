@@ -133,7 +133,7 @@ The repository includes an explicit golden-path acceptance procedure in [`INSTAL
 - Assessment/admission number: **U075/042**
 - Test admission/reporting date: **2026-09-09**
 
-The path covers admission, enrollment, course registration, UGX fee billing, installment payments, ledger verification, attendance, assessment/results, student profile and reporting. **Do not run this scenario against a production database.**
+The path covers admission, enrollment, course registration, currency-aware fee billing, installment payments, ledger verification, attendance, assessment/results, student profile and reporting. **Do not run this scenario against a production database.**
 
 ## System scope
 
@@ -188,7 +188,7 @@ Student/guardian self-service portals are **not part of the current scope**. Aca
 
 ## Finance and currency
 
-The institutional system currency is **UGX — Ugandan Shilling**. Finance workflows cover invoices, payments, installments, allocation, receivables, ledger, journals, credit notes/refunds, fiscal periods, budgets, bank reconciliation/reporting, accounting dimensions and financial statements foundations.
+The institutional system currency defaults to **UGX — Ugandan Shilling** and is configurable in System Administration. Existing transaction currencies are preserved; no automatic FX conversion is performed. Finance workflows cover invoices, payments, installments, allocation, receivables, ledger, journals, credit notes/refunds, fiscal periods, budgets, bank reconciliation/reporting, accounting dimensions and financial statements foundations.
 
 Amounts entered as `125000` represent **UGX 125,000**. Production deployments must not silently reinterpret institutional amounts as USD, EUR or another currency.
 

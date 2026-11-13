@@ -53,17 +53,17 @@ export function CashBankPositionReport() {
       {loading && !report ? <p className="empty">Loading cash and bank position…</p> : report && (
         <>
           <div className="summary-grid" style={{ marginBottom: 18 }}>
-            <div className="summary-card"><span>Opening Liquid Funds</span><strong>{formatCurrency(report.totalOpeningBalance)}</strong></div>
-            <div className="summary-card"><span>Total Inflows</span><strong>{formatCurrency(report.totalInflows)}</strong></div>
-            <div className="summary-card"><span>Total Outflows</span><strong>{formatCurrency(report.totalOutflows)}</strong></div>
-            <div className="summary-card"><span>Closing Liquid Funds</span><strong>{formatCurrency(report.totalClosingBalance)}</strong></div>
+            <div className="summary-card"><span>Opening Liquid Funds</span><strong>{formatCurrency(report.totalOpeningBalance, report.currency)}</strong></div>
+            <div className="summary-card"><span>Total Inflows</span><strong>{formatCurrency(report.totalInflows, report.currency)}</strong></div>
+            <div className="summary-card"><span>Total Outflows</span><strong>{formatCurrency(report.totalOutflows, report.currency)}</strong></div>
+            <div className="summary-card"><span>Closing Liquid Funds</span><strong>{formatCurrency(report.totalClosingBalance, report.currency)}</strong></div>
           </div>
 
           <div className="summary-grid" style={{ marginBottom: 18 }}>
-            <div className="summary-card"><span>Cash Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1010')?.closingBalance ?? 0)}</strong></div>
-            <div className="summary-card"><span>Bank Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1020')?.closingBalance ?? 0)}</strong></div>
-            <div className="summary-card"><span>Mobile Money Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1030')?.closingBalance ?? 0)}</strong></div>
-            <div className="summary-card"><span>Net Movement</span><strong>{formatCurrency(report.netMovement)}</strong></div>
+            <div className="summary-card"><span>Cash Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1010')?.closingBalance ?? 0, report.currency)}</strong></div>
+            <div className="summary-card"><span>Bank Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1020')?.closingBalance ?? 0, report.currency)}</strong></div>
+            <div className="summary-card"><span>Mobile Money Closing</span><strong>{formatCurrency(report.accounts.find(x => x.accountCode === '1030')?.closingBalance ?? 0, report.currency)}</strong></div>
+            <div className="summary-card"><span>Net Movement</span><strong>{formatCurrency(report.netMovement, report.currency)}</strong></div>
           </div>
 
           <div className="table-wrap">
@@ -73,19 +73,19 @@ export function CashBankPositionReport() {
                 {report.accounts.map(account => (
                   <tr key={account.accountId}>
                     <td><strong>{account.accountCode}</strong><br />{account.accountName}</td>
-                    <td>{formatCurrency(account.openingBalance)}</td>
-                    <td>{formatCurrency(account.inflows)}</td>
-                    <td>{formatCurrency(account.outflows)}</td>
-                    <td>{formatCurrency(account.netMovement)}</td>
-                    <td><strong>{formatCurrency(account.closingBalance)}</strong></td>
+                    <td>{formatCurrency(account.openingBalance, report.currency)}</td>
+                    <td>{formatCurrency(account.inflows, report.currency)}</td>
+                    <td>{formatCurrency(account.outflows, report.currency)}</td>
+                    <td>{formatCurrency(account.netMovement, report.currency)}</td>
+                    <td><strong>{formatCurrency(account.closingBalance, report.currency)}</strong></td>
                     <td>{account.reconciliationStatus}</td>
-                    <td>{account.reconciliationDifference === undefined ? '—' : formatCurrency(account.reconciliationDifference)}</td>
+                    <td>{account.reconciliationDifference === undefined ? '—' : formatCurrency(account.reconciliationDifference, report.currency)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="empty" style={{ marginTop: 12 }}>Period: {report.from} to {report.to} · Currency: {SYSTEM_CURRENCY}</p>
+          <p className="empty" style={{ marginTop: 12 }}>Period: {report.from} to {report.to} · Currency: {report.currency}</p>
         </>
       )}
     </section>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency';
 import { cancelMobileMoneyTransaction, getMobileMoneyTransactions, getStudentFinanceProfile, getInvoices, type MobileMoneyTransaction } from '../api/finance';
 
 interface Invoice {
@@ -78,10 +79,15 @@ export default function MobileMoneyPayments() {
     }
   };
 
-  const formatAmount = (val: number) => new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX' }).format(val);
+  const formatAmount = (val: number, currency = SYSTEM_CURRENCY) => formatCurrency(val, currency);
 
   const pendingTransactions = transactions.filter((t) => t.status === 'Pending');
   const completedTransactions = transactions.filter((t) => t.status === 'Completed');
+  const completedTotalsByCurrency = completedTransactions.reduce<Record<string, number>>((totals, transaction) => {
+    const currency = transaction.currency || SYSTEM_CURRENCY
+    totals[currency] = (totals[currency] ?? 0) + transaction.amount
+    return totals
+  }, {});
 
   return (
     <div className="panel">
@@ -98,10 +104,12 @@ export default function MobileMoneyPayments() {
           <div className="summary-label">Completed Transactions</div>
           <div className="summary-value">{completedTransactions.length}</div>
         </div>
-        <div className="summary-card">
-          <div className="summary-label">Total Completed (UGX)</div>
-          <div className="summary-value">{formatAmount(completedTransactions.reduce((sum, t) => sum + t.amount, 0))}</div>
-        </div>
+        {Object.entries(completedTotalsByCurrency).map(([currency, total]) => (
+          <div className="summary-card" key={currency}>
+            <div className="summary-label">Total Completed ({currency})</div>
+            <div className="summary-value">{formatAmount(total, currency)}</div>
+          </div>
+        ))}
       </div>
 
       {submitted && (
@@ -150,7 +158,7 @@ export default function MobileMoneyPayments() {
                     <td>{tx.transactionRef}</td>
                     <td>{tx.studentId}</td>
                     <td>{tx.provider} Mobile Money</td>
-                    <td>{formatAmount(tx.amount)}</td>
+                    <td>{formatAmount(tx.amount, tx.currency || SYSTEM_CURRENCY)}</td>
                     <td>
                       <span style={{ padding: '4px 8px', borderRadius: '4px', background: '#fef3c7', color: '#92400e' }}>
                         {tx.status}

@@ -18,6 +18,9 @@ public sealed class InstitutionSettings
     public string? LogoContentType { get; set; }
     public string? PrimaryColor { get; set; }
     public string? AccentColor { get; set; }
+    public string SystemCurrencyCode { get; set; } = "UGX";
+    public string SystemCurrencyLocale { get; set; } = "en-UG";
+    public int SystemCurrencyFractionDigits { get; set; }
     public bool EmailEnabled { get; set; }
     public string? EmailSmtpHost { get; set; }
     public int? EmailSmtpPort { get; set; }

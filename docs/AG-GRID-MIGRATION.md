@@ -42,7 +42,7 @@ AG Grid Community is MIT-licensed. This implementation does not import Enterpris
 
 Chart.js is bundled through npm and rendered locally; no CDN, remote font, or runtime network request is needed for chart rendering.
 
-The grid is a presentation layer. Existing API routes, backend validation, permission checks, and UGX formatting remain owned by the original feature screens.
+The grid is a presentation layer. Existing API routes, backend validation, permission checks, and currency-aware formatting remain owned by the original feature screens.
 
 ## Deliberately not converted
 

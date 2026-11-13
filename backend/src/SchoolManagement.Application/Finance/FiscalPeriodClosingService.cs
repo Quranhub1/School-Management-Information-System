@@ -18,22 +18,28 @@ public sealed class FiscalPeriodClosingService(IFinanceRepository finance, IFisc
         var retainedType = Normalize(retained.AccountType);
         if (retainedType is not ("equity" or "capital")) throw new ArgumentException("Retained earnings account must be an Equity or Capital account.");
 
-        var entryNumber = $"CLOSE-{period.Id:N}";
-        if (await finance.JournalEntryNumberExistsAsync(entryNumber, cancellationToken)) throw new InvalidOperationException($"The fiscal period '{period.Name}' has already been closed or has a closing entry.");
-
         var entries = await finance.GetPostedJournalEntriesAsync(period.StartDate, period.EndDate, null, cancellationToken);
-        var lines = BuildClosingLines(entries, retained.Id);
+        var currencyGroups = entries.GroupBy(x => string.IsNullOrWhiteSpace(x.Currency) ? "UGX" : x.Currency.Trim().ToUpperInvariant()).ToArray();
 
-        // A closing journal is required whenever there are income-statement
-        // balances. Even when net income is exactly zero, revenue and expense
-        // accounts still have to be cleared into the retained-earnings close.
-        if (lines.Count > 0)
+        foreach (var currencyGroup in currencyGroups)
         {
+            var entryNumber = currencyGroups.Length == 1
+                ? $"CLOSE-{period.Id:N}"
+                : $"CLOSE-{period.Id:N}-{currencyGroup.Key}";
+            if (await finance.JournalEntryNumberExistsAsync(entryNumber, cancellationToken))
+                throw new InvalidOperationException($"The fiscal period '{period.Name}' already has a closing journal for {currencyGroup.Key}.");
+
+            var lines = BuildClosingLines(currencyGroup, retained.Id);
+            // Each currency is closed independently. No exchange-rate conversion
+            // or cross-currency netting is performed by the closing process.
+            if (lines.Count == 0) continue;
+
             var entry = new JournalEntry
             {
                 EntryNumber = entryNumber,
+                Currency = currencyGroup.Key,
                 EntryDate = period.EndDate.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc),
-                Description = $"Fiscal period closing - {period.Name}",
+                Description = $"Fiscal period closing - {period.Name} ({currencyGroup.Key})",
                 Status = "Posted",
                 PostedAt = DateTimeOffset.UtcNow,
                 PostedBy = performedBy.Trim(),

@@ -116,7 +116,7 @@ export Authentication__JwtKey='REPLACE_WITH_A_RANDOM_SECRET_AT_LEAST_32_CHARACTE
 export ASPNETCORE_ENVIRONMENT='Production'
 ```
 
-The system currency is **UGX — Ugandan Shilling**. Do not configure USD/EUR as the institutional system currency.
+The system currency defaults to **UGX — Ugandan Shilling**. A System Administrator can change it under **System Administration → System settings → System currency**. Supported choices include UGX, USD, KES, EUR, GBP, TZS, RWF, ZAR and AED. The selected currency is the default for new records; existing transactions retain their recorded currency and are never automatically converted.
 
 ## 6. Apply EF Core migrations
 

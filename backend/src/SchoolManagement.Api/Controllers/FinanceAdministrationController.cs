@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Finance;
 
 namespace SchoolManagement.Api.Controllers;
@@ -8,7 +9,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/finance/administration")]
 [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
-public sealed class FinanceAdministrationController(BudgetService budgets, BankReconciliationService bankReconciliations) : ControllerBase
+public sealed class FinanceAdministrationController(BudgetService budgets, BankReconciliationService bankReconciliations, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("budgets")]
     public async Task<IActionResult> GetBudgets([FromQuery] Guid? academicYearId, [FromQuery] bool activeOnly = false, CancellationToken cancellationToken = default) =>
@@ -23,7 +24,7 @@ public sealed class FinanceAdministrationController(BudgetService budgets, BankR
                 request.DepartmentId,
                 request.AcademicYearId,
                 request.Name,
-                request.Currency,
+                string.IsNullOrWhiteSpace(request.Currency) ? (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code : request.Currency,
                 request.StartDate,
                 request.EndDate,
                 request.Lines.Select(x => new BudgetLineRequest(x.AccountId, x.Category, x.AllocatedAmount, x.Notes)).ToArray()), cancellationToken);
@@ -119,7 +120,7 @@ public sealed class FinanceAdministrationController(BudgetService budgets, BankR
     }
 
     // API-layer request names are kept stable while application services own their domain contracts.
-    public sealed record CreateBudgetRequest(Guid DepartmentId, Guid AcademicYearId, string Name, string Currency, DateTimeOffset StartDate, DateTimeOffset EndDate, IReadOnlyCollection<AddBudgetLineRequest> Lines);
+    public sealed record CreateBudgetRequest(Guid DepartmentId, Guid AcademicYearId, string Name, string? Currency, DateTimeOffset StartDate, DateTimeOffset EndDate, IReadOnlyCollection<AddBudgetLineRequest> Lines);
     public sealed record AddBudgetLineRequest(Guid AccountId, string Category, decimal AllocatedAmount, string? Notes = null);
     public sealed record CreateBankReconciliationRequest(Guid BankAccountId, DateTimeOffset StatementDate, decimal StatementBalance, decimal BookBalance, decimal ReconciledAmount, string? Notes = null);
     public sealed record AddStatementLineRequest(DateTimeOffset TransactionDate, decimal Amount, string TransactionType, string? Description = null, string? Reference = null);

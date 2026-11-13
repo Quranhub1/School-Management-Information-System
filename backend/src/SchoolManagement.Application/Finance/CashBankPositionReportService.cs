@@ -97,12 +97,11 @@ public sealed class CashBankPositionReportService(
         Guid? departmentId = null,
         Guid? programmeId = null)
     {
-        if (!string.Equals(currency.Trim(), "UGX", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("Cash and bank position reporting currently supports UGX only.", nameof(currency));
+        currency = MoneyMath.NormalizeCurrency(currency);
 
         var (effectiveFrom, effectiveTo) = await ResolveRangeAsync(from, to, cancellationToken);
-        var openingEntries = await finance.GetPostedJournalEntriesAsync(null, effectiveFrom.AddDays(-1), null, cancellationToken);
-        var periodEntries = await finance.GetPostedJournalEntriesAsync(effectiveFrom, effectiveTo, null, cancellationToken);
+        var openingEntries = (await finance.GetPostedJournalEntriesAsync(null, effectiveFrom.AddDays(-1), null, cancellationToken)).Where(x => string.Equals(x.Currency, currency, StringComparison.OrdinalIgnoreCase)).ToArray();
+        var periodEntries = (await finance.GetPostedJournalEntriesAsync(effectiveFrom, effectiveTo, null, cancellationToken)).Where(x => string.Equals(x.Currency, currency, StringComparison.OrdinalIgnoreCase)).ToArray();
 
         var openingBalances = Aggregate(openingEntries, campusId, facultyId, departmentId, programmeId);
         var movements = periodEntries
@@ -126,7 +125,7 @@ public sealed class CashBankPositionReportService(
             openingBalances.TryGetValue(account.Id, out var opening);
             var accountMovements = movements.Where(x => x.AccountId == account.Id).ToArray();
             latestReconciliations.TryGetValue(account.Id, out var reconciliation);
-            var isBank = code.Equals(FinanceAccountCodes.Bank, StringComparison.OrdinalIgnoreCase);
+            var isBank = currency == "UGX" && code.Equals(FinanceAccountCodes.Bank, StringComparison.OrdinalIgnoreCase);
             lines.Add(CashBankPositionCalculator.Calculate(
                 account.Id,
                 account.Code,
@@ -147,7 +146,7 @@ public sealed class CashBankPositionReportService(
         return new CashBankPositionReport(
             effectiveFrom,
             effectiveTo,
-            "UGX",
+            currency,
             lines.OrderBy(x => x.AccountCode).ToList(),
             cash?.OpeningBalance ?? 0m,
             bank?.OpeningBalance ?? 0m,

@@ -60,6 +60,7 @@ public sealed class InvoiceDiscountService(IFinanceRepository finance)
         var entry = new JournalEntry
         {
             EntryNumber = $"DISC-{discount.Id:N}"[..Math.Min(50, $"DISC-{discount.Id:N}".Length)],
+            Currency = invoice.Currency,
             Description = $"Discount {discount.DiscountType} for invoice {invoice.InvoiceNumber}",
             Status = "Posted",
             PostedAt = DateTimeOffset.UtcNow,

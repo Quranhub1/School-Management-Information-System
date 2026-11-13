@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Library;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure.Persistence;
@@ -19,7 +20,8 @@ public sealed class LibraryController(
     FinanceWorkflowService finance,
     IConfiguration configuration,
     SchoolManagementDbContext db,
-    CampusAccessService campusAccess) : ControllerBase
+    CampusAccessService campusAccess,
+    InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("books")]
     [Authorize(Policy = LibraryPolicies.Read)]
@@ -78,7 +80,17 @@ public sealed class LibraryController(
         if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId && x.IsActive, ct))
             return BadRequest(new { message = "The selected programme is not active." });
 
-        var currency = string.IsNullOrWhiteSpace(request.Currency) ? "UGX" : request.Currency.Trim().ToUpperInvariant();
+        string currency;
+        try
+        {
+            var defaultCurrency = (await institutionSettings.GetSystemCurrencyAsync(ct)).Code;
+            currency = SchoolManagement.Domain.Finance.MoneyMath.NormalizeCurrency(string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency);
+            SchoolManagement.Domain.Finance.MoneyMath.EnsurePrecision(request.Amount, currency);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
         // Keep one active Library requirement per programme so a student is never
         // billed twice for competing versions of the same course book policy.
         var previousRequirements = await db.FeeStructures
@@ -116,7 +128,7 @@ public sealed class LibraryController(
             FeeStructureId = structure.Id,
             Code = "LIB-BOOK",
             Name = request.Name.Trim(),
-            Amount = decimal.Round(request.Amount, 2, MidpointRounding.AwayFromZero),
+            Amount = request.Amount,
             Currency = currency,
             SortOrder = 1,
             IsOptional = false
@@ -220,10 +232,19 @@ public sealed class LibraryController(
                 .Where(x => x.StudentId == studentId && x.FeeType == "LibraryBook");
             if (!await libraryInvoices.AnyAsync(ct))
                 return Conflict(new { message = "No Library book-fee invoice exists for this student. The Librarian must configure the course requirement first." });
-            var outstanding = await libraryInvoices
-                .SumAsync(x => (decimal?)(x.Amount - x.DiscountAmount - x.PaidAmount), ct) ?? 0m;
-            if (outstanding > 0)
-                return Conflict(new { message = $"Library book fee is not fully paid. Outstanding: {outstanding:N0} UGX." });
+            var invoiceBalances = await libraryInvoices
+                .Select(x => new { x.Currency, Outstanding = x.Amount - x.DiscountAmount - x.PaidAmount })
+                .ToListAsync(ct);
+            var outstandingByCurrency = invoiceBalances
+                .GroupBy(x => string.IsNullOrWhiteSpace(x.Currency) ? "UGX" : x.Currency.Trim().ToUpperInvariant())
+                .Select(group => new { Currency = group.Key, Amount = group.Sum(x => x.Outstanding) })
+                .Where(x => x.Amount > 0m)
+                .ToList();
+            if (outstandingByCurrency.Count > 0)
+            {
+                var amounts = string.Join(", ", outstandingByCurrency.Select(x => $"{x.Currency} {x.Amount:N0}"));
+                return Conflict(new { message = $"Library book fee is not fully paid. Outstanding: {amounts}." });
+            }
         }
         else if (string.IsNullOrWhiteSpace(request.Reference))
         {
@@ -295,6 +316,6 @@ public sealed class LibraryController(
     }
 }
 
-public sealed record SetLibraryProgrammeRequirementRequest(Guid ProgrammeId, string Name, decimal Amount, string? Currency = "UGX");
+public sealed record SetLibraryProgrammeRequirementRequest(Guid ProgrammeId, string Name, decimal Amount, string? Currency = null);
 
 public sealed record LibraryClearanceRequest(string Method, string? Reference = null);

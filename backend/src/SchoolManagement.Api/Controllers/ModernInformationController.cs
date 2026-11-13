@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -12,13 +13,14 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/modern")]
 [Authorize]
-public sealed class ModernInformationController(SchoolManagementDbContext db, IWebHostEnvironment environment) : ControllerBase
+public sealed class ModernInformationController(SchoolManagementDbContext db, IWebHostEnvironment environment, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("dashboard")]
     public async Task<ActionResult<ModernDashboardDto>> Dashboard(CancellationToken ct)
     {
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(ct)).Code;
         var students = await db.Students.AsNoTracking().ToListAsync(ct);
-        var invoices = await db.StudentInvoices.AsNoTracking().ToListAsync(ct);
+        var invoices = await db.StudentInvoices.AsNoTracking().Where(x => x.Currency == systemCurrency).ToListAsync(ct);
         var assessments = await db.StudentAssessments.AsNoTracking().ToListAsync(ct);
         var attendance = await db.StudentAttendances.AsNoTracking().ToListAsync(ct);
         var placements = await db.StudentPlacements.AsNoTracking().ToListAsync(ct);
@@ -52,7 +54,8 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
 
         var attendance = await db.StudentAttendances.AsNoTracking().Where(x => x.StudentId == studentId).ToListAsync(ct);
         var assessments = await db.StudentAssessments.AsNoTracking().Where(x => x.StudentId == studentId).ToListAsync(ct);
-        var invoices = await db.StudentInvoices.AsNoTracking().Where(x => x.StudentId == studentId).ToListAsync(ct);
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(ct)).Code;
+        var invoices = await db.StudentInvoices.AsNoTracking().Where(x => x.StudentId == studentId && x.Currency == systemCurrency).ToListAsync(ct);
         var placements = await db.StudentPlacements.AsNoTracking().Where(x => x.StudentId == studentId).ToListAsync(ct);
         var certificates = await db.Certificates.AsNoTracking().CountAsync(x => x.StudentId == studentId, ct);
 
@@ -76,7 +79,8 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
         var students = await db.Students.AsNoTracking().ToListAsync(ct);
         var attendance = await db.StudentAttendances.AsNoTracking().ToListAsync(ct);
         var assessments = await db.StudentAssessments.AsNoTracking().ToListAsync(ct);
-        var invoices = await db.StudentInvoices.AsNoTracking().ToListAsync(ct);
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(ct)).Code;
+        var invoices = await db.StudentInvoices.AsNoTracking().Where(x => x.Currency == systemCurrency).ToListAsync(ct);
         var result = new List<StudentRiskDto>();
 
         foreach (var s in students)

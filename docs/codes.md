@@ -7,7 +7,7 @@ A practical command notebook for the **School Management Information System (SMI
 - Repository: https://github.com/Quranhub1/School-Management-Information-System
 - Main branch: `main`
 - Stack: .NET 8 / Entity Framework Core / PostgreSQL; React + TypeScript + Vite; Tauri desktop client.
-- Currency/locale: UGX / `en-UG`.
+- Default currency/locale: UGX / `en-UG`; configurable in System Administration → System settings → System currency.
 - Windows working directory previously used: `C:\\Users\\JOES TECH\\School-Management-Information-System`
 - Ubuntu working directory previously used: `~/School-Management-Information-System`
 

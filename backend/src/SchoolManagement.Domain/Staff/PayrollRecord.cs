@@ -10,6 +10,7 @@ public sealed class PayrollRecord
     public decimal Allowances { get; init; }
     public decimal Deductions { get; init; }
     public decimal NetPay { get; init; }
+    public string Currency { get; init; } = "UGX";
     public DateTimeOffset? PaymentDate { get; set; }
     public string Status { get; set; } = "Pending";
     public string? PaymentMethod { get; set; }

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import LoadingSpinner from './LoadingSpinner';
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { getAccountsOverviewDashboard, getAccountsOverviewOutstanding, getAccountsOverviewPayments, getAccountsOverviewPayroll, type AccountsOverviewDashboard, type AccountsOverviewOutstanding, type AccountsOverviewPayment, type AccountsOverviewPayroll } from '../api/finance'
 
 export function AccountsOverview() {
@@ -67,14 +68,14 @@ export function AccountsOverview() {
   }
 
   function exportOutstandingCSV() {
-    const headers = ['Student Number', 'Name', 'Programme', 'Balance', 'Status']
-    const rows = outstanding.map(o => [o.studentNumber, o.studentName, o.programmeName, o.balance.toLocaleString(), o.status])
+    const headers = ['Student Number', 'Name', 'Programme', 'Currency', 'Balance', 'Status']
+    const rows = outstanding.map(o => [o.studentNumber, o.studentName, o.programmeName, o.currency || SYSTEM_CURRENCY, formatCurrency(o.balance, o.currency || SYSTEM_CURRENCY), o.status])
     exportCSV('outstanding_balances.csv', headers, rows)
   }
 
   function exportPaymentsCSV() {
-    const headers = ['Receipt No.', 'Student Name', 'Invoice', 'Amount', 'Payment Method', 'Date']
-    const rows = payments.map(p => [p.receiptNumber, p.studentName, p.invoiceNumber, p.amount.toLocaleString(), p.paymentMethod, p.paidAt])
+    const headers = ['Receipt No.', 'Student Name', 'Invoice', 'Currency', 'Amount', 'Payment Method', 'Date']
+    const rows = payments.map(p => [p.receiptNumber, p.studentName, p.invoiceNumber, p.currency || SYSTEM_CURRENCY, formatCurrency(p.amount, p.currency || SYSTEM_CURRENCY), p.paymentMethod, p.paidAt])
     exportCSV('recent_payments.csv', headers, rows)
   }
 
@@ -107,21 +108,21 @@ export function AccountsOverview() {
             <div className="summary-grid">
               <div className="summary-card">
                 <span>Total Billed</span>
-                <strong>UGX {dashboard.totalBilled.toLocaleString()}</strong>
+                <strong>{formatCurrency(dashboard.totalBilled, SYSTEM_CURRENCY)}</strong>
               </div>
               <div className="summary-card">
                 <span>Total Paid</span>
-                <strong style={{ color: '#059669' }}>UGX {dashboard.totalPaid.toLocaleString()}</strong>
+                <strong style={{ color: '#059669' }}>{formatCurrency(dashboard.totalPaid, SYSTEM_CURRENCY)}</strong>
               </div>
               <div className="summary-card">
                 <span>Outstanding Balance</span>
                 <strong style={{ color: dashboard.totalOutstanding > 0 ? '#dc2626' : '#059669' }}>
-                  UGX {dashboard.totalOutstanding.toLocaleString()}
+                  {formatCurrency(dashboard.totalOutstanding, SYSTEM_CURRENCY)}
                 </strong>
               </div>
               <div className="summary-card">
                 <span>Today's Collection</span>
-                <strong>UGX {dashboard.todayCollection.toLocaleString()}</strong>
+                <strong>{formatCurrency(dashboard.todayCollection, SYSTEM_CURRENCY)}</strong>
               </div>
               <div className="summary-card">
                 <span>Invoice Count</span>
@@ -164,7 +165,7 @@ export function AccountsOverview() {
                         <td>{item.studentName}</td>
                         <td>{item.programmeName}</td>
                         <td style={{ color: '#dc2626', fontWeight: 700 }}>
-                          {item.currency} {item.balance.toLocaleString()}
+                          {formatCurrency(item.balance, item.currency || SYSTEM_CURRENCY)}
                         </td>
                         <td>{item.status}</td>
                       </tr>
@@ -229,7 +230,7 @@ export function AccountsOverview() {
                         <td>{payment.receiptNumber}</td>
                         <td>{payment.studentName}</td>
                         <td>{payment.invoiceNumber}</td>
-                        <td style={{ color: '#059669', fontWeight: 700 }}>UGX {payment.amount.toLocaleString()}</td>
+                        <td style={{ color: '#059669', fontWeight: 700 }}>{formatCurrency(payment.amount, payment.currency ?? SYSTEM_CURRENCY)}</td>
                         <td>{payment.paymentMethod}</td>
                         <td>{new Date(payment.paidAt).toLocaleDateString('en-UG')}</td>
                       </tr>

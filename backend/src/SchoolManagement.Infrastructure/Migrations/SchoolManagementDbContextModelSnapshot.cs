@@ -850,6 +850,19 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("SystemCurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<int>("SystemCurrencyFractionDigits")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SystemCurrencyLocale")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<bool>("EmailEnabled")
                         .HasColumnType("boolean");
 
@@ -2974,6 +2987,11 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("EntryDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
                     b.Property<string>("EntryNumber")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -4213,6 +4231,11 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.Property<int>("Month")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
 
                     b.Property<decimal>("NetPay")
                         .HasColumnType("numeric");
