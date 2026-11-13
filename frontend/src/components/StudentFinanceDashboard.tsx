@@ -117,7 +117,7 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
         totalsByCurrency[currency] = totals
       }
       return { student, billedByFee, totalsByCurrency, invoiceCount: studentInvoices.length }
-)
+    })
   }, [registerStudents, registerInvoices, query, programmeFilter, intakeFilter, classFilter, semesterFilter, academicYearFilter])
 
   const groupedRegisterRows = useMemo(() => {
@@ -275,9 +275,9 @@ export function StudentFinanceDashboard({ initialSearch = '' }: Props) {
         <div className="finance-code-box"><span>Payment Provider / Registration Code</span><strong>{profile.studentNumber}</strong><div><button className="secondary-button" onClick={() => void copyCode()}>Copy Code</button><button className="secondary-button" onClick={shareSms}>Share via SMS</button></div></div>
       </div>
       <div className="summary-grid finance-summary-grid">
-        <div className="summary-card"><span>Total Billed Term Fees</span><strong>{money(summary.billed)}</strong></div>
-        <div className="summary-card"><span>Total Amount Paid</span><strong style={{color:'#059669'}}>{money(summary.paid)}</strong></div>
-        <div className="summary-card"><span>Outstanding Balance</span><strong style={{color:summaryByCurrency.length === 1 ? summaryByCurrency[0].status.color : undefined}}>{money(summary.balance)}</strong></div>
+        <div className="summary-card"><span>Total Billed Term Fees</span><strong>{summaryByCurrency.map(row => money(row.billed, row.currency)).join(' / ')}</strong></div>
+        <div className="summary-card"><span>Total Amount Paid</span><strong style={{color:'#059669'}}>{summaryByCurrency.map(row => money(row.paid, row.currency)).join(' / ')}</strong></div>
+        <div className="summary-card"><span>Outstanding Balance</span><strong style={{color:summaryByCurrency.length === 1 ? summaryByCurrency[0].status.color : undefined}}>{summaryByCurrency.map(row => money(row.balance, row.currency)).join(' / ')}</strong></div>
       </div>
       <div className="finance-progress-card">
         <div className="finance-progress-head"><div><span>Payment Progress</span><strong>{summaryByCurrency.map(row => row.currency + ' ' + row.status.progress.toFixed(0) + '%').join(' · ')}</strong></div><span className="finance-status-badge" style={{color:summaryByCurrency.length === 1 ? summaryByCurrency[0].status.color : undefined,background:summaryByCurrency.length === 1 ? summaryByCurrency[0].status.bg : undefined}}>{summaryByCurrency.length === 1 ? summaryByCurrency[0].status.label : 'Per-currency balances'}</span></div>
