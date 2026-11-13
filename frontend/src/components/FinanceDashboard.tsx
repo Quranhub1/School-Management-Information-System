@@ -286,7 +286,7 @@ export function FinanceDashboard() {
                         <td>{item.studentName}</td>
                         <td>{item.programmeName}</td>
                         <td style={{ color: '#dc2626', fontWeight: 700 }}>
-                          {item.currency} {item.balance.toLocaleString()}
+                          {formatCurrency(item.balance, item.currency || SYSTEM_CURRENCY)}
                         </td>
                         <td>{item.status}</td>
                       </tr>
@@ -365,7 +365,7 @@ export function FinanceDashboard() {
                 >
                   {quickPayResult.invoices.map(inv => (
                     <option key={inv.id} value={inv.id}>
-                      {inv.invoiceNumber} (Balance: {inv.currency} {inv.balance.toLocaleString()})
+                      {inv.invoiceNumber} (Balance: {formatCurrency(inv.balance, inv.currency || SYSTEM_CURRENCY)})
                     </option>
                   ))}
                 </select>
