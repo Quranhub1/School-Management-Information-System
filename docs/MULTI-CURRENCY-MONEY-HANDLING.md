@@ -9,13 +9,21 @@
 - Backend finance calculations use .NET decimal. MoneyMath centralizes currency normalization, fraction digits, rounding, precision validation, explicit-rate conversion, and same-currency checks.
 - Invoice creation validates fee-item currencies and precision before creating the invoice. Payment recording validates the entered amount against the invoice/payment currency precision. Existing allocation logic already rejects allocations where payment and invoice currencies differ.
 
+## System currency configuration
+
+- UGX / `en-UG` remains the default on a new installation.
+- An authorized System Administrator can change the default at **System Administration → System settings → System currency**.
+- The selected code, locale and fraction-digit metadata are persisted with the active institution settings and loaded centrally by the frontend and relevant API defaults.
+- Supported system defaults are UGX, USD, KES, EUR, GBP, TZS, RWF, ZAR and AED. Currencies requiring three fractional digits are intentionally not offered until database precision is upgraded.
+- Changing the system default affects new records and system-default summaries only. It does not rewrite existing invoices, payments, journals, ledgers, fee structures or other historical records.
+
 ## Currency safety rules
 
 1. Never sum, compare, allocate, or report amounts across different currencies as if they were the same unit.
 2. Do not apply a live or guessed exchange rate. A conversion must use an explicitly supplied rate and round to the target currency's fraction digits.
 3. Preserve the original transaction currency on invoices, payments, allocations, and ledger entries. Changing the institution's default must not rewrite historical transactions.
 4. Use decimal strings at JavaScript boundaries where exact decimal precision matters. JSON numeric values are IEEE-754 numbers once parsed by JavaScript.
-5. Keep UGX as the default for new transactions unless the user explicitly selects another supported currency.
+5. Use the configured system currency as the default for new records unless the user explicitly selects another supported currency.
 
 ## Important deployment limitation
 
