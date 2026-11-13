@@ -129,15 +129,26 @@ export function FinanceManagement({ readOnly = false }: { readOnly?: boolean } =
   }, [outstanding, query])
 
   const collectionByDate = useMemo(() => {
-    const map = new Map<string, number>()
+    const totalsByCurrency = new Map<string, Map<string, number>>()
+    const dateLabels = new Map<string, string>()
     for (const payment of payments) {
-      const key = new Date(payment.paidAt).toLocaleDateString(SYSTEM_LOCALE, { month: 'short', day: 'numeric' })
-      map.set(key, (map.get(key) ?? 0) + Number(payment.amount || 0))
+      const paidAt = new Date(payment.paidAt)
+      if (!Number.isFinite(paidAt.getTime())) continue
+      const dateKey = [paidAt.getFullYear(), String(paidAt.getMonth() + 1).padStart(2, '0'), String(paidAt.getDate()).padStart(2, '0')].join('-')
+      const label = paidAt.toLocaleDateString(SYSTEM_LOCALE, { month: 'short', day: 'numeric' })
+      const currency = (payment.currency || SYSTEM_CURRENCY).toUpperCase()
+      dateLabels.set(dateKey, label)
+      const currencyTotals = totalsByCurrency.get(currency) ?? new Map<string, number>()
+      currencyTotals.set(dateKey, (currencyTotals.get(dateKey) ?? 0) + Number(payment.amount || 0))
+      totalsByCurrency.set(currency, currencyTotals)
     }
-    const entries = [...map.entries()].slice(-7)
+    const dateKeys = [...dateLabels.keys()].sort().slice(-7)
     return {
-      labels: entries.map(([key]) => key),
-      datasets: [{ label: 'Collections', data: entries.map(([, value]) => value), color: '#2563eb' }],
+      labels: dateKeys.map(key => dateLabels.get(key) ?? key),
+      datasets: [...totalsByCurrency.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([currency, totals]) => ({
+        label: currency + ' collections',
+        data: dateKeys.map(key => totals.get(key) ?? 0),
+      })),
     }
   }, [payments])
 
