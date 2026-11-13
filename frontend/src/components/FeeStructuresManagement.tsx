@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createFeeStructure, getFeeStructures, type FeeStructure } from '../api/finance'
 import { getAccessToken } from '../api/auth'
-import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
+import { formatCurrency, getCurrencyInputStep, SYSTEM_CURRENCY } from '../lib/currency'
 
 export function FeeStructuresManagement() {
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([])
@@ -90,7 +90,7 @@ export function FeeStructuresManagement() {
           <label>Name<input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Standard Tuition" required /></label>
           <label>Programme ID<input value={programmeId} onChange={e => setProgrammeId(e.target.value)} placeholder="Programme ID" required /></label>
           <label>Academic Year ID<input value={academicYearId} onChange={e => setAcademicYearId(e.target.value)} placeholder="Academic Year ID" required /></label>
-          <label>Total Amount ({SYSTEM_CURRENCY})<input type="number" min="0" step="0.01" value={totalAmount} onChange={e => setTotalAmount(e.target.value)} placeholder="0.00" required /></label>
+          <label>Total Amount ({SYSTEM_CURRENCY})<input type="number" min="0" step={getCurrencyInputStep(SYSTEM_CURRENCY)} value={totalAmount} onChange={e => setTotalAmount(e.target.value)} placeholder="0.00" required /></label>
         </div>
         <div className="topbar-actions">
           <button type="submit">Create Fee Structure</button>
