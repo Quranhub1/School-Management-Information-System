@@ -407,6 +407,8 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CampusId", "Code").IsUnique();
+
                     b.ToTable("Faculties");
                 });
 
