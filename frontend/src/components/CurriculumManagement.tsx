@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import {
   addCurriculumCourse,
   updateCurriculumCourse,
+  deleteCurriculumCourse,
+  deleteCourse,
   createCourse,
   createCurriculum,
   updateCurriculum,
