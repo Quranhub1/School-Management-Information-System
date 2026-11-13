@@ -113,7 +113,7 @@ export function StaffAllowancesWorkspace() {
             <label>Allowance Type
               <select value={allowanceType} onChange={e => setAllowanceType(e.target.value)}>{ALLOWANCE_TYPES.map(x => <option key={x}>{x}</option>)}</select>
             </label>
-            <label>Amount (UGX)
+            <label>Amount ({SYSTEM_CURRENCY})
               <input type="number" min="0.01" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required />
             </label>
             <label>Effective From
