@@ -485,14 +485,16 @@ h1, h2, h3, h4, h5, h6,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
-  padding: 8px 13px;
+  min-height: 38px;
+  padding: 8px 20px;
+  min-width: 150px;
   border: 1px solid #cfc5b2 !important;
   border-radius: 3px !important;
   background: #fffdf7 !important;
   background-image: none !important;
   color: #39352b !important;
   font-weight: 650;
+  white-space: nowrap;
   box-shadow: none !important;
   transform: none !important;
 }
@@ -527,7 +529,11 @@ h1, h2, h3, h4, h5, h6,
   background: #15803d !important;
   background-image: none !important;
   color: #ffffff !important;
-  font-weight: 650;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  min-width: 150px;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.45);
   box-shadow: none !important;
   transform: none !important;
 }
@@ -537,6 +543,10 @@ h1, h2, h3, h4, h5, h6,
   border-color: #14532d !important;
   background: #166534 !important;
   color: #ffffff !important;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.45);
 }
 .app-shell .content button.secondary-button:focus-visible,
 .app-shell .content .secondary-button:focus-visible,
@@ -592,6 +602,9 @@ h1, h2, h3, h4, h5, h6,
   border-color: #166534 !important;
   background: #15803d !important;
   color: #ffffff !important;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.45);
 }
 .app-shell button[class*="danger"],
 .app-shell button[class*="delete"],

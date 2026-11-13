@@ -2,21 +2,23 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Infrastructure.Persistence;
+using SchoolManagement.Application.Administration;
 
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/assistant")]
 [Authorize]
-public sealed class OfflineAssistantController(SchoolManagementDbContext db) : ControllerBase
+public sealed class OfflineAssistantController(SchoolManagementDbContext db, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<AssistantResponse>> Ask([FromBody] AssistantRequest request, CancellationToken ct)
     {
         var q = request.Question?.Trim() ?? string.Empty;
         if (q.Length < 2) return BadRequest("Ask a question.");
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(ct)).Code;
         var students = await db.Students.AsNoTracking().ToListAsync(ct);
-        var invoices = await db.StudentInvoices.AsNoTracking().ToListAsync(ct);
+        var invoices = await db.StudentInvoices.AsNoTracking().Where(x => x.Currency == systemCurrency).ToListAsync(ct);
         var attendance = await db.StudentAttendances.AsNoTracking().ToListAsync(ct);
         var assessments = await db.StudentAssessments.AsNoTracking().ToListAsync(ct);
         var admissions = await db.Admissions.AsNoTracking().ToListAsync(ct);
@@ -28,7 +30,7 @@ public sealed class OfflineAssistantController(SchoolManagementDbContext db) : C
         if (q.Contains("student", StringComparison.OrdinalIgnoreCase) || q.Contains("enrol", StringComparison.OrdinalIgnoreCase)) answer = $"The local SMIS database currently contains {students.Count} students, of whom {students.Count(x => x.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))} are active.";
         else if (q.Contains("admission", StringComparison.OrdinalIgnoreCase)) answer = $"There are {admissions.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))} pending admissions.";
         else if (q.Contains("attendance", StringComparison.OrdinalIgnoreCase)) answer = $"Recorded institution-wide attendance is {attendanceRate}%.";
-        else if (q.Contains("fee", StringComparison.OrdinalIgnoreCase) || q.Contains("balance", StringComparison.OrdinalIgnoreCase)) answer = $"The recorded outstanding student-invoice balance is UGX {outstanding:N0}.";
+        else if (q.Contains("fee", StringComparison.OrdinalIgnoreCase) || q.Contains("balance", StringComparison.OrdinalIgnoreCase)) answer = $"The recorded outstanding student-invoice balance is {systemCurrency} {outstanding:N0}.";
         else if (q.Contains("mark", StringComparison.OrdinalIgnoreCase) || q.Contains("score", StringComparison.OrdinalIgnoreCase) || q.Contains("exam", StringComparison.OrdinalIgnoreCase)) answer = $"The average recorded assessment percentage is {average}%.";
         else answer = "I can answer local questions about students, admissions, attendance, fees, assessments and institutional status. No cloud AI service is required for this assistant.";
         return Ok(new AssistantResponse(answer, DateTimeOffset.UtcNow, "local-rules"));

@@ -13,7 +13,7 @@ import {
 } from '../api/finance'
 import { validateForm } from '../lib/validation'
 import { recordPaymentRequestSchema } from '../schemas'
-import { SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
+import { formatCurrency, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency'
 
 type PaymentMethod = 'Cash' | 'Mobile Money' | 'Bank' | 'Card'
 
@@ -34,6 +34,7 @@ type PaymentRecord = {
   id: string
   receiptNumber: string
   amount: number
+  currency?: string
   paymentMethod: string
   paidAt: string
 }
@@ -138,12 +139,13 @@ export function FinanceDashboard() {
   }
 
   function exportOutstandingCSV() {
-    const headers = ['Student Number', 'Name', 'Programme', 'Balance (UGX)', 'Status']
+    const headers = ['Student Number', 'Name', 'Programme', 'Currency', 'Balance', 'Status']
     const rows = outstandingBalances.map(o => [
       o.studentNumber,
       o.studentName,
       o.programmeName,
-      o.balance.toLocaleString(),
+      o.currency ?? SYSTEM_CURRENCY,
+      formatCurrency(o.balance, o.currency || SYSTEM_CURRENCY),
       o.status,
     ])
     const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -157,8 +159,15 @@ export function FinanceDashboard() {
   }
 
   const paymentMethodTotals = payments.reduce<Record<string, number>>((acc, payment) => {
+    if ((payment.currency ?? SYSTEM_CURRENCY).toUpperCase() !== SYSTEM_CURRENCY) return acc
     acc[payment.paymentMethod] = (acc[payment.paymentMethod] || 0) + payment.amount
     return acc
+  }, {})
+
+  const quickPayBalancesByCurrency = (quickPayResult?.invoices ?? []).reduce<Record<string, number>>((totals, invoice) => {
+    const currency = invoice.currency ?? SYSTEM_CURRENCY
+    totals[currency] = (totals[currency] ?? 0) + invoice.balance
+    return totals
   }, {})
 
   const recentPayments = payments.slice(0, 10)
@@ -182,21 +191,21 @@ export function FinanceDashboard() {
           <div className="summary-grid">
             <div className="summary-card">
               <span>Total Billed</span>
-              <strong>{SYSTEM_CURRENCY} {dashboard.totalBilled.toLocaleString()}</strong>
+              <strong>{formatCurrency(dashboard.totalBilled, SYSTEM_CURRENCY)}</strong>
             </div>
             <div className="summary-card">
               <span>Total Paid</span>
-              <strong style={{ color: '#059669' }}>{SYSTEM_CURRENCY} {dashboard.totalPaid.toLocaleString()}</strong>
+              <strong style={{ color: '#059669' }}>{formatCurrency(dashboard.totalPaid, SYSTEM_CURRENCY)}</strong>
             </div>
             <div className="summary-card">
               <span>Outstanding Balance</span>
                 <strong style={{ color: dashboard.totalOutstanding > 0 ? '#dc2626' : '#059669' }}>
-                  {SYSTEM_CURRENCY} {dashboard.totalOutstanding.toLocaleString()}
+                  {formatCurrency(dashboard.totalOutstanding, SYSTEM_CURRENCY)}
                 </strong>
             </div>
             <div className="summary-card">
               <span>Today's Collection</span>
-              <strong>{SYSTEM_CURRENCY + ' ' + dashboard.todayCollection.toLocaleString()}</strong>
+              <strong>{formatCurrency(dashboard.todayCollection, SYSTEM_CURRENCY)}</strong>
             </div>
             <div className="summary-card">
               <span>Invoice Count</span>
@@ -239,7 +248,7 @@ export function FinanceDashboard() {
                 <div className="summary-card">
                   <span>Current Balance</span>
                   <strong style={{ color: quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0) > 0 ? '#dc2626' : '#059669' }}>
-                    UGX {quickPayResult.invoices.reduce((sum, inv) => sum + inv.balance, 0).toLocaleString()}
+                    {Object.entries(quickPayBalancesByCurrency).map(([currency, balance]) => <span key={currency}>{formatCurrency(balance, currency)} </span>)}
                   </strong>
                 </div>
                 <div className="summary-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -277,7 +286,7 @@ export function FinanceDashboard() {
                         <td>{item.studentName}</td>
                         <td>{item.programmeName}</td>
                         <td style={{ color: '#dc2626', fontWeight: 700 }}>
-                          {item.currency} {item.balance.toLocaleString()}
+                          {formatCurrency(item.balance, item.currency || SYSTEM_CURRENCY)}
                         </td>
                         <td>{item.status}</td>
                       </tr>
@@ -309,7 +318,7 @@ export function FinanceDashboard() {
                     {recentPayments.map(payment => (
                       <tr key={payment.id}>
                         <td>{payment.receiptNumber}</td>
-                        <td style={{ color: '#059669' }}>{SYSTEM_CURRENCY + ' ' + payment.amount.toLocaleString()}</td>
+                        <td style={{ color: '#059669' }}>{formatCurrency(payment.amount, payment.currency ?? SYSTEM_CURRENCY)}</td>
                         <td>{payment.paymentMethod}</td>
                         <td>{new Date(payment.paidAt).toLocaleDateString(SYSTEM_LOCALE)}</td>
                       </tr>
@@ -332,7 +341,7 @@ export function FinanceDashboard() {
                 .map(method => (
                 <div className="summary-card" key={method}>
                   <span>{method}</span>
-                  <strong>{SYSTEM_CURRENCY + ' ' + (paymentMethodTotals[method] || 0).toLocaleString()}</strong>
+                  <strong>{formatCurrency(paymentMethodTotals[method] || 0, SYSTEM_CURRENCY)}</strong>
                 </div>
               ))}
             </div>
@@ -356,7 +365,7 @@ export function FinanceDashboard() {
                 >
                   {quickPayResult.invoices.map(inv => (
                     <option key={inv.id} value={inv.id}>
-                      {inv.invoiceNumber} (Balance: {inv.currency} {inv.balance.toLocaleString()})
+                      {inv.invoiceNumber} (Balance: {formatCurrency(inv.balance, inv.currency || SYSTEM_CURRENCY)})
                     </option>
                   ))}
                 </select>

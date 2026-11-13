@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
 import { AgGridTable } from './AgGridTable'
 import type { ColDef } from 'ag-grid-community'
 
@@ -15,8 +16,8 @@ async function request<T>(path: string): Promise<T> {
 }
 
 type Dashboard = { totalBilled: number; totalPaid: number; totalOutstanding: number; todayCollection: number; invoiceCount: number; paymentCount: number; outstandingCount: number }
-type Outstanding = { studentId: string; studentNumber: string; studentName: string; programmeName: string; balance: number; currency: string; status: string }
-type Payment = { id: string; receiptNumber: string; amount: number; paymentMethod: string; paymentSource: string; sourceChannel?: string; providerTransactionId?: string; reference?: string; paidAt: string; studentName: string; invoiceNumber?: string }
+type Outstanding = { studentId: string; studentNumber: string; studentName: string; programmeName: string; balance: number; currency?: string; status: string }
+type Payment = { id: string; receiptNumber: string; amount: number; currency?: string; paymentMethod: string; paymentSource: string; sourceChannel?: string; providerTransactionId?: string; reference?: string; paidAt: string; studentName: string; invoiceNumber?: string }
 type Payroll = { id: string; staffName: string; staffNumber: string; month: number; year: number; basicSalary: number; allowances: number; deductions: number; netPay: number; status: string; paymentMethod?: string }
 
 type Tab = 'dashboard' | 'outstanding' | 'payments' | 'payroll'
@@ -25,7 +26,7 @@ const outstandingColumns: ColDef<Outstanding>[] = [
   { field: 'studentNumber', headerName: 'Student Number' },
   { field: 'studentName', headerName: 'Student Name' },
   { field: 'programmeName', headerName: 'Programme' },
-  { field: 'balance', headerName: 'Balance (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'balance', headerName: 'Balance', valueFormatter: p => formatCurrency(Number(p.value) || 0, p.data?.currency ?? SYSTEM_CURRENCY) },
   { field: 'status', headerName: 'Status' },
 ]
 const paymentColumns: ColDef<Payment>[] = [
@@ -34,19 +35,19 @@ const paymentColumns: ColDef<Payment>[] = [
   { field: 'studentName', headerName: 'Student' },
   { field: 'paymentSource', headerName: 'Payment Source' },
   { field: 'sourceChannel', headerName: 'Channel' },
-  { field: 'amount', headerName: 'Amount (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'amount', headerName: 'Amount', valueFormatter: p => formatCurrency(Number(p.value) || 0, p.data?.currency ?? SYSTEM_CURRENCY) },
 ]
 const payrollColumns: ColDef<Payroll>[] = [
   { field: 'staffNumber', headerName: 'Staff Number' },
   { field: 'staffName', headerName: 'Staff' },
   { headerName: 'Period', valueGetter: p => p.data ? `${p.data.month}/${p.data.year}` : '—' },
-  { field: 'basicSalary', headerName: 'Basic (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
-  { field: 'allowances', headerName: 'Allowances (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
-  { field: 'deductions', headerName: 'Deductions (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
-  { field: 'netPay', headerName: 'Net Pay (UGX)', valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'basicSalary', headerName: `Basic (${SYSTEM_CURRENCY})`, valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'allowances', headerName: `Allowances (${SYSTEM_CURRENCY})`, valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'deductions', headerName: `Deductions (${SYSTEM_CURRENCY})`, valueFormatter: p => money(Number(p.value) || 0) },
+  { field: 'netPay', headerName: `Net Pay (${SYSTEM_CURRENCY})`, valueFormatter: p => money(Number(p.value) || 0) },
   { field: 'status', headerName: 'Status' },
 ]
-const money = (n: number) => `UGX ${n.toLocaleString('en-UG')}`
+const money = (n: number) => formatCurrency(n, SYSTEM_CURRENCY)
 
 export function AccountsOverviewWorkspace() {
   const [tab, setTab] = useState<Tab>('dashboard')

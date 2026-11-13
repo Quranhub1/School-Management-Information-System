@@ -3,10 +3,10 @@ import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { AgGridTable } from './AgGridTable';
 import LoadingSpinner from './LoadingSpinner';
 import { listPayroll, markPayrollPaid, updatePayrollAllowances, type PayrollRecord } from '../api/payroll';
-import { SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency';
+import { formatCurrency, getCurrencyInputStep, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency';
 import './PayrollManagement.css';
 
-const money = (amount: number) => `${SYSTEM_CURRENCY} ${amount.toLocaleString(SYSTEM_LOCALE, { maximumFractionDigits: 0 })}`;
+const money = (amount: number, currency: string = SYSTEM_CURRENCY) => formatCurrency(amount, currency);
 const periodLabel = (month: number, year: number) =>
   new Date(year, month - 1, 1).toLocaleDateString(SYSTEM_LOCALE, { month: 'short', year: 'numeric' });
 const payrollCode = (id: string) => `PAY-${id.replace(/-/g, '').toUpperCase()}`;
@@ -52,19 +52,24 @@ export function PayrollManagement() {
   }
 
   const pendingCount = useMemo(() => records.filter(record => record.status.toLowerCase() === 'pending').length, [records]);
-  const totalNetPay = useMemo(() => records.reduce((sum, record) => sum + record.netPay, 0), [records]);
-  const totalPaid = useMemo(() => records.filter(record => record.status.toLowerCase() === 'paid')
-    .reduce((sum, record) => sum + record.netPay, 0), [records]);
+  const totalsByCurrency = useMemo(() => records.reduce<Record<string, { netPay: number; paid: number }>>((totals, record) => {
+    const currency = record.currency || SYSTEM_CURRENCY
+    const current = totals[currency] ?? { netPay: 0, paid: 0 }
+    current.netPay += record.netPay
+    if (record.status.toLowerCase() === 'paid') current.paid += record.netPay
+    totals[currency] = current
+    return totals
+  }, {}), [records]);
 
   const columns = useMemo<ColDef<PayrollRecord>[]>(() => [
     { headerName: 'No.', colId: 'rowNumber', width: 76, sortable: false, filter: false, valueGetter: params => params.node?.rowIndex == null ? '' : String(params.node.rowIndex + 1).padStart(2, '0') },
     { headerName: 'Payroll ID', field: 'id', minWidth: 160, valueFormatter: params => payrollCode(String(params.value ?? '')), tooltipField: 'id' },
     { headerName: 'Staff member ID', field: 'staffMemberId', minWidth: 150 },
     { headerName: 'Pay period', colId: 'period', valueGetter: params => params.data ? periodLabel(params.data.month, params.data.year) : '' },
-    { headerName: 'Basic salary', field: 'basicSalary', valueFormatter: params => money(Number(params.value ?? 0)), cellClass: 'payroll-amount' },
-    { headerName: 'Allowances', field: 'allowances', valueFormatter: params => money(Number(params.value ?? 0)), cellRenderer: (params: ICellRendererParams<PayrollRecord>) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Allowances" type="number" min="0" step="1" value={editAllowances} onChange={event => setEditAllowances(event.target.value)} /> : money(Number(params.value ?? 0)) },
-    { headerName: 'Deductions', field: 'deductions', valueFormatter: params => money(Number(params.value ?? 0)), cellRenderer: (params: ICellRendererParams<PayrollRecord>) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Deductions" type="number" min="0" step="1" value={editDeductions} onChange={event => setEditDeductions(event.target.value)} /> : money(Number(params.value ?? 0)) },
-    { headerName: 'Net pay', field: 'netPay', valueFormatter: params => money(Number(params.value ?? 0)), cellClass: 'payroll-net-pay' },
+    { headerName: 'Basic salary', field: 'basicSalary', valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY), cellClass: 'payroll-amount' },
+    { headerName: 'Allowances', field: 'allowances', valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY), cellRenderer: (params: ICellRendererParams<PayrollRecord>) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Allowances" type="number" min="0" step={getCurrencyInputStep(params.data.currency)} value={editAllowances} onChange={event => setEditAllowances(event.target.value)} /> : money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY) },
+    { headerName: 'Deductions', field: 'deductions', valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY), cellRenderer: (params: ICellRendererParams<PayrollRecord>) => params.data && editingId === params.data.id ? <input className="payroll-edit-input" aria-label="Deductions" type="number" min="0" step={getCurrencyInputStep(params.data.currency)} value={editDeductions} onChange={event => setEditDeductions(event.target.value)} /> : money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY) },
+    { headerName: 'Net pay', field: 'netPay', valueFormatter: params => money(Number(params.value ?? 0), params.data?.currency ?? SYSTEM_CURRENCY), cellClass: 'payroll-net-pay' },
     { headerName: 'Status', field: 'status', minWidth: 120, cellRenderer: (params: ICellRendererParams<PayrollRecord>) => { const status = params.value || 'Pending'; return <span className={`payroll-status payroll-status--${status.toLowerCase().replace(/[^a-z]+/g, '-')}`}>{status}</span> } },
     { headerName: 'Actions', colId: 'actions', minWidth: 190, sortable: false, filter: false, cellRenderer: (params: ICellRendererParams<PayrollRecord>) => {
       const record = params.data;
@@ -97,12 +102,11 @@ export function PayrollManagement() {
     {!loading && <div className="payroll-summary" aria-label="Payroll summary">
       <div className="payroll-stat"><span>Payroll records</span><strong>{records.length.toLocaleString(SYSTEM_LOCALE)}</strong></div>
       <div className="payroll-stat"><span>Awaiting payment</span><strong>{pendingCount.toLocaleString(SYSTEM_LOCALE)}</strong></div>
-      <div className="payroll-stat"><span>Total net payroll</span><strong>{money(totalNetPay)}</strong></div>
-      <div className="payroll-stat"><span>Total paid</span><strong>{money(totalPaid)}</strong></div>
+      {Object.entries(totalsByCurrency).map(([currency, totals]) => <div className="payroll-stat" key={currency}><span>Net payroll · {currency}</span><strong>{money(totals.netPay, currency)}</strong><small>Paid: {money(totals.paid, currency)}</small></div>)}
     </div>}
 
     {loading ? <div className="payroll-loading"><LoadingSpinner label="Loading payroll…" /></div> : <div className="payroll-table-wrap">
-      <AgGridTable rows={records} columns={columns} height={560} pageSize={25} exportFileName="ugx-payroll" />
+      <AgGridTable rows={records} columns={columns} height={560} pageSize={25} exportFileName="payroll-summary" />
       {records.length === 0 && <div className="payroll-empty"><strong>No payroll records yet</strong><span>Generate payroll for a month to see staff salary records here.</span></div>}
     </div>}
   </section>;

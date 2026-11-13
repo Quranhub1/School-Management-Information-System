@@ -36,6 +36,7 @@ public sealed class JournalReversalService(IFinanceRepository finance, FiscalPer
         var reversal = new JournalEntry
         {
             EntryNumber = reversalNumber,
+            Currency = original.Currency,
             EntryDate = reversalDate,
             Description = $"Reversal of {original.EntryNumber}: {reason.Trim()}",
             SourceType = "JournalReversal",

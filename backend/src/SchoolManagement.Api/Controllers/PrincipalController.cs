@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -9,11 +10,12 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/principal")]
 [Authorize(Policy = AuthorizationPolicies.FinanceRead)]
-public sealed class PrincipalController(SchoolManagementDbContext db) : ControllerBase
+public sealed class PrincipalController(SchoolManagementDbContext db, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard(CancellationToken cancellationToken)
     {
+        var systemCurrency = (await institutionSettings.GetSystemCurrencyAsync(cancellationToken)).Code;
         var totalStudents = await db.Students.LongCountAsync(cancellationToken);
         var activeStudents = await db.Students.LongCountAsync(x => x.Status == "Active", cancellationToken);
         var totalStaff = await db.StaffMembers.LongCountAsync(cancellationToken);
@@ -21,8 +23,8 @@ public sealed class PrincipalController(SchoolManagementDbContext db) : Controll
         var totalCourses = await db.Courses.LongCountAsync(cancellationToken);
         var totalInvoices = await db.StudentInvoices.LongCountAsync(cancellationToken);
         var outstandingInvoices = await db.StudentInvoices.LongCountAsync(x => x.OutstandingAmount > 0, cancellationToken);
-        var invoiced = await db.StudentInvoices.SumAsync(x => (decimal?)x.NetAmount, cancellationToken) ?? 0m;
-        var paid = await db.StudentInvoices.SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
+        var invoiced = await db.StudentInvoices.Where(x => x.Currency == systemCurrency).SumAsync(x => (decimal?)x.NetAmount, cancellationToken) ?? 0m;
+        var paid = await db.StudentInvoices.Where(x => x.Currency == systemCurrency).SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
         var pendingAdmissions = await db.Admissions.LongCountAsync(x => x.Status == "Pending", cancellationToken);
         var acceptedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == "Accepted", cancellationToken);
         var rejectedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == "Rejected", cancellationToken);
@@ -53,7 +55,7 @@ public sealed class PrincipalController(SchoolManagementDbContext db) : Controll
             join invoice in db.StudentInvoices.AsNoTracking() on payment.StudentInvoiceId equals invoice.Id into invoices
             from invoice in invoices.DefaultIfEmpty()
             orderby payment.PaidAt descending
-            select new { payment.Id, payment.ReceiptNumber, payment.Amount, payment.PaymentMethod, payment.PaidAt, studentName = student.FirstName + " " + student.LastName, invoiceNumber = invoice == null ? null : invoice.InvoiceNumber }
+            select new { payment.Id, payment.ReceiptNumber, payment.Amount, payment.Currency, payment.PaymentMethod, payment.PaidAt, studentName = student.FirstName + " " + student.LastName, invoiceNumber = invoice == null ? null : invoice.InvoiceNumber }
         ).Take(20).ToListAsync(cancellationToken);
         var recentResults = await (
             from result in db.Results.AsNoTracking()

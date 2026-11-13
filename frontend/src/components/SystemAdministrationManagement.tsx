@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { Activity, Archive, ArrowRight, Database, FileSearch, LockKeyhole, Settings2, ShieldCheck, UsersRound } from 'lucide-react'
+import { getSystemCurrencySettings, saveSystemCurrencySettings, type SystemCurrencySettings } from '../api/systemSettings'
 import { AuditLogManagement } from './AuditLog'
 import { BackupRestore } from './BackupRestore'
 
@@ -15,6 +17,32 @@ const tools = [
 
 export function SystemAdministrationManagement({ activeSubsection, onNavigate }: SystemAdministrationManagementProps) {
   const selected = activeSubsection ?? 'overview'
+  const [currency, setCurrency] = useState<SystemCurrencySettings>({ code: 'UGX', locale: 'en-UG', fractionDigits: 0 })
+  const [currencyLoading, setCurrencyLoading] = useState(false)
+  const [currencySaving, setCurrencySaving] = useState(false)
+  const [currencyError, setCurrencyError] = useState('')
+  const [currencySuccess, setCurrencySuccess] = useState('')
+
+  useEffect(() => {
+    if (selected !== 'settings') return
+    let cancelled = false
+    setCurrencyLoading(true)
+    getSystemCurrencySettings().then(value => { if (!cancelled) setCurrency(value) })
+      .catch(error => { if (!cancelled) setCurrencyError(error instanceof Error ? error.message : 'Unable to load system currency.') })
+      .finally(() => { if (!cancelled) setCurrencyLoading(false) })
+    return () => { cancelled = true }
+  }, [selected])
+
+  async function saveCurrency() {
+    setCurrencySaving(true); setCurrencyError(''); setCurrencySuccess('')
+    try {
+      const saved = await saveSystemCurrencySettings(currency.code)
+      setCurrency(saved)
+      setCurrencySuccess('System currency saved. It will become the default for new amounts and displays that use the system default.')
+      window.dispatchEvent(new CustomEvent('smis:system-currency-updated', { detail: saved }))
+    } catch (error) { setCurrencyError(error instanceof Error ? error.message : 'Unable to save system currency.') }
+    finally { setCurrencySaving(false) }
+  }
 
   return <section className="system-admin-workspace" aria-label="System Administration">
     <header className="page-header workspace-header">
@@ -42,6 +70,30 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
           <article className="summary-card"><LockKeyhole size={22} /><h3>Access control</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
           <article className="summary-card"><Database size={22} /><h3>Institution configuration</h3><button className="secondary-button" onClick={() => onNavigate('administration')}>Open Administration <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /></button></article>
         </div>
+        <section className="panel" aria-labelledby="system-currency-title" style={{ marginTop: 18, padding: 18 }}>
+          <div className="panel-heading"><div><p className="eyebrow">FINANCIAL CONFIGURATION</p><h3 id="system-currency-title">System currency</h3></div></div>
+          <p>Choose the default currency used when a new financial record does not specify its own currency. Existing invoices, payments and ledger entries keep their recorded currency.</p>
+          {currencyError && <p className="error" role="alert">{currencyError}</p>}
+          {currencySuccess && <p className="success" role="status">{currencySuccess}</p>}
+          <div className="form-row" style={{ alignItems: 'end' }}>
+            <label style={{ flex: 1 }}>Default currency
+              <select value={currency.code} disabled={currencyLoading || currencySaving} onChange={event => setCurrency(current => ({ ...current, code: event.target.value }))}>
+                <option value="UGX">UGX — Uganda Shilling (default)</option>
+                <option value="USD">USD — US Dollar</option>
+                <option value="KES">KES — Kenyan Shilling</option>
+                <option value="EUR">EUR — Euro</option>
+                <option value="GBP">GBP — Pound Sterling</option>
+                <option value="TZS">TZS — Tanzanian Shilling</option>
+                <option value="RWF">RWF — Rwandan Franc</option>
+                <option value="ZAR">ZAR — South African Rand</option>
+                <option value="AED">AED — UAE Dirham</option>
+              </select>
+            </label>
+            <button className="primary-button" disabled={currencyLoading || currencySaving} onClick={() => void saveCurrency()}>{currencySaving ? 'Saving…' : 'Save currency'}</button>
+          </div>
+          <small>New transactions use this default unless a specific transaction currency is selected. This setting does not perform exchange-rate conversion.</small>
+          <p className="warning" role="note" style={{ marginTop: 12 }}>Financial reports now keep journal balances separate by currency. No exchange-rate conversion is performed; choose the matching currency when reviewing a report. Bank statement reconciliation remains UGX-only.</p>
+        </section>
         
       </section>
     ) : (

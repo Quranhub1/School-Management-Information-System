@@ -1,4 +1,5 @@
 import { getAccessToken } from './auth'
+import { SYSTEM_CURRENCY } from '../lib/currency'
 import { readApiErrorMessage } from './errors'
 import { z } from 'zod'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
@@ -47,6 +48,7 @@ export interface StaffAdvance {
   id: string
   staffMemberId: string
   amount: number
+  currency?: string
   reason: string
   status: string
   createdAt: string
@@ -250,7 +252,7 @@ export const getCashBankPosition = (params?: { from?: string; to?: string; curre
   const query = new URLSearchParams()
   if (params?.from) query.set('from', params.from)
   if (params?.to) query.set('to', params.to)
-  query.set('currency', params?.currency ?? 'UGX')
+  query.set('currency', params?.currency ?? SYSTEM_CURRENCY)
   if (params?.campusId) query.set('campusId', params.campusId)
   if (params?.facultyId) query.set('facultyId', params.facultyId)
   if (params?.departmentId) query.set('departmentId', params.departmentId)
@@ -367,8 +369,8 @@ export const getBudgetVsActual = (budgetId: string, params?: { from?: string; to
   if (params?.to) query.set('to', params.to)
   return request<BudgetVsActualRow[]>(`/api/finance/administration/budgets/${budgetId}/vs-actual${query.toString() ? `?${query}` : ''}`)
 }
-export const getFinanceReceivablesAgeing = (asOf?: string, currency = 'UGX') => request<ReceivablesAgeingReport>(`/api/finance/reports/receivables-ageing?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
-export const getFinanceReceivablesReconciliation = (asOf?: string, currency = 'UGX') => request<ReceivablesReconciliationReport>(`/api/finance/reports/receivables-reconciliation?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
+export const getFinanceReceivablesAgeing = (asOf?: string, currency = SYSTEM_CURRENCY) => request<ReceivablesAgeingReport>(`/api/finance/reports/receivables-ageing?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
+export const getFinanceReceivablesReconciliation = (asOf?: string, currency = SYSTEM_CURRENCY) => request<ReceivablesReconciliationReport>(`/api/finance/reports/receivables-reconciliation?currency=${encodeURIComponent(currency)}${asOf ? `&asOf=${encodeURIComponent(asOf)}` : ''}`)
 
 
 export interface FinanceOverdueSummary { asOf: string; currency: string; installmentCount: number; studentCount: number; totalOutstanding: number }

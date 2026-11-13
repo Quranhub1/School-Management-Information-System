@@ -20,7 +20,7 @@ describe("SMIS Zod domain schemas", () => {
     const base = { studentId: "s1", accountId: "a1", paymentDate: "2026-01-01", paymentMethod: "Cash", reference: "RCPT-1" };
     expect(paymentEntrySchema.safeParse({ ...base, amount: 10000 }).success).toBe(true);
     expect(paymentEntrySchema.safeParse({ ...base, amount: 0 }).success).toBe(false);
-    expect(paymentEntrySchema.safeParse({ ...base, amount: 10.5 }).success).toBe(false);
+    expect(paymentEntrySchema.safeParse({ ...base, amount: 10.5 }).success).toBe(true);
   });
 
   it("rejects negative stock quantities", () => {

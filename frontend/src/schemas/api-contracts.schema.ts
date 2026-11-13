@@ -93,6 +93,7 @@ export const payrollRecordResponseSchema = z.looseObject({
   allowances: z.number().finite(),
   deductions: z.number().finite(),
   netPay: z.number().finite(),
+  currency: z.string().length(3).default("UGX"),
   paymentDate: z.string().nullable(),
   status: requiredTextSchema,
   paymentMethod: z.string().nullable().optional(),
