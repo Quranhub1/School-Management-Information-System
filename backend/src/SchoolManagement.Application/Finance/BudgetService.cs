@@ -59,7 +59,7 @@ public sealed class BudgetService(IBudgetRepository budgets, IFinanceRepository 
         if (start < budgetStart || end > budgetEnd)
             throw new ArgumentException($"Budget actual reporting range must remain within {budgetStart:yyyy-MM-dd} and {budgetEnd:yyyy-MM-dd}.");
 
-        var journals = await finance.GetPostedJournalEntriesAsync(start, end, null, cancellationToken);
+        var journals = (await finance.GetPostedJournalEntriesAsync(start, end, null, cancellationToken)).Where(x => string.Equals(x.Currency, budget.Currency, StringComparison.OrdinalIgnoreCase));
         var actuals = journals.SelectMany(x => x.Lines)
             // A department budget must be compared with postings belonging to
             // that department. Institution-wide (null department) postings are
