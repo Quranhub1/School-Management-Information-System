@@ -90,7 +90,7 @@ export function ModernInformationHub() {
       </article>
     </div>
     {dashboard && <div className="dashboard-chart-grid">
-      <DoughnutChart title="Fee collection position" description="Collected fees compared with outstanding balances" segments={[{ label: 'Collected', value: Math.max(0, dashboard.totalPaid), color: '#0d9488', displayValue: `UGX ${money(dashboard.totalPaid)}` }, { label: 'Outstanding', value: Math.max(0, dashboard.outstanding), color: '#f59e0b', displayValue: `UGX ${money(dashboard.outstanding)}` }]} centerValue={`UGX ${money(dashboard.totalPaid)}`} centerCaption="collected" valueFormatter={value => `UGX ${money(value)}`} />
+      <DoughnutChart title="Fee collection position" description="Collected fees compared with outstanding balances" segments={[{ label: 'Collected', value: Math.max(0, dashboard.totalPaid), color: '#0d9488', displayValue: `${SYSTEM_CURRENCY} ${money(dashboard.totalPaid)}` }, { label: 'Outstanding', value: Math.max(0, dashboard.outstanding), color: '#f59e0b', displayValue: `${SYSTEM_CURRENCY} ${money(dashboard.outstanding)}` }]} centerValue={`${SYSTEM_CURRENCY} ${money(dashboard.totalPaid)}`} centerCaption="collected" valueFormatter={value => `${SYSTEM_CURRENCY} ${money(value)}`} />
     </div>}
     <div className="dashboard-bottom-grid">
       <article className="dashboard-panel dashboard-risk-panel">
