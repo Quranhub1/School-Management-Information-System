@@ -29,6 +29,11 @@ vi.mock('../api/finance', () => ({
 }))
 
 import { FinanceManagement } from './FinanceManagement'
+import { InstitutionSettingsProvider } from './InstitutionSettingsContext'
+
+function renderFinance(ui: React.ReactElement) {
+  return render(<InstitutionSettingsProvider>{ui}</InstitutionSettingsProvider>)
+}
 
 describe('FinanceManagement', () => {
   beforeEach(() => {
@@ -36,12 +41,12 @@ describe('FinanceManagement', () => {
   })
 
   it('renders the finance management shell', () => {
-    render(<FinanceManagement />)
+    renderFinance(<FinanceManagement />)
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
   it('exposes a readOnly mode', () => {
-    render(<FinanceManagement readOnly />)
+    renderFinance(<FinanceManagement readOnly />)
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 })
