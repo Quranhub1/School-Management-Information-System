@@ -254,6 +254,7 @@ public sealed class AccountsOverviewController(SchoolManagementDbContext db, Cam
                 x.payroll.Allowances,
                 x.payroll.Deductions,
                 x.payroll.NetPay,
+                x.payroll.Currency,
                 x.payroll.Status,
                 x.payroll.PaymentDate,
                 x.payroll.PaymentMethod,
