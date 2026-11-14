@@ -56,11 +56,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === selectedAuthority)
   const expectedProgrammeType = tab === 'short' ? 1 : 0
   const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && Number(p.type) === expectedProgrammeType && authorityOfProgramme(p.id) === selectedAuthority)
-  const authorityCurriculumIds = new Set(authorityCurricula.map(c => c.id))
-  const authorityCourses = courses.filter(course => {
-    const associations = mappings.filter(mapping => mapping.courseId === course.id)
-    return associations.length === 0 || associations.some(mapping => authorityCurriculumIds.has(mapping.curriculumId))
-  })
+  // The API already scopes courses to the selected authority (including legacy unassigned courses).
+  // Do not infer course ownership from `mappings`: that state contains only the currently opened curriculum.
+  const authorityCourses = courses.filter(course =>
+    !course.authorityCode || resolveAcademicAuthority(course.authorityCode) === selectedAuthority
+  )
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
@@ -641,18 +641,20 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </div>
 
           <div className="form-row">
-            <select value={selected} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
-              <option value="">Select curriculum</option>
-              {authorityCurricula.map(c => (
+            <select aria-label="Select curriculum" value={selected} disabled={!authority || authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
+              <option value="">{authority ? 'Select curriculum' : 'Select a curriculum authority first'}</option>
+              {authorityCurricula.filter(item => item.isActive || item.id === selected).map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
               ))}
             </select>
-            <select value={mf.courseId} disabled={Boolean(editingMappingId)} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
-              <option value="">Select course</option>
+            <select aria-label="Select course" value={mf.courseId} disabled={!selected || Boolean(editingMappingId) || authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
+              <option value="">{!selected ? 'Select a curriculum first' : 'Select course'}</option>
               {authorityCourses.filter(c => c.isActive || c.id === mf.courseId).map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
               ))}
             </select>
+            {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
+            {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
             <input type="number" min="1" placeholder="Year" value={mf.yearOfStudy} onChange={e => setMf({ ...mf, yearOfStudy: e.target.value })} />
             <input type="number" min="1" placeholder="Semester" value={mf.semesterNumber} onChange={e => setMf({ ...mf, semesterNumber: e.target.value })} />
             <label>
