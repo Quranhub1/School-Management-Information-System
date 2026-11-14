@@ -6,16 +6,17 @@ vi.mock('../api/auth', () => ({
   getAccessToken: vi.fn(() => 'mock-access-token'),
 }))
 
-global.fetch = vi.fn()
-
+const mockFetch = vi.fn()
 beforeEach(() => {
   vi.clearAllMocks()
-  ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+  mockFetch.mockResolvedValue({
     ok: true,
     status: 200,
     json: vi.fn().mockResolvedValue({}),
   } as any)
 })
+
+globalThis.fetch = mockFetch
 
 import { AttendanceManagement } from './AttendanceManagement'
 
