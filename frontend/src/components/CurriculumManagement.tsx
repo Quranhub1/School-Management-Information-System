@@ -51,14 +51,16 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [programmeForm, setProgrammeForm] = useState({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: false, type: '0' })
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
   const [editingMappingId, setEditingMappingId] = useState<string | null>(null)
+  const selectedAuthority = resolveAcademicAuthority(authority)
   const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
-  const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === authority)
-  const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && p.type === (tab === 'short' ? 1 : 0) && authorityOfProgramme(p.id) === authority)
-  const authorityCurriculumIds = new Set(authorityCurricula.map(c => c.id))
-  const authorityCourses = courses.filter(course => {
-    const associations = mappings.filter(mapping => mapping.courseId === course.id)
-    return associations.length === 0 || associations.some(mapping => authorityCurriculumIds.has(mapping.curriculumId))
-  })
+  const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === selectedAuthority)
+  const expectedProgrammeType = tab === 'short' ? 1 : 0
+  const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && Number(p.type) === expectedProgrammeType && authorityOfProgramme(p.id) === selectedAuthority)
+  // The API already scopes courses to the selected authority (including legacy unassigned courses).
+  // Do not infer course ownership from `mappings`: that state contains only the currently opened curriculum.
+  const authorityCourses = courses.filter(course =>
+    !course.authorityCode || resolveAcademicAuthority(course.authorityCode) === selectedAuthority
+  )
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
@@ -468,7 +470,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
       <div className="form-row academic-authority-picker">
         <label>Curriculum authority
-          <select value={authority} onChange={async e => {
+          <select aria-label="Curriculum authority" value={authority} onChange={async e => {
           const nextAuthority = e.target.value
           setAuthority(nextAuthority); setSelected(''); setMappings([]); setEditingMappingId(null)
           setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' }))
@@ -476,6 +478,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           try { setCourses(nextAuthority ? await getCourses(nextAuthority) : []) }
           catch (loadError) { setCourses([]); setError(loadError instanceof Error ? loadError.message : 'Unable to load this authority course catalogue.') }
         }}>
+            <option value="">Select curriculum authority</option>
             {authorities.filter(item => item.isActive).map(item => <option key={item.code} value={item.code}>{item.name}</option>)}
           </select>
         </label>
@@ -583,8 +586,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {editingProgrammeId && <button type="button" className="secondary-button" onClick={() => { setEditingProgrammeId(null); setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: false, type: '0' }) }}>Cancel edit</button>}
         </form>
         <div className="table-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Award</th><th>Duration</th><th>Verification</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.award}</td><td>{item.durationYears} {item.durationUnit}</td><td>{item.isReferenceOnly ? 'Reference only' : item.approvalStatus}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><details className="programme-row-actions"><summary aria-label={`Actions for ${item.name}`}>Actions</summary><div className="programme-row-actions-menu"><button type="button" onClick={() => editProgramme(item)}>Edit</button><button type="button" className="secondary-button" onClick={() => void toggleProgramme(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button><button type="button" className="danger-button" onClick={() => void removeProgramme(item)}>Delete</button></div></details></td></tr>)}
-          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).length === 0 && <tr><td colSpan={7}>No programmes are saved under this authority yet.</td></tr>}
+          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === selectedAuthority).map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.award}</td><td>{item.durationYears} {item.durationUnit}</td><td>{item.isReferenceOnly ? 'Reference only' : item.approvalStatus}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><details className="programme-row-actions"><summary aria-label={`Actions for ${item.name}`}>Actions</summary><div className="programme-row-actions-menu"><button type="button" onClick={() => editProgramme(item)}>Edit</button><button type="button" className="secondary-button" onClick={() => void toggleProgramme(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button><button type="button" className="danger-button" onClick={() => void removeProgramme(item)}>Delete</button></div></details></td></tr>)}
+          {programmes.filter(item => resolveAcademicAuthority(item.regulator) === selectedAuthority).length === 0 && <tr><td colSpan={7}>No programmes are saved under this authority yet.</td></tr>}
         </tbody></table></div>
       </section>
       <section className="catalogue-board" aria-label="Curriculum register">
@@ -604,8 +607,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
-              <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select programme</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name} · {p.approvalStatus}</option>)}</select>
-              {authorityProgrammes.length === 0 && <p className="empty">No eligible programmes.</p>}
+              <select required value={cf.programmeId} disabled={!authority || authorityProgrammes.length === 0} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">{authority ? 'Select programme' : 'Select a curriculum authority first'}</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name} · {p.approvalStatus}</option>)}</select>
+              {authorityProgrammes.length === 0 && <p className="empty">{authority ? 'No active, eligible full programmes are available under this authority.' : 'Select a curriculum authority to load its programmes.'}</p>}
               <div className="form-row">
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
                 <input required placeholder="Title" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
@@ -638,18 +641,20 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </div>
 
           <div className="form-row">
-            <select value={selected} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
-              <option value="">Select curriculum</option>
-              {authorityCurricula.map(c => (
+            <select aria-label="Select curriculum" value={selected} disabled={!authority || authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
+              <option value="">{authority ? 'Select curriculum' : 'Select a curriculum authority first'}</option>
+              {authorityCurricula.filter(item => item.isActive || item.id === selected).map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
               ))}
             </select>
-            <select value={mf.courseId} disabled={Boolean(editingMappingId)} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
-              <option value="">Select course</option>
+            <select aria-label="Select course" value={mf.courseId} disabled={!selected || Boolean(editingMappingId) || authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
+              <option value="">{!selected ? 'Select a curriculum first' : 'Select course'}</option>
               {authorityCourses.filter(c => c.isActive || c.id === mf.courseId).map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
               ))}
             </select>
+            {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
+            {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
             <input type="number" min="1" placeholder="Year" value={mf.yearOfStudy} onChange={e => setMf({ ...mf, yearOfStudy: e.target.value })} />
             <input type="number" min="1" placeholder="Semester" value={mf.semesterNumber} onChange={e => setMf({ ...mf, semesterNumber: e.target.value })} />
             <label>
