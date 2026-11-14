@@ -235,6 +235,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   function loadTemplate() {
+    if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before loading the template.'); return }
     if (!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)) { setError('Choose a teaching group from the selected programme curriculum and academic period.'); return }
     const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
     const slots = [...defaultTemplateSlots.map(slot => ({ ...slot }))]
@@ -267,6 +268,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   async function saveTemplate() {
+    if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before saving the template.'); return }
     if (!templateGroupId || templateLoadedGroupId !== templateGroupId) { setError('Choose a class and load it into the template before saving.'); return }
     const populated = Object.entries(templateCells).filter(([, cell]) => cell.courseId || cell.teacherId)
     if (templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)) { setError('Every period must have an end time later than its start time.'); return }
