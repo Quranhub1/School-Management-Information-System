@@ -51,11 +51,10 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [programmeForm, setProgrammeForm] = useState({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
   const [editingMappingId, setEditingMappingId] = useState<string | null>(null)
-  const [allMappings, setAllMappings] = useState<CurriculumCourse[]>([])
   const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
   const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === authority)
   const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && p.type === (tab === 'short' ? 1 : 0) && authorityOfProgramme(p.id) === authority)
-  const selectedCurricula = authorityCurricula.filter(item => item.programmeType === (tab === 'short' ? 1 : 0))
+  const selectedCurricula = authorityCurricula.filter(item => item.isActive && item.programmeType === (tab === 'short' ? 1 : 0))
   const authorityCourses = courses.filter(course => course.authorityCode === authority || !course.authorityCode)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -82,10 +81,9 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         nextAuthority ? getCourses(nextAuthority) : Promise.resolve([]),
         campusId ? Promise.all([getAcademicDepartments(campusId), getAcademicFaculties(campusId)]) : Promise.resolve([[], []] as [AcademicDepartment[], FacultyOption[]]),
       ])
-      const courseMappings = (await Promise.all(a.map(curriculum => getCurriculumCourses(curriculum.id)))).flat()
       setCurricula(a); setCourses(b); setProgrammes(c); setAuthorities(d)
       setDepartments(structure[0]); setCampuses(campusList); setSelectedCampusId(campusId); setFaculties(structure[1])
-      setAuthority(nextAuthority); setAllMappings(courseMappings)
+      setAuthority(nextAuthority)
       if (selected && !a.some(item => item.id === selected && resolveAcademicAuthority(c.find(p => p.id === item.programmeId)?.regulator) === nextAuthority)) { setSelected(''); setMappings([]) }
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load curriculum data.') }
     finally { setLoading(false) }
@@ -265,6 +263,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
   async function saveCurriculum(e: React.FormEvent) {
     e.preventDefault()
+    if (!cf.programmeId) { setError('Select a programme before saving its curriculum.'); return }
     setSaving(true)
     try {
       const values = {
@@ -284,7 +283,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         setMessage('Curriculum created.')
       }
       setEditingCurriculumId(null)
-      setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' })
+      setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: tab === 'short' ? 'ShortCourse' : 'FullProgramme' })
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save curriculum.')
@@ -326,6 +325,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
   function editCurriculum(item: Curriculum) {
     setEditingCurriculumId(item.id)
+    setSelected('')
+    setMappings([])
     setTab(item.programmeType === 1 ? 'short' : 'full')
     setCf({
       programmeId: item.programmeId, version: item.version, title: item.title,

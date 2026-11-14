@@ -18,6 +18,13 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpPut("curricula/{id:guid}")]
     public async Task<IActionResult> UpdateCurriculum(Guid id, [FromBody] UpdateCurriculumRequest request, CancellationToken ct)
     {
+        var authorityActive = await (
+            from curriculum in db.Curricula.AsNoTracking()
+            join programme in db.Programmes.AsNoTracking() on curriculum.ProgrammeId equals programme.Id
+            join authority in db.AcademicAuthorities.AsNoTracking() on programme.Regulator equals authority.Code
+            where curriculum.Id == id && authority.IsActive
+            select authority.Id).AnyAsync(ct);
+        if (!authorityActive) return Conflict(new { message = "The curriculum's academic authority is inactive or no longer registered." });
         var (success, error) = await service.UpdateCurriculumAsync(id, request, ct);
         return success ? NoContent() : error == "Curriculum not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
     }
@@ -32,6 +39,12 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpPost("curricula")]
     public async Task<IActionResult> CreateCurriculum([FromBody] CreateCurriculumRequest request, CancellationToken ct)
     {
+        var authorityActive = await (
+            from programme in db.Programmes.AsNoTracking()
+            join authority in db.AcademicAuthorities.AsNoTracking() on programme.Regulator equals authority.Code
+            where programme.Id == request.ProgrammeId && authority.IsActive
+            select authority.Id).AnyAsync(ct);
+        if (!authorityActive) return Conflict(new { message = "Select a programme registered under an active academic authority." });
         var result = await service.CreateCurriculumAsync(request, ct);
         return result.Success ? Ok(result.Curriculum) : BadRequest(new { message = result.Error });
     }
@@ -58,6 +71,14 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
             return BadRequest(new { message = "Select a registered, active academic authority for this course." });
         if (!string.IsNullOrWhiteSpace(existing.AuthorityCode) && !string.Equals(existing.AuthorityCode, authorityCode, StringComparison.OrdinalIgnoreCase))
             return Conflict(new { message = "A course already assigned to an authority cannot be transferred. Create a new course record under the other authority instead." });
+        var mappedAuthorities = await (
+            from mapping in db.CurriculumCourses.AsNoTracking()
+            join curriculum in db.Curricula.AsNoTracking() on mapping.CurriculumId equals curriculum.Id
+            join programme in db.Programmes.AsNoTracking() on curriculum.ProgrammeId equals programme.Id
+            where mapping.CourseId == id && programme.Regulator != null
+            select programme.Regulator!).Distinct().ToListAsync(ct);
+        if (mappedAuthorities.Any(code => !string.Equals(code, authorityCode, StringComparison.OrdinalIgnoreCase)))
+            return Conflict(new { message = "This legacy course is mapped to another authority. Create a course under the selected authority and replace the affected curriculum mappings before retiring the legacy course." });
         var (success, error) = await service.UpdateCourseAsync(id, request with { AuthorityCode = authorityCode }, ct);
         return success ? NoContent() : error == "Course not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
     }
