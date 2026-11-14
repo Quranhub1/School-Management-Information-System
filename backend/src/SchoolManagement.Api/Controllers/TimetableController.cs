@@ -78,14 +78,15 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         return Ok(conflicts);
     }
 
-    private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, CancellationToken cancellationToken)
+    private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, Guid curriculumId, int yearOfStudy, int curriculumSemesterNumber, CancellationToken cancellationToken)
     {
         return await (from teachingGroup in db.TeachingGroups.AsNoTracking()
             join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
             join curriculum in db.Curricula.AsNoTracking() on offering.ProgrammeId equals curriculum.ProgrammeId
             join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
             where teachingGroup.Id == teachingGroupId && teachingGroup.IsActive && offering.IsActive &&
-                offering.CourseId == courseId && mapping.CourseId == courseId && curriculum.IsActive
+                offering.CourseId == courseId && mapping.CourseId == courseId && curriculum.IsActive &&
+                curriculum.Id == curriculumId && mapping.YearOfStudy == yearOfStudy && mapping.SemesterNumber == curriculumSemesterNumber
             select mapping.Id).AnyAsync(cancellationToken);
     }
 
@@ -96,7 +97,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     {
         if (request.EndTime <= request.StartTime) return BadRequest(new { message = "End time must be after start time." });
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == request.TeachingGroupId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teaching group not found." });
-        if (!await IsCourseMappedToTeachingGroupAsync(request.TeachingGroupId, request.CourseId, cancellationToken))
+        if (!await IsCourseMappedToTeachingGroupAsync(request.TeachingGroupId, request.CourseId, request.CurriculumId, request.YearOfStudy, request.CurriculumSemesterNumber, cancellationToken))
             return BadRequest(new { message = "The selected course is not mapped to the programme curriculum for this teaching group." });
         if (!await db.StaffMembers.AnyAsync(x => x.Id == request.TeacherId && x.IsActive && x.EmploymentStatus == "Active", cancellationToken)) return BadRequest(new { message = "Teacher not found." });
 
@@ -177,7 +178,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
                 return BadRequest(new { message = "A session contains an invalid day of week." });
             if (entry.EndTime <= entry.StartTime)
                 return BadRequest(new { message = "Every session must end after it starts." });
-            if (!await IsCourseMappedToTeachingGroupAsync(teachingGroupId, entry.CourseId, cancellationToken))
+            if (!await IsCourseMappedToTeachingGroupAsync(teachingGroupId, entry.CourseId, entry.CurriculumId, entry.YearOfStudy, entry.CurriculumSemesterNumber, cancellationToken))
                 return BadRequest(new { message = "A selected course is not mapped to the programme curriculum for this teaching group." });
             if (!await db.StaffMembers.AnyAsync(x => x.Id == entry.TeacherId && x.IsActive && x.EmploymentStatus == "Active", cancellationToken))
                 return BadRequest(new { message = "A selected teacher was not found or is inactive." });
@@ -267,5 +268,5 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     }
 }
 
-public sealed record CreateTimetableEntryRequest(Guid TeachingGroupId, Guid CourseId, Guid TeacherId, DayOfWeek DayOfWeek, TimeOnly StartTime, TimeOnly EndTime, string? Room, string? SessionType);
+public sealed record CreateTimetableEntryRequest(Guid TeachingGroupId, Guid CourseId, Guid TeacherId, DayOfWeek DayOfWeek, TimeOnly StartTime, TimeOnly EndTime, string? Room, string? SessionType, Guid CurriculumId, int YearOfStudy, int CurriculumSemesterNumber);
 public sealed record SaveTimetableTemplateRequest(Guid TeachingGroupId, List<CreateTimetableEntryRequest> Entries);

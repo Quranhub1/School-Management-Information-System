@@ -122,6 +122,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         teachingGroupId: templateGroupId,
         courseId: cell.courseId,
         teacherId: cell.teacherId,
+        curriculumId: selectedCurriculum?.id ?? '',
+        yearOfStudy: Number(yearOfStudy),
+        curriculumSemesterNumber: Number(curriculumSemester),
         dayOfWeek: day,
         startTime: slot.startTime,
         endTime: slot.endTime,
@@ -139,7 +142,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setError('')
     setGeneratedResult(null)
     setGeneratedTimetables([])
-    if (!semesterId) { setError('Select an academic period before generating a timetable.'); return }
+    if (!semesterId || !programmeId || !selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a programme, curriculum, year of study, curriculum semester and academic period first.'); return }
     const selectedGroups = teachingGroupId
       ? availableGroups.filter(group => group.id === teachingGroupId)
       : availableGroups.slice(0, Math.max(1, Math.min(availableGroups.length, Number(timetableCount) || 1)))
@@ -148,7 +151,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     try {
       const results: Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }> = []
       for (const group of selectedGroups) {
-        const result = await generateTimetable(semesterId, group.id)
+        const result = await generateTimetable(semesterId, group.id, selectedCurriculum.id, Number(yearOfStudy), Number(curriculumSemester), programmeId)
         results.push({ groupId: group.id, groupLabel: group.label, result })
       }
       setGeneratedTimetables(results)
@@ -164,7 +167,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     setError('')
-    if (!teachingGroupId || !courseId || !teacherId) { setError('Select a programme curriculum, academic period, teaching group and teacher.'); return }
+    if (!teachingGroupId || !courseId || !teacherId || !selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a programme, curriculum, year, semester, teaching group, course unit and teacher.'); return }
     if (!eligibleCourseIds.has(courseId) || options.teachingGroups.find(item => item.id === teachingGroupId)?.courseId !== courseId) { setError('The selected course unit does not belong to this teaching group and curriculum selection.'); return }
     if (endTime <= startTime) { setError('End time must be later than start time.'); return }
     setLoading(true)
@@ -174,6 +177,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           teachingGroupId,
           courseId,
           teacherId,
+          curriculumId: selectedCurriculum.id,
+          yearOfStudy: Number(yearOfStudy),
+          curriculumSemesterNumber: Number(curriculumSemester),
           dayOfWeek: Number(dayOfWeek),
           startTime: startTime + ':00',
           endTime: endTime + ':00',
@@ -337,6 +343,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <label>Academic period<select value={semesterId} onChange={event => { setSemesterId(event.target.value); setTeachingGroupId(''); setTemplateGroupId(''); setTemplateLoadedGroupId(''); }}><option value="">Select academic period</option>{availableSemesters.map(item => <option key={item.id} value={item.id}>{item.label}{item.isCurrent ? ' (Current)' : ''}</option>)}</select></label>
       </div>
       <p className="timetable-generator-help">{eligibleMappings.length} curriculum course unit(s) match this selection. {availableGroups.length} operational teaching group(s) are available for the selected academic period.</p>
+      {eligibleMappings.length > 0 && <p className="timetable-generator-help">Course units: {eligibleMappings.map(item => item.courseLabel).join(' · ')}</p>}
       {eligibleMappings.length === 0 && <p className="timetable-day-empty">No course units are mapped to this programme, year and semester. Add them under Curriculum &amp; Courses; unrelated courses will not be shown.</p>}
       {eligibleMappings.length > 0 && availableGroups.length === 0 && <p className="timetable-day-empty">The curriculum has course units, but no active course offerings and teaching groups match this academic period. Set up the offerings and groups before scheduling.</p>}
     </section>}

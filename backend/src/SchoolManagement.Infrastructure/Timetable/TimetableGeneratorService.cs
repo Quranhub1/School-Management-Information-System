@@ -29,7 +29,11 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             from offering in db.CourseOfferings.AsNoTracking()
             join curriculum in db.Curricula.AsNoTracking() on offering.ProgrammeId equals curriculum.ProgrammeId
             join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
-            where offering.SemesterId == semesterId && offering.IsActive && curriculum.IsActive && mapping.CourseId == offering.CourseId
+            where offering.SemesterId == semesterId && offering.IsActive && curriculum.IsActive && mapping.CourseId == offering.CourseId &&
+                  (!request.CurriculumId.HasValue || curriculum.Id == request.CurriculumId.Value) &&
+                  (!request.ProgrammeId.HasValue || offering.ProgrammeId == request.ProgrammeId.Value) &&
+                  (!request.YearOfStudy.HasValue || mapping.YearOfStudy == request.YearOfStudy.Value) &&
+                  (!request.CurriculumSemesterNumber.HasValue || mapping.SemesterNumber == request.CurriculumSemesterNumber.Value)
             select offering.Id).Distinct().ToListAsync(cancellationToken);
         var courseOfferings = await db.CourseOfferings.AsNoTracking()
             .Where(x => x.SemesterId == semesterId && x.IsActive && curriculumOfferingIds.Contains(x.Id))
