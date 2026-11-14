@@ -601,9 +601,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
-              <p className="empty">Draft and verified programmes can have curricula configured. Reference-only and inactive programmes are excluded; approval status does not block curriculum preparation.</p>
               <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select programme</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name} · {p.approvalStatus}</option>)}</select>
-              {authorityProgrammes.length === 0 && <p className="empty">No eligible active full programmes under this authority. Check programme type, active status and reference-only setting in the Programme Register.</p>}
+              {authorityProgrammes.length === 0 && <p className="empty">No eligible programmes.</p>}
               <div className="form-row">
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
                 <input required placeholder="Title" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
@@ -618,7 +617,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
             <form className="student-form" onSubmit={saveCourse}>
               <h3>Course / unit catalogue</h3>
-              <p className="empty">New course units are registered under {authorities.find(item => item.code === authority)?.name ?? 'the selected authority'}. Unassigned legacy courses are labelled and become authority-specific when saved.</p>
               <div className="form-row">
                 <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
                 <input required placeholder="Unit name" value={uf.name} onChange={e => setUf({ ...uf, name: e.target.value })} />
@@ -632,7 +630,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             </form>
             <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
               {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
-              {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses are registered under this authority. Add a course unit to begin the catalogue.</td></tr>}
+              {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses registered.</td></tr>}
             </tbody></table></div>
           </div>
 
@@ -703,7 +701,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                   </div>
                 </section>
               ))}
-              {semesterGroups.length === 0 && <p className="empty">No semesters have been configured for this curriculum. Add a course unit above and assign its year and semester to create the first semester group.</p>}
+              {semesterGroups.length === 0 && <p className="empty">No semesters configured.</p>}
             </div>
           )}
         </>
@@ -713,8 +711,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         <div className="short-course-section">
           <div className="short-course-form-panel">
             <h4>Create Short-Course Curriculum</h4>
-          <p className="empty">Short-course curricula use the same authority-specific catalogue, course placement and semester management workflow as full programmes.</p>
-          {authorityProgrammes.length === 0 && <p className="empty">No eligible active short-course programmes under this authority. Check programme type, active status and reference-only setting in the Programme Register.</p>}
+          {authorityProgrammes.length === 0 && <p className="empty">No eligible programmes.</p>}
             <form className="student-form" onSubmit={saveCurriculum}>
               <div className="form-row">
                 <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select the programme this short course belongs to</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name} · {p.approvalStatus}</option>)}</select>
@@ -732,7 +729,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <section className="catalogue-board" aria-label="Short-course course catalogue">
             <form className="student-form" onSubmit={saveCourse}>
               <h3>Course / unit catalogue</h3>
-              <p className="empty">New course units are registered under {authorities.find(item => item.code === authority)?.name ?? 'the selected authority'}. Unassigned legacy courses are labelled and become authority-specific when saved.</p>
               <div className="form-row">
                 <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
                 <input required placeholder="Unit name" value={uf.name} onChange={e => setUf({ ...uf, name: e.target.value })} />
@@ -746,7 +742,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             </form>
             <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
               {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
-              {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses are registered under this authority. Add a course unit to begin the catalogue.</td></tr>}
+              {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses registered.</td></tr>}
             </tbody></table></div>
           </section>
           <div className="form-row">
@@ -816,7 +812,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                   </div>
                 </section>
               ))}
-              {semesterGroups.length === 0 && <p className="empty">No semesters have been configured for this curriculum. Add a course unit above and assign its year and semester to create the first semester group.</p>}
+              {semesterGroups.length === 0 && <p className="empty">No semesters configured.</p>}
             </div>
           )}
         </div>
