@@ -25,8 +25,18 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             return new GeneratedTimetableResult([], [], ["Semester not found."], 0, [], false);
         }
 
+        var curriculumOfferingIds = await (
+            from offering in db.CourseOfferings.AsNoTracking()
+            join curriculum in db.Curricula.AsNoTracking() on offering.ProgrammeId equals curriculum.ProgrammeId
+            join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
+            where offering.SemesterId == semesterId && offering.IsActive && curriculum.IsActive && mapping.CourseId == offering.CourseId &&
+                  (!request.CurriculumId.HasValue || curriculum.Id == request.CurriculumId.Value) &&
+                  (!request.ProgrammeId.HasValue || offering.ProgrammeId == request.ProgrammeId.Value) &&
+                  (!request.YearOfStudy.HasValue || mapping.YearOfStudy == request.YearOfStudy.Value) &&
+                  (!request.CurriculumSemesterNumber.HasValue || mapping.SemesterNumber == request.CurriculumSemesterNumber.Value)
+            select offering.Id).Distinct().ToListAsync(cancellationToken);
         var courseOfferings = await db.CourseOfferings.AsNoTracking()
-            .Where(x => x.SemesterId == semesterId && x.IsActive)
+            .Where(x => x.SemesterId == semesterId && x.IsActive && curriculumOfferingIds.Contains(x.Id))
             .ToListAsync(cancellationToken);
 
         var courseOfferingIds = courseOfferings.Select(x => x.Id).ToHashSet();
@@ -39,6 +49,9 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             teachingGroupsQuery = teachingGroupsQuery.Where(x => x.Id == request.TeachingGroupId.Value);
 
         var teachingGroups = await teachingGroupsQuery.ToListAsync(cancellationToken);
+        if (request.TeachingGroupId.HasValue && teachingGroups.Count == 0)
+            return new GeneratedTimetableResult([], [], [], 0,
+                ["The selected teaching group does not belong to the selected programme curriculum and academic period."], false);
         var selectedOfferingIds = teachingGroups.Select(x => x.CourseOfferingId).ToHashSet();
         courseOfferings = courseOfferings.Where(x => selectedOfferingIds.Contains(x.Id)).ToList();
 
