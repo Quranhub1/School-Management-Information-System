@@ -619,7 +619,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <form className="student-form" onSubmit={saveCourse}>
               <h3>Course / unit catalogue</h3>
               <p className="empty">New course units are registered under {authorities.find(item => item.code === authority)?.name ?? 'the selected authority'}. Unassigned legacy courses are labelled and become authority-specific when saved.</p>
-              <p className="empty">New course units are registered under {authorities.find(item => item.code === authority)?.name ?? 'the selected authority'}. Unassigned legacy courses are labelled and become authority-specific when saved.</p>
               <div className="form-row">
                 <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
                 <input required placeholder="Unit name" value={uf.name} onChange={e => setUf({ ...uf, name: e.target.value })} />
@@ -733,6 +732,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <section className="catalogue-board" aria-label="Short-course course catalogue">
             <form className="student-form" onSubmit={saveCourse}>
               <h3>Course / unit catalogue</h3>
+              <p className="empty">New course units are registered under {authorities.find(item => item.code === authority)?.name ?? 'the selected authority'}. Unassigned legacy courses are labelled and become authority-specific when saved.</p>
               <div className="form-row">
                 <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
                 <input required placeholder="Unit name" value={uf.name} onChange={e => setUf({ ...uf, name: e.target.value })} />
