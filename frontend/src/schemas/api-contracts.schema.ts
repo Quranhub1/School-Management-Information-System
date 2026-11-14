@@ -304,3 +304,103 @@ export const invoiceNoteRequestSchema = z.object({
   note: requiredTextSchema.min(3),
   createdBy: z.string().trim().optional(),
 });
+
+export const createProgrammeRequestSchema = z.object({
+  programmeId: identifierSchema.optional(),
+  programmeNumber: requiredTextSchema,
+  programmeName: requiredTextSchema,
+  awardType: requiredTextSchema,
+  durationYears: z.number().int().positive(),
+  durationUnit: requiredTextSchema,
+  programmeType: z.number().int().min(0).max(1),
+  departmentId: identifierSchema.optional(),
+  campusId: identifierSchema.optional(),
+});
+export const programmeResponseSchema = z.looseObject({
+  id: identifierSchema,
+  programmeNumber: requiredTextSchema,
+  programmeName: requiredTextSchema,
+  awardType: requiredTextSchema,
+  durationYears: z.number().int().positive(),
+  durationUnit: requiredTextSchema,
+  programmeType: z.number().int().min(0).max(1),
+  departmentId: identifierSchema.optional(),
+  campusId: identifierSchema.optional(),
+  isActive: z.boolean(),
+  isReferenceOnly: z.boolean().optional(),
+  approvalStatus: requiredTextSchema,
+});
+
+export const createCourseRequestSchema = z.object({
+  courseNumber: requiredTextSchema,
+  courseName: requiredTextSchema,
+  creditUnits: z.number().int().nonnegative(),
+  courseType: requiredTextSchema.optional(),
+  description: z.string().trim().optional(),
+});
+export const courseResponseSchema = z.looseObject({
+  id: identifierSchema,
+  courseNumber: requiredTextSchema,
+  courseName: requiredTextSchema,
+  creditUnits: z.number().int().nonnegative(),
+  courseType: requiredTextSchema.optional(),
+  description: z.string().trim().optional().nullable(),
+  isActive: z.boolean(),
+});
+
+export const createCurriculumRequestSchema = z.object({
+  programmeId: identifierSchema,
+  version: requiredTextSchema,
+  title: requiredTextSchema,
+  minimumCredits: z.number().int().nonnegative(),
+  effectiveFrom: z.iso.date(),
+  effectiveTo: z.iso.date().optional().nullable(),
+  programmeType: z.number().int().min(0).max(1),
+});
+export const curriculumResponseSchema = z.looseObject({
+  id: identifierSchema,
+  programmeId: identifierSchema,
+  version: requiredTextSchema,
+  title: requiredTextSchema,
+  minimumCredits: z.number().int().nonnegative(),
+  effectiveFrom: z.string(),
+  effectiveTo: z.string().optional().nullable(),
+  programmeType: z.number().int().min(0).max(1),
+  status: requiredTextSchema,
+  isActive: z.boolean(),
+});
+
+export const createCurriculumCourseRequestSchema = z.object({
+  curriculumId: identifierSchema,
+  courseId: identifierSchema,
+  yearOfStudy: z.number().int().positive(),
+  semesterNumber: z.number().int().positive(),
+  isCore: z.boolean(),
+});
+export const curriculumCourseResponseSchema = z.looseObject({
+  id: identifierSchema,
+  curriculumId: identifierSchema,
+  courseId: identifierSchema,
+  yearOfStudy: z.number().int().positive(),
+  semesterNumber: z.number().int().positive(),
+  isCore: z.boolean(),
+  courseLabel: requiredTextSchema.optional(),
+});
+
+export const createSemesterRequestSchema = z.object({
+  academicYearId: identifierSchema,
+  name: requiredTextSchema,
+  sequence: z.number().int().positive(),
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+});
+export const semesterResponseSchema = z.looseObject({
+  id: identifierSchema,
+  academicYearId: identifierSchema,
+  name: requiredTextSchema,
+  sequence: z.number().int().positive(),
+  startDate: z.string(),
+  endDate: z.string(),
+  isCurrent: z.boolean(),
+  isActive: z.boolean(),
+});

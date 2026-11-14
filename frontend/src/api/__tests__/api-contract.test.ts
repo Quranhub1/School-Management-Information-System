@@ -5,10 +5,20 @@ import {
   admissionResponseSchema,
   createAdmissionRequestSchema,
   createInvoiceRequestSchema,
+  createProgrammeRequestSchema,
+  createCourseRequestSchema,
+  createCurriculumRequestSchema,
+  createCurriculumCourseRequestSchema,
+  createSemesterRequestSchema,
   feeStructureCreateRequestSchema,
   invoiceResponseSchema,
   libraryBookCreateRequestSchema,
   libraryLoanCreateRequestSchema,
+  programmeResponseSchema,
+  courseResponseSchema,
+  curriculumResponseSchema,
+  curriculumCourseResponseSchema,
+  semesterResponseSchema,
   recordPaymentRequestSchema,
   staffCreateRequestSchema,
   studentCreateRequestSchema,
@@ -177,6 +187,140 @@ describe('API contracts — timetable', () => {
   })
 })
 
+describe('API contracts — curriculum', () => {
+  it('validates a create programme request', () => {
+    const result = createProgrammeRequestSchema.safeParse({
+      programmeNumber: 'PROG-001',
+      programmeName: 'Bachelor of Science',
+      awardType: 'Degree',
+      durationYears: 3,
+      durationUnit: 'Years',
+      programmeType: 0,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('parses a programme response', () => {
+    const programme = {
+      id: 'prog-1',
+      programmeNumber: 'PROG-001',
+      programmeName: 'Bachelor of Science',
+      awardType: 'Degree',
+      durationYears: 3,
+      durationUnit: 'Years',
+      programmeType: 0,
+      departmentId: 'dept-1',
+      campusId: 'campus-1',
+      isActive: true,
+      isReferenceOnly: false,
+      approvalStatus: 'Approved',
+    }
+    expect(programmeResponseSchema.parse(programme)).toEqual(programme)
+  })
+
+  it('validates a create course request', () => {
+    const result = createCourseRequestSchema.safeParse({
+      courseNumber: 'MATH-101',
+      courseName: 'Mathematics I',
+      creditUnits: 3,
+      courseType: 'Core',
+      description: 'Introduction to Mathematics',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('parses a course response', () => {
+    const course = {
+      id: 'course-1',
+      courseNumber: 'MATH-101',
+      courseName: 'Mathematics I',
+      creditUnits: 3,
+      courseType: 'Core',
+      description: 'Introduction to Mathematics',
+      isActive: true,
+    }
+    expect(courseResponseSchema.parse(course)).toEqual(course)
+  })
+
+  it('validates a create curriculum request', () => {
+    const result = createCurriculumRequestSchema.safeParse({
+      programmeId: 'prog-1',
+      version: '1.0',
+      title: 'Curriculum v1.0',
+      minimumCredits: 120,
+      effectiveFrom: '2026-01-01',
+      effectiveTo: '2026-12-31',
+      programmeType: 0,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('parses a curriculum response', () => {
+    const curriculum = {
+      id: 'curr-1',
+      programmeId: 'prog-1',
+      version: '1.0',
+      title: 'Curriculum v1.0',
+      minimumCredits: 120,
+      effectiveFrom: '2026-01-01',
+      effectiveTo: '2026-12-31',
+      programmeType: 0,
+      status: 'Active',
+      isActive: true,
+    }
+    expect(curriculumResponseSchema.parse(curriculum)).toEqual(curriculum)
+  })
+
+  it('validates a create curriculum course request', () => {
+    const result = createCurriculumCourseRequestSchema.safeParse({
+      curriculumId: 'curr-1',
+      courseId: 'course-1',
+      yearOfStudy: 1,
+      semesterNumber: 1,
+      isCore: true,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('parses a curriculum course response', () => {
+    const mapping = {
+      id: 'mapping-1',
+      curriculumId: 'curr-1',
+      courseId: 'course-1',
+      yearOfStudy: 1,
+      semesterNumber: 1,
+      isCore: true,
+      courseLabel: 'MATH-101 — Mathematics I',
+    }
+    expect(curriculumCourseResponseSchema.parse(mapping)).toEqual(mapping)
+  })
+
+  it('validates a create semester request', () => {
+    const result = createSemesterRequestSchema.safeParse({
+      academicYearId: 'year-1',
+      name: 'Semester 1',
+      sequence: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-06-30',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('parses a semester response', () => {
+    const semester = {
+      id: 'sem-1',
+      academicYearId: 'year-1',
+      name: 'Semester 1',
+      sequence: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-06-30',
+      isCurrent: true,
+      isActive: true,
+    }
+    expect(semesterResponseSchema.parse(semester)).toEqual(semester)
+  })
+})
+
 describe('API contracts — zod schema integrity', () => {
   it('all contract schemas are defined zod objects', () => {
     const schemas = [
@@ -193,6 +337,16 @@ describe('API contracts — zod schema integrity', () => {
       libraryLoanCreateRequestSchema,
       streamCreateRequestSchema,
       streamResponseSchema,
+      createProgrammeRequestSchema,
+      programmeResponseSchema,
+      createCourseRequestSchema,
+      courseResponseSchema,
+      createCurriculumRequestSchema,
+      curriculumResponseSchema,
+      createCurriculumCourseRequestSchema,
+      curriculumCourseResponseSchema,
+      createSemesterRequestSchema,
+      semesterResponseSchema,
     ]
     for (const schema of schemas) {
       expect(schema).toBeDefined()
