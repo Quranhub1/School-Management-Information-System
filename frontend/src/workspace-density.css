@@ -495,8 +495,13 @@
   box-shadow: 0 8px 20px rgb(0 0 0 / 12%);
 }
 .app-shell .curriculum-management .programme-row-actions-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  text-align: left;
+  min-height: 36px;
+  padding: 8px 12px;
+  text-align: center;
   white-space: nowrap;
 }
 .app-shell .curriculum-management .programme-row-actions-menu .danger-button {

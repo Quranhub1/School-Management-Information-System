@@ -17,11 +17,14 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [Authorize(Policy = TimetablePolicies.Read)]
     public async Task<IActionResult> Options(CancellationToken cancellationToken)
     {
-        var teachingGroups = await db.TeachingGroups.AsNoTracking()
-            .Where(x => x.IsActive)
-            .OrderBy(x => x.GroupCode)
-            .Select(x => new { x.Id, Label = x.Name == null || x.Name == "" ? x.GroupCode : x.GroupCode + " — " + x.Name })
-            .ToListAsync(cancellationToken);
+        var teachingGroups = await (
+            from teachingGroup in db.TeachingGroups.AsNoTracking()
+            join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
+            where teachingGroup.IsActive && offering.IsActive
+            orderby teachingGroup.GroupCode
+            select new { teachingGroup.Id, Label = teachingGroup.Name == null || teachingGroup.Name == "" ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name,
+                ProgrammeId = offering.ProgrammeId, SemesterId = offering.SemesterId, CourseId = offering.CourseId
+            }).ToListAsync(cancellationToken);
         var courses = await db.Courses.AsNoTracking()
             .Where(x => x.IsActive)
             .OrderBy(x => x.Code)
@@ -36,7 +39,20 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             .OrderByDescending(x => x.IsCurrent).ThenByDescending(x => x.StartDate)
             .Select(x => new { x.Id, Label = x.Name, x.AcademicYearId, x.IsCurrent, x.IsActive })
             .ToListAsync(cancellationToken);
-        return Ok(new { teachingGroups, courses, teachers, semesters });
+        var programmes = await db.Programmes.AsNoTracking().Where(x => x.IsActive && !x.IsReferenceOnly)
+            .OrderBy(x => x.Name).Select(x => new { x.Id, Label = x.Name + " (" + x.Award + ")" }).ToListAsync(cancellationToken);
+        var curricula = await db.Curricula.AsNoTracking().Where(x => x.IsActive).OrderByDescending(x => x.EffectiveFrom)
+            .Select(x => new { x.Id, x.ProgrammeId, Label = x.Title + " — " + x.Version }).ToListAsync(cancellationToken);
+        var curriculumCourses = await (
+            from mapping in db.CurriculumCourses.AsNoTracking()
+            join curriculum in db.Curricula.AsNoTracking() on mapping.CurriculumId equals curriculum.Id
+            join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
+            where curriculum.IsActive && course.IsActive
+            orderby mapping.YearOfStudy, mapping.SemesterNumber, course.Code
+            select new { mapping.CurriculumId, curriculum.ProgrammeId, mapping.CourseId,
+                CourseLabel = course.Code + " — " + course.Name, mapping.YearOfStudy, mapping.SemesterNumber, mapping.IsCore
+            }).ToListAsync(cancellationToken);
+        return Ok(new { teachingGroups, courses, teachers, semesters, programmes, curricula, curriculumCourses });
     }
 
     [HttpGet]
@@ -62,6 +78,21 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         return Ok(conflicts);
     }
 
+    private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, Guid curriculumId, int yearOfStudy, int curriculumSemesterNumber, CancellationToken cancellationToken)
+    {
+        return await (from teachingGroup in db.TeachingGroups.AsNoTracking()
+            join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
+            join programme in db.Programmes.AsNoTracking() on offering.ProgrammeId equals programme.Id
+            join curriculum in db.Curricula.AsNoTracking() on offering.ProgrammeId equals curriculum.ProgrammeId
+            join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
+            join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
+            where teachingGroup.Id == teachingGroupId && teachingGroup.IsActive && offering.IsActive &&
+                programme.IsActive && !programme.IsReferenceOnly && course.IsActive &&
+                offering.CourseId == courseId && mapping.CourseId == courseId && curriculum.IsActive &&
+                curriculum.Id == curriculumId && mapping.YearOfStudy == yearOfStudy && mapping.SemesterNumber == curriculumSemesterNumber
+            select mapping.Id).AnyAsync(cancellationToken);
+    }
+
     [HttpPost]
     [Authorize(Policy = TimetablePolicies.Management)]
     [ValidateAntiForgeryToken]
@@ -69,7 +100,8 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     {
         if (request.EndTime <= request.StartTime) return BadRequest(new { message = "End time must be after start time." });
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == request.TeachingGroupId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teaching group not found." });
-        if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Course not found." });
+        if (!await IsCourseMappedToTeachingGroupAsync(request.TeachingGroupId, request.CourseId, request.CurriculumId, request.YearOfStudy, request.CurriculumSemesterNumber, cancellationToken))
+            return BadRequest(new { message = "The selected course is not mapped to the programme curriculum for this teaching group." });
         if (!await db.StaffMembers.AnyAsync(x => x.Id == request.TeacherId && x.IsActive && x.EmploymentStatus == "Active", cancellationToken)) return BadRequest(new { message = "Teacher not found." });
 
         var roomConflict = await repository.HasRoomConflictAsync(request.DayOfWeek, request.StartTime, request.EndTime, request.Room, cancellationToken: cancellationToken);
@@ -96,7 +128,8 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         var existing = await db.TimetableEntries.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, cancellationToken);
         if (existing is null) return NotFound(new { message = "Timetable session was not found or has already changed." });
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == request.TeachingGroupId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teaching group not found." });
-        if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Course not found." });
+        if (!await IsCourseMappedToTeachingGroupAsync(request.TeachingGroupId, request.CourseId, request.CurriculumId, request.YearOfStudy, request.CurriculumSemesterNumber, cancellationToken))
+            return BadRequest(new { message = "The selected course is not mapped to the programme curriculum for this teaching group." });
         if (!await db.StaffMembers.AnyAsync(x => x.Id == request.TeacherId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teacher not found." });
 
         var roomConflict = await repository.HasRoomConflictAsync(request.DayOfWeek, request.StartTime, request.EndTime, request.Room, excludeEntryId: id, cancellationToken: cancellationToken);
@@ -148,8 +181,8 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
                 return BadRequest(new { message = "A session contains an invalid day of week." });
             if (entry.EndTime <= entry.StartTime)
                 return BadRequest(new { message = "Every session must end after it starts." });
-            if (!await db.Courses.AnyAsync(x => x.Id == entry.CourseId && x.IsActive, cancellationToken))
-                return BadRequest(new { message = "A selected course was not found or is inactive." });
+            if (!await IsCourseMappedToTeachingGroupAsync(teachingGroupId, entry.CourseId, entry.CurriculumId, entry.YearOfStudy, entry.CurriculumSemesterNumber, cancellationToken))
+                return BadRequest(new { message = "A selected course is not mapped to the programme curriculum for this teaching group." });
             if (!await db.StaffMembers.AnyAsync(x => x.Id == entry.TeacherId && x.IsActive && x.EmploymentStatus == "Active", cancellationToken))
                 return BadRequest(new { message = "A selected teacher was not found or is inactive." });
         }
@@ -221,6 +254,10 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Generate(GenerateTimetableRequest request, CancellationToken cancellationToken)
     {
+        if (!request.CurriculumId.HasValue || !request.ProgrammeId.HasValue ||
+            !request.YearOfStudy.HasValue || request.YearOfStudy.Value < 1 ||
+            !request.CurriculumSemesterNumber.HasValue || request.CurriculumSemesterNumber.Value < 1)
+            return BadRequest(new { message = "Programme, curriculum, year of study and curriculum semester are required for timetable generation." });
         var result = await generator.GenerateAsync(request, cancellationToken);
         return Ok(result);
     }
@@ -238,5 +275,5 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     }
 }
 
-public sealed record CreateTimetableEntryRequest(Guid TeachingGroupId, Guid CourseId, Guid TeacherId, DayOfWeek DayOfWeek, TimeOnly StartTime, TimeOnly EndTime, string? Room, string? SessionType);
+public sealed record CreateTimetableEntryRequest(Guid TeachingGroupId, Guid CourseId, Guid TeacherId, DayOfWeek DayOfWeek, TimeOnly StartTime, TimeOnly EndTime, string? Room, string? SessionType, Guid CurriculumId, int YearOfStudy, int CurriculumSemesterNumber);
 public sealed record SaveTimetableTemplateRequest(Guid TeachingGroupId, List<CreateTimetableEntryRequest> Entries);

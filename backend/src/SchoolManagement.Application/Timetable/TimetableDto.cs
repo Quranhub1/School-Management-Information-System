@@ -28,7 +28,11 @@ public sealed record GenerateTimetableRequest(
     Guid SemesterId,
     Guid? TeachingGroupId,
     int RotationIntervalMinutes,
-    string? GenerationSource);
+    string? GenerationSource,
+    Guid? CurriculumId = null,
+    int? YearOfStudy = null,
+    int? CurriculumSemesterNumber = null,
+    Guid? ProgrammeId = null);
 
 public sealed record GeneratedTimetableResult(
     IReadOnlyList<TimetableEntryDto> Entries,

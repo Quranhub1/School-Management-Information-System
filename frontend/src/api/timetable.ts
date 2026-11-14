@@ -15,12 +15,15 @@ export type TimetableEntry = {
   generationSource?: string
 }
 
-export type CreateTimetableEntry = Omit<TimetableEntry, 'id' | 'isActive' | 'generatedAt' | 'generationSource'>
+export type CreateTimetableEntry = Omit<TimetableEntry, 'id' | 'isActive' | 'generatedAt' | 'generationSource'> & { curriculumId: string; yearOfStudy: number; curriculumSemesterNumber: number }
 export type TimetableOptions = {
-  teachingGroups: { id: string; label: string }[]
+  teachingGroups: { id: string; label: string; programmeId: string; semesterId: string; courseId: string }[]
   courses: { id: string; label: string }[]
   teachers: { id: string; label: string }[]
   semesters: { id: string; label: string; academicYearId: string; isCurrent: boolean; isActive: boolean }[]
+  programmes: { id: string; label: string }[]
+  curricula: { id: string; programmeId: string; label: string }[]
+  curriculumCourses: { curriculumId: string; programmeId: string; courseId: string; courseLabel: string; yearOfStudy: number; semesterNumber: number; isCore: boolean }[]
 }
 export type GenerateTimetableResult = {
   entries: TimetableEntry[]
@@ -48,6 +51,6 @@ export const listTimetable = (teachingGroupId?: string) => request<TimetableEntr
 export const createTimetableEntry = (input: CreateTimetableEntry) => request<TimetableEntry>('/api/timetable', { method: 'POST', body: JSON.stringify(input) })
 export const updateTimetableEntry = (id: string, input: CreateTimetableEntry) => request<TimetableEntry>(`/api/timetable/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
 export const deactivateTimetableEntry = (id: string) => request<void>(`/api/timetable/${id}`, { method: 'DELETE' })
-export const generateTimetable = (semesterId: string, teachingGroupId?: string) => request<GenerateTimetableResult>('/api/timetable/generate', { method: 'POST', body: JSON.stringify({ semesterId, teachingGroupId, rotationIntervalMinutes: 15, generationSource: 'Manual' }) })
+export const generateTimetable = (semesterId: string, teachingGroupId: string, curriculumId: string, yearOfStudy: number, curriculumSemesterNumber: number, programmeId: string) => request<GenerateTimetableResult>('/api/timetable/generate', { method: 'POST', body: JSON.stringify({ semesterId, teachingGroupId, curriculumId, yearOfStudy, curriculumSemesterNumber, programmeId, rotationIntervalMinutes: 15, generationSource: 'Manual' }) })
 
 export const saveTimetableTemplate = (teachingGroupId: string, entries: CreateTimetableEntry[]) => request<TimetableEntry[]>(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`, { method: 'PUT', body: JSON.stringify({ teachingGroupId, entries }) })
