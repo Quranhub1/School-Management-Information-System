@@ -603,7 +603,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <h3>New curriculum version</h3>
               <p className="empty">Draft and verified programmes can have curricula configured. Reference-only and inactive programmes are excluded; approval status does not block curriculum preparation.</p>
               <select required value={cf.programmeId} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select programme</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name} · {p.approvalStatus}</option>)}</select>
-              {authorityProgrammes.length === 0 && <p className="empty">No eligible active programmes under this authority for {tab === 'short' ? 'short courses' : 'full programmes'}. Check programme type, active status and reference-only setting in the Programme Register.</p>}
+              {authorityProgrammes.length === 0 && <p className="empty">No eligible active full programmes under this authority. Check programme type, active status and reference-only setting in the Programme Register.</p>}
               <div className="form-row">
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
                 <input required placeholder="Title" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
