@@ -135,6 +135,14 @@ The repository includes an explicit golden-path acceptance procedure in [`INSTAL
 
 The path covers admission, enrollment, course registration, currency-aware fee billing, installment payments, ledger verification, attendance, assessment/results, student profile and reporting. **Do not run this scenario against a production database.**
 
+## Curriculum and course catalogue
+
+Curricula are managed under the academic authority responsible for each programme. The Full Programmes and Short Courses workflows are separate and each accepts only active, non-reference programmes of the matching programme type. A programme's approval workflow status does not prevent curriculum preparation; inactive and reference-only programmes are excluded.
+
+Each curriculum records its version, effective dates and minimum credits. Course units are maintained in an authority-specific catalogue and can be placed into a curriculum by year and semester, with each placement marked as core or elective. The Short Courses workflow supports the same catalogue and semester-placement operations.
+
+Legacy courses without an assigned authority remain identifiable as unassigned. They are not automatically assigned where existing curriculum mappings are ambiguous. When a legacy course is saved under an authority, it becomes authority-specific only when backend validation confirms that adoption is safe.
+
 ## System scope
 
 ### Institutional structure
