@@ -77,21 +77,99 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
   async function load() {
     setLoading(true)
+    setError('')
+    setMessage('')
     try {
-      setError('')
-      const [a, c, d, campusList] = await Promise.all([getCurricula(), getProgrammes(), getAcademicAuthorities(true), getAcademicCampuses()])
-      const nextAuthority = d.some(item => item.code === authority && item.isActive) ? authority : (d.find(item => item.isActive)?.code ?? '')
-      const campusId = selectedCampusId && campusList.some(item => item.id === selectedCampusId) ? selectedCampusId : (campusList.find(item => item.isActive)?.id ?? '')
-      const [b, structure] = await Promise.all([
-        nextAuthority ? getCourses(nextAuthority) : Promise.resolve([]),
-        campusId ? Promise.all([getAcademicDepartments(campusId), getAcademicFaculties(campusId)]) : Promise.resolve([[], []] as [AcademicDepartment[], FacultyOption[]]),
+      // Load the academic catalog independently from the optional campus structure.
+      // A campus/faculty/department endpoint failure must never blank the three
+      // curriculum selectors.
+      const [curriculaResult, programmesResult, authoritiesResult] = await Promise.allSettled([
+        getCurricula(),
+        getProgrammes(),
+        getAcademicAuthorities(true),
       ])
-      setCurricula(a); setCourses(b); setProgrammes(c); setAuthorities(d)
-      setDepartments(structure[0]); setCampuses(campusList); setSelectedCampusId(campusId); setFaculties(structure[1])
+
+      const failures: string[] = []
+      const nextCurricula = curriculaResult.status === 'fulfilled' ? curriculaResult.value : []
+      const nextProgrammes = programmesResult.status === 'fulfilled' ? programmesResult.value : []
+      const nextAuthorities = authoritiesResult.status === 'fulfilled' ? authoritiesResult.value : []
+
+      if (curriculaResult.status === 'rejected') failures.push(`Curricula: ${curriculaResult.reason instanceof Error ? curriculaResult.reason.message : 'could not be loaded'}`)
+      if (programmesResult.status === 'rejected') failures.push(`Programmes: ${programmesResult.reason instanceof Error ? programmesResult.reason.message : 'could not be loaded'}`)
+      if (authoritiesResult.status === 'rejected') failures.push(`Academic authorities: ${authoritiesResult.reason instanceof Error ? authoritiesResult.reason.message : 'could not be loaded'}`)
+
+      const nextAuthority = nextAuthorities.some(item => item.code === authority && item.isActive)
+        ? authority
+        : (nextAuthorities.find(item => item.isActive)?.code ?? '')
+
+      // Publish successful core results immediately; do not wait for campus data.
+      setCurricula(nextCurricula)
+      setProgrammes(nextProgrammes)
+      setAuthorities(nextAuthorities)
       setAuthority(nextAuthority)
-      if (selected && !a.some(item => item.id === selected && resolveAcademicAuthority(c.find(p => p.id === item.programmeId)?.regulator) === nextAuthority)) { setSelected(''); setMappings([]) }
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load curriculum data.') }
-    finally { setLoading(false) }
+
+      if (nextAuthority) {
+        try {
+          setCourses(await getCourses(nextAuthority))
+        } catch (courseError) {
+          setCourses([])
+          failures.push(`Courses: ${courseError instanceof Error ? courseError.message : 'could not be loaded'}`)
+        }
+      } else {
+        setCourses([])
+        if (authoritiesResult.status === 'fulfilled' && nextAuthorities.length === 0) {
+          failures.push('No active academic authority is configured. Activate an authority to load programmes and courses.')
+        }
+      }
+
+      if (selected && !nextCurricula.some(item =>
+        item.id === selected &&
+        resolveAcademicAuthority(nextProgrammes.find(programme => programme.id === item.programmeId)?.regulator) === resolveAcademicAuthority(nextAuthority)
+      )) {
+        setSelected('')
+        setMappings([])
+      }
+
+      // Campus structure is ancillary to the programme/curriculum/course selectors.
+      try {
+        const campusList = await getAcademicCampuses()
+        const campusId = selectedCampusId && campusList.some(item => item.id === selectedCampusId)
+          ? selectedCampusId
+          : (campusList.find(item => item.isActive)?.id ?? '')
+        setCampuses(campusList)
+        setSelectedCampusId(campusId)
+        if (campusId) {
+          const [departmentResult, facultyResult] = await Promise.allSettled([
+            getAcademicDepartments(campusId),
+            getAcademicFaculties(campusId),
+          ])
+          if (departmentResult.status === 'fulfilled') setDepartments(departmentResult.value)
+          else {
+            setDepartments([])
+            failures.push(`Departments: ${departmentResult.reason instanceof Error ? departmentResult.reason.message : 'could not be loaded'}`)
+          }
+          if (facultyResult.status === 'fulfilled') setFaculties(facultyResult.value)
+          else {
+            setFaculties([])
+            failures.push(`Faculties: ${facultyResult.reason instanceof Error ? facultyResult.reason.message : 'could not be loaded'}`)
+          }
+        } else {
+          setDepartments([])
+          setFaculties([])
+        }
+      } catch (campusError) {
+        setCampuses([])
+        setDepartments([])
+        setFaculties([])
+        failures.push(`Campus structure: ${campusError instanceof Error ? campusError.message : 'could not be loaded'}`)
+      }
+
+      if (failures.length) setError(failures.join(' · '))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load curriculum data.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function refreshMappings(id: string) {
