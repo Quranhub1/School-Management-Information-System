@@ -16,13 +16,13 @@ public partial class AddCourseAcademicAuthority : Migration
             UPDATE ""Courses"" AS course
             SET ""AuthorityCode"" = mapped.""AuthorityCode""
             FROM (
-                SELECT mapping.""CourseId"", MIN(programme.""Regulator"") AS ""AuthorityCode""
+                SELECT mapping.""CourseId"", MIN(UPPER(BTRIM(programme.""Regulator""))) AS ""AuthorityCode""
                 FROM ""CurriculumCourses"" AS mapping
                 INNER JOIN ""Curricula"" AS curriculum ON curriculum.""Id"" = mapping.""CurriculumId""
                 INNER JOIN ""Programmes"" AS programme ON programme.""Id"" = curriculum.""ProgrammeId""
                 WHERE programme.""Regulator"" IS NOT NULL AND btrim(programme.""Regulator"") <> ''
                 GROUP BY mapping.""CourseId""
-                HAVING COUNT(DISTINCT programme.""Regulator"") = 1
+                HAVING COUNT(DISTINCT UPPER(BTRIM(programme.""Regulator""))) = 1
             ) AS mapped
             WHERE course.""Id"" = mapped.""CourseId"";
         ");

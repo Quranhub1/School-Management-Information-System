@@ -618,6 +618,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <form className="student-form" onSubmit={saveCourse}>
               <h3>Course / unit catalogue</h3>
               <p className="empty">New course units are registered under {authorities.find(item => item.code === authority)?.name ?? 'the selected authority'}. Unassigned legacy courses are labelled and become authority-specific when saved.</p>
+              <p className="empty">New course units are registered under {authorities.find(item => item.code === authority)?.name ?? 'the selected authority'}. Unassigned legacy courses are labelled and become authority-specific when saved.</p>
               <div className="form-row">
                 <input required placeholder="Unit code" value={uf.code} onChange={e => setUf({ ...uf, code: e.target.value })} />
                 <input required placeholder="Unit name" value={uf.name} onChange={e => setUf({ ...uf, name: e.target.value })} />
@@ -725,13 +726,6 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <input required type="date" value={cf.effectiveFrom} onChange={e => setCf({ ...cf, effectiveFrom: e.target.value })} />
                 <input type="date" value={cf.effectiveTo} onChange={e => setCf({ ...cf, effectiveTo: e.target.value })} />
               </div>
-              <select value={cf.type} onChange={e => {
-                const val = e.target.value
-                setCf({ ...cf, type: val === 'ShortCourse' ? 'ShortCourse' : 'FullProgramme' })
-              }}>
-                <option value="FullProgramme">Full Programme</option>
-                <option value="ShortCourse">Short Course</option>
-              </select>
               <button type="submit" disabled={saving}>{editingCurriculumId ? 'Save short-course curriculum' : 'Add short-course curriculum'}</button>{editingCurriculumId && <button type="button" className="secondary-button" onClick={() => { setEditingCurriculumId(null); setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'ShortCourse' }) }}>Cancel edit</button>}
             </form>
           </div>
@@ -750,8 +744,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <button type="submit" disabled={saving}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
             </form>
             <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
-              {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses are available under this authority.</td></tr>}
+              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+              {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses are registered under this authority. Add a course unit to begin the catalogue.</td></tr>}
             </tbody></table></div>
           </section>
           <div className="form-row">

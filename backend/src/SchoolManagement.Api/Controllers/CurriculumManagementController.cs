@@ -37,9 +37,10 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     }
 
     [HttpGet("courses")]
-    public async Task<IActionResult> GetCourses([FromQuery] string authorityCode, CancellationToken ct)
+    public async Task<IActionResult> GetCourses([FromQuery] string? authorityCode, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(authorityCode)) return BadRequest(new { message = "Academic authority is required." });
+        if (string.IsNullOrWhiteSpace(authorityCode))
+            return Ok(await service.GetCoursesAsync(ct));
         var code = authorityCode.Trim().ToUpperInvariant();
         if (!await db.AcademicAuthorities.AsNoTracking().AnyAsync(x => x.Code == code && x.IsActive, ct))
             return NotFound(new { message = "The selected academic authority is not registered or active." });

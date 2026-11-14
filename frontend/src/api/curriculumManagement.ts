@@ -21,7 +21,7 @@ export interface Course { id:string; authorityCode?:string|null; code:string; na
 export interface CurriculumCourse { id:string; curriculumId:string; courseId:string; yearOfStudy:number; semesterNumber:number; isCore:boolean }
 
 export const getCurricula = () => request<Curriculum[]>('/api/curriculum-management/curricula')
-export const getCourses = (authorityCode: string) => request<Course[]>(`/api/curriculum-management/courses?authorityCode=${encodeURIComponent(authorityCode)}`)
+export const getCourses = (authorityCode?: string) => request<Course[]>(authorityCode ? `/api/curriculum-management/courses?authorityCode=${encodeURIComponent(authorityCode)}` : '/api/curriculum-management/courses')
 export const createCurriculum = (input: Omit<Curriculum,'id'|'status'|'isActive'>) => request<Curriculum>('/api/curriculum-management/curricula',{method:'POST',body:JSON.stringify(input)})
 export const createCourse = (input: Omit<Course,'id'|'isActive'> & { authorityCode: string }) => request<Course>('/api/curriculum-management/courses',{method:'POST',body:JSON.stringify(input)})
 export const getCurriculumCourses = (id:string) => {
