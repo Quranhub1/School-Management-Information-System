@@ -21,6 +21,7 @@ import {
 } from '../api/curriculumManagement'
 import { createProgramme, deleteProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
+import { showConfirmDialog } from '../utils/confirmDialog'
 import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityActive, updateAcademicAuthority, type AcademicAuthority } from '../api/academicAuthorities'
 import { createAcademicDepartment, createAcademicFaculty, getAcademicCampuses, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, setAcademicFacultyActive, updateAcademicDepartment, updateAcademicFaculty, type AcademicDepartment, type CampusOption, type FacultyOption } from '../api/academicDepartments'
 
@@ -228,7 +229,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   }
 
   async function removeProgramme(item: Programme) {
-    const confirmed = window.confirm(`Delete programme ${item.code} — ${item.name}? This cannot be undone.`)
+    const confirmed = await showConfirmDialog(`Delete programme ${item.code} — ${item.name}? This cannot be undone.`, {
+      title: 'Delete programme',
+      confirmLabel: 'Delete programme',
+      destructive: true,
+    })
     if (!confirmed) return
     setError('')
     setMessage('')
