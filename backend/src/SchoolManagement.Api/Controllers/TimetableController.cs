@@ -251,6 +251,10 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Generate(GenerateTimetableRequest request, CancellationToken cancellationToken)
     {
+        if (!request.CurriculumId.HasValue || !request.ProgrammeId.HasValue ||
+            !request.YearOfStudy.HasValue || request.YearOfStudy.Value < 1 ||
+            !request.CurriculumSemesterNumber.HasValue || request.CurriculumSemesterNumber.Value < 1)
+            return BadRequest(new { message = "Programme, curriculum, year of study and curriculum semester are required for timetable generation." });
         var result = await generator.GenerateAsync(request, cancellationToken);
         return Ok(result);
     }

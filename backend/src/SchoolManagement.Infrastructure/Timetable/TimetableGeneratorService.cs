@@ -49,6 +49,9 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             teachingGroupsQuery = teachingGroupsQuery.Where(x => x.Id == request.TeachingGroupId.Value);
 
         var teachingGroups = await teachingGroupsQuery.ToListAsync(cancellationToken);
+        if (request.TeachingGroupId.HasValue && teachingGroups.Count == 0)
+            return new GeneratedTimetableResult([], [], [], 0,
+                ["The selected teaching group does not belong to the selected programme curriculum and academic period."], false);
         var selectedOfferingIds = teachingGroups.Select(x => x.CourseOfferingId).ToHashSet();
         courseOfferings = courseOfferings.Where(x => selectedOfferingIds.Contains(x.Id)).ToList();
 
