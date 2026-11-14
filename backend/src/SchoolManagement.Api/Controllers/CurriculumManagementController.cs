@@ -37,12 +37,27 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     }
 
     [HttpGet("courses")]
-    public async Task<IActionResult> GetCourses(CancellationToken ct) => Ok(await service.GetCoursesAsync(ct));
+    public async Task<IActionResult> GetCourses([FromQuery] string authorityCode, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(authorityCode)) return BadRequest(new { message = "Academic authority is required." });
+        var code = authorityCode.Trim().ToUpperInvariant();
+        if (!await db.AcademicAuthorities.AsNoTracking().AnyAsync(x => x.Code == code && x.IsActive, ct))
+            return NotFound(new { message = "The selected academic authority is not registered or active." });
+        return Ok(await db.Courses.AsNoTracking().Where(x => x.AuthorityCode == code || x.AuthorityCode == null)
+            .OrderBy(x => x.AuthorityCode == null).ThenBy(x => x.Code).ToListAsync(ct));
+    }
 
     [HttpPut("courses/{id:guid}")]
     public async Task<IActionResult> UpdateCourse(Guid id, [FromBody] UpdateCourseRequest request, CancellationToken ct)
     {
-        var (success, error) = await service.UpdateCourseAsync(id, request, ct);
+        var existing = await db.Courses.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (existing is null) return NotFound(new { message = "Course not found." });
+        var authorityCode = request.AuthorityCode?.Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(authorityCode) || !await db.AcademicAuthorities.AnyAsync(x => x.Code == authorityCode && x.IsActive, ct))
+            return BadRequest(new { message = "Select a registered, active academic authority for this course." });
+        if (!string.IsNullOrWhiteSpace(existing.AuthorityCode) && !string.Equals(existing.AuthorityCode, authorityCode, StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "A course already assigned to an authority cannot be transferred. Create a new course record under the other authority instead." });
+        var (success, error) = await service.UpdateCourseAsync(id, request with { AuthorityCode = authorityCode }, ct);
         return success ? NoContent() : error == "Course not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
     }
 
@@ -59,7 +74,10 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpPost("courses")]
     public async Task<IActionResult> CreateCourse([FromBody] CreateCourseRequest request, CancellationToken ct)
     {
-        var result = await service.CreateCourseAsync(request, ct);
+        var authorityCode = request.AuthorityCode?.Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(authorityCode) || !await db.AcademicAuthorities.AnyAsync(x => x.Code == authorityCode && x.IsActive, ct))
+            return BadRequest(new { message = "Select a registered, active academic authority for this course." });
+        var result = await service.CreateCourseAsync(request with { AuthorityCode = authorityCode }, ct);
         return result.Success ? Ok(result.Course) : BadRequest(new { message = result.Error });
     }
 
@@ -131,16 +149,16 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
             return NotFound(new { message = "The selected curriculum, programme or registered academic authority does not exist." });
         if (!curriculum.AuthorityIsActive)
             return Conflict(new { message = "The programme's academic authority is inactive. Activate it before changing curriculum mappings." });
-        if (!curriculum.Programme.IsActive || curriculum.Programme.IsReferenceOnly ||
-            (curriculum.Programme.ApprovalStatus != "Institutional" &&
-             curriculum.Programme.ApprovalStatus != "Verified" &&
-             curriculum.Programme.ApprovalStatus != "Approved"))
-            return Conflict(new { message = "Only active, institutionally approved or verified programmes can receive curriculum course mappings." });
+        if (!curriculum.Programme.IsActive || curriculum.Programme.IsReferenceOnly)
+            return Conflict(new { message = "Only active, non-reference programmes can receive curriculum course mappings." });
         if (!curriculum.Curriculum.IsActive)
             return Conflict(new { message = "Activate the curriculum before changing its course mappings." });
 
-        if (!await db.Courses.AnyAsync(x => x.Id == request.CourseId && x.IsActive, ct))
-            return NotFound(new { message = "The selected active course does not exist." });
+        var course = await db.Courses.FirstOrDefaultAsync(x => x.Id == request.CourseId && x.IsActive, ct);
+        if (course is null) return NotFound(new { message = "The selected active course does not exist." });
+        if (!string.IsNullOrWhiteSpace(course.AuthorityCode) && !string.Equals(course.AuthorityCode, curriculum.Authority, StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "This course belongs to a different academic authority. Select a course from the current authority catalogue." });
+        if (string.IsNullOrWhiteSpace(course.AuthorityCode)) course.AuthorityCode = curriculum.Authority;
 
         var otherAuthority = await (
             from mapping in db.CurriculumCourses.AsNoTracking()
