@@ -48,7 +48,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [editingProgrammeId, setEditingProgrammeId] = useState<string | null>(null)
   const [editingCurriculumId, setEditingCurriculumId] = useState<string | null>(null)
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null)
-  const [programmeForm, setProgrammeForm] = useState({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
+  const [programmeForm, setProgrammeForm] = useState({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: false, type: '0' })
   const [mappings, setMappings] = useState<CurriculumCourse[]>([])
   const [editingMappingId, setEditingMappingId] = useState<string | null>(null)
   const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
@@ -200,7 +200,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       if (editingProgrammeId) await updateProgramme(editingProgrammeId, input)
       else await createProgramme(input)
       setEditingProgrammeId(null)
-      setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
+      setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: false, type: '0' })
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save programme.')
@@ -231,7 +231,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       await deleteProgramme(item.id)
       if (editingProgrammeId === item.id) {
         setEditingProgrammeId(null)
-        setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' })
+        setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: false, type: '0' })
       }
       setMessage(`Programme ${item.code} deleted successfully.`)
       await load()
@@ -577,7 +577,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <label><input type="checkbox" checked={programmeForm.isReferenceOnly} onChange={e => setProgrammeForm({ ...programmeForm, isReferenceOnly: e.target.checked })} /> Reference only — do not offer for admission</label>
           </div>
           <button type="submit" disabled={saving || !authority}>{editingProgrammeId ? 'Save programme changes' : 'Add programme'}</button>
-          {editingProgrammeId && <button type="button" className="secondary-button" onClick={() => { setEditingProgrammeId(null); setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: true, type: '0' }) }}>Cancel edit</button>}
+          {editingProgrammeId && <button type="button" className="secondary-button" onClick={() => { setEditingProgrammeId(null); setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: false, type: '0' }) }}>Cancel edit</button>}
         </form>
         <div className="table-wrap"><table><thead><tr><th>Code</th><th>Programme</th><th>Award</th><th>Duration</th><th>Verification</th><th>Status</th><th>Actions</th></tr></thead><tbody>
           {programmes.filter(item => resolveAcademicAuthority(item.regulator) === authority).map(item => <tr key={item.id}><td>{item.code}</td><td>{item.name}</td><td>{item.award}</td><td>{item.durationYears} {item.durationUnit}</td><td>{item.isReferenceOnly ? 'Reference only' : item.approvalStatus}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><details className="programme-row-actions"><summary aria-label={`Actions for ${item.name}`}>Actions</summary><div className="programme-row-actions-menu"><button type="button" onClick={() => editProgramme(item)}>Edit</button><button type="button" className="secondary-button" onClick={() => void toggleProgramme(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button><button type="button" className="danger-button" onClick={() => void removeProgramme(item)}>Delete</button></div></details></td></tr>)}
