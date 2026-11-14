@@ -17,13 +17,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export interface Curriculum { id:string; programmeId:string; version:string; title:string; minimumCredits:number; effectiveFrom:string; effectiveTo?:string|null; status:string; isActive:boolean; programmeType:number }
-export interface Course { id:string; code:string; name:string; creditUnits:number; description?:string|null; courseType?:string|null; isActive:boolean }
+export interface Course { id:string; authorityCode?:string|null; code:string; name:string; creditUnits:number; description?:string|null; courseType?:string|null; isActive:boolean }
 export interface CurriculumCourse { id:string; curriculumId:string; courseId:string; yearOfStudy:number; semesterNumber:number; isCore:boolean }
 
 export const getCurricula = () => request<Curriculum[]>('/api/curriculum-management/curricula')
-export const getCourses = () => request<Course[]>('/api/curriculum-management/courses')
+export const getCourses = (authorityCode?: string) => request<Course[]>(authorityCode ? `/api/curriculum-management/courses?authorityCode=${encodeURIComponent(authorityCode)}` : '/api/curriculum-management/courses')
 export const createCurriculum = (input: Omit<Curriculum,'id'|'status'|'isActive'>) => request<Curriculum>('/api/curriculum-management/curricula',{method:'POST',body:JSON.stringify(input)})
-export const createCourse = (input: Omit<Course,'id'|'isActive'>) => request<Course>('/api/curriculum-management/courses',{method:'POST',body:JSON.stringify(input)})
+export const createCourse = (input: Omit<Course,'id'|'isActive'> & { authorityCode: string }) => request<Course>('/api/curriculum-management/courses',{method:'POST',body:JSON.stringify(input)})
 export const getCurriculumCourses = (id:string) => {
   if (!id.trim()) throw new Error('Curriculum ID is required.')
   return request<CurriculumCourse[]>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/courses`)
@@ -35,6 +35,7 @@ export const addCurriculumCourse = (id:string,input:{courseId:string;yearOfStudy
 }
 
 export interface UpdateCourseInput {
+  authorityCode: string
   code: string
   name: string
   creditUnits: number

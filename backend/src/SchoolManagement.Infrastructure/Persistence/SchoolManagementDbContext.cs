@@ -157,6 +157,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<SchoolManagement.Domain.Students.Student>().HasIndex(student => new { student.IsArchived, student.CampusId, student.StudentNumber });
         // Preserve the existing singular table name after exposing StudentCharge as a DbSet.
         m.Entity<StudentCharge>().ToTable("StudentCharge");
+        m.Entity<Course>(e => { e.Property(x => x.AuthorityCode).HasMaxLength(40); e.HasIndex(x => x.AuthorityCode); });
         m.Entity<AcademicAuthority>(e => { e.HasKey(x => x.Id); e.Property(x => x.Code).HasMaxLength(40).IsRequired(); e.Property(x => x.Name).HasMaxLength(160).IsRequired(); e.Property(x => x.Description).HasMaxLength(1000); e.Property(x => x.SourceReference).HasMaxLength(500); e.HasIndex(x => x.Code).IsUnique(); });
         m.Entity<Programme>().HasOne<AcademicAuthority>().WithMany().HasForeignKey(x => x.Regulator).HasPrincipalKey(x => x.Code).OnDelete(DeleteBehavior.Restrict);
         m.Entity<Programme>(e => { e.Property(x => x.ApprovalStatus).HasMaxLength(40).IsRequired(); e.Property(x => x.SourceReference).HasMaxLength(500); e.Property(x => x.Regulator).HasMaxLength(40); e.HasIndex(x => x.Regulator); e.HasIndex(x => x.Code).IsUnique(); });

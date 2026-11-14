@@ -4,8 +4,8 @@ using SchoolManagement.Domain.Academic;
 namespace SchoolManagement.Application.Academic;
 
 public sealed record CreateCurriculumRequest(Guid ProgrammeId, string Version, string Title, int MinimumCredits, DateOnly EffectiveFrom, DateOnly? EffectiveTo, ProgrammeType ProgrammeType = ProgrammeType.FullProgramme);
-public sealed record CreateCourseRequest(string Code, string Name, int CreditUnits, string? Description, string? CourseType);
-public sealed record UpdateCourseRequest(string Code, string Name, int CreditUnits, string? Description, string? CourseType, bool IsActive);
+public sealed record CreateCourseRequest(string AuthorityCode, string Code, string Name, int CreditUnits, string? Description, string? CourseType);
+public sealed record UpdateCourseRequest(string AuthorityCode, string Code, string Name, int CreditUnits, string? Description, string? CourseType, bool IsActive);
 public sealed record UpdateCurriculumRequest(string Version, string Title, int MinimumCredits, DateOnly EffectiveFrom, DateOnly? EffectiveTo, ProgrammeType ProgrammeType, bool IsActive);
 public sealed record AddCurriculumCourseRequest(Guid CourseId, int YearOfStudy, int SemesterNumber, bool IsCore);
 public sealed record UpdateCurriculumCourseRequest(int YearOfStudy, int SemesterNumber, bool IsCore);
@@ -24,6 +24,8 @@ public sealed class CurriculumManagementService(
     {
         var existing = await curricula.GetByIdAsync(id, ct);
         if (existing is null) return (false, "Curriculum not found.");
+        var programme = await programmes.GetByIdAsync(existing.ProgrammeId, ct);
+        if (programme is null || programme.Type != request.ProgrammeType) return (false, "Curriculum category must match the programme category.");
         var version = request.Version.Trim(); var title = request.Title.Trim();
         if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(title)) return (false, "Curriculum version and title are required.");
         if (request.MinimumCredits < 0) return (false, "Minimum credits cannot be negative.");
@@ -52,9 +54,9 @@ public sealed class CurriculumManagementService(
         if (request.ProgrammeId == Guid.Empty) return (false, "Programme is required.", null);
         var programme = await programmes.GetByIdAsync(request.ProgrammeId, ct);
         if (programme is null) return (false, "Programme not found.", null);
-        if (!programme.IsActive || programme.IsReferenceOnly ||
-            (programme.ApprovalStatus != "Institutional" && programme.ApprovalStatus != "Verified" && programme.ApprovalStatus != "Approved"))
-            return (false, "Only active, institutionally approved or verified programmes can receive a curriculum.", null);
+        if (programme.Type != request.ProgrammeType) return (false, "Curriculum category must match the selected programme category.", null);
+        if (!programme.IsActive || programme.IsReferenceOnly)
+            return (false, "Only active, non-reference programmes can receive a curriculum.", null);
         if (string.IsNullOrWhiteSpace(version)) return (false, "Curriculum version is required.", null);
         if (string.IsNullOrWhiteSpace(title)) return (false, "Curriculum title is required.", null);
         if (request.MinimumCredits < 0) return (false, "Minimum credits cannot be negative.", null);
@@ -72,6 +74,7 @@ public sealed class CurriculumManagementService(
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name)) return (false, "Course code and name are required.");
         if (request.CreditUnits < 0) return (false, "Credit units cannot be negative.");
         if (await courses.CodeExistsAsync(code, id, ct)) return (false, $"Course code '{code}' already exists.");
+        existing.AuthorityCode = request.AuthorityCode.Trim().ToUpperInvariant();
         existing.Code = code; existing.Name = name; existing.CreditUnits = request.CreditUnits;
         existing.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
         existing.CourseType = string.IsNullOrWhiteSpace(request.CourseType) ? null : request.CourseType.Trim();
@@ -87,7 +90,7 @@ public sealed class CurriculumManagementService(
         if (string.IsNullOrWhiteSpace(name)) return (false, "Course name is required.", null);
         if (request.CreditUnits < 0) return (false, "Credit units cannot be negative.", null);
         if (await courses.CodeExistsAsync(code, cancellationToken: ct)) return (false, $"Course code '{code}' already exists.", null);
-        var course = new Course { Code = code, Name = name, CreditUnits = request.CreditUnits, Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(), CourseType = string.IsNullOrWhiteSpace(request.CourseType) ? null : request.CourseType.Trim() };
+        var course = new Course { AuthorityCode = request.AuthorityCode.Trim().ToUpperInvariant(), Code = code, Name = name, CreditUnits = request.CreditUnits, Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(), CourseType = string.IsNullOrWhiteSpace(request.CourseType) ? null : request.CourseType.Trim() };
         await courses.AddAsync(course, ct); await courses.SaveChangesAsync(ct); return (true, null, course);
     }
 
@@ -113,9 +116,8 @@ public sealed class CurriculumManagementService(
         if (!curriculum.IsActive) return (false, "Activate the curriculum before adding courses.", null);
         var programme = await programmes.GetByIdAsync(curriculum.ProgrammeId, ct);
         if (programme is null) return (false, "The curriculum's programme was not found.", null);
-        if (!programme.IsActive || programme.IsReferenceOnly ||
-            (programme.ApprovalStatus != "Institutional" && programme.ApprovalStatus != "Verified" && programme.ApprovalStatus != "Approved"))
-            return (false, "Only active, institutionally approved or verified programmes can receive curriculum course mappings.", null);
+        if (!programme.IsActive || programme.IsReferenceOnly)
+            return (false, "Only active, non-reference programmes can receive curriculum course mappings.", null);
         var course = await courses.GetByIdAsync(request.CourseId, ct);
         if (course is null) return (false, "Course not found.", null);
         if (!course.IsActive) return (false, "Activate the course before adding it to a curriculum.", null);
