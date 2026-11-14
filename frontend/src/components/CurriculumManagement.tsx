@@ -56,7 +56,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && p.type === (tab === 'short' ? 1 : 0) && authorityOfProgramme(p.id) === authority)
   const authorityCurriculumIds = new Set(authorityCurricula.map(c => c.id))
   const authorityCourses = courses.filter(course => {
-    const associations = allMappings.filter(mapping => mapping.courseId === course.id)
+    const associations = mappings.filter(mapping => mapping.courseId === course.id)
     return associations.length === 0 || associations.some(mapping => authorityCurriculumIds.has(mapping.curriculumId))
   })
   const [error, setError] = useState('')
@@ -640,7 +640,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="form-row">
             <select value={selected} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
               <option value="">Select curriculum</option>
-              {selectedCurricula.map(c => (
+              {authorityCurricula.map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
               ))}
             </select>
@@ -751,7 +751,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="form-row">
             <select value={selected} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
               <option value="">Select curriculum</option>
-              {selectedCurricula.map(c => (
+              {authorityCurricula.map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
               ))}
             </select>
