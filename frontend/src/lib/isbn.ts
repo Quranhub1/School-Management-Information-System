@@ -64,7 +64,7 @@ export function formatIsbnInput(value: string): string {
 export function toBooklandEan13(value: string): string | null {
   const digits = normalizeIsbnDigits(value);
   if (!isValidIsbn(digits)) return null;
-  if (digits.length === 13) return /^(978|979)\\d{10}$/.test(digits) ? digits : null;
+  if (digits.length === 13) return /^(978|979)\d{10}$/.test(digits) ? digits : null;
 
   const eanBody = `978${digits.slice(0, 9)}`;
   const sum = [...eanBody].reduce((total, digit, index) =>
