@@ -53,8 +53,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [editingMappingId, setEditingMappingId] = useState<string | null>(null)
   const selectedAuthority = resolveAcademicAuthority(authority)
   const authorityOfProgramme = (programmeId: string) => resolveAcademicAuthority(programmes.find(p => p.id === programmeId)?.regulator)
-  const authorityCurricula = curricula.filter(c => authorityOfProgramme(c.programmeId) === selectedAuthority)
   const expectedProgrammeType = tab === 'short' ? 1 : 0
+  const authorityCurricula = curricula.filter(c =>
+    Number(c.programmeType) === expectedProgrammeType &&
+    authorityOfProgramme(c.programmeId) === selectedAuthority
+  )
   const authorityProgrammes = programmes.filter(p => p.isActive && !p.isReferenceOnly && Number(p.type) === expectedProgrammeType && authorityOfProgramme(p.id) === selectedAuthority)
   // The API already scopes courses to the selected authority (including legacy unassigned courses).
   // Do not infer course ownership from `mappings`: that state contains only the currently opened curriculum.
@@ -98,9 +101,31 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       if (programmesResult.status === 'rejected') failures.push(`Programmes: ${programmesResult.reason instanceof Error ? programmesResult.reason.message : 'could not be loaded'}`)
       if (authoritiesResult.status === 'rejected') failures.push(`Academic authorities: ${authoritiesResult.reason instanceof Error ? authoritiesResult.reason.message : 'could not be loaded'}`)
 
-      const nextAuthority = nextAuthorities.some(item => item.code === authority && item.isActive)
-        ? authority
-        : (nextAuthorities.find(item => item.isActive)?.code ?? '')
+      // Prefer an authority that actually owns eligible programmes for the
+      // current tab. SCHOOL_BASED sorts first, but the seeded full-programme
+      // catalogue is primarily UHPAB; blindly selecting the first authority
+      // leaves Programme, Curriculum and Course selectors disabled/empty.
+      const authoritiesWithEligibleProgrammes = new Set(
+        nextProgrammes
+          .filter(programme =>
+            programme.isActive &&
+            !programme.isReferenceOnly &&
+            Number(programme.type) === (tab === 'short' ? 1 : 0)
+          )
+          .map(programme => resolveAcademicAuthority(programme.regulator))
+          .filter(Boolean)
+      )
+      const currentAuthority = nextAuthorities.find(item =>
+        item.code === authority &&
+        item.isActive &&
+        authoritiesWithEligibleProgrammes.has(resolveAcademicAuthority(item.code))
+      )
+      const nextAuthority = currentAuthority?.code ??
+        nextAuthorities.find(item =>
+          item.isActive && authoritiesWithEligibleProgrammes.has(resolveAcademicAuthority(item.code))
+        )?.code ??
+        nextAuthorities.find(item => item.isActive)?.code ??
+        ''
 
       // Publish successful core results immediately; do not wait for campus data.
       setCurricula(nextCurricula)
@@ -531,6 +556,42 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     }, new Map<string, { year: number; semester: number; mappings: CurriculumCourse[] }>()).values()
   ).sort((left, right) => left.year - right.year || left.semester - right.semester)
 
+  function changeTab(nextTab: Tab) {
+    setTab(nextTab)
+    setSelected('')
+    setMappings([])
+    setEditingMappingId(null)
+    setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+    setCf(current => ({ ...current, programmeId: '', type: nextTab === 'short' ? 'ShortCourse' : 'FullProgramme' }))
+
+    const programmeType = nextTab === 'short' ? 1 : 0
+    const currentHasProgrammes = programmes.some(programme =>
+      programme.isActive &&
+      !programme.isReferenceOnly &&
+      Number(programme.type) === programmeType &&
+      resolveAcademicAuthority(programme.regulator) === resolveAcademicAuthority(authority)
+    )
+    if (!currentHasProgrammes) {
+      const preferredAuthority = authorities.find(item =>
+        item.isActive && programmes.some(programme =>
+          programme.isActive &&
+          !programme.isReferenceOnly &&
+          Number(programme.type) === programmeType &&
+          resolveAcademicAuthority(programme.regulator) === resolveAcademicAuthority(item.code)
+        )
+      )
+      if (preferredAuthority && preferredAuthority.code !== authority) {
+        setAuthority(preferredAuthority.code)
+        void getCourses(preferredAuthority.code)
+          .then(setCourses)
+          .catch(loadError => {
+            setCourses([])
+            setError(loadError instanceof Error ? loadError.message : 'Unable to load this authority course catalogue.')
+          })
+      }
+    }
+  }
+
   if (!canManage) return null
 
   return (
@@ -676,8 +737,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         </tbody></table></div>
       </section>
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
-        <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => { setTab('full'); setSelected(''); setMappings([]); setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }); setCf(current => ({ ...current, type: 'FullProgramme' })) }}>Full Programmes</button>
-        <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => { setTab('short'); setSelected(''); setMappings([]); setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }); setCf(current => ({ ...current, type: 'ShortCourse' })) }}>Short Courses</button>
+        <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => changeTab('full')}>Full Programmes</button>
+        <button role="tab" aria-selected={tab === 'short'} className={tab === 'short' ? 'active' : ''} onClick={() => changeTab('short')}>Short Courses</button>
       </div>
 
       {tab === 'full' && (
