@@ -719,13 +719,11 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       {barcodeBookId && (
         <div className="modal-backdrop" onClick={() => setBarcodeBookId(null)}>
           <div className="auth-card library-barcode-dialog" onClick={e => e.stopPropagation()}>
-            <p className="eyebrow">BOOK BARCODE · OFFLINE READY</p>
             <h3>{barcodeBook?.title ?? 'Book Barcode'}</h3>
             <p>{barcodeBook?.isbn ?? ''}</p>
             {barcodeError
               ? <p className="error" role="alert">{barcodeError}</p>
               : <svg ref={barcodeSvgRef} role="img" aria-label={`EAN-13 barcode for ${barcodeBook?.title ?? 'book'}`} style={{ display: 'block', width: '100%', maxWidth: 420, height: 'auto', margin: '12px auto', background: '#fff' }} />}
-            <p style={{ fontSize: 12, color: '#78716c' }}>Generated locally on this device. No CDN or internet connection is required.</p>
             <button className="secondary-button" style={{ marginTop: 12 }} onClick={() => setBarcodeBookId(null)}>Close</button>
           </div>
         </div>
