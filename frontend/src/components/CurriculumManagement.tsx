@@ -956,13 +956,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             </tbody></table></div>
           </section>
           <div className="form-row">
-            <select value={selected} disabled={!authority || authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
+            <select aria-label="Select curriculum" value={selected} disabled={!authority || authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
               <option value="">{authority ? 'Select curriculum' : 'Select a curriculum authority first'}</option>
-              {authorityCurricula.map(c => (
+              {authorityCurricula.filter(item => item.isActive || item.id === selected).map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
               ))}
             </select>
-            <select value={mf.courseId} disabled={!selected || Boolean(editingMappingId) || authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
+            <select aria-label="Select course" value={mf.courseId} disabled={!selected || Boolean(editingMappingId) || authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
               <option value="">Select course</option>
               {authorityCourses.filter(c => c.isActive || c.id === mf.courseId).map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
