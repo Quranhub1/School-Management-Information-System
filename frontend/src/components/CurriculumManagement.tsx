@@ -466,20 +466,35 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       {error && <div className="error" role="alert">{error}</div>}
       {message && <p role="status">{message}</p>}
 
-      <div className="form-row academic-authority-picker">
-        <label>Curriculum authority
-          <select value={authority} onChange={async e => {
-          const nextAuthority = e.target.value
-          setAuthority(nextAuthority); setSelected(''); setMappings([]); setEditingMappingId(null)
-          setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' }))
-          setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
-          try { setCourses(nextAuthority ? await getCourses(nextAuthority) : []) }
-          catch (loadError) { setCourses([]); setError(loadError instanceof Error ? loadError.message : 'Unable to load this authority course catalogue.') }
-        }}>
-            {authorities.filter(item => item.isActive).map(item => <option key={item.code} value={item.code}>{item.name}</option>)}
-          </select>
-        </label>
-      </div>
+      <section className="curriculum-authority-picker-card catalogue-board" aria-label="Curriculum authority picker">
+        <h3>Curriculum authority</h3>
+        <p className="eyebrow">Select the academic authority that owns the programmes and curricula you want to manage.</p>
+        <div className="form-row authority-select-row">
+          <label>Authority
+            <select value={authority} onChange={async e => {
+              const nextAuthority = e.target.value
+              setAuthority(nextAuthority); setSelected(''); setMappings([]); setEditingMappingId(null)
+              setMf(current => ({ ...current, courseId: '' })); setCf(current => ({ ...current, programmeId: '' }))
+              setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
+              try { setCourses(nextAuthority ? await getCourses(nextAuthority) : []) }
+              catch (loadError) { setCourses([]); setError(loadError instanceof Error ? loadError.message : 'Unable to load this authority course catalogue.') }
+            }}>
+              <option value="">Select a curriculum authority</option>
+              {authorities.filter(item => item.isActive).map(item => <option key={item.code} value={item.code}>{item.name}</option>)}
+            </select>
+          </label>
+        </div>
+        {!authority && (
+          <div className="empty">
+            <p>No authority selected. Choose one from the list above to load its programmes, curricula, and course units.</p>
+          </div>
+        )}
+        {authority && authorities.some(item => item.code === authority && item.isActive) && (
+          <div className="success" role="status">
+            <p>Authority <strong>{authorities.find(item => item.code === authority)?.name}</strong> selected. You can now create programmes, curricula, and course units.</p>
+          </div>
+        )}
+      </section>
       <section className="catalogue-board" aria-label="Academic authority register">
         <h3>Academic authorities</h3>
         <form className="student-form" onSubmit={saveAuthority}>

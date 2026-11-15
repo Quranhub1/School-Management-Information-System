@@ -903,3 +903,55 @@ h1, h2, h3, h4, h5, h6,
   .system-admin-workspace .system-currency-controls { grid-template-columns: 1fr; }
   .system-admin-workspace .system-currency-save { width: 100%; }
 }
+
+/* Curriculum & Courses — authority picker card */
+.curriculum-authority-picker-card {
+  border: 1px solid var(--smis-border, #dbe3dc);
+  border-radius: 8px;
+  background: var(--smis-surface-muted, #f8faf8);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.curriculum-authority-picker-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: var(--smis-text, #24332a);
+}
+.curriculum-authority-picker-card .eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  color: #526158;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.authority-select-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+.authority-select-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--smis-text-muted, #526158);
+  min-width: 0;
+}
+.authority-select-row select {
+  min-width: 220px;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--smis-border, #cfd8d1);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--smis-text, #24332a);
+  font: inherit;
+  font-size: 0.82rem;
+}
+.authority-select-row select:focus {
+  outline: 2px solid rgba(22, 107, 67, 0.2);
+  border-color: #26794f;
+  outline-offset: 1px;
+}
