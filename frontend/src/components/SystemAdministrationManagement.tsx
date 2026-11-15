@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, AlertTriangle, Archive, ArrowRight, Database, FileSearch, Info, LockKeyhole, Settings2, ShieldCheck, UsersRound } from 'lucide-react'
+import { Activity, Archive, ArrowRight, Database, FileSearch, LockKeyhole, Settings2, ShieldCheck, UsersRound } from 'lucide-react'
 import { getSystemCurrencySettings, saveSystemCurrencySettings, type SystemCurrencySettings } from '../api/systemSettings'
 import { AuditLogManagement } from './AuditLog'
 import { BackupRestore } from './BackupRestore'
