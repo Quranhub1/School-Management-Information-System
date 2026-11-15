@@ -154,6 +154,17 @@ describe('API contracts — library', () => {
     if (result.success) expect(result.data.isbn).toBe('9780306406157')
   })
 
+  it('accepts a valid ISBN-10 and normalizes its separators', () => {
+    const result = libraryBookCreateRequestSchema.safeParse({
+      isbn: '0-306-40615-2',
+      title: 'Test book',
+      author: 'Test author',
+      totalCopies: 1,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.isbn).toBe('0306406152')
+  })
+
   it('rejects an ISBN with an invalid check digit', () => {
     const result = libraryBookCreateRequestSchema.safeParse({
       isbn: '978-0-30640615-8',
