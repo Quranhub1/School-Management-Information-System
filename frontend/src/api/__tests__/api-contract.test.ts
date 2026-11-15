@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
+import { toBooklandEan13 } from '../../lib/isbn'
 
 import {
   admissionResponseSchema,
@@ -139,6 +140,20 @@ describe('API contracts — finance', () => {
       issuedAt: '2026-01-01T00:00:00Z',
     }
     expect(invoiceResponseSchema.parse(invoice)).toEqual(invoice)
+  })
+})
+
+describe('Library ISBN barcode conversion', () => {
+  it('converts a valid ISBN-10 into its Bookland EAN-13 value', () => {
+    expect(toBooklandEan13('0-306-40615-2')).toBe('9780306406157')
+  })
+
+  it('keeps a valid ISBN-13 as its EAN-13 barcode value', () => {
+    expect(toBooklandEan13('978-0-30640615-7')).toBe('9780306406157')
+  })
+
+  it('does not generate a barcode for an invalid ISBN', () => {
+    expect(toBooklandEan13('978-0-30640615-8')).toBeNull()
   })
 })
 
