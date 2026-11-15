@@ -42,6 +42,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null)
   const [departmentForm, setDepartmentForm] = useState({ facultyId: '', code: '', name: '' })
   const [selected, setSelected] = useState('')
+  const selectedCurriculumRef = useRef('')
   const [authority, setAuthority] = useState('')
   const [editingAuthority, setEditingAuthority] = useState<string | null>(null)
   const [authorityForm, setAuthorityForm] = useState({ code: '', name: '', description: '', sourceReference: '', sortOrder: '10' })
@@ -72,6 +73,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(false)
+  const loadRequest = useRef(0)
   const authorityCoursesRequest = useRef(0)
   const mappingsRequest = useRef(0)
   const [semesterEdit, setSemesterEdit] = useState<{ year: number; semester: number; nextYear: string; nextSemester: string } | null>(null)
@@ -84,7 +86,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     if (canManage) void load()
   }, [canManage])
 
-  async function load() {
+  async function load(tabForAuthority: Tab = tab) {
+    const loadRequestId = ++loadRequest.current
     const courseRequestId = ++authorityCoursesRequest.current
     mappingsRequest.current += 1
     setLoading(true)
@@ -99,6 +102,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         getProgrammes(),
         getAcademicAuthorities(true),
       ])
+      if (loadRequest.current !== loadRequestId) return
 
       const failures: string[] = []
       const nextCurricula = curriculaResult.status === 'fulfilled' ? curriculaResult.value : []
@@ -118,7 +122,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           .filter(programme =>
             programme.isActive &&
             !programme.isReferenceOnly &&
-            Number(programme.type) === (tab === 'short' ? 1 : 0)
+            Number(programme.type) === (tabForAuthority === 'short' ? 1 : 0)
           )
           .map(programme => resolveAcademicAuthority(programme.regulator))
           .filter(Boolean)
@@ -144,12 +148,15 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       if (nextAuthority) {
         try {
           const nextCourses = await getCourses(nextAuthority)
-          if (authorityCoursesRequest.current === courseRequestId) setCourses(nextCourses)
+          if (loadRequest.current === loadRequestId && authorityCoursesRequest.current === courseRequestId) setCourses(nextCourses)
         } catch (courseError) {
-          if (authorityCoursesRequest.current === courseRequestId) setCourses([])
-          failures.push(`Courses: ${courseError instanceof Error ? courseError.message : 'could not be loaded'}`)
+          if (loadRequest.current === loadRequestId && authorityCoursesRequest.current === courseRequestId) {
+            setCourses([])
+            failures.push(`Courses: ${courseError instanceof Error ? courseError.message : 'could not be loaded'}`)
+          }
         }
       } else {
+        if (loadRequest.current !== loadRequestId) return
         authorityCoursesRequest.current += 1
         setCourses([])
         if (authoritiesResult.status === 'fulfilled' && nextAuthorities.length === 0) {
@@ -157,10 +164,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         }
       }
 
-      if (selected && !nextCurricula.some(item =>
-        item.id === selected &&
+      if (loadRequest.current !== loadRequestId) return
+      const currentSelection = selectedCurriculumRef.current
+      if (currentSelection && !nextCurricula.some(item =>
+        item.id === currentSelection &&
         resolveAcademicAuthority(nextProgrammes.find(programme => programme.id === item.programmeId)?.regulator) === resolveAcademicAuthority(nextAuthority)
       )) {
+        selectedCurriculumRef.current = ''
         setSelected('')
         setMappings([])
       }
@@ -168,6 +178,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       // Campus structure is ancillary to the programme/curriculum/course selectors.
       try {
         const campusList = await getAcademicCampuses()
+        if (loadRequest.current !== loadRequestId) return
         const campusId = selectedCampusId && campusList.some(item => item.id === selectedCampusId)
           ? selectedCampusId
           : (campusList.find(item => item.isActive)?.id ?? '')
@@ -178,6 +189,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             getAcademicDepartments(campusId),
             getAcademicFaculties(campusId),
           ])
+          if (loadRequest.current !== loadRequestId) return
           if (departmentResult.status === 'fulfilled') setDepartments(departmentResult.value)
           else {
             setDepartments([])
@@ -193,22 +205,24 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           setFaculties([])
         }
       } catch (campusError) {
+        if (loadRequest.current !== loadRequestId) return
         setCampuses([])
         setDepartments([])
         setFaculties([])
         failures.push(`Campus structure: ${campusError instanceof Error ? campusError.message : 'could not be loaded'}`)
       }
 
-      if (failures.length) setError(failures.join(' · '))
+      if (loadRequest.current === loadRequestId && failures.length) setError(failures.join(' · '))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load curriculum data.')
+      if (loadRequest.current === loadRequestId) setError(e instanceof Error ? e.message : 'Unable to load curriculum data.')
     } finally {
-      setLoading(false)
+      if (loadRequest.current === loadRequestId) setLoading(false)
     }
   }
 
   async function refreshMappings(id: string) {
     const requestId = ++mappingsRequest.current
+    selectedCurriculumRef.current = id
     setSelected(id)
     setError('')
     if (!id) { setMappings([]); return }
@@ -453,6 +467,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   function editCurriculum(item: Curriculum) {
     setEditingCurriculumId(item.id)
     mappingsRequest.current += 1
+    selectedCurriculumRef.current = ''
     setSelected('')
     setMappings([])
     const programmeType = Number(programmes.find(programme => programme.id === item.programmeId)?.type ?? item.programmeType)
@@ -580,12 +595,19 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   function changeTab(nextTab: Tab) {
     setTab(nextTab)
     mappingsRequest.current += 1
+    selectedCurriculumRef.current = ''
     setSelected('')
     setMappings([])
     setSemesterEdit(null)
     setEditingMappingId(null)
     setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
-    setCf(current => ({ ...current, programmeId: '', type: nextTab === 'short' ? 'ShortCourse' : 'FullProgramme' }))
+    setEditingCurriculumId(null)
+    setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: nextTab === 'short' ? 'ShortCourse' : 'FullProgramme' })
+
+    if (loading) {
+      void load(nextTab)
+      return
+    }
 
     const programmeType = nextTab === 'short' ? 1 : 0
     const currentHasProgrammes = programmes.some(programme =>
@@ -604,8 +626,14 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         )
       )
       if (preferredAuthority && preferredAuthority.code !== authority) {
+        loadRequest.current += 1
+        setLoading(false)
         setAuthority(preferredAuthority.code)
         setCourses([])
+        setEditingProgrammeId(null)
+        setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: false, type: nextTab === 'short' ? '1' : '0' })
+        setEditingCourseId(null)
+        setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
         const requestId = ++authorityCoursesRequest.current
         void getCourses(preferredAuthority.code)
           .then(nextCourses => {
@@ -646,17 +674,23 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <label>Authority
             <select value={authority} disabled={loading && authorities.length === 0} onChange={async e => {
               const nextAuthority = e.target.value
+              loadRequest.current += 1
+              setLoading(false)
               const requestId = ++authorityCoursesRequest.current
               mappingsRequest.current += 1
               setError('')
               setAuthority(nextAuthority)
               setCourses([])
+              selectedCurriculumRef.current = ''
               setSelected('')
               setMappings([])
               setSemesterEdit(null)
               setEditingMappingId(null)
               setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
-              setCf(current => ({ ...current, programmeId: '' }))
+              setEditingProgrammeId(null)
+              setProgrammeForm({ departmentId: '', code: '', name: '', award: 'Certificate', awardTitle: '', durationYears: '2', durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalReference: '', approvalDate: '', approvalStatus: 'NeedsVerification', sourceReference: '', isReferenceOnly: false, type: tab === 'short' ? '1' : '0' })
+              setEditingCurriculumId(null)
+              setCf({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: tab === 'short' ? 'ShortCourse' : 'FullProgramme' })
               setEditingCourseId(null)
               setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
               if (!nextAuthority) return
@@ -843,7 +877,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             </tbody></table></div>
           </div>
 
-          <div className="form-row">
+          <div className="form-row curriculum-course-mapping-form">
             <select aria-label="Select curriculum" value={selected} disabled={!authority || authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
               <option value="">{authority ? 'Select curriculum' : 'Select a curriculum authority first'}</option>
               {authorityCurricula.filter(item => item.isActive || item.id === selected).map(c => (
@@ -856,15 +890,18 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
               ))}
             </select>
-            {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
-            {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
             <input type="number" min="1" placeholder="Year" value={mf.yearOfStudy} onChange={e => setMf({ ...mf, yearOfStudy: e.target.value })} />
             <input type="number" min="1" placeholder="Semester" value={mf.semesterNumber} onChange={e => setMf({ ...mf, semesterNumber: e.target.value })} />
             <label>
               <input type="checkbox" checked={mf.isCore} onChange={e => setMf({ ...mf, isCore: e.target.checked })} /> Core
             </label>
-            <button onClick={saveMapping} disabled={saving || !selected || !mf.courseId}>{editingMappingId ? 'Save course-unit placement' : 'Add course unit to semester'}</button>{editingMappingId && <button type="button" className="secondary-button" onClick={() => { setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }) }}>Cancel edit</button>}
+            <div className="curriculum-mapping-actions">
+              <button type="button" onClick={saveMapping} disabled={saving || !selected || !mf.courseId}>{editingMappingId ? 'Save course-unit placement' : 'Add course unit to semester'}</button>
+              {editingMappingId && <button type="button" className="secondary-button" onClick={() => { setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }) }}>Cancel edit</button>}
+            </div>
           </div>
+          {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
+          {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
 
           {selected && (
             <div className="curriculum-semester-list">
@@ -956,14 +993,14 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses registered.</td></tr>}
             </tbody></table></div>
           </section>
-          <div className="form-row">
-            <select value={selected} disabled={!authority || authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
+          <div className="form-row curriculum-course-mapping-form">
+            <select aria-label="Select curriculum" value={selected} disabled={!authority || authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0} onChange={e => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(e.target.value) }}>
               <option value="">{authority ? 'Select curriculum' : 'Select a curriculum authority first'}</option>
-              {authorityCurricula.map(c => (
+              {authorityCurricula.filter(item => item.isActive || item.id === selected).map(c => (
                 <option key={c.id} value={c.id}>{c.title} · v{c.version}</option>
               ))}
             </select>
-            <select value={mf.courseId} disabled={!selected || Boolean(editingMappingId) || authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
+            <select aria-label="Select course" value={mf.courseId} disabled={!selected || Boolean(editingMappingId) || authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0} onChange={e => setMf({ ...mf, courseId: e.target.value })}>
               <option value="">Select course</option>
               {authorityCourses.filter(c => c.isActive || c.id === mf.courseId).map(c => (
                 <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
@@ -974,8 +1011,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
             <label>
               <input type="checkbox" checked={mf.isCore} onChange={e => setMf({ ...mf, isCore: e.target.checked })} /> Core
             </label>
-            <button onClick={saveMapping} disabled={saving || !selected || !mf.courseId}>{editingMappingId ? 'Save course-unit placement' : 'Add course unit to semester'}</button>{editingMappingId && <button type="button" className="secondary-button" onClick={() => { setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }) }}>Cancel edit</button>}
+            <div className="curriculum-mapping-actions">
+              <button type="button" onClick={saveMapping} disabled={saving || !selected || !mf.courseId}>{editingMappingId ? 'Save course-unit placement' : 'Add course unit to semester'}</button>
+              {editingMappingId && <button type="button" className="secondary-button" onClick={() => { setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }) }}>Cancel edit</button>}
+            </div>
           </div>
+          {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
+          {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
 
           {selected && (
             <div className="curriculum-semester-list">
