@@ -2,22 +2,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import React from 'react'
 
-const mockAuthorityList = [
-  { id: 'authority-school', code: 'SCHOOL_BASED', name: 'School-based', isActive: true, sortOrder: 1 },
-  { id: 'authority-uhpab', code: 'UHPAB', name: 'UHPAB', isActive: true, sortOrder: 2 },
-]
-const mockProgrammes = [
-  { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', type: 0, regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
-  { id: 'programme-pharmacy', code: 'CPH', name: 'Certificate in Pharmacy', type: 0, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
-  { id: 'programme-short', code: 'UHPAB-SHORT', name: 'Basic Life Support', type: 1, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
-]
-const mockCurricula = [
-  // The stale programmeType value must not hide a curriculum whose programme is FullProgramme.
-  { id: 'curriculum-pharmacy', programmeId: 'programme-pharmacy', version: '1.0', title: 'Certificate in Pharmacy Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 1 },
-]
-const mockCourses = [
-  { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, courseType: 'Lecture' },
-]
+const { mockAuthorityList, mockProgrammes, mockCurricula, mockCourses } = vi.hoisted(() => ({
+  mockAuthorityList: [
+    { id: 'authority-school', code: 'SCHOOL_BASED', name: 'School-based', isActive: true, sortOrder: 1 },
+    { id: 'authority-uhpab', code: 'UHPAB', name: 'UHPAB', isActive: true, sortOrder: 2 },
+  ],
+  mockProgrammes: [
+    { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', type: 0, regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
+    { id: 'programme-pharmacy', code: 'CPH', name: 'Certificate in Pharmacy', type: 0, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
+    { id: 'programme-short', code: 'UHPAB-SHORT', name: 'Basic Life Support', type: 1, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
+  ],
+  mockCurricula: [
+    // The stale programmeType value must not hide a curriculum whose programme is FullProgramme.
+    { id: 'curriculum-pharmacy', programmeId: 'programme-pharmacy', version: '1.0', title: 'Certificate in Pharmacy Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 1 },
+  ],
+  mockCourses: [
+    { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, courseType: 'Lecture' },
+  ],
+}))
 
 vi.mock('../api/curriculumManagement', () => ({
   addCurriculumCourse: vi.fn(),
