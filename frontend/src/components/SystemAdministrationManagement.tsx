@@ -50,7 +50,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
         <h1>System Administration</h1>
         
       </div>
-      <span className="status"><ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} /></span>
+      <span className="status"><ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} /> Administrator area</span>
     </header>
 
     <nav className="library-workspace-tabs" aria-label="System administration sections" style={{ marginBottom: 18 }}>

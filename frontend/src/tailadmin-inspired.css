@@ -955,3 +955,83 @@ h1, h2, h3, h4, h5, h6,
   border-color: #26794f;
   outline-offset: 1px;
 }
+
+
+/* Compact, dismissible confirmations for settings saves. */
+.system-currency-toast,
+.institution-settings-toast {
+  position: fixed;
+  top: 82px;
+  right: 24px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(440px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px solid #86efac;
+  border-left: 4px solid #16a34a;
+  border-radius: 4px;
+  background: #f0fdf4;
+  color: #166534;
+  box-shadow: 0 10px 28px rgb(15 23 42 / 16%);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  animation: system-currency-toast-in 180ms ease-out;
+}
+.system-currency-toast > svg,
+.institution-settings-toast > svg { flex: 0 0 auto; }
+.system-currency-toast > span,
+.institution-settings-toast > span { flex: 1; min-width: 0; }
+.system-currency-toast > button,
+.institution-settings-toast > button {
+  flex: 0 0 auto;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 2px !important;
+  min-width: 24px;
+  min-height: 28px;
+  font-size: 1.35rem !important;
+  line-height: 1;
+  cursor: pointer;
+}
+@keyframes system-currency-toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.app-shell .system-currency-default-note,
+.app-shell .system-currency-report-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color, #d1d5db);
+  border-left-width: 4px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+.app-shell .system-currency-default-note {
+  border-left-color: #2563eb;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+.app-shell .system-currency-report-note {
+  border-left-color: #d97706;
+  background: #fffbeb;
+  color: #78350f;
+}
+.app-shell .system-currency-default-note > svg,
+.app-shell .system-currency-report-note > svg { flex: 0 0 auto; }
+.app-shell .system-currency-report-note p { margin: 3px 0 0; }
+@media (max-width: 600px) {
+  .system-currency-toast,
+  .institution-settings-toast {
+    top: 68px;
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
+}
