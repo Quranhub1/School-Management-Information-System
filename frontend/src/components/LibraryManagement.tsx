@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { validateForm } from '../lib/validation';
+import { formatIsbnInput, isValidIsbn, normalizeIsbnDigits } from '../lib/isbn';
 import { libraryBookCreateRequestSchema, libraryLoanCreateRequestSchema } from '../schemas';
 import { getCurrencyInputStep, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency';
 import {
@@ -102,7 +103,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     [loans],
   );
   const visibleLoans = tab === 'overdue' ? overdue : loans;
-  const selectedMember = useMemo(
+  const isbnDigits = normalizeIsbnDigits(form.isbn);\n  const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;\n  const isbnValid = isbnComplete && isValidIsbn(isbnDigits);\n  const selectedMember = useMemo(
     () => members.find((m) => m.studentNumber === issue.memberNumber),
     [members, issue.memberNumber],
   );
@@ -530,13 +531,33 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </div>
           <form className="library-book-form" onSubmit={submitBook}>
             {Object.keys(bookValidationErrors).length > 0 && <div className="error" role="alert"><strong>Catalogue fields requiring attention</strong><ul>{Object.entries(bookValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
-            <input
-              placeholder="ISBN"
-              aria-invalid={Boolean(bookValidationErrors.isbn)}
-              value={form.isbn}
-              onChange={(e) => setForm({ ...form, isbn: e.target.value })}
-              required
-            />
+            <label className="library-isbn-field">
+              <span>ISBN</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="Enter ISBN digits (10 or 13)"
+                aria-label="ISBN-10 or ISBN-13"
+                aria-invalid={Boolean(bookValidationErrors.isbn) || (isbnComplete && !isbnValid)}
+                aria-describedby="library-isbn-help"
+                value={form.isbn}
+                onChange={(e) => {
+                  const formatted = formatIsbnInput(e.target.value);
+                  setForm(current => ({ ...current, isbn: formatted }));
+                  setBookValidationErrors(current => ({ ...current, isbn: '' }));
+                }}
+                required
+              />
+              <small id="library-isbn-help" role="status">
+                {isbnValid
+                  ? `Valid ISBN-${isbnDigits.length === 10 ? '10' : '13'} · check digit verified`
+                  : isbnComplete
+                    ? 'ISBN check digit is invalid. Check the digits.'
+                    : 'Type digits only. Prefix and check digit separators are added automatically; publisher/title hyphens require the assigned ISBN range.'}
+              </small>
+              {bookValidationErrors.isbn && <small className="field-error">{bookValidationErrors.isbn}</small>}
+            </label>
             <input
               placeholder="Book title"
               aria-invalid={Boolean(bookValidationErrors.title)}
