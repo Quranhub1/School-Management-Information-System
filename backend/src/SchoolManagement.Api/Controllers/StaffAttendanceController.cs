@@ -93,6 +93,67 @@ public sealed class StaffAttendanceController(
         return Ok(rows);
     }
 
+    [HttpPost("{staffMemberId:guid}/fingerprint-credential")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EnrolFingerprint(
+        Guid staffMemberId,
+        [FromBody] EnrolStaffFingerprintRequest request,
+        CancellationToken cancellationToken)
+    {
+        var staff = await db.StaffMembers.SingleOrDefaultAsync(s => s.Id == staffMemberId && s.IsActive, cancellationToken);
+        if (staff is null) return NotFound(new { message = "Active staff member was not found." });
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
+        if (string.IsNullOrWhiteSpace(request.DeviceFamily) || string.IsNullOrWhiteSpace(request.TemplateFormat)
+            || string.IsNullOrWhiteSpace(request.EncryptedTemplateBase64))
+            return BadRequest(new { message = "Device family, template format and encrypted template are required." });
+        if (request.DeviceFamily.Length > 80 || request.TemplateFormat.Length > 80
+            || request.EncryptedTemplateBase64.Length > 65536)
+            return BadRequest(new { message = "Fingerprint credential metadata or payload exceeds the permitted size." });
+        if (!Guid.TryParse(User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value, out var enrolledBy))
+            return Unauthorized(new { message = "The signed-in user identity is missing." });
+
+        byte[] encryptedTemplate;
+        try { encryptedTemplate = Convert.FromBase64String(request.EncryptedTemplateBase64); }
+        catch (FormatException) { return BadRequest(new { message = "The encrypted template must be valid Base64." }); }
+        if (encryptedTemplate.Length < 32 || encryptedTemplate.Length > 48 * 1024)
+            return BadRequest(new { message = "The encrypted template size is invalid." });
+
+        var activeCredentials = await db.StaffFingerprintCredentials
+            .Where(x => x.StaffMemberId == staffMemberId && x.IsActive)
+            .ToListAsync(cancellationToken);
+        foreach (var credential in activeCredentials) credential.IsActive = false;
+
+        db.StaffFingerprintCredentials.Add(new StaffFingerprintCredential
+        {
+            StaffMemberId = staffMemberId,
+            DeviceFamily = request.DeviceFamily.Trim(),
+            TemplateFormat = request.TemplateFormat.Trim(),
+            EncryptedTemplate = encryptedTemplate,
+            EnrolledAtUtc = DateTimeOffset.UtcNow,
+            EnrolledByUserId = enrolledBy,
+            IsActive = true
+        });
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { staffMemberId, active = true, enrolledAtUtc = DateTimeOffset.UtcNow });
+    }
+
+    [HttpDelete("{staffMemberId:guid}/fingerprint-credential")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RevokeFingerprint(Guid staffMemberId, CancellationToken cancellationToken)
+    {
+        var staff = await db.StaffMembers.SingleOrDefaultAsync(s => s.Id == staffMemberId, cancellationToken);
+        if (staff is null) return NotFound();
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
+        var credentials = await db.StaffFingerprintCredentials
+            .Where(x => x.StaffMemberId == staffMemberId && x.IsActive)
+            .ToListAsync(cancellationToken);
+        foreach (var credential in credentials) credential.IsActive = false;
+        await db.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>
     /// Called by the trusted workstation agent only after local biometric matching succeeds.
     /// The server assigns the authoritative timestamp and derives IN/OUT; callers cannot choose it.
@@ -111,6 +172,10 @@ public sealed class StaffAttendanceController(
         var staff = await db.StaffMembers.SingleOrDefaultAsync(s => s.Id == request.StaffMemberId && s.IsActive, cancellationToken);
         if (staff is null) return NotFound(new { message = "Active staff member was not found." });
         if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
+        var hasEnrolledFingerprint = await db.StaffFingerprintCredentials.AnyAsync(
+            credential => credential.StaffMemberId == staff.Id && credential.IsActive, cancellationToken);
+        if (!hasEnrolledFingerprint)
+            return Conflict(new { message = "This staff member has no active fingerprint enrolment." });
 
         var duplicate = await db.StaffAttendanceEvents.AnyAsync(e =>
             e.DeviceId == request.DeviceId && e.CaptureId == request.CaptureId, cancellationToken);
@@ -164,4 +229,4 @@ public sealed class StaffAttendanceController(
     }
 }
 
-public sealed record StaffFingerprintCaptureRequest(Guid StaffMemberId, string DeviceId, string CaptureId);
+public sealed record StaffFingerprintCaptureRequest(Guid StaffMemberId, string DeviceId, string CaptureId);\npublic sealed record EnrolStaffFingerprintRequest(string DeviceFamily, string TemplateFormat, string EncryptedTemplateBase64);
