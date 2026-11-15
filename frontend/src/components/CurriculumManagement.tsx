@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   addCurriculumCourse,
   updateCurriculumCourse,
@@ -21,6 +21,8 @@ import {
 } from '../api/curriculumManagement'
 import { createProgramme, deleteProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
+import { CurriculumCard } from './CurriculumCard'
+import { CurriculumFilterPanel, type CurriculumFilters } from './CurriculumFilterPanel'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityActive, updateAcademicAuthority, type AcademicAuthority } from '../api/academicAuthorities'
 import { createAcademicDepartment, createAcademicFaculty, getAcademicCampuses, getAcademicDepartments, getAcademicFaculties, setAcademicDepartmentActive, setAcademicFacultyActive, updateAcademicDepartment, updateAcademicFaculty, type AcademicDepartment, type CampusOption, type FacultyOption } from '../api/academicDepartments'
@@ -42,6 +44,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null)
   const [departmentForm, setDepartmentForm] = useState({ facultyId: '', code: '', name: '' })
   const [selected, setSelected] = useState('')
+  const [curriculumFilters, setCurriculumFilters] = useState<CurriculumFilters>({ status: [], programmeType: [], creditRange: { min: 0, max: 10000 }, searchTerm: '' })
+  const [curriculumSummaries, setCurriculumSummaries] = useState<Record<string, { courseCount: number; totalCredits: number }>>({})
   const selectedCurriculumRef = useRef('')
   const [authority, setAuthority] = useState('')
   const [editingAuthority, setEditingAuthority] = useState<string | null>(null)
@@ -78,6 +82,17 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const mappingsRequest = useRef(0)
   const [semesterEdit, setSemesterEdit] = useState<{ year: number; semester: number; nextYear: string; nextSemester: string } | null>(null)
 
+  const filteredCurricula = useMemo(() => authorityCurricula.filter(item => {
+    const programme = programmes.find(row => row.id === item.programmeId)
+    const status = item.isActive ? 'active' : 'inactive'
+    const searchText = [item.title, item.version, programme?.code, programme?.name].filter(Boolean).join(' ').toLowerCase()
+    return (!curriculumFilters.status.length || curriculumFilters.status.includes(status)) &&
+      (!curriculumFilters.programmeType.length || curriculumFilters.programmeType.includes(String(programme?.type ?? ''))) &&
+      item.minimumCredits >= curriculumFilters.creditRange.min &&
+      item.minimumCredits <= curriculumFilters.creditRange.max &&
+      (!curriculumFilters.searchTerm.trim() || searchText.includes(curriculumFilters.searchTerm.trim().toLowerCase()))
+  }), [authorityCurricula, programmes, curriculumFilters])
+
   const [cf, setCf] = useState({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' as 'FullProgramme' | 'ShortCourse' })
   const [uf, setUf] = useState({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
   const [mf, setMf] = useState({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
@@ -85,6 +100,32 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   useEffect(() => {
     if (canManage) void load()
   }, [canManage])
+
+  useEffect(() => {
+    let cancelled = false
+    const eligibleCurricula = curricula.filter(item => {
+      const programme = programmes.find(row => row.id === item.programmeId)
+      return Boolean(programme) &&
+        Number(programme?.type) === (tab === 'short' ? 1 : 0) &&
+        resolveAcademicAuthority(programme?.regulator) === resolveAcademicAuthority(authority)
+    })
+    if (eligibleCurricula.length === 0) {
+      setCurriculumSummaries({})
+      return () => { cancelled = true }
+    }
+    void Promise.all(eligibleCurricula.map(async item => {
+      try {
+        const rows = await getCurriculumCourses(item.id)
+        const totalCredits = rows.reduce((sum, row) => sum + (courses.find(course => course.id === row.courseId)?.creditUnits ?? 0), 0)
+        return [item.id, { courseCount: rows.length, totalCredits }] as const
+      } catch {
+        return [item.id, { courseCount: 0, totalCredits: 0 }] as const
+      }
+    })).then(entries => {
+      if (!cancelled) setCurriculumSummaries(Object.fromEntries(entries))
+    })
+    return () => { cancelled = true }
+  }, [curricula, programmes, authority, tab, courses])
 
   async function load(tabForAuthority: Tab = tab) {
     const loadRequestId = ++loadRequest.current
@@ -851,12 +892,35 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {programmes.filter(item => resolveAcademicAuthority(item.regulator) === selectedAuthority).length === 0 && <tr><td colSpan={7}>No programmes are saved under this authority yet.</td></tr>}
         </tbody></table></div>
       </section>
-      <section className="catalogue-board" aria-label="Curriculum register">
-        <h3>Curriculum register</h3>
-        <div className="table-wrap"><table><thead><tr><th>Programme</th><th>Curriculum</th><th>Version</th><th>Effective from</th><th>Effective to</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-          {authorityCurricula.map(item => <tr key={item.id}><td>{programmes.find(p => p.id === item.programmeId)?.code ?? '—'}</td><td>{item.title}</td><td>{item.version}</td><td>{item.effectiveFrom}</td><td>{item.effectiveTo ?? '—'}</td><td>{item.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCurriculum(item)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCurriculum(item)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
-          {authorityCurricula.length === 0 && <tr><td colSpan={7}>No curricula configured under this authority.</td></tr>}
-        </tbody></table></div>
+      <section className="catalogue-board curriculum-register" aria-label="Curriculum register">
+        <div className="panel-heading">
+          <div><h3>Curriculum register</h3><p>{filteredCurricula.length} of {authorityCurricula.length} curricula</p></div>
+        </div>
+        <CurriculumFilterPanel
+          curricula={authorityCurricula}
+          onFilterChange={setCurriculumFilters}
+          onClearFilters={() => setCurriculumFilters({ status: [], programmeType: [], creditRange: { min: 0, max: 10000 }, searchTerm: '' })}
+        />
+        <div className="curriculum-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12, marginTop: 14 }}>
+          {filteredCurricula.map(item => {
+            const programme = programmes.find(row => row.id === item.programmeId)
+            const summary = curriculumSummaries[item.id] ?? { courseCount: 0, totalCredits: 0 }
+            return (
+              <CurriculumCard
+                key={item.id}
+                curriculum={item}
+                programmeName={programme ? `${programme.code} — ${programme.name}` : 'Unknown programme'}
+                courseCount={summary.courseCount}
+                totalCredits={summary.totalCredits}
+                onEdit={() => editCurriculum(item)}
+                onToggleStatus={() => void toggleCurriculum(item)}
+                onSelect={() => { setSemesterEdit(null); setEditingMappingId(null); setMf(current => ({ ...current, courseId: '' })); void refreshMappings(item.id) }}
+                isSelected={selected === item.id}
+              />
+            )
+          })}
+          {filteredCurricula.length === 0 && <p className="empty">{authorityCurricula.length === 0 ? 'No curricula configured under this authority.' : 'No curricula match the selected filters.'}</p>}
+        </div>
       </section>
       <div className="library-workspace-tabs" role="tablist" aria-label="Curriculum sections">
         <button role="tab" aria-selected={tab === 'full'} className={tab === 'full' ? 'active' : ''} onClick={() => changeTab('full')}>Full Programmes</button>
