@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, Archive, ArrowRight, Database, FileSearch, LockKeyhole, Settings2, ShieldCheck, UsersRound } from 'lucide-react'
+import { Activity, AlertTriangle, Archive, ArrowRight, Database, FileSearch, Info, LockKeyhole, Settings2, ShieldCheck, UsersRound } from 'lucide-react'
 import { getSystemCurrencySettings, saveSystemCurrencySettings, type SystemCurrencySettings } from '../api/systemSettings'
 import { AuditLogManagement } from './AuditLog'
 import { BackupRestore } from './BackupRestore'
@@ -50,7 +50,7 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
         <h1>System Administration</h1>
         
       </div>
-      <span className="status"><ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} /></span>
+      <span className="status"><ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }} /> Administrator area</span>
     </header>
 
     <nav className="library-workspace-tabs" aria-label="System administration sections" style={{ marginBottom: 18 }}>
