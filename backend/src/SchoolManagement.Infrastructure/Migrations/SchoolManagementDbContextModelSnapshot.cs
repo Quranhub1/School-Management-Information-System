@@ -5533,6 +5533,48 @@ namespace SchoolManagement.Infrastructure.Migrations
                 {
                     b.Navigation("Assignments");
                 });
+            modelBuilder.Entity("SchoolManagement.Domain.Attendance.StaffAttendanceEvent", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("CaptureId").IsRequired().HasMaxLength(160).HasColumnType("character varying(160)");
+                    b.Property<string>("DeviceId").IsRequired().HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<string>("EventType").IsRequired().HasMaxLength(10).HasColumnType("character varying(10)");
+                    b.Property<DateTimeOffset>("RecordedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<string>("Source").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)");
+                    b.Property<Guid>("StaffMemberId").HasColumnType("uuid");
+                    b.HasKey("Id");
+                    b.HasIndex("DeviceId", "CaptureId").IsUnique();
+                    b.HasIndex("StaffMemberId", "RecordedAtUtc");
+                    b.ToTable("StaffAttendanceEvents");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Attendance.StaffFingerprintCredential", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<byte[]>("EncryptedTemplate").IsRequired().HasColumnType("bytea");
+                    b.Property<string>("DeviceFamily").IsRequired().HasMaxLength(80).HasColumnType("character varying(80)");
+                    b.Property<DateTimeOffset>("EnrolledAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("EnrolledByUserId").HasColumnType("uuid");
+                    b.Property<bool>("IsActive").HasColumnType("boolean");
+                    b.Property<Guid>("StaffMemberId").HasColumnType("uuid");
+                    b.Property<string>("TemplateFormat").IsRequired().HasMaxLength(80).HasColumnType("character varying(80)");
+                    b.HasKey("Id");
+                    b.HasIndex("StaffMemberId", "IsActive");
+                    b.ToTable("StaffFingerprintCredentials");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Attendance.StaffAttendanceEvent", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null)
+                        .WithMany().HasForeignKey("StaffMemberId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Attendance.StaffFingerprintCredential", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null)
+                        .WithMany().HasForeignKey("StaffMemberId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                });
+
 #pragma warning restore 612, 618
         }
     }
