@@ -452,6 +452,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
   function editCurriculum(item: Curriculum) {
     setEditingCurriculumId(item.id)
+    mappingsRequest.current += 1
     setSelected('')
     setMappings([])
     const programmeType = Number(programmes.find(programme => programme.id === item.programmeId)?.type ?? item.programmeType)
@@ -809,7 +810,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           <div className="summary-grid">
             <form className="student-form" onSubmit={saveCurriculum}>
               <h3>New curriculum version</h3>
-              <select required value={cf.programmeId} disabled={!authority || authorityProgrammes.length === 0} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">{authority ? 'Select programme' : 'Select a curriculum authority first'}</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name} · {p.approvalStatus}</option>)}</select>
+              <select aria-label="Select programme" required value={cf.programmeId} disabled={!authority || authorityProgrammes.length === 0} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">{authority ? 'Select programme' : 'Select a curriculum authority first'}</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name} · {p.approvalStatus}</option>)}</select>
               {authorityProgrammes.length === 0 && <p className="empty">{authority ? 'No active, eligible full programmes are available under this authority.' : 'Select a curriculum authority to load its programmes.'}</p>}
               <div className="form-row">
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
@@ -831,7 +832,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               </div>
               <div className="form-row">
               <input required type="number" min="0" placeholder="Credit units" value={uf.creditUnits} onChange={e => setUf({ ...uf, creditUnits: e.target.value })} />
-              <select required value={uf.courseType} onChange={e => setUf({ ...uf, courseType: e.target.value })}><option value="">Select course unit type</option><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Examination">Examination</option><option value="Other">Other</option></select>
+              <select aria-label="Course unit type" required value={uf.courseType} onChange={e => setUf({ ...uf, courseType: e.target.value })}><option value="">Select course unit type</option><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Examination">Examination</option><option value="Other">Other</option></select>
               </div>
               <input placeholder="Description (optional)" value={uf.description} onChange={e => setUf({ ...uf, description: e.target.value })} />
               <button type="submit" disabled={saving || !authority}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
@@ -924,7 +925,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {authorityProgrammes.length === 0 && <p className="empty">No eligible programmes.</p>}
             <form className="student-form" onSubmit={saveCurriculum}>
               <div className="form-row">
-                <select required value={cf.programmeId} disabled={!authority || authorityProgrammes.length === 0} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select the programme this short course belongs to</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name} · {p.approvalStatus}</option>)}</select>
+                <select aria-label="Select programme" required value={cf.programmeId} disabled={!authority || authorityProgrammes.length === 0} onChange={e => setCf({ ...cf, programmeId: e.target.value })}><option value="">Select the programme this short course belongs to</option>{authorityProgrammes.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name} · {p.approvalStatus}</option>)}</select>
                 <input required placeholder="Version" value={cf.version} onChange={e => setCf({ ...cf, version: e.target.value })} />
               </div>
               <input required placeholder="Curriculum title (e.g. Certificate in Public Health)" value={cf.title} onChange={e => setCf({ ...cf, title: e.target.value })} />
@@ -945,7 +946,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               </div>
               <div className="form-row">
               <input required type="number" min="0" placeholder="Credit units" value={uf.creditUnits} onChange={e => setUf({ ...uf, creditUnits: e.target.value })} />
-              <select required value={uf.courseType} onChange={e => setUf({ ...uf, courseType: e.target.value })}><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Examination">Examination</option><option value="Other">Other</option></select>
+              <select aria-label="Course unit type" required value={uf.courseType} onChange={e => setUf({ ...uf, courseType: e.target.value })}><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Examination">Examination</option><option value="Other">Other</option></select>
               </div>
               <input placeholder="Description (optional)" value={uf.description} onChange={e => setUf({ ...uf, description: e.target.value })} />
               <button type="submit" disabled={saving || !authority}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
