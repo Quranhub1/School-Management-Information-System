@@ -103,7 +103,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     [loans],
   );
   const visibleLoans = tab === 'overdue' ? overdue : loans;
-  const isbnDigits = normalizeIsbnDigits(form.isbn);\n  const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;\n  const isbnValid = isbnComplete && isValidIsbn(isbnDigits);\n  const selectedMember = useMemo(
+  const isbnDigits = normalizeIsbnDigits(form.isbn);
+  const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;\n  const isbnValid = isbnComplete && isValidIsbn(isbnDigits);\n  const selectedMember = useMemo(
     () => members.find((m) => m.studentNumber === issue.memberNumber),
     [members, issue.memberNumber],
   );
