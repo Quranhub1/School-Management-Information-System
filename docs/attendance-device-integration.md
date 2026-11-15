@@ -4,7 +4,7 @@
 
 The barcode reader is for **books and their ISBNs**, not student attendance.
 
-The Library > Add New Book section includes a **Scan book ISBN barcode** field. A standard USB barcode reader configured as a keyboard wedge types the book's ISBN into this field. Configure the scanner to append an Enter/Carriage Return suffix. Enter transfers the scanned ISBN into the book registration form, where SMIS applies ISBN formatting and checksum validation. The book's EAN-13/Bookland barcode preview is generated locally by the already-bundled JsBarcode package.
+The Library > Add New Book form requires the librarian to select exactly one ISBN entry method: **Enter ISBN manually** or **Scan book barcode**. Only the selected method is displayed, so the librarian cannot use both methods for the same book. The ISBN is mandatory; leaving it blank prevents saving. In scan mode, a standard USB barcode reader configured as a keyboard wedge types the book's ISBN into the scan field. Configure the scanner to append an Enter/Carriage Return suffix. Enter transfers the scanned ISBN into the form, where SMIS applies ISBN formatting and checksum validation. In manual mode, the librarian types the ISBN digits directly. The book's EAN-13/Bookland barcode preview is generated locally by the already-bundled JsBarcode package.
 
 No extra barcode JavaScript package, CDN, internet connection, or Windows background service is required for a standard USB HID barcode scanner.
 
