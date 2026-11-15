@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
+import { toBooklandEan13 } from '../../lib/isbn'
 
 import {
   admissionResponseSchema,
@@ -142,15 +143,51 @@ describe('API contracts — finance', () => {
   })
 })
 
+describe('Library ISBN barcode conversion', () => {
+  it('converts a valid ISBN-10 into its Bookland EAN-13 value', () => {
+    expect(toBooklandEan13('0-306-40615-2')).toBe('9780306406157')
+  })
+
+  it('keeps a valid ISBN-13 as its EAN-13 barcode value', () => {
+    expect(toBooklandEan13('978-0-30640615-7')).toBe('9780306406157')
+  })
+
+  it('does not generate a barcode for an invalid ISBN', () => {
+    expect(toBooklandEan13('978-0-30640615-8')).toBeNull()
+  })
+})
+
 describe('API contracts — library', () => {
   it('validates a library book create request', () => {
     const result = libraryBookCreateRequestSchema.safeParse({
-      isbn: '978-0-123456-78-9',
+      isbn: '978-0-30640615-7',
       title: 'Introduction to Algorithms',
       author: 'Thomas H. Cormen',
       totalCopies: 5,
     })
     expect(result.success).toBe(true)
+    if (result.success) expect(result.data.isbn).toBe('9780306406157')
+  })
+
+  it('accepts a valid ISBN-10 and normalizes its separators', () => {
+    const result = libraryBookCreateRequestSchema.safeParse({
+      isbn: '0-306-40615-2',
+      title: 'Test book',
+      author: 'Test author',
+      totalCopies: 1,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.isbn).toBe('0306406152')
+  })
+
+  it('rejects an ISBN with an invalid check digit', () => {
+    const result = libraryBookCreateRequestSchema.safeParse({
+      isbn: '978-0-30640615-8',
+      title: 'Test book',
+      author: 'Test author',
+      totalCopies: 1,
+    })
+    expect(result.success).toBe(false)
   })
 
   it('validates a library loan create request', () => {

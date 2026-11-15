@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { identifierSchema, requiredTextSchema } from "./common.schema";
+import { isValidIsbn, normalizeIsbnDigits } from "../lib/isbn";
 
 /**
  * Boundary schemas for API modules migrated to runtime validation.
@@ -205,7 +206,9 @@ export const inventoryRegisterResponseSchema = z.looseObject({
 });
 
 export const libraryBookCreateRequestSchema = z.object({
-  isbn: requiredTextSchema.min(10).max(17),
+  isbn: requiredTextSchema
+    .transform(value => normalizeIsbnDigits(value))
+    .refine(value => isValidIsbn(value), "Enter a valid ISBN-10 or ISBN-13, including its correct check digit."),
   title: requiredTextSchema,
   author: requiredTextSchema,
   publisher: z.string().trim().optional(),
