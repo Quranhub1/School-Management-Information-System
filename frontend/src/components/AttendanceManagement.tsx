@@ -155,10 +155,9 @@ export function AttendanceManagement({
     }
   }
 
-  async function mark(event: React.FormEvent) {
-    event.preventDefault()
+  async function recordStudentAttendance(studentIdentifier: string) {
     clearNotice()
-    if (!sessionId.trim() || !studentId.trim()) {
+    if (!sessionId.trim() || !studentIdentifier.trim()) {
       setError('Session ID and student ID are required.')
       return
     }
@@ -173,7 +172,7 @@ export function AttendanceManagement({
         {
           method: 'POST',
           body: JSON.stringify({
-            studentId: studentId.trim(),
+            studentId: studentIdentifier.trim(),
             status,
             remarks: remarks.trim() || null,
           }),
@@ -182,11 +181,17 @@ export function AttendanceManagement({
       setMessage(`Attendance recorded as ${status}.`)
       setStudentId('')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to record attendance.')
+      setError(e instanceof Error ? e.message : 'Unable to record attendance. Check that the scanned code contains the student ID GUID.')
     } finally {
       setLoading(false)
     }
   }
+
+  async function mark(event: React.FormEvent) {
+    event.preventDefault()
+    await recordStudentAttendance(studentId)
+  }
+
 
   async function loadHistory() {
     clearNotice()

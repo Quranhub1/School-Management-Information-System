@@ -61,6 +61,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     dueDate: dateInput(),
   });
   const [barcodeBookId, setBarcodeBookId] = useState<string | null>(null);
+  const [isbnEntryMethod, setIsbnEntryMethod] = useState<'manual' | 'scan'>('manual');
+  const [isbnScanValue, setIsbnScanValue] = useState('');
   const [barcodeError, setBarcodeError] = useState('');
   const barcodeSvgRef = useRef<SVGSVGElement>(null);
   const isbnPreviewSvgRef = useRef<SVGSVGElement>(null);
@@ -205,6 +207,12 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   async function submitBook(e: FormEvent) {
     e.preventDefault();
     setError('');
+    const selectedIsbn = isbnEntryMethod === 'scan' ? form.isbn : form.isbn;
+    if (!selectedIsbn.trim()) {
+      setBookValidationErrors(current => ({ ...current, isbn: isbnEntryMethod === 'scan' ? 'Scan the book ISBN barcode before saving.' : 'Enter the book ISBN before saving.' }));
+      setError('Book was not added. Provide the ISBN using the selected method.');
+      return;
+    }
     const validation = validateForm(libraryBookCreateRequestSchema, form);
     if (!validation.success) {
       setBookValidationErrors(validation.errors);
@@ -222,6 +230,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         publisher: '',
         totalCopies: 1,
       });
+      setIsbnScanValue('');
+      setIsbnEntryMethod('manual');
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to add book.');
@@ -589,8 +599,52 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </div>
           <form className="library-book-form" onSubmit={submitBook}>
             {Object.keys(bookValidationErrors).length > 0 && <div className="error" role="alert"><strong>Catalogue fields requiring attention</strong><ul>{Object.entries(bookValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
+            <fieldset className="library-isbn-method" style={{ border: 0, padding: 0, margin: '0 0 12px' }}>
+              <legend style={{ fontWeight: 600, marginBottom: 8 }}>ISBN entry method <span aria-hidden="true">*</span></legend>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginRight: 18 }}>
+                <input type="radio" name="isbnEntryMethod" value="manual" checked={isbnEntryMethod === 'manual'} onChange={() => {
+                  setIsbnEntryMethod('manual');
+                  setForm(current => ({ ...current, isbn: '' }));
+                  setIsbnScanValue('');
+                  setBookValidationErrors(current => ({ ...current, isbn: '' }));
+                }} />
+                Enter ISBN manually
+              </label>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <input type="radio" name="isbnEntryMethod" value="scan" checked={isbnEntryMethod === 'scan'} onChange={() => {
+                  setIsbnEntryMethod('scan');
+                  setForm(current => ({ ...current, isbn: '' }));
+                  setIsbnScanValue('');
+                  setBookValidationErrors(current => ({ ...current, isbn: '' }));
+                }} />
+                Scan book barcode
+              </label>
+            </fieldset>
+            {isbnEntryMethod === 'scan' ? (
+              <div className="library-isbn-scanner">
+                <label htmlFor="library-isbn-scanner-input">Scan book ISBN barcode <span aria-hidden="true">*</span></label>
+                <input
+                  id="library-isbn-scanner-input"
+                  value={isbnScanValue}
+                  onChange={e => setIsbnScanValue(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key !== 'Enter') return;
+                    e.preventDefault();
+                    const scannedIsbn = formatIsbnInput(isbnScanValue);
+                    setForm(current => ({ ...current, isbn: scannedIsbn }));
+                    setBookValidationErrors(current => ({ ...current, isbn: '' }));
+                    setIsbnScanValue('');
+                  }}
+                  placeholder="Scan the ISBN barcode on the book"
+                  autoComplete="off"
+                  inputMode="none"
+                />
+                <small>Use a USB barcode reader configured to append Enter. The scanned ISBN is checked before the book can be saved.</small>
+                {form.isbn && <small role="status">Scanned ISBN: {form.isbn} {isbnValid ? '· valid checksum' : '· check digit needs correction'}</small>}
+              </div>
+            ) : (
             <label className="library-isbn-field">
-              <span>ISBN</span>
+              <span>ISBN <span aria-hidden="true">*</span></span>
               <input
                 type="text"
                 inputMode="text"
@@ -627,6 +681,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                 </div>
               )}
             </label>
+            )}
             <input
               placeholder="Book title"
               aria-invalid={Boolean(bookValidationErrors.title)}
