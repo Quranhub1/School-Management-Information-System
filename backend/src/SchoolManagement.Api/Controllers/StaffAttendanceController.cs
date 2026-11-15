@@ -54,28 +54,40 @@ public sealed class StaffAttendanceController(
             .Select(e => new { e.StaffMemberId, e.EventType, e.RecordedAtUtc })
             .ToListAsync(cancellationToken);
 
-        var rows = staff.Select(member =>
+        var firstDate = DateOnly.FromDateTime(start);
+        var lastDate = DateOnly.FromDateTime(end.AddTicks(-1));
+        if (lastDate.DayNumber - firstDate.DayNumber > 365)
+            return BadRequest(new { message = "Attendance reports are limited to 366 days per request." });
+
+        var rows = new List<object>();
+        for (var date = firstDate; date <= lastDate; date = date.AddDays(1))
         {
-            var memberEvents = events.Where(e => e.StaffMemberId == member.Id).ToArray();
-            var checkIn = memberEvents.FirstOrDefault(e => e.EventType == "IN")?.RecordedAtUtc;
-            var checkOut = memberEvents.LastOrDefault(e => e.EventType == "OUT")?.RecordedAtUtc;
-            var status = checkIn is null ? "Absent" : checkOut is null ? "Checked in" : "Complete";
-            var worked = checkIn.HasValue && checkOut.HasValue && checkOut > checkIn
-                ? (double?)(checkOut.Value - checkIn.Value).TotalHours : null;
-            return new
+            var dayStart = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
+            var dayEnd = dayStart.AddDays(1);
+            foreach (var member in staff)
             {
-                staffMemberId = member.Id,
-                member.StaffNumber,
-                name = string.Join(" ", new[] { member.FirstName, member.LastName }),
-                member.DepartmentId,
-                date = DateOnly.FromDateTime(start),
-                checkIn,
-                checkOut,
-                hoursWorked = worked,
-                status,
-                eventCount = memberEvents.Length
-            };
-        });
+                var memberEvents = events.Where(e => e.StaffMemberId == member.Id
+                    && e.RecordedAtUtc >= dayStart && e.RecordedAtUtc < dayEnd).ToArray();
+                var checkIn = memberEvents.FirstOrDefault(e => e.EventType == "IN")?.RecordedAtUtc;
+                var checkOut = memberEvents.LastOrDefault(e => e.EventType == "OUT")?.RecordedAtUtc;
+                var status = checkIn is null ? "Absent" : checkOut is null ? "Checked in" : "Complete";
+                double? worked = checkIn.HasValue && checkOut.HasValue && checkOut.Value > checkIn.Value
+                    ? (checkOut.Value - checkIn.Value).TotalHours : null;
+                rows.Add(new
+                {
+                    staffMemberId = member.Id,
+                    member.StaffNumber,
+                    name = string.Join(" ", new[] { member.FirstName, member.LastName }),
+                    member.DepartmentId,
+                    date,
+                    checkIn,
+                    checkOut,
+                    hoursWorked = worked,
+                    status,
+                    eventCount = memberEvents.Length
+                });
+            }
+        }
         return Ok(rows);
     }
 
