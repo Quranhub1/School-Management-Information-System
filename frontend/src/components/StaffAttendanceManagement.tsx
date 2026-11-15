@@ -14,7 +14,7 @@ function localDate(value: string | null) {
 }
 
 export function StaffAttendanceManagement() {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Kampala', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
   const [from, setFrom] = useState(today)
   const [to, setTo] = useState(today)
   const [search, setSearch] = useState('')
