@@ -8,8 +8,9 @@ import { notify } from './GlobalNotifications'
 import { validateForm } from '../lib/validation'
 import { staffCreateRequestSchema } from '../schemas'
 import { SYSTEM_CURRENCY } from '../lib/currency'
+import { StaffAttendanceManagement } from './StaffAttendanceManagement'
 
-type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment'
+type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment' | 'attendance'
 
 export function StaffManagement({ canManage = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; activeSubsection?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
@@ -23,7 +24,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [courseUnitDraftIds, setCourseUnitDraftIds] = useState<string[]>([])
   const [savingCourseUnits, setSavingCourseUnits] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'staff' | 'payroll' | 'leave' | 'recruitment'>('staff')
+  const [tab, setTab] = useState<Tab>('staff')
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
   const [payroll, setPayroll] = useState<PayrollRecord[]>([])
   const [payrollMonth, setPayrollMonth] = useState(new Date().getMonth() + 1)
@@ -35,9 +36,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       : activeSubsection === 'payroll' ? 'payroll'
       : activeSubsection === 'leave' ? 'leave'
       : activeSubsection === 'recruitment' ? 'recruitment'
+      : activeSubsection === 'attendance' ? 'attendance'
       : undefined
     if (nextTab === 'payroll' && !canReadPayroll) return
-    if ((nextTab === 'leave' || nextTab === 'recruitment') && !canManage) return
+    if ((nextTab === 'leave' || nextTab === 'recruitment' || nextTab === 'attendance') && !canManage) return
     if (nextTab) setTab(nextTab)
   }, [activeSubsection, canManage, canReadPayroll])
 
@@ -59,8 +61,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         : detail.subsection === 'payroll' ? 'payroll'
         : detail.subsection === 'leave' ? 'leave'
         : detail.subsection === 'recruitment' ? 'recruitment'
+        : detail.subsection === 'attendance' ? 'attendance'
         : undefined
-      if (nextTab === 'payroll' && !canReadPayroll) return; if ((nextTab === 'leave' || nextTab === 'recruitment') && !canManage) return; if (nextTab) setTab(nextTab)
+      if (nextTab === 'payroll' && !canReadPayroll) return; if ((nextTab === 'leave' || nextTab === 'recruitment' || nextTab === 'attendance') && !canManage) return; if (nextTab) setTab(nextTab)
     }
     window.addEventListener('smis:navigate-subsection', handler)
     return () => window.removeEventListener('smis:navigate-subsection', handler)
@@ -219,6 +222,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         {canReadPayroll && <button role="tab" aria-selected={tab === 'payroll'} className={tab === 'payroll' ? 'active' : ''} onClick={() => setTab('payroll')}>Payroll</button>}
         {canManage && <button role="tab" aria-selected={tab === 'leave'} className={tab === 'leave' ? 'active' : ''} onClick={() => setTab('leave')}>Leave</button>}
         {canManage && <button role="tab" aria-selected={tab === 'recruitment'} className={tab === 'recruitment' ? 'active' : ''} onClick={() => setTab('recruitment')}>Recruitment</button>}
+        {canManage && <button role="tab" aria-selected={tab === 'attendance'} className={tab === 'attendance' ? 'active' : ''} onClick={() => setTab('attendance')}>Attendance</button>}
       </div>
 
       {success && <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status" aria-live="polite">{success}</div>}
@@ -427,6 +431,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
           </div>
         </>
       )}
+
+      {tab === 'attendance' && <StaffAttendanceManagement />}
 
       {tab === 'recruitment' && (
         <div className="card">
