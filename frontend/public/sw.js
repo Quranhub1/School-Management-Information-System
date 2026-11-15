@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smis-v5';
+const CACHE_NAME = 'smis-v6';
 const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/icon.png'];
 
 self.addEventListener('install', (event) => {
@@ -49,7 +49,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache static assets for offline use. Hashed build assets are immutable;
+  // Cache static assets and bundled npm libraries (including JsBarcode) for offline use.
+  // Hashed build assets are immutable;
   // newly deployed HTML points to the new hashes.
   event.respondWith(
     caches.match(request).then((cached) => {
