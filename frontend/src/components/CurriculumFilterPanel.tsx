@@ -42,12 +42,12 @@ export function CurriculumFilterPanel({ curricula, onFilterChange, onClearFilter
   }
 
   return (
-    <section className="curriculum-filter-panel" aria-label="Filter curricula">
-      <div className="curriculum-filter-heading">
+    <section className="curriculum-filter-panel" aria-label="Filter curricula" style={{ border: "1px solid #d6d3d1", borderRadius: 8, padding: 12, background: "#fafaf9" }}>
+      <div className="curriculum-filter-heading" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
         <strong>Filter curricula</strong>
         <span>{curricula.length} total · {activeCount} active · {inactiveCount} inactive</span>
       </div>
-      <div className="curriculum-filter-controls">
+      <div className="curriculum-filter-controls" style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 14 }}>
         <label className="curriculum-filter-search">
           <span>Search</span>
           <input
@@ -57,19 +57,19 @@ export function CurriculumFilterPanel({ curricula, onFilterChange, onClearFilter
             onChange={event => update({ ...filters, searchTerm: event.target.value })}
           />
         </label>
-        <fieldset>
+        <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 4 }}>
           <legend>Status</legend>
           <label><input type="checkbox" checked={filters.status.includes('active')} onChange={event => toggleValue('status', 'active', event.target.checked)} /> Active ({activeCount})</label>
           <label><input type="checkbox" checked={filters.status.includes('inactive')} onChange={event => toggleValue('status', 'inactive', event.target.checked)} /> Inactive ({inactiveCount})</label>
         </fieldset>
-        <fieldset>
+        <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 4 }}>
           <legend>Programme type</legend>
           <label><input type="checkbox" checked={filters.programmeType.includes('0')} onChange={event => toggleValue('programmeType', '0', event.target.checked)} /> Full programme</label>
           <label><input type="checkbox" checked={filters.programmeType.includes('1')} onChange={event => toggleValue('programmeType', '1', event.target.checked)} /> Short course</label>
         </fieldset>
-        <fieldset>
+        <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 4 }}>
           <legend>Minimum credits</legend>
-          <div className="curriculum-credit-range">
+          <div className="curriculum-credit-range" style={{ display: "flex", gap: 8 }}>
             <label>From <input type="number" min="0" value={filters.creditRange.min} onChange={event => update({ ...filters, creditRange: { ...filters.creditRange, min: Math.max(0, Number(event.target.value)) } })} /></label>
             <label>To <input type="number" min="0" value={filters.creditRange.max} onChange={event => update({ ...filters, creditRange: { ...filters.creditRange, max: Math.max(0, Number(event.target.value)) } })} /></label>
           </div>
