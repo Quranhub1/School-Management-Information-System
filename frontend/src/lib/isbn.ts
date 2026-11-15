@@ -17,12 +17,12 @@ export function normalizeIsbnDigits(value: string): string {
 
 export function isValidIsbn(value: string): boolean {
   const digits = normalizeIsbnDigits(value);
-  if (/^\\d{13}$/.test(digits)) {
+  if (/^\d{13}$/.test(digits)) {
     const sum = [...digits].reduce((total, digit, index) =>
       total + Number(digit) * (index % 2 === 0 ? 1 : 3), 0);
     return sum % 10 === 0;
   }
-  if (/^\\d{9}[0-9X]$/.test(digits)) {
+  if (/^\d{9}[0-9X]$/.test(digits)) {
     const sum = [...digits].reduce((total, digit, index) =>
       total + (digit === 'X' ? 10 : Number(digit)) * (10 - index), 0);
     return sum % 11 === 0;
