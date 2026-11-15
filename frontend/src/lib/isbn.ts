@@ -39,20 +39,23 @@ export function formatIsbnInput(value: string): string {
   if (!digits) return '';
 
   if (digits.length <= 3) return digits;
-  if (digits.startsWith('978') || digits.startsWith('979')) {
+  const isComplete = digits.length === 10 || digits.length === 13;
+  const body = isComplete ? digits.slice(0, -1) : digits;
+  const checkDigit = isComplete ? digits.slice(-1) : '';
+
+  if (body.startsWith('978') || body.startsWith('979')) {
     const groupKey = Object.keys(ISBN_GROUP_LENGTHS)
-      .filter(key => key.startsWith(digits.slice(0, Math.min(digits.length, key.length))))
+      .filter(key => key.startsWith(body.slice(0, Math.min(body.length, key.length))))
       .sort((a, b) => b.length - a.length)[0];
     const groupLength = groupKey ? ISBN_GROUP_LENGTHS[groupKey] : 1;
-    const groupEnd = Math.min(3 + groupLength, digits.length);
-    const prefix = digits.slice(0, 3);
-    const group = digits.slice(3, groupEnd);
-    const remainder = digits.slice(groupEnd);
-    if (!group) return prefix + (remainder ? '-' + remainder : '');
-    return prefix + '-' + group + (remainder ? '-' + remainder : '');
+    const groupEnd = Math.min(3 + groupLength, body.length);
+    const prefix = body.slice(0, 3);
+    const group = body.slice(3, groupEnd);
+    const remainder = body.slice(groupEnd);
+    const formattedBody = prefix + (group ? '-' + group : '') + (remainder ? '-' + remainder : '');
+    return formattedBody + (checkDigit ? '-' + checkDigit : '');
   }
 
-  if (digits.length <= 1) return digits;
-  const remainder = digits.slice(1);
-  return digits.slice(0, 1) + (remainder ? '-' + remainder : '');
+  if (body.length <= 1) return body + (checkDigit ? '-' + checkDigit : '');
+  return body.slice(0, 1) + '-' + body.slice(1) + (checkDigit ? '-' + checkDigit : '');
 }
