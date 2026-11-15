@@ -25,9 +25,13 @@ public sealed class StaffAttendanceController(
         [FromQuery] Guid? departmentId,
         CancellationToken cancellationToken)
     {
-        var start = (from ?? DateOnly.FromDateTime(DateTime.UtcNow)).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-        var end = (to ?? from ?? DateOnly.FromDateTime(DateTime.UtcNow)).AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-        if (end <= start) return BadRequest(new { message = "The end date must be on or after the start date." });
+        var kampala = TimeZoneInfo.FindSystemTimeZoneById("Africa/Kampala");
+        var todayInKampala = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, kampala).DateTime);
+        var firstDate = from ?? todayInKampala;
+        var lastDate = to ?? firstDate;
+        if (lastDate < firstDate) return BadRequest(new { message = "The end date must be on or after the start date." });
+        var start = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(firstDate.ToDateTime(TimeOnly.MinValue), kampala));
+        var end = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(lastDate.AddDays(1).ToDateTime(TimeOnly.MinValue), kampala));
 
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
@@ -54,16 +58,14 @@ public sealed class StaffAttendanceController(
             .Select(e => new { e.StaffMemberId, e.EventType, e.RecordedAtUtc })
             .ToListAsync(cancellationToken);
 
-        var firstDate = DateOnly.FromDateTime(start);
-        var lastDate = DateOnly.FromDateTime(end.AddTicks(-1));
         if (lastDate.DayNumber - firstDate.DayNumber > 365)
             return BadRequest(new { message = "Attendance reports are limited to 366 days per request." });
 
         var rows = new List<object>();
         for (var date = firstDate; date <= lastDate; date = date.AddDays(1))
         {
-            var dayStart = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
-            var dayEnd = dayStart.AddDays(1);
+            var dayStart = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(date.ToDateTime(TimeOnly.MinValue), kampala));
+            var dayEnd = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(date.AddDays(1).ToDateTime(TimeOnly.MinValue), kampala));
             foreach (var member in staff)
             {
                 var memberEvents = events.Where(e => e.StaffMemberId == member.Id
@@ -115,7 +117,9 @@ public sealed class StaffAttendanceController(
         if (duplicate) return Conflict(new { message = "This scanner capture has already been recorded." });
 
         var now = DateTimeOffset.UtcNow;
-        var dayStart = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero);
+        var kampala = TimeZoneInfo.FindSystemTimeZoneById("Africa/Kampala");
+        var todayInKampala = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, kampala).DateTime);
+        var dayStart = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(todayInKampala.ToDateTime(TimeOnly.MinValue), kampala));
         var todays = await db.StaffAttendanceEvents.Where(e =>
                 e.StaffMemberId == staff.Id && e.RecordedAtUtc >= dayStart)
             .OrderBy(e => e.RecordedAtUtc)
