@@ -638,7 +638,6 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                   placeholder="Scan the ISBN barcode on the book"
                   autoComplete="off"
                   inputMode="none"
-                  required
                 />
                 <small>Use a USB barcode reader configured to append Enter. The scanned ISBN is checked before the book can be saved.</small>
                 {form.isbn && <small role="status">Scanned ISBN: {form.isbn} {isbnValid ? '· valid checksum' : '· check digit needs correction'}</small>}
