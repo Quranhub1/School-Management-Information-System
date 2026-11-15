@@ -577,3 +577,205 @@
     width: 100%;
   }
 }
+
+
+/* Curriculum Management — rebuilt workspace hierarchy */
+.app-shell .curriculum-management {
+  display: grid;
+  gap: 12px;
+  padding: 14px !important;
+  background: #f8fafc;
+}
+.app-shell .curriculum-management > .panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 !important;
+  padding: 0 0 12px;
+  border-bottom: 1px solid #dbe3ec;
+}
+.app-shell .curriculum-management > .panel-heading h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -.02em;
+}
+.app-shell .curriculum-management .curriculum-management-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #475569;
+  font-size: 12px;
+}
+.app-shell .curriculum-management .curriculum-refresh-button {
+  min-height: 34px;
+  padding: 7px 12px;
+  color: #fff;
+  background: #087443;
+  border: 1px solid #087443;
+  font-weight: 700;
+}
+.app-shell .curriculum-management .curriculum-authority-picker-card {
+  display: grid;
+  grid-template-columns: minmax(170px, .65fr) minmax(260px, 1.35fr);
+  align-items: center;
+  gap: 8px 18px;
+  margin: 0 !important;
+  padding: 14px !important;
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid #087443;
+  background: #fff;
+}
+.app-shell .curriculum-management .curriculum-authority-picker-card h3 {
+  grid-column: 1 / -1;
+  margin: 0 !important;
+  color: #0f172a;
+  font-size: 15px !important;
+}
+.app-shell .curriculum-management .curriculum-authority-picker-card > .eyebrow {
+  margin: 0 !important;
+  color: #64748b;
+  font-size: 12px;
+}
+.app-shell .curriculum-management .authority-select-row {
+  display: block;
+  margin: 0 !important;
+}
+.app-shell .curriculum-management .authority-select-row label {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+.app-shell .curriculum-management .authority-select-row select {
+  height: 38px;
+  min-height: 38px;
+  border: 1px solid #94a3b8;
+  background: #fff;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+}
+.app-shell .curriculum-management .catalogue-board {
+  margin: 0 !important;
+  padding: 13px !important;
+  border: 1px solid #dbe3ec;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+}
+.app-shell .curriculum-management .catalogue-board > h3 {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #edf1f5;
+  color: #172033;
+  font-size: 14px !important;
+  font-weight: 750;
+}
+.app-shell .curriculum-management .student-form {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.app-shell .curriculum-management .table-wrap {
+  margin-top: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+.app-shell .curriculum-management table {
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.app-shell .curriculum-management thead th {
+  position: sticky;
+  top: 0;
+  padding: 9px 10px;
+  color: #334155;
+  background: #f1f5f9;
+  border-bottom: 1px solid #cbd5e1;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.app-shell .curriculum-management tbody td {
+  padding: 9px 10px;
+  color: #334155;
+  border-bottom: 1px solid #edf1f5;
+  vertical-align: middle;
+}
+.app-shell .curriculum-management tbody tr:hover { background: #f8fafc; }
+.app-shell .curriculum-management .library-workspace-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0 !important;
+  padding: 5px;
+  border: 1px solid #dbe3ec;
+  background: #eef2f7;
+}
+.app-shell .curriculum-management .library-workspace-tabs button {
+  min-height: 36px;
+  padding: 8px 14px;
+  color: #334155;
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 700;
+}
+.app-shell .curriculum-management .library-workspace-tabs button.active {
+  color: #fff;
+  background: #087443;
+  border-color: #087443;
+}
+.app-shell .curriculum-management .curriculum-course-mapping-form {
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+}
+.app-shell .curriculum-management .curriculum-mapping-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.app-shell .curriculum-management .curriculum-mapping-actions button {
+  min-height: 34px;
+  padding: 7px 11px;
+  color: #fff;
+  background: #087443;
+  font-weight: 700;
+}
+.app-shell .curriculum-management .empty {
+  padding: 10px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+}
+.app-shell .curriculum-management .error {
+  padding: 10px 12px;
+  border-left: 4px solid #b42318;
+  background: #fff1f0;
+  color: #912018;
+  font-size: 12px;
+}
+.app-shell .curriculum-management :is(button, input, select) { border-radius: 3px !important; }
+@media (max-width: 760px) {
+  .app-shell .curriculum-management .curriculum-authority-picker-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-shell .curriculum-management .authority-select-row label {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-shell .curriculum-management > .panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .app-shell .curriculum-management .curriculum-management-header-actions {
+    flex-wrap: wrap;
+  }
+}

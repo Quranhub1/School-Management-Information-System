@@ -175,42 +175,44 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         setMappings([])
       }
 
-      // Campus structure is ancillary to the programme/curriculum/course selectors.
-      try {
-        const campusList = await getAcademicCampuses()
-        if (loadRequest.current !== loadRequestId) return
-        const campusId = selectedCampusId && campusList.some(item => item.id === selectedCampusId)
-          ? selectedCampusId
-          : (campusList.find(item => item.isActive)?.id ?? '')
-        setCampuses(campusList)
-        setSelectedCampusId(campusId)
-        if (campusId) {
+      // Campus/faculty/department data is ancillary. Load it in the background so a
+      // slow campus endpoint cannot keep the core authority selectors in a loading state.
+      void (async () => {
+        try {
+          const campusList = await getAcademicCampuses()
+          if (loadRequest.current !== loadRequestId) return
+          const campusId = selectedCampusId && campusList.some(item => item.id === selectedCampusId)
+            ? selectedCampusId
+            : (campusList.find(item => item.isActive)?.id ?? '')
+          setCampuses(campusList)
+          setSelectedCampusId(campusId)
+          if (!campusId) {
+            setDepartments([])
+            setFaculties([])
+            return
+          }
           const [departmentResult, facultyResult] = await Promise.allSettled([
             getAcademicDepartments(campusId),
             getAcademicFaculties(campusId),
           ])
           if (loadRequest.current !== loadRequestId) return
           if (departmentResult.status === 'fulfilled') setDepartments(departmentResult.value)
-          else {
-            setDepartments([])
-            failures.push(`Departments: ${departmentResult.reason instanceof Error ? departmentResult.reason.message : 'could not be loaded'}`)
-          }
+          else setDepartments([])
           if (facultyResult.status === 'fulfilled') setFaculties(facultyResult.value)
-          else {
-            setFaculties([])
-            failures.push(`Faculties: ${facultyResult.reason instanceof Error ? facultyResult.reason.message : 'could not be loaded'}`)
-          }
-        } else {
+          else setFaculties([])
+          const campusFailures = [
+            departmentResult.status === 'rejected' ? 'Departments could not be loaded.' : '',
+            facultyResult.status === 'rejected' ? 'Faculties could not be loaded.' : '',
+          ].filter(Boolean)
+          if (campusFailures.length) setError(current => [current, ...campusFailures].filter(Boolean).join(' · '))
+        } catch (campusError) {
+          if (loadRequest.current !== loadRequestId) return
+          setCampuses([])
           setDepartments([])
           setFaculties([])
+          setError(current => [current, campusError instanceof Error ? campusError.message : 'Campus structure could not be loaded.'].filter(Boolean).join(' · '))
         }
-      } catch (campusError) {
-        if (loadRequest.current !== loadRequestId) return
-        setCampuses([])
-        setDepartments([])
-        setFaculties([])
-        failures.push(`Campus structure: ${campusError instanceof Error ? campusError.message : 'could not be loaded'}`)
-      }
+      })()
 
       if (loadRequest.current === loadRequestId && failures.length) setError(failures.join(' · '))
     } catch (e) {
@@ -288,13 +290,26 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   async function saveAuthority(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
+    setError('')
+    setMessage('')
     try {
-      const input = { ...authorityForm, sortOrder: Number(authorityForm.sortOrder) }
-      if (editingAuthority) await updateAcademicAuthority(editingAuthority, input)
-      else await createAcademicAuthority(input)
+      const input = { ...authorityForm, code: authorityForm.code.trim().toUpperCase(), name: authorityForm.name.trim(), sortOrder: Number(authorityForm.sortOrder) }
+      let savedAuthority: AcademicAuthority | undefined
+      if (editingAuthority) {
+        await updateAcademicAuthority(editingAuthority, input)
+        setMessage('Academic authority updated successfully.')
+      } else {
+        savedAuthority = await createAcademicAuthority(input)
+        setMessage('Academic authority created successfully.')
+      }
       setAuthorityForm({ code: '', name: '', description: '', sourceReference: '', sortOrder: '10' })
       setEditingAuthority(null)
       await load()
+      if (savedAuthority?.isActive) {
+        setAuthority(savedAuthority.code)
+        const nextCourses = await getCourses(savedAuthority.code)
+        setCourses(nextCourses)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save academic authority.')
     } finally {
@@ -303,10 +318,19 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   }
 
   async function toggleAuthority(item: AcademicAuthority) {
+    setError('')
+    setMessage('')
     try {
       await setAcademicAuthorityActive(item.code, !item.isActive)
+      if (item.isActive && authority === item.code) {
+        setAuthority('')
+        setCourses([])
+        selectedCurriculumRef.current = ''
+        setSelected('')
+        setMappings([])
+      }
+      setMessage(item.isActive ? `Academic authority ${item.name} deactivated.` : `Academic authority ${item.name} activated.`)
       await load()
-      if (item.isActive && authority === item.code) setAuthority('')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to update academic authority.')
     }
