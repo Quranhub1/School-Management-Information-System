@@ -59,3 +59,16 @@ export function formatIsbnInput(value: string): string {
   if (body.length <= 1) return body + (checkDigit ? '-' + checkDigit : '');
   return body.slice(0, 1) + '-' + body.slice(1) + (checkDigit ? '-' + checkDigit : '');
 }
+
+/** Convert a validated ISBN-10 to its equivalent Bookland EAN-13 barcode value. */
+export function toBooklandEan13(value: string): string | null {
+  const digits = normalizeIsbnDigits(value);
+  if (!isValidIsbn(digits)) return null;
+  if (digits.length === 13) return /^(978|979)\\d{10}$/.test(digits) ? digits : null;
+
+  const eanBody = `978${digits.slice(0, 9)}`;
+  const sum = [...eanBody].reduce((total, digit, index) =>
+    total + Number(digit) * (index % 2 === 0 ? 1 : 3), 0);
+  const checkDigit = (10 - (sum % 10)) % 10;
+  return `${eanBody}${checkDigit}`;
+}
