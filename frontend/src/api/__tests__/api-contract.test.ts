@@ -145,12 +145,23 @@ describe('API contracts — finance', () => {
 describe('API contracts — library', () => {
   it('validates a library book create request', () => {
     const result = libraryBookCreateRequestSchema.safeParse({
-      isbn: '978-0-123456-78-9',
+      isbn: '978-0-30640615-7',
       title: 'Introduction to Algorithms',
       author: 'Thomas H. Cormen',
       totalCopies: 5,
     })
     expect(result.success).toBe(true)
+    if (result.success) expect(result.data.isbn).toBe('9780306406157')
+  })
+
+  it('rejects an ISBN with an invalid check digit', () => {
+    const result = libraryBookCreateRequestSchema.safeParse({
+      isbn: '978-0-30640615-8',
+      title: 'Test book',
+      author: 'Test author',
+      totalCopies: 1,
+    })
+    expect(result.success).toBe(false)
   })
 
   it('validates a library loan create request', () => {
