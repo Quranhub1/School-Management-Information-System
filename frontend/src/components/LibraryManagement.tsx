@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import JsBarcode from 'jsbarcode';
 import type { FormEvent } from 'react';
 import { validateForm } from '../lib/validation';
-import { formatIsbnInput, isValidIsbn, normalizeIsbnDigits } from '../lib/isbn';
+import { formatIsbnInput, isValidIsbn, normalizeIsbnDigits, toBooklandEan13 } from '../lib/isbn';
 import { libraryBookCreateRequestSchema, libraryLoanCreateRequestSchema } from '../schemas';
 import { getCurrencyInputStep, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency';
 import {
   addBook,
-  getBookBarcode,
   issueBook,
   listBooks,
   listLoans,
@@ -61,6 +61,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     dueDate: dateInput(),
   });
   const [barcodeBookId, setBarcodeBookId] = useState<string | null>(null);
+  const [barcodeError, setBarcodeError] = useState('');
+  const barcodeSvgRef = useRef<SVGSVGElement>(null);
 
   async function load() {
     setError('');
@@ -110,6 +112,33 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     () => members.find((m) => m.studentNumber === issue.memberNumber),
     [members, issue.memberNumber],
   );
+
+  const barcodeBook = books.find(book => book.id === barcodeBookId);
+  useEffect(() => {
+    const svg = barcodeSvgRef.current;
+    if (!barcodeBookId || !barcodeBook || !svg) return;
+    const ean13 = toBooklandEan13(barcodeBook.isbn);
+    svg.replaceChildren();
+    if (!ean13) {
+      setBarcodeError('This book does not have a valid ISBN-10 or ISBN-13 for barcode generation.');
+      return;
+    }
+    try {
+      JsBarcode(svg, ean13, {
+        format: 'EAN13',
+        width: 2,
+        height: 88,
+        displayValue: true,
+        fontSize: 16,
+        margin: 12,
+        background: '#ffffff',
+        lineColor: '#111827',
+      });
+      setBarcodeError('');
+    } catch {
+      setBarcodeError('The ISBN barcode could not be generated.');
+    }
+  }, [barcodeBookId, barcodeBook]);
 
   async function submitProgrammeRequirement(e: FormEvent) {
     e.preventDefault();
@@ -597,10 +626,14 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       )}
       {barcodeBookId && (
         <div className="modal-backdrop" onClick={() => setBarcodeBookId(null)}>
-          <div className="auth-card" onClick={e => e.stopPropagation()}>
-            <p className="eyebrow">Book Barcode</p>
-            <h3>{barcodeBookId}</h3>
-            <img src={getBookBarcode(barcodeBookId)} alt="Book Barcode" style={{ width: '100%', height: 'auto' }} />
+          <div className="auth-card library-barcode-dialog" onClick={e => e.stopPropagation()}>
+            <p className="eyebrow">BOOK BARCODE · OFFLINE READY</p>
+            <h3>{barcodeBook?.title ?? 'Book Barcode'}</h3>
+            <p>{barcodeBook?.isbn ?? ''}</p>
+            {barcodeError
+              ? <p className="error" role="alert">{barcodeError}</p>
+              : <svg ref={barcodeSvgRef} role="img" aria-label={`EAN-13 barcode for ${barcodeBook?.title ?? 'book'}`} style={{ display: 'block', width: '100%', maxWidth: 420, height: 'auto', margin: '12px auto', background: '#fff' }} />}
+            <p style={{ fontSize: 12, color: '#78716c' }}>Generated locally on this device. No CDN or internet connection is required.</p>
             <button className="secondary-button" style={{ marginTop: 12 }} onClick={() => setBarcodeBookId(null)}>Close</button>
           </div>
         </div>
