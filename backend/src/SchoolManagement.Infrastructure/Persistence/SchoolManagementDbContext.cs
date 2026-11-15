@@ -64,6 +64,8 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<TimetableEntry> TimetableEntries => Set<TimetableEntry>();
     public DbSet<AttendanceSession> AttendanceSessions => Set<AttendanceSession>();
     public DbSet<StudentAttendance> StudentAttendances => Set<StudentAttendance>();
+    public DbSet<StaffAttendanceEvent> StaffAttendanceEvents => Set<StaffAttendanceEvent>();
+    public DbSet<StaffFingerprintCredential> StaffFingerprintCredentials => Set<StaffFingerprintCredential>();
     public DbSet<StudentAcademicStatus> StudentAcademicStatuses => Set<StudentAcademicStatus>();
     public DbSet<LearningOutcome> LearningOutcomes => Set<LearningOutcome>();
     public DbSet<AssessmentPlan> AssessmentPlans => Set<AssessmentPlan>();
@@ -172,6 +174,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.ApplyConfiguration(new AdmissionsConfiguration());
         m.ApplyConfiguration(new AdmissionDecisionConfiguration());
         AttendanceConfiguration.Apply(m);
+        StaffAttendanceConfiguration.Apply(m);
         m.ApplyConfiguration(new SchoolManagement.Infrastructure.Certificates.CertificateConfiguration());
         m.ApplyConfiguration(new SchoolManagement.Infrastructure.Documents.StudentDocumentConfiguration());
         m.ApplyConfiguration(new SchoolManagement.Infrastructure.Workflows.WorkflowConfiguration());
