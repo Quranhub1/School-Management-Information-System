@@ -63,6 +63,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [barcodeBookId, setBarcodeBookId] = useState<string | null>(null);
   const [barcodeError, setBarcodeError] = useState('');
   const barcodeSvgRef = useRef<SVGSVGElement>(null);
+  const isbnPreviewSvgRef = useRef<SVGSVGElement>(null);
 
   async function load() {
     setError('');
@@ -139,6 +140,31 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       setBarcodeError('The ISBN barcode could not be generated.');
     }
   }, [barcodeBookId, barcodeBook]);
+
+  // Generate a preview as soon as a complete, checksum-valid ISBN is typed.
+  // JsBarcode is bundled with the app, so this works without a CDN or network.
+  useEffect(() => {
+    const svg = isbnPreviewSvgRef.current;
+    if (!svg) return;
+    svg.replaceChildren();
+    if (!isbnValid) return;
+    const ean13 = toBooklandEan13(isbnDigits);
+    if (!ean13) return;
+    try {
+      JsBarcode(svg, ean13, {
+        format: 'EAN13',
+        width: 2,
+        height: 60,
+        displayValue: true,
+        fontSize: 13,
+        margin: 8,
+        background: '#ffffff',
+        lineColor: '#111827',
+      });
+    } catch {
+      svg.replaceChildren();
+    }
+  }, [isbnDigits, isbnValid]);
 
   async function submitProgrammeRequirement(e: FormEvent) {
     e.preventDefault();
@@ -589,6 +615,17 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                     : 'Type digits only. Prefix and check digit separators are added automatically; publisher/title hyphens require the assigned ISBN range.'}
               </small>
               {bookValidationErrors.isbn && <small className="field-error">{bookValidationErrors.isbn}</small>}
+              {isbnValid && (
+                <div className="library-isbn-barcode-preview">
+                  <span>Live barcode preview</span>
+                  <svg
+                    ref={isbnPreviewSvgRef}
+                    role="img"
+                    aria-label="Live EAN-13 barcode preview for the entered ISBN"
+                    style={{ display: 'block', width: '100%', maxWidth: 360, height: 'auto', background: '#fff' }}
+                  />
+                </div>
+              )}
             </label>
             <input
               placeholder="Book title"
