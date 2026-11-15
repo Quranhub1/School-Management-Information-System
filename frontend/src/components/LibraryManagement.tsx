@@ -61,6 +61,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     dueDate: dateInput(),
   });
   const [barcodeBookId, setBarcodeBookId] = useState<string | null>(null);
+  const [isbnScanValue, setIsbnScanValue] = useState('');
   const [barcodeError, setBarcodeError] = useState('');
   const barcodeSvgRef = useRef<SVGSVGElement>(null);
   const isbnPreviewSvgRef = useRef<SVGSVGElement>(null);
@@ -586,6 +587,27 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             <span className="eyebrow">CATALOGUE</span>
             <h3>Add New Book</h3>
             
+          </div>
+          <div className="library-isbn-scanner" style={{ marginBottom: 12 }}>
+            <label htmlFor="library-isbn-scanner-input">Scan book ISBN barcode</label>
+            <input
+              id="library-isbn-scanner-input"
+              value={isbnScanValue}
+              onChange={e => setIsbnScanValue(e.target.value)}
+              onKeyDown={e => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                const scannedIsbn = formatIsbnInput(isbnScanValue);
+                setForm(current => ({ ...current, isbn: scannedIsbn }));
+                setBookValidationErrors(current => ({ ...current, isbn: '' }));
+                setIsbnScanValue('');
+                document.getElementById('library-add-book')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              placeholder="Scan the ISBN barcode on the book"
+              autoComplete="off"
+              inputMode="none"
+            />
+            <small>Use a USB barcode reader configured to append Enter. The scanned ISBN is placed in the book registration form and validated before saving.</small>
           </div>
           <form className="library-book-form" onSubmit={submitBook}>
             {Object.keys(bookValidationErrors).length > 0 && <div className="error" role="alert"><strong>Catalogue fields requiring attention</strong><ul>{Object.entries(bookValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
