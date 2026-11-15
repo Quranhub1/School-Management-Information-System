@@ -535,7 +535,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               <span>ISBN</span>
               <input
                 type="text"
-                inputMode="numeric"
+                inputMode="text"
                 autoComplete="off"
                 placeholder="Enter ISBN digits (10 or 13)"
                 aria-label="ISBN-10 or ISBN-13"
