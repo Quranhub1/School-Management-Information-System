@@ -229,4 +229,5 @@ public sealed class StaffAttendanceController(
     }
 }
 
-public sealed record StaffFingerprintCaptureRequest(Guid StaffMemberId, string DeviceId, string CaptureId);\npublic sealed record EnrolStaffFingerprintRequest(string DeviceFamily, string TemplateFormat, string EncryptedTemplateBase64);
+public sealed record StaffFingerprintCaptureRequest(Guid StaffMemberId, string DeviceId, string CaptureId);
+public sealed record EnrolStaffFingerprintRequest(string DeviceFamily, string TemplateFormat, string EncryptedTemplateBase64);
