@@ -53,6 +53,12 @@ export function InstitutionSettingsPage({ onSaved }: InstitutionSettingsPageProp
     void loadGallery()
   }, [])
 
+  useEffect(() => {
+    if (!success) return
+    const timeout = window.setTimeout(() => setSuccess(''), 4500)
+    return () => window.clearTimeout(timeout)
+  }, [success])
+
   async function load() {
     setLoading(true)
     setError('')
