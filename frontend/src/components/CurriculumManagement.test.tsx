@@ -8,13 +8,14 @@ const { mockAuthorityList, mockProgrammes, mockCurricula, mockCourses } = vi.hoi
     { id: 'authority-uhpab', code: 'UHPAB', name: 'UHPAB', isActive: true, sortOrder: 2 },
   ],
   mockProgrammes: [
-    { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', type: 0, regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
-    { id: 'programme-pharmacy', code: 'CPH', name: 'Certificate in Pharmacy', type: 0, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
-    { id: 'programme-short', code: 'UHPAB-SHORT', name: 'Basic Life Support', type: 1, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
+    { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
+    { id: 'programme-pharmacy', code: 'CPH', name: 'Certificate in Pharmacy', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
+    { id: 'programme-short', code: 'UHPAB-SHORT', name: 'Basic Life Support', award: 'Certificate', durationYears: 1, durationUnit: 'Days', studyMode: 'Full-time', deliveryType: 'ShortCourse', approvalStatus: 'Approved', type: 1, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
   ],
   mockCurricula: [
     // The stale programmeType value must not hide a curriculum whose programme is FullProgramme.
     { id: 'curriculum-pharmacy', programmeId: 'programme-pharmacy', version: '1.0', title: 'Certificate in Pharmacy Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 1 },
+    { id: 'curriculum-short-inactive', programmeId: 'programme-short', version: '1.0', title: 'Inactive short curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Inactive', isActive: false, programmeType: 1 },
   ],
   mockCourses: [
     { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, courseType: 'Lecture' },
@@ -69,6 +70,7 @@ vi.mock('../utils/confirmDialog', () => ({ showConfirmDialog: vi.fn(async () => 
 
 import { CurriculumManagement } from './CurriculumManagement'
 import { getCourses } from '../api/curriculumManagement'
+import { getProgrammes } from '../api/programmes'
 
 describe('CurriculumManagement selectors', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -99,5 +101,30 @@ describe('CurriculumManagement selectors', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Short Courses' }))
     expect(within(screen.getByLabelText('Select programme')).getByRole('option', { name: /UHPAB-SHORT — Basic Life Support/ })).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Select curriculum')).queryByRole('option', { name: /Inactive short curriculum/ })).not.toBeInTheDocument()
+  })
+
+  it('does not let a pending refresh override a newly selected authority', async () => {
+    render(<CurriculumManagement canManage />)
+
+    const authoritySelect = await screen.findByLabelText('Authority')
+    await waitFor(() => expect(within(authoritySelect).getByRole('option', { name: 'UHPAB' })).toBeInTheDocument())
+    fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
+    await waitFor(() => expect(getCourses).toHaveBeenCalledWith('UHPAB'))
+    await waitFor(() => expect(screen.queryByText('Loading curriculum data…')).not.toBeInTheDocument())
+
+    let resolveProgrammes!: (programmes: Awaited<ReturnType<typeof getProgrammes>>) => void
+    const pendingProgrammes = new Promise<Awaited<ReturnType<typeof getProgrammes>>>(resolve => {
+      resolveProgrammes = resolve
+    })
+    vi.mocked(getProgrammes).mockReturnValueOnce(pendingProgrammes)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh data' }))
+    await waitFor(() => expect(getProgrammes).toHaveBeenCalledTimes(2))
+    fireEvent.change(authoritySelect, { target: { value: 'SCHOOL_BASED' } })
+    await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
+
+    resolveProgrammes(mockProgrammes)
+    await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
   })
 })

@@ -582,47 +582,55 @@
  
 /* Prevent the curriculum's course-mapping controls from colliding with the next row.
    Keep long course labels inside their own grid cell instead of forcing overflow. */
-.app-shell .curriculum-management > .form-row {
+.app-shell .curriculum-management .curriculum-course-mapping-form {
   display: grid !important;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.45fr) minmax(72px, 0.55fr) minmax(82px, 0.65fr) minmax(68px, auto) max-content !important;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.45fr) minmax(72px, 0.55fr) minmax(82px, 0.65fr) minmax(68px, auto) minmax(150px, 1.4fr) !important;
   align-items: center !important;
   gap: 8px !important;
   width: 100% !important;
   min-width: 0 !important;
   margin: 0 0 12px !important;
 }
-.app-shell .curriculum-management > .form-row > select,
-.app-shell .curriculum-management > .form-row > input,
-.app-shell .curriculum-management > .form-row > label,
-.app-shell .curriculum-management > .form-row > button {
+.app-shell .curriculum-management .curriculum-course-mapping-form > select,
+.app-shell .curriculum-management .curriculum-course-mapping-form > input,
+.app-shell .curriculum-management .curriculum-course-mapping-form > label,
+.app-shell .curriculum-management .curriculum-course-mapping-form > .curriculum-mapping-actions {
   box-sizing: border-box !important;
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
   margin: 0 !important;
 }
-.app-shell .curriculum-management > .form-row > select {
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+.app-shell .curriculum-management .curriculum-course-mapping-form > select {
+  appearance: auto !important;
   white-space: nowrap !important;
 }
-.app-shell .curriculum-management > .form-row > label {
+.app-shell .curriculum-management .curriculum-course-mapping-form > label {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
   gap: 6px !important;
   white-space: nowrap !important;
 }
-.app-shell .curriculum-management > .form-row > label input[type="checkbox"] {
+.app-shell .curriculum-management .curriculum-course-mapping-form > label input[type="checkbox"] {
   flex: 0 0 15px !important;
 }
+.app-shell .curriculum-management .curriculum-mapping-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+}
+.app-shell .curriculum-management .curriculum-mapping-actions button {
+  flex: 1 1 100% !important;
+  min-width: 0 !important;
+}
 @media (max-width: 1050px) {
-  .app-shell .curriculum-management > .form-row {
+  .app-shell .curriculum-management .curriculum-course-mapping-form {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 @media (max-width: 560px) {
-  .app-shell .curriculum-management > .form-row {
+  .app-shell .curriculum-management .curriculum-course-mapping-form {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
