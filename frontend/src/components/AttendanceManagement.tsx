@@ -59,6 +59,7 @@ export function AttendanceManagement({
   )
   const [sessionId, setSessionId] = useState('')
   const [studentId, setStudentId] = useState('')
+  const [barcodeValue, setBarcodeValue] = useState('')
   const [status, setStatus] = useState('Present')
   const [remarks, setRemarks] = useState('')
   const [from, setFrom] = useState('')
@@ -155,10 +156,9 @@ export function AttendanceManagement({
     }
   }
 
-  async function mark(event: React.FormEvent) {
-    event.preventDefault()
+  async function recordStudentAttendance(studentIdentifier: string) {
     clearNotice()
-    if (!sessionId.trim() || !studentId.trim()) {
+    if (!sessionId.trim() || !studentIdentifier.trim()) {
       setError('Session ID and student ID are required.')
       return
     }
@@ -173,7 +173,7 @@ export function AttendanceManagement({
         {
           method: 'POST',
           body: JSON.stringify({
-            studentId: studentId.trim(),
+            studentId: studentIdentifier.trim(),
             status,
             remarks: remarks.trim() || null,
           }),
@@ -181,11 +181,25 @@ export function AttendanceManagement({
       )
       setMessage(`Attendance recorded as ${status}.`)
       setStudentId('')
+      setBarcodeValue('')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to record attendance.')
+      setError(e instanceof Error ? e.message : 'Unable to record attendance. Check that the scanned code contains the student ID GUID.')
     } finally {
       setLoading(false)
     }
+  }
+
+  async function mark(event: React.FormEvent) {
+    event.preventDefault()
+    await recordStudentAttendance(studentId)
+  }
+
+  async function submitBarcodeScan(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    const scannedValue = barcodeValue.trim()
+    if (!scannedValue) return
+    await recordStudentAttendance(scannedValue)
   }
 
   async function loadHistory() {
@@ -329,6 +343,21 @@ export function AttendanceManagement({
               {loading ? 'Opening…' : 'Open session'}
             </button>
           </form>
+          <div className="management-form" aria-label="Barcode attendance scanner">
+            <label>
+              Scan student barcode
+              <input
+                value={barcodeValue}
+                onChange={e => setBarcodeValue(e.target.value)}
+                onKeyDown={submitBarcodeScan}
+                placeholder="Focus here, then scan student ID card"
+                autoComplete="off"
+                inputMode="none"
+                disabled={loading || sessionClosed || !sessionId}
+              />
+            </label>
+            <p className="empty">USB barcode scanners work as keyboards. Configure the scanner to append Enter; the scanned value is submitted to the active attendance session.</p>
+          </div>
           <form className="management-form" onSubmit={mark}>
             <label>
               Attendance session ID
