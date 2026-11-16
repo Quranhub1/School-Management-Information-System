@@ -312,16 +312,6 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       )}
       {activeView === 'dashboard' && (
         <>
-          <div className="library-summary" aria-label="Library inventory summary">
-            <div className="library-stat">
-              <span className="library-icon">▣</span>
-              <div>
-                <small>Total Books</small>
-                <strong>{totalCopies.toLocaleString()}</strong>
-                <em>{books.length} titles</em>
-              </div>
-            </div>
-          </div>
           <section className="library-dashboard-options" aria-label="Library services">
             {[
               { key: 'books' as const, icon: '▤', title: 'Books Catalogue', description: 'Browse, register and manage books, ISBNs and barcodes.', links: [{ label: 'View Catalogue', view: 'books' as const }, { label: 'Add New Book', view: 'books' as const }] },
@@ -578,6 +568,16 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                 Add New Book
               </button>
             )}
+          </div>
+        </div>
+        <div className="library-summary" aria-label="Books catalogue summary">
+          <div className="library-stat">
+            <span className="library-icon">▣</span>
+            <div>
+              <small>Total Books</small>
+              <strong>{totalCopies.toLocaleString()}</strong>
+              <em>{books.length} titles</em>
+            </div>
           </div>
         </div>
         <div className="table-wrap">
