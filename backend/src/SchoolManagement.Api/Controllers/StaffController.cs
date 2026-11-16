@@ -5,6 +5,7 @@ using SchoolManagement.Application.Authorization;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Staff;
 using SchoolManagement.Domain.Staff;
+using SchoolManagement.Domain.People;
 using System.Text.Json;
 using SchoolManagement.Infrastructure.Persistence;
 
@@ -190,7 +191,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
 
     private static object ToProfile(StaffMember staff) => new
     {
-        staff.Id, staff.StaffNumber, staff.FirstName, staff.LastName, staff.NationalId,
+        staff.Id, staff.StaffNumber, staff.FirstName, staff.LastName, staff.OtherNames,
+        DisplayName = PersonName.Format(staff.LastName, staff.FirstName, staff.OtherNames), staff.NationalId,
         staff.PhoneNumber, staff.Email, staff.EmploymentType, staff.StaffType, staff.IsActive,
         staff.DepartmentId, staff.JobTitle, staff.HighestQualification, staff.Speciality,
         staff.ProfessionalRegistration,
