@@ -4131,6 +4131,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BarcodeValue")
+                        .HasColumnType("text");
+
                     b.Property<string>("Author")
                         .IsRequired()
                         .HasMaxLength(200)
