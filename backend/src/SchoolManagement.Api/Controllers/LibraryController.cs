@@ -299,7 +299,7 @@ public sealed class LibraryController(
             enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
             statusByStudent.TryGetValue(student.Id, out var academicStatus);
             invoiceByStudent.TryGetValue(student.Id, out var invoice);
-            coursesByProgramme.TryGetValue(admittedStudents.First(x => x.Id == student.Id).Id, out var studentCourses);
+            coursesByProgramme.TryGetValue(student.Id, out var studentCourses);
             var balance = invoice is null ? (decimal?)null : invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount;
             var paymentStatus = invoice is null ? "Not Invoiced" :
                 balance <= 0m ? "Paid" :
