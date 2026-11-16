@@ -129,7 +129,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   useEffect(() => {
     const svg = barcodeSvgRef.current;
     if (!barcodeBookId || !barcodeBook || !svg) return;
-    const ean13 = toBooklandEan13(barcodeBook.isbn);
+    setBarcodeError('');
+    const ean13 = barcodeBook.barcodeValue || toBooklandEan13(barcodeBook.isbn);
     svg.replaceChildren();
     if (!ean13) {
       setBarcodeError('This book does not have a valid ISBN-10 or ISBN-13 for barcode generation.');
