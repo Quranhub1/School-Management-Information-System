@@ -391,7 +391,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </section>}
       {activeView === 'clearance-students' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
-        <div className="library-toolbar"><div><h3>Students with paid course-book fees</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} paid students</small></div></div>
+        <div className="library-toolbar"><div><h3>Admitted Students — Course-book Requirements</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} admitted students</small></div></div>
         <div className="library-clearance-filters" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 10, margin: '14px 0' }}>
           <label>Search student
             <input value={clearanceFilters.name} onChange={e => setClearanceFilters(current => ({ ...current, name: e.target.value }))} placeholder="Name or student number" />
