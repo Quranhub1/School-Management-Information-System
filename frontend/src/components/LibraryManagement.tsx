@@ -407,11 +407,11 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </label>
         </div>
         <div className="table-wrap">
-          <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Year</th><th>Semester</th><th>Paid Amount</th><th>Invoice</th><th>Invoice Date</th></tr></thead>
+          <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Paid Amount</th><th>Invoice</th><th>Invoice Date</th></tr></thead>
             <tbody>{filteredPaidClearanceStudents.map((student, index) => <tr key={student.studentId + student.invoiceNumber}>
-              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : student.academicYearName || '—'}</td><td>{student.semesterName || '—'}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.invoiceNumber}</td><td>{student.issuedAt ? formatDate(student.issuedAt) : '—'}</td>
+              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || '—'}</td><td>{student.academicYearName || '—'}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.invoiceNumber}</td><td>{student.issuedAt ? formatDate(student.issuedAt) : '—'}</td>
             </tr>)}
-            {filteredPaidClearanceStudents.length === 0 && <tr><td colSpan={9}>No fully paid library course-book invoices match these filters.</td></tr>}</tbody>
+            {filteredPaidClearanceStudents.length === 0 && <tr><td colSpan={10}>No fully paid library course-book invoices match these filters.</td></tr>}</tbody>
           </table>
         </div>
       </section>}
