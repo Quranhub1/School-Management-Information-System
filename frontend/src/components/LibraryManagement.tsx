@@ -306,7 +306,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       {activeView === 'dashboard' && (
         <section className="library-dashboard-options" aria-label="Library services">
           {[
-            { key: 'books' as const, icon: '▤', title: 'Books', description: 'Browse and manage the book catalogue.', links: [{ label: 'View Books', view: 'books' as const }] },
+            { key: 'books' as const, icon: '▤', title: 'Books', description: 'Browse and manage the book catalogue.', links: [{ label: 'View Books', view: 'books' as const }, { label: 'Add New Book', view: 'books' as const }] },
             { key: 'issue' as const, icon: '↗', title: 'Issue Books', description: 'Issue books to students and monitor active loans.', links: [{ label: 'Issue Book', view: 'issue' as const }, { label: 'View Books Issued', view: 'issue' as const }] },
             { key: 'cards' as const, icon: '▣', title: 'Library Cards', description: 'Prepare student library membership cards and view the register.', links: [{ label: 'Issue Library Cards', view: 'cards' as const }, { label: 'View Library Cards', view: 'cards' as const }] },
             { key: 'clearance' as const, icon: '✓', title: 'Library Clearance', description: 'Manage programme course-book requirements and related fees.', links: [{ label: 'Course-book Requirements', view: 'clearance' as const }, { label: 'Fees & Settings', view: 'clearance' as const }] },
