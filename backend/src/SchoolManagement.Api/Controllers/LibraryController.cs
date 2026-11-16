@@ -285,7 +285,9 @@ public sealed class LibraryController(
         var coursesByProgramme = curriculumCourses.GroupBy(x => x.Id)
             .ToDictionary(x => x.Key, x => x.Select(item => item.CourseName).Distinct().OrderBy(name => name).ToArray());
 
-        var libraryInvoices = await db.StudentInvoices.AsNoTracking()
+        // Sum every LibraryBook invoice for each student. A student is not
+        // eligible for a card until the complete outstanding requirement is cleared.
+        var libraryInvoiceRows = await db.StudentInvoices.AsNoTracking()
             .Where(x => studentIds.Contains(x.StudentId) && x.FeeType == "LibraryBook")
             .OrderByDescending(x => x.IssuedAt)
             .Select(x => new
@@ -294,23 +296,39 @@ public sealed class LibraryController(
                 x.PaidAmount, x.Currency, x.IssuedAt
             })
             .ToListAsync(ct);
+        var libraryInvoices = libraryInvoiceRows
+            .GroupBy(x => x.StudentId)
+            .ToDictionary(
+                group => group.Key,
+                group =>
+                {
+                    var latest = group.OrderByDescending(x => x.IssuedAt).First();
+                    return new
+                    {
+                        StudentId = group.Key,
+                        InvoiceNumber = latest.InvoiceNumber,
+                        Amount = group.Sum(x => x.Amount),
+                        DiscountAmount = group.Sum(x => x.DiscountAmount),
+                        PaidAmount = group.Sum(x => x.PaidAmount),
+                        Currency = latest.Currency,
+                        IssuedAt = latest.IssuedAt
+                    };
+                });
 
         var enrollmentByStudent = enrollments.GroupBy(x => x.StudentId)
             .ToDictionary(x => x.Key, x => x.First());
         var statusByStudent = academicStatuses.GroupBy(x => x.StudentId)
             .ToDictionary(x => x.Key, x => x.First());
-        var invoiceByStudent = libraryInvoices.GroupBy(x => x.StudentId)
-            .ToDictionary(x => x.Key, x => x.First());
-
         var result = libraryStudents.Select(student =>
         {
             enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
             statusByStudent.TryGetValue(student.Id, out var academicStatus);
-            invoiceByStudent.TryGetValue(student.Id, out var invoice);
+            libraryInvoices.TryGetValue(student.Id, out var invoice);
             string[]? studentCourses = null;
             if (student.ProgrammeId.HasValue)
                 coursesByProgramme.TryGetValue(student.ProgrammeId.Value, out studentCourses);
-            var balance = invoice is null ? (decimal?)null : invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount;
+            var requiredAmount = invoice is null ? 0m : Math.Max(0m, invoice.Amount - invoice.DiscountAmount);
+            var balance = invoice is null ? 0m : Math.Max(0m, requiredAmount - invoice.PaidAmount);
             var paymentStatus = invoice is null ? "Not Invoiced" :
                 balance <= 0m ? "Paid" :
                 invoice.PaidAmount > 0m ? "Partially Paid" : "Not Paid";
@@ -329,8 +347,9 @@ public sealed class LibraryController(
                 paymentStatus,
                 invoiceNumber = invoice?.InvoiceNumber,
                 amount = invoice?.Amount ?? 0m,
+                requiredAmount,
                 paidAmount = invoice?.PaidAmount ?? 0m,
-                outstandingAmount = balance ?? 0m,
+                outstandingAmount = balance,
                 currency = invoice?.Currency ?? "UGX",
                 issuedAt = invoice?.IssuedAt
             };
