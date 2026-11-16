@@ -167,6 +167,8 @@ public sealed class FakeAdmissionRepository : IAdmissionRepository
     public Task<Applicant?> GetApplicantAsync(Guid applicantId, CancellationToken cancellationToken = default)
     {
         if (!_applicantExists) return Task.FromResult<Applicant?>(null);
+        if (Applicants.TryGetValue(applicantId, out var existing))
+            return Task.FromResult<Applicant?>(existing);
         return Task.FromResult<Applicant?>(new Applicant
         {
             Id = applicantId,
