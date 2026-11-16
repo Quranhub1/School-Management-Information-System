@@ -7,6 +7,8 @@ import { libraryBookCreateRequestSchema, libraryLoanCreateRequestSchema } from '
 import { getCurrencyInputStep, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency';
 import {
   addBook,
+  updateBook,
+  archiveBook,
   issueBook,
   listBooks,
   listLoans,
@@ -138,6 +140,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [bookValidationErrors, setBookValidationErrors] = useState<Record<string, string>>({});
   const [loanValidationErrors, setLoanValidationErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [editingBookId, setEditingBookId] = useState<string | null>(null);
   const [form, setForm] = useState({
     isbn: '',
     title: '',
@@ -416,7 +419,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     setBookValidationErrors({});
     setBusy(true);
     try {
-      await addBook(validation.data);
+      if (editingBookId) await updateBook(editingBookId, validation.data);
+      else await addBook(validation.data);
+      setEditingBookId(null);
       setForm({
         isbn: '',
         title: '',
@@ -428,10 +433,44 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       setIsbnEntryMethod('manual');
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to add book.');
+      setError(e instanceof Error ? e.message : (editingBookId ? 'Unable to update book.' : 'Unable to add book.'));
     } finally {
       setBusy(false);
     }
+  }
+
+  function beginEditBook(book: LibraryBook) {
+    setEditingBookId(book.id);
+    setForm({ isbn: book.isbn, title: book.title, author: book.author, publisher: book.publisher ?? '', totalCopies: book.totalCopies });
+    setIsbnEntryMethod('manual');
+    setBookValidationErrors({});
+    setError('');
+    document.getElementById('library-add-book')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function handleArchiveBook(book: LibraryBook) {
+    if (!window.confirm(`Archive "${book.title}" from the active catalogue? Its barcode and loan history will be retained.`)) return;
+    setBusy(true);
+    setError('');
+    try {
+      await archiveBook(book.id);
+      if (editingBookId === book.id) {
+        setEditingBookId(null);
+        setForm({ isbn: '', title: '', author: '', publisher: '', totalCopies: 1 });
+      }
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to archive this book.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function cancelBookEdit() {
+    setEditingBookId(null);
+    setForm({ isbn: '', title: '', author: '', publisher: '', totalCopies: 1 });
+    setBookValidationErrors({});
+    setError('');
   }
 
   async function submitIssue(e: FormEvent) {
@@ -567,7 +606,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </section>}
       {activeView === 'clearance-students' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
-        <div className="library-toolbar"><div><h3>Students — Course-book Requirements</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} students</small></div></div>
+        <div className="library-toolbar"><div><h3>Students — Course-book Requirements</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} students</small><p style={{ margin: '4px 0 0', fontSize: 12 }}>Librarians record money received manually and approve each payment here. No online checkout is used.</p></div></div>
         <div className="library-clearance-filters" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 10, margin: '14px 0' }}>
           <label className="library-clearance-search-label">Search student
             <div className="library-clearance-autocomplete">
@@ -631,10 +670,10 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div className="table-wrap">
           <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Required Fee</th><th>Amount Paid</th><th>Outstanding</th><th>Action</th></tr></thead>
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId}>
-              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{canManage && student.requirementId && student.outstandingAmount > 0 ? <div className="library-payment-approval" style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 190 }}>
-                <input aria-label={`Payment amount for ${student.studentName}`} type="number" min="0.01" max={student.outstandingAmount} step="0.01" placeholder="Amount paid" value={paymentAmounts[student.studentId] ?? ''} onChange={e => setPaymentAmounts(current => ({ ...current, [student.studentId]: e.target.value }))} style={{ width: 105, minWidth: 90 }} />
-                <button type="button" className="library-primary" disabled={busy || !paymentAmounts[student.studentId]} onClick={() => void recordStudentBookPayment(student)}>Approve payment</button>
-              </div> : student.paymentStatus === 'Paid' ? 'Cleared' : '—'}</td>
+              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.paymentStatus === 'Paid' ? <strong>Cleared</strong> : !student.requirementId ? <span title="Configure the programme fee under Fees & Settings">Fee not configured</span> : canManage ? <div className="library-payment-approval" style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 220 }}>
+                <input aria-label={`Manual payment amount for ${student.studentName}`} type="number" min="0.01" max={student.outstandingAmount} step="0.01" placeholder="Amount received" value={paymentAmounts[student.studentId] ?? ''} onChange={e => setPaymentAmounts(current => ({ ...current, [student.studentId]: e.target.value }))} style={{ width: 115, minWidth: 100 }} />
+                <button type="button" className="library-primary" disabled={busy || !paymentAmounts[student.studentId] || student.outstandingAmount <= 0} onClick={() => void recordStudentBookPayment(student)}>Approve manual payment</button>
+              </div> : <span title="A Librarian or System Administrator must approve manual course-book payments">Librarian approval required</span>}</td>
             </tr>)}
             {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No students match these filters.</td></tr>}</tbody>
           </table>
@@ -898,6 +937,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                 <th>Author</th>
                 <th>Publisher</th>
                 <th>Availability</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -919,7 +959,13 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                       {book.availableCopies}/{book.totalCopies} available
                     </span>
                   </td>
-                  <td><button className="secondary-button" onClick={() => setBarcodeBookId(book.id)}>View Barcode</button></td>
+                  <td>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      <button type="button" className="secondary-button" onClick={() => setBarcodeBookId(book.id)}>View Barcode</button>
+                      {canManage && <button type="button" className="secondary-button" disabled={busy} onClick={() => beginEditBook(book)}>Edit</button>}
+                      {canManage && <button type="button" className="secondary-button" disabled={busy} style={{ color: '#b42318', borderColor: '#e7b7b3' }} onClick={() => void handleArchiveBook(book)}>Delete</button>}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -931,7 +977,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <section className="library-add-card" id="library-add-book">
           <div>
             <span className="eyebrow">CATALOGUE</span>
-            <h3>Add New Book</h3>
+            <h3>{editingBookId ? 'Edit Catalogue Book' : 'Add New Book'}</h3>
             
           </div>
           <form className="library-book-form" onSubmit={submitBook}>
@@ -1047,9 +1093,12 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                 setForm({ ...form, totalCopies: Number(e.target.value) })
               }
             />
-            <button className="library-primary" disabled={busy}>
-              Add Book
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button type="submit" className="library-primary" disabled={busy}>
+                {editingBookId ? 'Save Changes' : 'Add Book'}
+              </button>
+              {editingBookId && <button type="button" className="secondary-button" disabled={busy} onClick={cancelBookEdit}>Cancel Edit</button>}
+            </div>
           </form>
         </section>
       )}

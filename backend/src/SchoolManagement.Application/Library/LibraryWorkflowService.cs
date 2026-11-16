@@ -24,6 +24,18 @@ public sealed class LibraryWorkflowService(LibraryService library)
             request.Isbn.Trim(), request.Title.Trim(), request.Author.Trim(), request.Publisher?.Trim(), request.TotalCopies, cancellationToken));
     }
 
+    public async Task<LibraryBookDto> UpdateBookAsync(Guid id, CreateLibraryBookRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request.TotalCopies < 1) throw new ArgumentException("Total copies must be at least one.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.Isbn) || string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Author))
+            throw new ArgumentException("ISBN, title and author are required.", nameof(request));
+        return LibraryBookDto.FromDomain(await library.UpdateBookAsync(
+            id, request.Isbn.Trim(), request.Title.Trim(), request.Author.Trim(), request.Publisher?.Trim(), request.TotalCopies, cancellationToken));
+    }
+
+    public Task ArchiveBookAsync(Guid id, CancellationToken cancellationToken = default) =>
+        library.ArchiveBookAsync(id, cancellationToken);
+
     public async Task<LibraryLoanDto> IssueBookAsync(IssueLibraryBookRequest request, CancellationToken cancellationToken = default)
     {
         if (request.MemberId == Guid.Empty) throw new ArgumentException("A valid library member is required.", nameof(request));

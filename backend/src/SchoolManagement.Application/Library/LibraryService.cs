@@ -53,6 +53,43 @@ public sealed class LibraryService(ILibraryRepository library)
         return book;
     }
 
+    public async Task<LibraryBook> UpdateBookAsync(Guid id, string isbn, string title, string author, string? publisher, int totalCopies, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("A valid book id is required.", nameof(id));
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(author))
+            throw new ArgumentException("Title and author are required.");
+        if (totalCopies < 1) throw new ArgumentOutOfRangeException(nameof(totalCopies));
+
+        var book = await library.GetBookAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException("The catalogue book was not found.");
+        var normalizedIsbn = NormalizeAndValidateIsbn(isbn);
+        var duplicate = await library.GetBookByIsbnAsync(normalizedIsbn, cancellationToken);
+        if (duplicate is not null && duplicate.Id != id)
+            throw new InvalidOperationException("Another catalogue book already uses this ISBN.");
+
+        var checkedOutCopies = book.TotalCopies - book.AvailableCopies;
+        if (totalCopies < checkedOutCopies)
+            throw new InvalidOperationException($"Total copies cannot be lower than the {checkedOutCopies} copies currently on loan.");
+
+        book.Isbn = normalizedIsbn;
+        book.BarcodeValue = ToBooklandEan13(normalizedIsbn);
+        book.Title = title.Trim();
+        book.Author = author.Trim();
+        book.Publisher = string.IsNullOrWhiteSpace(publisher) ? null : publisher.Trim();
+        book.SetInventory(totalCopies, totalCopies - checkedOutCopies);
+        await library.SaveChangesAsync(cancellationToken);
+        return book;
+    }
+
+    public async Task ArchiveBookAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("A valid book id is required.", nameof(id));
+        var book = await library.GetBookAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException("The catalogue book was not found.");
+        book.Deactivate();
+        await library.SaveChangesAsync(cancellationToken);
+    }
+
     private static string NormalizeAndValidateIsbn(string value)
     {
         var isbn = new string((value ?? string.Empty).ToUpperInvariant().Where(char.IsAsciiLetterOrDigit).ToArray());
