@@ -5249,3 +5249,186 @@ table { font-variant-numeric: tabular-nums; }
     font-size: .9rem;
   }
 }
+
+
+/* Library clearance student lookup: styled, accessible autocomplete rather
+   than the browser-native datalist whose popup cannot be themed reliably. */
+.library-clearance-search-label {
+  position: relative;
+  z-index: 5;
+}
+.library-clearance-autocomplete {
+  position: relative;
+  min-width: 0;
+}
+.library-clearance-autocomplete > input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 38px 10px 38px;
+  border: 1px solid #aebdaf;
+  border-radius: 7px;
+  background: #fff;
+  color: #17251d;
+  font: inherit;
+  font-size: .86rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .06);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.library-clearance-autocomplete > input::placeholder {
+  color: #87928b;
+  opacity: 1;
+}
+.library-clearance-autocomplete > input:focus {
+  outline: none;
+  border-color: #176b43;
+  box-shadow: 0 0 0 3px rgba(23, 107, 67, .14);
+}
+.library-clearance-search-icon {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-52%);
+  color: #52715e;
+  font-size: 22px;
+  line-height: 1;
+  pointer-events: none;
+}
+.library-clearance-clear-search {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: #edf3ef;
+  color: #40584a;
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+}
+.library-clearance-clear-search:hover {
+  background: #dcebe1;
+  color: #145333;
+}
+.library-clearance-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid #d3ded6;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 35, 22, .16), 0 2px 6px rgba(15, 35, 22, .08);
+}
+.library-clearance-suggestions > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #1c2d22;
+  text-align: left;
+  cursor: pointer;
+}
+.library-clearance-suggestions > button:hover,
+.library-clearance-suggestions > button:focus-visible {
+  outline: none;
+  background: #edf6f0;
+}
+.library-clearance-suggestion-avatar {
+  display: inline-flex;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #e2f0e7;
+  color: #176b43;
+  font-size: .88rem;
+  font-weight: 800;
+}
+.library-clearance-suggestion-details {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 3px;
+  min-width: 0;
+}
+.library-clearance-suggestion-details strong {
+  overflow: hidden;
+  color: #1b2c22;
+  font-size: .82rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.library-clearance-suggestion-details small {
+  color: #64756a;
+  font-size: .74rem;
+}
+.library-clearance-suggestion-arrow {
+  color: #8a9a8f;
+  font-size: .9rem;
+}
+.library-clearance-no-suggestions {
+  padding: 14px;
+  color: #68776e;
+  font-size: .8rem;
+}
+[data-theme="dark"] .library-clearance-autocomplete > input {
+  border-color: #587263;
+  background: #1b2c22;
+  color: #edf7f0;
+}
+[data-theme="dark"] .library-clearance-autocomplete > input::placeholder {
+  color: #a0afa5;
+}
+[data-theme="dark"] .library-clearance-search-icon {
+  color: #9be0b2;
+}
+[data-theme="dark"] .library-clearance-clear-search {
+  background: #304738;
+  color: #e4f3e8;
+}
+[data-theme="dark"] .library-clearance-suggestions {
+  border-color: #496151;
+  background: #1b2c22;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
+}
+[data-theme="dark"] .library-clearance-suggestions > button {
+  color: #edf7f0;
+}
+[data-theme="dark"] .library-clearance-suggestions > button:hover,
+[data-theme="dark"] .library-clearance-suggestions > button:focus-visible {
+  background: #294634;
+}
+[data-theme="dark"] .library-clearance-suggestion-avatar {
+  background: #2b5039;
+  color: #a9e4bb;
+}
+[data-theme="dark"] .library-clearance-suggestion-details strong {
+  color: #edf7f0;
+}
+[data-theme="dark"] .library-clearance-suggestion-details small,
+[data-theme="dark"] .library-clearance-suggestion-arrow,
+[data-theme="dark"] .library-clearance-no-suggestions {
+  color: #b5c6ba;
+}
