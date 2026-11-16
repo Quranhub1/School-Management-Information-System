@@ -73,6 +73,7 @@ export type PaidLibraryClearanceStudent = {
   courseNames: string[]
   classYear?: number | null
   semesterName?: string | null
+  semesterNumber?: number | null
   academicYearName?: string | null
   paymentStatus: 'Paid' | 'Partially Paid' | 'Not Paid' | 'Not Invoiced'
   invoiceNumber?: string | null
