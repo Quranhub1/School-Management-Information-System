@@ -106,6 +106,14 @@ jobs:
             --configuration Release \
             --no-build
 
+      - name: Run application service unit tests
+        working-directory: backend
+        run: dotnet test tests/SchoolManagement.Application.Tests/SchoolManagement.Application.Tests.csproj --configuration Release --no-restore --no-build --verbosity normal
+
+      - name: Run API controller tests
+        working-directory: backend
+        run: dotnet test tests/SchoolManagement.Api.Tests/SchoolManagement.Api.Tests.csproj --configuration Release --no-restore --no-build --verbosity normal
+
       - name: Run permanent PostgreSQL integration tests
         working-directory: backend
         run: dotnet test tests/SchoolManagement.Infrastructure.Tests/SchoolManagement.Infrastructure.Tests.csproj --configuration Release --no-restore --no-build --verbosity normal
