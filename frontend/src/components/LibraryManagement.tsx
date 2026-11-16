@@ -44,6 +44,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
   const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'cards' | 'clearance'>('dashboard');
+  const [openAddBookForm, setOpenAddBookForm] = useState(false);
   const [selectedCardMember, setSelectedCardMember] = useState<LibraryMember | null>(null);
   const [tab, setTab] = useState<'recent' | 'overdue'>('recent');
   const [error, setError] = useState('');
@@ -84,6 +85,12 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       setError(e instanceof Error ? e.message : 'Unable to load the library.');
     }
   }
+
+  useEffect(() => {
+    if (activeView !== 'books' || !openAddBookForm) return;
+    document.getElementById('library-add-book')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setOpenAddBookForm(false);
+  }, [activeView, openAddBookForm]);
 
   useEffect(() => {
     void load();
@@ -319,7 +326,10 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               <p style={{ minHeight: 42, margin: '12px 0', color: 'var(--text-muted, #64748b)', fontSize: 13 }}>{item.description}</p>
               <div className="library-dashboard-card-actions">
                 {item.links.map(link => (
-                  <button key={link.label} type="button" className="secondary-button" onClick={() => setActiveView(link.view)}>
+                  <button key={link.label} type="button" className="secondary-button" onClick={() => {
+                    setActiveView(link.view);
+                    if (link.label === 'Add New Book') setOpenAddBookForm(true);
+                  }}>
                     {link.label}
                   </button>
                 ))}
