@@ -5064,3 +5064,16 @@ table { font-variant-numeric: tabular-nums; }
   font-weight: 700 !important;
   text-shadow: none !important;
 }
+
+/* Library metric icons: solid institutional green tiles with crisp white glyphs. */
+.library-workspace .library-stat > .library-icon,
+.library-workspace .library-stat > .library-icon.available,
+.library-workspace .library-stat > .library-icon.issued,
+.library-workspace .library-stat > .library-icon.overdue {
+  background: #176b43 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+.library-workspace .library-stat > .library-icon {
+  border: 1px solid #176b43;
+}
