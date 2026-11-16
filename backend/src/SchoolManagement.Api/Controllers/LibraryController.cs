@@ -19,7 +19,7 @@ public sealed class LibraryController(
     IConfiguration configuration,
     SchoolManagementDbContext db,
     CampusAccessService campusAccess,
-    InstitutionSettingsService institutionSettings) : ControllerBase
+    ) : ControllerBase
 {
     [HttpGet("books")]
     [Authorize(Policy = LibraryPolicies.Read)]
