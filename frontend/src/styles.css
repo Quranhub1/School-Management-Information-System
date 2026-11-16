@@ -5986,11 +5986,13 @@ table { font-variant-numeric: tabular-nums; }
 
 
 
-/* Slightly extend two-card summaries to the left without changing card proportions. */
+/* Keep two-card summaries compact so both cards fit their content area cleanly. */
 .library-summary:has(> .library-stat:nth-child(2):last-child) {
   box-sizing: border-box;
-  width: calc(100% + 6px);
-  margin-left: -6px;
+  width: calc(100% - 16px);
+  margin-left: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px;
 }
 .library-summary:has(> .library-stat:nth-child(2):last-child) > .library-stat {
   box-sizing: border-box;
@@ -5998,8 +6000,8 @@ table { font-variant-numeric: tabular-nums; }
 }
 @media (max-width: 480px) {
   .library-summary:has(> .library-stat:nth-child(2):last-child) {
-    width: calc(100% + 4px);
-    margin-left: -4px;
+    width: calc(100% - 12px);
+    gap: 8px;
   }
 }
 
