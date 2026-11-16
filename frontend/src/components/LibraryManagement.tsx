@@ -787,7 +787,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </form>
         </section>
       )}
-      {(activeView === 'issue' || activeView === 'overdue') && <div className="library-grid">
+      {(activeView === 'issue' || activeView === 'overdue') && <div className={`library-grid ${activeView === 'issue' ? 'library-grid-fullwidth' : ''}`}>
         <div className="library-main-card">
           <div className="library-toolbar">
             <div>
