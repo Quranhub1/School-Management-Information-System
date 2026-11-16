@@ -65,8 +65,8 @@ public sealed class LibraryController(
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> RecordStudentLibraryPayment(Guid studentId, RecordLibraryPaymentRequest request, CancellationToken ct)
     {
-        await SyncCourseBookRequirementsFromFinanceAsync(ct);
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, ct)) return Forbid();
+        await SyncCourseBookRequirementsFromFinanceAsync(ct);
         if (request.Amount <= 0 || decimal.Round(request.Amount, 2) != request.Amount)
             return BadRequest(new { message = "Enter a payment amount greater than zero with no more than two decimal places." });
         var enrollmentProgramme = await (
@@ -388,8 +388,8 @@ public sealed class LibraryController(
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> ClearStudentLibraryRequirement(Guid studentId, LibraryClearanceRequest request, CancellationToken ct)
     {
-        await SyncCourseBookRequirementsFromFinanceAsync(ct);
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, ct)) return Forbid();
+        await SyncCourseBookRequirementsFromFinanceAsync(ct);
         var studentExists = await db.Students.AsNoTracking().AnyAsync(x => x.Id == studentId, ct);
         if (!studentExists) return NotFound(new { message = "Student was not found." });
 
@@ -574,11 +574,18 @@ public sealed class LibraryController(
             }
             else
             {
-                requirement.Name = fee.Name;
-                requirement.Amount = fee.TotalAmount;
-                requirement.Currency = fee.Currency;
-                requirement.IsActive = true;
-                requirement.UpdatedAtUtc = DateTimeOffset.UtcNow;
+                var changed = requirement.Name != fee.Name ||
+                    requirement.Amount != fee.TotalAmount ||
+                    !string.Equals(requirement.Currency, fee.Currency, StringComparison.OrdinalIgnoreCase) ||
+                    !requirement.IsActive;
+                if (changed)
+                {
+                    requirement.Name = fee.Name;
+                    requirement.Amount = fee.TotalAmount;
+                    requirement.Currency = fee.Currency;
+                    requirement.IsActive = true;
+                    requirement.UpdatedAtUtc = DateTimeOffset.UtcNow;
+                }
             }
 
             foreach (var duplicate in sameProgramme.Where(x => x.Id != requirement.Id && x.IsActive))
