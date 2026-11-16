@@ -325,8 +325,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           <section className="library-dashboard-options" aria-label="Library services">
             {[
               { key: 'books' as const, icon: '▤', title: 'Books Catalogue', description: 'Browse, register and manage books, ISBNs and barcodes.', links: [{ label: 'View Catalogue', view: 'books' as const }, { label: 'Add New Book', view: 'books' as const }] },
-              { key: 'issue' as const, icon: '↗', title: 'Issue & Returns', description: 'Issue books to students and manage active loans and returns.', links: [{ label: 'Issue a Book', view: 'issue' as const }, { label: 'View Active Loans', view: 'issue' as const }] },
-              { key: 'overdue' as const, icon: '!', title: 'Overdue Loans', description: 'Track late returns and follow up outstanding books.', links: [{ label: 'View Overdue Loans', view: 'overdue' as const }] },
+              { key: 'issue' as const, icon: '↗', title: 'Issue & Return Books', description: 'Issue books, process returns and follow up overdue loans.', links: [{ label: 'Issue a Book', view: 'issue' as const }, { label: 'View Active Loans', view: 'issue' as const }, { label: `Overdue Loans (${overdue.length})`, view: 'overdue' as const }] },
               { key: 'cards' as const, icon: '▣', title: 'Library Cards', description: 'Prepare student library membership cards and view the register.', links: [{ label: 'Issue Library Cards', view: 'cards' as const }, { label: 'View Library Cards', view: 'cards' as const }] },
               { key: 'clearance' as const, icon: '✓', title: 'Library Clearance', description: 'Manage programme course-book requirements and related fees.', links: [{ label: 'Course-book Requirements', view: 'clearance' as const }, { label: 'Fees & Settings', view: 'clearance' as const }] },
             ].map(item => (
