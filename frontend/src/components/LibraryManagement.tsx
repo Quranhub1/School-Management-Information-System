@@ -1076,7 +1076,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               <td>{clearance ? `${clearance.currency} ${clearance.requiredAmount.toLocaleString(SYSTEM_LOCALE)}` : '—'}</td>
               <td>{clearance ? `${clearance.currency} ${clearance.paidAmount.toLocaleString(SYSTEM_LOCALE)}` : '—'}</td>
               <td>{clearance ? `${clearance.currency} ${clearance.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}` : '—'}</td>
-              <td><span className={isPaid ? 'loan-status' : 'loan-status overdue'}>{clearance?.paymentStatus ?? 'Checking / Not invoiced'}</span></td>
+              <td><span className={isPaid ? 'loan-status' : 'loan-status overdue'}>{clearance?.paymentStatus ?? 'Not configured'}</span></td>
               <td><button type="button" className="secondary-button" onClick={() => setSelectedCardMember(member)}>View Card</button></td>
             </tr>;
           })}
