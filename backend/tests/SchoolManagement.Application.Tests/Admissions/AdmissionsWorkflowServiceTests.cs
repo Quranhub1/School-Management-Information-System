@@ -1,7 +1,6 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Admissions;
 using SchoolManagement.Domain.Admissions;
-using SchoolManagement.Domain.Students;
 using Xunit;
 
 namespace SchoolManagement.Application.Tests.Admissions;
@@ -76,7 +75,7 @@ public sealed class AdmissionsWorkflowServiceTests
     }
 
     [Fact]
-    public async Task DecideAsync_updates_status_and_records_decision()
+    public async Task DecideAsync_rejected_updates_status_and_records_decision()
     {
         var admission = new Admission
         {
@@ -90,10 +89,10 @@ public sealed class AdmissionsWorkflowServiceTests
         var workflow = CreateWorkflow(repository);
 
         var result = await workflow.DecideAsync(admission.Id,
-            new DecideAdmissionRequest(AdmissionStatus.Accepted, "Meets requirements", "tester"));
+            new DecideAdmissionRequest(AdmissionStatus.Rejected, "Incomplete documents", "tester"));
 
-        Assert.Equal(AdmissionStatus.Accepted, result.Decision);
-        Assert.Equal(AdmissionStatus.Accepted, admission.Status);
+        Assert.Equal(AdmissionStatus.Rejected, result.Decision);
+        Assert.Equal(AdmissionStatus.Rejected, admission.Status);
         Assert.NotNull(repository.LastDecision);
     }
 
@@ -150,9 +149,6 @@ public sealed class AdmissionsWorkflowServiceTests
         }
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-        public Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(Guid programmeId, bool mandatoryOnly = false, CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<AdmissionRequirement>>(Array.Empty<AdmissionRequirement>());
 
         public Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(
             Guid programmeId, bool mandatoryOnly = false, CancellationToken cancellationToken = default)
