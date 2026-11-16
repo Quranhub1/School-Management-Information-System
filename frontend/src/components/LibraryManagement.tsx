@@ -56,7 +56,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [openAddBookForm, setOpenAddBookForm] = useState(false);
   const [selectedCardMember, setSelectedCardMember] = useState<LibraryMember | null>(null);
   const [selectedCardPhotoUrl, setSelectedCardPhotoUrl] = useState<string | null>(null);
-  const institutionLogoUrl = `${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\\/$/, '') ?? ''}/api/public/institution-settings/logo`;
+  const institutionLogoUrl = `${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') ?? ''}/api/public/institution-settings/logo`;
   const [error, setError] = useState('');
   const [bookValidationErrors, setBookValidationErrors] = useState<Record<string, string>>({});
   const [loanValidationErrors, setLoanValidationErrors] = useState<Record<string, string>>({});
@@ -110,7 +110,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     let objectUrl: string | null = null;
     let cancelled = false;
     const token = getAccessToken();
-    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\\/$/, '') ?? '';
+    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') ?? '';
     void fetch(`${base}/api/students/${encodeURIComponent(selectedCardMember.id)}/application-form/photograph`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       cache: 'no-store',
