@@ -56,6 +56,11 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Curriculum> Curricula => Set<Curriculum>();
     public DbSet<CurriculumCourse> CurriculumCourses => Set<CurriculumCourse>();
+    public DbSet<LogbookRequirement> LogbookRequirements => Set<LogbookRequirement>();
+    public DbSet<LogbookCompetencyRequirement> LogbookCompetencyRequirements => Set<LogbookCompetencyRequirement>();
+    public DbSet<StudentLogbook> StudentLogbooks => Set<StudentLogbook>();
+    public DbSet<StudentLogbookCompetency> StudentLogbookCompetencies => Set<StudentLogbookCompetency>();
+    public DbSet<UhpabFeeReference> UhpabFeeReferences => Set<UhpabFeeReference>();
     public DbSet<AdmissionEntity> Admissions => Set<AdmissionEntity>();
     public DbSet<AdmissionDecision> AdmissionDecisions => Set<AdmissionDecision>();
     public DbSet<StudentEnrollment> StudentEnrollments => Set<StudentEnrollment>();
