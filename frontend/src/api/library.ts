@@ -33,12 +33,12 @@ export const listBooks = (search = '') => request<LibraryBook[]>(`/api/library/b
 export const listMembers = (search = '', memberType?: 'Student'|'Staff') => { const params = new URLSearchParams(); if (search.trim()) params.set('search', search.trim()); if (memberType) params.set('memberType', memberType); const query = params.toString(); return request<LibraryMember[]>(`/api/library/members${query ? `?${query}` : ''}`); };
 export const listLoans = (activeOnly = true) => request<LibraryLoan[]>(`/api/library/loans?activeOnly=${activeOnly}`);
 
-export const addBook = (input: Omit<LibraryBook,'id'|'availableCopies'|'isActive'>) => {
+export const addBook = (input: Omit<LibraryBook,'id'|'availableCopies'|'isActive'|'createdAtUtc'>) => {
   const validated = parseApiInput(libraryBookCreateRequestSchema, input, 'add library book');
   return request<LibraryBook>('/api/library/books', { method:'POST', body:JSON.stringify(validated) });
 };
 
-export const updateBook = (id: string, input: Omit<LibraryBook, 'id'|'availableCopies'|'isActive'|'barcodeValue'>) => {
+export const updateBook = (id: string, input: Omit<LibraryBook, 'id'|'availableCopies'|'isActive'|'barcodeValue'|'createdAtUtc'>) => {
   if (!id.trim()) throw new Error('Book id is required.');
   const validated = parseApiInput(libraryBookCreateRequestSchema, input, 'update library book');
   return request<LibraryBook>(`/api/library/books/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(validated) });
