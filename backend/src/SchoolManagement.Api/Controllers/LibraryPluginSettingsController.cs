@@ -125,7 +125,14 @@ public sealed class LibraryPluginSettingsController(
     private static bool IsHttp(Uri uri) => (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) && string.IsNullOrEmpty(uri.UserInfo);
     private static bool ValidOptionalUrl(string? value) => string.IsNullOrWhiteSpace(value) ||
         (Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri) && IsHttp(uri));
-    private static Uri EnsureApiRoot(Uri uri) => uri.AbsolutePath.EndsWith("/api/v1", StringComparison.OrdinalIgnoreCase) ? uri : new Uri(uri.ToString().TrimEnd('/') + "/api/v1/");
+    private static Uri EnsureApiRoot(Uri uri)
+    {
+        var builder = new UriBuilder(uri);
+        var path = builder.Path.TrimEnd('/');
+        if (!path.EndsWith("/api/v1", StringComparison.OrdinalIgnoreCase)) path += "/api/v1";
+        builder.Path = path + "/";
+        return builder.Uri;
+    }
     private static Uri EnsureOaiIdentify(Uri uri)
     {
         var builder = new UriBuilder(uri);
