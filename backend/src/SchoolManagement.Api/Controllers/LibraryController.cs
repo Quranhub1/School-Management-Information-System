@@ -262,7 +262,7 @@ public sealed class LibraryController(
             {
                 student.Id,
                 student.StudentNumber,
-                Name = (student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName).Trim(),
+                Name = (student.LastName + " " + student.FirstName + " " + (student.OtherNames ?? "")).Trim().ToUpper(),
                 ProgrammeId = admission == null ? (Guid?)null : admission.ProgrammeId,
                 ProgrammeName = programme == null ? null : programme.Name,
                 ProgrammeCode = programme == null ? null : programme.Code,
