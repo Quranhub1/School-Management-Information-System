@@ -299,7 +299,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       <div className="library-heading">
         <div>
           <span className="eyebrow">LIBRARY SERVICES</span>
-          <h2>Library Management</h2>
+          <h2>{activeView === 'books' ? 'Books' : activeView === 'issue' ? 'Issue & Return Books' : activeView === 'overdue' ? 'Overdue Loans' : activeView === 'cards' ? 'Library Cards' : activeView === 'clearance' ? 'Library Clearance' : 'Library Management'}</h2>
           
         </div>
       </div>
