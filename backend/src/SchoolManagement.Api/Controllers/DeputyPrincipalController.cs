@@ -79,7 +79,7 @@ public sealed class DeputyPrincipalController(SchoolManagementDbContext db) : Co
             from course in courseJoin.DefaultIfEmpty()
             where entry.IsActive
             orderby entry.DayOfWeek, entry.StartTime
-            select new { entry.Id, entry.DayOfWeek, entry.StartTime, entry.EndTime, entry.Room, staffName = staff == null ? null : staff.FirstName + " " + staff.LastName, courseName = course == null ? null : course.Name }
+            select new { entry.Id, entry.DayOfWeek, entry.StartTime, entry.EndTime, entry.Room, staffName = staff == null ? null : (staff.LastName + " " + staff.FirstName + " " + (staff.OtherNames ?? "")).Trim().ToUpper(), courseName = course == null ? null : course.Name }
         ).ToListAsync(cancellationToken);
         return Ok(timetable);
     }
