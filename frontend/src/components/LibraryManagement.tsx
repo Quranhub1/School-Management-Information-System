@@ -49,11 +49,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     const card = document.querySelector<HTMLElement>('.library-print-card');
     if (!card) return;
 
-    // Print an isolated copy of the card. This avoids the app shell, hidden
-    // navigation and other module styles interfering with the browser preview.
-    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    const printWindow = window.open('', '_blank', 'width=1000,height=750');
     if (!printWindow) {
-      window.alert('Please allow pop-ups for this site to print the library card.');
+      window.alert('Please allow pop-ups for this site to preview and print the library card.');
       return;
     }
 
@@ -67,46 +65,37 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     printWindow.document.open();
     printWindow.document.write(`<!doctype html>
       <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>Library Membership Card</title>${styles}${inlineStyles}
+      <title>Library Membership Card Preview</title>${styles}${inlineStyles}
       <style>
         @page { size: 85.6mm 54mm; margin: 0; }
-        html, body { width: 85.6mm !important; min-width: 85.6mm !important; height: 54mm !important; min-height: 54mm !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #fff !important; }
-        body { display: block !important; }
-        .library-print-card { display: block !important; position: relative !important; inset: auto !important; width: 85.6mm !important; height: 54mm !important; max-width: none !important; margin: 0 !important; padding: 3mm !important; box-sizing: border-box !important; aspect-ratio: auto !important; overflow: hidden !important; border: .25mm solid #aab8ae !important; border-radius: 2mm !important; box-shadow: none !important; visibility: visible !important; print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
-        .library-print-card, .library-print-card * { visibility: visible !important; }
-        .library-print-card-header { display: grid !important; grid-template-columns: 13mm minmax(0,1fr) 15mm !important; gap: 2mm !important; min-height: 17mm !important; }
-        .library-card-institution-badge { width: 13mm !important; height: 13mm !important; }
-        .library-card-student-photo { width: 15mm !important; height: 17mm !important; }
-        .library-card-heading { gap: 1.5mm !important; padding-top: 1mm !important; }
-        .library-card-heading strong { font-size: 7pt !important; }
-        .library-card-heading span { font-size: 6pt !important; }
-        .library-card-student-details { gap: 1.5mm !important; margin-top: 2mm !important; padding-top: 2mm !important; }
-        .library-card-student-details strong { font-size: 10pt !important; }
-        .library-card-student-details span { font-size: 7pt !important; }
-        .library-card-student-details small { font-size: 6pt !important; }
-      </style></head><body>${card.outerHTML}</body></html>`);
+        html, body { min-height: 100%; margin: 0; padding: 0; background: #eef2ef; }
+        body { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 28px; box-sizing: border-box; }
+        .library-print-card { display:block !important; position:relative !important; inset:auto !important; flex:none !important; width:85.6mm !important; height:54mm !important; max-width:none !important; margin:0 !important; padding:3mm !important; box-sizing:border-box !important; aspect-ratio:auto !important; overflow:hidden !important; border:.25mm solid #aab8ae !important; border-radius:2mm !important; box-shadow:0 8px 28px rgba(20,40,28,.18) !important; visibility:visible !important; print-color-adjust:exact !important; -webkit-print-color-adjust:exact !important; }
+        .library-print-card, .library-print-card * { visibility:visible !important; }
+        .library-print-card-header { display:grid !important; grid-template-columns:13mm minmax(0,1fr) 15mm !important; gap:2mm !important; min-height:17mm !important; }
+        .library-card-institution-badge { width:13mm !important; height:13mm !important; }
+        .library-card-student-photo { width:15mm !important; height:17mm !important; }
+        .library-card-heading { gap:1.5mm !important; padding-top:1mm !important; }
+        .library-card-heading strong { font-size:7pt !important; }
+        .library-card-heading span { font-size:6pt !important; }
+        .library-card-student-details { align-items:center !important; text-align:center !important; gap:1.5mm !important; margin-top:2mm !important; padding-top:2mm !important; }
+        .library-card-student-details strong { width:100%; text-align:center !important; font-size:10pt !important; }
+        .library-card-student-details span, .library-card-student-details small { width:100%; text-align:center !important; font-size:7pt !important; }
+        .library-card-student-details small { font-size:6pt !important; }
+        .library-preview-print-button { border:0; border-radius:6px; padding:11px 22px; background:#176b43; color:white; font:600 14px Arial,sans-serif; cursor:pointer; }
+        @media print {
+          html, body { width:85.6mm !important; height:54mm !important; min-height:54mm !important; background:#fff !important; overflow:hidden !important; }
+          body { display:block !important; padding:0 !important; }
+          .library-preview-print-button { display:none !important; }
+          .library-print-card { box-shadow:none !important; }
+        }
+      </style></head><body>${card.outerHTML}<button class="library-preview-print-button" type="button" id="library-preview-print">Print card</button>
+      <script>
+        document.getElementById('library-preview-print').addEventListener('click', function () { window.print(); });
+      </script>
+      </body></html>`);
     printWindow.document.close();
-
-    let printStarted = false;
-    const startPrint = () => {
-      if (printStarted) return;
-      printStarted = true;
-      const images = Array.from(printWindow.document.images);
-      Promise.all(images.map(image => {
-        if (image.complete) return Promise.resolve();
-        return new Promise<void>(resolve => {
-          image.onload = () => resolve();
-          image.onerror = () => resolve();
-        });
-      })).then(() => {
-        printWindow.focus();
-        printWindow.print();
-        printWindow.onafterprint = () => printWindow.close();
-      });
-    };
-    printWindow.addEventListener('load', startPrint, { once: true });
-    // Cached stylesheets can finish before the load listener is attached.
-    if (printWindow.document.readyState === 'complete') startPrint();
+    printWindow.focus();
   }
 
   const [books, setBooks] = useState<LibraryBook[]>([]);
