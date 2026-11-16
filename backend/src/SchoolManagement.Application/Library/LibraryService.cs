@@ -88,7 +88,7 @@ public sealed class LibraryService(ILibraryRepository library)
         throw new ArgumentException("Enter a valid ISBN-10 or ISBN-13 with its correct check digit.");
     }
 
-    private static string ToBooklandEan13(string isbn)
+    public static string ToBooklandEan13(string isbn)
     {
         if (isbn.Length == 13) return isbn;
         var body = "978" + isbn[..9];
