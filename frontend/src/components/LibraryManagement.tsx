@@ -30,6 +30,7 @@ import {
 import { getProgrammes, type Programme } from '../api/programmes';
 import { getAccessToken } from '../api/auth';
 import { useOptionalInstitutionSettings } from './InstitutionSettingsContext';
+import { showConfirmDialog } from '../utils/confirmDialog';
 
 const todayInput = () => new Date().toISOString().slice(0, 10);
 const dateInput = () => {
@@ -449,7 +450,15 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   }
 
   async function handleArchiveBook(book: LibraryBook) {
-    if (!window.confirm(`Archive "${book.title}" from the active catalogue? Its barcode and loan history will be retained.`)) return;
+    const confirmed = await showConfirmDialog(
+      `Archive "${book.title}" from the active catalogue? Its barcode and loan history will be retained.`,
+      {
+        title: 'Archive catalogue book',
+        confirmLabel: 'Yes, archive book',
+        destructive: true,
+      },
+    );
+    if (!confirmed) return;
     setBusy(true);
     setError('');
     try {
