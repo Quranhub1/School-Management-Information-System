@@ -367,7 +367,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               <td>{item.isActive ? 'Active' : 'Inactive'}</td>
               <td><button type="button" className="secondary-button" disabled={busy} onClick={() => void toggleProgrammeRequirement(item.id, !item.isActive)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td>
             </tr>)}
-            {requirements.length === 0 && <tr><td colSpan={5}>No course book requirements configured.</td></tr>}</tbody>
+            {requirements.length === 0 && <tr><td colSpan={6}>No course book requirements configured.</td></tr>}</tbody>
           </table>
         </div>
       </section>}
@@ -379,7 +379,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div className="table-wrap" style={{ maxHeight: 260, overflowY: 'auto' }}>
           <table><thead><tr><th>ID</th><th>Student number</th><th>Student name</th><th>Library membership</th></tr></thead>
             <tbody>{members.map((member, index) => <tr key={member.id}><td>{index + 1}</td><td><strong>{member.studentNumber}</strong></td><td>{member.name}</td><td>Registered from Admissions</td></tr>)}
-            {members.length === 0 && <tr><td colSpan={3}>No admitted students are available in the Library register.</td></tr>}</tbody>
+            {members.length === 0 && <tr><td colSpan={4}>No admitted students are available in the Library register.</td></tr>}</tbody>
           </table>
         </div>
       </section>}
@@ -747,7 +747,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </form>
         </section>
       )}
-      {activeView === 'cards' && <section className="library-main-card" style={{ padding: 16 }}><div className="library-toolbar"><div><h3>Library Card Register</h3><small>{members.length} students available for library membership cards</small></div></div><div className="table-wrap"><table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Card</th></tr></thead><tbody>{members.map((member, index) => <tr key={member.id}><td>{index + 1}</td><td><strong>{member.studentNumber}</strong></td><td>{member.name}</td><td><button type="button" className="secondary-button" onClick={() => setSelectedCardMember(member)}>Issue / View Card</button></td></tr>)}{members.length === 0 && <tr><td colSpan={3}>No students are available in the library register.</td></tr>}</tbody></table></div></section>}
+      {activeView === 'cards' && <section className="library-main-card" style={{ padding: 16 }}><div className="library-toolbar"><div><h3>Library Card Register</h3><small>{members.length} students available for library membership cards</small></div></div><div className="table-wrap"><table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Card</th></tr></thead><tbody>{members.map((member, index) => <tr key={member.id}><td>{index + 1}</td><td><strong>{member.studentNumber}</strong></td><td>{member.name}</td><td><button type="button" className="secondary-button" onClick={() => setSelectedCardMember(member)}>Issue / View Card</button></td></tr>)}{members.length === 0 && <tr><td colSpan={4}>No students are available in the library register.</td></tr>}</tbody></table></div></section>}
       {barcodeBookId && (
         <div className="modal-backdrop" onClick={() => setBarcodeBookId(null)}>
           <div className="auth-card library-barcode-dialog" onClick={e => e.stopPropagation()}>
