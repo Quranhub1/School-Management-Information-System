@@ -266,6 +266,17 @@ public sealed class LibraryController(
             .Select(x => x.Name)
             .FirstOrDefaultAsync(ct);
 
+        var curriculumCourses = await (
+            from curriculum in db.Curricula.AsNoTracking()
+            join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
+            join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
+            join programme in db.Programmes.AsNoTracking() on curriculum.ProgrammeId equals programme.Id
+            where curriculum.IsActive && course.IsActive && programme.IsActive
+            select new { programme.Id, CourseName = course.Name }
+        ).ToListAsync(ct);
+        var coursesByProgramme = curriculumCourses.GroupBy(x => x.Id)
+            .ToDictionary(x => x.Key, x => x.Select(item => item.CourseName).Distinct().OrderBy(name => name).ToArray());
+
         var libraryInvoices = await db.StudentInvoices.AsNoTracking()
             .Where(x => studentIds.Contains(x.StudentId) && x.FeeType == "LibraryBook")
             .OrderByDescending(x => x.IssuedAt)
@@ -288,6 +299,7 @@ public sealed class LibraryController(
             enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
             statusByStudent.TryGetValue(student.Id, out var academicStatus);
             invoiceByStudent.TryGetValue(student.Id, out var invoice);
+            coursesByProgramme.TryGetValue(admittedStudents.First(x => x.Id == student.Id).Id, out var studentCourses);
             var balance = invoice is null ? (decimal?)null : invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount;
             var paymentStatus = invoice is null ? "Not Invoiced" :
                 balance <= 0m ? "Paid" :
@@ -299,6 +311,7 @@ public sealed class LibraryController(
                 studentNumber = student.StudentNumber,
                 studentName = student.Name,
                 programmeName = student.ProgrammeName,
+                courseNames = studentCourses ?? Array.Empty<string>(),
                 classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
                 semesterName = academicStatus?.SemesterName ?? currentSemester,
                 academicYearName = student.AcademicYearName,
