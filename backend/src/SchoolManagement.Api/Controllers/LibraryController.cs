@@ -6,7 +6,6 @@ using SchoolManagement.Api.Helpers;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Administration;
 using SchoolManagement.Application.Library;
-using SchoolManagement.Application.Finance;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Domain.Workflows;
@@ -17,7 +16,6 @@ namespace SchoolManagement.Api.Controllers;
 [Route("api/library")]
 public sealed class LibraryController(
     LibraryWorkflowService library,
-    FinanceWorkflowService finance,
     IConfiguration configuration,
     SchoolManagementDbContext db,
     CampusAccessService campusAccess,
@@ -56,16 +54,14 @@ public sealed class LibraryController(
         return Ok(members);
     }
 
-    // Librarians own course-specific book purchase/fee requirements. These are stored
-    // as ordinary programme fee structures so Finance can invoice and receipt them.
+    // Library owns its course-book requirement configuration and student payment ledger.
     [HttpGet("programme-requirements")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> ProgrammeRequirements(CancellationToken ct)
     {
-        var requirements = await db.FeeStructures.AsNoTracking()
-            .Include(x => x.Items)
-            .Where(x => x.FeeType == "LibraryBook")
+        var requirements = await db.LibraryProgrammeRequirements.AsNoTracking()
             .OrderBy(x => x.Name)
+            .Select(x => new { id = x.Id, programmeId = x.ProgrammeId, name = x.Name, totalAmount = x.Amount, currency = x.Currency, isActive = x.IsActive })
             .ToListAsync(ct);
         return Ok(requirements);
     }
@@ -76,94 +72,102 @@ public sealed class LibraryController(
     {
         if (request.ProgrammeId == Guid.Empty) return BadRequest(new { message = "Select a course/programme." });
         if (string.IsNullOrWhiteSpace(request.Name)) return BadRequest(new { message = "Requirement name is required." });
-        if (request.Amount <= 0) return BadRequest(new { message = "The book fee must be greater than zero." });
+        if (request.Amount <= 0 || decimal.Round(request.Amount, 2) != request.Amount)
+            return BadRequest(new { message = "Enter a valid book fee with no more than two decimal places." });
         if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId && x.IsActive, ct))
             return BadRequest(new { message = "The selected programme is not active." });
 
-        string currency;
-        try
-        {
-            var defaultCurrency = (await institutionSettings.GetSystemCurrencyAsync(ct)).Code;
-            currency = SchoolManagement.Domain.Finance.MoneyMath.NormalizeCurrency(string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency);
-            SchoolManagement.Domain.Finance.MoneyMath.EnsurePrecision(request.Amount, currency);
-        }
-        catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        // Keep one active Library requirement per programme so a student is never
-        // billed twice for competing versions of the same course book policy.
-        var previousRequirements = await db.FeeStructures
-            .Where(x => x.ProgrammeId == request.ProgrammeId && x.FeeType == "LibraryBook" && x.IsActive)
-            .ToListAsync(ct);
-        foreach (var previous in previousRequirements) previous.IsActive = false;
+        var defaultCurrency = (await institutionSettings.GetSystemCurrencyAsync(ct)).Code;
+        var currency = (string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency.Trim()).ToUpperInvariant();
+        if (currency.Length != 3 || currency.Any(ch => !char.IsLetter(ch)))
+            return BadRequest(new { message = "Select a valid three-letter currency code." });
 
-        // Reuse an existing same-name policy rather than violating the unique
-        // programme/year/name index when the librarian revises its amount.
-        var structure = await db.FeeStructures.Include(x => x.Items)
-            .SingleOrDefaultAsync(x => x.ProgrammeId == request.ProgrammeId &&
-                x.AcademicYearId == Guid.Empty && x.Name == request.Name.Trim(), ct);
-        if (structure is null)
+        var requirement = await db.LibraryProgrammeRequirements
+            .SingleOrDefaultAsync(x => x.ProgrammeId == request.ProgrammeId && x.IsActive, ct);
+        if (requirement is null)
         {
-            structure = new SchoolManagement.Domain.Finance.FeeStructure
+            requirement = new SchoolManagement.Domain.Library.LibraryProgrammeRequirement
             {
                 ProgrammeId = request.ProgrammeId,
-                AcademicYearId = Guid.Empty,
                 Name = request.Name.Trim(),
-                FeeType = "LibraryBook",
+                Amount = request.Amount,
                 Currency = currency
             };
-            db.FeeStructures.Add(structure);
+            db.LibraryProgrammeRequirements.Add(requirement);
         }
         else
         {
-            db.FeeStructureItems.RemoveRange(structure.Items);
-            structure.Items.Clear();
-            structure.Currency = currency;
-            structure.FeeType = "LibraryBook";
-            structure.IsActive = true;
+            requirement.Name = request.Name.Trim();
+            requirement.Amount = request.Amount;
+            requirement.Currency = currency;
+            requirement.UpdatedAtUtc = DateTimeOffset.UtcNow;
         }
-        structure.Items.Add(new SchoolManagement.Domain.Finance.FeeStructureItem
-        {
-            FeeStructureId = structure.Id,
-            Code = "LIB-BOOK",
-            Name = request.Name.Trim(),
-            Amount = request.Amount,
-            Currency = currency,
-            SortOrder = 1,
-            IsOptional = false
-        });
-        structure.RecalculateTotal();
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        await db.SaveChangesAsync(ct);
 
-        // Also catch currently enrolled students who were admitted before this
-        // programme's Library requirement was configured.
-        var enrolledStudentIds = await db.StudentEnrollments.AsNoTracking()
-            .Where(x => x.ProgrammeId == request.ProgrammeId && x.Status == "Active")
-            .Select(x => x.StudentId)
-            .Distinct()
-            .ToListAsync(ct);
-        foreach (var studentId in enrolledStudentIds)
-        {
-            var alreadyInvoiced = await db.StudentInvoices.AnyAsync(
-                x => x.StudentId == studentId && x.FeeStructureId == structure.Id, ct);
-            if (alreadyInvoiced) continue;
-            await finance.CreateInvoiceAsync(studentId, structure.Id, $"LIB-{Guid.NewGuid():N}", ct);
-        }
-        await transaction.CommitAsync(ct);
-        return Created($"/api/library/programme-requirements/{structure.Id}", structure);
+        await db.SaveChangesAsync(ct);
+        return Ok(new { id = requirement.Id, programmeId = requirement.ProgrammeId, name = requirement.Name, totalAmount = requirement.Amount, currency = requirement.Currency, isActive = requirement.IsActive });
     }
 
     [HttpPatch("programme-requirements/{id:guid}/active")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> SetProgrammeRequirementActive(Guid id, [FromQuery] bool active, CancellationToken ct)
     {
-        var requirement = await db.FeeStructures.SingleOrDefaultAsync(x => x.Id == id && x.FeeType == "LibraryBook", ct);
+        var requirement = await db.LibraryProgrammeRequirements.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (requirement is null) return NotFound();
         requirement.IsActive = active;
+        requirement.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
         return Ok(new { requirement.Id, requirement.IsActive });
+    }
+
+    [HttpPost("students/{studentId:guid}/payments")]
+    [Authorize(Policy = LibraryPolicies.Management)]
+    public async Task<IActionResult> RecordStudentLibraryPayment(Guid studentId, RecordLibraryPaymentRequest request, CancellationToken ct)
+    {
+        if (!await campusAccess.CanAccessStudentAsync(User, studentId, ct)) return Forbid();
+        if (request.Amount <= 0 || decimal.Round(request.Amount, 2) != request.Amount)
+            return BadRequest(new { message = "Enter a payment amount greater than zero with no more than two decimal places." });
+        if (string.IsNullOrWhiteSpace(request.Method))
+            return BadRequest(new { message = "Select how the student paid." });
+
+        var programmeId = await db.StudentEnrollments.AsNoTracking()
+            .Where(x => x.StudentId == studentId && x.Status == "Active")
+            .OrderByDescending(x => x.AdmissionDate)
+            .Select(x => (Guid?)x.ProgrammeId)
+            .FirstOrDefaultAsync(ct);
+        if (!programmeId.HasValue)
+        {
+            var admissionId = await db.Students.AsNoTracking().Where(x => x.Id == studentId)
+                .Select(x => x.AdmissionId).FirstOrDefaultAsync(ct);
+            if (admissionId.HasValue)
+                programmeId = await db.Admissions.AsNoTracking().Where(x => x.Id == admissionId.Value)
+                    .Select(x => (Guid?)x.ProgrammeId).FirstOrDefaultAsync(ct);
+        }
+        if (!programmeId.HasValue) return Conflict(new { message = "The student is not linked to a programme with a library requirement." });
+
+        var requirement = await db.LibraryProgrammeRequirements.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.ProgrammeId == programmeId.Value && x.IsActive, ct);
+        if (requirement is null) return Conflict(new { message = "No active course-book requirement is configured for this student's programme." });
+
+        var paid = await db.LibraryStudentPayments.AsNoTracking()
+            .Where(x => x.StudentId == studentId && x.RequirementId == requirement.Id)
+            .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+        var balance = Math.Max(0m, requirement.Amount - paid);
+        if (request.Amount > balance)
+            return Conflict(new { message = $"Payment exceeds the outstanding library requirement of {requirement.Currency} {balance:N2}." });
+
+        var payment = new SchoolManagement.Domain.Library.LibraryStudentPayment
+        {
+            StudentId = studentId,
+            RequirementId = requirement.Id,
+            Amount = request.Amount,
+            Currency = requirement.Currency,
+            PaymentMethod = request.Method.Trim(),
+            Reference = string.IsNullOrWhiteSpace(request.Reference) ? null : request.Reference.Trim(),
+            RecordedBy = User.Identity?.Name
+        };
+        db.LibraryStudentPayments.Add(payment);
+        await db.SaveChangesAsync(ct);
+        return Ok(new { payment.Id, payment.StudentId, payment.Amount, payment.Currency, payment.PaymentMethod, payment.Reference, payment.RecordedAtUtc });
     }
 
     [HttpGet("books/{id:guid}/barcode")]
@@ -256,7 +260,7 @@ public sealed class LibraryController(
         var enrollments = await db.StudentEnrollments.AsNoTracking()
             .Where(x => studentIds.Contains(x.StudentId) && x.Status == "Active")
             .OrderByDescending(x => x.AdmissionDate)
-            .Select(x => new { x.StudentId, x.CurrentYear })
+            .Select(x => new { x.StudentId, x.CurrentYear, x.ProgrammeId })
             .ToListAsync(ct);
 
         var academicStatuses = await (
@@ -285,35 +289,18 @@ public sealed class LibraryController(
         var coursesByProgramme = curriculumCourses.GroupBy(x => x.Id)
             .ToDictionary(x => x.Key, x => x.Select(item => item.CourseName).Distinct().OrderBy(name => name).ToArray());
 
-        // Sum every LibraryBook invoice for each student. A student is not
-        // eligible for a card until the complete outstanding requirement is cleared.
-        var libraryInvoiceRows = await db.StudentInvoices.AsNoTracking()
-            .Where(x => studentIds.Contains(x.StudentId) && x.FeeType == "LibraryBook")
-            .OrderByDescending(x => x.IssuedAt)
-            .Select(x => new
-            {
-                x.StudentId, x.InvoiceNumber, x.Amount, x.DiscountAmount,
-                x.PaidAmount, x.Currency, x.IssuedAt
-            })
+        var activeRequirements = await db.LibraryProgrammeRequirements.AsNoTracking()
+            .Where(x => x.IsActive)
             .ToListAsync(ct);
-        var libraryInvoices = libraryInvoiceRows
-            .GroupBy(x => x.StudentId)
-            .ToDictionary(
-                group => group.Key,
-                group =>
-                {
-                    var latest = group.OrderByDescending(x => x.IssuedAt).First();
-                    return new
-                    {
-                        StudentId = group.Key,
-                        InvoiceNumber = latest.InvoiceNumber,
-                        Amount = group.Sum(x => x.Amount),
-                        DiscountAmount = group.Sum(x => x.DiscountAmount),
-                        PaidAmount = group.Sum(x => x.PaidAmount),
-                        Currency = latest.Currency,
-                        IssuedAt = latest.IssuedAt
-                    };
-                });
+        var requirementsByProgramme = activeRequirements.ToDictionary(x => x.ProgrammeId);
+        var requirementIds = activeRequirements.Select(x => x.Id).ToArray();
+        var paymentRows = await db.LibraryStudentPayments.AsNoTracking()
+            .Where(x => studentIds.Contains(x.StudentId) && requirementIds.Contains(x.RequirementId))
+            .Select(x => new { x.StudentId, x.RequirementId, x.Amount })
+            .ToListAsync(ct);
+        var paidByStudentAndRequirement = paymentRows
+            .GroupBy(x => (x.StudentId, x.RequirementId))
+            .ToDictionary(x => x.Key, x => x.Sum(row => row.Amount));
 
         var enrollmentByStudent = enrollments.GroupBy(x => x.StudentId)
             .ToDictionary(x => x.Key, x => x.First());
@@ -323,15 +310,17 @@ public sealed class LibraryController(
         {
             enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
             statusByStudent.TryGetValue(student.Id, out var academicStatus);
-            libraryInvoices.TryGetValue(student.Id, out var invoice);
+            var programmeId = enrollment?.ProgrammeId ?? student.ProgrammeId;
+            requirementsByProgramme.TryGetValue(programmeId ?? Guid.Empty, out var requirement);
             string[]? studentCourses = null;
-            if (student.ProgrammeId.HasValue)
-                coursesByProgramme.TryGetValue(student.ProgrammeId.Value, out studentCourses);
-            var requiredAmount = invoice is null ? 0m : Math.Max(0m, invoice.Amount - invoice.DiscountAmount);
-            var balance = invoice is null ? 0m : Math.Max(0m, requiredAmount - invoice.PaidAmount);
-            var paymentStatus = invoice is null ? "Not Invoiced" :
-                balance <= 0m ? "Paid" :
-                invoice.PaidAmount > 0m ? "Partially Paid" : "Not Paid";
+            if (programmeId.HasValue)
+                coursesByProgramme.TryGetValue(programmeId.Value, out studentCourses);
+            var paidAmount = requirement is null ? 0m :
+                paidByStudentAndRequirement.GetValueOrDefault((student.Id, requirement.Id), 0m);
+            var requiredAmount = requirement?.Amount ?? 0m;
+            var balance = Math.Max(0m, requiredAmount - paidAmount);
+            var paymentStatus = requirement is null ? "Not Configured" :
+                balance <= 0m ? "Paid" : paidAmount > 0m ? "Partially Paid" : "Not Paid";
 
             return new
             {
@@ -345,13 +334,13 @@ public sealed class LibraryController(
                 semesterNumber = academicStatus?.SemesterNumber ?? currentSemester?.Sequence,
                 academicYearName = student.AcademicYearName,
                 paymentStatus,
-                invoiceNumber = invoice?.InvoiceNumber,
-                amount = invoice?.Amount ?? 0m,
+                requirementId = requirement?.Id,
+                amount = requiredAmount,
                 requiredAmount,
-                paidAmount = invoice?.PaidAmount ?? 0m,
+                paidAmount,
                 outstandingAmount = balance,
-                currency = invoice?.Currency ?? "UGX",
-                issuedAt = invoice?.IssuedAt
+                currency = requirement?.Currency ?? "UGX",
+                issuedAt = (DateTimeOffset?)null
             };
         }).ToList();
 
@@ -422,23 +411,30 @@ public sealed class LibraryController(
 
         if (string.Equals(method, "FeePaid", StringComparison.OrdinalIgnoreCase))
         {
-            var libraryInvoices = db.StudentInvoices.AsNoTracking()
-                .Where(x => x.StudentId == studentId && x.FeeType == "LibraryBook");
-            if (!await libraryInvoices.AnyAsync(ct))
-                return Conflict(new { message = "No Library book-fee invoice exists for this student. The Librarian must configure the course requirement first." });
-            var invoiceBalances = await libraryInvoices
-                .Select(x => new { x.Currency, Outstanding = x.Amount - x.DiscountAmount - x.PaidAmount })
-                .ToListAsync(ct);
-            var outstandingByCurrency = invoiceBalances
-                .GroupBy(x => string.IsNullOrWhiteSpace(x.Currency) ? "UGX" : x.Currency.Trim().ToUpperInvariant())
-                .Select(group => new { Currency = group.Key, Amount = group.Sum(x => x.Outstanding) })
-                .Where(x => x.Amount > 0m)
-                .ToList();
-            if (outstandingByCurrency.Count > 0)
+            var programmeId = await db.StudentEnrollments.AsNoTracking()
+                .Where(x => x.StudentId == studentId && x.Status == "Active")
+                .OrderByDescending(x => x.AdmissionDate)
+                .Select(x => (Guid?)x.ProgrammeId)
+                .FirstOrDefaultAsync(ct);
+            if (!programmeId.HasValue)
             {
-                var amounts = string.Join(", ", outstandingByCurrency.Select(x => $"{x.Currency} {x.Amount:N0}"));
-                return Conflict(new { message = $"Library book fee is not fully paid. Outstanding: {amounts}." });
+                var admissionId = await db.Students.AsNoTracking().Where(x => x.Id == studentId)
+                    .Select(x => x.AdmissionId).FirstOrDefaultAsync(ct);
+                if (admissionId.HasValue)
+                    programmeId = await db.Admissions.AsNoTracking().Where(x => x.Id == admissionId.Value)
+                        .Select(x => (Guid?)x.ProgrammeId).FirstOrDefaultAsync(ct);
             }
+            var requirement = programmeId.HasValue
+                ? await db.LibraryProgrammeRequirements.AsNoTracking().SingleOrDefaultAsync(x => x.ProgrammeId == programmeId.Value && x.IsActive, ct)
+                : null;
+            if (requirement is null)
+                return Conflict(new { message = "No active Library course-book requirement is configured for this student." });
+            var paid = await db.LibraryStudentPayments.AsNoTracking()
+                .Where(x => x.StudentId == studentId && x.RequirementId == requirement.Id)
+                .SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+            var outstanding = Math.Max(0m, requirement.Amount - paid);
+            if (outstanding > 0m)
+                return Conflict(new { message = $"Library book fee is not fully paid. Outstanding: {requirement.Currency} {outstanding:N2}." });
         }
         else if (string.IsNullOrWhiteSpace(request.Reference))
         {
@@ -513,3 +509,4 @@ public sealed class LibraryController(
 public sealed record SetLibraryProgrammeRequirementRequest(Guid ProgrammeId, string Name, decimal Amount, string? Currency = null);
 
 public sealed record LibraryClearanceRequest(string Method, string? Reference = null);
+public sealed record RecordLibraryPaymentRequest(decimal Amount, string Method, string? Reference = null);
