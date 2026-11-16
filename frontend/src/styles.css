@@ -5543,3 +5543,145 @@ table { font-variant-numeric: tabular-nums; }
     width: 100%;
   }
 }
+
+
+/* SMIS global form-control standard: consistent, high-contrast dropdowns
+   and text areas across every module, not just Library. */
+.app-shell select,
+.app-shell textarea,
+.app-shell input[type="text"],
+.app-shell input[type="number"],
+.app-shell input[type="email"],
+.app-shell input[type="tel"],
+.app-shell input[type="search"],
+.app-shell input[type="date"],
+.app-shell input[type="url"],
+.app-shell input[type="password"] {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 13px;
+  border: 1.5px solid #829b89;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #17251d;
+  font-family: inherit;
+  font-size: .9rem;
+  font-weight: 450;
+  line-height: 1.45;
+  opacity: 1;
+  visibility: visible;
+  box-shadow: 0 1px 3px rgba(20, 55, 34, .10);
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.app-shell select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23176b43' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+.app-shell textarea {
+  display: block;
+  width: 100%;
+  min-height: 104px;
+  resize: vertical;
+  line-height: 1.55;
+}
+.app-shell select:hover:not(:disabled),
+.app-shell textarea:hover:not(:disabled),
+.app-shell input:not(:disabled):hover {
+  border-color: #43845e;
+  background-color: #fcfefc;
+}
+.app-shell select:focus,
+.app-shell select:focus-visible,
+.app-shell textarea:focus,
+.app-shell textarea:focus-visible,
+.app-shell input:focus,
+.app-shell input:focus-visible {
+  outline: 2px solid rgba(23, 107, 67, .18);
+  outline-offset: 1px;
+  border-color: #176b43;
+  box-shadow: 0 0 0 3px rgba(23, 107, 67, .13);
+}
+.app-shell select:disabled,
+.app-shell textarea:disabled,
+.app-shell input:disabled {
+  opacity: 1;
+  color: #7b8580;
+  background-color: #f1f4f2;
+  border-color: #d6ddd8;
+  cursor: not-allowed;
+}
+.app-shell select option {
+  padding: 9px 10px;
+  background: #fff;
+  color: #17251d;
+}
+.app-shell select option:checked {
+  background: #e5f2e9;
+  color: #145333;
+  font-weight: 700;
+}
+.app-shell textarea::placeholder,
+.app-shell input::placeholder {
+  color: #68776d;
+  opacity: 1;
+}
+[data-theme="dark"] .app-shell select,
+[data-theme="dark"] .app-shell textarea,
+[data-theme="dark"] .app-shell input[type="text"],
+[data-theme="dark"] .app-shell input[type="number"],
+[data-theme="dark"] .app-shell input[type="email"],
+[data-theme="dark"] .app-shell input[type="tel"],
+[data-theme="dark"] .app-shell input[type="search"],
+[data-theme="dark"] .app-shell input[type="date"],
+[data-theme="dark"] .app-shell input[type="url"],
+[data-theme="dark"] .app-shell input[type="password"] {
+  border-color: #648571;
+  background-color: #17271e;
+  color: #f0f8f2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+}
+[data-theme="dark"] .app-shell select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239be0b2' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+[data-theme="dark"] .app-shell select option {
+  background: #17271e;
+  color: #f0f8f2;
+}
+[data-theme="dark"] .app-shell select option:checked {
+  background: #28543a;
+  color: #fff;
+}
+[data-theme="dark"] .app-shell textarea::placeholder,
+[data-theme="dark"] .app-shell input::placeholder {
+  color: #b5c7ba;
+}
+[data-theme="dark"] .app-shell select:disabled,
+[data-theme="dark"] .app-shell textarea:disabled,
+[data-theme="dark"] .app-shell input:disabled {
+  color: #a6b4aa;
+  background-color: #25352b;
+  border-color: #53665a;
+}
+@media (max-width: 640px) {
+  .app-shell select,
+  .app-shell textarea,
+  .app-shell input[type="text"],
+  .app-shell input[type="number"],
+  .app-shell input[type="email"],
+  .app-shell input[type="tel"],
+  .app-shell input[type="search"],
+  .app-shell input[type="date"],
+  .app-shell input[type="url"],
+  .app-shell input[type="password"] {
+    min-height: 44px;
+    font-size: .92rem;
+  }
+}
