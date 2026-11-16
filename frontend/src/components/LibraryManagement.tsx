@@ -423,7 +423,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </section>}
       {activeView === 'cards' && selectedCardMember && <section className="library-main-card" style={{ marginBottom: 18, padding: 20 }}><div style={{ maxWidth: 440, border: '1px solid #cbd5e1', borderRadius: 12, padding: 20, background: '#fff', color: '#111827' }}><strong>KAMPALA SCHOOL OF HEALTH SCIENCES</strong><h3 style={{ margin: '16px 0 6px' }}>LIBRARY MEMBERSHIP CARD</h3><p>{selectedCardMember.name}</p><strong>{selectedCardMember.studentNumber}</strong><p style={{ fontSize: 12 }}>Student Library Member</p></div><button type="button" className="library-primary" style={{ marginTop: 12 }} onClick={() => window.print()}>Print Library Card</button><button type="button" className="secondary-button" style={{ margin: '12px 0 0 8px' }} onClick={() => setSelectedCardMember(null)}>Close Preview</button></section>}
-      {(activeView === 'dashboard' || activeView === 'issue') && <div className="library-grid">
+      {activeView === 'issue' && <div className="library-grid">
         <div className="library-main-card">
           <div className="library-tabs">
             <button
