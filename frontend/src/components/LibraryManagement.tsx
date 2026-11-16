@@ -661,7 +661,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               <td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td>
               <td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td>
               <td><strong>{student.paymentStatus}</strong></td>
-              <td><button type="button" className="secondary-button" onClick={() => setSelectedCardMember({ id: student.studentId, studentNumber: student.studentNumber, name: student.studentName })}>View Card</button></td>
+              <td><button type="button" className="secondary-button" onClick={() => setSelectedCardMember({ id: student.studentId, memberType: 'Student', memberNumber: student.studentNumber, studentNumber: student.studentNumber, name: student.studentName })}>View Card</button></td>
             </tr>)}
             {clearanceStudents.length === 0 && <tr><td colSpan={8}>No students are available in the central register.</td></tr>}</tbody>
           </table>
