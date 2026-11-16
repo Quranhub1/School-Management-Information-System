@@ -1,3 +1,7 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using SchoolManagement.Domain.People;
+
 namespace SchoolManagement.Domain.Staff;
 
 /// <summary>
@@ -10,6 +14,8 @@ public sealed class StaffMember
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
     public string? OtherNames { get; set; }
+    [NotMapped, JsonPropertyName("displayName")]
+    public string DisplayName => PersonName.Format(LastName, FirstName, OtherNames);
     public string? NationalId { get; set; }
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }

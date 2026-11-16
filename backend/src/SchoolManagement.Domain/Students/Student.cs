@@ -1,4 +1,7 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using SchoolManagement.Domain.Finance;
+using SchoolManagement.Domain.People;
 
 namespace SchoolManagement.Domain.Students;
 
@@ -9,6 +12,8 @@ public sealed class Student
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
     public string? OtherNames { get; set; }
+    [NotMapped, JsonPropertyName("displayName")]
+    public string DisplayName => PersonName.Format(LastName, FirstName, OtherNames);
     public DateOnly? DateOfBirth { get; set; }
     public string? Gender { get; set; }
     public string? NationalId { get; set; }

@@ -9,6 +9,7 @@ export interface Student {
   firstName: string
   lastName: string
   otherNames?: string | null
+  displayName?: string
   dateOfBirth?: string | null
   gender?: string | null
   nationalId?: string | null
