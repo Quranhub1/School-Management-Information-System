@@ -71,10 +71,6 @@ export type LibraryProgrammeRequirement = {
 }
 export const listProgrammeRequirements = () =>
   request<LibraryProgrammeRequirement[]>('/api/library/programme-requirements')
-export const setProgrammeRequirement = (input: { programmeId: string; name: string; amount: number; currency: string }) =>
-  request<LibraryProgrammeRequirement>('/api/library/programme-requirements', { method: 'POST', body: JSON.stringify(input) })
-export const setProgrammeRequirementActive = (id: string, active: boolean) =>
-  request<{ id: string; isActive: boolean }>(`/api/library/programme-requirements/${id}/active?active=${active}`, { method: 'PATCH' })
 export const recordLibraryStudentPayment = (studentId: string, input: { amount: number }) =>
   request<{ id: string; studentId: string; amount: number; currency: string; recordedAtUtc: string }>(
     `/api/library/students/${studentId}/payments`,
