@@ -528,9 +528,17 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <p>Configure one course-book fee for the whole programme, for example Certificate in Pharmacy (CPH). This is a programme-level requirement, not a fee for an individual subject. Librarians enter each student's amount paid and approve it under Course-book Requirements.</p>
         <form className="library-requirement-form" onSubmit={submitProgrammeRequirement}>
           <label>Programme / Course
-            <select value={requirementForm.programmeId} onChange={e => setRequirementForm(v => ({ ...v, programmeId: e.target.value }))} required>
+            <select value={requirementForm.programmeId} onChange={e => {
+              const programmeId = e.target.value;
+              const existing = requirements.find(item => item.programmeId === programmeId && item.isActive);
+              setRequirementForm({
+                programmeId,
+                name: existing?.name ?? 'Required course book',
+                amount: existing ? String(existing.totalAmount) : ''
+              });
+            }} required>
               <option value="">Select a programme (e.g. Certificate in Pharmacy — CPH)</option>
-              {programmes.map(programme => <option key={programme.id} value={programme.id}>{programme.name}</option>)}
+              {programmes.map(programme => <option key={programme.id} value={programme.id}>{programme.name} ({programme.code})</option>)}
             </select>
           </label>
           <label>Book / requirement
@@ -544,7 +552,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div className="table-wrap" style={{ marginTop: 12 }}>
           <table><thead><tr><th>ID</th><th>Programme</th><th>Requirement</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>{requirements.map((item, index) => <tr key={item.id}><td>{index + 1}</td>
-              <td>{programmes.find(p => p.id === item.programmeId)?.name ?? item.programmeId}</td>
+              <td>{programmes.find(p => p.id === item.programmeId)?.name ?? item.programmeId}{programmes.find(p => p.id === item.programmeId)?.code ? ` (${programmes.find(p => p.id === item.programmeId)?.code})` : ''}</td>
               <td>{item.name}</td>              <td>{item.currency} {item.totalAmount.toLocaleString(SYSTEM_LOCALE)}</td>
               <td>{item.isActive ? 'Active' : 'Inactive'}</td>
               <td><button type="button" className="secondary-button" disabled={busy} onClick={() => void toggleProgrammeRequirement(item.id, !item.isActive)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td>
