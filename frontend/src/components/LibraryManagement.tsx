@@ -606,7 +606,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </section>}
       {activeView === 'clearance-students' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
-        <div className="library-toolbar"><div><h3>Students — Course-book Requirements</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} students</small></div></div>
+        <div className="library-toolbar"><div><h3>Students — Course-book Requirements</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} students</small><p style={{ margin: '4px 0 0', fontSize: 12 }}>Librarians record money received manually and approve each payment here. No online checkout is used.</p></div></div>
         <div className="library-clearance-filters" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 10, margin: '14px 0' }}>
           <label className="library-clearance-search-label">Search student
             <div className="library-clearance-autocomplete">
@@ -672,7 +672,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId}>
               <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.paymentStatus === 'Paid' ? <strong>Cleared</strong> : !student.requirementId ? <span title="Configure the programme fee under Fees & Settings">Fee not configured</span> : canManage ? <div className="library-payment-approval" style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 220 }}>
                 <input aria-label={`Manual payment amount for ${student.studentName}`} type="number" min="0.01" max={student.outstandingAmount} step="0.01" placeholder="Amount received" value={paymentAmounts[student.studentId] ?? ''} onChange={e => setPaymentAmounts(current => ({ ...current, [student.studentId]: e.target.value }))} style={{ width: 115, minWidth: 100 }} />
-                <button type="button" className="library-primary" disabled={busy || !paymentAmounts[student.studentId] || student.outstandingAmount <= 0} onClick={() => void recordStudentBookPayment(student)}>Approve payment</button>
+                <button type="button" className="library-primary" disabled={busy || !paymentAmounts[student.studentId] || student.outstandingAmount <= 0} onClick={() => void recordStudentBookPayment(student)}>Approve manual payment</button>
               </div> : <span title="A Librarian or System Administrator must approve manual course-book payments">Librarian approval required</span>}</td>
             </tr>)}
             {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No students match these filters.</td></tr>}</tbody>
