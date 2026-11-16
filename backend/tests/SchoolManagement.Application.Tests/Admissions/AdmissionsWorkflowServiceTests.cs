@@ -151,6 +151,9 @@ public sealed class AdmissionsWorkflowServiceTests
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
+        public Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(Guid programmeId, bool mandatoryOnly = false, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<AdmissionRequirement>>(Array.Empty<AdmissionRequirement>());
+
         public Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(
             Guid programmeId, bool mandatoryOnly = false, CancellationToken cancellationToken = default)
         {
