@@ -129,6 +129,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [clearanceFilters, setClearanceFilters] = useState({ name: '', course: '', semester: '', year: '', academicYear: '' });
   const [clearanceSearchFocused, setClearanceSearchFocused] = useState(false);
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
+  const [savingStudentRow, setSavingStudentRow] = useState<Record<string, boolean>>({});
+  const [paymentStatusSelect, setPaymentStatusSelect] = useState<Record<string, string>>({});
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
   const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'overdue' | 'cards' | 'clearance-students' | 'clearance-settings'>('dashboard');
@@ -424,20 +426,37 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
   async function updateStudentPaymentStatus(student: PaidLibraryClearanceStudent, status: string) {
     const selected = (status ?? '').trim();
-    if (!['Paid', 'Partially Paid', 'Not Paid'].includes(selected)) return;
+    const currentStatus = getClearancePaymentStatus(student);
+    if (!['Paid', 'Partially Paid', 'Not Paid'].includes(selected)) {
+      setPaymentStatusSelect(current => ({ ...current, [student.studentId]: currentStatus }));
+      return;
+    }
 
-    if (selected === 'Paid' && student.outstandingAmount > 0) {
-      setSavingStudentRow(s => ({ ...s, [student.studentId]: true }));
-      setError('');
-      try {
-        await recordLibraryStudentPayment(student.studentId, { amount: student.outstandingAmount });
-        setPaymentStatusSelect(current => ({ ...current, [student.studentId]: '' }));
-        setClearanceStudents(await listPaidLibraryClearanceStudents());
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Unable to mark payment as paid.');
-      } finally {
-        setSavingStudentRow(s => ({ ...s, [student.studentId]: false }));
-      }
+    // Payment status is ledger-derived. Marking a student Paid records the
+    // exact outstanding amount; partial/unpaid states must come from actual
+    // payment entries rather than a manually editable status flag.
+    if (selected !== 'Paid') {
+      setPaymentStatusSelect(current => ({ ...current, [student.studentId]: currentStatus }));
+      setError('Partially Paid and Not Paid are calculated from recorded payments. Record a payment amount to update this student’s status.');
+      return;
+    }
+
+    if (student.outstandingAmount <= 0) {
+      setPaymentStatusSelect(current => ({ ...current, [student.studentId]: currentStatus }));
+      return;
+    }
+
+    setSavingStudentRow(current => ({ ...current, [student.studentId]: true }));
+    setError('');
+    try {
+      await recordLibraryStudentPayment(student.studentId, { amount: student.outstandingAmount });
+      setPaymentStatusSelect(current => ({ ...current, [student.studentId]: '' }));
+      setClearanceStudents(await listPaidLibraryClearanceStudents());
+    } catch (e) {
+      setPaymentStatusSelect(current => ({ ...current, [student.studentId]: currentStatus }));
+      setError(e instanceof Error ? e.message : 'Unable to mark payment as paid.');
+    } finally {
+      setSavingStudentRow(current => ({ ...current, [student.studentId]: false }));
     }
   }
 
@@ -719,7 +738,26 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Required Fee</th><th>Amount Paid</th><th>Outstanding</th><th>Action</th></tr></thead>
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId}>
               <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td>
-              <td><span className={getClearancePaymentStatus(student) === 'Paid' ? 'loan-status' : getClearancePaymentStatus(student) === 'Partially Paid' ? 'loan-status warning' : 'loan-status overdue'}>{getClearancePaymentStatus(student)}</span></td>
+              <td>
+                {canManage && student.requirementId ? (
+                  <select
+                    aria-label={`Payment status for ${student.studentName}`}
+                    value={paymentStatusSelect[student.studentId] ?? getClearancePaymentStatus(student)}
+                    disabled={Boolean(savingStudentRow[student.studentId])}
+                    onChange={event => {
+                      const nextStatus = event.target.value;
+                      setPaymentStatusSelect(current => ({ ...current, [student.studentId]: nextStatus }));
+                      void updateStudentPaymentStatus(student, nextStatus);
+                    }}
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Partially Paid">Partially Paid</option>
+                    <option value="Not Paid">Not Paid</option>
+                  </select>
+                ) : (
+                  <span className={getClearancePaymentStatus(student) === 'Paid' ? 'loan-status' : getClearancePaymentStatus(student) === 'Partially Paid' ? 'loan-status warning' : 'loan-status overdue'}>{getClearancePaymentStatus(student)}</span>
+                )}
+              </td>
               <td>{student.requirementId
                 ? <>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</>
                 : <span title="Configure this programme's required coursebook fee under Fees & Settings">Not configured</span>}</td>
