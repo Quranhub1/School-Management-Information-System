@@ -182,7 +182,7 @@ export function CurriculumLogbookManagement({ curricula }: { curricula: Curricul
       <h4>UHPAB official fee reference</h4>
       <p>Reference data only. These amounts are not KSHS tuition, student charges or invoices.</p>
       <div className="form-row">
-        <select value={feeForm.category} onChange={e => setFeeForm({ ...feeForm, category: e.target.value })}><option>Logbook</option><option>Assessment</option><option>Retake</option><option>Research</option><option>Late submission</option><option>Administrative</option><option>Verification</option></select>
+        <select value={feeForm.category} onChange={e => setFeeForm({ ...feeForm, category: e.target.value })}><option>Logbook</option><option>Assessment</option><option>Retake</option><option>Research</option><option>Late submission</option><option>Late registration</option><option>Administrative</option><option>Verification</option></select>
         <input placeholder="Programme code (optional)" value={feeForm.programmeCode} onChange={e => setFeeForm({ ...feeForm, programmeCode: e.target.value })} />
         <input placeholder="Programme name (optional)" value={feeForm.programmeName} onChange={e => setFeeForm({ ...feeForm, programmeName: e.target.value })} />
         <input required placeholder="Fee description" value={feeForm.description} onChange={e => setFeeForm({ ...feeForm, description: e.target.value })} />
