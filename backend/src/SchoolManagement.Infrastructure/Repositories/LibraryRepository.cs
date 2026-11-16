@@ -20,7 +20,7 @@ public sealed class LibraryRepository(SchoolManagementDbContext db) : ILibraryRe
         db.LibraryLoans.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default) =>
-        await db.LibraryBooks.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Title).ToListAsync(cancellationToken);
+        await db.LibraryBooks.Where(x => x.IsActive).OrderBy(x => x.Title).ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<LibraryLoan>> GetStudentLoansAsync(Guid studentId, bool activeOnly = false, CancellationToken cancellationToken = default)
     {
