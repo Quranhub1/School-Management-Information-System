@@ -206,6 +206,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
   useEffect(() => {
     if (activeView === 'cards') {
+      setClearanceStudents([]);
       listPaidLibraryClearanceStudents()
         .then(setClearanceStudents)
         .catch(e => setError(e instanceof Error ? e.message : 'Unable to load student library fee balances.'));
@@ -1026,7 +1027,15 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </section>
       )}
       {activeView === 'cards' && <section className="library-main-card" style={{ padding: 16 }}>
-        <div className="library-toolbar"><div><h3>Library Card Register</h3><small>{members.length} students in the central register. Printing is enabled only after the full course-book fee is paid.</small></div></div>
+        <div className="library-toolbar">
+          <div><h3>Library Card Register</h3><small>{members.length} students in the central register. Printing is enabled only after the full course-book fee is paid.</small></div>
+          <button type="button" className="secondary-button" onClick={() => {
+            setClearanceStudents([]);
+            listPaidLibraryClearanceStudents()
+              .then(setClearanceStudents)
+              .catch(e => setError(e instanceof Error ? e.message : 'Unable to refresh student library fee balances.'));
+          }}>Refresh payment status</button>
+        </div>
         <div className="table-wrap"><table>
           <thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Required Fee</th><th>Paid</th><th>Balance</th><th>Payment Status</th><th>Card</th></tr></thead>
           <tbody>{members.map((member, index) => {
