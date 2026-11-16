@@ -18,6 +18,7 @@ import {
   listProgrammeRequirements,
   setProgrammeRequirement,
   setProgrammeRequirementActive,
+  recordLibraryStudentPayment,
   type LibraryProgrammeRequirement,
   listPaidLibraryClearanceStudents,
   getLibraryClearanceAcademicOptions,
@@ -369,6 +370,33 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     }
   }
 
+  async function recordStudentBookPayment(student: PaidLibraryClearanceStudent) {
+    const enteredAmount = window.prompt(
+      `Enter the amount received from ${student.studentName}. Outstanding: ${student.currency} ${student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}`,
+      String(student.outstandingAmount),
+    );
+    if (enteredAmount === null) return;
+    const amount = Number(enteredAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError('Enter a valid payment amount greater than zero.');
+      return;
+    }
+    const method = window.prompt('Payment method (Cash, Bank, Mobile Money, etc.)', 'Cash');
+    if (method === null || !method.trim()) return;
+    const reference = window.prompt('Receipt or payment reference (optional)', '') ?? '';
+
+    setBusy(true);
+    setError('');
+    try {
+      await recordLibraryStudentPayment(student.studentId, { amount, method: method.trim(), reference: reference.trim() });
+      setClearanceStudents(await listPaidLibraryClearanceStudents());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to record the library payment.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function submitBook(e: FormEvent) {
     e.preventDefault();
     setError('');
@@ -499,7 +527,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
       {canManage && activeView === 'clearance-settings' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
         <h3>Course book requirements and fees</h3>
-        <p>Set the required book or book-purchase amount for each programme. These charges are added to the student's Finance account automatically on admission.</p>
+        <p>Set the required course-book amount for each programme. Record student payments here and track the remaining balance in Library Clearance.</p>
         <form className="library-requirement-form" onSubmit={submitProgrammeRequirement}>
           <label>Programme
             <select value={requirementForm.programmeId} onChange={e => setRequirementForm(v => ({ ...v, programmeId: e.target.value }))} required>
@@ -590,9 +618,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </label>
         </div>
         <div className="table-wrap">
-          <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Amount Paid</th><th>Outstanding</th><th>Invoice</th><th>Invoice Date</th></tr></thead>
+          <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Required Fee</th><th>Amount Paid</th><th>Outstanding</th><th>Action</th></tr></thead>
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId + student.invoiceNumber}>
-              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.invoiceNumber || '—'}</td><td>{student.issuedAt ? formatDate(student.issuedAt) : '—'}</td>
+              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{canManage && student.requirementId && student.outstandingAmount > 0 ? <button type="button" className="secondary-button" disabled={busy} onClick={() => void recordStudentBookPayment(student)}>Record payment</button> : student.paymentStatus === 'Paid' ? 'Cleared' : '—'}</td>
             </tr>)}
             {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No students match these filters.</td></tr>}</tbody>
           </table>
