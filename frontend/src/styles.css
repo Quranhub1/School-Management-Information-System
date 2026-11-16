@@ -198,6 +198,11 @@ td strong { display: block; }
 .library-stat em { color: #a8a29e; font-size: .72rem; font-style: normal; }
 .danger-number { color: #dc2626; }
 .library-grid { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; align-items: start; }
+.library-grid-fullwidth { grid-template-columns: minmax(0, 1fr); }
+.library-grid-fullwidth .library-main-card { width: 100%; min-width: 0; }
+.library-grid-fullwidth .library-main-card .table-wrap { width: 100%; }
+.library-grid-fullwidth .library-main-card table { width: 100%; }
+.library-grid-fullwidth .library-side-card { width: 100%; box-sizing: border-box; }
 .library-issue-entry { width: 100%; margin: 0 0 18px; border: 1px solid #e7e5e4; border-radius: 14px; background: #fff; box-shadow: 0 8px 25px rgba(28, 25, 23, .045); overflow: hidden; }
 .library-issue-entry-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #e7e5e4; }
 .library-issue-entry-heading h3 { margin: 0; color: #1c1917; font-size: .98rem; }
