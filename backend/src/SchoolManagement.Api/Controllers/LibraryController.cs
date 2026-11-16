@@ -324,7 +324,7 @@ public sealed class LibraryController(
             enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
             statusByStudent.TryGetValue(student.Id, out var academicStatus);
             // Resolve requirements against both enrolment and admission programme links.
-            LibraryProgrammeRequirement? requirement = null;
+            SchoolManagement.Domain.Library.LibraryProgrammeRequirement? requirement = null;
             if (enrollment?.ProgrammeId is Guid enrolledProgrammeId)
                 requirementsByProgramme.TryGetValue(enrolledProgrammeId, out requirement);
             if (requirement is null && student.ProgrammeId is Guid admittedProgrammeId)
