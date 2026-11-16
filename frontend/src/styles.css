@@ -5453,3 +5453,93 @@ table { font-variant-numeric: tabular-nums; }
 [data-theme="dark"] .library-clearance-no-suggestions {
   color: #b5c6ba;
 }
+
+
+/* Library fees & settings: make the programme selector and requirement
+   entry fields unmistakably visible in both light and dark themes. */
+.app-shell .library-requirement-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(190px, 1fr) minmax(150px, .7fr) auto;
+  gap: 14px;
+  align-items: end;
+  width: 100%;
+  margin-top: 16px;
+}
+.app-shell .library-requirement-form > label {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  color: #24372b;
+  font-size: .84rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+.app-shell .library-requirement-form > label > input,
+.app-shell .library-requirement-form > label > select,
+.app-shell .library-requirement-form > label > textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1.5px solid #829b89;
+  border-radius: 6px;
+  background: #fff;
+  color: #17251d;
+  font: inherit;
+  font-size: .9rem;
+  line-height: 1.4;
+  opacity: 1;
+  visibility: visible;
+  box-shadow: 0 1px 3px rgba(20, 55, 34, .10);
+}
+.app-shell .library-requirement-form > label > select {
+  padding-right: 42px;
+}
+.app-shell .library-requirement-form > label > input::placeholder,
+.app-shell .library-requirement-form > label > textarea::placeholder {
+  color: #68776d;
+  opacity: 1;
+}
+.app-shell .library-requirement-form > label > input:focus,
+.app-shell .library-requirement-form > label > select:focus,
+.app-shell .library-requirement-form > label > textarea:focus {
+  outline: 2px solid rgba(23, 107, 67, .2);
+  outline-offset: 1px;
+  border-color: #176b43;
+  box-shadow: 0 0 0 3px rgba(23, 107, 67, .13);
+}
+.app-shell .library-requirement-form > button {
+  min-height: 46px;
+  white-space: nowrap;
+}
+[data-theme="dark"] .app-shell .library-requirement-form > label {
+  color: #e6f1e9;
+}
+[data-theme="dark"] .app-shell .library-requirement-form > label > input,
+[data-theme="dark"] .app-shell .library-requirement-form > label > select,
+[data-theme="dark"] .app-shell .library-requirement-form > label > textarea {
+  border-color: #648571;
+  background-color: #17271e;
+  color: #f0f8f2;
+}
+[data-theme="dark"] .app-shell .library-requirement-form > label > input::placeholder,
+[data-theme="dark"] .app-shell .library-requirement-form > label > textarea::placeholder {
+  color: #b5c7ba;
+}
+@media (max-width: 900px) {
+  .app-shell .library-requirement-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .app-shell .library-requirement-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-shell .library-requirement-form > button {
+    width: 100%;
+  }
+}
