@@ -4,7 +4,7 @@ import type { FormEvent } from 'react';
 import { validateForm } from '../lib/validation';
 import { formatIsbnInput, isValidIsbn, normalizeIsbnDigits, toBooklandEan13 } from '../lib/isbn';
 import { libraryBookCreateRequestSchema, libraryLoanCreateRequestSchema } from '../schemas';
-import { getCurrencyInputStep, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency';
+import { SYSTEM_LOCALE } from '../lib/currency';
 import {
   addBook,
   updateBook,
@@ -18,8 +18,6 @@ import {
   type LibraryLoan,
   type LibraryMember,
   listProgrammeRequirements,
-  setProgrammeRequirement,
-  setProgrammeRequirementActive,
   recordLibraryStudentPayment,
   type LibraryProgrammeRequirement,
   listPaidLibraryClearanceStudents,
@@ -130,7 +128,6 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [clearanceFilters, setClearanceFilters] = useState({ name: '', course: '', semester: '', year: '', academicYear: '' });
   const [clearanceSearchFocused, setClearanceSearchFocused] = useState(false);
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
-  const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
   const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'overdue' | 'cards' | 'clearance-students' | 'clearance-settings'>('dashboard');
   const [openAddBookForm, setOpenAddBookForm] = useState(false);
@@ -351,42 +348,6 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     }
   }, [isbnDigits, isbnValid]);
 
-  async function submitProgrammeRequirement(e: FormEvent) {
-    e.preventDefault();
-    if (!requirementForm.programmeId || !requirementForm.name.trim() || Number(requirementForm.amount) <= 0) {
-      setError('Select a programme, enter the book requirement and a fee greater than zero.');
-      return;
-    }
-    setBusy(true);
-    setError('');
-    try {
-      await setProgrammeRequirement({
-        programmeId: requirementForm.programmeId,
-        name: requirementForm.name.trim(),
-        amount: Number(requirementForm.amount),
-        currency: SYSTEM_CURRENCY,
-      });
-      setRequirements(await listProgrammeRequirements());
-      setRequirementForm(current => ({ ...current, amount: '' }));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save course book requirement.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function toggleProgrammeRequirement(id: string, active: boolean) {
-    setBusy(true);
-    try {
-      await setProgrammeRequirementActive(id, active);
-      setRequirements(await listProgrammeRequirements());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update requirement.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function recordStudentBookPayment(student: PaidLibraryClearanceStudent) {
     const amount = Number(paymentAmounts[student.studentId] ?? '');
     if (!Number.isFinite(amount) || amount <= 0 || Math.round(amount * 100) !== amount * 100) {
@@ -586,40 +547,18 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       )}
 
       {canManage && activeView === 'clearance-settings' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
-        <h3>Programme course-book fee settings</h3>
-        <p>Configure one course-book fee for the whole programme, for example Certificate in Pharmacy (CPH). This is a programme-level requirement, not a fee for an individual subject. Librarians enter each student's amount paid and approve it under Course-book Requirements.</p>
-        <form className="library-requirement-form" onSubmit={submitProgrammeRequirement}>
-          <label>Programme / Course
-            <select value={requirementForm.programmeId} onChange={e => {
-              const programmeId = e.target.value;
-              const existing = requirements.find(item => item.programmeId === programmeId && item.isActive);
-              setRequirementForm({
-                programmeId,
-                name: existing?.name ?? 'Required course book',
-                amount: existing ? String(existing.totalAmount) : ''
-              });
-            }} required>
-              <option value="">Select a programme (e.g. Certificate in Pharmacy — CPH)</option>
-              {programmes.map(programme => <option key={programme.id} value={programme.id}>{programme.name} ({programme.code})</option>)}
-            </select>
-          </label>
-          <label>Book / requirement
-            <input value={requirementForm.name} onChange={e => setRequirementForm(v => ({ ...v, name: e.target.value }))} required />
-          </label>
-          <label>Amount ({SYSTEM_CURRENCY})
-            <input type="number" min={getCurrencyInputStep(SYSTEM_CURRENCY)} step={getCurrencyInputStep(SYSTEM_CURRENCY)} value={requirementForm.amount} onChange={e => setRequirementForm(v => ({ ...v, amount: e.target.value }))} required />
-          </label>
-          <button className="library-primary" type="submit" disabled={busy}>Save requirement</button>
-        </form>
+        <h3>Course-book fees from Finance</h3>
+        <p>These amounts are loaded directly from the active <strong>LibraryBook</strong> fee structures in Finance for the current academic year. To change a course-book fee, update it in Finance → Fee Settings. This screen is read-only so the same fee is never configured twice.</p>
         <div className="table-wrap" style={{ marginTop: 12 }}>
-          <table><thead><tr><th>ID</th><th>Programme</th><th>Requirement</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+          <table><thead><tr><th>ID</th><th>Programme</th><th>Fee structure</th><th>Configured amount</th><th>Source</th><th>Status</th></tr></thead>
             <tbody>{requirements.map((item, index) => <tr key={item.id}><td>{index + 1}</td>
               <td>{programmes.find(p => p.id === item.programmeId)?.name ?? item.programmeId}{programmes.find(p => p.id === item.programmeId)?.code ? ` (${programmes.find(p => p.id === item.programmeId)?.code})` : ''}</td>
-              <td>{item.name}</td>              <td>{item.currency} {item.totalAmount.toLocaleString(SYSTEM_LOCALE)}</td>
+              <td>{item.name}</td>
+              <td><strong>{item.currency} {item.totalAmount.toLocaleString(SYSTEM_LOCALE)}</strong></td>
+              <td>Finance Fee Settings</td>
               <td>{item.isActive ? 'Active' : 'Inactive'}</td>
-              <td><button type="button" className="secondary-button" disabled={busy} onClick={() => void toggleProgrammeRequirement(item.id, !item.isActive)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td>
             </tr>)}
-            {requirements.length === 0 && <tr><td colSpan={6}>No course book requirements configured.</td></tr>}</tbody>
+            {requirements.length === 0 && <tr><td colSpan={6}>No active LibraryBook fee structure was found in Finance for the current academic year. Configure one under Finance → Fee Settings.</td></tr>}</tbody>
           </table>
         </div>
       </section>}
