@@ -4125,6 +4125,38 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Librarians");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Library.LibraryProgrammeRequirement", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<decimal>("Amount").HasPrecision(18, 2).HasColumnType("numeric(18,2)");
+                    b.Property<DateTimeOffset>("CreatedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<string>("Currency").IsRequired().HasMaxLength(3).HasColumnType("character varying(3)");
+                    b.Property<bool>("IsActive").HasColumnType("boolean");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<Guid>("ProgrammeId").HasColumnType("uuid");
+                    b.Property<DateTimeOffset>("UpdatedAtUtc").HasColumnType("timestamp with time zone");
+                    b.HasKey("Id");
+                    b.HasIndex("ProgrammeId", "IsActive");
+                    b.ToTable("LibraryProgrammeRequirements");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Library.LibraryStudentPayment", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<decimal>("Amount").HasPrecision(18, 2).HasColumnType("numeric(18,2)");
+                    b.Property<string>("Currency").IsRequired().HasMaxLength(3).HasColumnType("character varying(3)");
+                    b.Property<string>("PaymentMethod").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<DateTimeOffset>("RecordedAtUtc").HasColumnType("timestamp with time zone");
+                    b.Property<string>("RecordedBy").HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<string>("Reference").HasMaxLength(120).HasColumnType("character varying(120)");
+                    b.Property<Guid>("RequirementId").HasColumnType("uuid");
+                    b.Property<Guid>("StudentId").HasColumnType("uuid");
+                    b.HasKey("Id");
+                    b.HasIndex("RequirementId");
+                    b.HasIndex("StudentId", "RequirementId", "RecordedAtUtc");
+                    b.ToTable("LibraryStudentPayments");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Library.LibraryBook", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5277,6 +5309,20 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasForeignKey("StaffMemberId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Library.LibraryProgrammeRequirement", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Programme", null)
+                        .WithMany().HasForeignKey("ProgrammeId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Library.LibraryStudentPayment", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Library.LibraryProgrammeRequirement", null)
+                        .WithMany().HasForeignKey("RequirementId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
+                        .WithMany().HasForeignKey("StudentId").OnDelete(DeleteBehavior.Restrict).IsRequired();
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Library.LibraryLoan", b =>
