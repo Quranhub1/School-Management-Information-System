@@ -26,6 +26,7 @@ import {
 } from '../api/library';
 import { getProgrammes, type Programme } from '../api/programmes';
 
+const todayInput = () => new Date().toISOString().slice(0, 10);
 const dateInput = () => {
   const d = new Date();
   d.setDate(d.getDate() + 14);
@@ -67,7 +68,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   });
   const [issue, setIssue] = useState({
     bookId: '',
+    memberType: 'Student' as 'Student' | 'Staff',
     memberNumber: '',
+    issueDate: todayInput(),
     dueDate: dateInput(),
   });
   const [barcodeBookId, setBarcodeBookId] = useState<string | null>(null);
@@ -159,8 +162,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;
   const isbnValid = isbnComplete && isValidIsbn(isbnDigits);
   const selectedMember = useMemo(
-    () => members.find((m) => m.studentNumber === issue.memberNumber),
-    [members, issue.memberNumber],
+    () => members.find((m) => m.memberType === issue.memberType && m.memberNumber === issue.memberNumber),
+    [members, issue.memberType, issue.memberNumber],
   );
 
   const barcodeBook = books.find(book => book.id === barcodeBookId);
@@ -297,7 +300,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
     const loanInput = {
       bookId: issue.bookId,
-      studentId: selectedMember.id,
+      memberId: selectedMember.id,
+      memberType: issue.memberType,
+      issuedAtUtc: new Date(`${issue.issueDate}T12:00:00`).toISOString(),
       dueAtUtc: new Date(`${issue.dueDate}T23:59:59`).toISOString(),
     };
     const validation = validateForm(libraryLoanCreateRequestSchema, loanInput);
@@ -311,7 +316,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     setError('');
     try {
       await issueBook(validation.data);
-      setIssue({ bookId: '', memberNumber: '', dueDate: dateInput() });
+      setIssue({ bookId: '', memberType: 'Student', memberNumber: '', issueDate: todayInput(), dueDate: dateInput() });
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to issue the book.');
@@ -610,43 +615,30 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           <h3>{activeView === 'overdue' ? 'Overdue Follow-up' : 'Quick Actions'}</h3>
           {activeView === 'issue' && canManage && (
             <form onSubmit={submitIssue} className="library-action-form">
-              <label>Issue a Book</label>
-              <select
-                value={issue.bookId}
-                onChange={(e) => setIssue({ ...issue, bookId: e.target.value })}
-              >
-                <option value="">Select available book</option>
-                {books
-                  .filter((b) => b.availableCopies > 0)
-                  .map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.title} · {b.availableCopies} available
-                    </option>
-                  ))}
-              </select>
-              <input
-                list="library-members"
-                placeholder="Student number or name"
-                value={issue.memberNumber}
-                onChange={(e) =>
-                  setIssue({ ...issue, memberNumber: e.target.value })
-                }
-              />
-              <datalist id="library-members">
-                {members.map((m) => (
-                  <option key={m.id} value={m.studentNumber}>
-                    {m.name}
-                  </option>
-                ))}
-              </datalist>
-              <input
-                type="date"
-                value={issue.dueDate}
-                onChange={(e) => setIssue({ ...issue, dueDate: e.target.value })}
-              />
-              <button className="quick-issue" disabled={busy}>
-                Issue Book
-              </button>
+              <label>Issue Book — Loan Register Entry</label>
+              <div className="table-wrap">
+                <table>
+                  <thead><tr><th>ID</th><th>Book</th><th>Member type</th><th>Member</th><th>Issue date</th><th>Due date</th><th>Status</th><th>Action</th></tr></thead>
+                  <tbody><tr>
+                    <td>New</td>
+                    <td><select aria-label="Select available book" required value={issue.bookId} onChange={e => setIssue({ ...issue, bookId: e.target.value })}>
+                      <option value="">Select book</option>
+                      {books.filter(b => b.availableCopies > 0).map(b => <option key={b.id} value={b.id}>{b.title} · {b.isbn} · {b.availableCopies} available</option>)}
+                    </select></td>
+                    <td><select aria-label="Member type" value={issue.memberType} onChange={e => setIssue({ ...issue, memberType: e.target.value as 'Student'|'Staff', memberNumber: '' })}>
+                      <option value="Student">Student</option><option value="Staff">Staff</option>
+                    </select></td>
+                    <td><select aria-label="Select member" required value={issue.memberNumber} onChange={e => setIssue({ ...issue, memberNumber: e.target.value })}>
+                      <option value="">Select {issue.memberType.toLowerCase()}</option>
+                      {members.filter(m => m.memberType === issue.memberType).map(m => <option key={m.id} value={m.memberNumber}>{m.memberNumber} — {m.name}</option>)}
+                    </select></td>
+                    <td><input aria-label="Issue date" type="date" required value={issue.issueDate} max={todayInput()} onChange={e => setIssue({ ...issue, issueDate: e.target.value })} /></td>
+                    <td><input aria-label="Due date" type="date" required min={issue.issueDate} value={issue.dueDate} onChange={e => setIssue({ ...issue, dueDate: e.target.value })} /></td>
+                    <td><span className="loan-status">Ready</span></td>
+                    <td><button className="quick-issue" disabled={busy || !selectedMember || !issue.bookId}>Issue</button></td>
+                  </tr></tbody>
+                </table>
+              </div>
             </form>
           )}
           {activeView === 'overdue' && canManage && (
