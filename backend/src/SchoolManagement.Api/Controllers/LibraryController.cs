@@ -59,7 +59,7 @@ public sealed class LibraryController(
                 name = (x.FirstName + " " + (x.OtherNames ?? "") + " " + x.LastName).Trim()
             }).ToListAsync(ct));
         }
-        return Ok(members.OrderBy(x => ((dynamic)x).name));
+        return Ok(members);
     }
 
     // Librarians own course-specific book purchase/fee requirements. These are stored
