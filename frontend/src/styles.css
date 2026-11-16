@@ -5304,36 +5304,38 @@ table { font-variant-numeric: tabular-nums; }
 .app-shell .library-clearance-autocomplete > .library-clearance-clear-search {
   position: absolute !important;
   top: 50% !important;
-  right: 10px !important;
+  right: 12px !important;
   bottom: auto !important;
   left: auto !important;
   z-index: 4;
   display: inline-flex !important;
-  flex: 0 0 30px;
   align-items: center;
   justify-content: center;
-  width: 30px !important;
-  min-width: 30px;
-  height: 30px !important;
-  min-height: 30px;
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 28px !important;
+  min-height: 28px !important;
   margin: 0 !important;
   padding: 0 !important;
   transform: translateY(-50%) !important;
-  border: 1px solid #c7d7cc !important;
-  border-radius: 50% !important;
-  background: #edf5ef !important;
-  color: #315b40 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #68756d !important;
   font-family: Arial, sans-serif;
   font-size: 21px !important;
-  font-weight: 600;
+  font-weight: 400 !important;
   line-height: 1 !important;
-  box-shadow: 0 1px 3px rgba(15, 35, 22, .12);
+  box-shadow: none !important;
   cursor: pointer;
 }
-.app-shell .library-clearance-autocomplete > .library-clearance-clear-search:hover {
-  border-color: #176b43 !important;
-  background: #d9ecdf !important;
-  color: #104b2d !important;
+.app-shell .library-clearance-autocomplete > .library-clearance-clear-search:hover,
+.app-shell .library-clearance-autocomplete > .library-clearance-clear-search:focus-visible {
+  border: 0 !important;
+  background: transparent !important;
+  color: #202a24 !important;
+  box-shadow: none !important;
+  outline: none;
 }
 .app-shell .library-clearance-autocomplete > input {
   padding-right: 50px;
