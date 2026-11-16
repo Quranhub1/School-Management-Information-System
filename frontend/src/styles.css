@@ -5295,29 +5295,48 @@ table { font-variant-numeric: tabular-nums; }
   line-height: 1;
   pointer-events: none;
 }
-.library-clearance-clear-search {
-  position: absolute;
-  z-index: 2;
-  top: 50%;
-  right: 9px;
-  display: inline-flex;
+.library-clearance-autocomplete {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.app-shell .library-clearance-autocomplete > .library-clearance-clear-search {
+  position: absolute !important;
+  top: 50% !important;
+  right: 10px !important;
+  bottom: auto !important;
+  left: auto !important;
+  z-index: 4;
+  display: inline-flex !important;
+  flex: 0 0 30px;
   align-items: center;
   justify-content: center;
-  width: 25px;
-  height: 25px;
-  padding: 0;
-  transform: translateY(-50%);
-  border: 0;
-  border-radius: 50%;
-  background: #edf3ef;
-  color: #40584a;
-  font-size: 19px;
-  line-height: 1;
+  width: 30px !important;
+  min-width: 30px;
+  height: 30px !important;
+  min-height: 30px;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: translateY(-50%) !important;
+  border: 1px solid #c7d7cc !important;
+  border-radius: 50% !important;
+  background: #edf5ef !important;
+  color: #315b40 !important;
+  font-family: Arial, sans-serif;
+  font-size: 21px !important;
+  font-weight: 600;
+  line-height: 1 !important;
+  box-shadow: 0 1px 3px rgba(15, 35, 22, .12);
   cursor: pointer;
 }
-.library-clearance-clear-search:hover {
-  background: #dcebe1;
-  color: #145333;
+.app-shell .library-clearance-autocomplete > .library-clearance-clear-search:hover {
+  border-color: #176b43 !important;
+  background: #d9ecdf !important;
+  color: #104b2d !important;
+}
+.app-shell .library-clearance-autocomplete > input {
+  padding-right: 50px;
 }
 .library-clearance-suggestions {
   position: absolute;
