@@ -21,6 +21,25 @@ namespace SchoolManagement.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            modelBuilder.Entity("SchoolManagement.Domain.Library.LibraryPluginSettings", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("KohaOpacUrl").IsRequired().HasColumnType("text");
+                    b.Property<string>("KohaApiUrl").IsRequired().HasColumnType("text");
+                    b.Property<string>("KohaUsername").HasColumnType("text");
+                    b.Property<string>("KohaPasswordProtected").HasColumnType("text");
+                    b.Property<string>("DSpaceBaseUrl").IsRequired().HasColumnType("text");
+                    b.Property<string>("DSpaceRestApiUrl").IsRequired().HasColumnType("text");
+                    b.Property<string>("DSpaceOaiPmhUrl").IsRequired().HasColumnType("text");
+                    b.Property<string>("DSpaceUsername").HasColumnType("text");
+                    b.Property<string>("DSpacePasswordProtected").HasColumnType("text");
+                    b.Property<bool>("KohaEnabled").HasColumnType("boolean");
+                    b.Property<bool>("DSpaceEnabled").HasColumnType("boolean");
+                    b.Property<DateTimeOffset>("UpdatedAt").HasColumnType("timestamp with time zone");
+                    b.HasKey("Id");
+                    b.ToTable("LibraryPluginSettings");
+                });
+
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Campus", b =>
                 {
