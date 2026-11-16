@@ -4,7 +4,7 @@ import type { FormEvent } from 'react';
 import { validateForm } from '../lib/validation';
 import { formatIsbnInput, isValidIsbn, normalizeIsbnDigits, toBooklandEan13 } from '../lib/isbn';
 import { libraryBookCreateRequestSchema, libraryLoanCreateRequestSchema } from '../schemas';
-import { getCurrencyInputStep, SYSTEM_CURRENCY, SYSTEM_LOCALE } from '../lib/currency';
+import { SYSTEM_LOCALE } from '../lib/currency';
 import {
   addBook,
   updateBook,
@@ -18,8 +18,6 @@ import {
   type LibraryLoan,
   type LibraryMember,
   listProgrammeRequirements,
-  setProgrammeRequirement,
-  setProgrammeRequirementActive,
   recordLibraryStudentPayment,
   type LibraryProgrammeRequirement,
   listPaidLibraryClearanceStudents,
@@ -130,8 +128,6 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [clearanceFilters, setClearanceFilters] = useState({ name: '', course: '', semester: '', year: '', academicYear: '' });
   const [clearanceSearchFocused, setClearanceSearchFocused] = useState(false);
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
-  const [requiredFeeAmounts, setRequiredFeeAmounts] = useState<Record<string, string>>({});
-  const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
   const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'overdue' | 'cards' | 'clearance-students' | 'clearance-settings'>('dashboard');
   const [openAddBookForm, setOpenAddBookForm] = useState(false);
@@ -290,16 +286,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     () => clearanceStudents.find(student => student.studentId === selectedCardMember?.id),
     [clearanceStudents, selectedCardMember],
   );
-  const getClearancePaymentStatus = (student: PaidLibraryClearanceStudent) => {
-    if (!student.requirementId || student.requiredAmount <= 0) return 'Not Configured' as const;
-    const paid = Math.max(0, Number(student.paidAmount) || 0);
-    const required = Math.max(0, Number(student.requiredAmount) || 0);
-    if (paid >= required) return 'Paid' as const;
-    return paid > 0 ? 'Partially Paid' as const : 'Not Paid' as const;
-  };
-  const selectedCardIsPaid = selectedCardClearance
-    ? getClearancePaymentStatus(selectedCardClearance) === 'Paid'
-    : false;
+  const selectedCardIsPaid = selectedCardClearance?.paymentStatus === 'Paid';
   const isbnDigits = normalizeIsbnDigits(form.isbn);
   const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;
   const isbnValid = isbnComplete && isValidIsbn(isbnDigits);
@@ -360,77 +347,6 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       svg.replaceChildren();
     }
   }, [isbnDigits, isbnValid]);
-
-  async function submitProgrammeRequirement(e: FormEvent) {
-    e.preventDefault();
-    if (!requirementForm.programmeId || !requirementForm.name.trim() || Number(requirementForm.amount) <= 0) {
-      setError('Select a programme, enter the book requirement and a fee greater than zero.');
-      return;
-    }
-    setBusy(true);
-    setError('');
-    try {
-      await setProgrammeRequirement({
-        programmeId: requirementForm.programmeId,
-        name: requirementForm.name.trim(),
-        amount: Number(requirementForm.amount),
-        currency: SYSTEM_CURRENCY,
-      });
-      setRequirements(await listProgrammeRequirements());
-      setRequirementForm(current => ({ ...current, amount: '' }));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save course book requirement.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function toggleProgrammeRequirement(id: string, active: boolean) {
-    setBusy(true);
-    try {
-      await setProgrammeRequirementActive(id, active);
-      setRequirements(await listProgrammeRequirements());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update requirement.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function saveStudentProgrammeRequirement(student: PaidLibraryClearanceStudent) {
-    const amountText = requiredFeeAmounts[student.studentId] ?? '';
-    const amount = Number(amountText);
-    if (!student.programmeId) {
-      setError('This student is not linked to a programme. Link the student to a programme before configuring the course-book fee.');
-      return;
-    }
-    if (!Number.isFinite(amount) || amount <= 0 || Math.round(amount * 100) !== amount * 100) {
-      setError('Enter a valid required course-book fee with no more than two decimal places.');
-      return;
-    }
-
-    setBusy(true);
-    setError('');
-    try {
-      await setProgrammeRequirement({
-        programmeId: student.programmeId,
-        name: 'Required course book',
-        amount,
-        currency: student.requirementId ? student.currency : SYSTEM_CURRENCY,
-      });
-      const [nextRequirements, nextStudents] = await Promise.all([
-        listProgrammeRequirements(),
-        listPaidLibraryClearanceStudents(),
-      ]);
-      setRequirements(nextRequirements);
-      setClearanceStudents(nextStudents);
-      setRequiredFeeAmounts(current => ({ ...current, [student.studentId]: '' }));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save the programme course-book fee.');
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function recordStudentBookPayment(student: PaidLibraryClearanceStudent) {
     const amount = Number(paymentAmounts[student.studentId] ?? '');
@@ -631,40 +547,18 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       )}
 
       {canManage && activeView === 'clearance-settings' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
-        <h3>Programme course-book fee settings</h3>
-        <p>Configure one course-book fee for the whole programme, for example Certificate in Pharmacy (CPH). This is a programme-level requirement, not a fee for an individual subject. Librarians enter each student's amount paid and approve it under Course-book Requirements.</p>
-        <form className="library-requirement-form" onSubmit={submitProgrammeRequirement}>
-          <label>Programme / Course
-            <select value={requirementForm.programmeId} onChange={e => {
-              const programmeId = e.target.value;
-              const existing = requirements.find(item => item.programmeId === programmeId && item.isActive);
-              setRequirementForm({
-                programmeId,
-                name: existing?.name ?? 'Required course book',
-                amount: existing ? String(existing.totalAmount) : ''
-              });
-            }} required>
-              <option value="">Select a programme (e.g. Certificate in Pharmacy — CPH)</option>
-              {programmes.map(programme => <option key={programme.id} value={programme.id}>{programme.name} ({programme.code})</option>)}
-            </select>
-          </label>
-          <label>Book / requirement
-            <input value={requirementForm.name} onChange={e => setRequirementForm(v => ({ ...v, name: e.target.value }))} required />
-          </label>
-          <label>Amount ({SYSTEM_CURRENCY})
-            <input type="number" min={getCurrencyInputStep(SYSTEM_CURRENCY)} step={getCurrencyInputStep(SYSTEM_CURRENCY)} value={requirementForm.amount} onChange={e => setRequirementForm(v => ({ ...v, amount: e.target.value }))} required />
-          </label>
-          <button className="library-primary" type="submit" disabled={busy}>Save requirement</button>
-        </form>
+        <h3>Course-book fees from Finance</h3>
+        <p>These amounts are loaded directly from the active <strong>LibraryBook</strong> fee structures in Finance for the current academic year. To change a course-book fee, update it in Finance → Fee Settings. This screen is read-only so the same fee is never configured twice.</p>
         <div className="table-wrap" style={{ marginTop: 12 }}>
-          <table><thead><tr><th>ID</th><th>Programme</th><th>Requirement</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+          <table><thead><tr><th>ID</th><th>Programme</th><th>Fee structure</th><th>Configured amount</th><th>Source</th><th>Status</th></tr></thead>
             <tbody>{requirements.map((item, index) => <tr key={item.id}><td>{index + 1}</td>
               <td>{programmes.find(p => p.id === item.programmeId)?.name ?? item.programmeId}{programmes.find(p => p.id === item.programmeId)?.code ? ` (${programmes.find(p => p.id === item.programmeId)?.code})` : ''}</td>
-              <td>{item.name}</td>              <td>{item.currency} {item.totalAmount.toLocaleString(SYSTEM_LOCALE)}</td>
+              <td>{item.name}</td>
+              <td><strong>{item.currency} {item.totalAmount.toLocaleString(SYSTEM_LOCALE)}</strong></td>
+              <td>Finance Fee Settings</td>
               <td>{item.isActive ? 'Active' : 'Inactive'}</td>
-              <td><button type="button" className="secondary-button" disabled={busy} onClick={() => void toggleProgrammeRequirement(item.id, !item.isActive)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td>
             </tr>)}
-            {requirements.length === 0 && <tr><td colSpan={6}>No course book requirements configured.</td></tr>}</tbody>
+            {requirements.length === 0 && <tr><td colSpan={6}>No active LibraryBook fee structure was found in Finance for the current academic year. Configure one under Finance → Fee Settings.</td></tr>}</tbody>
           </table>
         </div>
       </section>}
@@ -733,25 +627,10 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div className="table-wrap">
           <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Required Fee</th><th>Amount Paid</th><th>Outstanding</th><th>Action</th></tr></thead>
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId}>
-              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td>
-              <td><span className={getClearancePaymentStatus(student) === 'Paid' ? 'loan-status' : getClearancePaymentStatus(student) === 'Partially Paid' ? 'loan-status warning' : 'loan-status overdue'}>{getClearancePaymentStatus(student)}</span></td>
-              <td>{canManage ? <div className="library-payment-approval" style={{ display: 'grid', gap: 4, minWidth: 130 }}>
-                <input aria-label={`Required course-book fee for ${student.programmeName || student.studentName}`} type="number" min="0.01" step="0.01" placeholder="Required fee" value={requiredFeeAmounts[student.studentId] ?? (student.requirementId ? String(student.requiredAmount) : '')} onChange={e => setRequiredFeeAmounts(current => ({ ...current, [student.studentId]: e.target.value }))} />
-                <small>{student.requirementId ? 'Programme fee' : 'Not configured'}</small>
-              </div> : <>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</>}</td>
-              <td><div style={{ display: 'grid', gap: 4 }}>
-                <span>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</span>
-                {canManage && student.requirementId && student.outstandingAmount > 0 && <input aria-label={`Amount received for ${student.studentName}`} type="number" min="0.01" max={student.outstandingAmount} step="0.01" placeholder="Amount received" value={paymentAmounts[student.studentId] ?? ''} onChange={e => setPaymentAmounts(current => ({ ...current, [student.studentId]: e.target.value }))} />}
-              </div></td>
-              <td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td>
-              <td>{canManage ? <div className="library-payment-approval" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, minWidth: 150 }}>
-                {!student.requirementId
-                  ? <button type="button" className="library-primary" disabled={busy || !student.programmeId || !requiredFeeAmounts[student.studentId]} onClick={() => void saveStudentProgrammeRequirement(student)}>Save fee</button>
-                  : <button type="button" className="secondary-button" disabled={busy || !requiredFeeAmounts[student.studentId] || Number(requiredFeeAmounts[student.studentId]) === student.requiredAmount} onClick={() => void saveStudentProgrammeRequirement(student)}>Update fee</button>}
-                {student.requirementId && student.outstandingAmount > 0 && <button type="button" className="library-primary" disabled={busy || !paymentAmounts[student.studentId]} onClick={() => void recordStudentBookPayment(student)}>Approve payment</button>}
-                {getClearancePaymentStatus(student) === 'Paid' && <strong>Cleared</strong>}
-                {!student.programmeId && <small>Programme link required</small>}
-              </div> : getClearancePaymentStatus(student) === 'Paid' ? <strong>Cleared</strong> : <span title="A Librarian or System Administrator must approve manual course-book payments">Librarian approval required</span>}</td>
+              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.paymentStatus === 'Paid' ? <strong>Cleared</strong> : !student.requirementId ? (canManage ? <button type="button" className="secondary-button" onClick={() => setActiveView('clearance-settings')}>Configure course-book fee</button> : <span title="A librarian must configure the programme fee under Fees & Settings">Fee not configured</span>) : canManage ? <div className="library-payment-approval" style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 220 }}>
+                <input aria-label={`Manual payment amount for ${student.studentName}`} type="number" min="0.01" max={student.outstandingAmount} step="0.01" placeholder="Amount received" value={paymentAmounts[student.studentId] ?? ''} onChange={e => setPaymentAmounts(current => ({ ...current, [student.studentId]: e.target.value }))} style={{ width: 115, minWidth: 100 }} />
+                <button type="button" className="library-primary" disabled={busy || !paymentAmounts[student.studentId] || student.outstandingAmount <= 0} onClick={() => void recordStudentBookPayment(student)}>Approve manual payment</button>
+              </div> : <span title="A Librarian or System Administrator must approve manual course-book payments">Librarian approval required</span>}</td>
             </tr>)}
             {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No students match these filters.</td></tr>}</tbody>
           </table>
@@ -814,7 +693,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </section>}
       {activeView === 'issue' && (
-        <div className="library-summary library-summary-two" aria-label="Issue and returns summary">
+        <div className="library-summary" aria-label="Issue and returns summary">
           <div className="library-stat">
             <span className="library-icon available">▤</span>
             <div>
