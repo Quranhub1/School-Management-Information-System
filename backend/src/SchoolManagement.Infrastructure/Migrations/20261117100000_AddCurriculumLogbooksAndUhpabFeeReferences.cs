@@ -107,9 +107,29 @@ public sealed class AddCurriculumLogbooksAndUhpabFeeReferences : Migration
             """);
     }
 
+
+        migrationBuilder.Sql("""
+            INSERT INTO "UhpabFeeReferences"
+                ("Id", "Category", "ProgrammeCode", "ProgrammeName", "Description", "Amount", "Currency", "SourceUrl", "SourceTitle", "SourceCheckedOn", "EffectiveFrom", "EffectiveTo", "IsActive")
+            VALUES
+            ('a1170000-0000-4000-8000-000000000001', 'Assessment', NULL, NULL, 'Nurses and Midwives Certificate assessment fee', 200000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000002', 'Assessment', NULL, NULL, 'Nurses and Midwives Diploma assessment fee', 230000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000003', 'Assessment', NULL, NULL, 'Allied Health Certificate assessment fee', 200000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000004', 'Assessment', NULL, NULL, 'Allied Health Diploma assessment fee', 200000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000005', 'Retake', NULL, NULL, 'Retake fee per paper', 50000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000006', 'Research', NULL, NULL, 'Diploma research guideline', 15000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000007', 'Late submission', NULL, NULL, 'Late submission of research / reports', 100000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000008', 'Administrative', NULL, NULL, 'Certification per copy', 10000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000009', 'Administrative', NULL, NULL, 'Replacement of lost academic document', 50000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000010', 'Administrative', NULL, NULL, 'Replacement of lost assessment card', 20000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000011', 'Verification', NULL, NULL, 'National verification', 30000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000012', 'Verification', NULL, NULL, 'International verification', 40, 'USD', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE);
+            """);
+
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.Sql("""
+            DELETE FROM "UhpabFeeReferences" WHERE "Id" IN ('a1170000-0000-4000-8000-000000000001', 'a1170000-0000-4000-8000-000000000002', 'a1170000-0000-4000-8000-000000000003', 'a1170000-0000-4000-8000-000000000004', 'a1170000-0000-4000-8000-000000000005', 'a1170000-0000-4000-8000-000000000006', 'a1170000-0000-4000-8000-000000000007', 'a1170000-0000-4000-8000-000000000008', 'a1170000-0000-4000-8000-000000000009', 'a1170000-0000-4000-8000-000000000010', 'a1170000-0000-4000-8000-000000000011', 'a1170000-0000-4000-8000-000000000012');
             DROP TABLE IF EXISTS "StudentLogbookCompetencies";
             DROP TABLE IF EXISTS "StudentLogbooks";
             DROP TABLE IF EXISTS "LogbookCompetencyRequirements";
