@@ -539,6 +539,34 @@ public sealed class LibraryController(
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
+    [HttpPut("books/{id:guid}")]
+    [Authorize(Policy = LibraryPolicies.Management)]
+    public async Task<IActionResult> UpdateBook(Guid id, CreateLibraryBookRequest request, CancellationToken ct)
+    {
+        try { return Ok(await library.UpdateBookAsync(id, request, ct)); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+    }
+
+    [HttpDelete("books/{id:guid}")]
+    [Authorize(Policy = LibraryPolicies.Management)]
+    public async Task<IActionResult> ArchiveBook(Guid id, CancellationToken ct)
+    {
+        var exists = await db.LibraryBooks.AsNoTracking().AnyAsync(x => x.Id == id && x.IsActive, ct);
+        if (!exists) return NotFound(new { message = "The catalogue book was not found." });
+        var hasActiveLoans = await db.LibraryLoans.AsNoTracking()
+            .AnyAsync(x => x.BookId == id && x.ReturnedAtUtc == null, ct);
+        if (hasActiveLoans)
+            return Conflict(new { message = "This book cannot be archived while copies are on loan. Process the active returns first." });
+        try
+        {
+            await library.ArchiveBookAsync(id, ct);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+    }
+
     [HttpPost("loans")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> Issue(IssueLibraryBookRequest request, CancellationToken ct)
