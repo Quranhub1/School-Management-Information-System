@@ -58,7 +58,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
 
     [HttpPost("{id:guid}/archive")]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Archive(Guid id, [FromBody] ArchiveStudentRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
@@ -78,7 +77,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
 
     [HttpPost("{id:guid}/restore")]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Restore(Guid id, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
@@ -138,7 +136,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
 
     [HttpPost("{id:guid}/guardians")]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddGuardian(Guid id, AddStudentGuardianRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
@@ -154,7 +151,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
 
     [HttpPut("{id:guid}/guardians/{guardianId:guid}")]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateGuardian(Guid id, Guid guardianId, UpdateStudentGuardianRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
@@ -170,7 +166,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
 
     [HttpDelete("{id:guid}/guardians/{guardianId:guid}")]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteGuardian(Guid id, Guid guardianId, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
@@ -191,7 +186,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [HttpPut("{id:guid}/application-form")]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     [RequestSizeLimit(12_000_000)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveApplicationForm(Guid id, SaveStudentApplicationFormRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
@@ -253,7 +247,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
 
     [HttpPost]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateStudentRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.StudentNumber) ||
@@ -274,7 +267,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
 
     [HttpPut("{id:guid}")]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Update(Guid id, UpdateStudentRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
@@ -296,7 +288,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
