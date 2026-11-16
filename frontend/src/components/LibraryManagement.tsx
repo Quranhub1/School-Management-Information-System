@@ -205,10 +205,16 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   }, [selectedCardMember]);
 
   useEffect(() => {
-    if (activeView === 'clearance-students' || activeView === 'cards') {
+    if (activeView === 'cards') {
+      listPaidLibraryClearanceStudents()
+        .then(setClearanceStudents)
+        .catch(e => setError(e instanceof Error ? e.message : 'Unable to load student library fee balances.'));
+      return;
+    }
+    if (activeView === 'clearance-students') {
       Promise.all([listPaidLibraryClearanceStudents(), getLibraryClearanceAcademicOptions()])
         .then(([students, options]) => { setClearanceStudents(students); setClearanceAcademicOptions(options); })
-        .catch(e => setError(e instanceof Error ? e.message : 'Unable to load student library fee balances.'));
+        .catch(e => setError(e instanceof Error ? e.message : 'Unable to load students and curriculum filters.'));
     }
   }, [activeView]);
 
