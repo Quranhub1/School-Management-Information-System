@@ -643,30 +643,6 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       {error && <div className="error" role="alert">{error}</div>}
       {Object.keys(loanValidationErrors).length > 0 && <div className="error" role="alert"><strong>Loan fields requiring attention</strong><ul>{Object.entries(loanValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
 
-      {activeView === 'cards' && <section className="library-main-card" style={{ marginBottom: 18, padding: 14 }}>
-        <div className="library-toolbar">
-          <div><h3>Library Card Register</h3><small>{clearanceStudents.length} students in the central register. Card printing is enabled only after the full programme course-book fee is paid.</small></div>
-          <button type="button" className="secondary-button" disabled={busy} onClick={() => {
-            setBusy(true);
-            listPaidLibraryClearanceStudents().then(setClearanceStudents)
-              .catch(e => setError(e instanceof Error ? e.message : 'Unable to refresh library payment status.'))
-              .finally(() => setBusy(false));
-          }}>Refresh payment status</button>
-        </div>
-        <div className="table-wrap" style={{ maxHeight: 360, overflowY: 'auto' }}>
-          <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Required Fee</th><th>Paid</th><th>Balance</th><th>Payment Status</th><th>Card</th></tr></thead>
-            <tbody>{clearanceStudents.map((student, index) => <tr key={student.studentId}>
-              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td>
-              <td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td>
-              <td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td>
-              <td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td>
-              <td><strong>{student.paymentStatus}</strong></td>
-              <td><button type="button" className="secondary-button" onClick={() => setSelectedCardMember({ id: student.studentId, memberType: 'Student', memberNumber: student.studentNumber, studentNumber: student.studentNumber, name: student.studentName })}>View Card</button></td>
-            </tr>)}
-            {clearanceStudents.length === 0 && <tr><td colSpan={8}>No students are available in the central register.</td></tr>}</tbody>
-          </table>
-        </div>
-      </section>}
       {activeView === 'cards' && selectedCardMember && <section className="library-main-card library-card-preview-section" style={{ marginBottom: 18, padding: 20 }}>
         <article className="library-print-card" aria-label="Library membership card">
           <svg className="library-card-watermark" viewBox="0 0 856 540" preserveAspectRatio="none" aria-hidden="true">
