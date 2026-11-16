@@ -33,7 +33,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         var teachers = await db.StaffMembers.AsNoTracking()
             .Where(x => x.IsActive && x.EmploymentStatus == "Active")
             .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
-            .Select(x => new { x.Id, Label = x.FirstName + " " + x.LastName + " (" + x.StaffNumber + ")" })
+            .Select(x => new { x.Id, Label = (x.LastName + " " + x.FirstName).ToUpper() + " (" + x.StaffNumber + ")" })
             .ToListAsync(cancellationToken);
         var semesters = await db.Semesters.AsNoTracking()
             .OrderByDescending(x => x.IsCurrent).ThenByDescending(x => x.StartDate)
