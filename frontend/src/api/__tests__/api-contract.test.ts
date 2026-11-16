@@ -193,7 +193,9 @@ describe('API contracts — library', () => {
   it('validates a library loan create request', () => {
     const result = libraryLoanCreateRequestSchema.safeParse({
       bookId: 'book-1',
-      studentId: 'stu-1',
+      memberId: 'stu-1',
+      memberType: 'Student',
+      issuedAtUtc: '2026-01-18T12:00:00Z',
       dueAtUtc: '2026-02-01T00:00:00Z',
     })
     expect(result.success).toBe(true)
