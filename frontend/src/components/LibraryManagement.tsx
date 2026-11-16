@@ -248,6 +248,15 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     () => books.reduce((sum, b) => sum + b.totalCopies, 0),
     [books],
   );
+  const booksAddedThisMonth = useMemo(() => {
+    const now = new Date();
+    return books.filter(book => {
+      const createdAt = new Date(book.createdAtUtc);
+      return !Number.isNaN(createdAt.getTime()) &&
+        createdAt.getFullYear() === now.getFullYear() &&
+        createdAt.getMonth() === now.getMonth();
+    }).length;
+  }, [books]);
   const overdue = useMemo(
     () => loans.filter((l) => new Date(l.dueAtUtc) < new Date()),
     [loans],
@@ -679,7 +688,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div className="table-wrap">
           <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Required Fee</th><th>Amount Paid</th><th>Outstanding</th><th>Action</th></tr></thead>
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId}>
-              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.paymentStatus === 'Paid' ? <strong>Cleared</strong> : !student.requirementId ? <span title="Configure the programme fee under Fees & Settings">Fee not configured</span> : canManage ? <div className="library-payment-approval" style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 220 }}>
+              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.paymentStatus === 'Paid' ? <strong>Cleared</strong> : !student.requirementId ? (canManage ? <button type="button" className="secondary-button" onClick={() => setActiveView('clearance-settings')}>Configure course-book fee</button> : <span title="A librarian must configure the programme fee under Fees & Settings">Fee not configured</span>) : canManage ? <div className="library-payment-approval" style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 220 }}>
                 <input aria-label={`Manual payment amount for ${student.studentName}`} type="number" min="0.01" max={student.outstandingAmount} step="0.01" placeholder="Amount received" value={paymentAmounts[student.studentId] ?? ''} onChange={e => setPaymentAmounts(current => ({ ...current, [student.studentId]: e.target.value }))} style={{ width: 115, minWidth: 100 }} />
                 <button type="button" className="library-primary" disabled={busy || !paymentAmounts[student.studentId] || student.outstandingAmount <= 0} onClick={() => void recordStudentBookPayment(student)}>Approve manual payment</button>
               </div> : <span title="A Librarian or System Administrator must approve manual course-book payments">Librarian approval required</span>}</td>
@@ -933,6 +942,14 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               <small>Total Books</small>
               <strong>{totalCopies.toLocaleString()}</strong>
               <em>{books.length} titles</em>
+            </div>
+          </div>
+          <div className="library-stat">
+            <span className="library-icon">＋</span>
+            <div>
+              <small>Books Added This Month</small>
+              <strong>{booksAddedThisMonth.toLocaleString()}</strong>
+              <em>{new Intl.DateTimeFormat(SYSTEM_LOCALE, { month: 'long', year: 'numeric' }).format(new Date())}</em>
             </div>
           </div>
         </div>
