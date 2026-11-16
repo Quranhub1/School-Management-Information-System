@@ -90,6 +90,7 @@ public sealed class LibraryService(ILibraryRepository library)
 
     public static string ToBooklandEan13(string isbn)
     {
+        isbn = NormalizeAndValidateIsbn(isbn);
         if (isbn.Length == 13) return isbn;
         var body = "978" + isbn[..9];
         var sum = body.Select((c, i) => (c - '0') * (i % 2 == 0 ? 1 : 3)).Sum();
