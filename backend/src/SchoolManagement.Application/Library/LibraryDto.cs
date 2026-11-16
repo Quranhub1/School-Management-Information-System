@@ -12,12 +12,12 @@ public sealed record LibrarianDto(Guid Id, Guid StaffMemberId, string LibraryRol
     public static LibrarianDto FromDomain(Librarian x) => new(x.Id, x.StaffMemberId, x.LibraryRole, x.IsActive, x.AssignedAtUtc, x.DeactivatedAtUtc);
 }
 
-public sealed record LibraryLoanDto(Guid Id, Guid BookId, Guid StudentId, DateTime IssuedAtUtc, DateTime DueAtUtc, DateTime? ReturnedAtUtc, decimal FineAmount)
+public sealed record LibraryLoanDto(Guid Id, Guid BookId, Guid? StudentId, Guid? StaffMemberId, string MemberType, DateTime IssuedAtUtc, DateTime DueAtUtc, DateTime? ReturnedAtUtc, decimal FineAmount)
 {
     public bool IsActive => !ReturnedAtUtc.HasValue;
-    public static LibraryLoanDto FromDomain(LibraryLoan x) => new(x.Id, x.BookId, x.StudentId, x.IssuedAtUtc, x.DueAtUtc, x.ReturnedAtUtc, x.FineAmount);
+    public static LibraryLoanDto FromDomain(LibraryLoan x) => new(x.Id, x.BookId, x.StudentId, x.StaffMemberId, x.MemberType, x.IssuedAtUtc, x.DueAtUtc, x.ReturnedAtUtc, x.FineAmount);
 }
 
 public sealed record CreateLibraryBookRequest(string Isbn, string Title, string Author, string? Publisher, int TotalCopies);
-public sealed record IssueLibraryBookRequest(Guid StudentId, Guid BookId, DateTime DueAtUtc);
+public sealed record IssueLibraryBookRequest(Guid MemberId, string MemberType, Guid BookId, DateTime DueAtUtc, DateTime? IssuedAtUtc = null);
 public sealed record ReturnLibraryBookRequest(decimal FinePerOverdueDay = 1000m);

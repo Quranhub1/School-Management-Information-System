@@ -4,7 +4,9 @@ public sealed class LibraryLoan
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid BookId { get; set; }
-    public Guid StudentId { get; set; }
+    public Guid? StudentId { get; set; }
+    public Guid? StaffMemberId { get; set; }
+    public string MemberType { get; set; } = "Student";
     public DateTime IssuedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime DueAtUtc { get; set; }
     public DateTime? ReturnedAtUtc { get; set; }
