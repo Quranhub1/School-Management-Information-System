@@ -30,7 +30,13 @@ export type LibraryMember = { id:string; memberType:'Student'|'Staff'; memberNum
 export type LibraryLoan = { id:string; bookId:string; bookTitle:string; bookIsbn:string; memberId:string; memberType:'Student'|'Staff'; memberNumber:string; memberName:string; studentId?:string | null; studentNumber:string; studentName:string; issuedAtUtc:string; dueAtUtc:string; returnedAtUtc?:string | null; fineAmount:number };
 
 export const listBooks = (search = '') => request<LibraryBook[]>(`/api/library/books${search.trim() ? `?search=${encodeURIComponent(search.trim())}` : ''}`);
-export const listMembers = (search = '', memberType?: 'Student'|'Staff') => request<LibraryMember[]>(`/api/library/members?${new URLSearchParams({ ...(search.trim() ? { search: search.trim() } : {}), ...(memberType ? { memberType } : {}) }).toString()}`.replace(/\\?$/, ''));
+export const listMembers = (search = '', memberType?: 'Student'|'Staff') => {
+  const params = new URLSearchParams();
+  if (search.trim()) params.set('search', search.trim());
+  if (memberType) params.set('memberType', memberType);
+  const query = params.toString();
+  return request<LibraryMember[]>(`/api/library/members${query ? `?${query}` : ''}`);
+};
 export const listLoans = (activeOnly = true) => request<LibraryLoan[]>(`/api/library/loans?activeOnly=${activeOnly}`);
 
 export const addBook = (input: Omit<LibraryBook,'id'|'availableCopies'|'isActive'>) => {
