@@ -134,7 +134,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const filteredClearanceStudents = useMemo(() => clearanceStudents.filter(student =>
     (!clearanceFilters.name || (student.studentName + ' ' + student.studentNumber).toLowerCase().includes(clearanceFilters.name.toLowerCase())) &&
     (!clearanceFilters.course || student.courseNames.includes(clearanceFilters.course)) &&
-    (!clearanceFilters.semester || student.semesterName === `Semester ${clearanceFilters.semester}` || student.semesterName === clearanceFilters.semester) &&
+    (!clearanceFilters.semester || String(student.semesterNumber ?? '') === clearanceFilters.semester) &&
     (!clearanceFilters.year || String(student.classYear ?? '') === clearanceFilters.year)
   ), [clearanceStudents, clearanceFilters]);
   const clearanceCourses = clearanceAcademicOptions.courses;
@@ -415,7 +415,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div className="table-wrap">
           <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Amount Paid</th><th>Outstanding</th><th>Invoice</th><th>Invoice Date</th></tr></thead>
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId + student.invoiceNumber}>
-              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || '—'}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.invoiceNumber || '—'}</td><td>{student.issuedAt ? formatDate(student.issuedAt) : '—'}</td>
+              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.invoiceNumber || '—'}</td><td>{student.issuedAt ? formatDate(student.issuedAt) : '—'}</td>
             </tr>)}
             {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No admitted students match these filters.</td></tr>}</tbody>
           </table>
