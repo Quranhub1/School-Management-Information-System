@@ -43,10 +43,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [requirements, setRequirements] = useState<LibraryProgrammeRequirement[]>([]);
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
-  const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'cards' | 'clearance'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'overdue' | 'cards' | 'clearance'>('dashboard');
   const [openAddBookForm, setOpenAddBookForm] = useState(false);
   const [selectedCardMember, setSelectedCardMember] = useState<LibraryMember | null>(null);
-  const [tab, setTab] = useState<'recent' | 'overdue'>('recent');
   const [error, setError] = useState('');
   const [bookValidationErrors, setBookValidationErrors] = useState<Record<string, string>>({});
   const [loanValidationErrors, setLoanValidationErrors] = useState<Record<string, string>>({});
@@ -116,7 +115,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     () => loans.filter((l) => new Date(l.dueAtUtc) < new Date()),
     [loans],
   );
-  const visibleLoans = tab === 'overdue' ? overdue : loans;
+  const visibleLoans = activeView === 'overdue' ? overdue : loans;
   const isbnDigits = normalizeIsbnDigits(form.isbn);
   const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;
   const isbnValid = isbnComplete && isValidIsbn(isbnDigits);
@@ -312,72 +311,45 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </button>
       )}
       {activeView === 'dashboard' && (
-        <section className="library-dashboard-options" aria-label="Library services">
-          {[
-            { key: 'books' as const, icon: '▤', title: 'Books', description: 'Browse and manage the book catalogue.', links: [{ label: 'View Books', view: 'books' as const }, { label: 'Add New Book', view: 'books' as const }] },
-            { key: 'issue' as const, icon: '↗', title: 'Issue Books', description: 'Issue books to students and monitor active loans.', links: [{ label: 'Issue Book', view: 'issue' as const }, { label: 'View Books Issued', view: 'issue' as const }] },
-            { key: 'cards' as const, icon: '▣', title: 'Library Cards', description: 'Prepare student library membership cards and view the register.', links: [{ label: 'Issue Library Cards', view: 'cards' as const }, { label: 'View Library Cards', view: 'cards' as const }] },
-            { key: 'clearance' as const, icon: '✓', title: 'Library Clearance', description: 'Manage programme course-book requirements and related fees.', links: [{ label: 'Course-book Requirements', view: 'clearance' as const }, { label: 'Fees & Settings', view: 'clearance' as const }] },
-          ].map(item => (
-            <article key={item.key} className="library-main-card" style={{ padding: 18, borderTop: '3px solid var(--primary, #16834a)' }}>
-              <button type="button" onClick={() => setActiveView(item.key)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: 0, border: 0, background: 'transparent', color: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
-                <span aria-hidden="true" style={{ display: 'grid', placeItems: 'center', width: 42, height: 42, borderRadius: 10, background: 'rgba(22,131,74,.10)', color: 'var(--primary, #16834a)', fontSize: 23 }}>{item.icon}</span>
-                <strong style={{ fontSize: 17 }}>{item.title}</strong>
-              </button>
-              <p style={{ minHeight: 42, margin: '12px 0', color: 'var(--text-muted, #64748b)', fontSize: 13 }}>{item.description}</p>
-              <div className="library-dashboard-card-actions">
-                {item.links.map(link => (
-                  <button key={link.label} type="button" className="secondary-button" onClick={() => {
-                    setActiveView(link.view);
-                    if (link.label === 'Add New Book') setOpenAddBookForm(true);
-                  }}>
-                    {link.label}
-                  </button>
-                ))}
+        <>
+          <div className="library-summary" aria-label="Library inventory summary">
+            <div className="library-stat">
+              <span className="library-icon">▣</span>
+              <div>
+                <small>Total Books</small>
+                <strong>{totalCopies.toLocaleString()}</strong>
+                <em>{books.length} titles</em>
               </div>
-            </article>
-          ))}
-        </section>
-      )}
-      {activeView === 'books' && (
-      <div className="library-summary">
-        <div className="library-stat">
-          <span className="library-icon">▣</span>
-          <div>
-            <small>Total Books</small>
-            <strong>{totalCopies.toLocaleString()}</strong>
-            <em>{books.length} titles</em>
+            </div>
           </div>
-        </div>
-        <div className="library-stat">
-          <span className="library-icon available">▤</span>
-          <div>
-            <small>Available Copies</small>
-            <strong>{availableCopies.toLocaleString()}</strong>
-            <em>Ready to issue</em>
-          </div>
-        </div>
-        <div className="library-stat">
-          <span className="library-icon issued">↗</span>
-          <div>
-            <small>Books Issued</small>
-            <strong>
-              {Math.max(totalCopies - availableCopies, 0).toLocaleString()}
-            </strong>
-            <em>Currently on loan</em>
-          </div>
-        </div>
-        <div className="library-stat">
-          <span className="library-icon overdue">!</span>
-          <div>
-            <small>Overdue Loans</small>
-            <strong className={overdue.length ? 'danger-number' : ''}>
-              {overdue.length}
-            </strong>
-            <em>Require attention</em>
-          </div>
-        </div>
-      </div>
+          <section className="library-dashboard-options" aria-label="Library services">
+            {[
+              { key: 'books' as const, icon: '▤', title: 'Books Catalogue', description: 'Browse, register and manage books, ISBNs and barcodes.', links: [{ label: 'View Catalogue', view: 'books' as const }, { label: 'Add New Book', view: 'books' as const }] },
+              { key: 'issue' as const, icon: '↗', title: 'Issue & Returns', description: 'Issue books to students and manage active loans and returns.', links: [{ label: 'Issue a Book', view: 'issue' as const }, { label: 'View Active Loans', view: 'issue' as const }] },
+              { key: 'overdue' as const, icon: '!', title: 'Overdue Loans', description: 'Track late returns and follow up outstanding books.', links: [{ label: 'View Overdue Loans', view: 'overdue' as const }] },
+              { key: 'cards' as const, icon: '▣', title: 'Library Cards', description: 'Prepare student library membership cards and view the register.', links: [{ label: 'Issue Library Cards', view: 'cards' as const }, { label: 'View Library Cards', view: 'cards' as const }] },
+              { key: 'clearance' as const, icon: '✓', title: 'Library Clearance', description: 'Manage programme course-book requirements and related fees.', links: [{ label: 'Course-book Requirements', view: 'clearance' as const }, { label: 'Fees & Settings', view: 'clearance' as const }] },
+            ].map(item => (
+              <article key={item.key} className="library-main-card" style={{ padding: 18, borderTop: '3px solid var(--primary, #16834a)' }}>
+                <button type="button" onClick={() => setActiveView(item.key)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: 0, border: 0, background: 'transparent', color: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
+                  <span aria-hidden="true" style={{ display: 'grid', placeItems: 'center', width: 42, height: 42, borderRadius: 10, background: 'rgba(22,131,74,.10)', color: 'var(--primary, #16834a)', fontSize: 23 }}>{item.icon}</span>
+                  <strong style={{ fontSize: 17 }}>{item.title}</strong>
+                </button>
+                <p style={{ minHeight: 42, margin: '12px 0', color: 'var(--text-muted, #64748b)', fontSize: 13 }}>{item.description}</p>
+                <div className="library-dashboard-card-actions">
+                  {item.links.map(link => (
+                    <button key={link.label} type="button" className="secondary-button" onClick={() => {
+                      setActiveView(link.view);
+                      if (link.label === 'Add New Book') setOpenAddBookForm(true);
+                    }}>
+                      {link.label}
+                    </button>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </section>
+        </>
       )}
 
       {canManage && activeView === 'clearance' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
@@ -423,31 +395,47 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </section>}
       {activeView === 'cards' && selectedCardMember && <section className="library-main-card" style={{ marginBottom: 18, padding: 20 }}><div style={{ maxWidth: 440, border: '1px solid #cbd5e1', borderRadius: 12, padding: 20, background: '#fff', color: '#111827' }}><strong>KAMPALA SCHOOL OF HEALTH SCIENCES</strong><h3 style={{ margin: '16px 0 6px' }}>LIBRARY MEMBERSHIP CARD</h3><p>{selectedCardMember.name}</p><strong>{selectedCardMember.studentNumber}</strong><p style={{ fontSize: 12 }}>Student Library Member</p></div><button type="button" className="library-primary" style={{ marginTop: 12 }} onClick={() => window.print()}>Print Library Card</button><button type="button" className="secondary-button" style={{ margin: '12px 0 0 8px' }} onClick={() => setSelectedCardMember(null)}>Close Preview</button></section>}
-      {activeView === 'issue' && <div className="library-grid">
-        <div className="library-main-card">
-          <div className="library-tabs">
-            <button
-              className={tab === 'recent' ? 'active' : ''}
-              onClick={() => setTab('recent')}
-            >
-              Recent Loans
-            </button>
-            <button
-              className={tab === 'overdue' ? 'active' : ''}
-              onClick={() => setTab('overdue')}
-            >
-              Overdue Loans <span>{overdue.length}</span>
-            </button>
+      {activeView === 'issue' && (
+        <div className="library-summary" aria-label="Issue and returns summary">
+          <div className="library-stat">
+            <span className="library-icon available">▤</span>
+            <div>
+              <small>Available Copies</small>
+              <strong>{availableCopies.toLocaleString()}</strong>
+              <em>Ready to issue</em>
+            </div>
           </div>
-
+          <div className="library-stat">
+            <span className="library-icon issued">↗</span>
+            <div>
+              <small>Books Issued</small>
+              <strong>{loans.length.toLocaleString()}</strong>
+              <em>Currently on loan</em>
+            </div>
+          </div>
+        </div>
+      )}
+      {activeView === 'overdue' && (
+        <div className="library-summary" aria-label="Overdue loans summary">
+          <div className="library-stat">
+            <span className="library-icon overdue">!</span>
+            <div>
+              <small>Overdue Loans</small>
+              <strong className={overdue.length ? 'danger-number' : ''}>{overdue.length.toLocaleString()}</strong>
+              <em>Require attention</em>
+            </div>
+          </div>
+        </div>
+      )}
+      {(activeView === 'issue' || activeView === 'overdue') && <div className="library-grid">
+        <div className="library-main-card">
           <div className="library-toolbar">
             <div>
-              <h3>{tab === 'recent' ? 'Recent Book Loans' : 'Overdue Book Loans'}</h3>
-              
+              <h3>{activeView === 'overdue' ? 'Overdue Book Loans' : 'Active Book Loans'}</h3>
             </div>
             <div className="library-search">
               <input
-                placeholder="Search title, author or ISBN"
+                placeholder={activeView === 'overdue' ? 'Search overdue loans' : 'Search title, author or ISBN'}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
@@ -460,7 +448,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
           {visibleLoans.length === 0 ? (
             <p className="empty">
-              {tab === 'overdue'
+              {activeView === 'overdue'
                 ? 'No overdue loans. The library is up to date.'
                 : 'No active loans yet.'}
             </p>
@@ -493,11 +481,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                         <td>{formatDate(loan.issuedAtUtc)}</td>
                         <td>{formatDate(loan.dueAtUtc)}</td>
                         <td>
-                          <span
-                            className={
-                              isOverdue ? 'loan-status overdue' : 'loan-status'
-                            }
-                          >
+                          <span className={isOverdue ? 'loan-status overdue' : 'loan-status'}>
                             {isOverdue ? 'Overdue' : 'Active'}
                           </span>
                         </td>
@@ -522,8 +506,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
 
         <aside className="library-side-card">
-          <h3>Quick Actions</h3>
-          {canManage && (
+          <h3>{activeView === 'overdue' ? 'Overdue Follow-up' : 'Quick Actions'}</h3>
+          {activeView === 'issue' && canManage && (
             <form onSubmit={submitIssue} className="library-action-form">
               <label>Issue a Book</label>
               <select
@@ -564,9 +548,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               </button>
             </form>
           )}
-          {canManage && (
-            <button className="quick-return" onClick={() => setTab('recent')}>
-              ↩ View Active Loans
+          {activeView === 'overdue' && canManage && (
+            <button className="quick-return" onClick={() => setActiveView('issue')}>
+              ↩ Open Issue & Returns
             </button>
           )}
           <button
