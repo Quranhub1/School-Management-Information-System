@@ -44,7 +44,7 @@ public sealed class LibraryController(
                 students = students.Where(x => x.StudentNumber.Contains(term) || x.FirstName.Contains(term) || x.LastName.Contains(term) || (x.OtherNames != null && x.OtherNames.Contains(term)));
             members.AddRange(await students.OrderBy(x => x.StudentNumber).Select(x => new
             {
-                id = x.Id, memberType = "Student", memberNumber = x.StudentNumber,
+                id = x.Id, memberType = "Student", memberNumber = x.StudentNumber, studentNumber = x.StudentNumber,
                 name = (x.FirstName + " " + (x.OtherNames ?? "") + " " + x.LastName).Trim()
             }).ToListAsync(ct));
         }
@@ -55,7 +55,7 @@ public sealed class LibraryController(
                 staff = staff.Where(x => x.StaffNumber.Contains(term) || x.FirstName.Contains(term) || x.LastName.Contains(term) || (x.OtherNames != null && x.OtherNames.Contains(term)));
             members.AddRange(await staff.OrderBy(x => x.StaffNumber).Select(x => new
             {
-                id = x.Id, memberType = "Staff", memberNumber = x.StaffNumber,
+                id = x.Id, memberType = "Staff", memberNumber = x.StaffNumber, studentNumber = x.StaffNumber,
                 name = (x.FirstName + " " + (x.OtherNames ?? "") + " " + x.LastName).Trim()
             }).ToListAsync(ct));
         }
