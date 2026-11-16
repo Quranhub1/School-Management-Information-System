@@ -35,6 +35,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<string>("DSpacePasswordProtected").HasColumnType("text");
                     b.Property<bool>("KohaEnabled").HasColumnType("boolean");
                     b.Property<bool>("DSpaceEnabled").HasColumnType("boolean");
+                    b.Property<decimal>("FinePerOverdueDay").HasColumnType("numeric(18,2)").HasDefaultValue(1000m);
                     b.Property<DateTimeOffset>("UpdatedAt").HasColumnType("timestamp with time zone");
                     b.HasKey("Id");
                     b.ToTable("LibraryPluginSettings");
@@ -1060,6 +1061,41 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("AdmissionId", "Decision");
 
                     b.ToTable("AdmissionDecisions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Admissions.AdmissionRequirement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProgrammeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequirementType")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsMandatory")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProgrammeId", "IsActive");
+
+                    b.ToTable("AdmissionRequirements");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Admissions.Applicant", b =>
@@ -4200,6 +4236,11 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasDefaultValue(new byte[0]);
 
                     b.HasKey("Id");
 
