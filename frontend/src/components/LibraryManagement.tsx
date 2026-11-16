@@ -407,7 +407,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         programmeId: student.programmeId,
         name: 'Required course book',
         amount,
-        currency: student.currency || SYSTEM_CURRENCY,
+        currency: student.requirementId ? student.currency : SYSTEM_CURRENCY,
       });
       const [nextRequirements, nextStudents] = await Promise.all([
         listProgrammeRequirements(),
