@@ -87,7 +87,10 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       </style></head><body>${card.outerHTML}</body></html>`);
     printWindow.document.close();
 
+    let printStarted = false;
     const startPrint = () => {
+      if (printStarted) return;
+      printStarted = true;
       const images = Array.from(printWindow.document.images);
       Promise.all(images.map(image => {
         if (image.complete) return Promise.resolve();
