@@ -25,7 +25,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return response.status === 204 ? undefined as T : await response.json() as T;
 }
 
-export type LibraryBook = { id:string; isbn:string; title:string; author:string; publisher?:string; totalCopies:number; availableCopies:number; isActive:boolean };
+export type LibraryBook = { id:string; isbn:string; barcodeValue?:string | null; title:string; author:string; publisher?:string; totalCopies:number; availableCopies:number; isActive:boolean };
 export type LibraryMember = { id:string; studentNumber:string; name:string };
 export type LibraryLoan = { id:string; bookId:string; bookTitle:string; bookIsbn:string; studentId:string; studentNumber:string; studentName:string; issuedAtUtc:string; dueAtUtc:string; returnedAtUtc?:string; fineAmount:number };
 

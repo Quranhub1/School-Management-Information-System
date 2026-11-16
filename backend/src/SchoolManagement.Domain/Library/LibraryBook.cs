@@ -4,6 +4,7 @@ public sealed class LibraryBook
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Isbn { get; set; } = string.Empty;
+    public string? BarcodeValue { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Author { get; set; } = string.Empty;
     public string? Publisher { get; set; }

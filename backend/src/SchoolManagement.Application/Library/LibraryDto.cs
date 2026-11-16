@@ -2,9 +2,9 @@ using SchoolManagement.Domain.Library;
 
 namespace SchoolManagement.Application.Library;
 
-public sealed record LibraryBookDto(Guid Id, string Isbn, string Title, string Author, string? Publisher, int TotalCopies, int AvailableCopies, bool IsActive)
+public sealed record LibraryBookDto(Guid Id, string Isbn, string? BarcodeValue, string Title, string Author, string? Publisher, int TotalCopies, int AvailableCopies, bool IsActive)
 {
-    public static LibraryBookDto FromDomain(LibraryBook x) => new(x.Id, x.Isbn, x.Title, x.Author, x.Publisher, x.TotalCopies, x.AvailableCopies, x.IsActive);
+    public static LibraryBookDto FromDomain(LibraryBook x) => new(x.Id, x.Isbn, x.BarcodeValue, x.Title, x.Author, x.Publisher, x.TotalCopies, x.AvailableCopies, x.IsActive);
 }
 
 public sealed record LibrarianDto(Guid Id, Guid StaffMemberId, string LibraryRole, bool IsActive, DateTime AssignedAtUtc, DateTime? DeactivatedAtUtc)
