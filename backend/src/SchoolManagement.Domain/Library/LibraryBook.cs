@@ -12,6 +12,7 @@ public sealed class LibraryBook
     public int TotalCopies { get; private set; }
     public int AvailableCopies { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
     public void SetInventory(int totalCopies, int? availableCopies = null)
     {

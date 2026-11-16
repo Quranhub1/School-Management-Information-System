@@ -18,4 +18,5 @@ public interface ILibraryRepository
     Task AddLibrarianAsync(Librarian librarian, CancellationToken cancellationToken = default);
     Task AddLoanAsync(LibraryLoan loan, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<decimal> GetFinePerOverdueDayAsync(CancellationToken cancellationToken = default);
 }

@@ -409,7 +409,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       return;
     }
 
-    setBusy(true);
+    setSavingStudentRow(s => ({ ...s, [student.studentId]: true }));
     setError('');
     try {
       await recordLibraryStudentPayment(student.studentId, { amount });
@@ -418,7 +418,26 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to approve the library payment.');
     } finally {
-      setBusy(false);
+      setSavingStudentRow(s => ({ ...s, [student.studentId]: false }));
+    }
+  }
+
+  async function updateStudentPaymentStatus(student: PaidLibraryClearanceStudent, status: string) {
+    const selected = (status ?? '').trim();
+    if (!['Paid', 'Partially Paid', 'Not Paid'].includes(selected)) return;
+
+    if (selected === 'Paid' && student.outstandingAmount > 0) {
+      setSavingStudentRow(s => ({ ...s, [student.studentId]: true }));
+      setError('');
+      try {
+        await recordLibraryStudentPayment(student.studentId, { amount: student.outstandingAmount });
+        setPaymentStatusSelect(current => ({ ...current, [student.studentId]: '' }));
+        setClearanceStudents(await listPaidLibraryClearanceStudents());
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Unable to mark payment as paid.');
+      } finally {
+        setSavingStudentRow(s => ({ ...s, [student.studentId]: false }));
+      }
     }
   }
 
