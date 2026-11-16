@@ -293,6 +293,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.Property(x => x.Status).IsRequired();
             e.HasIndex(x => x.SerialNumber).IsUnique();
             e.HasIndex(x => new { x.StudentId, x.LogbookRequirementId });
+            e.HasIndex(x => x.LogbookRequirementId);
             e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<LogbookRequirement>().WithMany().HasForeignKey(x => x.LogbookRequirementId).OnDelete(DeleteBehavior.Restrict);
         });
