@@ -139,7 +139,7 @@ public sealed class Student360Service(SchoolManagementDbContext db)
             PhoneNumber: student.PhoneNumber,
             AdmissionId: student.AdmissionId,
             AdmissionDate: admissionDate,
-            AdmissionStatus: admission?.Status ?? string.Empty,
+            AdmissionStatus: admission?.Status.ToString() ?? string.Empty,
             ProgrammeId: programme?.Id,
             ProgrammeName: programme?.Name,
             Department: department,
