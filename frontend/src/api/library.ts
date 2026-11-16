@@ -90,7 +90,8 @@ export type LibraryClearanceAcademicOptions = {
   courses: { courseId: string; courseName: string }[]
   programmes: { programmeId: string; programmeName: string }[]
   years: number[]
-  semesters: number[]
+  semesters: { semesterId: string; name: string; sequence: number; academicYearId: string; isCurrent: boolean }[]
+  academicYears: { academicYearId: string; name: string; isCurrent: boolean }[]
   mappings: { programmeId: string; programmeName: string; courseId: string; courseName: string; yearOfStudy: number; semesterNumber: number }[]
 }
 export const getLibraryClearanceAcademicOptions = () =>
