@@ -5100,3 +5100,29 @@ table { font-variant-numeric: tabular-nums; }
     margin-left: 0;
   }
 }
+
+
+/* System Administrator-only control for the global table layout editor. */
+.main-content > .topbar .table-layout-toggle {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 7px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font-size: .78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.main-content > .topbar .table-layout-toggle:hover,
+.main-content > .topbar .table-layout-toggle[aria-pressed="true"] {
+  background: rgba(255,255,255,.24);
+  color: #fff;
+}
+@media (max-width: 640px) {
+  .main-content > .topbar .table-layout-toggle {
+    min-height: 34px;
+    padding: 6px 9px;
+    font-size: .72rem;
+  }
+}
