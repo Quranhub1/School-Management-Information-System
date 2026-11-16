@@ -187,7 +187,7 @@ export function CurriculumLogbookManagement({ curricula }: { curricula: Curricul
         <input placeholder="Programme name (optional)" value={feeForm.programmeName} onChange={e => setFeeForm({ ...feeForm, programmeName: e.target.value })} />
         <input required placeholder="Fee description" value={feeForm.description} onChange={e => setFeeForm({ ...feeForm, description: e.target.value })} />
         <input required type="number" min="0" step="0.01" placeholder="Amount" value={feeForm.amount} onChange={e => setFeeForm({ ...feeForm, amount: e.target.value })} />
-        <select value={feeForm.currency} onChange={e => setFeeForm({ ...feeForm, currency: e.target.value })}><option>UGX</option><option>USD</option></select>
+        <select aria-label="Currency or rate unit" value={feeForm.currency} onChange={e => setFeeForm({ ...feeForm, currency: e.target.value })}><option>UGX</option><option>USD</option><option value="PCT">Percentage</option></select>
       </div>
       <div className="form-row">
         <label>Source checked<input required type="date" value={feeForm.sourceCheckedOn} onChange={e => setFeeForm({ ...feeForm, sourceCheckedOn: e.target.value })} /></label>
@@ -197,7 +197,7 @@ export function CurriculumLogbookManagement({ curricula }: { curricula: Curricul
       </div>
     </form>
     <div className="table-wrap"><table><thead><tr><th>Category</th><th>Programme</th><th>Description</th><th>Amount</th><th>Source checked</th><th>Effective</th></tr></thead><tbody>
-      {fees.map(fee => <tr key={fee.id}><td>{fee.category}</td><td>{fee.programmeCode || 'All / unspecified'}</td><td>{fee.description}</td><td>{fee.currency} {fee.amount.toLocaleString()}</td><td>{fee.sourceCheckedOn}</td><td>{fee.effectiveFrom}{fee.effectiveTo ? ` – ${fee.effectiveTo}` : ' onward'}</td></tr>)}
+      {fees.map(fee => <tr key={fee.id}><td>{fee.category}</td><td>{fee.programmeCode || 'All / unspecified'}</td><td>{fee.description}</td><td>{fee.currency === 'PCT' ? `${fee.amount}%` : `${fee.currency} ${fee.amount.toLocaleString()}`}</td><td>{fee.sourceCheckedOn}</td><td>{fee.effectiveFrom}{fee.effectiveTo ? ` – ${fee.effectiveTo}` : ' onward'}</td></tr>)}
       {fees.length === 0 && <tr><td colSpan={6}>No UHPAB fee references recorded.</td></tr>}
     </tbody></table></div>
     <p><a href="https://uhpab.go.ug/assessment-fees" target="_blank" rel="noreferrer">Verify current UHPAB assessment fee schedule</a></p>
