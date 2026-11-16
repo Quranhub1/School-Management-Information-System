@@ -170,6 +170,8 @@ function GlobalTableLayoutEditor({ enabled }: { enabled: boolean }) {
       observer.disconnect();
       document.removeEventListener('pointerover', onPointerOver);
       activeResizeRow?.querySelector(':scope > .smis-row-resize-handle')?.remove();
+      document.querySelectorAll<HTMLElement>('.smis-column-resize-handle, .smis-row-resize-handle').forEach(handle => handle.remove());
+      document.querySelectorAll('.smis-resizable-column, .smis-resizable-row').forEach(cell => cell.classList.remove('smis-resizable-column', 'smis-resizable-row'));
     };
   }, [enabled]);
 
