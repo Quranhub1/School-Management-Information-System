@@ -121,7 +121,8 @@ public sealed class AddCurriculumLogbooksAndUhpabFeeReferences : Migration
             ('a1170000-0000-4000-8000-000000000009', 'Administrative', NULL, NULL, 'Replacement of lost academic document', 50000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
             ('a1170000-0000-4000-8000-000000000010', 'Administrative', NULL, NULL, 'Replacement of lost assessment card', 20000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
             ('a1170000-0000-4000-8000-000000000011', 'Verification', NULL, NULL, 'National verification', 30000, 'UGX', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
-            ('a1170000-0000-4000-8000-000000000012', 'Verification', NULL, NULL, 'International verification', 40, 'USD', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE);
+            ('a1170000-0000-4000-8000-000000000012', 'Verification', NULL, NULL, 'International verification', 40, 'USD', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE),
+            ('a1170000-0000-4000-8000-000000000013', 'Late registration', NULL, NULL, 'Late registration surcharge (percentage of applicable assessment fee)', 50, 'PCT', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE);
             """);
 
     }
@@ -129,7 +130,7 @@ public sealed class AddCurriculumLogbooksAndUhpabFeeReferences : Migration
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.Sql("""
-            DELETE FROM "UhpabFeeReferences" WHERE "Id" IN ('a1170000-0000-4000-8000-000000000001', 'a1170000-0000-4000-8000-000000000002', 'a1170000-0000-4000-8000-000000000003', 'a1170000-0000-4000-8000-000000000004', 'a1170000-0000-4000-8000-000000000005', 'a1170000-0000-4000-8000-000000000006', 'a1170000-0000-4000-8000-000000000007', 'a1170000-0000-4000-8000-000000000008', 'a1170000-0000-4000-8000-000000000009', 'a1170000-0000-4000-8000-000000000010', 'a1170000-0000-4000-8000-000000000011', 'a1170000-0000-4000-8000-000000000012');
+            DELETE FROM "UhpabFeeReferences" WHERE "Id" IN ('a1170000-0000-4000-8000-000000000001', 'a1170000-0000-4000-8000-000000000002', 'a1170000-0000-4000-8000-000000000003', 'a1170000-0000-4000-8000-000000000004', 'a1170000-0000-4000-8000-000000000005', 'a1170000-0000-4000-8000-000000000006', 'a1170000-0000-4000-8000-000000000007', 'a1170000-0000-4000-8000-000000000008', 'a1170000-0000-4000-8000-000000000009', 'a1170000-0000-4000-8000-000000000010', 'a1170000-0000-4000-8000-000000000011', 'a1170000-0000-4000-8000-000000000012', 'a1170000-0000-4000-8000-000000000013');
             DROP TABLE IF EXISTS "StudentLogbookCompetencies";
             DROP TABLE IF EXISTS "StudentLogbooks";
             DROP TABLE IF EXISTS "LogbookCompetencyRequirements";
