@@ -16,6 +16,7 @@ public sealed class LibraryRepository(SchoolManagementDbContext db) : ILibraryRe
     public Task<Librarian?> GetLibrarianAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.Librarians.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    // Historical circulation remains queryable after a book is archived; archive blocks active loans.
     public Task<LibraryLoan?> GetLoanAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.LibraryLoans.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 

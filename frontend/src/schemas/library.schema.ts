@@ -1,13 +1,8 @@
 import { z } from "zod";
-import { identifierSchema, isoDateSchema, requiredTextSchema } from "./common.schema";
+import { identifierSchema, isoDateSchema } from "./common.schema";
 
-export const libraryBookSchema = z.object({
-  title: requiredTextSchema,
-  author: requiredTextSchema,
-  isbn: z.string().trim().min(10).max(17).optional().or(z.literal("")),
-  categoryId: identifierSchema,
-  copies: z.number().int().nonnegative(),
-});
+// Keep the legacy export name while sharing the exact create contract used by library.ts.
+export { libraryBookCreateRequestSchema as libraryBookSchema } from "./api-contracts.schema";
 export const libraryLoanSchema = z.object({
   bookId: identifierSchema,
   borrowerId: identifierSchema,

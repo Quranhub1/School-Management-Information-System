@@ -5,8 +5,8 @@ namespace SchoolManagement.Application.Library;
 
 public sealed class LibraryService(ILibraryRepository library)
 {
-    public async Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default) =>
-        await library.GetBooksAsync(cancellationToken);
+    public Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default) =>
+        library.GetBooksAsync(cancellationToken);
 
     public Task<IReadOnlyList<Librarian>> GetLibrariansAsync(CancellationToken cancellationToken = default) => library.GetLibrariansAsync(cancellationToken);
 
@@ -89,8 +89,9 @@ public sealed class LibraryService(ILibraryRepository library)
         throw new ArgumentException("Enter a valid ISBN-10 or ISBN-13 with its correct check digit.");
     }
 
-    private static string ToBooklandEan13(string isbn)
+    public static string ToBooklandEan13(string isbn)
     {
+        isbn = NormalizeAndValidateIsbn(isbn);
         if (isbn.Length == 13) return isbn;
         var body = "978" + isbn[..9];
         var sum = body.Select((c, i) => (c - '0') * (i % 2 == 0 ? 1 : 3)).Sum();

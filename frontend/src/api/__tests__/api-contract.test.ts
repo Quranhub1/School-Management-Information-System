@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { toBooklandEan13 } from '../../lib/isbn'
+import { libraryBookSchema } from '../../schemas/library.schema'
 
 import {
   admissionResponseSchema,
@@ -158,6 +159,25 @@ describe('Library ISBN barcode conversion', () => {
 })
 
 describe('API contracts — library', () => {
+  it('keeps the legacy library book schema aligned with the backend request contract', () => {
+    const valid = libraryBookSchema.safeParse({
+      isbn: '978-0-30640615-7',
+      title: 'Test book',
+      author: 'Test author',
+      totalCopies: 2,
+    })
+    expect(valid.success).toBe(true)
+
+    const staleFrontendShape = libraryBookSchema.safeParse({
+      isbn: '978-0-30640615-7',
+      title: 'Test book',
+      author: 'Test author',
+      categoryId: 'category-1',
+      copies: 2,
+    })
+    expect(staleFrontendShape.success).toBe(false)
+  })
+
   it('validates a library book create request', () => {
     const result = libraryBookCreateRequestSchema.safeParse({
       isbn: '978-0-30640615-7',
