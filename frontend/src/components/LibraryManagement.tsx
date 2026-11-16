@@ -573,7 +573,18 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             <h3>Book Catalogue</h3>
             
           </div>
-          <span className="status">{books.length} titles</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span className="status">{books.length} titles</span>
+            {canManage && (
+              <button
+                type="button"
+                className="library-primary"
+                onClick={() => document.getElementById('library-add-book')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                Add New Book
+              </button>
+            )}
+          </div>
         </div>
         <div className="table-wrap">
           <table>
