@@ -64,3 +64,20 @@ export const setProgrammeRequirement = (input: { programmeId: string; name: stri
   request<LibraryProgrammeRequirement>('/api/library/programme-requirements', { method: 'POST', body: JSON.stringify(input) })
 export const setProgrammeRequirementActive = (id: string, active: boolean) =>
   request<{ id: string; isActive: boolean }>(`/api/library/programme-requirements/${id}/active?active=${active}`, { method: 'PATCH' })
+
+export type PaidLibraryClearanceStudent = {
+  studentId: string
+  studentNumber: string
+  studentName: string
+  programmeName?: string | null
+  classYear?: number | null
+  semesterName?: string | null
+  academicYearName?: string | null
+  invoiceNumber: string
+  amount: number
+  paidAmount: number
+  currency: string
+  issuedAt: string
+}
+export const listPaidLibraryClearanceStudents = () =>
+  request<PaidLibraryClearanceStudent[]>('/api/library/clearance/paid-students')
