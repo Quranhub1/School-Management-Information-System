@@ -21,9 +21,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export type Notice = { id:string; title:string; body:string; priority:string; audience:string; expiresAt?:string; createdBy:string; createdAt:string };
 export function listNotices() {
-  return readThroughCache('notices:board', () => request<Notice[]>('/api/notices/board'), { ttlMs: 30 * 60 * 1000 });
+  return readThroughCache('notices:board', () => request<Notice[]>('/api/notices/board'), { ttlMs: 30 * 1000 });
 }
-export type CreateNoticeInput = Omit<Notice, 'id' | 'createdAt' | 'createdBy' | 'expiresAt'> & { expiresAt: string | null; createdBy: string };
+export type CreateNoticeInput = Omit<Notice, 'id' | 'createdAt' | 'createdBy' | 'expiresAt'> & { expiresAt: string | null };
 export async function createNotice(input: CreateNoticeInput) {
   const created = await request<Notice>('/api/notices/board',{method:'POST',body:JSON.stringify(input)});
   await invalidateCachedRead('notices:board');
