@@ -54,6 +54,10 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     day: '2-digit', month: 'short', year: 'numeric',
   }).format(value);
   function printLibraryCard() {
+    if (!selectedCardMember || selectedCardClearance?.paymentStatus !== 'Paid') {
+      window.alert('The full library course-book fee must be paid before this card can be printed.');
+      return;
+    }
     const card = document.querySelector<HTMLElement>('.library-print-card');
     if (!card) return;
 
@@ -201,10 +205,10 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   }, [selectedCardMember]);
 
   useEffect(() => {
-    if (activeView === 'clearance-students') {
+    if (activeView === 'clearance-students' || activeView === 'cards') {
       Promise.all([listPaidLibraryClearanceStudents(), getLibraryClearanceAcademicOptions()])
         .then(([students, options]) => { setClearanceStudents(students); setClearanceAcademicOptions(options); })
-        .catch(e => setError(e instanceof Error ? e.message : 'Unable to load students and curriculum filters.'));
+        .catch(e => setError(e instanceof Error ? e.message : 'Unable to load student library fee balances.'));
     }
   }, [activeView]);
 
@@ -256,6 +260,11 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const clearanceSemesters = clearanceAcademicOptions.semesters;
   const clearanceYears = clearanceAcademicOptions.years;
   const clearanceAcademicYears = clearanceAcademicOptions.academicYears;
+  const selectedCardClearance = useMemo(
+    () => clearanceStudents.find(student => student.studentId === selectedCardMember?.id),
+    [clearanceStudents, selectedCardMember],
+  );
+  const selectedCardIsPaid = selectedCardClearance?.paymentStatus === 'Paid';
   const isbnDigits = normalizeIsbnDigits(form.isbn);
   const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;
   const isbnValid = isbnComplete && isValidIsbn(isbnDigits);
@@ -620,7 +629,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             <strong>{selectedCardMember.name}</strong>
             <span>Student Number: {selectedCardMember.studentNumber}</span>
             <small>Student Library Member</small>
-            <span className="library-card-membership-status">ACTIVE</span>
+            <span className="library-card-membership-status">{selectedCardIsPaid ? 'ACTIVE' : 'NOT CLEARED'}</span>
           </div>
           <div className="library-card-dates" aria-label="Library membership dates">
             <span><b>ISSUED:</b> {formatCardDate(cardIssueDate)}</span>
@@ -635,8 +644,15 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             style={{ background: `linear-gradient(90deg, ${institutionPrimaryColor} 0%, ${institutionPrimaryColor} 58%, ${institutionAccentColor} 58%, ${institutionAccentColor} 100%)` }}
           />
         </article>
+        <div className="library-card-payment-check" role="status">
+          {selectedCardClearance
+            ? selectedCardIsPaid
+              ? `Course-book fee cleared in full: ${selectedCardClearance.currency} ${selectedCardClearance.requiredAmount.toLocaleString(SYSTEM_LOCALE)}.`
+              : `Printing disabled. Required: ${selectedCardClearance.currency} ${selectedCardClearance.requiredAmount.toLocaleString(SYSTEM_LOCALE)}; paid: ${selectedCardClearance.paidAmount.toLocaleString(SYSTEM_LOCALE)}; outstanding: ${selectedCardClearance.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}.`
+            : 'Printing disabled until a course-book invoice is available and fully paid.'}
+        </div>
         <div className="library-card-preview-actions">
-          <button type="button" className="library-primary" onClick={printLibraryCard}>Print Library Card</button>
+          <button type="button" className="library-primary" disabled={!selectedCardIsPaid} onClick={printLibraryCard}>Print Library Card</button>
           <button type="button" className="secondary-button" onClick={() => setSelectedCardMember(null)}>Close Preview</button>
         </div>
       </section>}
@@ -1003,7 +1019,28 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </form>
         </section>
       )}
-      {activeView === 'cards' && <section className="library-main-card" style={{ padding: 16 }}><div className="library-toolbar"><div><h3>Library Card Register</h3><small>{members.length} students available for library membership cards</small></div></div><div className="table-wrap"><table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Card</th></tr></thead><tbody>{members.map((member, index) => <tr key={member.id}><td>{index + 1}</td><td><strong>{member.studentNumber}</strong></td><td>{member.name}</td><td><button type="button" className="secondary-button" onClick={() => setSelectedCardMember(member)}>Issue / View Card</button></td></tr>)}{members.length === 0 && <tr><td colSpan={4}>No students are available in the library register.</td></tr>}</tbody></table></div></section>}
+      {activeView === 'cards' && <section className="library-main-card" style={{ padding: 16 }}>
+        <div className="library-toolbar"><div><h3>Library Card Register</h3><small>{members.length} students in the central register. Printing is enabled only after the full course-book fee is paid.</small></div></div>
+        <div className="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Required Fee</th><th>Paid</th><th>Balance</th><th>Payment Status</th><th>Card</th></tr></thead>
+          <tbody>{members.map((member, index) => {
+            const clearance = clearanceStudents.find(student => student.studentId === member.id);
+            const isPaid = clearance?.paymentStatus === 'Paid';
+            return <tr key={member.id}>
+              <td>{index + 1}</td>
+              <td><strong>{member.studentNumber}</strong></td>
+              <td>{member.name}</td>
+              <td>{clearance ? `${clearance.currency} ${clearance.requiredAmount.toLocaleString(SYSTEM_LOCALE)}` : '—'}</td>
+              <td>{clearance ? `${clearance.currency} ${clearance.paidAmount.toLocaleString(SYSTEM_LOCALE)}` : '—'}</td>
+              <td>{clearance ? `${clearance.currency} ${clearance.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}` : '—'}</td>
+              <td><span className={isPaid ? 'loan-status' : 'loan-status overdue'}>{clearance?.paymentStatus ?? 'Checking / Not invoiced'}</span></td>
+              <td><button type="button" className="secondary-button" onClick={() => setSelectedCardMember(member)}>View Card</button></td>
+            </tr>;
+          })}
+          {members.length === 0 && <tr><td colSpan={8}>No students are available in the library register.</td></tr>}
+          </tbody>
+        </table></div>
+      </section>}
       {barcodeBookId && (
         <div className="modal-backdrop" onClick={() => setBarcodeBookId(null)}>
           <div className="auth-card library-barcode-dialog" onClick={e => e.stopPropagation()}>
