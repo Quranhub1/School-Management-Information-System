@@ -5126,3 +5126,32 @@ table { font-variant-numeric: tabular-nums; }
     font-size: .72rem;
   }
 }
+
+
+/* Library clearance student filters collapse cleanly on smaller screens. */
+.library-clearance-filters {
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+.library-clearance-filters label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--smis-text, #334155);
+  font-size: .78rem;
+  font-weight: 700;
+}
+.library-clearance-filters input,
+.library-clearance-filters select {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .library-clearance-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 560px) {
+  .library-clearance-filters {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
