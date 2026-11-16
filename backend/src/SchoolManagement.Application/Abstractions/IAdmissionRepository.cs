@@ -12,4 +12,5 @@ public interface IAdmissionRepository
     Task DeleteAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default);
     Task AddDecisionAsync(AdmissionDecision decision, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(Guid programmeId, bool mandatoryOnly = false, CancellationToken cancellationToken = default);
 }

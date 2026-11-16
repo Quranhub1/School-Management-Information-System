@@ -1,3 +1,5 @@
+using SchoolManagement.Domain.Admissions;
+
 namespace SchoolManagement.Application.Admissions;
 
 public sealed record CreateAdmissionRequest(
@@ -8,10 +10,10 @@ public sealed record CreateAdmissionRequest(
 
 public sealed record UpdateAdmissionRequest(
     Guid Id,
-    string? Status = null);
+    AdmissionStatus? Status = null);
 
 public sealed record DecideAdmissionRequest(
-    string Decision,
+    AdmissionStatus Decision,
     string? Reason,
     string? DecidedBy);
 
@@ -21,12 +23,12 @@ public sealed record AdmissionDto(
     Guid ProgrammeId,
     Guid AcademicYearId,
     Guid IntakeId,
-    string Status,
+    AdmissionStatus Status,
     DateTimeOffset? DecidedAt);
 
 public sealed record AdmissionDecisionDto(
     Guid Id,
     Guid AdmissionId,
-    string Decision,
+    AdmissionStatus Decision,
     string? Reason,
     string? DecidedBy);

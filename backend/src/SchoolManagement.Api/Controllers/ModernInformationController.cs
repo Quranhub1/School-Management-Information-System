@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Administration;
+using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -36,7 +37,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
         return Ok(new ModernDashboardDto(
             students.Count,
             students.Count(x => string.Equals(x.Status, "Active", StringComparison.OrdinalIgnoreCase)),
-            admissions.Count(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase)),
+            admissions.Count(x => x.Status == AdmissionStatus.Pending),
             billed,
             paid,
             billed - paid,
@@ -127,7 +128,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
         var invoices = await db.StudentInvoices.AsNoTracking().ToListAsync(ct);
         var placements = await db.StudentPlacements.AsNoTracking().ToListAsync(ct);
         return Ok(new WorkflowSummaryDto(
-            admissions.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase)),
+            admissions.Count(x => x.Status == AdmissionStatus.Pending),
             invoices.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase) || x.PaidAmount < x.Amount),
             placements.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase)),
             DateTimeOffset.UtcNow));
