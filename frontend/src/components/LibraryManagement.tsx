@@ -43,7 +43,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [members, setMembers] = useState<LibraryMember[]>([]);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [requirements, setRequirements] = useState<LibraryProgrammeRequirement[]>([]);
-  const [paidClearanceStudents, setPaidClearanceStudents] = useState<PaidLibraryClearanceStudent[]>([]);
+  const [clearanceStudents, setClearanceStudents] = useState<PaidLibraryClearanceStudent[]>([]);
   const [clearanceFilters, setClearanceFilters] = useState({ name: '', course: '', semester: '', year: '' });
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
@@ -97,7 +97,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
   useEffect(() => {
     if (activeView === 'clearance-students') {
-      listPaidLibraryClearanceStudents().then(setPaidClearanceStudents).catch(e => setError(e instanceof Error ? e.message : 'Unable to load paid library clearance students.'));
+      listPaidLibraryClearanceStudents().then(setClearanceStudents).catch(e => setError(e instanceof Error ? e.message : 'Unable to load admitted students for course-book requirements.'));
     }
   }, [activeView]);
 
@@ -126,15 +126,15 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     [loans],
   );
   const visibleLoans = activeView === 'overdue' ? overdue : loans;
-  const filteredPaidClearanceStudents = useMemo(() => paidClearanceStudents.filter(student =>
+  const filteredClearanceStudents = useMemo(() => clearanceStudents.filter(student =>
     (!clearanceFilters.name || (student.studentName + ' ' + student.studentNumber).toLowerCase().includes(clearanceFilters.name.toLowerCase())) &&
     (!clearanceFilters.course || student.programmeName === clearanceFilters.course) &&
     (!clearanceFilters.semester || student.semesterName === clearanceFilters.semester) &&
     (!clearanceFilters.year || student.academicYearName === clearanceFilters.year)
-  ), [paidClearanceStudents, clearanceFilters]);
-  const clearanceCourses = useMemo(() => [...new Set(paidClearanceStudents.map(student => student.programmeName).filter((value): value is string => Boolean(value)))].sort(), [paidClearanceStudents]);
-  const clearanceSemesters = useMemo(() => [...new Set(paidClearanceStudents.map(student => student.semesterName).filter((value): value is string => Boolean(value)))].sort(), [paidClearanceStudents]);
-  const clearanceYears = useMemo(() => [...new Set(paidClearanceStudents.map(student => student.academicYearName).filter((value): value is string => Boolean(value)))].sort(), [paidClearanceStudents]);
+  ), [clearanceStudents, clearanceFilters]);
+  const clearanceCourses = useMemo(() => [...new Set(clearanceStudents.map(student => student.programmeName).filter((value): value is string => Boolean(value)))].sort(), [clearanceStudents]);
+  const clearanceSemesters = useMemo(() => [...new Set(clearanceStudents.map(student => student.semesterName).filter((value): value is string => Boolean(value)))].sort(), [clearanceStudents]);
+  const clearanceYears = useMemo(() => [...new Set(clearanceStudents.map(student => student.academicYearName).filter((value): value is string => Boolean(value)))].sort(), [clearanceStudents]);
   const isbnDigits = normalizeIsbnDigits(form.isbn);
   const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;
   const isbnValid = isbnComplete && isValidIsbn(isbnDigits);
@@ -391,7 +391,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </section>}
       {activeView === 'clearance-students' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
-        <div className="library-toolbar"><div><h3>Students with paid course-book fees</h3><small>{filteredPaidClearanceStudents.length} of {paidClearanceStudents.length} paid students</small></div></div>
+        <div className="library-toolbar"><div><h3>Students with paid course-book fees</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} paid students</small></div></div>
         <div className="library-clearance-filters" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 10, margin: '14px 0' }}>
           <label>Search student
             <input value={clearanceFilters.name} onChange={e => setClearanceFilters(current => ({ ...current, name: e.target.value }))} placeholder="Name or student number" />
@@ -407,11 +407,11 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </label>
         </div>
         <div className="table-wrap">
-          <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Paid Amount</th><th>Invoice</th><th>Invoice Date</th></tr></thead>
-            <tbody>{filteredPaidClearanceStudents.map((student, index) => <tr key={student.studentId + student.invoiceNumber}>
-              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || '—'}</td><td>{student.academicYearName || '—'}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.invoiceNumber}</td><td>{student.issuedAt ? formatDate(student.issuedAt) : '—'}</td>
+          <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Amount Paid</th><th>Outstanding</th><th>Invoice</th><th>Invoice Date</th></tr></thead>
+            <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId + student.invoiceNumber}>
+              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || '—'}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.invoiceNumber || '—'}</td><td>{student.issuedAt ? formatDate(student.issuedAt) : '—'}</td>
             </tr>)}
-            {filteredPaidClearanceStudents.length === 0 && <tr><td colSpan={10}>No fully paid library course-book invoices match these filters.</td></tr>}</tbody>
+            {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No admitted students match these filters.</td></tr>}</tbody>
           </table>
         </div>
       </section>}
