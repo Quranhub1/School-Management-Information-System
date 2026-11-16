@@ -78,6 +78,7 @@ export type PaidLibraryClearanceStudent = {
   paymentStatus: 'Paid' | 'Partially Paid' | 'Not Paid' | 'Not Invoiced'
   invoiceNumber?: string | null
   amount: number
+  requiredAmount: number
   paidAmount: number
   outstandingAmount: number
   currency: string
