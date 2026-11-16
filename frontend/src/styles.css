@@ -5089,3 +5089,14 @@ table { font-variant-numeric: tabular-nums; }
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Offset the Total Books card slightly from the left edge. */
+.library-workspace .library-books-summary {
+  margin-left: 40px;
+}
+
+@media (max-width: 640px) {
+  .library-workspace .library-books-summary {
+    margin-left: 0;
+  }
+}
