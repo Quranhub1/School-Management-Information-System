@@ -70,6 +70,7 @@ export type PaidLibraryClearanceStudent = {
   studentNumber: string
   studentName: string
   programmeName?: string | null
+  courseNames: string[]
   classYear?: number | null
   semesterName?: string | null
   academicYearName?: string | null
