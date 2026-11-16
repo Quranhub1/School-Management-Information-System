@@ -175,5 +175,6 @@ public sealed class LibraryServiceTests
         public Task AddLibrarianAsync(Librarian librarian, CancellationToken cancellationToken = default) { Librarians.Add(librarian); return Task.CompletedTask; }
         public Task AddLoanAsync(LibraryLoan loan, CancellationToken cancellationToken = default) { Loans.Add(loan); return Task.CompletedTask; }
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) { SaveChangesCount++; return Task.CompletedTask; }
+        public Task<decimal> GetFinePerOverdueDayAsync(CancellationToken cancellationToken = default) => Task.FromResult(1000m);
     }
 }
