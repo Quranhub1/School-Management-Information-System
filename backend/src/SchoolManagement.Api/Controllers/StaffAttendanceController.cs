@@ -49,7 +49,7 @@ public sealed class StaffAttendanceController(
 
         var staff = await staffQuery.Select(s => new
         {
-            s.Id, s.StaffNumber, s.FirstName, s.LastName, s.DepartmentId
+            s.Id, s.StaffNumber, s.FirstName, s.LastName, s.OtherNames, s.DepartmentId
         }).ToListAsync(cancellationToken);
         var staffIds = staff.Select(s => s.Id).ToArray();
         var events = await db.StaffAttendanceEvents.AsNoTracking()
