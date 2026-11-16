@@ -29,31 +29,37 @@ public sealed class LibraryController(
 
     [HttpGet("members")]
     [Authorize(Policy = LibraryPolicies.Read)]
-    public async Task<IActionResult> Members([FromQuery] string? search = null, CancellationToken ct = default)
+    public async Task<IActionResult> Members([FromQuery] string? search = null, [FromQuery] string? memberType = null, CancellationToken ct = default)
     {
-        var query = db.Students.AsNoTracking();
+        var term = search?.Trim();
+        var includeStudents = string.IsNullOrWhiteSpace(memberType) || memberType.Equals("Student", StringComparison.OrdinalIgnoreCase);
+        var includeStaff = string.IsNullOrWhiteSpace(memberType) || memberType.Equals("Staff", StringComparison.OrdinalIgnoreCase);
+        if (!includeStudents && !includeStaff) return BadRequest(new { message = "Member type must be Student or Staff." });
 
-        if (!string.IsNullOrWhiteSpace(search))
+        var members = new List<object>();
+        if (includeStudents)
         {
-            var term = search.Trim();
-            query = query.Where(student =>
-                student.StudentNumber.Contains(term) ||
-                student.FirstName.Contains(term) ||
-                student.LastName.Contains(term) ||
-                (student.OtherNames != null && student.OtherNames.Contains(term)));
-        }
-
-        var members = await query
-            .OrderBy(student => student.StudentNumber)
-            .Select(student => new
+            var students = db.Students.AsNoTracking().IgnoreQueryFilters().Where(x => !x.IsArchived);
+            if (!string.IsNullOrWhiteSpace(term))
+                students = students.Where(x => x.StudentNumber.Contains(term) || x.FirstName.Contains(term) || x.LastName.Contains(term) || (x.OtherNames != null && x.OtherNames.Contains(term)));
+            members.AddRange(await students.OrderBy(x => x.StudentNumber).Select(x => new
             {
-                id = student.Id,
-                studentNumber = student.StudentNumber,
-                name = (student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName).Trim()
-            })
-            .ToListAsync(ct);
-
-        return Ok(members);
+                id = x.Id, memberType = "Student", memberNumber = x.StudentNumber,
+                name = (x.FirstName + " " + (x.OtherNames ?? "") + " " + x.LastName).Trim()
+            }).ToListAsync(ct));
+        }
+        if (includeStaff)
+        {
+            var staff = db.StaffMembers.AsNoTracking().Where(x => x.IsActive && x.EmploymentStatus == "Active");
+            if (!string.IsNullOrWhiteSpace(term))
+                staff = staff.Where(x => x.StaffNumber.Contains(term) || x.FirstName.Contains(term) || x.LastName.Contains(term) || (x.OtherNames != null && x.OtherNames.Contains(term)));
+            members.AddRange(await staff.OrderBy(x => x.StaffNumber).Select(x => new
+            {
+                id = x.Id, memberType = "Staff", memberNumber = x.StaffNumber,
+                name = (x.FirstName + " " + (x.OtherNames ?? "") + " " + x.LastName).Trim()
+            }).ToListAsync(ct));
+        }
+        return Ok(members.OrderBy(x => ((dynamic)x).name));
     }
 
     // Librarians own course-specific book purchase/fee requirements. These are stored
@@ -178,34 +184,41 @@ public sealed class LibraryController(
     [Authorize(Policy = LibraryPolicies.Read)]
     public async Task<IActionResult> Loans([FromQuery] bool activeOnly = true, CancellationToken ct = default)
     {
-        var query =
-            from loan in db.LibraryLoans.AsNoTracking()
-            join book in db.LibraryBooks.AsNoTracking() on loan.BookId equals book.Id
-            join student in db.Students.AsNoTracking() on loan.StudentId equals student.Id
-            select new { loan, book, student };
+        var loanQuery = db.LibraryLoans.AsNoTracking();
+        if (activeOnly) loanQuery = loanQuery.Where(x => x.ReturnedAtUtc == null);
+        var rows = await loanQuery.OrderByDescending(x => x.IssuedAtUtc).ToListAsync(ct);
+        var bookIds = rows.Select(x => x.BookId).Distinct().ToArray();
+        var studentIds = rows.Where(x => x.StudentId.HasValue).Select(x => x.StudentId!.Value).Distinct().ToArray();
+        var staffIds = rows.Where(x => x.StaffMemberId.HasValue).Select(x => x.StaffMemberId!.Value).Distinct().ToArray();
+        var books = await db.LibraryBooks.AsNoTracking().Where(x => bookIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, ct);
+        var students = await db.Students.IgnoreQueryFilters().AsNoTracking().Where(x => studentIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, ct);
+        var staff = await db.StaffMembers.AsNoTracking().Where(x => staffIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, ct);
 
-        if (activeOnly)
-            query = query.Where(item => item.loan.ReturnedAtUtc == null);
-
-        var loans = await query
-            .OrderByDescending(item => item.loan.IssuedAtUtc)
-            .Select(item => new
+        var result = rows.Select(loan =>
+        {
+            books.TryGetValue(loan.BookId, out var book);
+            string? memberNumber = null;
+            string? memberName = null;
+            if (loan.StudentId.HasValue && students.TryGetValue(loan.StudentId.Value, out var student))
             {
-                id = item.loan.Id,
-                bookId = item.loan.BookId,
-                bookTitle = item.book.Title,
-                bookIsbn = item.book.Isbn,
-                studentId = item.loan.StudentId,
-                studentNumber = item.student.StudentNumber,
-                studentName = (item.student.FirstName + " " + (item.student.OtherNames ?? "") + " " + item.student.LastName).Trim(),
-                issuedAtUtc = item.loan.IssuedAtUtc,
-                dueAtUtc = item.loan.DueAtUtc,
-                returnedAtUtc = item.loan.ReturnedAtUtc,
-                fineAmount = item.loan.FineAmount
-            })
-            .ToListAsync(ct);
-
-        return Ok(loans);
+                memberNumber = student.StudentNumber;
+                memberName = (student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName).Trim();
+            }
+            else if (loan.StaffMemberId.HasValue && staff.TryGetValue(loan.StaffMemberId.Value, out var staffMember))
+            {
+                memberNumber = staffMember.StaffNumber;
+                memberName = (staffMember.FirstName + " " + (staffMember.OtherNames ?? "") + " " + staffMember.LastName).Trim();
+            }
+            return new
+            {
+                id = loan.Id, bookId = loan.BookId, bookTitle = book?.Title ?? "Unavailable book",
+                bookIsbn = book?.Isbn ?? "", memberId = loan.StudentId ?? loan.StaffMemberId,
+                memberType = loan.MemberType, memberNumber, memberName,
+                issuedAtUtc = loan.IssuedAtUtc, dueAtUtc = loan.DueAtUtc,
+                returnedAtUtc = loan.ReturnedAtUtc, fineAmount = loan.FineAmount
+            };
+        }).ToList();
+        return Ok(result);
     }
 
     [HttpGet("loans/{studentId:guid}")]
