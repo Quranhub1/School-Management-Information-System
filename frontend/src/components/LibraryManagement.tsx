@@ -26,6 +26,7 @@ import {
 } from '../api/library';
 import { getProgrammes, type Programme } from '../api/programmes';
 import { getAccessToken } from '../api/auth';
+import { useOptionalInstitutionSettings } from './InstitutionSettingsContext';
 
 const dateInput = () => {
   const d = new Date();
@@ -41,6 +42,9 @@ const formatDate = (value: string) =>
   }).format(new Date(value));
 
 export function LibraryManagement({ canManage }: { canManage?: boolean }) {
+  const institutionContext = useOptionalInstitutionSettings();
+  const institutionName = institutionContext?.institution?.institutionName?.trim() || 'Institution';
+  const institutionShortName = institutionContext?.institution?.abbreviation?.trim() || institutionName;
   const [books, setBooks] = useState<LibraryBook[]>([]);
   const [loans, setLoans] = useState<LibraryLoan[]>([]);
   const [members, setMembers] = useState<LibraryMember[]>([]);
@@ -526,9 +530,22 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       </section>}
       {activeView === 'cards' && selectedCardMember && <section className="library-main-card library-card-preview-section" style={{ marginBottom: 18, padding: 20 }}>
         <article className="library-print-card" aria-label="Library membership card">
+          <svg className="library-card-watermark" viewBox="0 0 856 540" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <pattern id="library-card-wave-pattern" width="220" height="88" patternUnits="userSpaceOnUse">
+                <path id="library-card-wave-one" d="M-10 22 Q45 0 100 22 T220 22" fill="none" />
+                <path id="library-card-wave-two" d="M-10 66 Q45 44 100 66 T220 66" fill="none" />
+                <g className="library-card-watermark-text">
+                  <text><textPath href="#library-card-wave-one">{`${institutionShortName}  •  ${institutionShortName}  •  ${institutionShortName}`}</textPath></text>
+                  <text><textPath href="#library-card-wave-two">{`${institutionShortName}  •  ${institutionShortName}  •  ${institutionShortName}`}</textPath></text>
+                </g>
+              </pattern>
+            </defs>
+            <rect width="856" height="540" fill="url(#library-card-wave-pattern)" />
+          </svg>
           <header className="library-print-card-header">
             <img className="library-card-institution-badge" src={institutionLogoUrl} alt="Institution badge" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} />
-            <div className="library-card-heading"><strong>KAMPALA SCHOOL OF HEALTH SCIENCES</strong><span>LIBRARY MEMBERSHIP CARD</span></div>
+            <div className="library-card-heading"><strong>{institutionName}</strong><span>LIBRARY MEMBERSHIP CARD</span></div>
             {selectedCardPhotoUrl
               ? <img className="library-card-student-photo" src={selectedCardPhotoUrl} alt={`Photograph of ${selectedCardMember.name}`} />
               : <div className="library-card-student-photo library-card-photo-placeholder" aria-label="No admission photograph available">PHOTO</div>}
