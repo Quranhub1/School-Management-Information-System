@@ -5155,3 +5155,97 @@ table { font-variant-numeric: tabular-nums; }
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+ 
+/* System-wide dropdown refresh: clear borders, readable text, visible chevron,
+   consistent control height and strong focus state across every module. */
+.app-shell select,
+.app-shell .form-group select,
+.app-shell label select,
+.app-shell .library-workspace select,
+.app-shell .library-clearance-filters select {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  min-height: 40px;
+  width: 100%;
+  max-width: 100%;
+  padding: 9px 42px 9px 12px;
+  border: 1px solid #aebdaf;
+  border-radius: 6px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23176b43' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 16px;
+  color: #17251d;
+  font: inherit;
+  font-size: .86rem;
+  line-height: 1.35;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .06);
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.app-shell select:hover:not(:disabled) {
+  border-color: #43845e;
+  background-color: #fcfefc;
+}
+.app-shell select:focus,
+.app-shell select:focus-visible {
+  outline: none;
+  border-color: #176b43;
+  box-shadow: 0 0 0 3px rgba(23, 107, 67, .16);
+}
+.app-shell select:disabled {
+  color: #7b8580;
+  background-color: #f1f4f2;
+  border-color: #d6ddd8;
+  cursor: not-allowed;
+  opacity: 1;
+}
+.app-shell select option {
+  padding: 9px 10px;
+  background: #fff;
+  color: #17251d;
+}
+.app-shell select option:checked {
+  background: #e5f2e9;
+  color: #145333;
+  font-weight: 700;
+}
+[data-theme="dark"] .app-shell select,
+[data-theme="dark"] .app-shell .form-group select,
+[data-theme="dark"] .app-shell label select,
+[data-theme="dark"] .app-shell .library-workspace select,
+[data-theme="dark"] .app-shell .library-clearance-filters select {
+  border-color: #587263;
+  background-color: #1b2c22;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239be0b2' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  color: #edf7f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+}
+[data-theme="dark"] .app-shell select:hover:not(:disabled) {
+  border-color: #83b895;
+  background-color: #20382a;
+}
+[data-theme="dark"] .app-shell select:focus,
+[data-theme="dark"] .app-shell select:focus-visible {
+  border-color: #8bd0a3;
+  box-shadow: 0 0 0 3px rgba(139, 208, 163, .2);
+}
+[data-theme="dark"] .app-shell select option {
+  background: #1b2c22;
+  color: #edf7f0;
+}
+[data-theme="dark"] .app-shell select option:checked {
+  background: #28543a;
+  color: #fff;
+}
+@media (max-width: 640px) {
+  .app-shell select,
+  .app-shell .form-group select,
+  .app-shell label select {
+    min-height: 42px;
+    font-size: .9rem;
+  }
+}
