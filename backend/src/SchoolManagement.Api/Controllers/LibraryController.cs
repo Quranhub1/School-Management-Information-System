@@ -592,6 +592,7 @@ public sealed class LibraryController(
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (DbUpdateConcurrencyException) { return Conflict(new { message = "The available book inventory changed during this request. Refresh the catalogue and try again." }); }
     }
 
     [HttpPatch("loans/{id:guid}/return")]
