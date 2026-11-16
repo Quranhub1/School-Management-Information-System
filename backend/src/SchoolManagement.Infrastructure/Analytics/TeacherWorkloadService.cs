@@ -88,7 +88,7 @@ public sealed class TeacherWorkloadService(SchoolManagementDbContext db)
             var warningLevel = workloadScore > 50m ? "High" : workloadScore > 30m ? "Medium" : "Low";
 
             var staff = staffMembers.FirstOrDefault(s => s.Id == teacherId);
-            var teacherName = staff is null ? "Unknown" : $"{staff.FirstName} {staff.LastName}".Trim();
+            var teacherName = staff is null ? "Unknown" : $"{staff.LastName} {staff.FirstName} {staff.OtherNames}".Trim().ToUpperInvariant();
 
             var departmentName = departments.FirstOrDefault(d => d.HeadStaffId == teacherId) is { } dept
                 ? dept.Name
