@@ -64,6 +64,11 @@ export const setProgrammeRequirement = (input: { programmeId: string; name: stri
   request<LibraryProgrammeRequirement>('/api/library/programme-requirements', { method: 'POST', body: JSON.stringify(input) })
 export const setProgrammeRequirementActive = (id: string, active: boolean) =>
   request<{ id: string; isActive: boolean }>(`/api/library/programme-requirements/${id}/active?active=${active}`, { method: 'PATCH' })
+export const recordLibraryStudentPayment = (studentId: string, input: { amount: number; method: string; reference?: string }) =>
+  request<{ id: string; studentId: string; amount: number; currency: string; paymentMethod: string; reference?: string | null; recordedAtUtc: string }>(
+    `/api/library/students/${studentId}/payments`,
+    { method: 'POST', body: JSON.stringify(input) },
+  )
 
 export type PaidLibraryClearanceStudent = {
   studentId: string
@@ -75,14 +80,13 @@ export type PaidLibraryClearanceStudent = {
   semesterName?: string | null
   semesterNumber?: number | null
   academicYearName?: string | null
-  paymentStatus: 'Paid' | 'Partially Paid' | 'Not Paid' | 'Not Invoiced'
-  invoiceNumber?: string | null
+  paymentStatus: 'Paid' | 'Partially Paid' | 'Not Paid' | 'Not Configured'
   amount: number
   requiredAmount: number
+  requirementId?: string | null
   paidAmount: number
   outstandingAmount: number
   currency: string
-  issuedAt?: string | null
 }
 export const listPaidLibraryClearanceStudents = () =>
   request<PaidLibraryClearanceStudent[]>('/api/library/clearance/paid-students')
