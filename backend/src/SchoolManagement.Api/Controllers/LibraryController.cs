@@ -82,8 +82,12 @@ public sealed class LibraryController(
         if (currency.Length != 3 || currency.Any(ch => !char.IsLetter(ch)))
             return BadRequest(new { message = "Select a valid three-letter currency code." });
 
-        var requirement = await db.LibraryProgrammeRequirements
-            .SingleOrDefaultAsync(x => x.ProgrammeId == request.ProgrammeId && x.IsActive, ct);
+        var activeRequirements = await db.LibraryProgrammeRequirements
+            .Where(x => x.ProgrammeId == request.ProgrammeId && x.IsActive)
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .ToListAsync(ct);
+        var requirement = activeRequirements.FirstOrDefault();
+        foreach (var duplicate in activeRequirements.Skip(1)) duplicate.IsActive = false;
         if (requirement is null)
         {
             requirement = new SchoolManagement.Domain.Library.LibraryProgrammeRequirement
@@ -113,6 +117,13 @@ public sealed class LibraryController(
     {
         var requirement = await db.LibraryProgrammeRequirements.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (requirement is null) return NotFound();
+        if (active)
+        {
+            var competingRequirements = await db.LibraryProgrammeRequirements
+                .Where(x => x.ProgrammeId == requirement.ProgrammeId && x.Id != id && x.IsActive)
+                .ToListAsync(ct);
+            foreach (var competing in competingRequirements) competing.IsActive = false;
+        }
         requirement.IsActive = active;
         requirement.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
@@ -145,7 +156,9 @@ public sealed class LibraryController(
         if (!programmeId.HasValue) return Conflict(new { message = "The student is not linked to a programme with a library requirement." });
 
         var requirement = await db.LibraryProgrammeRequirements.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.ProgrammeId == programmeId.Value && x.IsActive, ct);
+            .Where(x => x.ProgrammeId == programmeId.Value && x.IsActive)
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .FirstOrDefaultAsync(ct);
         if (requirement is null) return Conflict(new { message = "No active course-book requirement is configured for this student's programme." });
 
         var paid = await db.LibraryStudentPayments.AsNoTracking()
@@ -292,7 +305,9 @@ public sealed class LibraryController(
         var activeRequirements = await db.LibraryProgrammeRequirements.AsNoTracking()
             .Where(x => x.IsActive)
             .ToListAsync(ct);
-        var requirementsByProgramme = activeRequirements.ToDictionary(x => x.ProgrammeId);
+        var requirementsByProgramme = activeRequirements
+            .GroupBy(x => x.ProgrammeId)
+            .ToDictionary(x => x.Key, x => x.OrderByDescending(item => item.UpdatedAtUtc).First());
         var requirementIds = activeRequirements.Select(x => x.Id).ToArray();
         var paymentRows = await db.LibraryStudentPayments.AsNoTracking()
             .Where(x => studentIds.Contains(x.StudentId) && requirementIds.Contains(x.RequirementId))
@@ -425,7 +440,10 @@ public sealed class LibraryController(
                         .Select(x => (Guid?)x.ProgrammeId).FirstOrDefaultAsync(ct);
             }
             var requirement = programmeId.HasValue
-                ? await db.LibraryProgrammeRequirements.AsNoTracking().SingleOrDefaultAsync(x => x.ProgrammeId == programmeId.Value && x.IsActive, ct)
+                ? await db.LibraryProgrammeRequirements.AsNoTracking()
+                    .Where(x => x.ProgrammeId == programmeId.Value && x.IsActive)
+                    .OrderByDescending(x => x.UpdatedAtUtc)
+                    .FirstOrDefaultAsync(ct)
                 : null;
             if (requirement is null)
                 return Conflict(new { message = "No active Library course-book requirement is configured for this student." });
