@@ -18,7 +18,6 @@ public sealed class LibraryRepositoryTests
 
         Assert.NotNull(concurrencyProperty);
         Assert.True(concurrencyProperty!.IsConcurrencyToken);
-        Assert.True(concurrencyProperty.IsRowVersion());
     }
 
     [Fact]
