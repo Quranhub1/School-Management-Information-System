@@ -5058,8 +5058,8 @@ table { font-variant-numeric: tabular-nums; }
   .library-tabs > button.active,
   .library-search > button
 ) :where(span, strong, b, small, em, label) {
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  color: var(--color-white, #ffffff) !important;
+  -webkit-text-fill-color: var(--color-white, #ffffff) !important;
   opacity: 1 !important;
   font-weight: 700 !important;
   text-shadow: none !important;
