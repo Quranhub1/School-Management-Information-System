@@ -1,3 +1,4 @@
+import { formatPersonName } from '../utils/personName'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react';
 import { addLibrarian, deleteLibrarian, listLibrarians, updateLibrarian, type Librarian } from '../api/librarians';
@@ -38,7 +39,7 @@ export function LibrarianManagement() {
       setLibrarians(current => [assigned, ...current.filter(item => item.id !== assigned.id)]);
       setStaff(current => current.filter(person => person.id !== assigned.staffMemberId));
       setStaffMemberId('');
-      setMessage(`${assigned.firstName} ${assigned.lastName} is now listed as ${assigned.libraryRole}.`);
+      setMessage(`${formatPersonName(assigned.lastName, assigned.firstName)} is now listed as ${assigned.libraryRole}.`);
       // Reconcile with persisted server state in the background.
       void refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to add librarian.'); }
@@ -52,7 +53,7 @@ export function LibrarianManagement() {
   }
 
   async function remove(librarian: Librarian) {
-    if (!(await showConfirmDialog(`Remove ${librarian.firstName} ${librarian.lastName} from the librarian assignments? Their staff record will be retained.`, { title: 'Remove librarian assignment', confirmLabel: 'Yes, remove', destructive: true }))) return;
+    if (!(await showConfirmDialog(`Remove ${formatPersonName(librarian.lastName, librarian.firstName)} from the librarian assignments? Their staff record will be retained.`, { title: 'Remove librarian assignment', confirmLabel: 'Yes, remove', destructive: true }))) return;
     setMessage('');
     try {
       await deleteLibrarian(librarian.id);
@@ -66,7 +67,7 @@ export function LibrarianManagement() {
   return <section aria-labelledby="librarian-management-title">
     <div className="library-toolbar"><div><span className="eyebrow">LIBRARY STAFF</span><h3 id="librarian-management-title">Librarian Management</h3><p>Assign staff to library operations and control their library status.</p></div></div>
     <form onSubmit={add} className="library-form">
-      <label>Staff member<select value={staffMemberId} onChange={event => setStaffMemberId(event.target.value)}><option value="">Select staff member</option>{staff.map(person => <option key={person.id} value={person.id}>{person.staffNumber} — {person.firstName} {person.lastName}</option>)}</select></label>
+      <label>Staff member<select value={staffMemberId} onChange={event => setStaffMemberId(event.target.value)}><option value="">Select staff member</option>{staff.map(person => <option key={person.id} value={person.id}>{person.staffNumber} — {formatPersonName(person.lastName, person.firstName)}</option>)}</select></label>
       <label>Library role<input value={libraryRole} onChange={event => setLibraryRole(event.target.value)} placeholder="Librarian" maxLength={80} required /></label>
       <button type="submit" disabled={!staffMemberId || !libraryRole.trim() || libraryRole.trim().length > 80}>Assign librarian</button>
     </form>

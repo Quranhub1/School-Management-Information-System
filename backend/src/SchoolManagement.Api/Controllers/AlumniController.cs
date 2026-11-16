@@ -29,7 +29,7 @@ public sealed class AlumniController(SchoolManagementDbContext db) : ControllerB
         return Ok(await query.OrderByDescending(x => x.alumni.GraduationDate).Select(x => new
         {
             x.alumni.Id, x.alumni.StudentId, studentNumber = x.student.StudentNumber,
-            studentName = x.student.FirstName + " " + x.student.LastName, x.alumni.GraduationDate,
+            studentName = (x.student.LastName + " " + x.student.FirstName + " " + (x.student.OtherNames ?? "")).Trim().ToUpper(), x.alumni.GraduationDate,
             x.alumni.Programme, x.alumni.CurrentOccupation, x.alumni.Employer, x.alumni.ContactInfo, x.alumni.IsActive
         }).ToListAsync(cancellationToken));
     }

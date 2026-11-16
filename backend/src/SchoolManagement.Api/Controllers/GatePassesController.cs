@@ -20,7 +20,7 @@ public sealed class GatePassesController(SchoolManagementDbContext db) : Control
             join student in db.Students.AsNoTracking() on pass.StudentId equals student.Id
             where pass.Status == "Pending"
             orderby pass.IssuedAtUtc descending
-            select new { pass.Id, studentId = student.Id, studentNumber = student.StudentNumber, studentName = student.FirstName + " " + student.LastName, pass.PassType, pass.Reason, pass.Destination, pass.ExpectedReturnDate, pass.IssuedAtUtc, pass.AuthorizedBy, pass.ParentGuardianContact }
+            select new { pass.Id, studentId = student.Id, studentNumber = student.StudentNumber, studentName = (student.LastName + " " + student.FirstName + " " + (student.OtherNames ?? "")).Trim().ToUpper(), pass.PassType, pass.Reason, pass.Destination, pass.ExpectedReturnDate, pass.IssuedAtUtc, pass.AuthorizedBy, pass.ParentGuardianContact }
         ).ToListAsync(cancellationToken);
         return Ok(passes);
     }

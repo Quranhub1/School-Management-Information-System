@@ -47,7 +47,7 @@ public sealed class PrincipalController(SchoolManagementDbContext db, Institutio
             from fee in fees.DefaultIfEmpty()
             where invoice.OutstandingAmount > 0
             orderby invoice.OutstandingAmount descending
-            select new { studentId = student.Id, studentNumber = student.StudentNumber, studentName = student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName, balance = invoice.OutstandingAmount, invoice.Currency, programmeName = fee == null ? invoice.FeeType : fee.Name }
+            select new { studentId = student.Id, studentNumber = student.StudentNumber, studentName = (student.LastName + " " + student.FirstName + " " + (student.OtherNames ?? "")).Trim().ToUpper(), balance = invoice.OutstandingAmount, invoice.Currency, programmeName = fee == null ? invoice.FeeType : fee.Name }
         ).Take(20).ToListAsync(cancellationToken);
         var recentPayments = await (
             from payment in db.Payments.AsNoTracking()
@@ -55,7 +55,7 @@ public sealed class PrincipalController(SchoolManagementDbContext db, Institutio
             join invoice in db.StudentInvoices.AsNoTracking() on payment.StudentInvoiceId equals invoice.Id into invoices
             from invoice in invoices.DefaultIfEmpty()
             orderby payment.PaidAt descending
-            select new { payment.Id, payment.ReceiptNumber, payment.Amount, payment.Currency, payment.PaymentMethod, payment.PaidAt, studentName = student.FirstName + " " + student.LastName, invoiceNumber = invoice == null ? null : invoice.InvoiceNumber }
+            select new { payment.Id, payment.ReceiptNumber, payment.Amount, payment.Currency, payment.PaymentMethod, payment.PaidAt, studentName = (student.LastName + " " + student.FirstName).Trim().ToUpper(), invoiceNumber = invoice == null ? null : invoice.InvoiceNumber }
         ).Take(20).ToListAsync(cancellationToken);
         var recentResults = await (
             from result in db.Results.AsNoTracking()

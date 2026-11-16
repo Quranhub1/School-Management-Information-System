@@ -49,7 +49,7 @@ public sealed class StaffAttendanceController(
 
         var staff = await staffQuery.Select(s => new
         {
-            s.Id, s.StaffNumber, s.FirstName, s.LastName, s.DepartmentId
+            s.Id, s.StaffNumber, s.FirstName, s.LastName, s.OtherNames, s.DepartmentId
         }).ToListAsync(cancellationToken);
         var staffIds = staff.Select(s => s.Id).ToArray();
         var events = await db.StaffAttendanceEvents.AsNoTracking()
@@ -79,7 +79,7 @@ public sealed class StaffAttendanceController(
                 {
                     staffMemberId = member.Id,
                     member.StaffNumber,
-                    name = string.Join(" ", new[] { member.FirstName, member.LastName }),
+                    name = string.Join(" ", new[] { member.LastName, member.FirstName, member.OtherNames }.Where(value => !string.IsNullOrWhiteSpace(value))).ToUpper(),
                     member.DepartmentId,
                     date,
                     checkIn,
@@ -217,7 +217,7 @@ public sealed class StaffAttendanceController(
         {
             attendanceEvent.Id,
             staffMemberId = staff.Id,
-            staffName = $"{staff.FirstName} {staff.LastName}",
+            staffName = $"{staff.LastName} {staff.FirstName} {staff.OtherNames}".Trim().ToUpperInvariant(),
             staff.StaffNumber,
             eventType,
             recordedAtUtc = now,

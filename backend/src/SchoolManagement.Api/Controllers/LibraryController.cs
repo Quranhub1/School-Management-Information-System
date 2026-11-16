@@ -47,7 +47,7 @@ public sealed class LibraryController(
             {
                 id = student.Id,
                 studentNumber = student.StudentNumber,
-                name = (student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName).Trim()
+                name = (student.LastName + " " + student.FirstName + " " + (student.OtherNames ?? "")).Trim().ToUpper()
             })
             .ToListAsync(ct);
 
