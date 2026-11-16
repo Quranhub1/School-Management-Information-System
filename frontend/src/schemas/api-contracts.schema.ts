@@ -216,7 +216,9 @@ export const libraryBookCreateRequestSchema = z.object({
 });
 export const libraryLoanCreateRequestSchema = z.object({
   bookId: identifierSchema,
-  studentId: identifierSchema,
+  memberId: identifierSchema,
+  memberType: z.enum(["Student", "Staff"]),
+  issuedAtUtc: z.string().min(1),
   dueAtUtc: z.string().min(1),
 });
 
