@@ -48,6 +48,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [clearanceStudents, setClearanceStudents] = useState<PaidLibraryClearanceStudent[]>([]);
   const [clearanceAcademicOptions, setClearanceAcademicOptions] = useState<LibraryClearanceAcademicOptions>({ courses: [], programmes: [], years: [], semesters: [], mappings: [] });
   const [clearanceFilters, setClearanceFilters] = useState({ name: '', course: '', semester: '', year: '' });
+  const [clearanceSearchFocused, setClearanceSearchFocused] = useState(false);
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
   const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'overdue' | 'cards' | 'clearance-students' | 'clearance-settings'>('dashboard');
@@ -137,6 +138,18 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     (!clearanceFilters.semester || String(student.semesterNumber ?? '') === clearanceFilters.semester) &&
     (!clearanceFilters.year || String(student.classYear ?? '') === clearanceFilters.year)
   ), [clearanceStudents, clearanceFilters]);
+  const clearanceStudentSuggestions = useMemo(() => {
+    const query = clearanceFilters.name.trim().toLowerCase();
+    if (!query) return [];
+    const seen = new Set<string>();
+    return clearanceStudents.filter(student => {
+      const matches = student.studentName.toLowerCase().includes(query) ||
+        student.studentNumber.toLowerCase().includes(query);
+      if (!matches || seen.has(student.studentId)) return false;
+      seen.add(student.studentId);
+      return true;
+    }).slice(0, 8);
+  }, [clearanceStudents, clearanceFilters.name]);
   const clearanceCourses = clearanceAcademicOptions.courses;
   const clearanceSemesters = clearanceAcademicOptions.semesters;
   const clearanceYears = clearanceAcademicOptions.years;
@@ -398,9 +411,51 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       {activeView === 'clearance-students' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
         <div className="library-toolbar"><div><h3>Admitted Students — Course-book Requirements</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} admitted students</small></div></div>
         <div className="library-clearance-filters" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 10, margin: '14px 0' }}>
-          <label>Search student
-            <input list="library-clearance-student-suggestions" value={clearanceFilters.name} onChange={e => setClearanceFilters(current => ({ ...current, name: e.target.value }))} placeholder="Start typing a name or student number" autoComplete="off" />
-            <datalist id="library-clearance-student-suggestions">{clearanceStudents.map(student => <option key={student.studentId} value={student.studentName}>{student.studentNumber}</option>)}</datalist>
+          <label className="library-clearance-search-label">Search student
+            <div className="library-clearance-autocomplete">
+              <span className="library-clearance-search-icon" aria-hidden="true">⌕</span>
+              <input
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={clearanceSearchFocused && clearanceStudentSuggestions.length > 0}
+                aria-controls="library-clearance-student-suggestions"
+                aria-label="Search by student name or student number"
+                value={clearanceFilters.name}
+                onFocus={() => setClearanceSearchFocused(true)}
+                onBlur={() => setClearanceSearchFocused(false)}
+                onChange={e => setClearanceFilters(current => ({ ...current, name: e.target.value }))}
+                placeholder="Start typing a name or student number"
+                autoComplete="off"
+              />
+              {clearanceFilters.name && <button type="button" className="library-clearance-clear-search" aria-label="Clear student search" onMouseDown={e => e.preventDefault()} onClick={() => setClearanceFilters(current => ({ ...current, name: '' }))}>×</button>}
+              {clearanceSearchFocused && clearanceStudentSuggestions.length > 0 && (
+                <div className="library-clearance-suggestions" id="library-clearance-student-suggestions" role="listbox">
+                  {clearanceStudentSuggestions.map(student => (
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      key={student.studentId}
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => {
+                        setClearanceFilters(current => ({ ...current, name: student.studentNumber }));
+                        setClearanceSearchFocused(false);
+                      }}
+                    >
+                      <span className="library-clearance-suggestion-avatar" aria-hidden="true">{student.studentName.trim().charAt(0).toUpperCase()}</span>
+                      <span className="library-clearance-suggestion-details">
+                        <strong>{student.studentName}</strong>
+                        <small>{student.studentNumber}</small>
+                      </span>
+                      <span className="library-clearance-suggestion-arrow" aria-hidden="true">↵</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {clearanceSearchFocused && clearanceFilters.name.trim() && clearanceStudentSuggestions.length === 0 && (
+                <div className="library-clearance-suggestions library-clearance-no-suggestions" role="status">No matching admitted students</div>
+              )}
+            </div>
           </label>
           <label>Course
             <select value={clearanceFilters.course} onChange={e => setClearanceFilters(current => ({ ...current, course: e.target.value }))}><option value="">All courses</option>{clearanceCourses.map(course => <option key={course.courseId} value={course.courseName}>{course.courseName}</option>)}</select>
