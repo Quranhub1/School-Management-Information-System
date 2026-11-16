@@ -103,6 +103,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   }, [activeView, openAddBookForm]);
 
   useEffect(() => {
+    setSelectedCardPhotoUrl(null);
     if (!selectedCardMember) {
       setSelectedCardPhotoUrl(null);
       return;
