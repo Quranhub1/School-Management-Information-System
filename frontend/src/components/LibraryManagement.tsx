@@ -19,6 +19,8 @@ import {
   setProgrammeRequirement,
   setProgrammeRequirementActive,
   type LibraryProgrammeRequirement,
+  listPaidLibraryClearanceStudents,
+  type PaidLibraryClearanceStudent,
 } from '../api/library';
 import { getProgrammes, type Programme } from '../api/programmes';
 
@@ -41,9 +43,11 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [members, setMembers] = useState<LibraryMember[]>([]);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [requirements, setRequirements] = useState<LibraryProgrammeRequirement[]>([]);
+  const [paidClearanceStudents, setPaidClearanceStudents] = useState<PaidLibraryClearanceStudent[]>([]);
+  const [clearanceFilters, setClearanceFilters] = useState({ name: '', course: '', semester: '', year: '' });
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
-  const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'overdue' | 'cards' | 'clearance'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'overdue' | 'cards' | 'clearance-students' | 'clearance-settings'>('dashboard');
   const [openAddBookForm, setOpenAddBookForm] = useState(false);
   const [selectedCardMember, setSelectedCardMember] = useState<LibraryMember | null>(null);
   const [error, setError] = useState('');
@@ -92,6 +96,12 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   }, [activeView, openAddBookForm]);
 
   useEffect(() => {
+    if (activeView === 'clearance-students') {
+      listPaidLibraryClearanceStudents().then(setPaidClearanceStudents).catch(e => setError(e instanceof Error ? e.message : 'Unable to load paid library clearance students.'));
+    }
+  }, [activeView]);
+
+  useEffect(() => {
     void load();
     if (canManage) {
       Promise.all([getProgrammes(), listProgrammeRequirements()])
@@ -116,6 +126,15 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     [loans],
   );
   const visibleLoans = activeView === 'overdue' ? overdue : loans;
+  const filteredPaidClearanceStudents = useMemo(() => paidClearanceStudents.filter(student =>
+    (!clearanceFilters.name || (student.studentName + ' ' + student.studentNumber).toLowerCase().includes(clearanceFilters.name.toLowerCase())) &&
+    (!clearanceFilters.course || student.programmeName === clearanceFilters.course) &&
+    (!clearanceFilters.semester || student.semesterName === clearanceFilters.semester) &&
+    (!clearanceFilters.year || student.academicYearName === clearanceFilters.year)
+  ), [paidClearanceStudents, clearanceFilters]);
+  const clearanceCourses = useMemo(() => [...new Set(paidClearanceStudents.map(student => student.programmeName).filter((value): value is string => Boolean(value)))].sort(), [paidClearanceStudents]);
+  const clearanceSemesters = useMemo(() => [...new Set(paidClearanceStudents.map(student => student.semesterName).filter((value): value is string => Boolean(value)))].sort(), [paidClearanceStudents]);
+  const clearanceYears = useMemo(() => [...new Set(paidClearanceStudents.map(student => student.academicYearName).filter((value): value is string => Boolean(value)))].sort(), [paidClearanceStudents]);
   const isbnDigits = normalizeIsbnDigits(form.isbn);
   const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;
   const isbnValid = isbnComplete && isValidIsbn(isbnDigits);
@@ -299,7 +318,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       <div className="library-heading">
         <div>
           <span className="eyebrow">LIBRARY SERVICES</span>
-          <h2>{activeView === 'books' ? 'Books' : activeView === 'issue' ? 'Issue & Return Books' : activeView === 'overdue' ? 'Overdue Loans' : activeView === 'cards' ? 'Library Cards' : activeView === 'clearance' ? 'Library Clearance' : 'Library Management'}</h2>
+          <h2>{activeView === 'books' ? 'Books' : activeView === 'issue' ? 'Issue & Return Books' : activeView === 'overdue' ? 'Overdue Loans' : activeView === 'cards' ? 'Library Cards' : activeView === 'clearance-students' ? 'Course-book Requirements' : activeView === 'clearance-settings' ? 'Fees & Settings' : 'Library Management'}</h2>
           
         </div>
       </div>
@@ -317,7 +336,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               { key: 'books' as const, icon: '▤', title: 'Books Catalogue', description: 'Browse, register and manage books, ISBNs and barcodes.', links: [{ label: 'View Catalogue', view: 'books' as const }, { label: 'Add New Book', view: 'books' as const }] },
               { key: 'issue' as const, icon: '↗', title: 'Issue & Return Books', description: 'Issue books, process returns and follow up overdue loans.', links: [{ label: 'Issue a Book', view: 'issue' as const }, { label: 'View Active Loans', view: 'issue' as const }, { label: `Overdue Loans (${overdue.length})`, view: 'overdue' as const }] },
               { key: 'cards' as const, icon: '▣', title: 'Library Cards', description: 'Prepare student library membership cards and view the register.', links: [{ label: 'Issue Library Cards', view: 'cards' as const }, { label: 'View Library Cards', view: 'cards' as const }] },
-              { key: 'clearance' as const, icon: '✓', title: 'Library Clearance', description: 'Manage programme course-book requirements and related fees.', links: [{ label: 'Course-book Requirements', view: 'clearance' as const }, { label: 'Fees & Settings', view: 'clearance' as const }] },
+              { key: 'clearance-students' as const, icon: '✓', title: 'Library Clearance', description: 'View students who have fully paid their required course-book fees and configure course fees.', links: [{ label: 'Course-book Requirements', view: 'clearance-students' as const }, { label: 'Fees & Settings', view: 'clearance-settings' as const }] },
             ].map(item => (
               <article key={item.key} className="library-main-card" style={{ padding: 18, borderTop: '3px solid var(--primary, #16834a)' }}>
                 <button type="button" onClick={() => setActiveView(item.key)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: 0, border: 0, background: 'transparent', color: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
@@ -341,7 +360,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </>
       )}
 
-      {canManage && activeView === 'clearance' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
+      {canManage && activeView === 'clearance-settings' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
         <h3>Course book requirements and fees</h3>
         <p>Set the required book or book-purchase amount for each programme. These charges are added to the student's Finance account automatically on admission.</p>
         <form onSubmit={submitProgrammeRequirement} style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 1.5fr) minmax(160px, 1fr) minmax(120px, .7fr) auto', gap: 10, alignItems: 'end' }}>
@@ -368,6 +387,31 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               <td><button type="button" className="secondary-button" disabled={busy} onClick={() => void toggleProgrammeRequirement(item.id, !item.isActive)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td>
             </tr>)}
             {requirements.length === 0 && <tr><td colSpan={6}>No course book requirements configured.</td></tr>}</tbody>
+          </table>
+        </div>
+      </section>}
+      {activeView === 'clearance-students' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
+        <div className="library-toolbar"><div><h3>Students with paid course-book fees</h3><small>{filteredPaidClearanceStudents.length} of {paidClearanceStudents.length} paid students</small></div></div>
+        <div className="library-clearance-filters" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 10, margin: '14px 0' }}>
+          <label>Search student
+            <input value={clearanceFilters.name} onChange={e => setClearanceFilters(current => ({ ...current, name: e.target.value }))} placeholder="Name or student number" />
+          </label>
+          <label>Course
+            <select value={clearanceFilters.course} onChange={e => setClearanceFilters(current => ({ ...current, course: e.target.value }))}><option value="">All courses</option>{clearanceCourses.map(course => <option key={course} value={course}>{course}</option>)}</select>
+          </label>
+          <label>Semester
+            <select value={clearanceFilters.semester} onChange={e => setClearanceFilters(current => ({ ...current, semester: e.target.value }))}><option value="">All semesters</option>{clearanceSemesters.map(semester => <option key={semester} value={semester}>{semester}</option>)}</select>
+          </label>
+          <label>Academic year
+            <select value={clearanceFilters.year} onChange={e => setClearanceFilters(current => ({ ...current, year: e.target.value }))}><option value="">All years</option>{clearanceYears.map(year => <option key={year} value={year}>{year}</option>)}</select>
+          </label>
+        </div>
+        <div className="table-wrap">
+          <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Year</th><th>Semester</th><th>Paid Amount</th><th>Invoice</th><th>Invoice Date</th></tr></thead>
+            <tbody>{filteredPaidClearanceStudents.map((student, index) => <tr key={student.studentId + student.invoiceNumber}>
+              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : student.academicYearName || '—'}</td><td>{student.semesterName || '—'}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.invoiceNumber}</td><td>{student.issuedAt ? formatDate(student.issuedAt) : '—'}</td>
+            </tr>)}
+            {filteredPaidClearanceStudents.length === 0 && <tr><td colSpan={9}>No fully paid library course-book invoices match these filters.</td></tr>}</tbody>
           </table>
         </div>
       </section>}
