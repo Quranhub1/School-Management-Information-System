@@ -3,6 +3,7 @@ namespace SchoolManagement.Domain.Library;
 public sealed class LibraryBook
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public string Isbn { get; set; } = string.Empty;
     public string? BarcodeValue { get; set; }
     public string Title { get; set; } = string.Empty;
