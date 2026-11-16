@@ -290,7 +290,16 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     () => clearanceStudents.find(student => student.studentId === selectedCardMember?.id),
     [clearanceStudents, selectedCardMember],
   );
-  const selectedCardIsPaid = selectedCardClearance?.paymentStatus === 'Paid';
+  const getClearancePaymentStatus = (student: PaidLibraryClearanceStudent) => {
+    if (!student.requirementId || student.requiredAmount <= 0) return 'Not Configured' as const;
+    const paid = Math.max(0, Number(student.paidAmount) || 0);
+    const required = Math.max(0, Number(student.requiredAmount) || 0);
+    if (paid >= required) return 'Paid' as const;
+    return paid > 0 ? 'Partially Paid' as const : 'Not Paid' as const;
+  };
+  const selectedCardIsPaid = selectedCardClearance
+    ? getClearancePaymentStatus(selectedCardClearance) === 'Paid'
+    : false;
   const isbnDigits = normalizeIsbnDigits(form.isbn);
   const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;
   const isbnValid = isbnComplete && isValidIsbn(isbnDigits);
@@ -725,7 +734,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Required Fee</th><th>Amount Paid</th><th>Outstanding</th><th>Action</th></tr></thead>
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId}>
               <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td>
-              <td><span className={student.paymentStatus === 'Paid' ? 'loan-status' : 'loan-status overdue'}>{student.paymentStatus}</span></td>
+              <td><span className={getClearancePaymentStatus(student) === 'Paid' ? 'loan-status' : getClearancePaymentStatus(student) === 'Partially Paid' ? 'loan-status warning' : 'loan-status overdue'}>{getClearancePaymentStatus(student)}</span></td>
               <td>{canManage ? <div className="library-payment-approval" style={{ display: 'grid', gap: 4, minWidth: 130 }}>
                 <input aria-label={`Required course-book fee for ${student.programmeName || student.studentName}`} type="number" min="0.01" step="0.01" placeholder="Required fee" value={requiredFeeAmounts[student.studentId] ?? (student.requirementId ? String(student.requiredAmount) : '')} onChange={e => setRequiredFeeAmounts(current => ({ ...current, [student.studentId]: e.target.value }))} />
                 <small>{student.requirementId ? 'Programme fee' : 'Not configured'}</small>
@@ -740,9 +749,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                   ? <button type="button" className="library-primary" disabled={busy || !student.programmeId || !requiredFeeAmounts[student.studentId]} onClick={() => void saveStudentProgrammeRequirement(student)}>Save fee</button>
                   : <button type="button" className="secondary-button" disabled={busy || !requiredFeeAmounts[student.studentId] || Number(requiredFeeAmounts[student.studentId]) === student.requiredAmount} onClick={() => void saveStudentProgrammeRequirement(student)}>Update fee</button>}
                 {student.requirementId && student.outstandingAmount > 0 && <button type="button" className="library-primary" disabled={busy || !paymentAmounts[student.studentId]} onClick={() => void recordStudentBookPayment(student)}>Approve payment</button>}
-                {student.paymentStatus === 'Paid' && <strong>Cleared</strong>}
+                {getClearancePaymentStatus(student) === 'Paid' && <strong>Cleared</strong>}
                 {!student.programmeId && <small>Programme link required</small>}
-              </div> : student.paymentStatus === 'Paid' ? <strong>Cleared</strong> : <span title="A Librarian or System Administrator must approve manual course-book payments">Librarian approval required</span>}</td>
+              </div> : getClearancePaymentStatus(student) === 'Paid' ? <strong>Cleared</strong> : <span title="A Librarian or System Administrator must approve manual course-book payments">Librarian approval required</span>}</td>
             </tr>)}
             {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No students match these filters.</td></tr>}</tbody>
           </table>
@@ -805,7 +814,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </section>}
       {activeView === 'issue' && (
-        <div className="library-summary" aria-label="Issue and returns summary">
+        <div className="library-summary library-summary-two" aria-label="Issue and returns summary">
           <div className="library-stat">
             <span className="library-icon available">▤</span>
             <div>
