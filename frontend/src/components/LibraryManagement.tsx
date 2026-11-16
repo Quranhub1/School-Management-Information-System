@@ -381,7 +381,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       {canManage && activeView === 'clearance-settings' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
         <h3>Course book requirements and fees</h3>
         <p>Set the required book or book-purchase amount for each programme. These charges are added to the student's Finance account automatically on admission.</p>
-        <form onSubmit={submitProgrammeRequirement} style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 1.5fr) minmax(160px, 1fr) minmax(120px, .7fr) auto', gap: 10, alignItems: 'end' }}>
+        <form className="library-requirement-form" onSubmit={submitProgrammeRequirement}>
           <label>Programme
             <select value={requirementForm.programmeId} onChange={e => setRequirementForm(v => ({ ...v, programmeId: e.target.value }))} required>
               <option value="">Select course/programme</option>
