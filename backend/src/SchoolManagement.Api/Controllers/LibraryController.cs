@@ -448,15 +448,27 @@ public sealed class LibraryController(
             .Select(x => new { academicYearId = x.Id, x.Name, x.IsCurrent })
             .ToListAsync(ct);
 
+        // Keep filter options available even when a programme has not yet had its
+        // curriculum mapped. The course catalogue and programme duration are the
+        // authoritative registers; curriculum mappings are used only to associate
+        // courses with programmes.
+        var courses = await db.Courses.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Name)
+            .Select(x => new { courseId = x.Id, courseName = x.Name })
+            .ToListAsync(ct);
+        var programmes = await db.Programmes.AsNoTracking()
+            .Where(x => x.IsActive && !x.IsReferenceOnly)
+            .OrderBy(x => x.Name)
+            .Select(x => new { programmeId = x.Id, programmeName = x.Name, x.DurationYears })
+            .ToListAsync(ct);
+        var maximumStudyYear = programmes.Select(x => x.DurationYears).DefaultIfEmpty(0).Max();
+
         return Ok(new
         {
-            courses = rows.Select(x => new { x.courseId, x.courseName }).Distinct().OrderBy(x => x.courseName),
-            programmes = await db.Programmes.AsNoTracking()
-                .Where(x => x.IsActive && !x.IsReferenceOnly)
-                .OrderBy(x => x.Name)
-                .Select(x => new { programmeId = x.Id, programmeName = x.Name })
-                .ToListAsync(ct),
-            years = rows.Select(x => x.yearOfStudy).Distinct().OrderBy(x => x),
+            courses,
+            programmes = programmes.Select(x => new { x.programmeId, x.programmeName }),
+            years = Enumerable.Range(1, Math.Max(0, maximumStudyYear)),
             semesters,
             academicYears,
             mappings = rows
