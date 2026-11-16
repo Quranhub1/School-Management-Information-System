@@ -5598,6 +5598,80 @@ namespace SchoolManagement.Infrastructure.Migrations
                 {
                     b.Navigation("Assignments");
                 });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.LogbookRequirement", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CurriculumId").HasColumnType("uuid");
+                b.Property<string>("Title").IsRequired().HasColumnType("text");
+                b.Property<string>("Description").HasColumnType("text");
+                b.Property<int>("YearOfStudy").HasColumnType("integer");
+                b.Property<int>("SemesterNumber").HasColumnType("integer");
+                b.Property<int>("RequiredQuantity").HasColumnType("integer");
+                b.Property<bool>("IsMandatory").HasColumnType("boolean");
+                b.Property<bool>("IsActive").HasColumnType("boolean");
+                b.HasKey("Id"); b.HasIndex("CurriculumId"); b.ToTable("LogbookRequirements");
+            });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Clinical.LogbookCompetencyRequirement", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("LogbookRequirementId").HasColumnType("uuid");
+                b.Property<string>("Code").IsRequired().HasColumnType("text");
+                b.Property<string>("Name").IsRequired().HasColumnType("text");
+                b.Property<int>("RequiredCount").HasColumnType("integer");
+                b.Property<bool>("IsMandatory").HasColumnType("boolean");
+                b.Property<bool>("IsActive").HasColumnType("boolean");
+                b.HasKey("Id"); b.HasIndex("LogbookRequirementId"); b.ToTable("LogbookCompetencyRequirements");
+            });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Clinical.StudentLogbook", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("StudentId").HasColumnType("uuid");
+                b.Property<Guid>("LogbookRequirementId").HasColumnType("uuid");
+                b.Property<string>("SerialNumber").IsRequired().HasColumnType("text");
+                b.Property<DateOnly>("IssuedOn").HasColumnType("date");
+                b.Property<DateOnly?>("SubmittedOn").HasColumnType("date");
+                b.Property<string>("Status").IsRequired().HasColumnType("text");
+                b.Property<string>("IssuedBy").HasColumnType("text");
+                b.Property<string>("Remarks").HasColumnType("text");
+                b.HasKey("Id"); b.HasIndex("SerialNumber").IsUnique(); b.HasIndex("StudentId", "LogbookRequirementId"); b.ToTable("StudentLogbooks");
+            });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Clinical.StudentLogbookCompetency", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("StudentLogbookId").HasColumnType("uuid");
+                b.Property<Guid>("CompetencyRequirementId").HasColumnType("uuid");
+                b.Property<Guid?>("StudentPlacementId").HasColumnType("uuid");
+                b.Property<string>("Outcome").IsRequired().HasColumnType("text");
+                b.Property<DateOnly?>("AssessedOn").HasColumnType("date");
+                b.Property<string>("AssessorName").HasColumnType("text");
+                b.Property<string>("AssessorRole").HasColumnType("text");
+                b.Property<string>("EvidenceReference").HasColumnType("text");
+                b.Property<string>("Remarks").HasColumnType("text");
+                b.HasKey("Id"); b.HasIndex("StudentLogbookId"); b.HasIndex("CompetencyRequirementId"); b.HasIndex("StudentPlacementId"); b.ToTable("StudentLogbookCompetencies");
+            });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.UhpabFeeReference", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<string>("Category").IsRequired().HasColumnType("text");
+                b.Property<string>("ProgrammeCode").HasColumnType("text");
+                b.Property<string>("ProgrammeName").HasColumnType("text");
+                b.Property<string>("Description").IsRequired().HasColumnType("text");
+                b.Property<decimal>("Amount").HasPrecision(18, 2).HasColumnType("numeric(18,2)");
+                b.Property<string>("Currency").IsRequired().HasMaxLength(3).HasColumnType("character varying(3)");
+                b.Property<string>("SourceUrl").IsRequired().HasColumnType("text");
+                b.Property<string>("SourceTitle").IsRequired().HasColumnType("text");
+                b.Property<DateOnly>("SourceCheckedOn").HasColumnType("date");
+                b.Property<DateOnly>("EffectiveFrom").HasColumnType("date");
+                b.Property<DateOnly?>("EffectiveTo").HasColumnType("date");
+                b.Property<bool>("IsActive").HasColumnType("boolean");
+                b.HasKey("Id"); b.HasIndex("Category", "ProgrammeCode", "IsActive"); b.ToTable("UhpabFeeReferences");
+            });
+
             modelBuilder.Entity("SchoolManagement.Domain.Attendance.StaffAttendanceEvent", b =>
                 {
                     b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
@@ -5640,7 +5714,24 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .WithMany().HasForeignKey("StaffMemberId").OnDelete(DeleteBehavior.Restrict).IsRequired();
                 });
 
-#pragma warning restore 612, 618
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.LogbookRequirement", b =>
+                b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null).WithMany().HasForeignKey("CurriculumId").OnDelete(DeleteBehavior.Cascade).IsRequired());
+            modelBuilder.Entity("SchoolManagement.Domain.Clinical.LogbookCompetencyRequirement", b =>
+                b.HasOne("SchoolManagement.Domain.Academic.LogbookRequirement", null).WithMany().HasForeignKey("LogbookRequirementId").OnDelete(DeleteBehavior.Cascade).IsRequired());
+            modelBuilder.Entity("SchoolManagement.Domain.Clinical.StudentLogbook", b =>
+            {
+                b.HasOne("SchoolManagement.Domain.Students.Student", null).WithMany().HasForeignKey("StudentId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                b.HasOne("SchoolManagement.Domain.Academic.LogbookRequirement", null).WithMany().HasForeignKey("LogbookRequirementId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+            });
+            modelBuilder.Entity("SchoolManagement.Domain.Clinical.StudentLogbookCompetency", b =>
+            {
+                b.HasOne("SchoolManagement.Domain.Clinical.StudentLogbook", null).WithMany().HasForeignKey("StudentLogbookId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                b.HasOne("SchoolManagement.Domain.Clinical.LogbookCompetencyRequirement", null).WithMany().HasForeignKey("CompetencyRequirementId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                b.HasOne("SchoolManagement.Domain.Clinical.StudentPlacement", null).WithMany().HasForeignKey("StudentPlacementId").OnDelete(DeleteBehavior.SetNull);
+            });
+
+            #pragma warning restore 612, 618
         }
     }
 }
