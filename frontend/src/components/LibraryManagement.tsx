@@ -708,7 +708,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             ? selectedCardIsPaid
               ? `Course-book fee cleared in full: ${selectedCardClearance.currency} ${selectedCardClearance.requiredAmount.toLocaleString(SYSTEM_LOCALE)}.`
               : `Printing disabled. Required: ${selectedCardClearance.currency} ${selectedCardClearance.requiredAmount.toLocaleString(SYSTEM_LOCALE)}; paid: ${selectedCardClearance.paidAmount.toLocaleString(SYSTEM_LOCALE)}; outstanding: ${selectedCardClearance.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}.`
-            : 'Printing disabled until the student's full library course-book requirement is paid.'}
+            : "Printing disabled until the student's full library course-book requirement is paid."}
         </div>
         <div className="library-card-preview-actions">
           <button type="button" className="library-primary" disabled={!selectedCardIsPaid} onClick={printLibraryCard}>Print Library Card</button>
