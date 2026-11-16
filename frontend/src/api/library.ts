@@ -38,6 +38,17 @@ export const addBook = (input: Omit<LibraryBook,'id'|'availableCopies'|'isActive
   return request<LibraryBook>('/api/library/books', { method:'POST', body:JSON.stringify(validated) });
 };
 
+export const updateBook = (id: string, input: Omit<LibraryBook, 'id'|'availableCopies'|'isActive'|'barcodeValue'>) => {
+  if (!id.trim()) throw new Error('Book id is required.');
+  const validated = parseApiInput(libraryBookCreateRequestSchema, input, 'update library book');
+  return request<LibraryBook>(`/api/library/books/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(validated) });
+};
+
+export const archiveBook = (id: string) => {
+  if (!id.trim()) throw new Error('Book id is required.');
+  return request<void>(`/api/library/books/${encodeURIComponent(id)}`, { method: 'DELETE' });
+};
+
 export const issueBook = (input:{bookId:string;memberId:string;memberType:'Student'|'Staff';issuedAtUtc:string;dueAtUtc:string}) => {
   const validated = parseApiInput(libraryLoanCreateRequestSchema, input, 'issue library book');
   return request<LibraryLoan>('/api/library/loans', { method:'POST', body:JSON.stringify(validated) });
