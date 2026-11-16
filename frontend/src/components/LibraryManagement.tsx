@@ -25,6 +25,7 @@ import {
   type PaidLibraryClearanceStudent,
 } from '../api/library';
 import { getProgrammes, type Programme } from '../api/programmes';
+import { getAccessToken } from '../api/auth';
 
 const dateInput = () => {
   const d = new Date();
@@ -54,6 +55,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'overdue' | 'cards' | 'clearance-students' | 'clearance-settings'>('dashboard');
   const [openAddBookForm, setOpenAddBookForm] = useState(false);
   const [selectedCardMember, setSelectedCardMember] = useState<LibraryMember | null>(null);
+  const [selectedCardPhotoUrl, setSelectedCardPhotoUrl] = useState<string | null>(null);
+  const institutionLogoUrl = `${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\\/$/, '') ?? ''}/api/public/institution-settings/logo`;
   const [error, setError] = useState('');
   const [bookValidationErrors, setBookValidationErrors] = useState<Record<string, string>>({});
   const [loanValidationErrors, setLoanValidationErrors] = useState<Record<string, string>>({});
@@ -98,6 +101,33 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     document.getElementById('library-add-book')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setOpenAddBookForm(false);
   }, [activeView, openAddBookForm]);
+
+  useEffect(() => {
+    if (!selectedCardMember) {
+      setSelectedCardPhotoUrl(null);
+      return;
+    }
+    let objectUrl: string | null = null;
+    let cancelled = false;
+    const token = getAccessToken();
+    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\\/$/, '') ?? '';
+    void fetch(`${base}/api/students/${encodeURIComponent(selectedCardMember.id)}/application-form/photograph`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      cache: 'no-store',
+    }).then(async response => {
+      if (!response.ok) return;
+      const blob = await response.blob();
+      if (cancelled) return;
+      objectUrl = URL.createObjectURL(blob);
+      setSelectedCardPhotoUrl(objectUrl);
+    }).catch(() => {
+      if (!cancelled) setSelectedCardPhotoUrl(null);
+    });
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedCardMember]);
 
   useEffect(() => {
     if (activeView === 'clearance-students') {
@@ -493,7 +523,26 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </table>
         </div>
       </section>}
-      {activeView === 'cards' && selectedCardMember && <section className="library-main-card" style={{ marginBottom: 18, padding: 20 }}><div style={{ maxWidth: 440, border: '1px solid #cbd5e1', borderRadius: 12, padding: 20, background: '#fff', color: '#111827' }}><strong>KAMPALA SCHOOL OF HEALTH SCIENCES</strong><h3 style={{ margin: '16px 0 6px' }}>LIBRARY MEMBERSHIP CARD</h3><p>{selectedCardMember.name}</p><strong>{selectedCardMember.studentNumber}</strong><p style={{ fontSize: 12 }}>Student Library Member</p></div><button type="button" className="library-primary" style={{ marginTop: 12 }} onClick={() => window.print()}>Print Library Card</button><button type="button" className="secondary-button" style={{ margin: '12px 0 0 8px' }} onClick={() => setSelectedCardMember(null)}>Close Preview</button></section>}
+      {activeView === 'cards' && selectedCardMember && <section className="library-main-card library-card-preview-section" style={{ marginBottom: 18, padding: 20 }}>
+        <article className="library-print-card" aria-label="Library membership card">
+          <header className="library-print-card-header">
+            <img className="library-card-institution-badge" src={institutionLogoUrl} alt="Institution badge" onError={event => { event.currentTarget.style.visibility = 'hidden'; }} />
+            <div className="library-card-heading"><strong>KAMPALA SCHOOL OF HEALTH SCIENCES</strong><span>LIBRARY MEMBERSHIP CARD</span></div>
+            {selectedCardPhotoUrl
+              ? <img className="library-card-student-photo" src={selectedCardPhotoUrl} alt={`Photograph of ${selectedCardMember.name}`} />
+              : <div className="library-card-student-photo library-card-photo-placeholder" aria-label="No admission photograph available">PHOTO</div>}
+          </header>
+          <div className="library-card-student-details">
+            <strong>{selectedCardMember.name}</strong>
+            <span>Student Number: {selectedCardMember.studentNumber}</span>
+            <small>Student Library Member</small>
+          </div>
+        </article>
+        <div className="library-card-preview-actions">
+          <button type="button" className="library-primary" onClick={() => window.print()}>Print Library Card</button>
+          <button type="button" className="secondary-button" onClick={() => setSelectedCardMember(null)}>Close Preview</button>
+        </div>
+      </section>}
       {activeView === 'issue' && (
         <div className="library-summary" aria-label="Issue and returns summary">
           <div className="library-stat">
