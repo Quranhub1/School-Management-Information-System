@@ -271,5 +271,52 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<CourseRegistration>().HasOne<Campus>().WithMany().HasForeignKey(x => x.CampusId).OnDelete(DeleteBehavior.SetNull);
         m.Entity<StaffMember>().HasOne<Campus>().WithMany().HasForeignKey(x => x.CampusId).OnDelete(DeleteBehavior.SetNull);
         m.Entity<InstitutionSettings>(e => { e.HasKey(x => x.Id); e.Property(x => x.InstitutionName).HasMaxLength(250).IsRequired(); e.Property(x => x.Abbreviation).HasMaxLength(50); e.Property(x => x.Motto).HasMaxLength(500); e.Property(x => x.Address).HasMaxLength(500); e.Property(x => x.Phone).HasMaxLength(50); e.Property(x => x.Email).HasMaxLength(200); e.Property(x => x.Website).HasMaxLength(200); e.Property(x => x.PostalAddress).HasMaxLength(200); e.Property(x => x.Country).HasMaxLength(100); e.Property(x => x.InstitutionType).HasMaxLength(100); e.Property(x => x.LogoPath).HasMaxLength(500); e.Property(x => x.LogoContentType).HasMaxLength(100); e.Property(x => x.PrimaryColor).HasMaxLength(20); e.Property(x => x.AccentColor).HasMaxLength(20); e.Property(x => x.EmailSmtpHost).HasMaxLength(255); e.Property(x => x.EmailSmtpSecureMode).HasMaxLength(30); e.Property(x => x.EmailSmtpUsername).HasMaxLength(255); e.Property(x => x.EmailSmtpPasswordProtected).HasMaxLength(4000); e.Property(x => x.SystemCurrencyCode).HasMaxLength(3).IsRequired(); e.Property(x => x.SystemCurrencyLocale).HasMaxLength(10).IsRequired(); e.Property(x => x.EmailFromAddress).HasMaxLength(255); e.Property(x => x.EmailFromName).HasMaxLength(200); e.HasIndex(x => x.IsActive); });
+        m.Entity<LogbookRequirement>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Title).IsRequired();
+            e.HasIndex(x => x.CurriculumId);
+            e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<LogbookCompetencyRequirement>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Code).IsRequired();
+            e.Property(x => x.Name).IsRequired();
+            e.HasIndex(x => x.LogbookRequirementId);
+            e.HasOne<LogbookRequirement>().WithMany().HasForeignKey(x => x.LogbookRequirementId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<StudentLogbook>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.SerialNumber).IsRequired();
+            e.Property(x => x.Status).IsRequired();
+            e.HasIndex(x => x.SerialNumber).IsUnique();
+            e.HasIndex(x => new { x.StudentId, x.LogbookRequirementId });
+            e.HasOne<Student>().WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<LogbookRequirement>().WithMany().HasForeignKey(x => x.LogbookRequirementId).OnDelete(DeleteBehavior.Restrict);
+        });
+        m.Entity<StudentLogbookCompetency>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Outcome).IsRequired();
+            e.HasIndex(x => x.StudentLogbookId);
+            e.HasIndex(x => x.CompetencyRequirementId);
+            e.HasIndex(x => x.StudentPlacementId);
+            e.HasOne<StudentLogbook>().WithMany().HasForeignKey(x => x.StudentLogbookId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<LogbookCompetencyRequirement>().WithMany().HasForeignKey(x => x.CompetencyRequirementId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<StudentPlacement>().WithMany().HasForeignKey(x => x.StudentPlacementId).OnDelete(DeleteBehavior.SetNull);
+        });
+        m.Entity<UhpabFeeReference>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Category).IsRequired();
+            e.Property(x => x.Description).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+            e.Property(x => x.SourceUrl).IsRequired();
+            e.Property(x => x.SourceTitle).IsRequired();
+            e.HasIndex(x => new { x.Category, x.ProgrammeCode, x.IsActive });
+        });
     }
 }
