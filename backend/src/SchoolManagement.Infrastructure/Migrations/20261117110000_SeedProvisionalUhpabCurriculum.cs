@@ -241,7 +241,7 @@ WHERE p.""Regulator""='UHPAB' AND p.""IsReferenceOnly""=FALSE
   AND EXISTS (
     SELECT 1 FROM ""Courses"" c
     WHERE c.""AuthorityCode""='UHPAB'
-      AND split_part(c.""Code"",' ',1)=p.""Code""
+      AND upper(split_part(c.""Code"",' ',1))=upper(p.""Code"")
   )
   AND NOT EXISTS (
     SELECT 1 FROM ""Curricula"" cu
@@ -254,16 +254,16 @@ WHERE p.""Regulator""='UHPAB' AND p.""IsReferenceOnly""=FALSE
 INSERT INTO ""CurriculumCourses""
 (""Id"",""CurriculumId"",""CourseId"",""YearOfStudy"",""SemesterNumber"",""IsCore"")
 SELECT gen_random_uuid(),cu.""Id"",c.""Id"",
-       substring(regexp_replace(c.""Code"",'^[^ ]+\\s*','') from 1 for 1)::integer,
-       substring(regexp_replace(c.""Code"",'^[^ ]+\\s*','') from 2 for 1)::integer,
+       substring(regexp_replace(c.""Code"",'^[^ ]+\s*','') from 1 for 1)::integer,
+       substring(regexp_replace(c.""Code"",'^[^ ]+\s*','') from 2 for 1)::integer,
        TRUE
 FROM ""Courses"" c
-JOIN ""Programmes"" p ON p.""Code""=split_part(c.""Code"",' ',1) AND p.""Regulator""='UHPAB'
+JOIN ""Programmes"" p ON upper(p.""Code"")=upper(split_part(c.""Code"",' ',1)) AND p.""Regulator""='UHPAB'
 JOIN ""Curricula"" cu ON cu.""ProgrammeId""=p.""Id"" AND cu.""Version""='UHPAB-DEC-2025-PROVISIONAL'
 WHERE c.""AuthorityCode""='UHPAB'
-  AND length(regexp_replace(c.""Code"",'^[^ ]+\\s*','')) >= 3
-  AND substring(regexp_replace(c.""Code"",'^[^ ]+\\s*','') from 1 for 1) ~ '^[1-9]$'
-  AND substring(regexp_replace(c.""Code"",'^[^ ]+\\s*','') from 2 for 1) ~ '^[1-9]$'
+  AND length(regexp_replace(c.""Code"",'^[^ ]+\s*','')) >= 3
+  AND substring(regexp_replace(c.""Code"",'^[^ ]+\s*','') from 1 for 1) ~ '^[1-9]$'
+  AND substring(regexp_replace(c.""Code"",'^[^ ]+\s*','') from 2 for 1) ~ '^[1-9]$'
   AND NOT EXISTS (
     SELECT 1 FROM ""CurriculumCourses"" cc
     WHERE cc.""CurriculumId""=cu.""Id"" AND cc.""CourseId""=c.""Id""
