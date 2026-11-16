@@ -315,6 +315,37 @@ public sealed class LibraryController(
         return Ok(result);
     }
 
+    [HttpGet("clearance/academic-options")]
+    [Authorize(Policy = LibraryPolicies.Read)]
+    public async Task<IActionResult> ClearanceAcademicOptions(CancellationToken ct)
+    {
+        var rows = await (
+            from curriculum in db.Curricula.AsNoTracking()
+            join programme in db.Programmes.AsNoTracking() on curriculum.ProgrammeId equals programme.Id
+            join mapping in db.CurriculumCourses.AsNoTracking() on curriculum.Id equals mapping.CurriculumId
+            join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
+            where curriculum.IsActive && programme.IsActive && !programme.IsReferenceOnly && course.IsActive
+            orderby programme.Name, mapping.YearOfStudy, mapping.SemesterNumber, course.Name
+            select new
+            {
+                programmeId = programme.Id,
+                programmeName = programme.Name,
+                courseId = course.Id,
+                courseName = course.Name,
+                yearOfStudy = mapping.YearOfStudy,
+                semesterNumber = mapping.SemesterNumber
+            }).Distinct().ToListAsync(ct);
+
+        return Ok(new
+        {
+            courses = rows.Select(x => new { x.courseId, x.courseName }).Distinct().OrderBy(x => x.courseName),
+            programmes = rows.Select(x => new { x.programmeId, x.programmeName }).Distinct().OrderBy(x => x.programmeName),
+            years = rows.Select(x => x.yearOfStudy).Distinct().OrderBy(x => x),
+            semesters = rows.Select(x => x.semesterNumber).Distinct().OrderBy(x => x),
+            mappings = rows
+        });
+    }
+
     [HttpPost("students/{studentId:guid}/clearance")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> ClearStudentLibraryRequirement(Guid studentId, LibraryClearanceRequest request, CancellationToken ct)
