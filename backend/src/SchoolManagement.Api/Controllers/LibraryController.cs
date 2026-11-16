@@ -151,6 +151,7 @@ public sealed class LibraryController(
             ? await db.Admissions.AsNoTracking().Where(x => x.Id == admissionId.Value)
                 .Select(x => (Guid?)x.ProgrammeId).FirstOrDefaultAsync(ct)
             : null;
+        var enrollmentProgrammeCode = enrollmentProgramme?.ProgrammeCode?.Trim().ToUpperInvariant();
         var programmeIds = new[] { enrollmentProgrammeId, admissionProgrammeId }
             .Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToArray();
         if (programmeIds.Length == 0)
@@ -166,7 +167,7 @@ public sealed class LibraryController(
         if (requirement is null)
         {
             var programmeCodes = await db.Programmes.AsNoTracking()
-                .Where(x => programmeIds.Contains(x.Id) || (enrollmentProgramme?.ProgrammeCode != null && x.Code == enrollmentProgramme.ProgrammeCode))
+                .Where(x => programmeIds.Contains(x.Id) || (enrollmentProgrammeCode != null && x.Code.Trim().ToUpper() == enrollmentProgrammeCode))
                 .Select(x => x.Code.Trim().ToUpper())
                 .Distinct()
                 .ToListAsync(ct);
