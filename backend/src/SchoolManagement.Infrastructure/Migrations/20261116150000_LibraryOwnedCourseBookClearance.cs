@@ -69,12 +69,20 @@ public sealed class LibraryOwnedCourseBookClearance : Migration
 
             INSERT INTO "LibraryStudentPayments"
                 ("Id", "RequirementId", "StudentId", "Amount", "Currency", "PaymentMethod", "Reference", "RecordedAtUtc", "RecordedBy")
-            SELECT gen_random_uuid(), invoice."FeeStructureId", invoice."StudentId",
-                   invoice."PaidAmount", invoice."Currency", 'Legacy Finance Import',
+            SELECT gen_random_uuid(), requirement."Id", invoice."StudentId",
+                   invoice."PaidAmount", invoice."Currency", 'Legacy payment import',
                    invoice."InvoiceNumber", invoice."IssuedAt", 'System migration'
             FROM "StudentInvoices" invoice
-            INNER JOIN "LibraryProgrammeRequirements" requirement
-                ON requirement."Id" = invoice."FeeStructureId"
+            INNER JOIN "FeeStructures" source_requirement
+                ON source_requirement."Id" = invoice."FeeStructureId"
+               AND source_requirement."FeeType" = 'LibraryBook'
+            JOIN LATERAL (
+                SELECT target."Id"
+                FROM "LibraryProgrammeRequirements" target
+                WHERE target."ProgrammeId" = source_requirement."ProgrammeId"
+                ORDER BY target."IsActive" DESC, target."CreatedAtUtc" DESC, target."Id" DESC
+                LIMIT 1
+            ) requirement ON TRUE
             WHERE invoice."FeeType" = 'LibraryBook' AND invoice."PaidAmount" > 0;
             """);
     }
