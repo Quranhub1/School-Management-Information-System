@@ -9,6 +9,9 @@ vi.mock('../api/curriculumManagement', () => ({
   createUhpabFeeReference: vi.fn(),
   getLogbookRequirements: vi.fn(async () => []),
   getStudentLogbooks: vi.fn(async () => []),
+  getLogbookEligibility: vi.fn(async () => null),
+  assessStudentLogbookCompetency: vi.fn(),
+  updateStudentLogbookStatus: vi.fn(),
   getUhpabFeeReferences: vi.fn(async () => []),
   issueStudentLogbook: vi.fn(),
 }))
