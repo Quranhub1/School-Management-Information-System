@@ -29,6 +29,16 @@ public sealed class LibraryRepository(SchoolManagementDbContext db) : ILibraryRe
         return await query.OrderByDescending(x => x.IssuedAtUtc).ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<LibraryLoan>> GetStaffLoansAsync(Guid staffMemberId, bool activeOnly = false, CancellationToken cancellationToken = default)
+    {
+        var query = db.LibraryLoans.AsNoTracking().Where(x => x.StaffMemberId == staffMemberId);
+        if (activeOnly) query = query.Where(x => x.ReturnedAtUtc == null);
+        return await query.OrderByDescending(x => x.IssuedAtUtc).ToListAsync(cancellationToken);
+    }
+
+    public Task<bool> StudentExistsAsync(Guid studentId, CancellationToken cancellationToken = default) => db.Students.AnyAsync(x => x.Id == studentId, cancellationToken);
+    public Task<bool> ActiveStaffExistsAsync(Guid staffMemberId, CancellationToken cancellationToken = default) => db.StaffMembers.AnyAsync(x => x.Id == staffMemberId && x.IsActive && x.EmploymentStatus == "Active", cancellationToken);
+
     public async Task<IReadOnlyList<Librarian>> GetLibrariansAsync(CancellationToken cancellationToken = default) =>
         await db.Librarians.AsNoTracking().OrderBy(x => x.LibraryRole).ToListAsync(cancellationToken);
 
