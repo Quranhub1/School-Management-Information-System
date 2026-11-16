@@ -101,7 +101,7 @@ export type PaidLibraryClearanceStudent = {
   currency: string
 }
 export const listPaidLibraryClearanceStudents = () =>
-  request<PaidLibraryClearanceStudent[]>('/api/library/clearance/paid-students')
+  request<PaidLibraryClearanceStudent[]>('/api/library/clearance/paid-students', { cache: 'no-store' })
 
 export type LibraryClearanceAcademicOptions = {
   courses: { courseId: string; courseName: string }[]
