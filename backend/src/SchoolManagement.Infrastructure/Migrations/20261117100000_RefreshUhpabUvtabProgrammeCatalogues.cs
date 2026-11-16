@@ -16,12 +16,12 @@ public partial class RefreshUhpabUvtabProgrammeCatalogues : Migration
         // and semester counts. The database stores programme duration; semester counts are
         // also recorded in SourceReference so they are not confused with live academic periods.
         migrationBuilder.Sql(@"
-UPDATE ""Programmes"" SET ""DurationYears"" = 2.5, ""DurationUnit"" = 'Years',
+UPDATE ""Programmes"" SET ""DurationYears"" = 2, ""DurationUnit"" = 'Years (5 semesters)',
  ""ApprovalStatus"" = 'ListedForReview',
  ""SourceReference"" = 'UHPAB Programs & Fees: https://uhpab.go.ug/programs/ — 2.5 years, 5 semesters'
 WHERE ""Regulator"" = 'UHPAB' AND ""Code"" IN ('CM','CN','CMHN');
 
-UPDATE ""Programmes"" SET ""DurationYears"" = 2, ""DurationUnit"" = 'Years',
+UPDATE ""Programmes"" SET ""DurationYears"" = 2, ""DurationUnit"" = 'Years (4 semesters)',
  ""ApprovalStatus"" = 'ListedForReview',
  ""SourceReference"" = 'UHPAB Programs & Fees: https://uhpab.go.ug/programs/ — 2 years, 4 semesters'
 WHERE ""Regulator"" = 'UHPAB' AND ""Code"" IN ('CEC','CEH','CLT','CMR','CTA','CPH');
