@@ -20,6 +20,9 @@ import {
   type LibraryProgrammeRequirement,
 } from '../api/library';
 import { getProgrammes, type Programme } from '../api/programmes';
+import { getCourses, type Course } from '../api/curriculumManagement';
+import { getAcademicYears, getAcademicPeriods, type AcademicYear, type AcademicPeriod } from '../api/academicCalendar';
+import { getAccessToken } from '../api/auth';
 
 const dateInput = () => {
   const d = new Date();
@@ -40,10 +43,21 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [members, setMembers] = useState<LibraryMember[]>([]);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [requirements, setRequirements] = useState<LibraryProgrammeRequirement[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const [semesters, setSemesters] = useState<AcademicPeriod[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('');
+  const [selectedYearOfStudy, setSelectedYearOfStudy] = useState('');
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'recent' | 'overdue'>('recent');
   const [error, setError] = useState('');
+  const [clearanceStudents, setClearanceStudents] = useState<LibraryMember[]>([]);
+  const [clearanceLoading, setClearanceLoading] = useState(false);
+  const [clearanceBusy, setClearanceBusy] = useState<Record<string, boolean>>({});
+  const [clearanceSearch, setClearanceSearch] = useState('');
   const [bookValidationErrors, setBookValidationErrors] = useState<Record<string, string>>({});
   const [loanValidationErrors, setLoanValidationErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -77,15 +91,61 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     }
   }
 
+  async function loadSemesters(yearId: string) {
+    if (!yearId.trim()) { setSemesters([]); return; }
+    try {
+      const periods = await getAcademicPeriods(yearId);
+      setSemesters(periods);
+    } catch { setSemesters([]); }
+  }
+
+  async function loadClearanceStudents() {
+    setClearanceLoading(true);
+    setError('');
+    try {
+      const students = await listMembers(clearanceSearch);
+      setClearanceStudents(students);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load students.');
+      setClearanceStudents([]);
+    } finally {
+      setClearanceLoading(false);
+    }
+  }
+
+  async function submitClearance(studentId: string, method: 'BookIssued' | 'FeePaid', reference: string) {
+    setClearanceBusy(current => ({ ...current, [studentId]: true }));
+    try {
+      const token = getAccessToken();
+      await fetch(`${(import.meta.env.VITE_API_BASE_URL ?? '')}/api/library/students/${studentId}/clearance`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ method, reference: reference.trim() || undefined }),
+      });
+      await loadClearanceStudents();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to record library clearance.');
+    } finally {
+      setClearanceBusy(current => { const next = { ...current }; delete next[studentId]; return next; });
+    }
+  }
+
   useEffect(() => {
     void load();
     if (canManage) {
-      Promise.all([getProgrammes(), listProgrammeRequirements()])
-        .then(([programmeRows, requirementRows]) => {
+      Promise.all([getProgrammes(), listProgrammeRequirements(), getCourses(), getAcademicYears()])
+        .then(([programmeRows, requirementRows, courseRows, yearRows]) => {
           setProgrammes(programmeRows.filter(programme => programme.isActive));
           setRequirements(requirementRows);
+          setCourses(courseRows);
+          setAcademicYears(yearRows);
         })
         .catch(e => setError(e instanceof Error ? e.message : 'Unable to load course book requirements.'));
+      void loadClearanceStudents();
     }
   }, [canManage]);
 
@@ -306,6 +366,101 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </table>
         </div>
       </section>}
+
+      {canManage && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
+        <div className="library-toolbar">
+          <div>
+            <span className="eyebrow">LIBRARY SERVICES</span>
+            <h2>Course-book Requirements</h2>
+            <p>Students — Course-book Requirements</p>
+            <p className="count">{clearanceStudents.length} student{clearanceStudents.length !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+        <div className="library-clearance-filters" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, marginBottom: 12 }}>
+          <label>Search student
+            <input
+              value={clearanceSearch}
+              onChange={e => { setClearanceSearch(e.target.value); void loadClearanceStudents(); }}
+              placeholder="Student number or name"
+            />
+          </label>
+          <label>Course
+            <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)}>
+              <option value="">All courses</option>
+              {courses.map(course => <option key={course.id} value={course.id}>{course.code} — {course.name}</option>)}
+            </select>
+          </label>
+          <label>Year of study
+            <select value={selectedYearOfStudy} onChange={e => setSelectedYearOfStudy(e.target.value)}>
+              <option value="">All study years</option>
+              {[1, 2, 3, 4, 5, 6].map(year => <option key={year} value={String(year)}>Year {year}</option>)}
+            </select>
+          </label>
+          <label>Semester
+            <select value={selectedSemester} onChange={e => setSelectedSemester(e.target.value)} disabled={!selectedAcademicYear}>
+              <option value="">All semesters</option>
+              {semesters.map(semester => <option key={semester.id} value={semester.id}>{semester.name}</option>)}
+            </select>
+          </label>
+          <label>Academic year
+            <select value={selectedAcademicYear} onChange={e => { setSelectedAcademicYear(e.target.value); void loadSemesters(e.target.value); }}>
+              <option value="">All academic years</option>
+              {academicYears.map(year => <option key={year.id} value={year.id}>{year.name}</option>)}
+            </select>
+          </label>
+        </div>
+        <div className="table-wrap" style={{ maxHeight: 400, overflowY: 'auto' }}>
+          <table>
+            <thead>
+              <tr>
+                <th>NAME</th>
+                <th>COURSE</th>
+                <th>CLASS YEAR</th>
+                <th>SEMESTER</th>
+                <th>ACADEMIC YEAR</th>
+                <th>PAYMENT STATUS</th>
+                <th>REQUIRED FEE</th>
+                <th>AMOUNT PAID</th>
+                <th>OUTSTANDING</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {clearanceStudents.map(student => {
+                const requirement = requirements.find(r => r.programmeId === student.id);
+                const hasOutstanding = requirement && requirement.totalAmount > 0;
+                return (
+                  <tr key={student.id}>
+                    <td>{student.name}</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>{hasOutstanding ? 'Not Configured' : 'Cleared'}</td>
+                    <td>{requirement ? requirement.currency + ' ' + requirement.totalAmount.toLocaleString(SYSTEM_LOCALE) : 'UGX 0'}</td>
+                    <td>UGX 0</td>
+                    <td>{hasOutstanding ? requirement.currency + ' ' + requirement.totalAmount.toLocaleString(SYSTEM_LOCALE) : 'UGX 0'}</td>
+                    <td>
+                      {clearanceBusy[student.id] ? 'Processing…' : (
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          disabled={!hasOutstanding}
+                          onClick={() => void submitClearance(student.id, 'BookIssued', student.name)}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {clearanceStudents.length === 0 && <tr><td colSpan={10}>No students found.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>}
+
       {error && <div className="error" role="alert">{error}</div>}
       {Object.keys(loanValidationErrors).length > 0 && <div className="error" role="alert"><strong>Loan fields requiring attention</strong><ul>{Object.entries(loanValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
 
