@@ -199,6 +199,9 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  /* The content pane below is the only desktop vertical scroll container.
+     Prevent the parent from competing with it for wheel/trackpad scrolling. */
+  overflow: hidden;
 }
 
 .app-shell > .main-content > .content {
@@ -212,10 +215,14 @@
 }
 
 @media (max-width: 640px) {
+  .app-shell > .main-content {
+    overflow: visible;
+  }
+
   .app-shell > .main-content > .content {
     flex: 0 0 auto;
     min-height: auto;
-    overflow-y: visible;
+    overflow: visible;
     touch-action: auto;
   }
 }
