@@ -13,7 +13,7 @@ export function CurriculumLogbookManagement({ curricula }: { curricula: Curricul
   const [studentId, setStudentId] = useState('')
   const [studentLogbooks, setStudentLogbooks] = useState<Array<{ logbook: { id: string; serialNumber: string; status: string; issuedOn: string }; requirement: { title: string }; competencies: StudentLogbookCompetency[] }>>([])
   const [eligibility, setEligibility] = useState<LogbookEligibility | null>(null)
-  const [assessmentEdits, setAssessmentEdits] = useState<Record<string, { outcome: string; assessedOn: string; assessorName: string; assessorRole: string; remarks: string }>>({})
+  const [assessmentEdits, setAssessmentEdits] = useState<Record<string, { outcome: string; assessedOn: string; assessorName: string; assessorRole: string; studentPlacementId: string; remarks: string }>>({})
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [saving, setSaving] = useState(false)
@@ -75,7 +75,7 @@ export function CurriculumLogbookManagement({ curricula }: { curricula: Curricul
       else setEligibility(null)
       setAssessmentEdits(Object.fromEntries(rows.flatMap(row => row.competencies.map(item => [item.id, {
         outcome: item.outcome, assessedOn: item.assessedOn ?? '', assessorName: item.assessorName ?? '',
-        assessorRole: item.assessorRole ?? '', remarks: item.remarks ?? '',
+        assessorRole: item.assessorRole ?? '', studentPlacementId: item.studentPlacementId ?? '', remarks: item.remarks ?? '',
       }]))))
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not find student logbooks.') }
   }
@@ -86,7 +86,7 @@ export function CurriculumLogbookManagement({ curricula }: { curricula: Curricul
     try {
       await assessStudentLogbookCompetency(logbookId, assessment.id, {
         outcome: edit.outcome, assessedOn: edit.assessedOn || null,
-        assessorName: edit.assessorName, assessorRole: edit.assessorRole, remarks: edit.remarks,
+        assessorName: edit.assessorName, assessorRole: edit.assessorRole, studentPlacementId: edit.studentPlacementId || null, remarks: edit.remarks,
       })
       await findStudentLogbooks(); setNotice('Competency assessment saved.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not save competency assessment.') } finally { setSaving(false) }
@@ -158,21 +158,22 @@ export function CurriculumLogbookManagement({ curricula }: { curricula: Curricul
     </form>
     {studentLogbooks.length > 0 && <div className="curriculum-semester-list">{studentLogbooks.map(row => <section className="catalogue-board" key={row.logbook.id}>
       <div className="panel-heading"><h4>{row.requirement.title} · {row.logbook.serialNumber}</h4><span>{row.logbook.issuedOn} · {row.logbook.status}</span></div>
-      <div className="table-wrap"><table><thead><tr><th>Competency</th><th>Outcome</th><th>Assessment date</th><th>Assessor</th><th>Role</th><th>Remarks</th><th>Action</th></tr></thead><tbody>
+      <div className="table-wrap"><table><thead><tr><th>Competency</th><th>Outcome</th><th>Assessment date</th><th>Assessor</th><th>Role</th><th>Placement ID</th><th>Remarks</th><th>Action</th></tr></thead><tbody>
         {row.competencies.map(assessment => {
           const competency = requirements.flatMap(item => item.competencies).find(item => item.id === assessment.competencyRequirementId)
-          const edit = assessmentEdits[assessment.id] ?? { outcome: assessment.outcome, assessedOn: '', assessorName: '', assessorRole: '', remarks: '' }
+          const edit = assessmentEdits[assessment.id] ?? { outcome: assessment.outcome, assessedOn: '', assessorName: '', assessorRole: '', studentPlacementId: '', remarks: '' }
           return <tr key={assessment.id}>
             <td>{competency ? `${competency.code} — ${competency.name}` : 'Competency'}</td>
             <td><select aria-label="Competency outcome" value={edit.outcome} onChange={e => setAssessmentEdits(current => ({ ...current, [assessment.id]: { ...edit, outcome: e.target.value } }))}><option value="Pending">Pending</option><option value="Competent">Competent</option><option value="NotYetCompetent">Not yet competent</option></select></td>
             <td><input aria-label="Competency assessment date" type="date" value={edit.assessedOn} onChange={e => setAssessmentEdits(current => ({ ...current, [assessment.id]: { ...edit, assessedOn: e.target.value } }))} /></td>
             <td><input aria-label="Assessor name" value={edit.assessorName} onChange={e => setAssessmentEdits(current => ({ ...current, [assessment.id]: { ...edit, assessorName: e.target.value } }))} /></td>
             <td><input aria-label="Assessor role" value={edit.assessorRole} onChange={e => setAssessmentEdits(current => ({ ...current, [assessment.id]: { ...edit, assessorRole: e.target.value } }))} /></td>
+            <td><input aria-label="Student placement ID" value={edit.studentPlacementId} onChange={e => setAssessmentEdits(current => ({ ...current, [assessment.id]: { ...edit, studentPlacementId: e.target.value } }))} /></td>
             <td><input aria-label="Assessment remarks" value={edit.remarks} onChange={e => setAssessmentEdits(current => ({ ...current, [assessment.id]: { ...edit, remarks: e.target.value } }))} /></td>
             <td><button type="button" disabled={saving} onClick={() => void saveAssessment(row.logbook.id, assessment)}>Save sign-off</button></td>
           </tr>
         })}
-        {row.competencies.length === 0 && <tr><td colSpan={7}>No competency sign-offs configured for this logbook.</td></tr>}
+        {row.competencies.length === 0 && <tr><td colSpan={8}>No competency sign-offs configured for this logbook.</td></tr>}
       </tbody></table></div>
       <div className="form-row"><button type="button" disabled={saving} onClick={() => void changeLogbookStatus(row.logbook.id, 'Submitted')}>Mark submitted</button><button type="button" disabled={saving} onClick={() => void changeLogbookStatus(row.logbook.id, 'Verified')}>Verify completed logbook</button></div>
     </section>)}</div>}
