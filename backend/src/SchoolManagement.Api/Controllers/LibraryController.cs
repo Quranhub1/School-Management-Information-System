@@ -220,89 +220,95 @@ public sealed class LibraryController(
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
 
-        var paidRowsQuery =
-            from invoice in db.StudentInvoices.AsNoTracking()
-            join student in db.Students.AsNoTracking() on invoice.StudentId equals student.Id
-            where invoice.FeeType == "LibraryBook" &&
-                invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount <= 0m &&
-                !student.IsArchived
+        // The Admissions workflow is the source of truth: only records whose
+        // admission decision has reached Admitted belong in this register.
+        var admittedQuery =
+            from student in db.Students.AsNoTracking()
+            join admission in db.Admissions.AsNoTracking() on student.AdmissionId equals admission.Id
+            join programme in db.Programmes.AsNoTracking() on admission.ProgrammeId equals programme.Id
+            join academicYear in db.AcademicYears.AsNoTracking() on admission.AcademicYearId equals academicYear.Id
+            where admission.Status == "Admitted" && !student.IsArchived
             select new
             {
                 student.Id,
                 student.StudentNumber,
                 Name = (student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName).Trim(),
-                invoice.InvoiceNumber,
-                invoice.Amount,
-                invoice.PaidAmount,
-                invoice.Currency,
-                invoice.IssuedAt,
+                ProgrammeName = programme.Name,
+                AcademicYearName = academicYear.Name,
                 student.CampusId
             };
 
         if (accessibleCampuses is not null)
-            paidRowsQuery = paidRowsQuery.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
+            admittedQuery = admittedQuery.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
 
-        var paidRows = await paidRowsQuery.OrderBy(x => x.Name).ThenByDescending(x => x.IssuedAt).ToListAsync(ct);
-        if (paidRows.Count == 0) return Ok(Array.Empty<object>());
+        var admittedStudents = await admittedQuery.OrderBy(x => x.Name).ToListAsync(ct);
+        if (admittedStudents.Count == 0) return Ok(Array.Empty<object>());
 
-        var studentIds = paidRows.Select(x => x.Id).Distinct().ToArray();
-        var enrollments = await (
-            from enrollment in db.StudentEnrollments.AsNoTracking()
-            join programme in db.Programmes.AsNoTracking() on enrollment.ProgrammeId equals programme.Id
-            where studentIds.Contains(enrollment.StudentId)
-            orderby enrollment.Status == "Active" descending, enrollment.AdmissionDate descending
-            select new
-            {
-                enrollment.StudentId,
-                ProgrammeName = programme.Name,
-                enrollment.CurrentYear,
-                EnrollmentStatus = enrollment.Status
-            }).ToListAsync(ct);
+        var studentIds = admittedStudents.Select(x => x.Id).ToArray();
+        var enrollments = await db.StudentEnrollments.AsNoTracking()
+            .Where(x => studentIds.Contains(x.StudentId) && x.Status == "Active")
+            .OrderByDescending(x => x.AdmissionDate)
+            .Select(x => new { x.StudentId, x.CurrentYear })
+            .ToListAsync(ct);
 
         var academicStatuses = await (
             from status in db.StudentAcademicStatuses.AsNoTracking()
             join semester in db.Semesters.AsNoTracking() on status.SemesterId equals semester.Id
-            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id
             where studentIds.Contains(status.StudentId)
-            orderby academicYear.IsCurrent descending, semester.IsCurrent descending,
-                semester.EndDate descending, status.YearOfStudy descending, semester.Sequence descending
-            select new
+            orderby semester.IsCurrent descending, semester.EndDate descending,
+                status.YearOfStudy descending, semester.Sequence descending
+            select new { status.StudentId, status.YearOfStudy, SemesterName = semester.Name }
+        ).ToListAsync(ct);
+
+        var currentSemester = await db.Semesters.AsNoTracking()
+            .Where(x => x.IsCurrent)
+            .OrderByDescending(x => x.Sequence)
+            .Select(x => x.Name)
+            .FirstOrDefaultAsync(ct);
+
+        var libraryInvoices = await db.StudentInvoices.AsNoTracking()
+            .Where(x => studentIds.Contains(x.StudentId) && x.FeeType == "LibraryBook")
+            .OrderByDescending(x => x.IssuedAt)
+            .Select(x => new
             {
-                status.StudentId,
-                status.YearOfStudy,
-                SemesterName = semester.Name,
-                AcademicYearName = academicYear.Name
-            }).ToListAsync(ct);
+                x.StudentId, x.InvoiceNumber, x.Amount, x.DiscountAmount,
+                x.PaidAmount, x.Currency, x.IssuedAt
+            })
+            .ToListAsync(ct);
 
-        var currentPeriod = await (
-            from semester in db.Semesters.AsNoTracking()
-            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id
-            where semester.IsCurrent && academicYear.IsCurrent
-            orderby semester.Sequence descending
-            select new { SemesterName = semester.Name, AcademicYearName = academicYear.Name }
-        ).FirstOrDefaultAsync(ct);
+        var enrollmentByStudent = enrollments.GroupBy(x => x.StudentId)
+            .ToDictionary(x => x.Key, x => x.First());
+        var statusByStudent = academicStatuses.GroupBy(x => x.StudentId)
+            .ToDictionary(x => x.Key, x => x.First());
+        var invoiceByStudent = libraryInvoices.GroupBy(x => x.StudentId)
+            .ToDictionary(x => x.Key, x => x.First());
 
-        var enrollmentByStudent = enrollments.GroupBy(x => x.StudentId).ToDictionary(x => x.Key, x => x.First());
-        var statusByStudent = academicStatuses.GroupBy(x => x.StudentId).ToDictionary(x => x.Key, x => x.First());
-
-        var result = paidRows.Select(row =>
+        var result = admittedStudents.Select(student =>
         {
-            enrollmentByStudent.TryGetValue(row.Id, out var enrollment);
-            statusByStudent.TryGetValue(row.Id, out var academicStatus);
+            enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
+            statusByStudent.TryGetValue(student.Id, out var academicStatus);
+            invoiceByStudent.TryGetValue(student.Id, out var invoice);
+            var balance = invoice is null ? (decimal?)null : invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount;
+            var paymentStatus = invoice is null ? "Not Invoiced" :
+                balance <= 0m ? "Paid" :
+                invoice.PaidAmount > 0m ? "Partially Paid" : "Not Paid";
+
             return new
             {
-                studentId = row.Id,
-                row.StudentNumber,
-                studentName = row.Name,
-                programmeName = enrollment?.ProgrammeName,
+                studentId = student.Id,
+                studentNumber = student.StudentNumber,
+                studentName = student.Name,
+                programmeName = student.ProgrammeName,
                 classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
-                semesterName = academicStatus?.SemesterName ?? currentPeriod?.SemesterName,
-                academicYearName = academicStatus?.AcademicYearName ?? currentPeriod?.AcademicYearName,
-                row.InvoiceNumber,
-                row.Amount,
-                row.PaidAmount,
-                row.Currency,
-                row.IssuedAt
+                semesterName = academicStatus?.SemesterName ?? currentSemester,
+                academicYearName = student.AcademicYearName,
+                paymentStatus,
+                invoiceNumber = invoice?.InvoiceNumber,
+                amount = invoice?.Amount ?? 0m,
+                paidAmount = invoice?.PaidAmount ?? 0m,
+                outstandingAmount = balance ?? 0m,
+                currency = invoice?.Currency ?? "UGX",
+                issuedAt = invoice?.IssuedAt
             };
         }).ToList();
 
