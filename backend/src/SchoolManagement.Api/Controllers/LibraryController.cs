@@ -224,7 +224,7 @@ public sealed class LibraryController(
         {
             books.TryGetValue(loan.BookId, out var book);
             string? memberNumber = null; string? memberName = null;
-            if (loan.StudentId.HasValue && students.TryGetValue(loan.StudentId.Value, out var student)) { memberNumber = student.StudentNumber; memberName = (student.LastName + " " + student.FirstName + " " + (student.OtherNames ?? "")).Trim().ToUpper(); }
+                Name = (student.LastName + " " + student.FirstName + " " + (student.OtherNames ?? "")).Trim().ToUpper(),
             else if (loan.StaffMemberId.HasValue && staff.TryGetValue(loan.StaffMemberId.Value, out var staffMember)) { memberNumber = staffMember.StaffNumber; memberName = (staffMember.LastName + " " + staffMember.FirstName + " " + (staffMember.OtherNames ?? "")).Trim().ToUpper(); }
             return new { id = loan.Id, bookId = loan.BookId, bookTitle = book?.Title ?? "Unavailable book", bookIsbn = book?.Isbn ?? "", memberId = loan.StudentId ?? loan.StaffMemberId, memberType = loan.MemberType, memberNumber, memberName, studentId = loan.StudentId, studentNumber = memberNumber, studentName = memberName, issuedAtUtc = loan.IssuedAtUtc, dueAtUtc = loan.DueAtUtc, returnedAtUtc = loan.ReturnedAtUtc, fineAmount = loan.FineAmount };
         }).ToList();
