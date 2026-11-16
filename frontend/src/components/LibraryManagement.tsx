@@ -46,8 +46,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [requirements, setRequirements] = useState<LibraryProgrammeRequirement[]>([]);
   const [clearanceStudents, setClearanceStudents] = useState<PaidLibraryClearanceStudent[]>([]);
-  const [clearanceAcademicOptions, setClearanceAcademicOptions] = useState<LibraryClearanceAcademicOptions>({ courses: [], programmes: [], years: [], semesters: [], mappings: [] });
-  const [clearanceFilters, setClearanceFilters] = useState({ name: '', course: '', semester: '', year: '' });
+  const [clearanceAcademicOptions, setClearanceAcademicOptions] = useState<LibraryClearanceAcademicOptions>({ courses: [], programmes: [], years: [], semesters: [], academicYears: [], mappings: [] });
+  const [clearanceFilters, setClearanceFilters] = useState({ name: '', course: '', semester: '', year: '', academicYear: '' });
   const [clearanceSearchFocused, setClearanceSearchFocused] = useState(false);
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
@@ -135,8 +135,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const filteredClearanceStudents = useMemo(() => clearanceStudents.filter(student =>
     (!clearanceFilters.name || (student.studentName + ' ' + student.studentNumber).toLowerCase().includes(clearanceFilters.name.toLowerCase())) &&
     (!clearanceFilters.course || student.courseNames.includes(clearanceFilters.course)) &&
-    (!clearanceFilters.semester || String(student.semesterNumber ?? '') === clearanceFilters.semester) &&
-    (!clearanceFilters.year || String(student.classYear ?? '') === clearanceFilters.year)
+    (!clearanceFilters.semester || (student.semesterName ?? '') === clearanceFilters.semester) &&
+    (!clearanceFilters.year || String(student.classYear ?? '') === clearanceFilters.year) &&
+    (!clearanceFilters.academicYear || (student.academicYearName ?? '') === clearanceFilters.academicYear)
   ), [clearanceStudents, clearanceFilters]);
   const clearanceStudentSuggestions = useMemo(() => {
     const query = clearanceFilters.name.trim().toLowerCase();
@@ -153,6 +154,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const clearanceCourses = clearanceAcademicOptions.courses;
   const clearanceSemesters = clearanceAcademicOptions.semesters;
   const clearanceYears = clearanceAcademicOptions.years;
+  const clearanceAcademicYears = clearanceAcademicOptions.academicYears;
   const isbnDigits = normalizeIsbnDigits(form.isbn);
   const isbnComplete = isbnDigits.length === 10 || isbnDigits.length === 13;
   const isbnValid = isbnComplete && isValidIsbn(isbnDigits);
@@ -461,10 +463,13 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             <select value={clearanceFilters.course} onChange={e => setClearanceFilters(current => ({ ...current, course: e.target.value }))}><option value="">All courses</option>{clearanceCourses.map(course => <option key={course.courseId} value={course.courseName}>{course.courseName}</option>)}</select>
           </label>
           <label>Semester
-            <select value={clearanceFilters.semester} onChange={e => setClearanceFilters(current => ({ ...current, semester: e.target.value }))}><option value="">All semesters</option>{clearanceSemesters.map(semester => <option key={semester} value={String(semester)}>Semester {semester}</option>)}</select>
+            <select value={clearanceFilters.semester} onChange={e => setClearanceFilters(current => ({ ...current, semester: e.target.value }))}><option value="">All semesters</option>{clearanceSemesters.map(semester => <option key={semester.semesterId} value={semester.name}>{semester.name}{semester.isCurrent ? ' (Current)' : ''}</option>)}</select>
+          </label>
+          <label>Year of study
+            <select value={clearanceFilters.year} onChange={e => setClearanceFilters(current => ({ ...current, year: e.target.value }))}><option value="">All study years</option>{clearanceYears.map(year => <option key={year} value={String(year)}>Year {year}</option>)}</select>
           </label>
           <label>Academic year
-            <select value={clearanceFilters.year} onChange={e => setClearanceFilters(current => ({ ...current, year: e.target.value }))}><option value="">All years</option>{clearanceYears.map(year => <option key={year} value={String(year)}>Year {year}</option>)}</select>
+            <select value={clearanceFilters.academicYear} onChange={e => setClearanceFilters(current => ({ ...current, academicYear: e.target.value }))}><option value="">All academic years</option>{clearanceAcademicYears.map(year => <option key={year.academicYearId} value={year.name}>{year.name}{year.isCurrent ? ' (Current)' : ''}</option>)}</select>
           </label>
         </div>
         <div className="table-wrap">
