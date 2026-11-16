@@ -59,6 +59,23 @@ public sealed class LibraryOwnedCourseBookClearance : Migration
         // Preserve existing LibraryBook fee settings and posted amounts once, then
         // let the Library module own all future requirement and payment records.
         migrationBuilder.Sql("""
+            -- Older deployed databases may predate FeeStructures.FeeType even
+            -- though the current EF model includes it. Repair the column before
+            -- identifying legacy LibraryBook fee structures.
+            ALTER TABLE "FeeStructures"
+                ADD COLUMN IF NOT EXISTS "FeeType" character varying(50) NOT NULL DEFAULT 'Tuition';
+
+            -- Recover the intended type for fee structures referenced by
+            -- library-book invoices before copying them into the Library module.
+            UPDATE "FeeStructures" fs
+            SET "FeeType" = 'LibraryBook'
+            WHERE EXISTS (
+                SELECT 1
+                FROM "StudentInvoices" invoice
+                WHERE invoice."FeeStructureId" = fs."Id"
+                  AND invoice."FeeType" = 'LibraryBook'
+            );
+
             INSERT INTO "LibraryProgrammeRequirements"
                 ("Id", "ProgrammeId", "Name", "Amount", "Currency", "IsActive", "CreatedAtUtc", "UpdatedAtUtc")
             SELECT fs."Id", fs."ProgrammeId", fs."Name", fs."TotalAmount", fs."Currency",
