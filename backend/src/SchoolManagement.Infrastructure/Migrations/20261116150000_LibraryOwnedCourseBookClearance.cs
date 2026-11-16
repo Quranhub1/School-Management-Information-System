@@ -62,7 +62,7 @@ public sealed class LibraryOwnedCourseBookClearance : Migration
             INSERT INTO "LibraryProgrammeRequirements"
                 ("Id", "ProgrammeId", "Name", "Amount", "Currency", "IsActive", "CreatedAtUtc", "UpdatedAtUtc")
             SELECT fs."Id", fs."ProgrammeId", fs."Name", fs."TotalAmount", fs."Currency",
-                   fs."IsActive", fs."CreatedAt", CURRENT_TIMESTAMP
+                   fs."IsActive", fs."CreatedAt", fs."CreatedAt"
             FROM "FeeStructures" fs
             WHERE fs."FeeType" = 'LibraryBook'
             ON CONFLICT ("Id") DO NOTHING;
