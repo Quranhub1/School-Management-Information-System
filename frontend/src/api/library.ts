@@ -83,3 +83,13 @@ export type PaidLibraryClearanceStudent = {
 }
 export const listPaidLibraryClearanceStudents = () =>
   request<PaidLibraryClearanceStudent[]>('/api/library/clearance/paid-students')
+
+export type LibraryClearanceAcademicOptions = {
+  courses: { courseId: string; courseName: string }[]
+  programmes: { programmeId: string; programmeName: string }[]
+  years: number[]
+  semesters: number[]
+  mappings: { programmeId: string; programmeName: string; courseId: string; courseName: string; yearOfStudy: number; semesterNumber: number }[]
+}
+export const getLibraryClearanceAcademicOptions = () =>
+  request<LibraryClearanceAcademicOptions>('/api/library/clearance/academic-options')
