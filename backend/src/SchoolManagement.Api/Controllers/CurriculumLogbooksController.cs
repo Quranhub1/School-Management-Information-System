@@ -103,7 +103,10 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         var competencyRequirements = await db.LogbookCompetencyRequirements.AsNoTracking()
             .Where(x => x.LogbookRequirementId == requirement.Id && x.IsActive).ToListAsync(ct);
         foreach (var competency in competencyRequirements)
-            db.StudentLogbookCompetencies.Add(new StudentLogbookCompetency { StudentLogbookId = entity.Id, CompetencyRequirementId = competency.Id });
+        {
+            for (var attempt = 0; attempt < competency.RequiredCount; attempt++)
+                db.StudentLogbookCompetencies.Add(new StudentLogbookCompetency { StudentLogbookId = entity.Id, CompetencyRequirementId = competency.Id });
+        }
         await db.SaveChangesAsync(ct);
         return Ok(entity);
     }
@@ -180,7 +183,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
                 Competencies = competencyGaps, CompetenciesComplete = competencyGaps.All(x => x.Complete)
             };
         }).ToList();
-        return Ok(new { StudentId = studentId, CurriculumId = curriculumId, IsComplete = gaps.All(x => x.LogbooksComplete && x.CompetenciesComplete), Requirements = gaps,
+        return Ok(new { StudentId = studentId, CurriculumId = curriculumId, HasRequirements = requirements.Count > 0, IsComplete = requirements.Count > 0 && gaps.All(x => x.LogbooksComplete && x.CompetenciesComplete), Requirements = gaps,
             Notice = "This is an academic tracking result only. It does not automatically block assessment registration; apply the institution's approved eligibility policy." });
     }
 
