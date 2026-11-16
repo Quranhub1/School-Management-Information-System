@@ -103,7 +103,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     if (activeView === 'clearance-students') {
       Promise.all([listPaidLibraryClearanceStudents(), getLibraryClearanceAcademicOptions()])
         .then(([students, options]) => { setClearanceStudents(students); setClearanceAcademicOptions(options); })
-        .catch(e => setError(e instanceof Error ? e.message : 'Unable to load admitted students and curriculum filters.'));
+        .catch(e => setError(e instanceof Error ? e.message : 'Unable to load students and curriculum filters.'));
     }
   }, [activeView]);
 
@@ -409,7 +409,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </section>}
       {activeView === 'clearance-students' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
-        <div className="library-toolbar"><div><h3>Admitted Students — Course-book Requirements</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} admitted students</small></div></div>
+        <div className="library-toolbar"><div><h3>Students — Course-book Requirements</h3><small>{filteredClearanceStudents.length} of {clearanceStudents.length} students</small></div></div>
         <div className="library-clearance-filters" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 10, margin: '14px 0' }}>
           <label className="library-clearance-search-label">Search student
             <div className="library-clearance-autocomplete">
@@ -453,7 +453,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                 </div>
               )}
               {clearanceSearchFocused && clearanceFilters.name.trim() && clearanceStudentSuggestions.length === 0 && (
-                <div className="library-clearance-suggestions library-clearance-no-suggestions" role="status">No matching admitted students</div>
+                <div className="library-clearance-suggestions library-clearance-no-suggestions" role="status">No matching students</div>
               )}
             </div>
           </label>
@@ -472,7 +472,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId + student.invoiceNumber}>
               <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.invoiceNumber || '—'}</td><td>{student.issuedAt ? formatDate(student.issuedAt) : '—'}</td>
             </tr>)}
-            {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No admitted students match these filters.</td></tr>}</tbody>
+            {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No students match these filters.</td></tr>}</tbody>
           </table>
         </div>
       </section>}
