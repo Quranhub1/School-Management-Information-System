@@ -127,7 +127,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
                      || (x.Email != null && x.Email.ToLower().Contains(term))
                      || (x.PhoneNumber != null && x.PhoneNumber.ToLower().Contains(term)))
             .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
-            .Select(x => new StaffSearchResult(x.Id, x.StaffNumber, (x.LastName + " " + x.FirstName).Trim().ToUpper(), x.EmploymentType))
+            .Select(x => new StaffSearchResult(x.Id, x.StaffNumber, (x.LastName + " " + x.FirstName + " " + (x.OtherNames ?? string.Empty)).Trim().ToUpper(), x.EmploymentType))
             .Take(20).ToListAsync(ct);
     }
 
