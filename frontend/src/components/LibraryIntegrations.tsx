@@ -27,7 +27,7 @@ export function LibraryIntegrations({ canManage }: { canManage?: boolean }) {
 
   function save() {
     saveLibraryIntegrationConfig(config);
-    setMessage('Library integration settings saved on this workstation.');
+    setMessage('Plugin endpoint settings saved in this browser. Connection status is verified separately.');
     void refresh();
   }
 
@@ -35,8 +35,8 @@ export function LibraryIntegrations({ canManage }: { canManage?: boolean }) {
     <section className="library-integrations" aria-labelledby="library-integrations-title">
       <div className="library-toolbar">
         <div>
-          <span className="eyebrow">LIBRARY INTEGRATIONS</span>
-          <h3 id="library-integrations-title">KOHA &amp; DSpace Configuration</h3>
+          <span className="eyebrow">SYSTEM PLUGINS</span>
+          <h3 id="library-integrations-title">Connected library plugins</h3>
           
         </div>
       </div>
@@ -44,8 +44,8 @@ export function LibraryIntegrations({ canManage }: { canManage?: boolean }) {
       {canManage && (
         <div className="library-add-card">
           <div>
-            <span className="eyebrow">LOCAL ENDPOINTS</span>
-            <h4>Service configuration</h4>
+            <span className="eyebrow">PLUGIN CONNECTIONS</span>
+            <h4>Koha and DSpace connection settings</h4>
             <p>Enter the addresses used by this school's local installation.</p>
           </div>
           <div className="library-book-form">
@@ -82,7 +82,7 @@ export function LibraryIntegrations({ canManage }: { canManage?: boolean }) {
                 <h4>{integration.name === 'KOHA' ? 'Library Automation & OPAC' : 'Institutional Repository'}</h4>
               </div>
               <span className={integration.enabled ? 'status connected' : 'status'}>
-                {integration.enabled ? 'Configured' : 'Not configured'}
+                {integration.enabled ? 'Endpoint configured' : 'Not configured'}
               </span>
             </div>
             <div className="integration-url">
@@ -95,12 +95,12 @@ export function LibraryIntegrations({ canManage }: { canManage?: boolean }) {
                 disabled={!integration.enabled || !integration.baseUrl}
                 onClick={() => window.open(integration.baseUrl, '_blank', 'noopener,noreferrer')}
               >
-                Open {integration.name}
+                Open {integration.name} workspace
               </button>
               <span className="integration-note">
                 {integration.name === 'KOHA'
-                  ? 'KOHA can remain a separate local library system while the management system manages institution-level library workflows.'
-                  : 'DSpace can remain a separate local repository while management system provides controlled access from Library Management.'}
+                  ? 'Koha provides the library catalogue and circulation service. The workspace opens the connected Koha service; in-app API operations require a configured Koha API connection.'
+                  : 'DSpace provides the institutional repository. The workspace opens the connected DSpace service; repository API operations require a configured DSpace REST connection.'}
               </span>
             </div>
           </article>
