@@ -360,12 +360,30 @@ public sealed class LibraryController(
                 semesterNumber = mapping.SemesterNumber
             }).Distinct().ToListAsync(ct);
 
+        // Read semester and academic-year options from the central Academic Structure
+        // register. Curriculum mappings remain the source for course/year-of-study links.
+        var semesters = await db.Semesters.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.AcademicYearId).ThenBy(x => x.Sequence)
+            .Select(x => new { semesterId = x.Id, x.Name, x.Sequence, x.AcademicYearId, x.IsCurrent })
+            .ToListAsync(ct);
+        var academicYears = await db.AcademicYears.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderByDescending(x => x.StartDate)
+            .Select(x => new { academicYearId = x.Id, x.Name, x.IsCurrent })
+            .ToListAsync(ct);
+
         return Ok(new
         {
             courses = rows.Select(x => new { x.courseId, x.courseName }).Distinct().OrderBy(x => x.courseName),
-            programmes = rows.Select(x => new { x.programmeId, x.programmeName }).Distinct().OrderBy(x => x.programmeName),
+            programmes = await db.Programmes.AsNoTracking()
+                .Where(x => x.IsActive && !x.IsReferenceOnly)
+                .OrderBy(x => x.Name)
+                .Select(x => new { programmeId = x.Id, programmeName = x.Name })
+                .ToListAsync(ct),
             years = rows.Select(x => x.yearOfStudy).Distinct().OrderBy(x => x),
-            semesters = rows.Select(x => x.semesterNumber).Distinct().OrderBy(x => x),
+            semesters,
+            academicYears,
             mappings = rows
         });
     }
