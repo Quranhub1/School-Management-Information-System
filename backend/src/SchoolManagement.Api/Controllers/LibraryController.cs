@@ -137,24 +137,27 @@ public sealed class LibraryController(
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, ct)) return Forbid();
         if (request.Amount <= 0 || decimal.Round(request.Amount, 2) != request.Amount)
             return BadRequest(new { message = "Enter a payment amount greater than zero with no more than two decimal places." });
-        var programmeId = await db.StudentEnrollments.AsNoTracking()
+        var enrollmentProgrammeId = await db.StudentEnrollments.AsNoTracking()
             .Where(x => x.StudentId == studentId && x.Status == "Active")
             .OrderByDescending(x => x.AdmissionDate)
             .Select(x => (Guid?)x.ProgrammeId)
             .FirstOrDefaultAsync(ct);
-        if (!programmeId.HasValue)
-        {
-            var admissionId = await db.Students.AsNoTracking().Where(x => x.Id == studentId)
-                .Select(x => x.AdmissionId).FirstOrDefaultAsync(ct);
-            if (admissionId.HasValue)
-                programmeId = await db.Admissions.AsNoTracking().Where(x => x.Id == admissionId.Value)
-                    .Select(x => (Guid?)x.ProgrammeId).FirstOrDefaultAsync(ct);
-        }
-        if (!programmeId.HasValue) return Conflict(new { message = "The student is not linked to a programme with a library requirement." });
+        var admissionId = await db.Students.AsNoTracking().Where(x => x.Id == studentId)
+            .Select(x => x.AdmissionId).FirstOrDefaultAsync(ct);
+        var admissionProgrammeId = admissionId.HasValue
+            ? await db.Admissions.AsNoTracking().Where(x => x.Id == admissionId.Value)
+                .Select(x => (Guid?)x.ProgrammeId).FirstOrDefaultAsync(ct)
+            : null;
+        var programmeIds = new[] { enrollmentProgrammeId, admissionProgrammeId }
+            .Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToArray();
+        if (programmeIds.Length == 0)
+            return Conflict(new { message = "The student is not linked to a programme with a library requirement." });
 
+        // Match either central enrolment or admission programme, preferring enrolment.
         var requirement = await db.LibraryProgrammeRequirements.AsNoTracking()
-            .Where(x => x.ProgrammeId == programmeId.Value && x.IsActive)
-            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Where(x => programmeIds.Contains(x.ProgrammeId) && x.IsActive)
+            .OrderBy(x => x.ProgrammeId == enrollmentProgrammeId ? 0 : 1)
+            .ThenByDescending(x => x.UpdatedAtUtc)
             .FirstOrDefaultAsync(ct);
         if (requirement is null) return Conflict(new { message = "No active course-book requirement is configured for this student's programme." });
 
@@ -320,8 +323,13 @@ public sealed class LibraryController(
         {
             enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
             statusByStudent.TryGetValue(student.Id, out var academicStatus);
-            var programmeId = enrollment?.ProgrammeId ?? student.ProgrammeId;
-            requirementsByProgramme.TryGetValue(programmeId ?? Guid.Empty, out var requirement);
+            // Resolve requirements against both enrolment and admission programme links.
+            LibraryProgrammeRequirement? requirement = null;
+            if (enrollment?.ProgrammeId is Guid enrolledProgrammeId)
+                requirementsByProgramme.TryGetValue(enrolledProgrammeId, out requirement);
+            if (requirement is null && student.ProgrammeId is Guid admittedProgrammeId)
+                requirementsByProgramme.TryGetValue(admittedProgrammeId, out requirement);
+            var programmeId = requirement?.ProgrammeId ?? enrollment?.ProgrammeId ?? student.ProgrammeId;
             string[]? studentCourses = null;
             if (programmeId.HasValue)
                 coursesByProgramme.TryGetValue(programmeId.Value, out studentCourses);
@@ -421,23 +429,24 @@ public sealed class LibraryController(
 
         if (string.Equals(method, "FeePaid", StringComparison.OrdinalIgnoreCase))
         {
-            var programmeId = await db.StudentEnrollments.AsNoTracking()
+            var enrollmentProgrammeId = await db.StudentEnrollments.AsNoTracking()
                 .Where(x => x.StudentId == studentId && x.Status == "Active")
                 .OrderByDescending(x => x.AdmissionDate)
                 .Select(x => (Guid?)x.ProgrammeId)
                 .FirstOrDefaultAsync(ct);
-            if (!programmeId.HasValue)
-            {
-                var admissionId = await db.Students.AsNoTracking().Where(x => x.Id == studentId)
-                    .Select(x => x.AdmissionId).FirstOrDefaultAsync(ct);
-                if (admissionId.HasValue)
-                    programmeId = await db.Admissions.AsNoTracking().Where(x => x.Id == admissionId.Value)
-                        .Select(x => (Guid?)x.ProgrammeId).FirstOrDefaultAsync(ct);
-            }
-            var requirement = programmeId.HasValue
+            var admissionId = await db.Students.AsNoTracking().Where(x => x.Id == studentId)
+                .Select(x => x.AdmissionId).FirstOrDefaultAsync(ct);
+            var admissionProgrammeId = admissionId.HasValue
+                ? await db.Admissions.AsNoTracking().Where(x => x.Id == admissionId.Value)
+                    .Select(x => (Guid?)x.ProgrammeId).FirstOrDefaultAsync(ct)
+                : null;
+            var programmeIds = new[] { enrollmentProgrammeId, admissionProgrammeId }
+                .Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToArray();
+            var requirement = programmeIds.Length > 0
                 ? await db.LibraryProgrammeRequirements.AsNoTracking()
-                    .Where(x => x.ProgrammeId == programmeId.Value && x.IsActive)
-                    .OrderByDescending(x => x.UpdatedAtUtc)
+                    .Where(x => programmeIds.Contains(x.ProgrammeId) && x.IsActive)
+                    .OrderBy(x => x.ProgrammeId == enrollmentProgrammeId ? 0 : 1)
+                    .ThenByDescending(x => x.UpdatedAtUtc)
                     .FirstOrDefaultAsync(ct)
                 : null;
             if (requirement is null)
