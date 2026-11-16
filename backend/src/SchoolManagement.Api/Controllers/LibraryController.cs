@@ -201,10 +201,26 @@ public sealed class LibraryController(
 
     [HttpGet("books/{id:guid}/barcode")]
     [AllowAnonymous]
-    public IActionResult GetBookBarcode(Guid id)
+    public async Task<IActionResult> GetBookBarcode(Guid id, CancellationToken ct)
     {
-        var barcode = BarcodeHelper.GenerateSvg(id.ToString());
-        return Content(barcode, "image/svg+xml");
+        var book = await db.LibraryBooks.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
+        if (book is null) return NotFound(new { message = "Active catalogue book was not found." });
+
+        var barcodeValue = book.BarcodeValue;
+        if (string.IsNullOrWhiteSpace(barcodeValue))
+        {
+            try
+            {
+                barcodeValue = LibraryService.ToBooklandEan13(book.Isbn);
+            }
+            catch (ArgumentException)
+            {
+                return Conflict(new { message = "This book does not have a valid ISBN barcode value." });
+            }
+        }
+
+        return Content(BarcodeHelper.GenerateSvg(barcodeValue), "image/svg+xml");
     }
 
     [HttpGet("loans")]
@@ -576,6 +592,7 @@ public sealed class LibraryController(
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (DbUpdateConcurrencyException) { return Conflict(new { message = "The available book inventory changed during this request. Refresh the catalogue and try again." }); }
     }
 
     [HttpPatch("loans/{id:guid}/return")]
@@ -586,6 +603,7 @@ public sealed class LibraryController(
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (DbUpdateConcurrencyException) { return Conflict(new { message = "The loan or inventory changed during this request. Refresh the loan register and try again." }); }
     }
 }
 

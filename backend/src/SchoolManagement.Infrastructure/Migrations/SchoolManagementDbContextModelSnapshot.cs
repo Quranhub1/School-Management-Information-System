@@ -4196,6 +4196,11 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<int>("TotalCopies")
                         .HasColumnType("integer");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Isbn")
