@@ -40,6 +40,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Campus> Campuses => Set<Campus>();
     public DbSet<UserCampusAssignment> UserCampusAssignments => Set<UserCampusAssignment>();
     public DbSet<InstitutionSettings> InstitutionSettings => Set<InstitutionSettings>();
+    public DbSet<LibraryPluginSettings> LibraryPluginSettings => Set<LibraryPluginSettings>();
     public DbSet<InstitutionGalleryImage> InstitutionGalleryImages => Set<InstitutionGalleryImage>();
     public DbSet<Applicant> Applicants => Set<Applicant>();
     public DbSet<StudentApplicationRecord> StudentApplicationRecords => Set<StudentApplicationRecord>();
