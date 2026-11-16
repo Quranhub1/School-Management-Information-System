@@ -4,26 +4,8 @@ namespace SchoolManagement.Application.Library;
 
 public sealed class LibraryService(ILibraryRepository library)
 {
-    public async Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default)
-    {
-        var books = await library.GetBooksAsync(cancellationToken);
-        var changed = false;
-        foreach (var book in books.Where(x => string.IsNullOrWhiteSpace(x.BarcodeValue)))
-        {
-            try
-            {
-                var normalizedIsbn = NormalizeAndValidateIsbn(book.Isbn);
-                book.BarcodeValue = ToBooklandEan13(normalizedIsbn);
-                changed = true;
-            }
-            catch (ArgumentException)
-            {
-                // Keep legacy invalid ISBN records viewable; do not invent a barcode.
-            }
-        }
-        if (changed) await library.SaveChangesAsync(cancellationToken);
-        return books;
-    }
+    public Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default) =>
+        library.GetBooksAsync(cancellationToken);
 
     public Task<IReadOnlyList<Librarian>> GetLibrariansAsync(CancellationToken cancellationToken = default) => library.GetLibrariansAsync(cancellationToken);
 
