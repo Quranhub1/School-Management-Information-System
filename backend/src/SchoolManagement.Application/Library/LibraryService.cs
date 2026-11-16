@@ -90,17 +90,21 @@ public sealed class LibraryService(ILibraryRepository library)
         return librarian;
     }
 
-    public async Task<LibraryLoan> IssueBookAsync(Guid studentId, Guid bookId, DateTime dueAtUtc, CancellationToken cancellationToken = default)
+    public async Task<LibraryLoan> IssueBookAsync(Guid memberId, string memberType, Guid bookId, DateTime issuedAtUtc, DateTime dueAtUtc, CancellationToken cancellationToken = default)
     {
-        if (studentId == Guid.Empty || bookId == Guid.Empty || dueAtUtc <= DateTime.UtcNow)
-            throw new ArgumentException("Student, book and a future due date are required.");
+        var type = (memberType ?? string.Empty).Trim();
+        if (memberId == Guid.Empty || bookId == Guid.Empty || (type != "Student" && type != "Staff")) throw new ArgumentException("Select a valid Student or Staff member and a book.");
+        if (issuedAtUtc.Kind == DateTimeKind.Unspecified) issuedAtUtc = DateTime.SpecifyKind(issuedAtUtc, DateTimeKind.Utc);
+        if (dueAtUtc.Kind == DateTimeKind.Unspecified) dueAtUtc = DateTime.SpecifyKind(dueAtUtc, DateTimeKind.Utc);
+        if (issuedAtUtc > DateTime.UtcNow.AddMinutes(5) || dueAtUtc <= issuedAtUtc) throw new ArgumentException("Issue date cannot be in the future and due date must be after issue date.");
+        if (type == "Student" && !await library.StudentExistsAsync(memberId, cancellationToken)) throw new KeyNotFoundException("Student was not found in the central student register.");
+        if (type == "Staff" && !await library.ActiveStaffExistsAsync(memberId, cancellationToken)) throw new KeyNotFoundException("Active staff member was not found in the staff register.");
         var book = await library.GetBookAsync(bookId, cancellationToken) ?? throw new KeyNotFoundException("Library book was not found.");
         if (!book.IsActive) throw new InvalidOperationException("This library book is inactive.");
         if (book.AvailableCopies <= 0) throw new InvalidOperationException("No available copies remain for this book.");
-        if ((await library.GetStudentLoansAsync(studentId, true, cancellationToken)).Any(x => x.BookId == bookId))
-            throw new InvalidOperationException("The student already has an active loan for this book.");
-
-        var loan = new LibraryLoan { StudentId = studentId, BookId = bookId, DueAtUtc = dueAtUtc };
+        var memberLoans = type == "Student" ? await library.GetStudentLoansAsync(memberId, true, cancellationToken) : await library.GetStaffLoansAsync(memberId, true, cancellationToken);
+        if (memberLoans.Any(x => x.BookId == bookId)) throw new InvalidOperationException("This member already has an active loan for this book.");
+        var loan = new LibraryLoan { StudentId = type == "Student" ? memberId : null, StaffMemberId = type == "Staff" ? memberId : null, MemberType = type, BookId = bookId, IssuedAtUtc = issuedAtUtc, DueAtUtc = dueAtUtc };
         book.SetInventory(book.TotalCopies, book.AvailableCopies - 1);
         await library.AddLoanAsync(loan, cancellationToken);
         await library.SaveChangesAsync(cancellationToken);
