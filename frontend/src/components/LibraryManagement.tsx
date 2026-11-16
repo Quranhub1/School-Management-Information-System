@@ -315,7 +315,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </button>
       )}
       {activeView === 'dashboard' && (
-        <section className="library-dashboard-options" aria-label="Library services" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(235px, 1fr))', gap: 16, margin: '4px 0 20px' }}>
+        <section className="library-dashboard-options" aria-label="Library services">
           {[
             { key: 'books' as const, icon: '▤', title: 'Books', description: 'Manage the book catalogue and register new titles.', links: [{ label: 'View Books', view: 'books' as const }, { label: 'Add New Book', view: 'books' as const, action: 'add' }] },
             { key: 'issue' as const, icon: '↗', title: 'Issue Books', description: 'Issue books to students and monitor active loans.', links: [{ label: 'Issue Book', view: 'issue' as const }, { label: 'View Books Issued', view: 'issue' as const }] },
@@ -328,7 +328,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
                 <strong style={{ fontSize: 17 }}>{item.title}</strong>
               </button>
               <p style={{ minHeight: 42, margin: '12px 0', color: 'var(--text-muted, #64748b)', fontSize: 13 }}>{item.description}</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div className="library-dashboard-card-actions">
                 {item.links.map(link => (
                   <button key={link.label} type="button" className="secondary-button" onClick={() => { setActiveView(link.view); if ('action' in link && link.action === 'add') window.setTimeout(() => document.getElementById('library-add-book')?.scrollIntoView({ behavior: 'smooth' }), 0); }}>
                     {link.label}
@@ -571,17 +571,14 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           )}
           <button
             className="quick-search"
-            onClick={() => {
-              const el = document.getElementById('library-books')
-              if (el) el.scrollIntoView({ behavior: 'smooth' })
-            }}
+            onClick={() => setActiveView('books')}
           >
             ▣ Browse Book Catalogue
           </button>
         </aside>
       </div>}
 
-      {(activeView === 'dashboard' || activeView === 'books') && <section className="library-catalogue" id="library-books">
+      {activeView === 'books' && <section className="library-catalogue" id="library-books">
         <div className="library-toolbar">
           <div>
             <h3>Book Catalogue</h3>
