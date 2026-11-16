@@ -198,6 +198,26 @@ td strong { display: block; }
 .library-stat em { color: #a8a29e; font-size: .72rem; font-style: normal; }
 .danger-number { color: #dc2626; }
 .library-grid { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 18px; align-items: start; }
+.library-issue-entry { width: 100%; margin: 0 0 18px; border: 1px solid #e7e5e4; border-radius: 14px; background: #fff; box-shadow: 0 8px 25px rgba(28, 25, 23, .045); overflow: hidden; }
+.library-issue-entry-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #e7e5e4; }
+.library-issue-entry-heading h3 { margin: 0; color: #1c1917; font-size: .98rem; }
+.library-issue-entry-heading span { color: #78716c; font-size: .78rem; }
+.library-issue-entry form { padding: 10px 14px 14px; }
+.library-issue-entry table { width: 100%; table-layout: fixed; }
+.library-issue-entry th, .library-issue-entry td { padding: 10px 8px; white-space: normal; overflow-wrap: anywhere; vertical-align: middle; }
+.library-issue-entry th:nth-child(1) { width: 5%; }
+.library-issue-entry th:nth-child(2) { width: 20%; }
+.library-issue-entry th:nth-child(3) { width: 11%; }
+.library-issue-entry th:nth-child(4) { width: 21%; }
+.library-issue-entry th:nth-child(5), .library-issue-entry th:nth-child(6) { width: 14%; }
+.library-issue-entry th:nth-child(7) { width: 7%; }
+.library-issue-entry th:nth-child(8) { width: 8%; }
+.library-issue-entry select, .library-issue-entry input { display: block; width: 100%; min-width: 0; box-sizing: border-box; padding: 8px 6px; border: 1px solid #d6d3d1; border-radius: 7px; background: #fff; color: #292524; font: inherit; font-size: .78rem; }
+.library-issue-entry .quick-issue { width: 100%; min-width: 52px; padding: 9px 7px; white-space: nowrap; }
+[data-theme="dark"] .library-issue-entry { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .library-issue-entry-heading { border-color: #334155; }
+[data-theme="dark"] .library-issue-entry-heading h3 { color: #f8fafc; }
+[data-theme="dark"] .library-issue-entry select, [data-theme="dark"] .library-issue-entry input { background: #0f172a; border-color: #475569; color: #f8fafc; }
 .library-main-card, .library-side-card, .library-catalogue, .library-add-card { border: 1px solid #e7e5e4; border-radius: 16px; background: white; box-shadow: 0 8px 25px rgba(28, 25, 23, .045); overflow: hidden; }
 .library-tabs, .library-workspace-tabs { display:flex; gap:5px; padding:5px; flex-wrap:wrap; border:1px solid var(--smis-glass-border); border-radius:999px; background:var(--smis-glass-bg); backdrop-filter:blur(14px) saturate(150%); -webkit-backdrop-filter:blur(14px) saturate(150%); box-shadow:var(--smis-shadow-sm); }
 .library-tabs button, .library-workspace-tabs button { position:relative; border:0; padding:9px 16px; border-radius:999px; background:transparent; color:var(--smis-text-muted); font-weight:700; cursor:pointer; transition:color .25s ease,background-color .25s ease,box-shadow .25s ease; }
