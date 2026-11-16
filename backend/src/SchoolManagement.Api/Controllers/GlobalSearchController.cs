@@ -97,14 +97,14 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
                     .FirstOrDefault()
             })
             .OrderByDescending(x => x.Student.StudentNumber.ToLower() == normalized)
-            .ThenByDescending(x => (x.Student.FirstName + " " + (x.Student.OtherNames ?? string.Empty) + " " + x.Student.LastName).Trim().ToLower() == normalized)
+            .ThenByDescending(x => (x.Student.LastName + " " + x.Student.FirstName + " " + (x.Student.OtherNames ?? string.Empty)).Trim().ToLower() == normalized)
             .ThenByDescending(x => x.Student.LastName.ToLower().StartsWith(normalized))
             .ThenBy(x => x.Student.LastName)
             .ThenBy(x => x.Student.FirstName)
             .Select(x => new StudentSearchResult(
                 x.Student.Id,
                 x.Student.StudentNumber,
-                (x.Student.FirstName + " " + (x.Student.OtherNames ?? string.Empty) + " " + x.Student.LastName).Trim(),
+                (x.Student.LastName + " " + x.Student.FirstName + " " + (x.Student.OtherNames ?? string.Empty)).Trim().ToUpper(),
                 x.Student.Status,
                 x.Enrollment == null ? null : x.Enrollment.ProgrammeId,
                 x.Enrollment == null ? null : db.Programmes.Where(p => p.Id == x.Enrollment.ProgrammeId).Select(p => p.Name).FirstOrDefault(),
@@ -127,7 +127,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
                      || (x.Email != null && x.Email.ToLower().Contains(term))
                      || (x.PhoneNumber != null && x.PhoneNumber.ToLower().Contains(term)))
             .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
-            .Select(x => new StaffSearchResult(x.Id, x.StaffNumber, (x.FirstName + " " + x.LastName).Trim(), x.EmploymentType))
+            .Select(x => new StaffSearchResult(x.Id, x.StaffNumber, (x.LastName + " " + x.FirstName).Trim().ToUpper(), x.EmploymentType))
             .Take(20).ToListAsync(ct);
     }
 
@@ -197,7 +197,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
         if (to.HasValue) query = query.Where(x => x.AppliedAt <= to.Value);
 
         return await query.OrderByDescending(x => x.AppliedAt)
-            .Select(x => new ApplicantSearchResult(x.Id, x.ApplicationNumber, (x.FirstName + " " + x.LastName).Trim(), x.Status))
+            .Select(x => new ApplicantSearchResult(x.Id, x.ApplicationNumber, (x.LastName + " " + x.FirstName + " " + (x.OtherNames ?? string.Empty)).Trim().ToUpper(), x.Status))
             .Take(20).ToListAsync(ct);
     }
 
@@ -220,7 +220,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
             .Select(x => new AlumniSearchResult(
                 x.alumni.Id,
                 x.alumni.StudentId,
-                (x.student.FirstName + " " + x.student.LastName).Trim(),
+                (x.student.LastName + " " + x.student.FirstName + " " + (x.student.OtherNames ?? string.Empty)).Trim().ToUpper(),
                 x.alumni.GraduationDate))
             .Take(20).ToListAsync(ct);
     }
