@@ -63,8 +63,10 @@ The backend exposes a role-protected stock-alert endpoint. In-app warnings are s
 ## Shared table/register layout
 
 All data tables and register-style sheets should provide consistent layout behavior:
-- Drag-resizable column widths and row heights where appropriate.
-- Keyboard-accessible resize handles.
+- Column widths and row heights are locked by default for every role.
+- Only a signed-in System Administrator can enable the global table layout editor using the top-bar toggle; it is off by default.
+- When enabled, provide drag-resizable column widths and row heights where appropriate, with keyboard-accessible resize handles.
+- Turning the editor off removes all interactive resize handles and locks the current table dimensions.
 - Horizontal scrolling on narrow screens and sensible minimum sizes.
 - Print output without interactive resize handles.
 - No change to the underlying records when changing presentation dimensions.
