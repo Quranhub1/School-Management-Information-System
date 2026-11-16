@@ -5986,10 +5986,10 @@ table { font-variant-numeric: tabular-nums; }
 
 
 
-/* Keep two-card summaries compact so both cards fit their content area cleanly. */
+/* Narrow two-card summaries further while keeping both cards on one row. */
 .library-summary:has(> .library-stat:nth-child(2):last-child) {
   box-sizing: border-box;
-  width: calc(100% - 16px);
+  width: calc(100% - 32px);
   margin-left: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 12px;
@@ -6000,7 +6000,7 @@ table { font-variant-numeric: tabular-nums; }
 }
 @media (max-width: 480px) {
   .library-summary:has(> .library-stat:nth-child(2):last-child) {
-    width: calc(100% - 12px);
+    width: calc(100% - 24px);
     gap: 8px;
   }
 }
