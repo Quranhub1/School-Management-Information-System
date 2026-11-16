@@ -95,7 +95,6 @@ public sealed class StaffAttendanceController(
 
     [HttpPost("{staffMemberId:guid}/fingerprint-credential")]
     [Authorize(Policy = StaffPolicies.Management)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EnrolFingerprint(
         Guid staffMemberId,
         [FromBody] EnrolStaffFingerprintRequest request,
@@ -140,7 +139,6 @@ public sealed class StaffAttendanceController(
 
     [HttpDelete("{staffMemberId:guid}/fingerprint-credential")]
     [Authorize(Policy = StaffPolicies.Management)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RevokeFingerprint(Guid staffMemberId, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(s => s.Id == staffMemberId, cancellationToken);
@@ -160,7 +158,6 @@ public sealed class StaffAttendanceController(
     /// </summary>
     [HttpPost("capture")]
     [Authorize(Policy = StaffPolicies.Management)]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Capture([FromBody] StaffFingerprintCaptureRequest request, CancellationToken cancellationToken)
     {
         if (request.StaffMemberId == Guid.Empty || string.IsNullOrWhiteSpace(request.DeviceId)
