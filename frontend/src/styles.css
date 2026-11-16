@@ -5029,3 +5029,38 @@ table { font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) {
   .library-dashboard-options { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* Library workspace: solid-green actions always use high-contrast pure-white labels. */
+.library-workspace :is(
+  button.library-primary,
+  button.primary-button,
+  button.btn-success,
+  button.button-success,
+  button[class*="success"],
+  button[class*="green"],
+  button[class*="emerald"],
+  button[class*="teal"],
+  button[data-variant="success"],
+  .library-tabs > button.active,
+  .library-search > button
+),
+.library-workspace :is(
+  button.library-primary,
+  button.primary-button,
+  button.btn-success,
+  button.button-success,
+  button[class*="success"],
+  button[class*="green"],
+  button[class*="emerald"],
+  button[class*="teal"],
+  button[data-variant="success"],
+  .library-tabs > button.active,
+  .library-search > button
+) :where(span, strong, b, small, em, label) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
