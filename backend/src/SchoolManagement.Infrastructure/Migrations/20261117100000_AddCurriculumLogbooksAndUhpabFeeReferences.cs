@@ -124,6 +124,8 @@ public sealed class AddCurriculumLogbooksAndUhpabFeeReferences : Migration
             ('a1170000-0000-4000-8000-000000000012', 'Verification', NULL, NULL, 'International verification', 40, 'USD', 'https://uhpab.go.ug/assessment-fees', 'UHPAB assessment fees', DATE '2026-11-17', DATE '2026-11-17', NULL, TRUE);
             """);
 
+    }
+
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.Sql("""
