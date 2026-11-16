@@ -321,7 +321,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             ].map(item => (
               <article key={item.key} className="library-main-card" style={{ padding: 18, borderTop: '3px solid var(--primary, #16834a)' }}>
                 <button type="button" onClick={() => setActiveView(item.key)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: 0, border: 0, background: 'transparent', color: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
-                  <span aria-hidden="true" style={{ display: 'grid', placeItems: 'center', width: 42, height: 42, borderRadius: 10, background: 'rgba(22,131,74,.10)', color: 'var(--primary, #16834a)', fontSize: 23 }}>{item.icon}</span>
+                  <span aria-hidden="true" style={{ display: 'grid', placeItems: 'center', width: 42, height: 42, borderRadius: 10, background: 'var(--primary, #16834a)', color: '#ffffff', fontSize: 23 }}>{item.icon}</span>
                   <strong style={{ fontSize: 17 }}>{item.title}</strong>
                 </button>
                 <p style={{ minHeight: 42, margin: '12px 0', color: 'var(--text-muted, #64748b)', fontSize: 13 }}>{item.description}</p>
