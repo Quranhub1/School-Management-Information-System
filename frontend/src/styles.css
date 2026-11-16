@@ -5303,7 +5303,7 @@ table { font-variant-numeric: tabular-nums; }
 }
 .app-shell .library-clearance-autocomplete > .library-clearance-clear-search {
   position: absolute !important;
-  top: 50% !important;
+  top: calc(50% - 3px) !important;
   right: 12px !important;
   bottom: auto !important;
   left: auto !important;
