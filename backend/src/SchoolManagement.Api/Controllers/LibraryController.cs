@@ -137,9 +137,6 @@ public sealed class LibraryController(
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, ct)) return Forbid();
         if (request.Amount <= 0 || decimal.Round(request.Amount, 2) != request.Amount)
             return BadRequest(new { message = "Enter a payment amount greater than zero with no more than two decimal places." });
-        if (string.IsNullOrWhiteSpace(request.Method))
-            return BadRequest(new { message = "Select how the student paid." });
-
         var programmeId = await db.StudentEnrollments.AsNoTracking()
             .Where(x => x.StudentId == studentId && x.Status == "Active")
             .OrderByDescending(x => x.AdmissionDate)
@@ -174,13 +171,11 @@ public sealed class LibraryController(
             RequirementId = requirement.Id,
             Amount = request.Amount,
             Currency = requirement.Currency,
-            PaymentMethod = request.Method.Trim(),
-            Reference = string.IsNullOrWhiteSpace(request.Reference) ? null : request.Reference.Trim(),
             RecordedBy = User.Identity?.Name
         };
         db.LibraryStudentPayments.Add(payment);
         await db.SaveChangesAsync(ct);
-        return Ok(new { payment.Id, payment.StudentId, payment.Amount, payment.Currency, payment.PaymentMethod, payment.Reference, payment.RecordedAtUtc });
+        return Ok(new { payment.Id, payment.StudentId, payment.Amount, payment.Currency, payment.RecordedAtUtc });
     }
 
     [HttpGet("books/{id:guid}/barcode")]
@@ -527,4 +522,4 @@ public sealed class LibraryController(
 public sealed record SetLibraryProgrammeRequirementRequest(Guid ProgrammeId, string Name, decimal Amount, string? Currency = null);
 
 public sealed record LibraryClearanceRequest(string Method, string? Reference = null);
-public sealed record RecordLibraryPaymentRequest(decimal Amount, string Method, string? Reference = null);
+public sealed record RecordLibraryPaymentRequest(decimal Amount);
