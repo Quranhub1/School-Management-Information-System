@@ -13,16 +13,17 @@ public sealed class LibraryService(ILibraryRepository library)
 
     public async Task<LibraryBook> AddBookAsync(string isbn, string title, string author, string? publisher, int totalCopies, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(isbn) || string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(author))
+        var normalizedIsbn = NormalizeAndValidateIsbn(isbn);
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(author))
             throw new ArgumentException("ISBN, title and author are required.");
         if (totalCopies < 1) throw new ArgumentOutOfRangeException(nameof(totalCopies));
-        var normalizedIsbn = isbn.Trim();
         if (await library.GetBookByIsbnAsync(normalizedIsbn, cancellationToken) is not null)
             throw new InvalidOperationException("A library book with this ISBN already exists.");
 
         var book = new LibraryBook
         {
             Isbn = normalizedIsbn,
+            BarcodeValue = ToBooklandEan13(normalizedIsbn),
             Title = title.Trim(),
             Author = author.Trim(),
             Publisher = string.IsNullOrWhiteSpace(publisher) ? null : publisher.Trim()
@@ -31,6 +32,30 @@ public sealed class LibraryService(ILibraryRepository library)
         await library.AddBookAsync(book, cancellationToken);
         await library.SaveChangesAsync(cancellationToken);
         return book;
+    }
+
+    private static string NormalizeAndValidateIsbn(string value)
+    {
+        var isbn = new string((value ?? string.Empty).ToUpperInvariant().Where(char.IsAsciiLetterOrDigit).ToArray());
+        if (isbn.Length == 13 && isbn.All(char.IsAsciiDigit))
+        {
+            var sum = isbn.Take(12).Select((c, i) => (c - '0') * (i % 2 == 0 ? 1 : 3)).Sum();
+            if ((10 - sum % 10) % 10 == isbn[12] - '0') return isbn;
+        }
+        if (isbn.Length == 10 && isbn.Take(9).All(char.IsAsciiDigit) && (char.IsAsciiDigit(isbn[9]) || isbn[9] == 'X'))
+        {
+            var sum = isbn.Select((c, i) => (c == 'X' ? 10 : c - '0') * (10 - i)).Sum();
+            if (sum % 11 == 0) return isbn;
+        }
+        throw new ArgumentException("Enter a valid ISBN-10 or ISBN-13 with its correct check digit.");
+    }
+
+    private static string ToBooklandEan13(string isbn)
+    {
+        if (isbn.Length == 13) return isbn;
+        var body = "978" + isbn[..9];
+        var sum = body.Select((c, i) => (c - '0') * (i % 2 == 0 ? 1 : 3)).Sum();
+        return body + ((10 - sum % 10) % 10).ToString();
     }
 
     public async Task<Librarian> AddLibrarianAsync(Guid staffMemberId, string libraryRole, CancellationToken cancellationToken = default)
