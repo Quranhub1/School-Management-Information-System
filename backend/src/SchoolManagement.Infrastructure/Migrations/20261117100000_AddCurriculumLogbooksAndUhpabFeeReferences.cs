@@ -100,6 +100,7 @@ public sealed class AddCurriculumLogbooksAndUhpabFeeReferences : Migration
             CREATE INDEX "IX_LogbookRequirements_CurriculumId" ON "LogbookRequirements" ("CurriculumId");
             CREATE INDEX "IX_LogbookCompetencyRequirements_LogbookRequirementId" ON "LogbookCompetencyRequirements" ("LogbookRequirementId");
             CREATE INDEX "IX_StudentLogbooks_StudentId_LogbookRequirementId" ON "StudentLogbooks" ("StudentId", "LogbookRequirementId");
+            CREATE INDEX "IX_StudentLogbooks_LogbookRequirementId" ON "StudentLogbooks" ("LogbookRequirementId");
             CREATE INDEX "IX_StudentLogbookCompetencies_StudentLogbookId" ON "StudentLogbookCompetencies" ("StudentLogbookId");
             CREATE INDEX "IX_StudentLogbookCompetencies_CompetencyRequirementId" ON "StudentLogbookCompetencies" ("CompetencyRequirementId");
             CREATE INDEX "IX_StudentLogbookCompetencies_StudentPlacementId" ON "StudentLogbookCompetencies" ("StudentPlacementId");
