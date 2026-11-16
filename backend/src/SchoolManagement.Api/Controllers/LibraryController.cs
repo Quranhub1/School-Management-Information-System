@@ -214,6 +214,7 @@ public sealed class LibraryController(
                 id = loan.Id, bookId = loan.BookId, bookTitle = book?.Title ?? "Unavailable book",
                 bookIsbn = book?.Isbn ?? "", memberId = loan.StudentId ?? loan.StaffMemberId,
                 memberType = loan.MemberType, memberNumber, memberName,
+                studentId = loan.StudentId, studentNumber = memberNumber, studentName = memberName,
                 issuedAtUtc = loan.IssuedAtUtc, dueAtUtc = loan.DueAtUtc,
                 returnedAtUtc = loan.ReturnedAtUtc, fineAmount = loan.FineAmount
             };
