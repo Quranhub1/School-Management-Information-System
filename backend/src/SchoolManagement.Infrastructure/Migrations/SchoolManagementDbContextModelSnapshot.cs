@@ -4145,10 +4145,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
                     b.Property<decimal>("Amount").HasPrecision(18, 2).HasColumnType("numeric(18,2)");
                     b.Property<string>("Currency").IsRequired().HasMaxLength(3).HasColumnType("character varying(3)");
-                    b.Property<string>("PaymentMethod").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
                     b.Property<DateTimeOffset>("RecordedAtUtc").HasColumnType("timestamp with time zone");
                     b.Property<string>("RecordedBy").HasMaxLength(200).HasColumnType("character varying(200)");
-                    b.Property<string>("Reference").HasMaxLength(120).HasColumnType("character varying(120)");
                     b.Property<Guid>("RequirementId").HasColumnType("uuid");
                     b.Property<Guid>("StudentId").HasColumnType("uuid");
                     b.HasKey("Id");
