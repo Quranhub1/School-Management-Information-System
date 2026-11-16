@@ -752,6 +752,41 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </div>
         </div>
       )}
+      {activeView === 'issue' && canManage && (
+        <section className="library-issue-entry">
+          <div className="library-issue-entry-heading">
+            <h3>Issue Book — Loan Register Entry</h3>
+            <span>Complete the row and issue the selected book</span>
+          </div>
+          <form onSubmit={submitIssue}>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>ID</th><th>Book</th><th>Member type</th><th>Member</th><th>Issue date</th><th>Due date</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody><tr>
+                  <td>New</td>
+                  <td><select aria-label="Select available book" required value={issue.bookId} onChange={e => setIssue({ ...issue, bookId: e.target.value })}>
+                    <option value="">Select book</option>
+                    {books.filter(book => book.availableCopies > 0).map(book => <option key={book.id} value={book.id}>{book.title} · {book.isbn} · {book.availableCopies} available</option>)}
+                  </select></td>
+                  <td><select aria-label="Member type" value={issue.memberType} onChange={e => setIssue({ ...issue, memberType: e.target.value as 'Student'|'Staff', memberNumber: '' })}>
+                    <option value="Student">Student</option><option value="Staff">Staff</option>
+                  </select></td>
+                  <td><select aria-label="Select member" required value={issue.memberNumber} onChange={e => setIssue({ ...issue, memberNumber: e.target.value })}>
+                    <option value="">Select {issue.memberType.toLowerCase()}</option>
+                    {members.filter(member => member.memberType === issue.memberType).map(member => <option key={member.id} value={member.memberNumber}>{member.memberNumber} — {member.name}</option>)}
+                  </select></td>
+                  <td><input aria-label="Issue date" type="date" required value={issue.issueDate} max={todayInput()} onChange={e => setIssue({ ...issue, issueDate: e.target.value })} /></td>
+                  <td><input aria-label="Due date" type="date" required min={issue.issueDate} value={issue.dueDate} onChange={e => setIssue({ ...issue, dueDate: e.target.value })} /></td>
+                  <td><span className="loan-status">Ready</span></td>
+                  <td><button className="quick-issue" disabled={busy || !selectedMember || !issue.bookId}>Issue</button></td>
+                </tr></tbody>
+              </table>
+            </div>
+          </form>
+        </section>
+      )}
       {(activeView === 'issue' || activeView === 'overdue') && <div className="library-grid">
         <div className="library-main-card">
           <div className="library-toolbar">
@@ -834,34 +869,6 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
         <aside className="library-side-card">
           <h3>{activeView === 'overdue' ? 'Overdue Follow-up' : 'Quick Actions'}</h3>
-          {activeView === 'issue' && canManage && (
-            <form onSubmit={submitIssue} className="library-action-form">
-              <label>Issue Book — Loan Register Entry</label>
-              <div className="table-wrap">
-                <table>
-                  <thead><tr><th>ID</th><th>Book</th><th>Member type</th><th>Member</th><th>Issue date</th><th>Due date</th><th>Status</th><th>Action</th></tr></thead>
-                  <tbody><tr>
-                    <td>New</td>
-                    <td><select aria-label="Select available book" required value={issue.bookId} onChange={e => setIssue({ ...issue, bookId: e.target.value })}>
-                      <option value="">Select book</option>
-                      {books.filter(book => book.availableCopies > 0).map(book => <option key={book.id} value={book.id}>{book.title} · {book.isbn} · {book.availableCopies} available</option>)}
-                    </select></td>
-                    <td><select aria-label="Member type" value={issue.memberType} onChange={e => setIssue({ ...issue, memberType: e.target.value as 'Student'|'Staff', memberNumber: '' })}>
-                      <option value="Student">Student</option><option value="Staff">Staff</option>
-                    </select></td>
-                    <td><select aria-label="Select member" required value={issue.memberNumber} onChange={e => setIssue({ ...issue, memberNumber: e.target.value })}>
-                      <option value="">Select {issue.memberType.toLowerCase()}</option>
-                      {members.filter(member => member.memberType === issue.memberType).map(member => <option key={member.id} value={member.memberNumber}>{member.memberNumber} — {member.name}</option>)}
-                    </select></td>
-                    <td><input aria-label="Issue date" type="date" required value={issue.issueDate} max={todayInput()} onChange={e => setIssue({ ...issue, issueDate: e.target.value })} /></td>
-                    <td><input aria-label="Due date" type="date" required min={issue.issueDate} value={issue.dueDate} onChange={e => setIssue({ ...issue, dueDate: e.target.value })} /></td>
-                    <td><span className="loan-status">Ready</span></td>
-                    <td><button className="quick-issue" disabled={busy || !selectedMember || !issue.bookId}>Issue</button></td>
-                  </tr></tbody>
-                </table>
-              </div>
-            </form>
-          )}
           {activeView === 'overdue' && canManage && (
             <button className="quick-return" onClick={() => setActiveView('issue')}>
               ↩ Open Issue & Returns
