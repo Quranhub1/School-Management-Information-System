@@ -64,8 +64,8 @@ export const setProgrammeRequirement = (input: { programmeId: string; name: stri
   request<LibraryProgrammeRequirement>('/api/library/programme-requirements', { method: 'POST', body: JSON.stringify(input) })
 export const setProgrammeRequirementActive = (id: string, active: boolean) =>
   request<{ id: string; isActive: boolean }>(`/api/library/programme-requirements/${id}/active?active=${active}`, { method: 'PATCH' })
-export const recordLibraryStudentPayment = (studentId: string, input: { amount: number; method: string; reference?: string }) =>
-  request<{ id: string; studentId: string; amount: number; currency: string; paymentMethod: string; reference?: string | null; recordedAtUtc: string }>(
+export const recordLibraryStudentPayment = (studentId: string, input: { amount: number }) =>
+  request<{ id: string; studentId: string; amount: number; currency: string; recordedAtUtc: string }>(
     `/api/library/students/${studentId}/payments`,
     { method: 'POST', body: JSON.stringify(input) },
   )
