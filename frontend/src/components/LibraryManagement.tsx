@@ -339,6 +339,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           ))}
         </section>
       )}
+      {activeView === 'books' && (
       <div className="library-summary">
         <div className="library-stat">
           <span className="library-icon">▣</span>
@@ -377,6 +378,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </div>
         </div>
       </div>
+      )}
 
       {canManage && activeView === 'clearance' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
         <h3>Course book requirements and fees</h3>
