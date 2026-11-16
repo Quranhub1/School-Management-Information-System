@@ -413,7 +413,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("mobile-money")]
-    [ValidateAntiForgeryToken]
     public IActionResult CreateMobileMoneyTransaction(CreateMobileMoneyTransactionRequest request)
         => StatusCode(StatusCodes.Status410Gone, new
         {
@@ -422,7 +421,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("mobile-money/{transactionId:guid}/confirm")]
-    [ValidateAntiForgeryToken]
     public IActionResult ConfirmMobileMoneyTransaction(Guid transactionId, ConfirmMobileMoneyTransactionRequest request)
         => StatusCode(StatusCodes.Status410Gone, new
         {
@@ -431,7 +429,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpDelete("mobile-money/{transactionId:guid}")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CancelMobileMoneyTransaction(Guid transactionId, CancellationToken cancellationToken)
     {
         var transaction = await db.MobileMoneyTransactions.SingleOrDefaultAsync(x => x.Id == transactionId, cancellationToken);
@@ -464,7 +461,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("administration/fee-structures")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateFeeStructure(CreateFeeStructureRequest request, CancellationToken cancellationToken)
     {
         try
@@ -515,7 +511,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
 
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("administration/fee-structures/{feeStructureId:guid}/apply")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApplyFeeStructure(Guid feeStructureId, ApplyFeeStructureRequest request, CancellationToken cancellationToken)
     {
         var fee = await db.FeeStructures.Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == feeStructureId && x.IsActive, cancellationToken);
@@ -617,7 +612,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("students/{studentId:guid}/charges")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateStudentCharge(Guid studentId, CreateStudentChargeRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
@@ -625,7 +619,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("charges/{chargeId:guid}/void")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> VoidStudentCharge(Guid chargeId, VoidStudentChargeRequest request, CancellationToken cancellationToken)
     {
         if (!await CanAccessChargeAsync(chargeId, cancellationToken)) return Forbid();
@@ -639,7 +632,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices/{invoiceId:guid}/credit-notes")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateCreditNote(Guid invoiceId, CreateCreditNoteRequest request, CancellationToken cancellationToken)
     {
         if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
@@ -647,7 +639,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("credit-notes/{creditNoteId:guid}/cancel")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CancelCreditNote(Guid creditNoteId, CancelCreditNoteRequest request, CancellationToken cancellationToken)
     {
         if (!await CanAccessCreditNoteAsync(creditNoteId, cancellationToken)) return Forbid();
@@ -655,7 +646,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/refund")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RefundPayment(Guid paymentId, CreateRefundRequest request, CancellationToken cancellationToken)
     {
         if (!await CanAccessPaymentAsync(paymentId, cancellationToken)) return Forbid();
@@ -663,7 +653,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateInvoice(CreateInvoiceRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, request.StudentId, cancellationToken)) return Forbid();
@@ -677,7 +666,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices/{invoiceId:guid}/discounts")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RequestDiscount(Guid invoiceId, RequestDiscountRequest request, CancellationToken cancellationToken)
     {
         if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
@@ -685,7 +673,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("discounts/{discountId:guid}/approve")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApproveDiscount(Guid discountId, CancellationToken cancellationToken)
     {
         if (!await CanAccessDiscountAsync(discountId, cancellationToken)) return Forbid();
@@ -693,7 +680,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("discounts/{discountId:guid}/reject")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RejectDiscount(Guid discountId, CancellationToken cancellationToken)
     {
         if (!await CanAccessDiscountAsync(discountId, cancellationToken)) return Forbid();
@@ -713,7 +699,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices/{invoiceId:guid}/installments")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateInstallmentSchedule(Guid invoiceId, CreateInstallmentScheduleRequest request, CancellationToken cancellationToken)
     {
         if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
@@ -721,7 +706,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("invoices/{invoiceId:guid}/payments")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RecordPayment(Guid invoiceId, RecordPaymentRequest request, CancellationToken cancellationToken)
     {
         if (!await CanAccessInvoiceAsync(invoiceId, cancellationToken)) return Forbid();
@@ -731,7 +715,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("students/{studentId:guid}/payments")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RecordUnallocatedPayment(Guid studentId, RecordUnallocatedPaymentRequest request, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
@@ -741,7 +724,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/allocate")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AllocatePayment(Guid paymentId, AllocatePaymentRequest request, CancellationToken cancellationToken)
     {
         if (!await CanAccessPaymentAsync(paymentId, cancellationToken)) return Forbid();
@@ -749,7 +731,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceOperations)]
     [HttpPost("payments/{paymentId:guid}/allocate-fifo")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AllocatePaymentFifo(Guid paymentId, CancellationToken cancellationToken)
     {
         if (!await CanAccessPaymentAsync(paymentId, cancellationToken)) return Forbid();
@@ -757,7 +738,6 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
     [Authorize(Policy = AuthorizationPolicies.FinanceManagement)]
     [HttpPost("journal-entries/{journalEntryId:guid}/reverse")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> ReverseJournalEntry(Guid journalEntryId, ReverseJournalEntryRequest request, CancellationToken cancellationToken)
     {
         if (!await CanViewUnscopedFinancialReportAsync(cancellationToken)) return Forbid();
