@@ -4211,7 +4211,7 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasIndex("StudentId", "BookId", "ReturnedAtUtc");
 
-                    b.ToTable("LibraryLoans", t => t.HasCheckConstraint("CK_LibraryLoans_ExactlyOneMember", "(\\"StudentId\\" IS NOT NULL AND \\"StaffMemberId\\" IS NULL AND \\"MemberType\\" = 'Student') OR (\\"StudentId\\" IS NULL AND \\"StaffMemberId\\" IS NOT NULL AND \\"MemberType\\" = 'Staff')"));
+                    b.ToTable("LibraryLoans", t => t.HasCheckConstraint("CK_LibraryLoans_ExactlyOneMember", "(\"StudentId\" IS NOT NULL AND \"StaffMemberId\" IS NULL AND \"MemberType\" = 'Student') OR (\"StudentId\" IS NULL AND \"StaffMemberId\" IS NOT NULL AND \"MemberType\" = 'Staff')"));
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Staff.LeaveRequest", b =>
