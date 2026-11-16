@@ -137,11 +137,14 @@ public sealed class LibraryController(
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, ct)) return Forbid();
         if (request.Amount <= 0 || decimal.Round(request.Amount, 2) != request.Amount)
             return BadRequest(new { message = "Enter a payment amount greater than zero with no more than two decimal places." });
-        var enrollmentProgrammeId = await db.StudentEnrollments.AsNoTracking()
-            .Where(x => x.StudentId == studentId && x.Status == "Active")
-            .OrderByDescending(x => x.AdmissionDate)
-            .Select(x => (Guid?)x.ProgrammeId)
-            .FirstOrDefaultAsync(ct);
+        var enrollmentProgramme = await (
+            from enrollment in db.StudentEnrollments.AsNoTracking()
+            join programme in db.Programmes.AsNoTracking() on enrollment.ProgrammeId equals programme.Id
+            where enrollment.StudentId == studentId && enrollment.Status == "Active"
+            orderby enrollment.AdmissionDate descending
+            select new { ProgrammeId = (Guid?)programme.Id, ProgrammeCode = programme.Code }
+        ).FirstOrDefaultAsync(ct);
+        var enrollmentProgrammeId = enrollmentProgramme?.ProgrammeId;
         var admissionId = await db.Students.AsNoTracking().Where(x => x.Id == studentId)
             .Select(x => x.AdmissionId).FirstOrDefaultAsync(ct);
         var admissionProgrammeId = admissionId.HasValue
@@ -153,12 +156,31 @@ public sealed class LibraryController(
         if (programmeIds.Length == 0)
             return Conflict(new { message = "The student is not linked to a programme with a library requirement." });
 
-        // Match either central enrolment or admission programme, preferring enrolment.
+        // Prefer exact programme IDs. If an older admission/enrolment points to a
+        // duplicate programme record, fall back to the stable programme code (e.g. CPH).
         var requirement = await db.LibraryProgrammeRequirements.AsNoTracking()
             .Where(x => programmeIds.Contains(x.ProgrammeId) && x.IsActive)
             .OrderBy(x => x.ProgrammeId == enrollmentProgrammeId ? 0 : 1)
             .ThenByDescending(x => x.UpdatedAtUtc)
             .FirstOrDefaultAsync(ct);
+        if (requirement is null)
+        {
+            var programmeCodes = await db.Programmes.AsNoTracking()
+                .Where(x => programmeIds.Contains(x.Id) || (enrollmentProgramme?.ProgrammeCode != null && x.Code == enrollmentProgramme.ProgrammeCode))
+                .Select(x => x.Code.Trim().ToUpper())
+                .Distinct()
+                .ToListAsync(ct);
+            if (programmeCodes.Count > 0)
+            {
+                requirement = await (
+                    from item in db.LibraryProgrammeRequirements.AsNoTracking()
+                    join programme in db.Programmes.AsNoTracking() on item.ProgrammeId equals programme.Id
+                    where item.IsActive && programmeCodes.Contains(programme.Code.Trim().ToUpper())
+                    orderby item.UpdatedAtUtc descending
+                    select item
+                ).FirstOrDefaultAsync(ct);
+            }
+        }
         if (requirement is null) return Conflict(new { message = "No active course-book requirement is configured for this student's programme." });
 
         var paid = await db.LibraryStudentPayments.AsNoTracking()
@@ -257,6 +279,7 @@ public sealed class LibraryController(
                 Name = (student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName).Trim(),
                 ProgrammeId = admission == null ? (Guid?)null : admission.ProgrammeId,
                 ProgrammeName = programme == null ? null : programme.Name,
+                ProgrammeCode = programme == null ? null : programme.Code,
                 AcademicYearName = academicYear == null ? null : academicYear.Name,
                 student.CampusId
             };
@@ -268,11 +291,20 @@ public sealed class LibraryController(
         if (libraryStudents.Count == 0) return Ok(Array.Empty<object>());
 
         var studentIds = libraryStudents.Select(x => x.Id).ToArray();
-        var enrollments = await db.StudentEnrollments.AsNoTracking()
-            .Where(x => studentIds.Contains(x.StudentId) && x.Status == "Active")
-            .OrderByDescending(x => x.AdmissionDate)
-            .Select(x => new { x.StudentId, x.CurrentYear, x.ProgrammeId })
-            .ToListAsync(ct);
+        var enrollments = await (
+            from enrollment in db.StudentEnrollments.AsNoTracking()
+            join programme in db.Programmes.AsNoTracking() on enrollment.ProgrammeId equals programme.Id
+            where studentIds.Contains(enrollment.StudentId) && enrollment.Status == "Active"
+            orderby enrollment.AdmissionDate descending
+            select new
+            {
+                enrollment.StudentId,
+                enrollment.CurrentYear,
+                enrollment.ProgrammeId,
+                ProgrammeCode = programme.Code,
+                ProgrammeName = programme.Name
+            }
+        ).ToListAsync(ct);
 
         var academicStatuses = await (
             from status in db.StudentAcademicStatuses.AsNoTracking()
@@ -300,12 +332,22 @@ public sealed class LibraryController(
         var coursesByProgramme = curriculumCourses.GroupBy(x => x.Id)
             .ToDictionary(x => x.Key, x => x.Select(item => item.CourseName).Distinct().OrderBy(name => name).ToArray());
 
-        var activeRequirements = await db.LibraryProgrammeRequirements.AsNoTracking()
-            .Where(x => x.IsActive)
-            .ToListAsync(ct);
+        var requirementRows = await (
+            from requirement in db.LibraryProgrammeRequirements.AsNoTracking()
+            join programme in db.Programmes.AsNoTracking() on requirement.ProgrammeId equals programme.Id
+            where requirement.IsActive
+            select new { Requirement = requirement, ProgrammeCode = programme.Code }
+        ).ToListAsync(ct);
+        var activeRequirements = requirementRows.Select(x => x.Requirement).ToList();
         var requirementsByProgramme = activeRequirements
             .GroupBy(x => x.ProgrammeId)
             .ToDictionary(x => x.Key, x => x.OrderByDescending(item => item.UpdatedAtUtc).First());
+        var requirementsByProgrammeCode = requirementRows
+            .Where(x => !string.IsNullOrWhiteSpace(x.ProgrammeCode))
+            .GroupBy(x => x.ProgrammeCode.Trim().ToUpperInvariant())
+            .ToDictionary(
+                x => x.Key,
+                x => x.OrderByDescending(item => item.Requirement.UpdatedAtUtc).First().Requirement);
         var requirementIds = activeRequirements.Select(x => x.Id).ToArray();
         var paymentRows = await db.LibraryStudentPayments.AsNoTracking()
             .Where(x => studentIds.Contains(x.StudentId) && requirementIds.Contains(x.RequirementId))
@@ -329,6 +371,10 @@ public sealed class LibraryController(
                 requirementsByProgramme.TryGetValue(enrolledProgrammeId, out requirement);
             if (requirement is null && student.ProgrammeId is Guid admittedProgrammeId)
                 requirementsByProgramme.TryGetValue(admittedProgrammeId, out requirement);
+            if (requirement is null && !string.IsNullOrWhiteSpace(enrollment?.ProgrammeCode))
+                requirementsByProgrammeCode.TryGetValue(enrollment.ProgrammeCode.Trim().ToUpperInvariant(), out requirement);
+            if (requirement is null && !string.IsNullOrWhiteSpace(student.ProgrammeCode))
+                requirementsByProgrammeCode.TryGetValue(student.ProgrammeCode.Trim().ToUpperInvariant(), out requirement);
             var programmeId = requirement?.ProgrammeId ?? enrollment?.ProgrammeId ?? student.ProgrammeId;
             string[]? studentCourses = null;
             if (programmeId.HasValue)
@@ -345,7 +391,7 @@ public sealed class LibraryController(
                 studentId = student.Id,
                 studentNumber = student.StudentNumber,
                 studentName = student.Name,
-                programmeName = student.ProgrammeName,
+                programmeName = enrollment?.ProgrammeName ?? student.ProgrammeName,
                 courseNames = studentCourses ?? Array.Empty<string>(),
                 classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
                 semesterName = academicStatus?.SemesterName ?? currentSemester?.Name,
