@@ -59,12 +59,12 @@ describe('library API', () => {
     vi.stubGlobal('fetch', mockFetch)
     const { addBook } = await import('./library')
 
-    await expect(addBook({
+    expect(() => addBook({
       isbn: '978-0-30640615-8',
       title: 'Test Book',
       author: 'Test Author',
       totalCopies: 1,
-    })).rejects.toThrow()
+    })).toThrow()
 
     expect(mockFetch).not.toHaveBeenCalled()
   })
@@ -74,13 +74,13 @@ describe('library API', () => {
     vi.stubGlobal('fetch', mockFetch)
     const { issueBook } = await import('./library')
 
-    await expect(issueBook({
+    expect(() => issueBook({
       bookId: 'book-1',
       memberId: 'member-1',
       memberType: 'Visitor' as 'Student',
       issuedAtUtc: '2026-11-17T08:00:00Z',
       dueAtUtc: '2026-11-24T08:00:00Z',
-    })).rejects.toThrow()
+    })).toThrow()
 
     expect(mockFetch).not.toHaveBeenCalled()
   })
