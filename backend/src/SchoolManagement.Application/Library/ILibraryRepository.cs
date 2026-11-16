@@ -10,6 +10,9 @@ public interface ILibraryRepository
     Task<LibraryLoan?> GetLoanAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<LibraryLoan>> GetStudentLoansAsync(Guid studentId, bool activeOnly = false, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LibraryLoan>> GetStaffLoansAsync(Guid staffMemberId, bool activeOnly = false, CancellationToken cancellationToken = default);
+    Task<bool> StudentExistsAsync(Guid studentId, CancellationToken cancellationToken = default);
+    Task<bool> ActiveStaffExistsAsync(Guid staffMemberId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Librarian>> GetLibrariansAsync(CancellationToken cancellationToken = default);
     Task AddBookAsync(LibraryBook book, CancellationToken cancellationToken = default);
     Task AddLibrarianAsync(Librarian librarian, CancellationToken cancellationToken = default);
