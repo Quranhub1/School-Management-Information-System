@@ -45,6 +45,67 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const institutionContext = useOptionalInstitutionSettings();
   const institutionName = institutionContext?.institution?.institutionName?.trim() || 'Institution';
   const institutionShortName = institutionContext?.institution?.abbreviation?.trim() || institutionName;
+  function printLibraryCard() {
+    const card = document.querySelector<HTMLElement>('.library-print-card');
+    if (!card) return;
+
+    // Print an isolated copy of the card. This avoids the app shell, hidden
+    // navigation and other module styles interfering with the browser preview.
+    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    if (!printWindow) {
+      window.alert('Please allow pop-ups for this site to print the library card.');
+      return;
+    }
+
+    const styles = Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'))
+      .map(link => `<link rel="stylesheet" href="${link.href}">`)
+      .join('');
+    const inlineStyles = Array.from(document.querySelectorAll<HTMLStyleElement>('style'))
+      .map(style => style.outerHTML)
+      .join('');
+
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+      <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Library Membership Card</title>${styles}${inlineStyles}
+      <style>
+        @page { size: 85.6mm 54mm; margin: 0; }
+        html, body { width: 85.6mm !important; min-width: 85.6mm !important; height: 54mm !important; min-height: 54mm !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #fff !important; }
+        body { display: block !important; }
+        .library-print-card { display: block !important; position: relative !important; inset: auto !important; width: 85.6mm !important; height: 54mm !important; max-width: none !important; margin: 0 !important; padding: 3mm !important; box-sizing: border-box !important; aspect-ratio: auto !important; overflow: hidden !important; border: .25mm solid #aab8ae !important; border-radius: 2mm !important; box-shadow: none !important; visibility: visible !important; print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
+        .library-print-card, .library-print-card * { visibility: visible !important; }
+        .library-print-card-header { display: grid !important; grid-template-columns: 13mm minmax(0,1fr) 15mm !important; gap: 2mm !important; min-height: 17mm !important; }
+        .library-card-institution-badge { width: 13mm !important; height: 13mm !important; }
+        .library-card-student-photo { width: 15mm !important; height: 17mm !important; }
+        .library-card-heading { gap: 1.5mm !important; padding-top: 1mm !important; }
+        .library-card-heading strong { font-size: 7pt !important; }
+        .library-card-heading span { font-size: 6pt !important; }
+        .library-card-student-details { gap: 1.5mm !important; margin-top: 2mm !important; padding-top: 2mm !important; }
+        .library-card-student-details strong { font-size: 10pt !important; }
+        .library-card-student-details span { font-size: 7pt !important; }
+        .library-card-student-details small { font-size: 6pt !important; }
+      </style></head><body>${card.outerHTML}</body></html>`);
+    printWindow.document.close();
+
+    const startPrint = () => {
+      const images = Array.from(printWindow.document.images);
+      Promise.all(images.map(image => {
+        if (image.complete) return Promise.resolve();
+        return new Promise<void>(resolve => {
+          image.onload = () => resolve();
+          image.onerror = () => resolve();
+        });
+      })).then(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.onafterprint = () => printWindow.close();
+      });
+    };
+    printWindow.addEventListener('load', startPrint, { once: true });
+    // Cached stylesheets can finish before the load listener is attached.
+    if (printWindow.document.readyState === 'complete') startPrint();
+  }
+
   const [books, setBooks] = useState<LibraryBook[]>([]);
   const [loans, setLoans] = useState<LibraryLoan[]>([]);
   const [members, setMembers] = useState<LibraryMember[]>([]);
@@ -557,7 +618,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </div>
         </article>
         <div className="library-card-preview-actions">
-          <button type="button" className="library-primary" onClick={() => window.print()}>Print Library Card</button>
+          <button type="button" className="library-primary" onClick={printLibraryCard}>Print Library Card</button>
           <button type="button" className="secondary-button" onClick={() => setSelectedCardMember(null)}>Close Preview</button>
         </div>
       </section>}
