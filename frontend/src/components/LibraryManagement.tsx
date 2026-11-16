@@ -570,7 +570,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             )}
           </div>
         </div>
-        <div className="library-summary" aria-label="Books catalogue summary">
+        <div className="library-summary library-books-summary" aria-label="Books catalogue summary">
           <div className="library-stat">
             <span className="library-icon">▣</span>
             <div>
