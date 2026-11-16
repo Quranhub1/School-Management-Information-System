@@ -213,6 +213,102 @@ public sealed class LibraryController(
     public Task<IReadOnlyList<LibraryLoanDto>> StudentLoans(Guid studentId, [FromQuery] bool activeOnly = false, CancellationToken ct = default) =>
         library.GetStudentLoansAsync(studentId, activeOnly, ct);
 
+    [HttpGet("clearance/paid-students")]
+    [Authorize(Policy = LibraryPolicies.Read)]
+    public async Task<IActionResult> PaidLibraryClearanceStudents(CancellationToken ct)
+    {
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+
+        var paidRowsQuery =
+            from invoice in db.StudentInvoices.AsNoTracking()
+            join student in db.Students.AsNoTracking() on invoice.StudentId equals student.Id
+            where invoice.FeeType == "LibraryBook" &&
+                invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount <= 0m &&
+                !student.IsArchived
+            select new
+            {
+                student.Id,
+                student.StudentNumber,
+                Name = (student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName).Trim(),
+                invoice.InvoiceNumber,
+                invoice.Amount,
+                invoice.PaidAmount,
+                invoice.Currency,
+                invoice.IssuedAt,
+                student.CampusId
+            };
+
+        if (accessibleCampuses is not null)
+            paidRowsQuery = paidRowsQuery.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
+
+        var paidRows = await paidRowsQuery.OrderBy(x => x.Name).ThenByDescending(x => x.IssuedAt).ToListAsync(ct);
+        if (paidRows.Count == 0) return Ok(Array.Empty<object>());
+
+        var studentIds = paidRows.Select(x => x.Id).Distinct().ToArray();
+        var enrollments = await (
+            from enrollment in db.StudentEnrollments.AsNoTracking()
+            join programme in db.Programmes.AsNoTracking() on enrollment.ProgrammeId equals programme.Id
+            where studentIds.Contains(enrollment.StudentId)
+            orderby enrollment.Status == "Active" descending, enrollment.AdmissionDate descending
+            select new
+            {
+                enrollment.StudentId,
+                ProgrammeName = programme.Name,
+                enrollment.CurrentYear,
+                EnrollmentStatus = enrollment.Status
+            }).ToListAsync(ct);
+
+        var academicStatuses = await (
+            from status in db.StudentAcademicStatuses.AsNoTracking()
+            join semester in db.Semesters.AsNoTracking() on status.SemesterId equals semester.Id
+            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id
+            where studentIds.Contains(status.StudentId)
+            orderby academicYear.IsCurrent descending, semester.IsCurrent descending,
+                semester.EndDate descending, status.YearOfStudy descending, semester.Sequence descending
+            select new
+            {
+                status.StudentId,
+                status.YearOfStudy,
+                SemesterName = semester.Name,
+                AcademicYearName = academicYear.Name
+            }).ToListAsync(ct);
+
+        var currentPeriod = await (
+            from semester in db.Semesters.AsNoTracking()
+            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id
+            where semester.IsCurrent && academicYear.IsCurrent
+            orderby semester.Sequence descending
+            select new { SemesterName = semester.Name, AcademicYearName = academicYear.Name }
+        ).FirstOrDefaultAsync(ct);
+
+        var enrollmentByStudent = enrollments.GroupBy(x => x.StudentId).ToDictionary(x => x.Key, x => x.First());
+        var statusByStudent = academicStatuses.GroupBy(x => x.StudentId).ToDictionary(x => x.Key, x => x.First());
+
+        var result = paidRows.Select(row =>
+        {
+            enrollmentByStudent.TryGetValue(row.Id, out var enrollment);
+            statusByStudent.TryGetValue(row.Id, out var academicStatus);
+            return new
+            {
+                studentId = row.Id,
+                row.StudentNumber,
+                studentName = row.Name,
+                programmeName = enrollment?.ProgrammeName,
+                classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
+                semesterName = academicStatus?.SemesterName ?? currentPeriod?.SemesterName,
+                academicYearName = academicStatus?.AcademicYearName ?? currentPeriod?.AcademicYearName,
+                row.InvoiceNumber,
+                row.Amount,
+                row.PaidAmount,
+                row.Currency,
+                row.IssuedAt
+            };
+        }).ToList();
+
+        return Ok(result);
+    }
+
     [HttpPost("students/{studentId:guid}/clearance")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> ClearStudentLibraryRequirement(Guid studentId, LibraryClearanceRequest request, CancellationToken ct)
