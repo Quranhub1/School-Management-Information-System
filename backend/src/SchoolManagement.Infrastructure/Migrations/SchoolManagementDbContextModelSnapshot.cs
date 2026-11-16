@@ -4222,16 +4222,14 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<DateTime?>("ReturnedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("StudentId")
-                        .HasColumnType("uuid");
-
+                    b.Property<string>("MemberType").IsRequired().HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<Guid?>("StaffMemberId").HasColumnType("uuid");
+                    b.Property<Guid?>("StudentId").HasColumnType("uuid");
                     b.HasKey("Id");
-
                     b.HasIndex("BookId");
-
+                    b.HasIndex("StaffMemberId", "BookId", "ReturnedAtUtc");
                     b.HasIndex("StudentId", "BookId", "ReturnedAtUtc");
-
-                    b.ToTable("LibraryLoans");
+                    b.ToTable("LibraryLoans", t => t.HasCheckConstraint("CK_LibraryLoans_ExactlyOneMember", "(\"StudentId\" IS NOT NULL AND \"StaffMemberId\" IS NULL AND \"MemberType\" = 'Student') OR (\"StudentId\" IS NULL AND \"StaffMemberId\" IS NOT NULL AND \"MemberType\" = 'Staff')"));
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Staff.LeaveRequest", b =>
@@ -5325,17 +5323,9 @@ namespace SchoolManagement.Infrastructure.Migrations
 
             modelBuilder.Entity("SchoolManagement.Domain.Library.LibraryLoan", b =>
                 {
-                    b.HasOne("SchoolManagement.Domain.Library.LibraryBook", null)
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SchoolManagement.Domain.Students.Student", null)
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("SchoolManagement.Domain.Library.LibraryBook", null).WithMany().HasForeignKey("BookId").OnDelete(DeleteBehavior.Restrict).IsRequired();
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null).WithMany().HasForeignKey("StaffMemberId").OnDelete(DeleteBehavior.Restrict);
+                    b.HasOne("SchoolManagement.Domain.Students.Student", null).WithMany().HasForeignKey("StudentId").OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Staff.PayrollRecord", b =>
