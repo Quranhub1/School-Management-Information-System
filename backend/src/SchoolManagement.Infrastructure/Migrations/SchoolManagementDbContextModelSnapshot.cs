@@ -5636,7 +5636,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                 b.Property<string>("Status").IsRequired().HasColumnType("text");
                 b.Property<string>("IssuedBy").HasColumnType("text");
                 b.Property<string>("Remarks").HasColumnType("text");
-                b.HasKey("Id"); b.HasIndex("SerialNumber").IsUnique(); b.HasIndex("StudentId", "LogbookRequirementId"); b.ToTable("StudentLogbooks");
+                b.HasKey("Id"); b.HasIndex("SerialNumber").IsUnique(); b.HasIndex("LogbookRequirementId"); b.HasIndex("StudentId", "LogbookRequirementId"); b.ToTable("StudentLogbooks");
             });
 
             modelBuilder.Entity("SchoolManagement.Domain.Clinical.StudentLogbookCompetency", b =>
