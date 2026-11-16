@@ -27,7 +27,6 @@ import {
   type LibraryClearanceAcademicOptions,
   type PaidLibraryClearanceStudent,
 } from '../api/library';
-import { getProgrammes, type Programme } from '../api/programmes';
 import { getAccessToken } from '../api/auth';
 import { useOptionalInstitutionSettings } from './InstitutionSettingsContext';
 import { showConfirmDialog } from '../utils/confirmDialog';
@@ -123,7 +122,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [books, setBooks] = useState<LibraryBook[]>([]);
   const [loans, setLoans] = useState<LibraryLoan[]>([]);
   const [members, setMembers] = useState<LibraryMember[]>([]);
-  const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [programmes, setProgrammes] = useState<{ id: string; name: string }[]>([]);
   const [requirements, setRequirements] = useState<LibraryProgrammeRequirement[]>([]);
   const [clearanceStudents, setClearanceStudents] = useState<PaidLibraryClearanceStudent[]>([]);
   const [clearanceAcademicOptions, setClearanceAcademicOptions] = useState<LibraryClearanceAcademicOptions>({ courses: [], programmes: [], years: [], semesters: [], academicYears: [], mappings: [] });
@@ -232,9 +231,12 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   useEffect(() => {
     void load();
     if (canManage) {
-      Promise.all([getProgrammes(), listProgrammeRequirements()])
-        .then(([programmeRows, requirementRows]) => {
-          setProgrammes(programmeRows.filter(programme => programme.isActive));
+      Promise.all([getLibraryClearanceAcademicOptions(), listProgrammeRequirements()])
+        .then(([academicOptions, requirementRows]) => {
+          setProgrammes(academicOptions.programmes.map(programme => ({
+            id: programme.programmeId,
+            name: programme.programmeName,
+          })));
           setRequirements(requirementRows);
         })
         .catch(e => setError(e instanceof Error ? e.message : 'Unable to load course book requirements.'));
@@ -645,7 +647,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
               });
             }} required>
               <option value="">Select a programme (e.g. Certificate in Pharmacy — CPH)</option>
-              {programmes.map(programme => <option key={programme.id} value={programme.id}>{programme.name} ({programme.code})</option>)}
+              {programmes.map(programme => <option key={programme.id} value={programme.id}>{programme.name}</option>)}
             </select>
           </label>
           <label>Book / requirement
@@ -659,7 +661,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div className="table-wrap" style={{ marginTop: 12 }}>
           <table><thead><tr><th>ID</th><th>Programme</th><th>Requirement</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>{requirements.map((item, index) => <tr key={item.id}><td>{index + 1}</td>
-              <td>{programmes.find(p => p.id === item.programmeId)?.name ?? item.programmeId}{programmes.find(p => p.id === item.programmeId)?.code ? ` (${programmes.find(p => p.id === item.programmeId)?.code})` : ''}</td>
+              <td>{programmes.find(p => p.id === item.programmeId)?.name ?? item.programmeId}</td>
               <td>{item.name}</td>              <td>{item.currency} {item.totalAmount.toLocaleString(SYSTEM_LOCALE)}</td>
               <td>{item.isActive ? 'Active' : 'Inactive'}</td>
               <td><button type="button" className="secondary-button" disabled={busy} onClick={() => void toggleProgrammeRequirement(item.id, !item.isActive)}>{item.isActive ? 'Deactivate' : 'Activate'}</button></td>
