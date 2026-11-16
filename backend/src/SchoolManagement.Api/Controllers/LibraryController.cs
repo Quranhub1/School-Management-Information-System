@@ -18,8 +18,7 @@ public sealed class LibraryController(
     LibraryWorkflowService library,
     IConfiguration configuration,
     SchoolManagementDbContext db,
-    CampusAccessService campusAccess,
-    ) : ControllerBase
+    CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet("books")]
     [Authorize(Policy = LibraryPolicies.Read)]
@@ -178,6 +177,7 @@ public sealed class LibraryController(
     [Authorize(Policy = LibraryPolicies.Read)]
     public async Task<IActionResult> PaidLibraryClearanceStudents(CancellationToken ct)
     {
+        await SyncCourseBookRequirementsFromFinanceAsync(ct);
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
 
