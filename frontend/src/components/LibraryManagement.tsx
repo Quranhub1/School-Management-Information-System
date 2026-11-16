@@ -372,26 +372,23 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
 
   async function recordStudentBookPayment(student: PaidLibraryClearanceStudent) {
     const enteredAmount = window.prompt(
-      `Enter the amount received from ${student.studentName}. Outstanding: ${student.currency} ${student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}`,
+      `Enter payment amount for ${student.studentName}. Outstanding: ${student.currency} ${student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}`,
       String(student.outstandingAmount),
     );
     if (enteredAmount === null) return;
     const amount = Number(enteredAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setError('Enter a valid payment amount greater than zero.');
+    if (!Number.isFinite(amount) || amount <= 0 || Math.round(amount * 100) !== amount * 100) {
+      setError('Enter a valid payment amount with no more than two decimal places.');
       return;
     }
-    const method = window.prompt('Payment method (Cash, Bank, Mobile Money, etc.)', 'Cash');
-    if (method === null || !method.trim()) return;
-    const reference = window.prompt('Receipt or payment reference (optional)', '') ?? '';
 
     setBusy(true);
     setError('');
     try {
-      await recordLibraryStudentPayment(student.studentId, { amount, method: method.trim(), reference: reference.trim() });
+      await recordLibraryStudentPayment(student.studentId, { amount });
       setClearanceStudents(await listPaidLibraryClearanceStudents());
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to record the library payment.');
+      setError(e instanceof Error ? e.message : 'Unable to save the library payment.');
     } finally {
       setBusy(false);
     }
@@ -620,7 +617,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         <div className="table-wrap">
           <table><thead><tr><th>ID</th><th>Student Number</th><th>Student Name</th><th>Course</th><th>Class Year</th><th>Semester</th><th>Academic Year</th><th>Payment Status</th><th>Required Fee</th><th>Amount Paid</th><th>Outstanding</th><th>Action</th></tr></thead>
             <tbody>{filteredClearanceStudents.map((student, index) => <tr key={student.studentId}>
-              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{canManage && student.requirementId && student.outstandingAmount > 0 ? <button type="button" className="secondary-button" disabled={busy} onClick={() => void recordStudentBookPayment(student)}>Record payment</button> : student.paymentStatus === 'Paid' ? 'Cleared' : '—'}</td>
+              <td>{index + 1}</td><td><strong>{student.studentNumber}</strong></td><td>{student.studentName}</td><td>{student.programmeName || '—'}</td><td>{student.classYear ? 'Year ' + student.classYear : '—'}</td><td>{student.semesterName || (student.semesterNumber ? 'Semester ' + student.semesterNumber : '—')}</td><td>{student.academicYearName || '—'}</td><td>{student.paymentStatus}</td><td>{student.currency} {student.requiredAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.paidAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{student.currency} {student.outstandingAmount.toLocaleString(SYSTEM_LOCALE)}</td><td>{canManage && student.requirementId && student.outstandingAmount > 0 ? <button type="button" className="secondary-button" disabled={busy} onClick={() => void recordStudentBookPayment(student)}>Save payment</button> : student.paymentStatus === 'Paid' ? 'Cleared' : '—'}</td>
             </tr>)}
             {filteredClearanceStudents.length === 0 && <tr><td colSpan={12}>No students match these filters.</td></tr>}</tbody>
           </table>
