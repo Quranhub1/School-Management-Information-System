@@ -105,8 +105,6 @@ public sealed class AddCurriculumLogbooksAndUhpabFeeReferences : Migration
             CREATE INDEX "IX_StudentLogbookCompetencies_StudentPlacementId" ON "StudentLogbookCompetencies" ("StudentPlacementId");
             CREATE INDEX "IX_UhpabFeeReferences_Category_ProgrammeCode_IsActive" ON "UhpabFeeReferences" ("Category", "ProgrammeCode", "IsActive");
             """);
-    }
-
 
         migrationBuilder.Sql("""
             INSERT INTO "UhpabFeeReferences"
