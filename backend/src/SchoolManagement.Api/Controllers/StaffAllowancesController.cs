@@ -23,7 +23,7 @@ public sealed class StaffAllowancesController(SchoolManagementDbContext db, Inst
                     {
                         allowance.Id,
                         allowance.StaffMemberId,
-                        staffName = staff.FirstName + " " + (staff.OtherNames ?? "") + " " + staff.LastName,
+                        staffName = (staff.LastName + " " + staff.FirstName + " " + (staff.OtherNames ?? "")).Trim().ToUpper(),
                         staff.StaffNumber,
                         allowance.AllowanceType,
                         allowance.Amount,
