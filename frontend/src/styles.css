@@ -5077,3 +5077,15 @@ table { font-variant-numeric: tabular-nums; }
 .library-workspace .library-stat > .library-icon {
   border: 1px solid #176b43;
 }
+
+
+/* Give the single Total Books metric a wider, readable card. */
+.library-workspace .library-books-summary {
+  grid-template-columns: minmax(0, 420px);
+}
+
+@media (max-width: 640px) {
+  .library-workspace .library-books-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
