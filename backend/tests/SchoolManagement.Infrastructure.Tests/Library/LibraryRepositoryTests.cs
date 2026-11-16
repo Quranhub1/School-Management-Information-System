@@ -10,6 +10,18 @@ namespace SchoolManagement.Infrastructure.Tests.Library;
 public sealed class LibraryRepositoryTests
 {
     [Fact]
+    public void LibraryBook_has_a_database_concurrency_token()
+    {
+        using var db = CreateContext();
+        var entity = db.Model.FindEntityType(typeof(LibraryBook));
+        var concurrencyProperty = entity?.FindProperty("xmin");
+
+        Assert.NotNull(concurrencyProperty);
+        Assert.True(concurrencyProperty!.IsConcurrencyToken);
+        Assert.True(concurrencyProperty.IsRowVersion());
+    }
+
+    [Fact]
     public async Task GetBooksAsync_returns_only_active_books_in_title_order()
     {
         await using var db = CreateContext();
