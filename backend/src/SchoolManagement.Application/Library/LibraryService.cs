@@ -1,29 +1,12 @@
+using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Library;
 
 namespace SchoolManagement.Application.Library;
 
 public sealed class LibraryService(ILibraryRepository library)
 {
-    public async Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default)
-    {
-        var books = await library.GetBooksAsync(cancellationToken);
-        var changed = false;
-        foreach (var book in books.Where(x => string.IsNullOrWhiteSpace(x.BarcodeValue)))
-        {
-            try
-            {
-                var normalizedIsbn = NormalizeAndValidateIsbn(book.Isbn);
-                book.BarcodeValue = ToBooklandEan13(normalizedIsbn);
-                changed = true;
-            }
-            catch (ArgumentException)
-            {
-                // Keep legacy invalid ISBN records viewable; do not invent a barcode.
-            }
-        }
-        if (changed) await library.SaveChangesAsync(cancellationToken);
-        return books;
-    }
+    public async Task<IReadOnlyList<LibraryBook>> GetBooksAsync(CancellationToken cancellationToken = default) =>
+        await library.GetBooksAsync(cancellationToken);
 
     public Task<IReadOnlyList<Librarian>> GetLibrariansAsync(CancellationToken cancellationToken = default) => library.GetLibrariansAsync(cancellationToken);
 
@@ -136,31 +119,60 @@ public sealed class LibraryService(ILibraryRepository library)
         if (issuedAtUtc > DateTime.UtcNow.AddMinutes(5) || dueAtUtc <= issuedAtUtc) throw new ArgumentException("Issue date cannot be in the future and due date must be after issue date.");
         if (type == "Student" && !await library.StudentExistsAsync(memberId, cancellationToken)) throw new KeyNotFoundException("Student was not found in the central student register.");
         if (type == "Staff" && !await library.ActiveStaffExistsAsync(memberId, cancellationToken)) throw new KeyNotFoundException("Active staff member was not found in the staff register.");
-        var book = await library.GetBookAsync(bookId, cancellationToken) ?? throw new KeyNotFoundException("Library book was not found.");
-        if (!book.IsActive) throw new InvalidOperationException("This library book is inactive.");
-        if (book.AvailableCopies <= 0) throw new InvalidOperationException("No available copies remain for this book.");
-        var memberLoans = type == "Student" ? await library.GetStudentLoansAsync(memberId, true, cancellationToken) : await library.GetStaffLoansAsync(memberId, true, cancellationToken);
-        if (memberLoans.Any(x => x.BookId == bookId)) throw new InvalidOperationException("This member already has an active loan for this book.");
-        var loan = new LibraryLoan { StudentId = type == "Student" ? memberId : null, StaffMemberId = type == "Staff" ? memberId : null, MemberType = type, BookId = bookId, IssuedAtUtc = issuedAtUtc, DueAtUtc = dueAtUtc };
-        book.SetInventory(book.TotalCopies, book.AvailableCopies - 1);
-        await library.AddLoanAsync(loan, cancellationToken);
-        await library.SaveChangesAsync(cancellationToken);
-        return loan;
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            var book = await library.GetBookAsync(bookId, cancellationToken) ?? throw new KeyNotFoundException("Library book was not found.");
+            if (!book.IsActive) throw new InvalidOperationException("This library book is inactive.");
+            if (book.AvailableCopies <= 0) throw new InvalidOperationException("No available copies remain for this book.");
+            var memberLoans = type == "Student" ? await library.GetStudentLoansAsync(memberId, true, cancellationToken) : await library.GetStaffLoansAsync(memberId, true, cancellationToken);
+            if (memberLoans.Any(x => x.BookId == bookId)) throw new InvalidOperationException("This member already has an active loan for this book.");
+            var loan = new LibraryLoan { StudentId = type == "Student" ? memberId : null, StaffMemberId = type == "Staff" ? memberId : null, MemberType = type, BookId = bookId, IssuedAtUtc = issuedAtUtc, DueAtUtc = dueAtUtc };
+            book.SetInventory(book.TotalCopies, book.AvailableCopies - 1);
+            await library.AddLoanAsync(loan, cancellationToken);
+            try
+            {
+                await library.SaveChangesAsync(cancellationToken);
+                return loan;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (attempt == 0) continue;
+                throw new InvalidOperationException("The book inventory changed while processing this issue. Please try again.");
+            }
+        }
+
+        throw new InvalidOperationException("Failed to issue the book due to a concurrency conflict.");
     }
 
-    public async Task<LibraryLoan> ReturnBookAsync(Guid loanId, decimal finePerOverdueDay = 1000m, CancellationToken cancellationToken = default)
+    public async Task<LibraryLoan> ReturnBookAsync(Guid loanId, decimal? finePerOverdueDay = null, CancellationToken cancellationToken = default)
     {
-        if (finePerOverdueDay < 0) throw new ArgumentOutOfRangeException(nameof(finePerOverdueDay));
+        var fineRate = finePerOverdueDay ?? await library.GetFinePerOverdueDayAsync(cancellationToken);
+        if (fineRate < 0) throw new ArgumentOutOfRangeException(nameof(finePerOverdueDay));
         var loan = await library.GetLoanAsync(loanId, cancellationToken) ?? throw new KeyNotFoundException("Library loan was not found.");
         if (loan.ReturnedAtUtc.HasValue) throw new InvalidOperationException("This loan has already been returned.");
-        var book = await library.GetBookAsync(loan.BookId, cancellationToken) ?? throw new KeyNotFoundException("Library book was not found.");
 
-        var returnedAt = DateTime.UtcNow;
-        var overdueDays = returnedAt.Date > loan.DueAtUtc.Date ? (returnedAt.Date - loan.DueAtUtc.Date).Days : 0;
-        loan.FineAmount = overdueDays * finePerOverdueDay;
-        loan.ReturnedAtUtc = returnedAt;
-        book.SetInventory(book.TotalCopies, Math.Min(book.TotalCopies, book.AvailableCopies + 1));
-        await library.SaveChangesAsync(cancellationToken);
-        return loan;
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            var book = await library.GetBookAsync(loan.BookId, cancellationToken) ?? throw new KeyNotFoundException("Library book was not found.");
+
+            var returnedAt = DateTime.UtcNow;
+            var overdueDays = returnedAt.Date > loan.DueAtUtc.Date ? (returnedAt.Date - loan.DueAtUtc.Date).Days : 0;
+            loan.FineAmount = overdueDays * fineRate;
+            loan.ReturnedAtUtc = returnedAt;
+            book.SetInventory(book.TotalCopies, Math.Min(book.TotalCopies, book.AvailableCopies + 1));
+            try
+            {
+                await library.SaveChangesAsync(cancellationToken);
+                return loan;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (attempt == 0) continue;
+                throw new InvalidOperationException("The book inventory changed while processing this return. Please try again.");
+            }
+        }
+
+        throw new InvalidOperationException("Failed to process the return due to a concurrency conflict.");
     }
 }

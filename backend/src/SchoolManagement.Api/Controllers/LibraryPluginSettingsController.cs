@@ -25,12 +25,12 @@ public sealed class LibraryPluginSettingsController(
     public sealed record SettingsDto(
         string KohaOpacUrl, string KohaApiUrl, string? KohaUsername, bool HasKohaPassword, bool KohaEnabled,
         string DSpaceBaseUrl, string DSpaceRestApiUrl, string DSpaceOaiPmhUrl, string? DSpaceUsername,
-        bool HasDSpacePassword, bool DSpaceEnabled, DateTimeOffset? UpdatedAt);
+        bool HasDSpacePassword, bool DSpaceEnabled, decimal FinePerOverdueDay, DateTimeOffset? UpdatedAt);
 
     public sealed record UpdateSettingsRequest(
         string? KohaOpacUrl, string? KohaApiUrl, string? KohaUsername, string? KohaPassword, bool KohaEnabled,
         string? DSpaceBaseUrl, string? DSpaceRestApiUrl, string? DSpaceOaiPmhUrl, string? DSpaceUsername,
-        string? DSpacePassword, bool DSpaceEnabled);
+        string? DSpacePassword, bool DSpaceEnabled, decimal? FinePerOverdueDay);
 
     [HttpGet]
     public async Task<ActionResult<SettingsDto>> Get(CancellationToken ct)
@@ -59,6 +59,11 @@ public sealed class LibraryPluginSettingsController(
         s.DSpaceUsername = Clean(request.DSpaceUsername);
         if (!string.IsNullOrWhiteSpace(request.DSpacePassword)) s.DSpacePasswordProtected = _protector.Protect(request.DSpacePassword);
         s.DSpaceEnabled = request.DSpaceEnabled;
+        if (request.FinePerOverdueDay.HasValue)
+        {
+            if (request.FinePerOverdueDay.Value < 0) return BadRequest(new { message = "Fine per overdue day cannot be negative." });
+            s.FinePerOverdueDay = request.FinePerOverdueDay.Value;
+        }
         s.UpdatedAt = DateTimeOffset.UtcNow;
         if (db.Entry(s).State == EntityState.Detached) db.Add(s);
         await db.SaveChangesAsync(ct);
@@ -119,7 +124,7 @@ public sealed class LibraryPluginSettingsController(
     private SettingsDto ToDto(LibraryPluginSettings? s) => new(
         s?.KohaOpacUrl ?? "", s?.KohaApiUrl ?? "", s?.KohaUsername, !string.IsNullOrEmpty(s?.KohaPasswordProtected), s?.KohaEnabled ?? false,
         s?.DSpaceBaseUrl ?? "", s?.DSpaceRestApiUrl ?? "", s?.DSpaceOaiPmhUrl ?? "", s?.DSpaceUsername,
-        !string.IsNullOrEmpty(s?.DSpacePasswordProtected), s?.DSpaceEnabled ?? false, s?.UpdatedAt);
+        !string.IsNullOrEmpty(s?.DSpacePasswordProtected), s?.DSpaceEnabled ?? false, s?.FinePerOverdueDay ?? 1000m, s?.UpdatedAt);
 
     private static string Clean(string? value) => value?.Trim() ?? "";
     private static bool IsHttp(Uri uri) => (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) && string.IsNullOrEmpty(uri.UserInfo);

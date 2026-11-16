@@ -46,4 +46,8 @@ public sealed class LibraryRepository(SchoolManagementDbContext db) : ILibraryRe
     public Task AddLibrarianAsync(Librarian librarian, CancellationToken cancellationToken = default) => db.Librarians.AddAsync(librarian, cancellationToken).AsTask();
     public Task AddLoanAsync(LibraryLoan loan, CancellationToken cancellationToken = default) => db.LibraryLoans.AddAsync(loan, cancellationToken).AsTask();
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) => db.SaveChangesAsync(cancellationToken);
+    public Task<decimal> GetFinePerOverdueDayAsync(CancellationToken cancellationToken = default) =>
+        db.LibraryPluginSettings
+            .Select(x => x.FinePerOverdueDay)
+            .FirstOrDefaultAsync(cancellationToken);
 }

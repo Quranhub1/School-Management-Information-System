@@ -14,5 +14,6 @@ public sealed class LibraryPluginSettings
     public string? DSpacePasswordProtected { get; set; }
     public bool KohaEnabled { get; set; }
     public bool DSpaceEnabled { get; set; }
+    public decimal FinePerOverdueDay { get; set; } = 1000m;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
