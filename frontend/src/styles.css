@@ -5685,3 +5685,127 @@ table { font-variant-numeric: tabular-nums; }
     font-size: .92rem;
   }
 }
+
+
+/* Library membership card: institution badge at upper-left, admission photo at upper-right. */
+.library-print-card {
+  box-sizing: border-box;
+  width: min(100%, 440px);
+  aspect-ratio: 1.586 / 1;
+  padding: 18px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #f5faf7 100%);
+  color: #14231b;
+  box-shadow: 0 8px 24px rgba(15, 45, 30, .10);
+}
+.library-print-card-header {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 68px;
+  align-items: start;
+  gap: 10px;
+  min-height: 76px;
+}
+.library-card-institution-badge,
+.library-card-student-photo {
+  display: block;
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  border-radius: 5px;
+}
+.library-card-student-photo {
+  width: 68px;
+  height: 76px;
+  object-fit: cover;
+  border: 1px solid #d1d9d3;
+  border-radius: 4px;
+  background: #eef2ef;
+}
+.library-card-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64736a;
+  font-size: 10px;
+  font-weight: 700;
+}
+.library-card-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 5px;
+  text-align: center;
+}
+.library-card-heading strong {
+  font-size: 13px;
+  line-height: 1.25;
+  letter-spacing: .025em;
+}
+.library-card-heading span {
+  color: #176b43;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+.library-card-student-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 13px;
+  padding-top: 10px;
+  border-top: 1px solid #dbe5de;
+}
+.library-card-student-details strong {
+  overflow: hidden;
+  font-size: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.library-card-student-details span { font-size: 12px; font-weight: 700; }
+.library-card-student-details small { color: #53665a; font-size: 10px; }
+.library-card-preview-actions { display: flex; gap: 8px; margin-top: 12px; }
+@media (max-width: 480px) {
+  .library-print-card { padding: 12px; }
+  .library-print-card-header { grid-template-columns: 42px minmax(0, 1fr) 58px; gap: 6px; }
+  .library-card-institution-badge { width: 42px; height: 48px; }
+  .library-card-student-photo { width: 58px; height: 66px; }
+  .library-card-heading strong { font-size: 10px; }
+  .library-card-heading span { font-size: 9px; }
+  .library-card-student-details strong { font-size: 14px; }
+}
+@media print {
+  @page { size: 85.6mm 54mm; margin: 0; }
+  body * { visibility: hidden !important; }
+  .library-print-card, .library-print-card * { visibility: visible !important; }
+  .library-print-card {
+    position: fixed !important;
+    inset: 0 auto auto 0 !important;
+    width: 85.6mm !important;
+    height: 54mm !important;
+    max-width: none !important;
+    aspect-ratio: auto !important;
+    padding: 3mm !important;
+    border: .25mm solid #aab8ae !important;
+    border-radius: 2mm !important;
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .library-print-card-header {
+    grid-template-columns: 13mm minmax(0, 1fr) 15mm !important;
+    gap: 2mm !important;
+    min-height: 17mm !important;
+  }
+  .library-card-institution-badge { width: 13mm !important; height: 13mm !important; }
+  .library-card-student-photo { width: 15mm !important; height: 17mm !important; }
+  .library-card-heading { gap: 1.5mm !important; padding-top: 1mm !important; }
+  .library-card-heading strong { font-size: 7pt !important; }
+  .library-card-heading span { font-size: 6pt !important; }
+  .library-card-student-details { gap: 1.5mm !important; margin-top: 2mm !important; padding-top: 2mm !important; }
+  .library-card-student-details strong { font-size: 10pt !important; }
+  .library-card-student-details span { font-size: 7pt !important; }
+  .library-card-student-details small { font-size: 6pt !important; }
+  .library-card-preview-actions, .library-card-preview-section > :not(.library-print-card) { display: none !important; }
+}
