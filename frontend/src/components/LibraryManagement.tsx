@@ -45,6 +45,14 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const institutionContext = useOptionalInstitutionSettings();
   const institutionName = institutionContext?.institution?.institutionName?.trim() || 'Institution';
   const institutionShortName = institutionContext?.institution?.abbreviation?.trim() || institutionName;
+  const institutionPrimaryColor = institutionContext?.institution?.primaryColor?.trim() || '#176b43';
+  const institutionAccentColor = institutionContext?.institution?.accentColor?.trim() || '#8eb79b';
+  const cardIssueDate = new Date();
+  const cardExpiryDate = new Date(cardIssueDate);
+  cardExpiryDate.setFullYear(cardExpiryDate.getFullYear() + 1);
+  const formatCardDate = (value: Date) => new Intl.DateTimeFormat(SYSTEM_LOCALE, {
+    day: '2-digit', month: 'short', year: 'numeric',
+  }).format(value);
   function printLibraryCard() {
     const card = document.querySelector<HTMLElement>('.library-print-card');
     if (!card) return;
@@ -82,6 +90,11 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         .library-card-student-details strong { width:100%; text-align:center !important; font-size:10pt !important; }
         .library-card-student-details span, .library-card-student-details small { width:100%; text-align:center !important; font-size:7pt !important; }
         .library-card-student-details small { font-size:6pt !important; }
+        .library-card-membership-status { display:inline-flex !important; align-self:center !important; padding:1mm 2.5mm !important; border-radius:8mm !important; background:#e5f4e9 !important; color:#176b43 !important; font-size:6pt !important; font-weight:800 !important; letter-spacing:.08em !important; }
+        .library-card-dates { display:flex !important; justify-content:space-between !important; gap:3mm !important; margin-top:1.5mm !important; font-size:6pt !important; }
+        .library-card-signature { display:flex !important; justify-content:flex-end !important; align-items:flex-end !important; margin-top:1.5mm !important; font-size:5.5pt !important; }
+        .library-card-signature-line { display:inline-block !important; width:27mm !important; margin-left:2mm !important; border-bottom:.2mm solid #53665a !important; height:3mm !important; }
+        .library-card-colour-strip { position:absolute !important; z-index:3 !important; right:0 !important; bottom:0 !important; left:0 !important; height:2mm !important; }
         .library-preview-print-button { border:0; border-radius:6px; padding:11px 22px; background:#176b43; color:white; font:600 14px Arial,sans-serif; cursor:pointer; }
         @media print {
           html, body { width:85.6mm !important; height:54mm !important; min-height:54mm !important; background:#fff !important; overflow:hidden !important; }
@@ -607,7 +620,20 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             <strong>{selectedCardMember.name}</strong>
             <span>Student Number: {selectedCardMember.studentNumber}</span>
             <small>Student Library Member</small>
+            <span className="library-card-membership-status">ACTIVE</span>
           </div>
+          <div className="library-card-dates" aria-label="Library membership dates">
+            <span><b>ISSUED:</b> {formatCardDate(cardIssueDate)}</span>
+            <span><b>EXPIRES:</b> {formatCardDate(cardExpiryDate)}</span>
+          </div>
+          <div className="library-card-signature">
+            <span>LIBRARIAN</span><span className="library-card-signature-line" aria-hidden="true" />
+          </div>
+          <div
+            className="library-card-colour-strip"
+            aria-hidden="true"
+            style={{ background: `linear-gradient(90deg, ${institutionPrimaryColor} 0%, ${institutionPrimaryColor} 58%, ${institutionAccentColor} 58%, ${institutionAccentColor} 100%)` }}
+          />
         </article>
         <div className="library-card-preview-actions">
           <button type="button" className="library-primary" onClick={printLibraryCard}>Print Library Card</button>
