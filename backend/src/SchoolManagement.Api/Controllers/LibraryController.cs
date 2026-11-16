@@ -220,31 +220,39 @@ public sealed class LibraryController(
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
 
-        // The Admissions workflow is the source of truth: only records whose
-        // admission decision has reached Admitted belong in this register.
-        var admittedQuery =
+        // Use the central Students register, matching Issue & Return Books.
+        // Admission, programme and academic-year records enrich the row when
+        // available, but missing admission metadata must not hide a student.
+        var studentQuery =
             from student in db.Students.AsNoTracking()
-            join admission in db.Admissions.AsNoTracking() on student.AdmissionId equals admission.Id
-            join programme in db.Programmes.AsNoTracking() on admission.ProgrammeId equals programme.Id
-            join academicYear in db.AcademicYears.AsNoTracking() on admission.AcademicYearId equals academicYear.Id
-            where admission.Status == "Admitted" && !student.IsArchived
+            join admissionRow in db.Admissions.AsNoTracking()
+                on student.AdmissionId equals admissionRow.Id into admissionRows
+            from admission in admissionRows.DefaultIfEmpty()
+            join programmeRow in db.Programmes.AsNoTracking()
+                on (Guid?)admission!.ProgrammeId equals (Guid?)programmeRow.Id into programmeRows
+            from programme in programmeRows.DefaultIfEmpty()
+            join academicYearRow in db.AcademicYears.AsNoTracking()
+                on (Guid?)admission!.AcademicYearId equals (Guid?)academicYearRow.Id into academicYearRows
+            from academicYear in academicYearRows.DefaultIfEmpty()
+            where !student.IsArchived
             select new
             {
                 student.Id,
                 student.StudentNumber,
                 Name = (student.FirstName + " " + (student.OtherNames ?? "") + " " + student.LastName).Trim(),
-                ProgrammeName = programme.Name,
-                AcademicYearName = academicYear.Name,
+                ProgrammeId = admission == null ? (Guid?)null : admission.ProgrammeId,
+                ProgrammeName = programme == null ? null : programme.Name,
+                AcademicYearName = academicYear == null ? null : academicYear.Name,
                 student.CampusId
             };
 
         if (accessibleCampuses is not null)
-            admittedQuery = admittedQuery.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
+            studentQuery = studentQuery.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
 
-        var admittedStudents = await admittedQuery.OrderBy(x => x.Name).ToListAsync(ct);
-        if (admittedStudents.Count == 0) return Ok(Array.Empty<object>());
+        var libraryStudents = await studentQuery.OrderBy(x => x.Name).ToListAsync(ct);
+        if (libraryStudents.Count == 0) return Ok(Array.Empty<object>());
 
-        var studentIds = admittedStudents.Select(x => x.Id).ToArray();
+        var studentIds = libraryStudents.Select(x => x.Id).ToArray();
         var enrollments = await db.StudentEnrollments.AsNoTracking()
             .Where(x => studentIds.Contains(x.StudentId) && x.Status == "Active")
             .OrderByDescending(x => x.AdmissionDate)
@@ -294,12 +302,12 @@ public sealed class LibraryController(
         var invoiceByStudent = libraryInvoices.GroupBy(x => x.StudentId)
             .ToDictionary(x => x.Key, x => x.First());
 
-        var result = admittedStudents.Select(student =>
+        var result = libraryStudents.Select(student =>
         {
             enrollmentByStudent.TryGetValue(student.Id, out var enrollment);
             statusByStudent.TryGetValue(student.Id, out var academicStatus);
             invoiceByStudent.TryGetValue(student.Id, out var invoice);
-            coursesByProgramme.TryGetValue(student.Id, out var studentCourses);
+            if (student.ProgrammeId.HasValue) coursesByProgramme.TryGetValue(student.ProgrammeId.Value, out studentCourses);
             var balance = invoice is null ? (decimal?)null : invoice.Amount - invoice.DiscountAmount - invoice.PaidAmount;
             var paymentStatus = invoice is null ? "Not Invoiced" :
                 balance <= 0m ? "Paid" :
