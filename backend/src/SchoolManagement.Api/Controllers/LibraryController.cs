@@ -257,13 +257,13 @@ public sealed class LibraryController(
             where studentIds.Contains(status.StudentId)
             orderby semester.IsCurrent descending, semester.EndDate descending,
                 status.YearOfStudy descending, semester.Sequence descending
-            select new { status.StudentId, status.YearOfStudy, SemesterName = semester.Name }
+            select new { status.StudentId, status.YearOfStudy, SemesterName = semester.Name, SemesterNumber = semester.Sequence }
         ).ToListAsync(ct);
 
         var currentSemester = await db.Semesters.AsNoTracking()
             .Where(x => x.IsCurrent)
             .OrderByDescending(x => x.Sequence)
-            .Select(x => x.Name)
+            .Select(x => new { x.Name, x.Sequence })
             .FirstOrDefaultAsync(ct);
 
         var curriculumCourses = await (
@@ -313,7 +313,8 @@ public sealed class LibraryController(
                 programmeName = student.ProgrammeName,
                 courseNames = studentCourses ?? Array.Empty<string>(),
                 classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
-                semesterName = academicStatus?.SemesterName ?? currentSemester,
+                semesterName = academicStatus?.SemesterName ?? currentSemester?.Name,
+                semesterNumber = academicStatus?.SemesterNumber ?? currentSemester?.Sequence,
                 academicYearName = student.AcademicYearName,
                 paymentStatus,
                 invoiceNumber = invoice?.InvoiceNumber,
