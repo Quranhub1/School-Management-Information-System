@@ -73,11 +73,13 @@ export type PaidLibraryClearanceStudent = {
   classYear?: number | null
   semesterName?: string | null
   academicYearName?: string | null
-  invoiceNumber: string
+  paymentStatus: 'Paid' | 'Partially Paid' | 'Not Paid' | 'Not Invoiced'
+  invoiceNumber?: string | null
   amount: number
   paidAmount: number
+  outstandingAmount: number
   currency: string
-  issuedAt: string
+  issuedAt?: string | null
 }
 export const listPaidLibraryClearanceStudents = () =>
   request<PaidLibraryClearanceStudent[]>('/api/library/clearance/paid-students')
