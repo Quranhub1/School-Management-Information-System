@@ -26,11 +26,10 @@ public sealed class LibraryWorkflowService(LibraryService library)
 
     public async Task<LibraryLoanDto> IssueBookAsync(IssueLibraryBookRequest request, CancellationToken cancellationToken = default)
     {
-        if (request.StudentId == Guid.Empty) throw new ArgumentException("A valid student id is required.", nameof(request));
+        if (request.MemberId == Guid.Empty) throw new ArgumentException("A valid library member is required.", nameof(request));
         if (request.BookId == Guid.Empty) throw new ArgumentException("A valid book id is required.", nameof(request));
-        if (request.DueAtUtc <= DateTime.UtcNow) throw new ArgumentException("Due date must be in the future.", nameof(request));
-
-        return LibraryLoanDto.FromDomain(await library.IssueBookAsync(request.StudentId, request.BookId, request.DueAtUtc, cancellationToken));
+        var issuedAt = request.IssuedAtUtc ?? DateTime.UtcNow;
+        return LibraryLoanDto.FromDomain(await library.IssueBookAsync(request.MemberId, request.MemberType, request.BookId, issuedAt, request.DueAtUtc, cancellationToken));
     }
 
     public async Task<LibraryLoanDto> ReturnBookAsync(Guid loanId, ReturnLibraryBookRequest request, CancellationToken cancellationToken = default)
