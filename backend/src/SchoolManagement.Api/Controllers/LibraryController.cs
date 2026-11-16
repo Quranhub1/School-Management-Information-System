@@ -377,6 +377,7 @@ public sealed class LibraryController(
                 studentId = student.Id,
                 studentNumber = student.StudentNumber,
                 studentName = student.Name,
+                programmeId,
                 programmeName = enrollment?.ProgrammeName ?? student.ProgrammeName,
                 courseNames = studentCourses ?? Array.Empty<string>(),
                 classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
