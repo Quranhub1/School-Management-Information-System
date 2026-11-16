@@ -133,11 +133,11 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const visibleLoans = activeView === 'overdue' ? overdue : loans;
   const filteredClearanceStudents = useMemo(() => clearanceStudents.filter(student =>
     (!clearanceFilters.name || (student.studentName + ' ' + student.studentNumber).toLowerCase().includes(clearanceFilters.name.toLowerCase())) &&
-    (!clearanceFilters.course || student.programmeName === clearanceFilters.course) &&
+    (!clearanceFilters.course || student.courseNames.includes(clearanceFilters.course)) &&
     (!clearanceFilters.semester || student.semesterName === `Semester ${clearanceFilters.semester}` || student.semesterName === clearanceFilters.semester) &&
     (!clearanceFilters.year || String(student.classYear ?? '') === clearanceFilters.year)
   ), [clearanceStudents, clearanceFilters]);
-  const clearanceCourses = clearanceAcademicOptions.programmes;
+  const clearanceCourses = clearanceAcademicOptions.courses;
   const clearanceSemesters = clearanceAcademicOptions.semesters;
   const clearanceYears = clearanceAcademicOptions.years;
   const isbnDigits = normalizeIsbnDigits(form.isbn);
@@ -403,7 +403,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             <datalist id="library-clearance-student-suggestions">{clearanceStudents.map(student => <option key={student.studentId} value={student.studentName}>{student.studentNumber}</option>)}</datalist>
           </label>
           <label>Course
-            <select value={clearanceFilters.course} onChange={e => setClearanceFilters(current => ({ ...current, course: e.target.value }))}><option value="">All courses</option>{clearanceCourses.map(course => <option key={course.programmeId} value={course.programmeName}>{course.programmeName}</option>)}</select>
+            <select value={clearanceFilters.course} onChange={e => setClearanceFilters(current => ({ ...current, course: e.target.value }))}><option value="">All courses</option>{clearanceCourses.map(course => <option key={course.courseId} value={course.courseName}>{course.courseName}</option>)}</select>
           </label>
           <label>Semester
             <select value={clearanceFilters.semester} onChange={e => setClearanceFilters(current => ({ ...current, semester: e.target.value }))}><option value="">All semesters</option>{clearanceSemesters.map(semester => <option key={semester} value={String(semester)}>Semester {semester}</option>)}</select>
