@@ -18,8 +18,7 @@ public sealed class LibraryController(
     LibraryWorkflowService library,
     IConfiguration configuration,
     SchoolManagementDbContext db,
-    CampusAccessService campusAccess,
-    InstitutionSettingsService institutionSettings) : ControllerBase
+    CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet("books")]
     [Authorize(Policy = LibraryPolicies.Read)]
@@ -49,11 +48,12 @@ public sealed class LibraryController(
         return Ok(members);
     }
 
-    // Library owns its course-book requirement configuration and student payment ledger.
+    // Finance fee structures are the source of truth for course-book charges.
     [HttpGet("programme-requirements")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> ProgrammeRequirements(CancellationToken ct)
     {
+        await SyncCourseBookRequirementsFromFinanceAsync(ct);
         var requirements = await db.LibraryProgrammeRequirements.AsNoTracking()
             .OrderBy(x => x.Name)
             .Select(x => new { id = x.Id, programmeId = x.ProgrammeId, name = x.Name, totalAmount = x.Amount, currency = x.Currency, isActive = x.IsActive })
@@ -61,74 +61,11 @@ public sealed class LibraryController(
         return Ok(requirements);
     }
 
-    [HttpPost("programme-requirements")]
-    [Authorize(Policy = LibraryPolicies.Management)]
-    public async Task<IActionResult> SetProgrammeRequirement(SetLibraryProgrammeRequirementRequest request, CancellationToken ct)
-    {
-        if (request.ProgrammeId == Guid.Empty) return BadRequest(new { message = "Select a course/programme." });
-        if (string.IsNullOrWhiteSpace(request.Name)) return BadRequest(new { message = "Requirement name is required." });
-        if (request.Amount <= 0 || decimal.Round(request.Amount, 2) != request.Amount)
-            return BadRequest(new { message = "Enter a valid book fee with no more than two decimal places." });
-        if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId && x.IsActive, ct))
-            return BadRequest(new { message = "The selected programme is not active." });
-
-        var defaultCurrency = (await institutionSettings.GetSystemCurrencyAsync(ct)).Code;
-        var currency = (string.IsNullOrWhiteSpace(request.Currency) ? defaultCurrency : request.Currency.Trim()).ToUpperInvariant();
-        if (currency.Length != 3 || currency.Any(ch => !char.IsLetter(ch)))
-            return BadRequest(new { message = "Select a valid three-letter currency code." });
-
-        var activeRequirements = await db.LibraryProgrammeRequirements
-            .Where(x => x.ProgrammeId == request.ProgrammeId && x.IsActive)
-            .OrderByDescending(x => x.UpdatedAtUtc)
-            .ToListAsync(ct);
-        var requirement = activeRequirements.FirstOrDefault();
-        foreach (var duplicate in activeRequirements.Skip(1)) duplicate.IsActive = false;
-        if (requirement is null)
-        {
-            requirement = new SchoolManagement.Domain.Library.LibraryProgrammeRequirement
-            {
-                ProgrammeId = request.ProgrammeId,
-                Name = request.Name.Trim(),
-                Amount = request.Amount,
-                Currency = currency
-            };
-            db.LibraryProgrammeRequirements.Add(requirement);
-        }
-        else
-        {
-            requirement.Name = request.Name.Trim();
-            requirement.Amount = request.Amount;
-            requirement.Currency = currency;
-            requirement.UpdatedAtUtc = DateTimeOffset.UtcNow;
-        }
-
-        await db.SaveChangesAsync(ct);
-        return Ok(new { id = requirement.Id, programmeId = requirement.ProgrammeId, name = requirement.Name, totalAmount = requirement.Amount, currency = requirement.Currency, isActive = requirement.IsActive });
-    }
-
-    [HttpPatch("programme-requirements/{id:guid}/active")]
-    [Authorize(Policy = LibraryPolicies.Management)]
-    public async Task<IActionResult> SetProgrammeRequirementActive(Guid id, [FromQuery] bool active, CancellationToken ct)
-    {
-        var requirement = await db.LibraryProgrammeRequirements.SingleOrDefaultAsync(x => x.Id == id, ct);
-        if (requirement is null) return NotFound();
-        if (active)
-        {
-            var competingRequirements = await db.LibraryProgrammeRequirements
-                .Where(x => x.ProgrammeId == requirement.ProgrammeId && x.Id != id && x.IsActive)
-                .ToListAsync(ct);
-            foreach (var competing in competingRequirements) competing.IsActive = false;
-        }
-        requirement.IsActive = active;
-        requirement.UpdatedAtUtc = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync(ct);
-        return Ok(new { requirement.Id, requirement.IsActive });
-    }
-
     [HttpPost("students/{studentId:guid}/payments")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> RecordStudentLibraryPayment(Guid studentId, RecordLibraryPaymentRequest request, CancellationToken ct)
     {
+        await SyncCourseBookRequirementsFromFinanceAsync(ct);
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, ct)) return Forbid();
         if (request.Amount <= 0 || decimal.Round(request.Amount, 2) != request.Amount)
             return BadRequest(new { message = "Enter a payment amount greater than zero with no more than two decimal places." });
@@ -240,6 +177,7 @@ public sealed class LibraryController(
     [Authorize(Policy = LibraryPolicies.Read)]
     public async Task<IActionResult> PaidLibraryClearanceStudents(CancellationToken ct)
     {
+        await SyncCourseBookRequirementsFromFinanceAsync(ct);
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, ct);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
 
@@ -377,7 +315,6 @@ public sealed class LibraryController(
                 studentId = student.Id,
                 studentNumber = student.StudentNumber,
                 studentName = student.Name,
-                programmeId,
                 programmeName = enrollment?.ProgrammeName ?? student.ProgrammeName,
                 courseNames = studentCourses ?? Array.Empty<string>(),
                 classYear = academicStatus?.YearOfStudy ?? enrollment?.CurrentYear,
@@ -451,6 +388,7 @@ public sealed class LibraryController(
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> ClearStudentLibraryRequirement(Guid studentId, LibraryClearanceRequest request, CancellationToken ct)
     {
+        await SyncCourseBookRequirementsFromFinanceAsync(ct);
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, ct)) return Forbid();
         var studentExists = await db.Students.AsNoTracking().AnyAsync(x => x.Id == studentId, ct);
         if (!studentExists) return NotFound(new { message = "Student was not found." });
@@ -578,6 +516,82 @@ public sealed class LibraryController(
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
     }
 
+
+    private async Task SyncCourseBookRequirementsFromFinanceAsync(CancellationToken ct)
+    {
+        var currentAcademicYearId = await db.AcademicYears.AsNoTracking()
+            .Where(x => x.IsCurrent)
+            .Select(x => (Guid?)x.Id)
+            .FirstOrDefaultAsync(ct);
+
+        var feeQuery = db.FeeStructures.AsNoTracking()
+            .Where(x => x.IsActive && x.FeeType == "LibraryBook");
+        if (currentAcademicYearId.HasValue)
+            feeQuery = feeQuery.Where(x => x.AcademicYearId == currentAcademicYearId.Value);
+
+        var financeFees = await feeQuery
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new { x.Id, x.ProgrammeId, x.Name, x.TotalAmount, x.Currency })
+            .ToListAsync(ct);
+
+        // The library ledger currently tracks one active course-book requirement per
+        // programme. When Finance has no current academic year, use the newest active
+        // LibraryBook fee structure for each programme rather than an arbitrary row.
+        var selectedFees = financeFees
+            .GroupBy(x => x.ProgrammeId)
+            .Select(group => group.First())
+            .ToList();
+        var requirements = await db.LibraryProgrammeRequirements.ToListAsync(ct);
+        var selectedProgrammeIds = selectedFees.Select(x => x.ProgrammeId).ToHashSet();
+
+        foreach (var stale in requirements.Where(x => x.IsActive && !selectedProgrammeIds.Contains(x.ProgrammeId)))
+        {
+            stale.IsActive = false;
+            stale.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        }
+
+        foreach (var fee in selectedFees)
+        {
+            var sameProgramme = requirements.Where(x => x.ProgrammeId == fee.ProgrammeId).ToList();
+            var requirement = sameProgramme.FirstOrDefault(x => x.Id == fee.Id)
+                ?? sameProgramme.OrderByDescending(x => x.IsActive)
+                    .ThenByDescending(x => x.UpdatedAtUtc)
+                    .FirstOrDefault();
+
+            if (requirement is null)
+            {
+                requirement = new SchoolManagement.Domain.Library.LibraryProgrammeRequirement
+                {
+                    Id = fee.Id,
+                    ProgrammeId = fee.ProgrammeId,
+                    Name = fee.Name,
+                    Amount = fee.TotalAmount,
+                    Currency = fee.Currency,
+                    IsActive = true
+                };
+                db.LibraryProgrammeRequirements.Add(requirement);
+                requirements.Add(requirement);
+            }
+            else
+            {
+                requirement.Name = fee.Name;
+                requirement.Amount = fee.TotalAmount;
+                requirement.Currency = fee.Currency;
+                requirement.IsActive = true;
+                requirement.UpdatedAtUtc = DateTimeOffset.UtcNow;
+            }
+
+            foreach (var duplicate in sameProgramme.Where(x => x.Id != requirement.Id && x.IsActive))
+            {
+                duplicate.IsActive = false;
+                duplicate.UpdatedAtUtc = DateTimeOffset.UtcNow;
+            }
+        }
+
+        if (db.ChangeTracker.HasChanges())
+            await db.SaveChangesAsync(ct);
+    }
+
     [HttpPatch("loans/{id:guid}/return")]
     [Authorize(Policy = LibraryPolicies.Management)]
     public async Task<IActionResult> Return(Guid id, [FromQuery] decimal finePerOverdueDay = 1000m, CancellationToken ct = default)
@@ -589,7 +603,6 @@ public sealed class LibraryController(
     }
 }
 
-public sealed record SetLibraryProgrammeRequirementRequest(Guid ProgrammeId, string Name, decimal Amount, string? Currency = null);
 
 public sealed record LibraryClearanceRequest(string Method, string? Reference = null);
 public sealed record RecordLibraryPaymentRequest(decimal Amount);
