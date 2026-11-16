@@ -43,6 +43,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [requirements, setRequirements] = useState<LibraryProgrammeRequirement[]>([]);
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
+  const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'cards' | 'clearance'>('dashboard');
+  const [selectedCardMember, setSelectedCardMember] = useState<LibraryMember | null>(null);
   const [tab, setTab] = useState<'recent' | 'overdue'>('recent');
   const [error, setError] = useState('');
   const [bookValidationErrors, setBookValidationErrors] = useState<Record<string, string>>({});
@@ -306,6 +308,37 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         )}
       </div>
 
+
+      {activeView !== 'dashboard' && (
+        <button type="button" className="secondary-button" style={{ marginBottom: 16 }} onClick={() => setActiveView('dashboard')}>
+          ← Back to Library Dashboard
+        </button>
+      )}
+      {activeView === 'dashboard' && (
+        <section className="library-dashboard-options" aria-label="Library services" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(235px, 1fr))', gap: 16, margin: '4px 0 20px' }}>
+          {[
+            { key: 'books' as const, icon: '▤', title: 'Books', description: 'Manage the book catalogue and register new titles.', links: [{ label: 'View Books', view: 'books' as const }, { label: 'Add New Book', view: 'books' as const, action: 'add' }] },
+            { key: 'issue' as const, icon: '↗', title: 'Issue Books', description: 'Issue books to students and monitor active loans.', links: [{ label: 'Issue Book', view: 'issue' as const }, { label: 'View Books Issued', view: 'issue' as const }] },
+            { key: 'cards' as const, icon: '▣', title: 'Library Cards', description: 'Prepare student library membership cards and view the register.', links: [{ label: 'Issue Library Cards', view: 'cards' as const }, { label: 'View Library Cards', view: 'cards' as const }] },
+            { key: 'clearance' as const, icon: '✓', title: 'Library Clearance', description: 'Manage programme course-book requirements and related fees.', links: [{ label: 'Course-book Requirements', view: 'clearance' as const }, { label: 'Fees & Settings', view: 'clearance' as const }] },
+          ].map(item => (
+            <article key={item.key} className="library-main-card" style={{ padding: 18, borderTop: '3px solid var(--primary, #16834a)' }}>
+              <button type="button" onClick={() => setActiveView(item.key)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: 0, border: 0, background: 'transparent', color: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
+                <span aria-hidden="true" style={{ display: 'grid', placeItems: 'center', width: 42, height: 42, borderRadius: 10, background: 'rgba(22,131,74,.10)', color: 'var(--primary, #16834a)', fontSize: 23 }}>{item.icon}</span>
+                <strong style={{ fontSize: 17 }}>{item.title}</strong>
+              </button>
+              <p style={{ minHeight: 42, margin: '12px 0', color: 'var(--text-muted, #64748b)', fontSize: 13 }}>{item.description}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {item.links.map(link => (
+                  <button key={link.label} type="button" className="secondary-button" onClick={() => { setActiveView(link.view); if ('action' in link && link.action === 'add') window.setTimeout(() => document.getElementById('library-add-book')?.scrollIntoView({ behavior: 'smooth' }), 0); }}>
+                    {link.label}
+                  </button>
+                ))}
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
       <div className="library-summary">
         <div className="library-stat">
           <span className="library-icon">▣</span>
@@ -345,7 +378,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
         </div>
       </div>
 
-      {canManage && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
+      {canManage && activeView === 'clearance' && <section className="library-main-card" style={{ marginBottom: 18, padding: 16 }}>
         <h3>Course book requirements and fees</h3>
         <p>Set the required book or book-purchase amount for each programme. These charges are added to the student's Finance account automatically on admission.</p>
         <form onSubmit={submitProgrammeRequirement} style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 1.5fr) minmax(160px, 1fr) minmax(120px, .7fr) auto', gap: 10, alignItems: 'end' }}>
@@ -378,7 +411,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
       {error && <div className="error" role="alert">{error}</div>}
       {Object.keys(loanValidationErrors).length > 0 && <div className="error" role="alert"><strong>Loan fields requiring attention</strong><ul>{Object.entries(loanValidationErrors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul></div>}
 
-      <section className="library-main-card" style={{ marginBottom: 18, padding: 14 }}>
+      {activeView === 'cards' && <section className="library-main-card" style={{ marginBottom: 18, padding: 14 }}>
         <div className="library-toolbar"><div><h3>Student library register</h3><small>{members.length} students linked from the central student register</small></div></div>
         <div className="table-wrap" style={{ maxHeight: 260, overflowY: 'auto' }}>
           <table><thead><tr><th>Student number</th><th>Student name</th><th>Library membership</th></tr></thead>
@@ -386,8 +419,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             {members.length === 0 && <tr><td colSpan={3}>No admitted students are available in the Library register.</td></tr>}</tbody>
           </table>
         </div>
-      </section>
-      <div className="library-grid">
+      </section>}
+      {activeView === 'cards' && selectedCardMember && <section className="library-main-card" style={{ marginBottom: 18, padding: 20 }}><div style={{ maxWidth: 440, border: '1px solid #cbd5e1', borderRadius: 12, padding: 20, background: '#fff', color: '#111827' }}><strong>KAMPALA SCHOOL OF HEALTH SCIENCES</strong><h3 style={{ margin: '16px 0 6px' }}>LIBRARY MEMBERSHIP CARD</h3><p>{selectedCardMember.name}</p><strong>{selectedCardMember.studentNumber}</strong><p style={{ fontSize: 12 }}>Student Library Member</p></div><button type="button" className="library-primary" style={{ marginTop: 12 }} onClick={() => window.print()}>Print Library Card</button><button type="button" className="secondary-button" style={{ margin: '12px 0 0 8px' }} onClick={() => setSelectedCardMember(null)}>Close Preview</button></section>}
+      {(activeView === 'dashboard' || activeView === 'issue') && <div className="library-grid">
         <div className="library-main-card">
           <div className="library-tabs">
             <button
@@ -543,9 +577,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             ▣ Browse Book Catalogue
           </button>
         </aside>
-      </div>
+      </div>}
 
-      <section className="library-catalogue" id="library-books">
+      {(activeView === 'dashboard' || activeView === 'books') && <section className="library-catalogue" id="library-books">
         <div className="library-toolbar">
           <div>
             <h3>Book Catalogue</h3>
@@ -588,9 +622,9 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
             </tbody>
           </table>
         </div>
-      </section>
+      </section>}
 
-      {canManage && (
+      {canManage && activeView === 'books' && (
         <section className="library-add-card" id="library-add-book">
           <div>
             <span className="eyebrow">CATALOGUE</span>
@@ -716,6 +750,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
           </form>
         </section>
       )}
+      {activeView === 'cards' && <section className="library-main-card" style={{ padding: 16 }}><div className="library-toolbar"><div><h3>Library Card Register</h3><small>{members.length} students available for library membership cards</small></div></div><div className="table-wrap"><table><thead><tr><th>Student Number</th><th>Student Name</th><th>Card</th></tr></thead><tbody>{members.map(member => <tr key={member.id}><td><strong>{member.studentNumber}</strong></td><td>{member.name}</td><td><button type="button" className="secondary-button" onClick={() => setSelectedCardMember(member)}>Issue / View Card</button></td></tr>)}{members.length === 0 && <tr><td colSpan={3}>No students are available in the library register.</td></tr>}</tbody></table></div></section>}
       {barcodeBookId && (
         <div className="modal-backdrop" onClick={() => setBarcodeBookId(null)}>
           <div className="auth-card library-barcode-dialog" onClick={e => e.stopPropagation()}>
