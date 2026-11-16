@@ -55,6 +55,8 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         if (!await db.LogbookRequirements.AnyAsync(x => x.Id == requirementId, ct)) return NotFound();
         if (string.IsNullOrWhiteSpace(request.Code) || string.IsNullOrWhiteSpace(request.Name) || request.RequiredCount < 1)
             return BadRequest(new { message = "Competency code, name and a positive required count are required." });
+        if (await db.LogbookCompetencyRequirements.AnyAsync(x => x.LogbookRequirementId == requirementId && x.Code == request.Code.Trim(), ct))
+            return Conflict(new { message = "A competency with that code already exists for this logbook requirement." });
         var entity = new LogbookCompetencyRequirement
         {
             LogbookRequirementId = requirementId, Code = request.Code.Trim(), Name = request.Name.Trim(),
@@ -86,7 +88,8 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         if (!await db.Students.AnyAsync(x => x.Id == studentId, ct)) return NotFound(new { message = "Student not found." });
         var requirement = await db.LogbookRequirements.FirstOrDefaultAsync(x => x.Id == request.LogbookRequirementId && x.IsActive, ct);
         if (requirement is null) return BadRequest(new { message = "Select an active curriculum logbook requirement." });
-        if (string.IsNullOrWhiteSpace(request.SerialNumber)) return BadRequest(new { message = "A unique logbook serial number is required." });
+        if (string.IsNullOrWhiteSpace(request.SerialNumber) || request.IssuedOn == default)
+            return BadRequest(new { message = "A unique logbook serial number and valid issue date are required." });
         if (await db.StudentLogbooks.AnyAsync(x => x.SerialNumber == request.SerialNumber.Trim(), ct))
             return Conflict(new { message = "That logbook serial number has already been issued." });
         var issuedCount = await db.StudentLogbooks.CountAsync(x => x.StudentId == studentId && x.LogbookRequirementId == requirement.Id && x.Status != "Void", ct);
@@ -121,8 +124,12 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
             return BadRequest(new { message = "Outcome must be Competent, NotYetCompetent or Pending." });
         if (outcome != "Pending" && (string.IsNullOrWhiteSpace(request.AssessorName) || request.AssessedOn is null))
             return BadRequest(new { message = "Assessor name and assessment date are required for a signed assessment." });
-        if (request.StudentPlacementId.HasValue && !await db.StudentPlacements.AnyAsync(x => x.Id == request.StudentPlacementId.Value, ct))
-            return BadRequest(new { message = "The selected student placement does not exist." });
+        if (request.StudentPlacementId.HasValue)
+        {
+            var logbookStudentId = await db.StudentLogbooks.Where(x => x.Id == logbookId).Select(x => x.StudentId).SingleAsync(ct);
+            if (!await db.StudentPlacements.AnyAsync(x => x.Id == request.StudentPlacementId.Value && x.StudentId == logbookStudentId, ct))
+                return BadRequest(new { message = "The selected placement does not belong to this student." });
+        }
         assessment.Outcome = outcome;
         assessment.AssessedOn = request.AssessedOn;
         assessment.AssessorName = request.AssessorName?.Trim();
@@ -200,7 +207,8 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
     public async Task<IActionResult> CreateUhpabFeeReference([FromBody] CreateUhpabFeeReferenceRequest request, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.Category) || string.IsNullOrWhiteSpace(request.Description) ||
-            request.Amount < 0 || request.Currency.Trim().Length != 3 ||
+            request.Amount < 0 || string.IsNullOrWhiteSpace(request.Currency) || request.Currency.Trim().Length != 3 ||
+            string.IsNullOrWhiteSpace(request.SourceTitle) ||
             !Uri.TryCreate(request.SourceUrl, UriKind.Absolute, out var source) ||
             source.Scheme != Uri.UriSchemeHttps || !source.Host.Equals("uhpab.go.ug", StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { message = "Provide a category, description, non-negative amount, three-letter currency and an HTTPS UHPAB source URL." });
