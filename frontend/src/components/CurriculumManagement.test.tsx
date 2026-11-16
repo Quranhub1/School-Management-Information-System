@@ -38,6 +38,13 @@ vi.mock('../api/curriculumManagement', () => ({
   getCourses: vi.fn(async (authorityCode?: string) => authorityCode === 'UHPAB' ? mockCourses : []),
   getCurricula: vi.fn(async () => mockCurricula),
   getCurriculumCourses: vi.fn(async () => []),
+  getLogbookRequirements: vi.fn(async () => []),
+  createLogbookRequirement: vi.fn(),
+  createLogbookCompetency: vi.fn(),
+  getStudentLogbooks: vi.fn(async () => []),
+  issueStudentLogbook: vi.fn(),
+  getUhpabFeeReferences: vi.fn(async () => []),
+  createUhpabFeeReference: vi.fn(),
 }))
 vi.mock('../api/programmes', () => ({
   createProgramme: vi.fn(),
