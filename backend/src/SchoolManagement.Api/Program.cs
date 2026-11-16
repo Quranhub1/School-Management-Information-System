@@ -69,6 +69,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddHttpClient("Superset");
+builder.Services.AddHttpClient("LibraryPlugins", client => client.Timeout = TimeSpan.FromSeconds(15));
 builder.Services.AddHttpClient("InstitutionalEmailService", client =>
 {
     var emailServiceBaseUrl = builder.Configuration["EmailService:BaseUrl"] ?? "http://127.0.0.1:5100";
