@@ -245,7 +245,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     const today = todayKampala()
     if (preset === 'today') { setFrom(today); setTo(today) }
     else if (preset === 'yesterday') { const yesterday = shiftDate(today, -1); setFrom(yesterday); setTo(yesterday) }
-    else if (preset === 'week') { setFrom(currentWeekStart()); setTo(today) }
+    else if (preset === 'week') { setFrom(shiftDate(today, -6)); setTo(today) }
     else { setFrom(`${today.slice(0, 7)}-01`); setTo(today) }
   }
 
