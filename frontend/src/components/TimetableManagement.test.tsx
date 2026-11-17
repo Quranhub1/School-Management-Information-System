@@ -19,7 +19,12 @@ vi.mock('../api/timetable', () => ({
     semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', academicYearLabel: '2026/2027', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
     programmes: [{ id: 'programme-1', label: 'Certificate in Pharmacy' }],
     curricula: [{ id: 'curriculum-1', programmeId: 'programme-1', label: 'Certificate in Pharmacy — 2026' }],
-    curriculumCourses: [{ curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-1', courseLabel: 'CPH 101 — Pharmacy Practice', yearOfStudy: 1, semesterNumber: 1, isCore: true }],
+    curriculumCourses: [
+      { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-1', courseLabel: 'CPH 101 — Pharmacy Practice', yearOfStudy: 1, semesterNumber: 1, isCore: true },
+      { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-2', courseLabel: 'CPH 102 — Pharmaceutics', yearOfStudy: 1, semesterNumber: 2, isCore: true },
+      { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-3', courseLabel: 'CPH 201 — Clinical Pharmacy', yearOfStudy: 2, semesterNumber: 1, isCore: true },
+      { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-4', courseLabel: 'CPH 202 — Dispensing Practice', yearOfStudy: 2, semesterNumber: 2, isCore: true },
+    ],
   }),
 }))
 
@@ -74,7 +79,10 @@ describe('TimetableManagement', () => {
   it('shows a separate blank timetable template for every mapped curriculum semester', async () => {
     render(<TimetableManagement />)
     expect(await screen.findByRole('heading', { name: /semester templates/i })).toBeTruthy()
-    expect(screen.getByRole('heading', { name: 'Semester 1' })).toBeTruthy()
+    expect(screen.getByText(/4 separate templates/)).toBeTruthy()
+    expect(screen.getAllByRole('heading', { name: 'Semester 1' })).toHaveLength(2)
+    expect(screen.getAllByRole('heading', { name: 'Semester 2' })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: /open semester template/i })).toHaveLength(4)
     expect(screen.getByText(/Blank template ready/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /open semester template/i }))
     expect(await screen.findByRole('heading', { name: /edit the timetable grid/i })).toBeTruthy()
