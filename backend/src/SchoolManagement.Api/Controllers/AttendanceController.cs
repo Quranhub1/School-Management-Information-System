@@ -29,7 +29,10 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
 
         try
         {
-            var session = await service.OpenSessionAsync(request.TimetableEntryId, request.SessionDate, request.RecordedByUserId, request.Remarks, cancellationToken);
+            Guid? recordedByUserId = Guid.TryParse(
+                User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value,
+                out var signedInUserId) ? signedInUserId : null;
+            var session = await service.OpenSessionAsync(request.TimetableEntryId, request.SessionDate, recordedByUserId, request.Remarks, cancellationToken);
             return Created($"/api/attendance/sessions/{session.Id}", session);
         }
         catch (ArgumentException ex)
