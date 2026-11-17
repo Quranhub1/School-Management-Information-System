@@ -4,6 +4,14 @@ import React from 'react'
 
 vi.mock('../api/timetable', () => ({
   listTimetable: vi.fn().mockResolvedValue([]),
+  generateTimetable: vi.fn().mockResolvedValue({
+    entries: [{ id: 'entry-1', teachingGroupId: 'group-1', courseId: 'course-1', teacherId: 'teacher-1', dayOfWeek: 1, startTime: '08:00:00', endTime: '09:00:00', room: 'Room 1', sessionType: 'Lecture', isActive: true }],
+    optimizationScore: 95,
+    isConflictFree: true,
+    conflicts: [],
+    warnings: [],
+    unscheduled: [],
+  }),
   getTimetableOptions: vi.fn().mockResolvedValue({
     teachingGroups: [{ id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' }],
     courses: [{ id: 'course-1', label: 'CPH 101 — Pharmacy Practice' }],
