@@ -447,3 +447,4 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
 public sealed record OpenAttendanceSessionRequest(Guid TimetableEntryId, DateOnly SessionDate, Guid? RecordedByUserId, string? Remarks);
 public sealed record MarkAttendanceRequest(Guid StudentId, string Status, string? Remarks);
 public sealed record MarkQrAttendanceRequest(Guid StudentId, string? Status, string? Remarks, string Token);
+public sealed record UpdateAttendanceRecordRequest(string Status, string? Remarks);
