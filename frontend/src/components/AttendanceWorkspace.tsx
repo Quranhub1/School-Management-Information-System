@@ -164,7 +164,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     try {
       const params = new URLSearchParams()
       if (intakeId) params.set('intakeId', intakeId)
-      const register = await request<{ students: StudentRow[] }>(`/api/attendance/sessions/${session.id}/eligible-students?${params.toString()}`)
+      const register = await request<{ students: StudentRow[] }>(`/api/attendance/sessions/${session.id}/register?${params.toString()}`)
       for (const row of register.students.filter(x => !x.status)) {
         await request(`/api/attendance/sessions/${session.id}/records`, { method: 'POST', body: JSON.stringify({ studentId: row.id, status: 'Present', remarks: null }) })
       }
