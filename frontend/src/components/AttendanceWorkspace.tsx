@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getAccessToken } from '../api/auth'
+import { QRCodeSVG } from 'qrcode.react'
 import { StaffAttendanceManagement } from './StaffAttendanceManagement'
 
 const API_BASE_URL = (typeof import.meta.env.VITE_API_BASE_URL === 'string' ? import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '') : '')
@@ -37,7 +38,7 @@ const currentWeekStart = () => { const today = todayKampala(); const weekday = (
 
 export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance = false }: { readOnly?: boolean; canViewStaffAttendance?: boolean }) {
   const [section, setSection] = useState<'students' | 'staff'>('students')
-  const [studentView, setStudentView] = useState<'report' | 'register' | 'history'>('report')
+  const [studentView, setStudentView] = useState<'report' | 'register' | 'history' | 'qr'>('report')
   const [groups, setGroups] = useState<GroupOption[]>([])
   const [programmes, setProgrammes] = useState<{ id: string; name: string }[]>([])
   const [intakes, setIntakes] = useState<IntakeOption[]>([])
@@ -63,6 +64,9 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   const [from, setFrom] = useState(currentWeekStart)
   const [to, setTo] = useState(todayKampala)
   const [historyStatus, setHistoryStatus] = useState('All')
+  const [qrToken, setQrToken] = useState('')
+  const [qrExpiresAt, setQrExpiresAt] = useState('')
+  const [qrSeconds, setQrSeconds] = useState(0)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -115,6 +119,16 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   }, [semesterId])
 
   useEffect(() => { void loadOptions() }, [loadOptions])
+  useEffect(() => {
+    if (!qrExpiresAt || studentView !== 'qr') return
+    const updateCountdown = () => setQrSeconds(Math.max(0, Math.ceil((new Date(qrExpiresAt).getTime() - Date.now()) / 1000)))
+    updateCountdown()
+    const timer = window.setInterval(updateCountdown, 1000)
+    return () => window.clearInterval(timer)
+  }, [qrExpiresAt, studentView])
+  useEffect(() => {
+    if (studentView === 'qr' && session?.status === 'Open' && qrSeconds === 0 && qrExpiresAt) void refreshQr()
+  }, [qrSeconds, studentView, session?.id, session?.status, qrExpiresAt])
   useEffect(() => { void loadReport() }, [loadReport])
 
   async function openSession() {
@@ -183,6 +197,23 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     finally { setSaving(false) }
   }
 
+  async function refreshQr() {
+    if (!session || session.status !== 'Open') { setError('Open an attendance session before generating its QR code.'); return }
+    try {
+      const result = await request<{ token: string; expiresAtUtc: string }>(`/api/attendance/sessions/${session.id}/qr`)
+      setQrToken(result.token)
+      setQrExpiresAt(result.expiresAtUtc)
+      setQrSeconds(Math.max(0, Math.ceil((new Date(result.expiresAtUtc).getTime() - Date.now()) / 1000)))
+      setError('')
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to generate the attendance QR code.') }
+  }
+
+  async function toggleQrFullscreen() {
+    const target = document.getElementById('attendance-qr-stage')
+    if (document.fullscreenElement) await document.exitFullscreen()
+    else await target?.requestFullscreen()
+  }
+
   async function searchStudents() {
     if (studentSearch.trim().length < 2) { setError('Enter at least two characters of a student name or registration number.'); return }
     setLoading(true); setError('')
@@ -246,6 +277,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
           <button type="button" role="tab" aria-selected={studentView === 'report'} className={studentView === 'report' ? 'active' : ''} onClick={() => setStudentView('report')}>Attendance report</button>
           <button type="button" role="tab" aria-selected={studentView === 'register'} className={studentView === 'register' ? 'active' : ''} onClick={() => setStudentView('register')}>Attendance register</button>
           <button type="button" role="tab" aria-selected={studentView === 'history'} className={studentView === 'history' ? 'active' : ''} onClick={() => setStudentView('history')}>Student history</button>
+          {!readOnly && <button type="button" role="tab" aria-selected={studentView === 'qr'} className={studentView === 'qr' ? 'active' : ''} onClick={() => setStudentView('qr')}>QR attendance</button>}
         </div>
 
         {studentView === 'report' && <>
@@ -316,6 +348,19 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
           </tbody></table></div>}
         </>}
 
+        {studentView === 'qr' && !readOnly && <>
+          {!session ? <p className="empty">Open a classroom session in the attendance register before displaying its QR code.</p> : session.status !== 'Open' ? <p className="empty">This session is closed. QR attendance is disabled.</p> : <div id="attendance-qr-stage" className="panel" style={{ marginTop: 12, display: 'grid', justifyItems: 'center', gap: 12, padding: 20, background: '#fff', color: '#111827' }}>
+            <div className="flex w-full flex-wrap items-center justify-between gap-2">
+              <strong>{sessionContext?.courseName ?? sessionContext?.className ?? 'Attendance session'}</strong>
+              <button type="button" className="btn btn-secondary" onClick={() => void toggleQrFullscreen()}>Fullscreen QR</button>
+            </div>
+            <p className="text-sm text-center">Display this screen to students. They scan the code using the student app.</p>
+            {qrToken ? <QRCodeSVG value={qrToken} size={320} level="M" includeMargin /> : <p className="empty">Generating QR code…</p>}
+            <strong style={{ fontSize: 18 }}>{qrSeconds}s until token rotation</strong>
+            <span className="text-xs">The code refreshes automatically every 60 seconds.</span>
+            <button type="button" className="btn btn-secondary" onClick={() => void refreshQr()}>Refresh QR now</button>
+          </div>}
+        </>}
         {studentView === 'history' && <>
           <div className="grid-form"><label>Find student<input value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="Name or registration number" /></label><button type="button" className="btn btn-secondary" onClick={() => void searchStudents()} disabled={loading}>Search students</button><label>Student<select value={studentId} onChange={e => setStudentId(e.target.value)}><option value="">Select student</option>{studentMatches.map(x => <option key={x.id} value={x.id}>{x.name} · {x.registrationNumber}</option>)}</select></label><label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label><button type="button" className="btn btn-secondary" onClick={() => void loadHistory()} disabled={loading || !studentId}>Load history</button></div>
           <div className="flex flex-wrap items-center gap-2" style={{ marginTop: 10 }}>
