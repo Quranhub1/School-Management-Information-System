@@ -187,7 +187,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
                 record.Remarks,
                 sessionDate = session.SessionDate,
                 sessionStatus = session.Status,
-                className = string.IsNullOrWhiteSpace(teachingGroup.Name) ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name
+                className = teachingGroup.Name == null || teachingGroup.Name == "" ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name
             }).ToListAsync(cancellationToken);
         return Ok(history);
     }
