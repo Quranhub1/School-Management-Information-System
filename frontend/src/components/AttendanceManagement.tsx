@@ -55,7 +55,7 @@ async function request<T>(
 export function AttendanceManagement({
   readOnly = false,
 }: { readOnly?: boolean } = {}) {
-  const [tab, setTab] = useState<'daily' | 'history' | 'qr'>(
+  const [tab, setTab] = useState<'daily' | 'history'>(
     readOnly ? 'history' : 'daily',
   )
   const [timetableEntryId, setTimetableEntryId] = useState('')
@@ -69,8 +69,6 @@ export function AttendanceManagement({
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [history, setHistory] = useState<AttendanceRecord[]>([])
-  const [qrToken, setQrToken] = useState('')
-  const [qrExpires, setQrExpires] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -219,34 +217,6 @@ export function AttendanceManagement({
     }
   }
 
-  async function refreshQr() {
-    clearNotice()
-    if (!sessionId.trim()) {
-      setError('Open or enter an attendance session first.')
-      return
-    }
-    setLoading(true)
-    try {
-      const result = await request<{
-        token: string
-        expiresAtUtc: string
-      }>(`/api/attendance/sessions/${sessionId.trim()}/qr`)
-      setQrToken(result.token)
-      setQrExpires(result.expiresAtUtc)
-      setMessage(
-        'Rotating QR token generated. It rotates every 60 seconds.',
-      )
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to generate QR token.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (tab === 'qr' && sessionId) void refreshQr()
-  }, [tab, sessionId])
-
   return (
     <section className="panel" aria-label="Attendance management">
       <div className="panel-heading">
@@ -257,8 +227,8 @@ export function AttendanceManagement({
           </h3>
           <p>
             {readOnly
-              ? 'Review student attendance history. Recording, closing sessions and QR attendance actions are disabled.'
-              : 'Open class sessions, record attendance, review student history and generate rotating QR tokens.'}
+              ? 'Review student attendance history. Recording and session changes are disabled.'
+              : 'Open class sessions, record attendance and review student history.'}
           </p>
         </div>
       </div>
@@ -285,16 +255,6 @@ export function AttendanceManagement({
         >
           Student history
         </button>
-        {!readOnly && (
-          <button
-            role="tab"
-            aria-selected={tab === 'qr'}
-            className={tab === 'qr' ? 'active' : ''}
-            onClick={() => setTab('qr')}
-          >
-            QR attendance
-          </button>
-        )}
       </div>
       {message && <div className="success" role="status">{message}</div>}
       {error && <div className="error" role="alert">{error}</div>}
@@ -454,49 +414,6 @@ export function AttendanceManagement({
         </>
       )}
 
-      {!readOnly && tab === 'qr' && (
-        <div className="panel" style={{ marginTop: 16 }}>
-          <form
-            className="management-form"
-            onSubmit={e => {
-              e.preventDefault()
-              void refreshQr()
-            }}
-          >
-            <label>
-              Attendance session ID
-              <input
-                value={sessionId}
-                onChange={e => setSessionId(e.target.value)}
-                placeholder="Session GUID"
-                required
-              />
-            </label>
-            <button type="submit" disabled={loading}>
-              {loading ? 'Generating…' : 'Generate current token'}
-            </button>
-          </form>
-          {qrToken && (
-            <div>
-              <p><strong>Token:</strong></p>
-              <code style={{ wordBreak: 'break-all' }}>{qrToken}</code>
-              <p>
-                <strong>Expires:</strong>{' '}
-                {qrExpires
-                  ? new Date(qrExpires).toLocaleTimeString(undefined, {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : '—'}
-              </p>
-              <p className="empty">
-                The API accepts the current token and the immediately previous
-                60-second slot to tolerate scanning at the rotation boundary.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
     </section>
   )
 }
