@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using SchoolManagement.Domain.Audit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Services;
@@ -373,15 +375,25 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         if (record is null) return NotFound(new { message = "Attendance record was not found." });
         var session = await db.AttendanceSessions.SingleOrDefaultAsync(x => x.Id == record.AttendanceSessionId, cancellationToken);
         if (session is null) return NotFound(new { message = "Attendance session was not found." });
-        if (session.Status != "Open") return Conflict(new { message = "Only open attendance sessions can be corrected." });
         var campusId = await GetSessionCampusIdAsync(session.Id, cancellationToken);
         if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)
             || !await campusAccess.CanAccessStudentAsync(User, record.StudentId, cancellationToken)) return Forbid();
         var status = request.Status?.Trim();
         if (status is not ("Present" or "Absent" or "Late" or "Excused"))
             return BadRequest(new { message = "Status must be Present, Absent, Late or Excused." });
+        var previous = new { status = record.Status, remarks = record.Remarks, sessionStatus = session.Status };
         record.Status = status;
         record.Remarks = request.Remarks?.Trim();
+        db.AuditLogs.Add(new AuditLog
+        {
+            UserId = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value,
+            Action = "AttendanceRecordCorrected",
+            EntityType = "StudentAttendance",
+            EntityId = record.Id.ToString(),
+            Changes = JsonSerializer.Serialize(new { before = previous, after = new { status = record.Status, remarks = record.Remarks } }),
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = Request.Headers.UserAgent.ToString()
+        });
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new { record.Id, record.StudentId, record.Status, record.Remarks });
     }
