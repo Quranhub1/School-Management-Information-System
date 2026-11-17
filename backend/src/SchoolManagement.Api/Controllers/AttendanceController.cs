@@ -190,19 +190,19 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         if (accessibleCampuses is { Count: 0 }) return Forbid();
 
         var groups = await (
-            from group in db.TeachingGroups.AsNoTracking()
-            join offering in db.CourseOfferings.AsNoTracking() on group.CourseOfferingId equals offering.Id
+            from teachingGroup in db.TeachingGroups.AsNoTracking()
+            join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
             join programme in db.Programmes.AsNoTracking() on offering.ProgrammeId equals programme.Id
             join semester in db.Semesters.AsNoTracking() on offering.SemesterId equals semester.Id
-            join entry in db.TimetableEntries.AsNoTracking() on group.Id equals entry.TeachingGroupId
+            join entry in db.TimetableEntries.AsNoTracking() on teachingGroup.Id equals entry.TeachingGroupId
             join staff in db.StaffMembers.AsNoTracking() on entry.StaffMemberId equals staff.Id
-            where group.IsActive && offering.IsActive && entry.IsActive && programme.IsActive && !programme.IsReferenceOnly
+            where teachingGroup.IsActive && offering.IsActive && entry.IsActive && programme.IsActive && !programme.IsReferenceOnly
                 && (accessibleCampuses == null || (staff.CampusId.HasValue && accessibleCampuses.Contains(staff.CampusId.Value)))
             select new
             {
-                teachingGroupId = group.Id,
-                group.GroupCode,
-                groupName = group.Name,
+                teachingGroupId = teachingGroup.Id,
+                teachingGroup.GroupCode,
+                groupName = teachingGroup.Name,
                 programmeId = programme.Id,
                 programmeName = programme.Name,
                 semesterId = semester.Id,
