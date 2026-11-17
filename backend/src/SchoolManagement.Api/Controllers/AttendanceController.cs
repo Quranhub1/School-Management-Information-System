@@ -178,6 +178,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             join entry in db.TimetableEntries.AsNoTracking() on session.TimetableEntryId equals entry.Id
             join teachingGroup in db.TeachingGroups.AsNoTracking() on entry.TeachingGroupId equals teachingGroup.Id
             join course in db.Courses.AsNoTracking() on entry.CourseId equals course.Id
+            join student in db.Students.AsNoTracking() on record.StudentId equals student.Id
             where record.StudentId == studentId
                 && (!fromDate.HasValue || session.SessionDate >= fromDate.Value)
                 && (!toDate.HasValue || session.SessionDate <= toDate.Value)
@@ -187,6 +188,8 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
                 record.Id,
                 record.AttendanceSessionId,
                 record.StudentId,
+                studentName = string.Join(" ", new[] { student.LastName, student.FirstName, student.OtherNames }.Where(value => value != null && value != "")),
+                studentNumber = student.StudentNumber,
                 record.Status,
                 record.Remarks,
                 sessionDate = session.SessionDate,
@@ -203,6 +206,8 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             row.Id,
             row.AttendanceSessionId,
             row.StudentId,
+            row.studentName,
+            row.studentNumber,
             row.Status,
             row.Remarks,
             row.sessionDate,
