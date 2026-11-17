@@ -1,7 +1,6 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using SchoolManagement.Domain.Audit;
+using SchoolManagement.Domain.Attendance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Services;
@@ -15,7 +14,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/attendance")]
 [Authorize]
-public sealed class AttendanceController(AttendanceService service, IConfiguration configuration, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
+public sealed class AttendanceController(AttendanceService service, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpPost("sessions")]
     [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
@@ -28,7 +27,10 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
 
         try
         {
-            var session = await service.OpenSessionAsync(request.TimetableEntryId, request.SessionDate, request.RecordedByUserId, request.Remarks, cancellationToken);
+            Guid? recordedByUserId = Guid.TryParse(
+                User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value,
+                out var signedInUserId) ? signedInUserId : null;
+            var session = await service.OpenSessionAsync(request.TimetableEntryId, request.SessionDate, recordedByUserId, request.Remarks, cancellationToken);
             return Created($"/api/attendance/sessions/{session.Id}", session);
         }
         catch (ArgumentException ex)
@@ -64,56 +66,6 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         }
     }
 
-    [HttpGet("sessions/{attendanceSessionId:guid}/qr")]
-    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
-    public async Task<IActionResult> GetRotatingQrToken(Guid attendanceSessionId, CancellationToken cancellationToken)
-    {
-        var campusId = await GetSessionCampusIdAsync(attendanceSessionId, cancellationToken);
-        if (campusId is null && !await db.AttendanceSessions.AnyAsync(x => x.Id == attendanceSessionId, cancellationToken))
-            return NotFound(new { message = "Attendance session was not found." });
-        if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)) return Forbid();
-        var now = DateTimeOffset.UtcNow;
-        var slot = now.ToUnixTimeSeconds() / 60;
-        var token = CreateQrToken(attendanceSessionId, slot);
-
-        return Ok(new
-        {
-            attendanceSessionId,
-            token,
-            expiresAtUtc = DateTimeOffset.FromUnixTimeSeconds((slot + 1) * 60),
-            rotationSeconds = 60,
-            scheme = "SMIS-ATTENDANCE-V1"
-        });
-    }
-
-    [HttpPost("sessions/{attendanceSessionId:guid}/qr-records")]
-    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
-    public async Task<IActionResult> MarkWithQr(Guid attendanceSessionId, MarkQrAttendanceRequest request, CancellationToken cancellationToken)
-    {
-        if (!IsValidQrToken(attendanceSessionId, request.Token))
-            return Unauthorized(new { message = "The attendance QR code is invalid or has expired. Scan the current code and try again." });
-        var campusError = await ValidateAttendanceCampusAsync(attendanceSessionId, request.StudentId, cancellationToken);
-        if (campusError is not null) return campusError;
-
-        try
-        {
-            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status ?? "Present", request.Remarks, cancellationToken);
-            return Created($"/api/attendance/records/{record.Id}", record);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
-    }
-
     [HttpPost("sessions/{attendanceSessionId:guid}/records")]
     [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
     public async Task<IActionResult> Mark(Guid attendanceSessionId, MarkAttendanceRequest request, CancellationToken cancellationToken)
@@ -122,7 +74,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         if (campusError is not null) return campusError;
         try
         {
-            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status, request.Remarks, cancellationToken);
+            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status.ToString(), request.Remarks, cancellationToken);
             return Created($"/api/attendance/records/{record.Id}", record);
         }
         catch (KeyNotFoundException ex)
@@ -153,7 +105,10 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             query = query.Where(s => s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value));
         var matches = await query.Where(s => s.StudentNumber.ToLower().Contains(term)
                 || s.FirstName.ToLower().Contains(term) || s.LastName.ToLower().Contains(term)
-                || (s.OtherNames != null && s.OtherNames.ToLower().Contains(term)))
+                || (s.OtherNames != null && s.OtherNames.ToLower().Contains(term))
+                || db.Admissions.Any(admission => admission.Id == s.AdmissionId
+                    && db.Applicants.Any(applicant => applicant.Id == admission.ApplicantId
+                        && applicant.ApplicationNumber.ToLower().Contains(term))))
             .OrderBy(s => s.LastName).ThenBy(s => s.FirstName).Take(25)
             .Select(s => new { s.Id, s.StudentNumber, s.LastName, s.FirstName, s.OtherNames })
             .ToListAsync(cancellationToken);
@@ -176,6 +131,8 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             join session in db.AttendanceSessions.AsNoTracking() on record.AttendanceSessionId equals session.Id
             join entry in db.TimetableEntries.AsNoTracking() on session.TimetableEntryId equals entry.Id
             join teachingGroup in db.TeachingGroups.AsNoTracking() on entry.TeachingGroupId equals teachingGroup.Id
+            join course in db.Courses.AsNoTracking() on entry.CourseId equals course.Id
+            join student in db.Students.AsNoTracking() on record.StudentId equals student.Id
             where record.StudentId == studentId
                 && (!fromDate.HasValue || session.SessionDate >= fromDate.Value)
                 && (!toDate.HasValue || session.SessionDate <= toDate.Value)
@@ -185,13 +142,35 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
                 record.Id,
                 record.AttendanceSessionId,
                 record.StudentId,
+                studentName = string.Join(" ", new[] { student.LastName, student.FirstName, student.OtherNames }.Where(value => value != null && value != "")),
+                studentNumber = student.StudentNumber,
                 record.Status,
                 record.Remarks,
                 sessionDate = session.SessionDate,
                 sessionStatus = session.Status,
-                className = teachingGroup.Name == null || teachingGroup.Name == "" ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name
+                className = teachingGroup.Name == null || teachingGroup.Name == "" ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name,
+                courseName = course.Name,
+                dayOfWeek = entry.DayOfWeek,
+                startTime = entry.StartTime,
+                endTime = entry.EndTime,
+                room = entry.Room
             }).ToListAsync(cancellationToken);
-        return Ok(history);
+        return Ok(history.Select(row => new
+        {
+            row.Id,
+            row.AttendanceSessionId,
+            row.StudentId,
+            row.studentName,
+            row.studentNumber,
+            row.Status,
+            row.Remarks,
+            row.sessionDate,
+            row.sessionStatus,
+            row.className,
+            row.courseName,
+            timetableSlot = row.dayOfWeek + " " + row.startTime.ToString("HH:mm") + "–" + row.endTime.ToString("HH:mm"),
+            row.room
+        }));
     }
 
     [HttpGet("sessions/lookup")]
@@ -378,9 +357,9 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         var campusId = await GetSessionCampusIdAsync(session.Id, cancellationToken);
         if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)
             || !await campusAccess.CanAccessStudentAsync(User, record.StudentId, cancellationToken)) return Forbid();
-        var status = request.Status?.Trim();
-        if (status is not ("Present" or "Absent" or "Late" or "Excused"))
-            return BadRequest(new { message = "Status must be Present, Absent, Late or Excused." });
+        var status = request.Status.ToString();
+        if (!Enum.IsDefined(typeof(AttendanceStatus), request.Status))
+            return BadRequest(new { message = "Attendance status is invalid." });
         var previous = new { status = record.Status, remarks = record.Remarks, sessionStatus = session.Status };
         record.Status = status;
         record.Remarks = request.Remarks?.Trim();
@@ -428,35 +407,9 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         return null;
     }
 
-    private string CreateQrToken(Guid sessionId, long slot)
-    {
-        var secret = configuration["Security:AttendanceQrSecret"]
-            ?? configuration["SMIS_ATTENDANCE_QR_SECRET"]
-            ?? Environment.GetEnvironmentVariable("SMIS_ATTENDANCE_QR_SECRET");
-        if (string.IsNullOrWhiteSpace(secret))
-            throw new InvalidOperationException("Attendance QR security secret is not configured. Set SMIS_ATTENDANCE_QR_SECRET on the server.");
 
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
-        var payload = $"SMIS-ATTENDANCE-V1|{sessionId:N}|{slot}";
-        return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
-    }
-
-    private bool IsValidQrToken(Guid sessionId, string? suppliedToken)
-    {
-        if (string.IsNullOrWhiteSpace(suppliedToken)) return false;
-
-        var currentSlot = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / 60;
-        foreach (var slot in new[] { currentSlot, currentSlot - 1 })
-        {
-            var expected = CreateQrToken(sessionId, slot);
-            if (CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(suppliedToken.Trim().ToLowerInvariant())))
-                return true;
-        }
-        return false;
-    }
 }
 
 public sealed record OpenAttendanceSessionRequest(Guid TimetableEntryId, DateOnly SessionDate, Guid? RecordedByUserId, string? Remarks);
-public sealed record MarkAttendanceRequest(Guid StudentId, string Status, string? Remarks);
-public sealed record MarkQrAttendanceRequest(Guid StudentId, string? Status, string? Remarks, string Token);
-public sealed record UpdateAttendanceRecordRequest(string Status, string? Remarks);
+public sealed record MarkAttendanceRequest(Guid StudentId, AttendanceStatus Status, string? Remarks);
+public sealed record UpdateAttendanceRecordRequest(AttendanceStatus Status, string? Remarks);

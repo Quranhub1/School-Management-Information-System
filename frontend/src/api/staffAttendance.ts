@@ -2,13 +2,16 @@ import { readApiErrorMessage } from './errors'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 function token() { return sessionStorage.getItem('smis.accessToken') }
-async function request<T>(path: string): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
     cache: 'no-store',
     headers: {
       'Cache-Control': 'no-cache',
       Pragma: 'no-cache',
-      ...(token() ? { Authorization: `Bearer ${token()}` } : {})
+      'Content-Type': 'application/json',
+      ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
+      ...(init.headers ?? {})
     }
   })
   if (!response.ok) throw new Error(await readApiErrorMessage(response))
@@ -38,4 +41,11 @@ export function listStaffDailyAttendance(filters: {
   if (filters.search?.trim()) params.set('search', filters.search.trim())
   if (filters.departmentId) params.set('departmentId', filters.departmentId)
   return request<StaffDailyAttendanceRow[]>(`/api/staff-attendance/daily?${params.toString()}`)
+}
+
+export function recordManualStaffAttendance(staffMemberId: string, eventType: 'IN' | 'OUT') {
+  return request<{ id: string; staffMemberId: string; eventType: string; recordedAtUtc: string }>(
+    `/api/staff-attendance/${encodeURIComponent(staffMemberId)}/manual-event`,
+    { method: 'POST', body: JSON.stringify({ eventType }) }
+  )
 }
