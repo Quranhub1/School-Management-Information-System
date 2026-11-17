@@ -142,7 +142,30 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
     public async Task<IActionResult> StudentHistory(Guid studentId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
     {
         if (!await campusAccess.CanAccessStudentAsync(User, studentId, cancellationToken)) return Forbid();
-        return Ok(await service.GetStudentHistoryAsync(studentId, from, to, cancellationToken));
+        if (from.HasValue && to.HasValue && to.Value < from.Value)
+            return BadRequest(new { message = "The end date must be on or after the start date." });
+
+        var history = await (
+            from record in db.StudentAttendances.AsNoTracking()
+            join session in db.AttendanceSessions.AsNoTracking() on record.AttendanceSessionId equals session.Id
+            join entry in db.TimetableEntries.AsNoTracking() on session.TimetableEntryId equals entry.Id
+            join teachingGroup in db.TeachingGroups.AsNoTracking() on entry.TeachingGroupId equals teachingGroup.Id
+            where record.StudentId == studentId
+                && (!from.HasValue || session.SessionDate >= from.Value)
+                && (!to.HasValue || session.SessionDate <= to.Value)
+            orderby session.SessionDate descending
+            select new
+            {
+                record.Id,
+                record.AttendanceSessionId,
+                record.StudentId,
+                record.Status,
+                record.Remarks,
+                sessionDate = session.SessionDate,
+                sessionStatus = session.Status,
+                className = string.IsNullOrWhiteSpace(teachingGroup.Name) ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name
+            }).ToListAsync(cancellationToken);
+        return Ok(history);
     }
 
     [HttpGet("options")]
