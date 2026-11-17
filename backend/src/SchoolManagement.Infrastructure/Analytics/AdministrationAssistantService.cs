@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Clinical;
 using SchoolManagement.Domain.Workflows;
 using SchoolManagement.Infrastructure.Persistence;
@@ -11,7 +12,7 @@ public sealed class AdministrationAssistantService(SchoolManagementDbContext db)
     {
         var totalStudents = await db.Students.AsNoTracking().LongCountAsync(cancellationToken);
         var activeStudents = await db.Students.AsNoTracking().CountAsync(s => s.Status == "Active", cancellationToken);
-        var pendingAdmissions = await db.Admissions.AsNoTracking().CountAsync(a => a.Status == "Pending", cancellationToken);
+        var pendingAdmissions = await db.Admissions.AsNoTracking().CountAsync(a => a.Status == AdmissionStatus.Pending, cancellationToken);
 
         var totalAttendanceRecords = await db.StudentAttendances.AsNoTracking().LongCountAsync(cancellationToken);
         var presentCount = await db.StudentAttendances.AsNoTracking().CountAsync(a => a.Status == "Present", cancellationToken);

@@ -129,6 +129,8 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
   const [clearanceFilters, setClearanceFilters] = useState({ name: '', course: '', semester: '', year: '', academicYear: '' });
   const [clearanceSearchFocused, setClearanceSearchFocused] = useState(false);
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
+  const [savingStudentRow, setSavingStudentRow] = useState<Record<string, boolean>>({});
+  const [paymentStatusSelect, setPaymentStatusSelect] = useState<Record<string, string>>({});
   const [requirementForm, setRequirementForm] = useState({ programmeId: '', name: 'Required course book', amount: '' });
   const [search, setSearch] = useState('');
   const [activeView, setActiveView] = useState<'dashboard' | 'books' | 'issue' | 'overdue' | 'cards' | 'clearance-students' | 'clearance-settings'>('dashboard');

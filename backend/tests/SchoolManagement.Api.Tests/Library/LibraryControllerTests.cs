@@ -100,5 +100,6 @@ public sealed class LibraryControllerTests
         public Task AddLibrarianAsync(Librarian librarian, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task AddLoanAsync(LibraryLoan loan, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<decimal> GetFinePerOverdueDayAsync(CancellationToken cancellationToken = default) => Task.FromResult(1000m);
     }
 }
