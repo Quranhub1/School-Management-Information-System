@@ -1,3 +1,4 @@
+using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Attendance;
 
 namespace SchoolManagement.Application.Attendance;
