@@ -93,6 +93,61 @@ public sealed class StaffAttendanceController(
         return Ok(rows);
     }
 
+    [HttpPost("{staffMemberId:guid}/manual-event")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> RecordManualEvent(
+        Guid staffMemberId,
+        [FromBody] ManualStaffAttendanceRequest request,
+        CancellationToken cancellationToken)
+    {
+        var eventType = request.EventType?.Trim().ToUpperInvariant();
+        if (eventType is not ("IN" or "OUT"))
+            return BadRequest(new { message = "Choose check-in or check-out." });
+
+        var staff = await db.StaffMembers.SingleOrDefaultAsync(s => s.Id == staffMemberId && s.IsActive, cancellationToken);
+        if (staff is null) return NotFound(new { message = "Active staff member was not found." });
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
+
+        var now = DateTimeOffset.UtcNow;
+        var kampala = TimeZoneInfo.FindSystemTimeZoneById("Africa/Kampala");
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, kampala).DateTime);
+        var start = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(today.ToDateTime(TimeOnly.MinValue), kampala));
+        var events = await db.StaffAttendanceEvents
+            .Where(x => x.StaffMemberId == staffMemberId && x.RecordedAtUtc >= start)
+            .OrderBy(x => x.RecordedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        var hasCheckIn = events.Any(x => x.EventType == "IN");
+        var hasCheckOut = events.Any(x => x.EventType == "OUT");
+        if (eventType == "IN" && hasCheckIn)
+            return Conflict(new { message = "A check-in is already recorded for this staff member today." });
+        if (eventType == "OUT" && !hasCheckIn)
+            return Conflict(new { message = "Record check-in before check-out." });
+        if (eventType == "OUT" && hasCheckOut)
+            return Conflict(new { message = "A check-out is already recorded for this staff member today." });
+
+        var attendanceEvent = new StaffAttendanceEvent
+        {
+            StaffMemberId = staffMemberId,
+            EventType = eventType,
+            RecordedAtUtc = now,
+            DeviceId = "SMIS-MANUAL",
+            CaptureId = Guid.NewGuid().ToString("N"),
+            Source = "Manual"
+        };
+        db.StaffAttendanceEvents.Add(attendanceEvent);
+        await db.SaveChangesAsync(cancellationToken);
+
+        return Ok(new
+        {
+            attendanceEvent.Id,
+            staffMemberId,
+            eventType,
+            recordedAtUtc = now,
+            source = attendanceEvent.Source
+        });
+    }
+
     [HttpPost("{staffMemberId:guid}/fingerprint-credential")]
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> EnrolFingerprint(
@@ -227,4 +282,5 @@ public sealed class StaffAttendanceController(
 }
 
 public sealed record StaffFingerprintCaptureRequest(Guid StaffMemberId, string DeviceId, string CaptureId);
+public sealed record ManualStaffAttendanceRequest(string EventType);
 public sealed record EnrolStaffFingerprintRequest(string DeviceFamily, string TemplateFormat, string EncryptedTemplateBase64);
