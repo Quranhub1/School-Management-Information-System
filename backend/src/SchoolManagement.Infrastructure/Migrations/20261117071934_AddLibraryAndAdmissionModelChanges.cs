@@ -35,8 +35,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                 nullable: false,
                 defaultValue: 0u);
 
-            migrationBuilder.Sql("ALTER TABLE \"Applicants\" ALTER COLUMN \"Status\" TYPE integer USING \"Status\"::integer;");
-
             migrationBuilder.Sql("ALTER TABLE \"LeaveRequests\" ALTER COLUMN \"Status\" TYPE integer USING \"Status\"::integer;");
 
             migrationBuilder.Sql("ALTER TABLE \"LeaveRequests\" ALTER COLUMN \"LeaveType\" TYPE integer USING \"LeaveType\"::integer;");
@@ -82,8 +80,6 @@ namespace SchoolManagement.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AdmissionRequirements");
-
-            migrationBuilder.Sql("ALTER TABLE \"Applicants\" ALTER COLUMN \"Status\" TYPE text USING \"Status\"::text;");
 
             migrationBuilder.Sql("ALTER TABLE \"LeaveRequests\" ALTER COLUMN \"Status\" TYPE text USING \"Status\"::text;");
 
