@@ -12,6 +12,11 @@ type AttendanceRecord = {
   studentId: string
   status: string
   remarks?: string | null
+  sessionDate?: string
+  className?: string
+  courseName?: string
+  timetableSlot?: string
+  room?: string | null
 }
 
 type AttendanceSession = {
@@ -64,10 +69,6 @@ export function AttendanceManagement({
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [history, setHistory] = useState<AttendanceRecord[]>([])
-  const [sheetWidth, setSheetWidth] = useState(100)
-  const [rowHeight, setRowHeight] = useState(44)
-  const [sheetFontSize, setSheetFontSize] = useState(14)
-  const [cellPadding, setCellPadding] = useState(12)
   const [qrToken, setQrToken] = useState('')
   const [qrExpires, setQrExpires] = useState('')
   const [message, setMessage] = useState('')
@@ -415,99 +416,19 @@ export function AttendanceManagement({
               {loading ? 'Loading…' : 'Load history'}
             </button>
           </div>
-          <div className="panel" style={{ marginBottom: 12 }}>
-            <div className="panel-heading">
-              <div>
-                <h4>Attendance sheet layout</h4>
-                <p>
-                  Adjust the sheet width, row height, text size and cell spacing.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  setSheetWidth(100)
-                  setRowHeight(44)
-                  setSheetFontSize(14)
-                  setCellPadding(12)
-                }}
-              >
-                Reset layout
-              </button>
-            </div>
-            <div className="management-form">
-              <label>
-                Sheet width: {sheetWidth}%
-                <input
-                  type="range"
-                  min="60"
-                  max="100"
-                  step="5"
-                  value={sheetWidth}
-                  onChange={e => setSheetWidth(Number(e.target.value))}
-                />
-              </label>
-              <label>
-                Row height: {rowHeight}px
-                <input
-                  type="range"
-                  min="28"
-                  max="100"
-                  step="2"
-                  value={rowHeight}
-                  onChange={e => setRowHeight(Number(e.target.value))}
-                />
-              </label>
-              <label>
-                Text size: {sheetFontSize}px
-                <input
-                  type="range"
-                  min="10"
-                  max="20"
-                  step="1"
-                  value={sheetFontSize}
-                  onChange={e => setSheetFontSize(Number(e.target.value))}
-                />
-              </label>
-              <label>
-                Cell spacing: {cellPadding}px
-                <input
-                  type="range"
-                  min="4"
-                  max="24"
-                  step="2"
-                  value={cellPadding}
-                  onChange={e => setCellPadding(Number(e.target.value))}
-                />
-              </label>
-            </div>
-          </div>
           <div
             className="table-wrap"
-            style={{
-              width: `${sheetWidth}%`,
-              maxWidth: '100%',
-              overflowX: 'auto',
-            }}
+            style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}
           >
             <table
-              style={{
-                width: '100%',
-                fontSize: `${sheetFontSize}px`,
-                borderCollapse: 'collapse',
-              }}
+              style={{ width: '100%', borderCollapse: 'collapse' }}
             >
               <thead>
                 <tr>
-                  {['Record', 'Session', 'Status', 'Remarks'].map(
+                  {['Date', 'Class', 'Course', 'Timetable', 'Room', 'Status', 'Remarks'].map(
                     (label) => (
                       <th
                         key={label}
-                        style={{
-                          padding: `${Math.max(4, cellPadding / 2)}px ${cellPadding}px`,
-                          height: rowHeight,
-                        }}
                       >
                         {label}
                       </th>
@@ -518,8 +439,11 @@ export function AttendanceManagement({
               <tbody>
                 {history.map((rec) => (
                   <tr key={rec.id}>
-                    <td>{rec.id.slice(0, 8)}</td>
-                    <td>{rec.attendanceSessionId.slice(0, 8)}</td>
+                    <td>{rec.sessionDate ?? '—'}</td>
+                    <td>{rec.className ?? '—'}</td>
+                    <td>{rec.courseName ?? '—'}</td>
+                    <td>{rec.timetableSlot ?? '—'}</td>
+                    <td>{rec.room ?? '—'}</td>
                     <td>{rec.status}</td>
                     <td>{rec.remarks ?? ''}</td>
                   </tr>
