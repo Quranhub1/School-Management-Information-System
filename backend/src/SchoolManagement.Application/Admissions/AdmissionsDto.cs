@@ -10,10 +10,10 @@ public sealed record CreateAdmissionRequest(
 
 public sealed record UpdateAdmissionRequest(
     Guid Id,
-    AdmissionStatus? Status = null);
+    string? Status = null);
 
 public sealed record DecideAdmissionRequest(
-    AdmissionStatus Decision,
+    string Decision,
     string? Reason,
     string? DecidedBy);
 
@@ -23,12 +23,12 @@ public sealed record AdmissionDto(
     Guid ProgrammeId,
     Guid AcademicYearId,
     Guid IntakeId,
-    AdmissionStatus Status,
+    string Status,
     DateTimeOffset? DecidedAt);
 
 public sealed record AdmissionDecisionDto(
     Guid Id,
     Guid AdmissionId,
-    AdmissionStatus Decision,
+    string Decision,
     string? Reason,
     string? DecidedBy);
