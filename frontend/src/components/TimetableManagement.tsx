@@ -423,20 +423,45 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
     {generatedTimetables.length > 0 && <section className="timetable-generated-list" aria-live="polite">
       <div className="timetable-generated-heading"><h3>Generated class timetables</h3><span>{generatedTimetables.length} timetable{generatedTimetables.length === 1 ? '' : 's'}</span></div>
-      {generatedTimetables.map(({ groupId, groupLabel, result }) => <article className="timetable-class-document" key={groupId}>
-        <div className="timetable-class-document-heading"><div><h4>{groupLabel}</h4><span>Teaching timetable · {availableSemesters.find(item => item.id === semesterId)?.label ?? 'Selected academic period'}</span></div>
-          <div className="timetable-class-actions">
-            <button className="timetable-action" type="button" onClick={() => downloadInstitutionalPdf(timetablePdfOptions(groupLabel + ' Teaching Timetable', result.entries, groupLabel + '-timetable'))}>Download PDF</button>
-            <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)}>Print</button>
+      {generatedTimetables.map(({ groupId, groupLabel, result }) => {
+        const classEntries = [...result.entries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
+        const classTimeSlots = [...new Set(classEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b))
+        return <article className="timetable-class-document" key={groupId}>
+          <div className="timetable-class-document-heading"><div><h4>{groupLabel}</h4><span>Teaching timetable · {availableSemesters.find(item => item.id === semesterId)?.label ?? 'Selected academic period'}</span></div>
+            <div className="timetable-class-actions">
+              <button className="timetable-action" type="button" onClick={() => downloadInstitutionalPdf(timetablePdfOptions(groupLabel + ' Teaching Timetable', classEntries, groupLabel + '-timetable'))}>Download PDF</button>
+              <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)}>Print</button>
+            </div>
           </div>
-        </div>
-        <p className="timetable-class-status">Score: {result.optimizationScore.toFixed(1)}% · {result.isConflictFree ? 'No conflicts reported' : 'Conflicts detected'}</p>
-        {result.conflicts.length > 0 && <p className="timetable-class-warning">Conflicts: {result.conflicts.join('; ')}</p>}
-        {result.warnings.length > 0 && <p className="timetable-class-warning">Warnings: {result.warnings.join('; ')}</p>}
-        <div className="timetable-table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Course</th><th>Teacher</th><th>Venue</th><th>Type</th></tr></thead><tbody>
-          {activeEntries.filter(entry => entry.teachingGroupId === groupId).sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)).map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{timeRange(entry)}</td><td>{courseLabels.get(entry.courseId) ?? 'Course not found'}</td><td>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</td><td>{entry.room || '—'}</td><td>{entry.sessionType || '—'}</td></tr>)}
-        </tbody></table></div>
-      </article>)}
+          <p className="timetable-class-status">Score: {result.optimizationScore.toFixed(1)}% · {result.isConflictFree ? 'No conflicts reported' : 'Conflicts detected'}</p>
+          {result.conflicts.length > 0 && <p className="timetable-class-warning">Conflicts: {result.conflicts.join('; ')}</p>}
+          {result.warnings.length > 0 && <p className="timetable-class-warning">Warnings: {result.warnings.join('; ')}</p>}
+          {classEntries.length === 0 ? <p className="timetable-day-empty">No sessions were generated for this class.</p> : <div className="timetable-grid-scroll">
+            <table className="timetable-formal-grid timetable-class-grid">
+              <thead><tr><th className="timetable-day-column">DAY</th>{classTimeSlots.map((slot, index) => {
+                const period = classEntries.find(entry => entry.startTime === slot)
+                return <th key={slot}><span className="timetable-period-label">PERIOD {index + 1}</span><strong>{timeLabel(slot)}–{period ? timeLabel(period.endTime) : ''}</strong></th>
+              })}</tr></thead>
+              <tbody>{weekOrder.filter(day => day !== 0).map(dayIndex => <tr key={dayIndex}>
+                <th className="timetable-day-column">{days[dayIndex].toUpperCase()}</th>
+                {classTimeSlots.map(slot => {
+                  const cellEntries = classEntries.filter(entry => entry.dayOfWeek === dayIndex && entry.startTime === slot)
+                  return <td key={slot} className={cellEntries.length ? 'has-session' : 'empty-session'}>
+                    {cellEntries.map(entry => <article className="timetable-grid-session" key={entry.id}>
+                      <strong>{courseLabels.get(entry.courseId) ?? 'Course not found'}</strong>
+                      <span>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</span>
+                      <span className="timetable-grid-time">{timeRange(entry)}</span>
+                      {entry.room && <span>Venue: {entry.room}</span>}
+                      {entry.sessionType && <span>{entry.sessionType}</span>}
+                    </article>)}
+                    {cellEntries.length === 0 && <span className="timetable-grid-dash">—</span>}
+                  </td>
+                })}
+              </tr>)}</tbody>
+            </table>
+          </div>}
+        </article>
+      })}
     </section>}
 
     {generatedResult && <section className="timetable-result" aria-live="polite">
