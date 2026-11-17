@@ -27,7 +27,8 @@ public sealed class LeaveRequestService(ILeaveRequestRepository leaveRepository)
             throw new ArgumentException("Start date cannot be after end date.", nameof(startDate));
         if (startDate < DateOnly.FromDateTime(DateTime.UtcNow))
             throw new ArgumentException("Start date cannot be in the past.", nameof(startDate));
-        if ((endDate.ToDateTime(TimeOnly.MinValue) - startDate.ToDateTime(TimeOnly.MinValue)).Days > 90)
+        var inclusiveDurationDays = endDate.DayNumber - startDate.DayNumber + 1;
+        if (inclusiveDurationDays > 90)
             throw new ArgumentException("Leave duration cannot exceed 90 days.", nameof(endDate));
 
         var existing = await leaveRepository.GetByStaffAsync(staffMemberId, cancellationToken);
