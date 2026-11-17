@@ -50,7 +50,8 @@ export function StaffAttendanceManagement() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <span className="eyebrow">HR / ATTENDANCE</span>
-          <h3 className="text-lg font-semibold">Daily Staff Attendance</h3>\n          <p className="text-xs text-slate-500">Fingerprint check-in and check-out events appear here automatically after the workstation agent confirms each scan.</p>
+          <h3 className="text-lg font-semibold">Daily Staff Attendance</h3>
+          <p className="text-xs text-slate-500">Fingerprint check-in and check-out events appear here automatically after the workstation agent confirms each scan.</p>
         </div>
         <button type="button" className="btn btn-secondary" onClick={() => void load()} disabled={loading}>Refresh register</button>
       </div>
