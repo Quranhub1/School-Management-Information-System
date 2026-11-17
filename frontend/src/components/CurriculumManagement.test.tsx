@@ -180,6 +180,38 @@ describe('CurriculumManagement selectors', () => {
     })))
   })
 
+  it('lets administrators add and correct UHPAB course units for a selected programme curriculum', async () => {
+    vi.mocked(createCourse).mockResolvedValue({
+      id: 'uhpab-unit-new', authorityCode: 'UHPAB', code: 'UHPAB-PH201',
+      name: 'Pharmaceutical Chemistry', creditUnits: 4, courseType: 'Lecture', isActive: true,
+    })
+    vi.mocked(addCurriculumCourse).mockResolvedValue({
+      id: 'mapping-uhpab-new', curriculumId: 'curriculum-pharmacy', courseId: 'uhpab-unit-new',
+      yearOfStudy: 2, semesterNumber: 1, isCore: true,
+    })
+
+    render(<CurriculumManagement canManage />)
+    const authoritySelect = await screen.findByLabelText('Authority')
+    await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
+    fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
+    await waitFor(() => expect(authoritySelect).toHaveValue('UHPAB'))
+    fireEvent.change(screen.getByLabelText('Select curriculum'), { target: { value: 'curriculum-pharmacy' } })
+
+    expect(await screen.findByRole('heading', { name: 'Add or correct UHPAB course unit for this programme' })).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('UHPAB course-unit code'), { target: { value: 'UHPAB-PH201' } })
+    fireEvent.change(screen.getByPlaceholderText('UHPAB course-unit name'), { target: { value: 'Pharmaceutical Chemistry' } })
+    fireEvent.change(screen.getByLabelText('Course unit type'), { target: { value: 'Lecture' } })
+    fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save and add to semester' }))
+
+    await waitFor(() => expect(createCourse).toHaveBeenCalledWith(expect.objectContaining({
+      authorityCode: 'UHPAB', code: 'UHPAB-PH201', name: 'Pharmaceutical Chemistry', creditUnits: 0,
+    })))
+    await waitFor(() => expect(addCurriculumCourse).toHaveBeenCalledWith('curriculum-pharmacy', expect.objectContaining({
+      courseId: 'uhpab-unit-new', yearOfStudy: 2, semesterNumber: 1, isCore: true,
+    })))
+  })
+
   it('does not let a pending refresh override a newly selected authority', async () => {
     render(<CurriculumManagement canManage />)
 
