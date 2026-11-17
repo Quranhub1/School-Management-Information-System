@@ -8,7 +8,7 @@ type SemesterOption = { id: string; name: string; academicYearId: string; startD
 type IntakeOption = { id: string; name: string; code: string }
 type StudentRow = { number: number; id: string; registrationNumber: string; name: string; status: string | null; remarks?: string | null; attendanceRecordId?: string | null }
 type ReportRow = { month: string; classId: string; className: string; totalAttendance: number; totalPresent: number; totalAbsent: number; totalLate: number; totalExcused: number }
-type HistoryRow = { id: string; attendanceSessionId: string; studentId: string; status: string; remarks?: string | null; sessionDate: string; className: string; sessionStatus: string }
+type HistoryRow = { id: string; attendanceSessionId: string; studentId: string; status: string; remarks?: string | null; sessionDate: string; className: string; sessionStatus: string }\ntype StudentMatch = { id: string; registrationNumber: string; name: string }
 type Session = { id: string; timetableEntryId: string; sessionDate: string; status: string }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -48,7 +48,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   const [monthly, setMonthly] = useState<ReportRow[]>([])
   const [overall, setOverall] = useState<Omit<ReportRow, 'month'>[]>([])
   const [reportMonth, setReportMonth] = useState('')
-  const [studentId, setStudentId] = useState('')
+  const [studentId, setStudentId] = useState('')\n  const [studentSearch, setStudentSearch] = useState('')\n  const [studentMatches, setStudentMatches] = useState<StudentMatch[]>([])
   const [history, setHistory] = useState<HistoryRow[]>([])
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -157,6 +157,15 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     finally { setSaving(false) }
   }
 
+  async function searchStudents() {
+    if (studentSearch.trim().length < 2) { setError('Enter at least two characters of a student name or registration number.'); return }
+    setLoading(true); setError('')
+    try {
+      setStudentMatches(await request<StudentMatch[]>(`/api/attendance/students/search?q=${encodeURIComponent(studentSearch.trim())}`))
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to search students.') }
+    finally { setLoading(false) }
+  }
+
   async function loadHistory() {
     if (!studentId.trim()) { setError('Enter a student ID to view attendance history.'); return }
     setLoading(true); setError('')
@@ -239,7 +248,8 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
         </>}
 
         {studentView === 'history' && <>
-          <div className="grid-form"><label>Student ID<input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="Student record ID" /></label><label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label><button type="button" className="btn btn-secondary" onClick={() => void loadHistory()} disabled={loading}>Load history</button></div>
+          <div className="grid-form"><label>Find student<input value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="Name or registration number" /></label><button type="button" className="btn btn-secondary" onClick={() => void searchStudents()} disabled={loading}>Search students</button><label>Student<select value={studentId} onChange={e => setStudentId(e.target.value)}><option value="">Select student</option>{studentMatches.map(x => <option key={x.id} value={x.id}>{x.name} · {x.registrationNumber}</option>)}</select></label><label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label><button type="button" className="btn btn-secondary" onClick={() => void loadHistory()} disabled={loading || !studentId}>Load history</button></div>
+          {history.length > 0 && <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" style={{ marginTop: 12 }}><div className="summary-card"><span>Recorded sessions</span><strong>{history.length}</strong></div><div className="summary-card"><span>Present / late</span><strong>{history.filter(x => x.status === 'Present' || x.status === 'Late').length}</strong></div><div className="summary-card"><span>Recorded attendance rate</span><strong>{Math.round(history.filter(x => x.status !== 'Excused').length ? history.filter(x => x.status === 'Present' || x.status === 'Late').length / history.filter(x => x.status !== 'Excused').length * 100 : 0)}%</strong></div></div>}
           <div className="table-responsive" style={{ marginTop: 12 }}><table className="data-table"><thead><tr><th>#</th><th>DATE</th><th>CLASS</th><th>STATUS</th><th>REMARKS</th><th>ACTION</th></tr></thead><tbody>{history.map((x,i) => <tr key={x.id}><td>{i+1}</td><td>{x.sessionDate}</td><td>{x.className}</td><td><select aria-label={`Correct attendance for ${x.sessionDate}`} value={x.status} disabled={readOnly || x.sessionStatus !== 'Open'} onChange={e => setHistory(current => current.map(row => row.id === x.id ? { ...row, status: e.target.value } : row))}>{statusOptions.map(option => <option key={option}>{option}</option>)}</select></td><td>{x.remarks ?? '—'}</td><td><button type="button" className="btn btn-secondary" disabled={readOnly || x.sessionStatus !== 'Open'} onClick={async () => { try { await request(`/api/attendance/records/${x.id}`, { method: 'PUT', body: JSON.stringify({ status: x.status, remarks: x.remarks ?? null }) }); setMessage('Attendance correction saved.') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to correct attendance.') } }}>Save correction</button></td></tr>)}{history.length === 0 && <tr><td colSpan={6}>No attendance history loaded.</td></tr>}</tbody></table></div>
         </>}
       </>}
