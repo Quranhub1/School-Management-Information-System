@@ -203,7 +203,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)) return Forbid();
         var session = await db.AttendanceSessions.AsNoTracking()
             .SingleOrDefaultAsync(x => x.TimetableEntryId == timetableEntryId && x.SessionDate == sessionDate, cancellationToken);
-        return Ok(session);
+        return Ok(new { session });
     }
 
     [HttpGet("options")]
