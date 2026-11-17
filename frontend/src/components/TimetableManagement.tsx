@@ -73,6 +73,19 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const programmeCurricula = options.curricula.filter(item => item.programmeId === programmeId)
   const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? programmeCurricula[0]
   const curriculumMappings = options.curriculumCourses.filter(item => item.curriculumId === selectedCurriculum?.id)
+  // Each distinct year/semester in an active curriculum is represented as its own
+  // timetable template for the selected academic period, even before sessions exist.
+  const semesterTemplates = useMemo(() => {
+    const grouped = new Map<string, { year: number; semester: number; courseIds: Set<string>; courseLabels: string[] }>()
+    for (const mapping of curriculumMappings) {
+      const key = mapping.yearOfStudy + '-' + mapping.semesterNumber
+      const current = grouped.get(key) ?? { year: mapping.yearOfStudy, semester: mapping.semesterNumber, courseIds: new Set<string>(), courseLabels: [] }
+      current.courseIds.add(mapping.courseId)
+      if (!current.courseLabels.includes(mapping.courseLabel)) current.courseLabels.push(mapping.courseLabel)
+      grouped.set(key, current)
+    }
+    return [...grouped.values()].sort((a, b) => a.year - b.year || a.semester - b.semester)
+  }, [curriculumMappings])
   const studyYears = [...new Set(curriculumMappings.map(item => item.yearOfStudy))].sort((a, b) => a - b)
   const curriculumSemesters = [...new Set(curriculumMappings.filter(item => !yearOfStudy || item.yearOfStudy === Number(yearOfStudy)).map(item => item.semesterNumber))].sort((a, b) => a - b)
   const eligibleMappings = curriculumMappings.filter(item => (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) && (!curriculumSemester || item.semesterNumber === Number(curriculumSemester)))
@@ -340,6 +353,37 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <div className="timetable-metric"><span>Assigned teachers</span><strong>{distinctTeachers}</strong></div>
       <div className="timetable-metric"><span>Practical sessions</span><strong>{practicalCount}</strong></div>
     </div>
+
+    {!readOnly && selectedCurriculum && <section className="timetable-semester-templates" aria-label="Curriculum semester timetable templates">
+      <div className="timetable-semester-templates-heading">
+        <div><h3>{selectedCurriculum.label} · Semester templates</h3><span>{semesterTemplates.length} separate template{semesterTemplates.length === 1 ? '' : 's'} · {availableSemesters.find(item => item.id === semesterId)?.label ?? 'Select an academic period'}</span></div>
+      </div>
+      {semesterTemplates.length === 0 ? <p className="timetable-day-empty">This active curriculum has no semester course mappings yet. Add course units and assign each to a year and semester in Curriculum &amp; Courses; its timetable templates will appear here automatically.</p> :
+        <div className="timetable-semester-template-grid">
+          {semesterTemplates.map(item => {
+            const courseIds = item.courseIds
+            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === programmeId && group.semesterId === semesterId && courseIds.has(group.courseId))
+            const sessionCount = activeEntries.filter(entry => matchingGroups.some(group => group.id === entry.teachingGroupId)).length
+            const selected = yearOfStudy === String(item.year) && curriculumSemester === String(item.semester)
+            return <article className={`timetable-semester-template-card${selected ? ' is-selected' : ''}`} key={item.year + '-' + item.semester}>
+              <div><span className="timetable-semester-template-kicker">YEAR {item.year}</span><h4>Semester {item.semester}</h4></div>
+              <p>{item.courseLabels.length} course unit{item.courseLabels.length === 1 ? '' : 's'} · {matchingGroups.length} teaching group{matchingGroups.length === 1 ? '' : 's'}</p>
+              <span className="timetable-semester-template-status">{sessionCount > 0 ? sessionCount + ' scheduled session' + (sessionCount === 1 ? '' : 's') : 'Blank template ready'}</span>
+              <button className="timetable-action primary" type="button" onClick={() => {
+                setYearOfStudy(String(item.year))
+                setCurriculumSemester(String(item.semester))
+                setTeachingGroupId(matchingGroups[0]?.id ?? '')
+                setTemplateGroupId(matchingGroups[0]?.id ?? '')
+                setTemplateLoadedGroupId('')
+                setTemplateCells({})
+                setShowTemplateEditor(true)
+                setShowGenerator(false)
+                setShowScheduleForm(false)
+              }}>Open semester template</button>
+            </article>
+          })}
+        </div>}
+    </section>}
 
     {!readOnly && (showGenerator || showTemplateEditor || showScheduleForm) && <section className="timetable-form-panel timetable-curriculum-guide" aria-label="Programme curriculum selection">
       <h3>Programme curriculum guide</h3>
