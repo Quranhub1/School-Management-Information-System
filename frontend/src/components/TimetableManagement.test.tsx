@@ -84,7 +84,7 @@ describe('TimetableManagement', () => {
     expect(screen.getAllByRole('heading', { name: 'Semester 2' })).toHaveLength(2)
     expect(screen.getAllByRole('button', { name: /open semester template/i })).toHaveLength(4)
     expect(screen.getAllByText(/Blank template ready/)).toHaveLength(4)
-    fireEvent.click(screen.getByRole('button', { name: /open semester template/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
     expect(await screen.findByRole('heading', { name: /edit the timetable grid/i })).toBeTruthy()
   })
 
