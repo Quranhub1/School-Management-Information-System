@@ -6,9 +6,12 @@ namespace SchoolManagement.Application.Admissions;
 public sealed class AdmissionService(IAdmissionRepository repository)
 {
     public async Task<IReadOnlyList<Admission>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        await repository.GetAdmissionAsync(cancellationToken);
+        await repository.GetAllAsync(cancellationToken);
 
-    public async Task<Admission?> CreateAsync(Guid applicantId, Guid programmeId, Guid academicYearId, Guid intakeId, CancellationToken cancellationToken = default)
+    public async Task<Admission?> GetByIdAsync(Guid admissionId, CancellationToken cancellationToken = default) =>
+        await repository.GetAdmissionAsync(admissionId, cancellationToken);
+
+    public async Task<Admission> CreateAsync(Guid applicantId, Guid programmeId, Guid academicYearId, Guid intakeId, CancellationToken cancellationToken = default)
     {
         if (await repository.GetApplicantAsync(applicantId, cancellationToken) is null)
             throw new KeyNotFoundException("Applicant was not found.");
@@ -27,7 +30,28 @@ public sealed class AdmissionService(IAdmissionRepository repository)
         return admission;
     }
 
-    public async Task<Admission?> DecideAsync(Guid admissionId, string decision, string? reason = null, string? decidedBy = null, CancellationToken cancellationToken = default)
+    public async Task<Admission?> UpdateAsync(Guid admissionId, string? status = null, CancellationToken cancellationToken = default)
+    {
+        var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken);
+        if (admission is null) return null;
+
+        if (status != null)
+            admission.Status = status;
+
+        await repository.UpdateAdmissionAsync(admission, cancellationToken);
+        return admission;
+    }
+
+    public async Task<bool> DeleteAsync(Guid admissionId, CancellationToken cancellationToken = default)
+    {
+        var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken);
+        if (admission is null) return false;
+
+        await repository.DeleteAdmissionAsync(admissionId, cancellationToken);
+        return true;
+    }
+
+    public async Task<AdmissionDecision> DecideAsync(Guid admissionId, string decision, string? reason = null, string? decidedBy = null, CancellationToken cancellationToken = default)
     {
         var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken)
             ?? throw new KeyNotFoundException("Admission was not found.");
@@ -48,9 +72,9 @@ public sealed class AdmissionService(IAdmissionRepository repository)
         // at least one active requirement the programme is not ready to accept students.
         if (decision == "Accepted")
         {
-            var requirements = await repository.GetAdmissionRequirementsAsync(
+            var mandatoryRequirements = await repository.GetAdmissionRequirementsAsync(
                 admission.ProgrammeId, mandatoryOnly: true, cancellationToken);
-            if (!requirements.Any())
+            if (!mandatoryRequirements.Any())
                 throw new InvalidOperationException("This programme has no active mandatory admission requirements configured. Configure requirements before accepting applicants.");
         }
 
@@ -62,7 +86,8 @@ public sealed class AdmissionService(IAdmissionRepository repository)
             DecidedBy = decidedBy
         };
 
-        await repository.AddAdmissionAsync(result, cancellationToken);
+        await repository.AddDecisionAsync(result, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
-        return admission;
+        return result;
     }
+}

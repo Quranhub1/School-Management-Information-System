@@ -75,7 +75,7 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
     {
         var applicant = await db.Applicants.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (applicant is null) return NotFound();
-        if (applicant.Status != ApplicantStatus.Accepted) return Conflict(new { message = "Only an accepted application can be admitted." });
+        if (applicant.Status != "Accepted") return Conflict(new { message = "Only an accepted application can be admitted." });
         if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId, cancellationToken)) return BadRequest(new { message = "The selected programme does not exist." });
         if (!await db.Intakes.AnyAsync(x => x.Id == request.IntakeId, cancellationToken)) return BadRequest(new { message = "The selected intake does not exist." });
         if (!await db.AcademicYears.AnyAsync(x => x.Id == request.AcademicYearId, cancellationToken)) return BadRequest(new { message = "The selected academic year does not exist." });
@@ -126,8 +126,8 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
         {
             enrollment.Status = "Active";
         }
-        admission.Status = AdmissionStatus.Admitted;
-        applicant.Status = ApplicantStatus.Admitted;
+        admission.Status = "Admitted";
+        applicant.Status = "Admitted";
         await db.SaveChangesAsync(cancellationToken);
 
         // Admission is the source event for student billing. Select the most specific
