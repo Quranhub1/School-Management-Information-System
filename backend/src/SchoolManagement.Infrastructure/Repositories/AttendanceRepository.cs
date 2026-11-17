@@ -109,7 +109,7 @@ public sealed class AttendanceRepository(SchoolManagementDbContext db) : IAttend
                 x.LastName,
                 x.OtherNames,
                 x.DisplayName,
-                x.CampusId?.ToString() ?? string.Empty,
+                x.CampusId.HasValue ? x.CampusId.Value.ToString() : null,
                 false))
             .ToListAsync(cancellationToken);
 

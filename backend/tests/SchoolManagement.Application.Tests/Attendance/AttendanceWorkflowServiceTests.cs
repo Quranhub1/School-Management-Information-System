@@ -53,5 +53,12 @@ public sealed class AttendanceWorkflowServiceTests
             Task.FromResult<IReadOnlyList<StudentAttendance>>([]);
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<EligibleStudentDto>> GetEligibleStudentsAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<EligibleStudentDto>>([]);
+
+        public Task<SessionSummaryDto> GetSessionSummaryAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new SessionSummaryDto(
+                attendanceSessionId, Guid.Empty, DateOnly.MinValue, AttendanceSessionStatus.Open, 0, 0, 0, 0, 0, 0, 0));
     }
 }

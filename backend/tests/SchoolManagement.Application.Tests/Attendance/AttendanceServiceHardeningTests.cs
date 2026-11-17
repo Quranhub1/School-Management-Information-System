@@ -139,5 +139,16 @@ public sealed class AttendanceServiceHardeningTests
             SaveCount++;
             return Task.CompletedTask;
         }
+
+        public Task<IReadOnlyList<EligibleStudentDto>> GetEligibleStudentsAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<EligibleStudentDto>>([]);
+        }
+
+        public Task<SessionSummaryDto> GetSessionSummaryAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new SessionSummaryDto(
+                attendanceSessionId, Guid.Empty, DateOnly.MinValue, AttendanceSessionStatus.Open, 0, 0, 0, 0, 0, 0, 0));
+        }
     }
 }
