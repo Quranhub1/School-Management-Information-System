@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using SchoolManagement.Domain.Audit;
+using SchoolManagement.Domain.Attendance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Services;
@@ -97,7 +98,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
 
         try
         {
-            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status ?? "Present", request.Remarks, cancellationToken);
+            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status?.ToString() ?? nameof(AttendanceStatus.Present), request.Remarks, cancellationToken);
             return Created($"/api/attendance/records/{record.Id}", record);
         }
         catch (KeyNotFoundException ex)
@@ -122,7 +123,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         if (campusError is not null) return campusError;
         try
         {
-            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status, request.Remarks, cancellationToken);
+            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status.ToString(), request.Remarks, cancellationToken);
             return Created($"/api/attendance/records/{record.Id}", record);
         }
         catch (KeyNotFoundException ex)
@@ -378,9 +379,9 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         var campusId = await GetSessionCampusIdAsync(session.Id, cancellationToken);
         if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)
             || !await campusAccess.CanAccessStudentAsync(User, record.StudentId, cancellationToken)) return Forbid();
-        var status = request.Status?.Trim();
-        if (status is not ("Present" or "Absent" or "Late" or "Excused"))
-            return BadRequest(new { message = "Status must be Present, Absent, Late or Excused." });
+        var status = request.Status.ToString();
+        if (!Enum.IsDefined(typeof(AttendanceStatus), request.Status))
+            return BadRequest(new { message = "Attendance status is invalid." });
         var previous = new { status = record.Status, remarks = record.Remarks, sessionStatus = session.Status };
         record.Status = status;
         record.Remarks = request.Remarks?.Trim();
@@ -457,6 +458,6 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
 }
 
 public sealed record OpenAttendanceSessionRequest(Guid TimetableEntryId, DateOnly SessionDate, Guid? RecordedByUserId, string? Remarks);
-public sealed record MarkAttendanceRequest(Guid StudentId, string Status, string? Remarks);
-public sealed record MarkQrAttendanceRequest(Guid StudentId, string? Status, string? Remarks, string Token);
-public sealed record UpdateAttendanceRecordRequest(string Status, string? Remarks);
+public sealed record MarkAttendanceRequest(Guid StudentId, AttendanceStatus Status, string? Remarks);
+public sealed record MarkQrAttendanceRequest(Guid StudentId, AttendanceStatus? Status, string? Remarks, string Token);
+public sealed record UpdateAttendanceRecordRequest(AttendanceStatus Status, string? Remarks);
