@@ -1,11 +1,13 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Attendance;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;

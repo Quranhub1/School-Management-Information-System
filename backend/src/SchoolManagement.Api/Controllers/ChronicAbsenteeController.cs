@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using SchoolManagement.Domain.Attendance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +31,7 @@ public sealed class ChronicAbsenteeController(SchoolManagementDbContext db, Camp
             select new
             {
                 StudentId = g.Key,
-                AbsenceCount = g.Count(x => x.Status == "Absent"),
+                AbsenceCount = g.Count(x => x.Status == AttendanceStatus.Absent),
                 TotalSessions = g.Count()
             })
             .Where(x => x.AbsenceCount >= thresholdDays)
