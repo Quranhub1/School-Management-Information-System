@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -168,4 +169,66 @@ public sealed class AttendanceEligibleStudentsController(
             students
         });
     }
+    [HttpPost("{sessionId:guid}/records/bulk-present")]
+    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
+    public async Task<IActionResult> MarkAllPresent(
+        Guid sessionId,
+        [FromQuery] Guid? intakeId,
+        CancellationToken cancellationToken)
+    {
+        var session = await db.AttendanceSessions.SingleOrDefaultAsync(x => x.Id == sessionId, cancellationToken);
+        if (session is null) return NotFound(new { message = "Attendance session was not found." });
+        if (!string.Equals(session.Status, "Open", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "Attendance cannot be recorded after the session has been closed." });
+
+        var context = await (
+            from entry in db.TimetableEntries.AsNoTracking()
+            join teachingGroup in db.TeachingGroups.AsNoTracking() on entry.TeachingGroupId equals teachingGroup.Id
+            join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
+            join staff in db.StaffMembers.AsNoTracking() on entry.StaffMemberId equals staff.Id
+            where entry.Id == session.TimetableEntryId
+            select new { offering.ProgrammeId, offering.SemesterId, entry.CourseId, staff.CampusId }
+        ).SingleOrDefaultAsync(cancellationToken);
+        if (context is null) return NotFound(new { message = "The timetable context for this attendance session was not found." });
+        if (!await campusAccess.CanAccessCampusAsync(User, context.CampusId, cancellationToken)) return Forbid();
+
+        var admissionIds = db.Admissions.AsNoTracking()
+            .Where(a => a.ProgrammeId == context.ProgrammeId
+                && (!intakeId.HasValue || a.IntakeId == intakeId.Value))
+            .Select(a => a.Id);
+        var eligibleQuery = db.Students.AsNoTracking().Where(student =>
+            !student.IsArchived && student.Status == "Active"
+            && student.AdmissionId.HasValue && admissionIds.Contains(student.AdmissionId.Value)
+            && db.CourseRegistrations.Any(registration =>
+                registration.StudentId == student.Id
+                && registration.SemesterId == context.SemesterId
+                && registration.CourseId == context.CourseId
+                && (registration.Status == "Registered" || registration.Status == "Active")));
+        if (context.CampusId.HasValue)
+            eligibleQuery = eligibleQuery.Where(student => student.CampusId == context.CampusId);
+
+        var eligibleIds = await eligibleQuery.Select(student => student.Id).ToListAsync(cancellationToken);
+        var alreadyMarked = await db.StudentAttendances.AsNoTracking()
+            .Where(record => record.AttendanceSessionId == sessionId && eligibleIds.Contains(record.StudentId))
+            .Select(record => record.StudentId)
+            .ToListAsync(cancellationToken);
+        var alreadyMarkedSet = alreadyMarked.ToHashSet();
+        var records = eligibleIds.Where(studentId => !alreadyMarkedSet.Contains(studentId))
+            .Select(studentId => new StudentAttendance
+            {
+                AttendanceSessionId = sessionId,
+                StudentId = studentId,
+                Status = nameof(AttendanceStatus.Present)
+            })
+            .ToList();
+
+        if (records.Count > 0)
+        {
+            await db.StudentAttendances.AddRangeAsync(records, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        return Ok(new { markedCount = records.Count, alreadyMarkedCount = alreadyMarked.Count, totalEligible = eligibleIds.Count });
+    }
+
 }
