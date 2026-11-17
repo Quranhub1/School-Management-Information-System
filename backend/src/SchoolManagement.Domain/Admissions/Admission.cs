@@ -7,7 +7,7 @@ public sealed class Admission
     public Guid ProgrammeId { get; init; }
     public Guid AcademicYearId { get; init; }
     public Guid IntakeId { get; init; }
-    public AdmissionStatus Status { get; set; } = AdmissionStatus.Pending;
+    public string Status { get; set; } = "Pending";
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? DecidedAt { get; set; }
 }

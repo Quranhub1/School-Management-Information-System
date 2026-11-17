@@ -51,12 +51,12 @@ public sealed class AdmissionService(IAdmissionRepository repository)
         return true;
     }
 
-    public async Task<AdmissionDecision> DecideAsync(Guid admissionId, AdmissionStatus decision, string? reason = null, string? decidedBy = null, CancellationToken cancellationToken = default)
+    public async Task<AdmissionDecision> DecideAsync(Guid admissionId, string decision, string? reason = null, string? decidedBy = null, CancellationToken cancellationToken = default)
     {
         var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken)
             ?? throw new KeyNotFoundException("Admission was not found.");
 
-        if (admission.Status != AdmissionStatus.Pending)
+        if (admission.Status != "Pending")
             throw new InvalidOperationException($"Admission is already {admission.Status} and cannot be re-decided.");
 
         admission.Status = decision;
@@ -66,18 +66,16 @@ public sealed class AdmissionService(IAdmissionRepository repository)
             ?? throw new KeyNotFoundException("Applicant was not found.");
 
         // Keep the applicant lifecycle state synchronized with the admission decision.
-        // Admission and applicant are separate aggregates, so explicitly persist the
-        // applicant transition rather than relying on navigation-property tracking.
-        applicant.Status = decision == AdmissionStatus.Accepted ? ApplicantStatus.Accepted : ApplicantStatus.Rejected;
+        applicant.Status = decision == "Accepted" ? "Accepted" : "Rejected";
 
         // Enforce that mandatory admission requirements exist for the programme before
         // an applicant can be accepted. Requirements are defined per programme; without
         // at least one active requirement the programme is not ready to accept students.
-        if (decision == AdmissionStatus.Accepted)
+        if (decision == "Accepted")
         {
-            var mandatoryRequirements = await repository.GetAdmissionRequirementsAsync(
+            var requirements = await repository.GetAdmissionRequirementsAsync(
                 admission.ProgrammeId, mandatoryOnly: true, cancellationToken);
-            if (!mandatoryRequirements.Any())
+            if (!requirements.Any())
                 throw new InvalidOperationException("This programme has no active mandatory admission requirements configured. Configure requirements before accepting applicants.");
         }
 

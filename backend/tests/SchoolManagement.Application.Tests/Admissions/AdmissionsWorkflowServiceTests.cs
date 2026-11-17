@@ -18,7 +18,7 @@ public sealed class AdmissionsWorkflowServiceTests
             applicantId, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()));
 
         Assert.Equal(applicantId, result.ApplicantId);
-        Assert.Equal(AdmissionStatus.Pending, result.Status);
+        Assert.Equal("Pending", result.Status);
         Assert.NotEqual(Guid.Empty, result.Id);
     }
 
@@ -26,7 +26,7 @@ public sealed class AdmissionsWorkflowServiceTests
     public async Task GetAllAsync_returns_all_admissions()
     {
         var applicantId = Guid.NewGuid();
-        var admission = new Admission { ApplicantId = applicantId, ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = AdmissionStatus.Pending };
+        var admission = new Admission { ApplicantId = applicantId, ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
         var repository = new FakeAdmissionRepository(admission);
         var workflow = CreateWorkflow(repository);
 
@@ -39,7 +39,7 @@ public sealed class AdmissionsWorkflowServiceTests
     [Fact]
     public async Task GetByIdAsync_returns_admission_when_exists()
     {
-        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = AdmissionStatus.Pending };
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
         var repository = new FakeAdmissionRepository(admission);
         var workflow = CreateWorkflow(repository);
 
@@ -52,20 +52,20 @@ public sealed class AdmissionsWorkflowServiceTests
     [Fact]
     public async Task UpdateAsync_updates_status()
     {
-        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = AdmissionStatus.Pending };
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
         var repository = new FakeAdmissionRepository(admission);
         var workflow = CreateWorkflow(repository);
 
-        var result = await workflow.UpdateAsync(admission.Id, new UpdateAdmissionRequest(admission.Id, AdmissionStatus.Accepted));
+        var result = await workflow.UpdateAsync(admission.Id, new UpdateAdmissionRequest(admission.Id, "Accepted"));
 
         Assert.NotNull(result);
-        Assert.Equal(AdmissionStatus.Accepted, result!.Status);
+        Assert.Equal("Accepted", result!.Status);
     }
 
     [Fact]
     public async Task DeleteAsync_removes_admission()
     {
-        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = AdmissionStatus.Pending };
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Status = "Pending" };
         var repository = new FakeAdmissionRepository(admission);
         var workflow = CreateWorkflow(repository);
 
@@ -83,16 +83,16 @@ public sealed class AdmissionsWorkflowServiceTests
             ProgrammeId = Guid.NewGuid(),
             AcademicYearId = Guid.NewGuid(),
             IntakeId = Guid.NewGuid(),
-            Status = AdmissionStatus.Pending
+            Status = "Pending"
         };
         var repository = new FakeAdmissionRepository(admission);
         var workflow = CreateWorkflow(repository);
 
         var result = await workflow.DecideAsync(admission.Id,
-            new DecideAdmissionRequest(AdmissionStatus.Rejected, "Incomplete documents", "tester"));
+            new DecideAdmissionRequest("Rejected", "Incomplete documents", "tester"));
 
-        Assert.Equal(AdmissionStatus.Rejected, result.Decision);
-        Assert.Equal(AdmissionStatus.Rejected, admission.Status);
+        Assert.Equal("Rejected", result.Decision);
+        Assert.Equal("Rejected", admission.Status);
         Assert.NotNull(repository.LastDecision);
     }
 
@@ -151,11 +151,9 @@ public sealed class AdmissionsWorkflowServiceTests
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
         public Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(
-            Guid programmeId, bool mandatoryOnly = false, CancellationToken cancellationToken = default)
+            Guid admissionId, bool mandatoryOnly = false, CancellationToken cancellationToken = default)
         {
-            var query = _requirements.Where(x => x.ProgrammeId == programmeId && x.IsActive);
-            if (mandatoryOnly) query = query.Where(x => x.IsMandatory);
-            return Task.FromResult<IReadOnlyList<AdmissionRequirement>>(query.ToList());
+            return Task.FromResult<IReadOnlyList<AdmissionRequirement>>([]);
         }
     }
 }
