@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Academic;
+using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Domain.Examinations;
 using SchoolManagement.Infrastructure.Persistence;
 

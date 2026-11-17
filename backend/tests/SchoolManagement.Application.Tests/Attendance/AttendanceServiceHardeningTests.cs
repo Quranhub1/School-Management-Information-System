@@ -1,4 +1,5 @@
 using SchoolManagement.Application.Attendance;
+using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Attendance;
 using Xunit;
 

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Admissions;
+using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Domain.Clinical;
 using SchoolManagement.Domain.Workflows;
 using SchoolManagement.Infrastructure.Persistence;
