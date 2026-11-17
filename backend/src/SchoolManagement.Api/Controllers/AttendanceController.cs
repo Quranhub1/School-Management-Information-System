@@ -265,7 +265,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             && (!intakeId.HasValue || a.IntakeId == intakeId.Value)).Select(a => a.Id);
         var studentsQuery = db.Students.AsNoTracking().Where(s => !s.IsArchived && s.Status == "Active"
             && s.AdmissionId.HasValue && admissionIds.Contains(s.AdmissionId.Value)
-            && db.CourseRegistrations.Any(reg => reg.StudentId == s.Id && reg.SemesterId == group.SemesterId && reg.CourseId == group.CourseId));
+            && db.CourseRegistrations.Any(reg => reg.StudentId == s.Id && reg.SemesterId == group.SemesterId && reg.CourseId == group.CourseId && (reg.Status == "Registered" || reg.Status == "Active")));
         if (group.CampusId.HasValue) studentsQuery = studentsQuery.Where(s => s.CampusId == group.CampusId);
         var students = await studentsQuery.OrderBy(s => s.LastName).ThenBy(s => s.FirstName)
             .Select(s => new { id = s.Id, registrationNumber = s.StudentNumber, s.LastName, s.FirstName, s.OtherNames })
@@ -345,7 +345,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             && (!intakeId.HasValue || a.IntakeId == intakeId.Value)).Select(a => a.Id);
         var rosterQuery = db.Students.AsNoTracking().Where(s => !s.IsArchived && s.Status == "Active"
             && s.AdmissionId.HasValue && admissionIds.Contains(s.AdmissionId.Value)
-            && db.CourseRegistrations.Any(reg => reg.StudentId == s.Id && reg.SemesterId == context.SemesterId && reg.CourseId == context.CourseId));
+            && db.CourseRegistrations.Any(reg => reg.StudentId == s.Id && reg.SemesterId == context.SemesterId && reg.CourseId == context.CourseId && (reg.Status == "Registered" || reg.Status == "Active")));
         if (context.CampusId.HasValue) rosterQuery = rosterQuery.Where(s => s.CampusId == context.CampusId);
         var rosterRows = await rosterQuery.OrderBy(s => s.LastName).ThenBy(s => s.FirstName)
             .Select(s => new { id = s.Id, registrationNumber = s.StudentNumber, s.LastName, s.FirstName, s.OtherNames })
