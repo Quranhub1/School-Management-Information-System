@@ -61,7 +61,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   const [message, setMessage] = useState('')
 
   const selectedGroup = groups.find(x => x.teachingGroupId === groupId)
-  const filteredGroups = useMemo(() => Array.from(new Map(groups.filter(x => !programmeId || x.programmeId === programmeId).map(x => [x.teachingGroupId, x])).values()), [groups, programmeId])
+  const filteredGroups = useMemo(() => Array.from(new Map<string, GroupOption>(groups.filter(x => !programmeId || x.programmeId === programmeId).map(x => [x.teachingGroupId, x] as [string, GroupOption])).values()), [groups, programmeId])
   const availableMonths = useMemo(() => [...new Set(monthly.map(x => x.month))].sort(), [monthly])
   const chartRows = useMemo(() => {
     const rows = monthly.filter(x => x.month === reportMonth)
