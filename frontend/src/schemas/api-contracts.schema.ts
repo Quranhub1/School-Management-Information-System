@@ -446,13 +446,6 @@ export const attendanceSessionSummarySchema = z.looseObject({
   unmarked: z.number().int().nonnegative(),
   attendancePercentage: z.number().nonnegative(),
 });
-export const attendanceQrTokenSchema = z.looseObject({
-  attendanceSessionId: identifierSchema,
-  token: requiredTextSchema,
-  expiresAtUtc: z.string(),
-  rotationSeconds: z.number().int().positive(),
-  scheme: requiredTextSchema,
-});
 export const staffCheckEventSchema = z.looseObject({
   id: identifierSchema,
   staffMemberId: identifierSchema,
