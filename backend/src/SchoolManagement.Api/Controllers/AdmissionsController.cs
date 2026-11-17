@@ -85,8 +85,8 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
 
         var admission = await db.Admissions.SingleOrDefaultAsync(x => x.ApplicantId == id && x.ProgrammeId == request.ProgrammeId && x.IntakeId == request.IntakeId && x.AcademicYearId == request.AcademicYearId, cancellationToken);
         if (admission is null) return Conflict(new { message = "No matching admission record exists for this accepted application." });
-        if (admission.Status == AdmissionStatus.Admitted) return Conflict(new { message = "This applicant has already been admitted." });
-        if (admission.Status != AdmissionStatus.Accepted) return Conflict(new { message = "The matching admission is not accepted." });
+        if (admission.Status == "Admitted") return Conflict(new { message = "This applicant has already been admitted." });
+        if (admission.Status != "Accepted") return Conflict(new { message = "The matching admission is not accepted." });
 
         // Enforce mandatory admission requirements before admitting.
         var mandatoryRequirements = await db.AdmissionRequirements
