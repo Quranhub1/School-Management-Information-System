@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { listStaffDailyAttendance, type StaffDailyAttendanceRow } from '../api/staffAttendance'
+import { listStaffDailyAttendance, recordManualStaffAttendance, type StaffDailyAttendanceRow } from '../api/staffAttendance'
 import { listStaffDepartments, type StaffDepartment } from '../api/staff'
 import LoadingSpinner from './LoadingSpinner'
 
@@ -22,6 +22,7 @@ export function StaffAttendanceManagement() {
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
   const [rows, setRows] = useState<StaffDailyAttendanceRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [savingStaffId, setSavingStaffId] = useState('')
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
@@ -40,6 +41,19 @@ export function StaffAttendanceManagement() {
     void listStaffDepartments().then(setDepartments).catch(() => setDepartments([]))
   }, [])
   useEffect(() => { void load() }, [load])
+
+  async function recordStaffEvent(row: StaffDailyAttendanceRow, eventType: 'IN' | 'OUT') {
+    setSavingStaffId(row.staffMemberId)
+    setError('')
+    try {
+      await recordManualStaffAttendance(row.staffMemberId, eventType)
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to record staff attendance.')
+    } finally {
+      setSavingStaffId('')
+    }
+  }
 
   const checkIns = rows.filter(row => row.checkIn).length
   const checkOuts = rows.filter(row => row.checkOut).length
@@ -78,11 +92,11 @@ export function StaffAttendanceManagement() {
       <div className="table-responsive">
         <table className="data-table">
           <thead><tr>
-            <th>Staff No.</th><th>Staff member</th><th>Date</th><th>Check-in</th><th>Check-out</th><th>Hours</th><th>Status</th>
+            <th>Staff No.</th><th>Staff member</th><th>Date</th><th>Check-in</th><th>Check-out</th><th>Hours</th><th>Status</th><th>Action</th>
           </tr></thead>
           <tbody>
-            {loading ? <tr><td colSpan={7}><LoadingSpinner /></td></tr>
-              : rows.length === 0 ? <tr><td colSpan={7}>No staff attendance records found for the selected filters.</td></tr>
+            {loading ? <tr><td colSpan={8}><LoadingSpinner /></td></tr>
+              : rows.length === 0 ? <tr><td colSpan={8}>No staff attendance records found for the selected filters.</td></tr>
               : rows.map(row => <tr key={row.staffMemberId + row.date}>
                 <td>{row.staffNumber}</td>
                 <td>{row.name}</td>
@@ -91,6 +105,11 @@ export function StaffAttendanceManagement() {
                 <td>{localDate(row.checkOut)}</td>
                 <td>{row.hoursWorked == null ? '—' : row.hoursWorked.toFixed(2)}</td>
                 <td><span className={row.status === 'Complete' ? 'status status-success' : row.status === 'Checked in' ? 'status status-warning' : 'status'}>{row.status}</span></td>
+                <td>{row.date === today && row.status === 'Absent'
+                  ? <button type="button" className="btn btn-secondary" disabled={savingStaffId === row.staffMemberId} onClick={() => void recordStaffEvent(row, 'IN')}>{savingStaffId === row.staffMemberId ? 'Saving…' : 'Check in'}</button>
+                  : row.date === today && row.status === 'Checked in'
+                    ? <button type="button" className="btn btn-secondary" disabled={savingStaffId === row.staffMemberId} onClick={() => void recordStaffEvent(row, 'OUT')}>{savingStaffId === row.staffMemberId ? 'Saving…' : 'Check out'}</button>
+                    : '—'}</td>
               </tr>)}
           </tbody>
         </table>
