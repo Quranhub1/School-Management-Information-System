@@ -34,9 +34,12 @@ public sealed class AdmissionServiceTests
     public async Task DecideAsync_AcceptedWithMandatoryRequirements_SetsStatusAndApplicant()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var admissionId = Guid.NewGuid();
+        var programmeId = Guid.NewGuid();
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = programmeId, AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Id = admissionId };
+        await repo.AddAdmissionAsync(admission);
         repo.AddApplicant(admission.ApplicantId);
-        repo.AddRequirement(admission.ProgrammeId, "Birth certificate", isMandatory: true);
+        repo.AddRequirement(programmeId, "Birth certificate", "Birth certificate", isMandatory: true);
 
         var service = new AdmissionService(repo);
         var decision = await service.DecideAsync(admission.Id, "Accepted", "Met all requirements", "registrar");
@@ -53,7 +56,9 @@ public sealed class AdmissionServiceTests
     public async Task DecideAsync_Rejected_SetsStatusAndApplicant()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var admissionId = Guid.NewGuid();
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Id = admissionId };
+        await repo.AddAdmissionAsync(admission);
         repo.AddApplicant(admission.ApplicantId);
 
         var service = new AdmissionService(repo);
@@ -70,9 +75,9 @@ public sealed class AdmissionServiceTests
     public async Task DecideAsync_RejectsNonPendingAdmission()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-        admission.Status = "Accepted";
-        repo.Admissions[0] = admission;
+        var admissionId = Guid.NewGuid();
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Id = admissionId, Status = "Accepted" };
+        await repo.AddAdmissionAsync(admission);
 
         var service = new AdmissionService(repo);
 
@@ -84,7 +89,9 @@ public sealed class AdmissionServiceTests
     public async Task DecideAsync_AcceptedWithoutMandatoryRequirements_Throws()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var admissionId = Guid.NewGuid();
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Id = admissionId };
+        await repo.AddAdmissionAsync(admission);
         repo.AddApplicant(admission.ApplicantId);
         // No mandatory requirements added for this programme
 
@@ -98,9 +105,12 @@ public sealed class AdmissionServiceTests
     public async Task DecideAsync_AcceptedWithOnlyOptionalRequirements_Throws()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var admissionId = Guid.NewGuid();
+        var programmeId = Guid.NewGuid();
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = programmeId, AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Id = admissionId };
+        await repo.AddAdmissionAsync(admission);
         repo.AddApplicant(admission.ApplicantId);
-        repo.AddRequirement(admission.ProgrammeId, "Optional document", isMandatory: false);
+        repo.AddRequirement(programmeId, "Optional document", "Optional document", isMandatory: false);
 
         var service = new AdmissionService(repo);
 
@@ -112,7 +122,9 @@ public sealed class AdmissionServiceTests
     public async Task UpdateAsync_ChangesStatus()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var admissionId = Guid.NewGuid();
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Id = admissionId };
+        await repo.AddAdmissionAsync(admission);
 
         var service = new AdmissionService(repo);
         var updated = await service.UpdateAsync(admission.Id, "Rejected");
@@ -136,7 +148,9 @@ public sealed class AdmissionServiceTests
     public async Task DeleteAsync_RemovesAdmission()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var admissionId = Guid.NewGuid();
+        var admission = new Admission { ApplicantId = Guid.NewGuid(), ProgrammeId = Guid.NewGuid(), AcademicYearId = Guid.NewGuid(), IntakeId = Guid.NewGuid(), Id = admissionId };
+        await repo.AddAdmissionAsync(admission);
 
         var service = new AdmissionService(repo);
         var result = await service.DeleteAsync(admission.Id);
@@ -196,9 +210,9 @@ public sealed class AdmissionServiceTests
             return Task.CompletedTask;
         }
 
-        public Task AddRequirement(Guid programmeId, string name, bool isMandatory, CancellationToken cancellationToken = default)
+        public Task AddRequirement(Guid programmeId, string requirementType, string description, bool isMandatory, CancellationToken cancellationToken = default)
         {
-            _requirements.Add(new AdmissionRequirement { ProgrammeId = programmeId, Name = name, IsMandatory = isMandatory });
+            _requirements.Add(new AdmissionRequirement { ProgrammeId = programmeId, RequirementType = requirementType, Description = description, IsMandatory = isMandatory });
             return Task.CompletedTask;
         }
 
