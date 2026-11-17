@@ -137,6 +137,28 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         }
     }
 
+    [HttpGet("students/search")]
+    [Authorize(Policy = AuthorizationPolicies.AttendanceRead)]
+    public async Task<IActionResult> SearchStudents([FromQuery] string? q, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+            return Ok(Array.Empty<object>());
+        var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
+        if (accessibleCampuses is { Count: 0 }) return Forbid();
+        var term = q.Trim().ToLowerInvariant();
+        var query = db.Students.AsNoTracking().Where(s => !s.IsArchived && s.Status == "Active");
+        if (accessibleCampuses is not null)
+            query = query.Where(s => s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value));
+        var matches = await query.Where(s => s.StudentNumber.ToLower().Contains(term)
+                || s.FirstName.ToLower().Contains(term) || s.LastName.ToLower().Contains(term)
+                || (s.OtherNames != null && s.OtherNames.ToLower().Contains(term)))
+            .OrderBy(s => s.LastName).ThenBy(s => s.FirstName).Take(25)
+            .Select(s => new { s.Id, s.StudentNumber, s.LastName, s.FirstName, s.OtherNames })
+            .ToListAsync(cancellationToken);
+        return Ok(matches.Select(s => new { id = s.Id, registrationNumber = s.StudentNumber,
+            name = string.Join(" ", new[] { s.LastName, s.FirstName, s.OtherNames }.Where(v => !string.IsNullOrWhiteSpace(v))) }));
+    }
+
     [HttpGet("students/{studentId:guid}")]
     [Authorize(Policy = AuthorizationPolicies.AttendanceRead)]
     public async Task<IActionResult> StudentHistory(Guid studentId, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
