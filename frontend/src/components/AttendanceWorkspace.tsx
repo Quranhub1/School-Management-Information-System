@@ -129,6 +129,9 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   useEffect(() => {
     if (studentView === 'qr' && session?.status === 'Open' && qrSeconds === 0 && qrExpiresAt) void refreshQr()
   }, [qrSeconds, studentView, session?.id, session?.status, qrExpiresAt])
+  useEffect(() => {
+    if (studentView === 'qr' && session?.status === 'Open' && !qrToken) void refreshQr()
+  }, [studentView, session?.id, session?.status, qrToken])
   useEffect(() => { void loadReport() }, [loadReport])
 
   async function openSession() {
