@@ -1,9 +1,11 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Attendance;
+using SchoolManagement.Domain.Audit;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -225,6 +227,21 @@ public sealed class AttendanceEligibleStudentsController(
         if (records.Count > 0)
         {
             await db.StudentAttendances.AddRangeAsync(records, cancellationToken);
+            db.AuditLogs.Add(new AuditLog
+            {
+                UserId = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value,
+                Action = "AttendanceBulkMarkedPresent",
+                EntityType = "AttendanceSession",
+                EntityId = sessionId.ToString(),
+                Changes = JsonSerializer.Serialize(new
+                {
+                    markedCount = records.Count,
+                    alreadyMarkedCount = alreadyMarked.Count,
+                    totalEligible = eligibleIds.Count
+                }),
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserAgent = Request.Headers["User-Agent"].ToString()
+            });
             await db.SaveChangesAsync(cancellationToken);
         }
 
