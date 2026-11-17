@@ -64,7 +64,12 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   const filteredGroups = useMemo(() => Array.from(new Map<string, GroupOption>(groups.filter(x => !programmeId || x.programmeId === programmeId).map(x => [x.teachingGroupId, x] as [string, GroupOption])).values()), [groups, programmeId])
   const availableMonths = useMemo(() => [...new Set(monthly.map(x => x.month))].sort(), [monthly])
   const chartRows = useMemo(() => {
-    const rows = monthly.filter(x => x.month === reportMonth)
+    const selectedRows = monthly.filter(x => !reportMonth || x.month === reportMonth)
+    const rows = reportMonth ? selectedRows : Array.from(selectedRows.reduce((map, row) => {
+      const current = map.get(row.classId)
+      map.set(row.classId, current ? { ...current, totalAttendance: current.totalAttendance + row.totalAttendance, totalPresent: current.totalPresent + row.totalPresent, totalAbsent: current.totalAbsent + row.totalAbsent, totalLate: current.totalLate + row.totalLate, totalExcused: current.totalExcused + row.totalExcused } : { ...row, month: 'All' })
+      return map
+    }, new Map<string, ReportRow>()).values())
     const total = rows.reduce((sum, x) => sum + x.totalPresent, 0)
     let cursor = 0
     const stops = rows.map((row, index) => {
@@ -72,7 +77,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
       cursor += total > 0 ? row.totalPresent / total * 100 : 0
       return `${chartColors[index % chartColors.length]} ${start}% ${cursor}%`
     })
-    return { rows, total, gradient: stops.length ? `conic-gradient(${stops.join(', ')})` : 'conic-gradient(#e5e7eb 0% 100%)' }
+    return { rows, total, gradient: total > 0 && stops.length ? `conic-gradient(${stops.join(', ')})` : 'conic-gradient(#e5e7eb 0% 100%)' }
   }, [monthly, reportMonth])
 
   const loadOptions = useCallback(async () => {
