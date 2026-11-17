@@ -236,6 +236,16 @@
 }
 
 
+.timetable-class-document-identity{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.timetable-class-document-identity>p{margin:0;color:#475569;font-size:.66rem;font-weight:800;letter-spacing:.08em}
+.timetable-class-document-identity>h4{margin:0;font-size:1.08rem;line-height:1.25;text-transform:uppercase}
+.timetable-class-document-identity>strong{font-size:.86rem;color:#1f2937}
+.timetable-class-document-identity>span{font-size:.75rem;color:#596579}
+.timetable-class-document-heading{align-items:flex-start}
+.timetable-template-document-heading h3{text-transform:uppercase}
+.timetable-document-heading h3{text-transform:uppercase}
+
+ 
 .timetable-semester-templates{display:grid;gap:12px;margin:18px 0;padding:16px;border:1px solid var(--border-color,#d8d5cc);border-radius:8px;background:var(--surface,#fff)}
 .timetable-semester-templates-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .timetable-semester-templates-heading h3{margin:0;font-size:1rem}
