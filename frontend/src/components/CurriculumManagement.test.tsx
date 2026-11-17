@@ -6,16 +6,19 @@ const { mockAuthorityList, mockProgrammes, mockCurricula, mockCourses } = vi.hoi
   mockAuthorityList: [
     { id: 'authority-school', code: 'SCHOOL_BASED', name: 'School-based', isActive: true, sortOrder: 1 },
     { id: 'authority-uhpab', code: 'UHPAB', name: 'UHPAB', isActive: true, sortOrder: 2 },
+    { id: 'authority-uvtab', code: 'UVTAB', name: 'UVTAB', isActive: true, sortOrder: 3 },
   ],
   mockProgrammes: [
     { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
     { id: 'programme-pharmacy', code: 'CPH', name: 'Certificate in Pharmacy', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
     { id: 'programme-short', code: 'UHPAB-SHORT', name: 'Basic Life Support', award: 'Certificate', durationYears: 1, durationUnit: 'Days', studyMode: 'Full-time', deliveryType: 'ShortCourse', approvalStatus: 'Approved', type: 1, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
+    { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Institutional', type: 0, regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
   ],
   mockCurricula: [
     // The stale programmeType value must not hide a curriculum whose programme is FullProgramme.
     { id: 'curriculum-pharmacy', programmeId: 'programme-pharmacy', version: '1.0', title: 'Certificate in Pharmacy Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 1 },
     { id: 'curriculum-short-inactive', programmeId: 'programme-short', version: '1.0', title: 'Inactive short curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Inactive', isActive: false, programmeType: 1 },
+    { id: 'curriculum-school', programmeId: 'programme-school', version: '1.0', title: 'KSHS School-Based Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 0 },
   ],
   mockCourses: [
     { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, courseType: 'Lecture' },
@@ -79,7 +82,7 @@ vi.mock('../utils/academicAuthorities', () => ({
 vi.mock('../utils/confirmDialog', () => ({ showConfirmDialog: vi.fn(async () => true) }))
 
 import { CurriculumManagement } from './CurriculumManagement'
-import { getCourses } from '../api/curriculumManagement'
+import { addCurriculumCourse, createCourse, getCourses } from '../api/curriculumManagement'
 import { getProgrammes } from '../api/programmes'
 
 describe('CurriculumManagement selectors', () => {
@@ -112,6 +115,36 @@ describe('CurriculumManagement selectors', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Short Courses' }))
     expect(within(screen.getByLabelText('Select programme')).getByRole('option', { name: /UHPAB-SHORT — Basic Life Support/ })).toBeInTheDocument()
     expect(within(screen.getByLabelText('Select curriculum')).queryByRole('option', { name: /Inactive short curriculum/ })).not.toBeInTheDocument()
+  })
+
+  it('lets administrators create and place a school-based unit directly in a curriculum semester', async () => {
+    vi.mocked(createCourse).mockResolvedValue({
+      id: 'course-school-new', authorityCode: 'SCHOOL_BASED', code: 'KSHS101',
+      name: 'Foundations of Public Health', creditUnits: 3, courseType: 'Lecture', isActive: true,
+    })
+    vi.mocked(addCurriculumCourse).mockResolvedValue({
+      id: 'mapping-school-new', curriculumId: 'curriculum-school', courseId: 'course-school-new',
+      yearOfStudy: 1, semesterNumber: 1, isCore: true,
+    })
+
+    render(<CurriculumManagement canManage />)
+    const authoritySelect = await screen.findByLabelText('Authority')
+    await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
+
+    const curriculumSelect = screen.getByLabelText('Select curriculum')
+    fireEvent.change(curriculumSelect, { target: { value: 'curriculum-school' } })
+
+    expect(await screen.findByRole('heading', { name: 'Add school-based course unit directly to this curriculum' })).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('Course/unit code'), { target: { value: 'KSHS101' } })
+    fireEvent.change(screen.getByPlaceholderText('Course/unit name'), { target: { value: 'Foundations of Public Health' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save and add to semester' }))
+
+    await waitFor(() => expect(createCourse).toHaveBeenCalledWith(expect.objectContaining({
+      authorityCode: 'SCHOOL_BASED', code: 'KSHS101', name: 'Foundations of Public Health',
+    })))
+    await waitFor(() => expect(addCurriculumCourse).toHaveBeenCalledWith('curriculum-school', expect.objectContaining({
+      courseId: 'course-school-new', yearOfStudy: 1, semesterNumber: 1, isCore: true,
+    })))
   })
 
   it('does not let a pending refresh override a newly selected authority', async () => {
