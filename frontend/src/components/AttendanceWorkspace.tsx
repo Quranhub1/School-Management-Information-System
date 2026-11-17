@@ -142,6 +142,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
       const lookupResult = await request<{ session: Session | null }>(`/api/attendance/sessions/lookup?${lookup.toString()}`)
       const existing = lookupResult.session
       const opened = existing ?? await request<Session>('/api/attendance/sessions', { method: 'POST', body: JSON.stringify({ timetableEntryId, sessionDate, recordedByUserId: null, remarks: null }) })
+      setQrToken(''); setQrExpiresAt(''); setQrSeconds(0)
       setSession(opened)
       await loadRegister(opened.id)
       setMessage('Attendance session opened.')
@@ -240,7 +241,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
 
   function changeGroup(value: string) {
     const next = groups.find(x => x.teachingGroupId === value)
-    setGroupId(value); setTimetableEntryId(next?.timetableEntryId ?? ''); setSession(null); setSessionContext(null); setRegisterSummary(null); setStudents([])
+    setGroupId(value); setTimetableEntryId(next?.timetableEntryId ?? ''); setSession(null); setSessionContext(null); setRegisterSummary(null); setStudents([]); setQrToken(''); setQrExpiresAt(''); setQrSeconds(0)
   }
 
   function setHistoryRange(preset: 'today' | 'yesterday' | 'week' | 'month') {
