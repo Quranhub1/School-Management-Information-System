@@ -97,6 +97,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [cf, setCf] = useState({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' as 'FullProgramme' | 'ShortCourse' })
   const [uf, setUf] = useState({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
   const [mf, setMf] = useState({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+  const [schoolUnitForm, setSchoolUnitForm] = useState({ code: '', name: '', creditUnits: '0', courseType: 'Lecture', description: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+
 
   useEffect(() => {
     if (canManage) void load()
@@ -596,6 +598,41 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     }
   }
 
+  async function saveSchoolBasedCourseUnit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selected || resolveAcademicAuthority(authority) !== 'SCHOOL_BASED') return
+    setSaving(true)
+    setError('')
+    setMessage('')
+    try {
+      const created = await createCourse({
+        authorityCode: 'SCHOOL_BASED',
+        code: schoolUnitForm.code.trim(),
+        name: schoolUnitForm.name.trim(),
+        creditUnits: Number(schoolUnitForm.creditUnits),
+        courseType: schoolUnitForm.courseType,
+        description: schoolUnitForm.description,
+      })
+      await addCurriculumCourse(selected, {
+        courseId: created.id,
+        yearOfStudy: Number(schoolUnitForm.yearOfStudy),
+        semesterNumber: Number(schoolUnitForm.semesterNumber),
+        isCore: schoolUnitForm.isCore,
+      })
+      setSchoolUnitForm({ code: '', name: '', creditUnits: '0', courseType: 'Lecture', description: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+      setMessage('School-based course unit created and added to the selected curriculum semester.')
+      const [nextCourses] = await Promise.all([getCourses('SCHOOL_BASED'), refreshMappings(selected)])
+      setCourses(nextCourses)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create and map the school-based course unit.')
+      // If the catalogue record was saved but mapping failed, refresh the catalogue
+      // so the unit remains available for a retry without creating a duplicate.
+      try { setCourses(await getCourses('SCHOOL_BASED')) } catch { /* retain the original error */ }
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function removeCourseUnit(mapping: CurriculumCourse) {
     const course = courses.find(item => item.id === mapping.courseId)
     const confirmed = await showConfirmDialog(`Remove ${course?.code ?? 'this course unit'} from this curriculum? The course remains in the catalogue and historical registrations are not deleted.`, { title: 'Remove course unit', confirmLabel: 'Remove course unit', destructive: true })
@@ -991,6 +1028,30 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </div>
           {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
           {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
+
+          {selected && resolveAcademicAuthority(authority) === 'SCHOOL_BASED' && (
+            <form className="student-form curriculum-school-course-form" onSubmit={saveSchoolBasedCourseUnit}>
+              <h3>Add school-based course unit directly to this curriculum</h3>
+              <p className="empty">Enter the unit from the institution's approved curriculum. It will be saved in the SCHOOL_BASED catalogue and placed in the selected year and semester.</p>
+              <div className="form-row">
+                <input required placeholder="Course/unit code" value={schoolUnitForm.code} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, code: e.target.value })} />
+                <input required placeholder="Course/unit name" value={schoolUnitForm.name} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, name: e.target.value })} />
+              </div>
+              <div className="form-row">
+                <input required type="number" min="0" placeholder="Credit units" value={schoolUnitForm.creditUnits} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, creditUnits: e.target.value })} />
+                <select aria-label="School-based course unit type" required value={schoolUnitForm.courseType} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, courseType: e.target.value })}>
+                  <option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Competence Area">Competence Area</option><option value="Other">Other</option>
+                </select>
+              </div>
+              <input placeholder="Description / learning outcomes (optional)" value={schoolUnitForm.description} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, description: e.target.value })} />
+              <div className="form-row">
+                <label>Year of study<input required type="number" min="1" value={schoolUnitForm.yearOfStudy} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, yearOfStudy: e.target.value })} /></label>
+                <label>Semester<input required type="number" min="1" value={schoolUnitForm.semesterNumber} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, semesterNumber: e.target.value })} /></label>
+                <label><input type="checkbox" checked={schoolUnitForm.isCore} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, isCore: e.target.checked })} /> Core unit</label>
+              </div>
+              <button type="submit" disabled={saving || !selected || !schoolUnitForm.code.trim() || !schoolUnitForm.name.trim()}>Save and add to semester</button>
+            </form>
+          )}
 
           {selected && (
             <div className="curriculum-semester-list">
