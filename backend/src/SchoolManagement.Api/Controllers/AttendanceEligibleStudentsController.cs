@@ -78,6 +78,8 @@ public sealed class AttendanceEligibleStudentsController(
         if (context.CampusId.HasValue)
             studentsQuery = studentsQuery.Where(s => s.CampusId == context.CampusId);
 
+        var totalEnrolled = await studentsQuery.CountAsync(cancellationToken);
+
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim().ToLowerInvariant();
@@ -142,7 +144,7 @@ public sealed class AttendanceEligibleStudentsController(
                 dayOfWeek = context.DayOfWeek.ToString(),
                 context.StartTime,
                 context.EndTime,
-                totalEnrolled = students.Count
+                totalEnrolled
             },
             students
         });
