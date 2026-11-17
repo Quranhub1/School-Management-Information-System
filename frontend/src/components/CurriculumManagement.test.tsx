@@ -12,12 +12,14 @@ const { mockAuthorityList, mockProgrammes, mockCurricula, mockCourses } = vi.hoi
     { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
     { id: 'programme-pharmacy', code: 'CPH', name: 'Certificate in Pharmacy', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
     { id: 'programme-short', code: 'UHPAB-SHORT', name: 'Basic Life Support', award: 'Certificate', durationYears: 1, durationUnit: 'Days', studyMode: 'Full-time', deliveryType: 'ShortCourse', approvalStatus: 'Approved', type: 1, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
+    { id: 'programme-uvtab', code: 'UVTAB-DBA', name: 'Diploma in Business Administration', award: 'Diploma', durationYears: 0, durationUnit: 'Not published', studyMode: 'Full-time', deliveryType: 'CompetencyBased', approvalStatus: 'NeedsVerification', type: 0, regulator: 'UVTAB', isActive: true, isReferenceOnly: false },
   ],
   mockCurricula: [
     // The stale programmeType value must not hide a curriculum whose programme is FullProgramme.
     { id: 'curriculum-pharmacy', programmeId: 'programme-pharmacy', version: '1.0', title: 'Certificate in Pharmacy Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 1 },
     { id: 'curriculum-short-inactive', programmeId: 'programme-short', version: '1.0', title: 'Inactive short curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Inactive', isActive: false, programmeType: 1 },
     { id: 'curriculum-school', programmeId: 'programme-school', version: '1.0', title: 'KSHS School-Based Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 0 },
+    { id: 'curriculum-uvtab', programmeId: 'programme-uvtab', version: '1.0', title: 'UVTAB Business Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 0 },
   ],
   mockCourses: [
     { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, courseType: 'Lecture' },
@@ -136,6 +138,7 @@ describe('CurriculumManagement selectors', () => {
     expect(await screen.findByRole('heading', { name: 'Add school-based course unit directly to this curriculum' })).toBeInTheDocument()
     fireEvent.change(screen.getByPlaceholderText('Course/unit code'), { target: { value: 'KSHS101' } })
     fireEvent.change(screen.getByPlaceholderText('Course/unit name'), { target: { value: 'Foundations of Public Health' } })
+    fireEvent.change(screen.getByLabelText('School-based course unit type'), { target: { value: 'Lecture' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save and add to semester' }))
 
     await waitFor(() => expect(createCourse).toHaveBeenCalledWith(expect.objectContaining({
@@ -143,6 +146,37 @@ describe('CurriculumManagement selectors', () => {
     })))
     await waitFor(() => expect(addCurriculumCourse).toHaveBeenCalledWith('curriculum-school', expect.objectContaining({
       courseId: 'course-school-new', yearOfStudy: 1, semesterNumber: 1, isCore: true,
+    })))
+  })
+
+  it('offers competence-area and competence-unit entry for UVTAB curricula', async () => {
+    vi.mocked(createCourse).mockResolvedValue({
+      id: 'uvtab-competence-1', authorityCode: 'UVTAB', code: 'UVTAB-COMP-01',
+      name: 'Apply workplace safety', creditUnits: 0, courseType: 'Competence Area', isActive: true,
+    })
+    vi.mocked(addCurriculumCourse).mockResolvedValue({
+      id: 'mapping-uvtab-1', curriculumId: 'curriculum-uvtab', courseId: 'uvtab-competence-1',
+      yearOfStudy: 1, semesterNumber: 1, isCore: true,
+    })
+
+    render(<CurriculumManagement canManage />)
+    const authoritySelect = await screen.findByLabelText('Authority')
+    await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
+    fireEvent.change(authoritySelect, { target: { value: 'UVTAB' } })
+    await waitFor(() => expect(authoritySelect).toHaveValue('UVTAB'))
+    fireEvent.change(screen.getByLabelText('Select curriculum'), { target: { value: 'curriculum-uvtab' } })
+
+    expect(await screen.findByRole('heading', { name: 'Add UVTAB competence area / unit' })).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('Competence code'), { target: { value: 'UVTAB-COMP-01' } })
+    fireEvent.change(screen.getByPlaceholderText('Competence area / unit name'), { target: { value: 'Apply workplace safety' } })
+    fireEvent.change(screen.getByLabelText('Competence type'), { target: { value: 'Competence Area' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save and add to semester' }))
+
+    await waitFor(() => expect(createCourse).toHaveBeenCalledWith(expect.objectContaining({
+      authorityCode: 'UVTAB', code: 'UVTAB-COMP-01', courseType: 'Competence Area',
+    })))
+    await waitFor(() => expect(addCurriculumCourse).toHaveBeenCalledWith('curriculum-uvtab', expect.objectContaining({
+      courseId: 'uvtab-competence-1', yearOfStudy: 1, semesterNumber: 1,
     })))
   })
 
