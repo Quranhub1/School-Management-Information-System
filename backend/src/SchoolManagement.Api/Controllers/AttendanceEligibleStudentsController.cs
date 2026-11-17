@@ -95,7 +95,6 @@ public sealed class AttendanceEligibleStudentsController(
 
         var roster = await studentsQuery
             .OrderBy(s => s.LastName).ThenBy(s => s.FirstName)
-            .Take(100)
             .Select(s => new
             {
                 s.Id,
