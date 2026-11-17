@@ -193,10 +193,25 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
                 sessionStatus = session.Status,
                 className = teachingGroup.Name == null || teachingGroup.Name == "" ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name,
                 courseName = course.Name,
-                timetableSlot = entry.DayOfWeek + " " + entry.StartTime.ToString("HH:mm") + "–" + entry.EndTime.ToString("HH:mm"),
+                dayOfWeek = entry.DayOfWeek,
+                startTime = entry.StartTime,
+                endTime = entry.EndTime,
                 room = entry.Room
             }).ToListAsync(cancellationToken);
-        return Ok(history);
+        return Ok(history.Select(row => new
+        {
+            row.Id,
+            row.AttendanceSessionId,
+            row.StudentId,
+            row.Status,
+            row.Remarks,
+            row.sessionDate,
+            row.sessionStatus,
+            row.className,
+            row.courseName,
+            timetableSlot = row.dayOfWeek + " " + row.startTime.ToString("HH:mm") + "–" + row.endTime.ToString("HH:mm"),
+            row.room
+        }));
     }
 
     [HttpGet("sessions/lookup")]
