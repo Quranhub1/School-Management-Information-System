@@ -169,7 +169,7 @@ export const staffCreateRequestSchema = z.object({
 });
 export const leaveRequestSchema = z.object({
   staffMemberId: identifierSchema,
-  leaveType: requiredTextSchema,
+  leaveType: z.enum(['Annual', 'Sick', 'Maternity', 'Paternity', 'Study']),
   startDate: z.iso.date(),
   endDate: z.iso.date(),
   reason: requiredTextSchema.min(5),
