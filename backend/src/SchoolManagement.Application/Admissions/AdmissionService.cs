@@ -22,7 +22,7 @@ public sealed class AdmissionService(IAdmissionRepository repository)
             ProgrammeId = programmeId,
             AcademicYearId = academicYearId,
             IntakeId = intakeId,
-            Status = AdmissionStatus.Pending
+            Status = "Pending"
         };
 
         await repository.AddAdmissionAsync(admission, cancellationToken);
@@ -35,8 +35,8 @@ public sealed class AdmissionService(IAdmissionRepository repository)
         var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken);
         if (admission is null) return null;
 
-        if (status.HasValue)
-            admission.Status = status.Value;
+        if (status != null)
+            admission.Status = status;
 
         await repository.UpdateAdmissionAsync(admission, cancellationToken);
         return admission;
