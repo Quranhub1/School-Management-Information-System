@@ -5,7 +5,6 @@ import {
   attendanceBulkMarkRequestSchema,
   attendanceEligibleStudentSchema,
   attendanceSessionSummarySchema,
-  attendanceQrTokenSchema,
   staffCheckEventSchema,
 } from '../schemas'
 
@@ -77,13 +76,6 @@ export type SessionSummary = {
   attendancePercentage: number
 }
 
-export type QrTokenInfo = {
-  attendanceSessionId: string
-  token: string
-  expiresAtUtc: string
-  rotationSeconds: number
-  scheme: string
-}
 
 export type StaffCheckEvent = {
   id: string
@@ -180,23 +172,6 @@ export async function getStudentAttendanceHistory(
   return request<AttendanceRecord[]>(
     `/api/attendance/students/${encodeURIComponent(studentId)}?${params.toString()}`,
   )
-}
-
-/** ---------- QR ---------- */
-
-export async function getQrToken(sessionId: string) {
-  return request<QrTokenInfo>(`/api/attendance/sessions/${encodeURIComponent(sessionId)}/qr`)
-}
-
-export async function getQrImage(sessionId: string) {
-  const response = await fetch(`${API_BASE_URL}/api/attendance/sessions/${encodeURIComponent(sessionId)}/qr-image`, {
-    cache: 'no-store',
-    headers: {
-      ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
-    },
-  })
-  if (!response.ok) throw new Error(await readApiErrorMessage(response))
-  return response.text() // SVG
 }
 
 /** ---------- Staff check-in/check-out ---------- */
