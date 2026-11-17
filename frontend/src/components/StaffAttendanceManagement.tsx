@@ -41,12 +41,16 @@ export function StaffAttendanceManagement() {
   }, [])
   useEffect(() => { void load() }, [load])
 
+  const checkIns = rows.filter(row => row.checkIn).length
+  const checkOuts = rows.filter(row => row.checkOut).length
+  const incomplete = rows.filter(row => row.checkIn && !row.checkOut).length
+
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <span className="eyebrow">HR / ATTENDANCE</span>
-          <h3 className="text-lg font-semibold">Daily Staff Attendance</h3>
+          <h3 className="text-lg font-semibold">Daily Staff Attendance</h3>\n          <p className="text-xs text-slate-500">Fingerprint check-in and check-out events appear here automatically after the workstation agent confirms each scan.</p>
         </div>
         <button type="button" className="btn btn-secondary" onClick={() => void load()} disabled={loading}>Refresh register</button>
       </div>
@@ -61,6 +65,12 @@ export function StaffAttendanceManagement() {
             {departments.map(department => <option key={department.id} value={department.id}>{department.name}</option>)}
           </select>
         </label>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="summary-card"><span>Check-ins</span><strong>{checkIns}</strong></div>
+        <div className="summary-card"><span>Check-outs</span><strong>{checkOuts}</strong></div>
+        <div className="summary-card"><span>Missing check-out</span><strong>{incomplete}</strong></div>
       </div>
 
       {error && <div className="error-message" role="alert">{error}</div>}
