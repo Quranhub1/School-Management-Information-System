@@ -8,7 +8,8 @@ type SemesterOption = { id: string; name: string; academicYearId: string; startD
 type IntakeOption = { id: string; name: string; code: string }
 type StudentRow = { number: number; id: string; registrationNumber: string; name: string; status: string | null; remarks?: string | null; attendanceRecordId?: string | null }
 type ReportRow = { month: string; classId: string; className: string; totalAttendance: number; totalPresent: number; totalAbsent: number; totalLate: number; totalExcused: number }
-type HistoryRow = { id: string; attendanceSessionId: string; studentId: string; status: string; remarks?: string | null; sessionDate: string; className: string; sessionStatus: string }\ntype StudentMatch = { id: string; registrationNumber: string; name: string }
+type HistoryRow = { id: string; attendanceSessionId: string; studentId: string; status: string; remarks?: string | null; sessionDate: string; className: string; sessionStatus: string }
+type StudentMatch = { id: string; registrationNumber: string; name: string }
 type Session = { id: string; timetableEntryId: string; sessionDate: string; status: string }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -48,7 +49,9 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   const [monthly, setMonthly] = useState<ReportRow[]>([])
   const [overall, setOverall] = useState<Omit<ReportRow, 'month'>[]>([])
   const [reportMonth, setReportMonth] = useState('')
-  const [studentId, setStudentId] = useState('')\n  const [studentSearch, setStudentSearch] = useState('')\n  const [studentMatches, setStudentMatches] = useState<StudentMatch[]>([])
+  const [studentId, setStudentId] = useState('')
+  const [studentSearch, setStudentSearch] = useState('')
+  const [studentMatches, setStudentMatches] = useState<StudentMatch[]>([])
   const [history, setHistory] = useState<HistoryRow[]>([])
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
