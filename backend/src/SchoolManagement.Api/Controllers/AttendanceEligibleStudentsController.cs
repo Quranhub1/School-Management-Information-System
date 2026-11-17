@@ -102,7 +102,10 @@ public sealed class AttendanceEligibleStudentsController(
                 s.StudentNumber.ToLower().Contains(term)
                 || s.FirstName.ToLower().Contains(term)
                 || s.LastName.ToLower().Contains(term)
-                || (s.OtherNames != null && s.OtherNames.ToLower().Contains(term)));
+                || (s.OtherNames != null && s.OtherNames.ToLower().Contains(term))
+                || db.Admissions.Any(admission => admission.Id == s.AdmissionId
+                    && db.Applicants.Any(applicant => applicant.Id == admission.ApplicantId
+                        && applicant.ApplicationNumber.ToLower().Contains(term))));
         }
 
         var roster = await studentsQuery
