@@ -231,7 +231,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   return (
     <section className="panel" aria-label="Attendance management">
       <style>{`@media (max-width: 640px) { .attendance-mobile-table thead { display: none; } .attendance-mobile-table, .attendance-mobile-table tbody, .attendance-mobile-table tr, .attendance-mobile-table td { display: block; width: 100%; } .attendance-mobile-table tr { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; padding: 6px 10px; } .attendance-mobile-table td { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 6px 0; text-align: right; } .attendance-mobile-table td::before { content: attr(data-label); font-weight: 600; color: #475569; text-align: left; } .attendance-mobile-table td button, .attendance-mobile-table td select { min-height: 44px; } }`}</style>
-      <div className="panel-heading"><div><span className="eyebrow">ATTENDANCE</span><h3>Attendance management</h3></div></div>
+      <div className="panel-heading"><div><h3>Attendance management</h3></div></div>
       <div className="library-workspace-tabs" role="tablist" aria-label="Attendance categories">
         <button type="button" role="tab" aria-selected={section === 'students'} className={section === 'students' ? 'active' : ''} onClick={() => setSection('students')}>Students</button>
         {canViewStaffAttendance && <button type="button" role="tab" aria-selected={section === 'staff'} className={section === 'staff' ? 'active' : ''} onClick={() => setSection('staff')}>Staff</button>}
@@ -255,7 +255,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
             <button type="button" className="btn btn-secondary" onClick={() => void loadReport()} disabled={loading}>Refresh report</button>
           </div>
           <div className="panel" style={{ marginTop: 16 }}>
-            <div className="panel-heading"><div><h4>Monthly attendance by class</h4><p>Each colour represents a different class. Select a month to compare the classes across the school.</p></div></div>
+            <div className="panel-heading"><div><h4>Monthly attendance by class</h4></div></div>
             {loading ? <p className="empty">Loading attendance report…</p> : chartRows.rows.length === 0 ? <p className="empty">No attendance records are available for this semester and month.</p> : <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 28 }}>
               <div aria-label="Pie chart of present attendance by class" role="img" style={{ width: 220, height: 220, borderRadius: '50%', background: chartRows.gradient, flex: '0 0 220px', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.08)' }} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 10, flex: '1 1 280px' }}>

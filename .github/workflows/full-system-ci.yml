@@ -27,8 +27,6 @@ env:
   Authentication__JwtIssuer: https://ci.school-management.local
   Authentication__JwtAudience: school-management-api
   SEED_ADMIN_PASSWORD: ci-only-strong-admin-password-for-e2e-validation-2026
-  Security__AttendanceQrSecret: ci-only-attendance-qr-secret-for-e2e-validation-2026
-  SMIS_ATTENDANCE_QR_SECRET: ci-only-attendance-qr-secret-for-e2e-validation-2026
   VITE_API_BASE_URL: http://127.0.0.1:5080
   API_BASE_URL: http://127.0.0.1:5080
   FRONTEND_URL: http://127.0.0.1:4173
@@ -157,9 +155,17 @@ jobs:
         working-directory: frontend
         run: npm test
 
-      - name: Install Playwright for E2E tests
+      - name: Install isolated Playwright test dependencies
         working-directory: frontend
-        run: npm install --no-save --package-lock=false @playwright/test@1.65.0
+        run: |
+          set -euo pipefail
+          playwright_dir="${{ runner.temp }}/smis-playwright"
+          mkdir -p "$playwright_dir"
+          npm install --prefix "$playwright_dir" --no-save --package-lock=false @playwright/test@1.65.0
+          mkdir -p node_modules/@playwright
+          ln -s "$playwright_dir/node_modules/@playwright/test" node_modules/@playwright/test
+          ln -s "$playwright_dir/node_modules/playwright" node_modules/playwright
+          ln -s "$playwright_dir/node_modules/playwright-core" node_modules/playwright-core
 
       - name: Build frontend against running API
         working-directory: frontend
@@ -171,7 +177,7 @@ jobs:
 
       - name: Install Playwright Chromium
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: ${{ runner.temp }}/smis-playwright/node_modules/.bin/playwright install --with-deps chromium
 
       - name: Start frontend preview server
         working-directory: frontend
@@ -203,7 +209,7 @@ jobs:
         working-directory: frontend
         env:
           NODE_PATH: ${{ github.workspace }}/frontend/node_modules
-        run: npx playwright test --config=playwright.config.cjs --reporter=line
+        run: ${{ runner.temp }}/smis-playwright/node_modules/.bin/playwright test --config=playwright.config.cjs --reporter=line
 
       - name: Dump service logs on failure
         if: failure()
