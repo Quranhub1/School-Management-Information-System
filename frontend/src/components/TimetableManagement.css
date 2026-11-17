@@ -234,3 +234,18 @@
     white-space: normal;
   }
 }
+
+
+.timetable-semester-templates{display:grid;gap:12px;margin:18px 0;padding:16px;border:1px solid var(--border-color,#d8d5cc);border-radius:8px;background:var(--surface,#fff)}
+.timetable-semester-templates-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.timetable-semester-templates-heading h3{margin:0;font-size:1rem}
+.timetable-semester-templates-heading span{font-size:.82rem;color:var(--text-muted,#686868)}
+.timetable-semester-template-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.timetable-semester-template-card{display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:14px;border:1px solid var(--border-color,#d8d5cc);border-radius:7px;background:var(--surface-raised,#faf9f6)}
+.timetable-semester-template-card.is-selected{border-color:var(--primary-color,#173f9b);box-shadow:inset 0 0 0 1px var(--primary-color,#173f9b)}
+.timetable-semester-template-kicker{font-size:.7rem;font-weight:700;letter-spacing:.06em;color:var(--text-muted,#686868)}
+.timetable-semester-template-card h4{margin:3px 0 0;font-size:1rem}
+.timetable-semester-template-card p{margin:0;font-size:.82rem;color:var(--text-muted,#686868)}
+.timetable-semester-template-status{font-size:.8rem;font-weight:600}
+.timetable-semester-template-card .timetable-action{margin-top:auto;width:100%;justify-content:center}
+@media(max-width:640px){.timetable-semester-templates{padding:12px}.timetable-semester-template-grid{grid-template-columns:1fr}}
