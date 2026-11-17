@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using SchoolManagement.Domain.Audit;
 using SchoolManagement.Domain.Attendance;
@@ -16,7 +14,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/attendance")]
 [Authorize]
-public sealed class AttendanceController(AttendanceService service, IConfiguration configuration, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
+public sealed class AttendanceController(AttendanceService service, SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpPost("sessions")]
     [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
@@ -61,62 +59,6 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         catch (KeyNotFoundException ex)
         {
             return NotFound(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
-    }
-
-    [HttpGet("sessions/{attendanceSessionId:guid}/qr")]
-    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
-    public async Task<IActionResult> GetRotatingQrToken(Guid attendanceSessionId, CancellationToken cancellationToken)
-    {
-        var campusId = await GetSessionCampusIdAsync(attendanceSessionId, cancellationToken);
-        if (campusId is null && !await db.AttendanceSessions.AnyAsync(x => x.Id == attendanceSessionId, cancellationToken))
-            return NotFound(new { message = "Attendance session was not found." });
-        if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)) return Forbid();
-        var sessionStatus = await db.AttendanceSessions.AsNoTracking()
-            .Where(x => x.Id == attendanceSessionId)
-            .Select(x => x.Status)
-            .SingleOrDefaultAsync(cancellationToken);
-        if (!string.Equals(sessionStatus, "Open", StringComparison.OrdinalIgnoreCase))
-            return Conflict(new { message = "QR attendance is available only while the attendance session is open." });
-        var now = DateTimeOffset.UtcNow;
-        var slot = now.ToUnixTimeSeconds() / 60;
-        var token = CreateQrToken(attendanceSessionId, slot);
-
-        return Ok(new
-        {
-            attendanceSessionId,
-            token,
-            expiresAtUtc = DateTimeOffset.FromUnixTimeSeconds((slot + 1) * 60),
-            rotationSeconds = 60,
-            scheme = "SMIS-ATTENDANCE-V1"
-        });
-    }
-
-    [HttpPost("sessions/{attendanceSessionId:guid}/qr-records")]
-    [Authorize(Policy = AuthorizationPolicies.AttendanceManagement)]
-    public async Task<IActionResult> MarkWithQr(Guid attendanceSessionId, MarkQrAttendanceRequest request, CancellationToken cancellationToken)
-    {
-        if (!IsValidQrToken(attendanceSessionId, request.Token))
-            return Unauthorized(new { message = "The attendance QR code is invalid or has expired. Scan the current code and try again." });
-        var campusError = await ValidateAttendanceCampusAsync(attendanceSessionId, request.StudentId, cancellationToken);
-        if (campusError is not null) return campusError;
-
-        try
-        {
-            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status?.ToString() ?? nameof(AttendanceStatus.Present), request.Remarks, cancellationToken);
-            return Created($"/api/attendance/records/{record.Id}", record);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
@@ -465,35 +407,9 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         return null;
     }
 
-    private string CreateQrToken(Guid sessionId, long slot)
-    {
-        var secret = configuration["Security:AttendanceQrSecret"]
-            ?? configuration["SMIS_ATTENDANCE_QR_SECRET"]
-            ?? Environment.GetEnvironmentVariable("SMIS_ATTENDANCE_QR_SECRET");
-        if (string.IsNullOrWhiteSpace(secret))
-            throw new InvalidOperationException("Attendance QR security secret is not configured. Set SMIS_ATTENDANCE_QR_SECRET on the server.");
 
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
-        var payload = $"SMIS-ATTENDANCE-V1|{sessionId:N}|{slot}";
-        return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
-    }
-
-    private bool IsValidQrToken(Guid sessionId, string? suppliedToken)
-    {
-        if (string.IsNullOrWhiteSpace(suppliedToken)) return false;
-
-        var currentSlot = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / 60;
-        foreach (var slot in new[] { currentSlot, currentSlot - 1 })
-        {
-            var expected = CreateQrToken(sessionId, slot);
-            if (CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(suppliedToken.Trim().ToLowerInvariant())))
-                return true;
-        }
-        return false;
-    }
 }
 
 public sealed record OpenAttendanceSessionRequest(Guid TimetableEntryId, DateOnly SessionDate, Guid? RecordedByUserId, string? Remarks);
 public sealed record MarkAttendanceRequest(Guid StudentId, AttendanceStatus Status, string? Remarks);
-public sealed record MarkQrAttendanceRequest(Guid StudentId, AttendanceStatus? Status, string? Remarks, string Token);
 public sealed record UpdateAttendanceRecordRequest(AttendanceStatus Status, string? Remarks);
