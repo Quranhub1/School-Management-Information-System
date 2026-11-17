@@ -8,7 +8,7 @@ type SemesterOption = { id: string; name: string; academicYearId: string; startD
 type IntakeOption = { id: string; name: string; code: string }
 type StudentRow = { number: number; id: string; registrationNumber: string; name: string; status: string | null; remarks?: string | null; attendanceRecordId?: string | null }
 type ReportRow = { month: string; classId: string; className: string; totalAttendance: number; totalPresent: number; totalAbsent: number; totalLate: number; totalExcused: number }
-type HistoryRow = { id: string; attendanceSessionId: string; studentId: string; status: string; remarks?: string | null }
+type HistoryRow = { id: string; attendanceSessionId: string; studentId: string; status: string; remarks?: string | null; sessionDate: string; className: string; sessionStatus: string }
 type Session = { id: string; timetableEntryId: string; sessionDate: string; status: string }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -104,7 +104,9 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     if (!timetableEntryId) { setError('Select a class and its timetable session first.'); return }
     setLoading(true); setError(''); setMessage('')
     try {
-      const opened = await request<Session>('/api/attendance/sessions', { method: 'POST', body: JSON.stringify({ timetableEntryId, sessionDate, recordedByUserId: null, remarks: null }) })
+      const lookup = new URLSearchParams({ timetableEntryId, sessionDate })
+      const existing = await request<Session | null>(`/api/attendance/sessions/lookup?${lookup.toString()}`)
+      const opened = existing ?? await request<Session>('/api/attendance/sessions', { method: 'POST', body: JSON.stringify({ timetableEntryId, sessionDate, recordedByUserId: null, remarks: null }) })
       setSession(opened)
       await loadRegister(opened.id)
       setMessage('Attendance session opened.')
@@ -238,7 +240,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
 
         {studentView === 'history' && <>
           <div className="grid-form"><label>Student ID<input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="Student record ID" /></label><label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label><button type="button" className="btn btn-secondary" onClick={() => void loadHistory()} disabled={loading}>Load history</button></div>
-          <div className="table-responsive" style={{ marginTop: 12 }}><table className="data-table"><thead><tr><th>#</th><th>SESSION</th><th>STATUS</th><th>REMARKS</th></tr></thead><tbody>{history.map((x,i) => <tr key={x.id}><td>{i+1}</td><td>{x.attendanceSessionId}</td><td>{x.status}</td><td>{x.remarks ?? '—'}</td></tr>)}{history.length === 0 && <tr><td colSpan={4}>No attendance history loaded.</td></tr>}</tbody></table></div>
+          <div className="table-responsive" style={{ marginTop: 12 }}><table className="data-table"><thead><tr><th>#</th><th>DATE</th><th>CLASS</th><th>STATUS</th><th>REMARKS</th><th>ACTION</th></tr></thead><tbody>{history.map((x,i) => <tr key={x.id}><td>{i+1}</td><td>{x.sessionDate}</td><td>{x.className}</td><td><select aria-label={`Correct attendance for ${x.sessionDate}`} value={x.status} disabled={readOnly || x.sessionStatus !== 'Open'} onChange={e => setHistory(current => current.map(row => row.id === x.id ? { ...row, status: e.target.value } : row))}>{statusOptions.map(option => <option key={option}>{option}</option>)}</select></td><td>{x.remarks ?? '—'}</td><td><button type="button" className="btn btn-secondary" disabled={readOnly || x.sessionStatus !== 'Open'} onClick={async () => { try { await request(`/api/attendance/records/${x.id}`, { method: 'PUT', body: JSON.stringify({ status: x.status, remarks: x.remarks ?? null }) }); setMessage('Attendance correction saved.') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to correct attendance.') } }}>Save correction</button></td></tr>)}{history.length === 0 && <tr><td colSpan={6}>No attendance history loaded.</td></tr>}</tbody></table></div>
         </>}
       </>}
     </section>
