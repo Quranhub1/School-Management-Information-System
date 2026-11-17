@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Domain.Attendance;
