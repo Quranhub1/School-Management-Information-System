@@ -198,20 +198,21 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             join entry in db.TimetableEntries.AsNoTracking() on teachingGroup.Id equals entry.TeachingGroupId
             join staff in db.StaffMembers.AsNoTracking() on entry.StaffMemberId equals staff.Id
             where teachingGroup.Id == teachingGroupId && teachingGroup.IsActive && offering.IsActive && entry.IsActive
-            select new { offering.ProgrammeId, offering.SemesterId, staff.CampusId }).FirstOrDefaultAsync(cancellationToken);
+            select new { offering.ProgrammeId, offering.SemesterId, entry.CourseId, staff.CampusId }).FirstOrDefaultAsync(cancellationToken);
         if (group is null) return NotFound(new { message = "Class or its timetable assignment was not found." });
         if (!await campusAccess.CanAccessCampusAsync(User, group.CampusId, cancellationToken)) return Forbid();
 
         var admissionIds = db.Admissions.AsNoTracking().Where(a => a.ProgrammeId == group.ProgrammeId
             && (!intakeId.HasValue || a.IntakeId == intakeId.Value)).Select(a => a.Id);
         var studentsQuery = db.Students.AsNoTracking().Where(s => !s.IsArchived && s.Status == "Active"
-            && s.AdmissionId.HasValue && admissionIds.Contains(s.AdmissionId.Value));
+            && s.AdmissionId.HasValue && admissionIds.Contains(s.AdmissionId.Value)
+            && db.CourseRegistrations.Any(reg => reg.StudentId == s.Id && reg.SemesterId == group.SemesterId && reg.CourseId == group.CourseId));
         if (group.CampusId.HasValue) studentsQuery = studentsQuery.Where(s => s.CampusId == group.CampusId);
         var students = await studentsQuery.OrderBy(s => s.LastName).ThenBy(s => s.FirstName)
-            .Select(s => new { id = s.Id, registrationNumber = s.StudentNumber,
-                name = string.Join(" ", new[] { s.LastName, s.FirstName, s.OtherNames }.Where(v => v != null && v != "")) })
+            .Select(s => new { id = s.Id, registrationNumber = s.StudentNumber, s.LastName, s.FirstName, s.OtherNames })
             .ToListAsync(cancellationToken);
-        return Ok(students);
+        return Ok(students.Select(s => new { s.id, s.registrationNumber,
+            name = string.Join(" ", new[] { s.LastName, s.FirstName, s.OtherNames }.Where(v => !string.IsNullOrWhiteSpace(v))) }));
     }
 
     [HttpGet("monthly-report")]
@@ -279,23 +280,25 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             join offering in db.CourseOfferings.AsNoTracking() on teachingGroup.CourseOfferingId equals offering.Id
             join staff in db.StaffMembers.AsNoTracking() on entry.StaffMemberId equals staff.Id
             where entry.Id == session.TimetableEntryId
-            select new { teachingGroup.Id, teachingGroup.GroupCode, teachingGroup.Name, offering.ProgrammeId, staff.CampusId }).FirstOrDefaultAsync(cancellationToken);
+            select new { teachingGroup.Id, teachingGroup.GroupCode, teachingGroup.Name, offering.ProgrammeId, offering.SemesterId, entry.CourseId, staff.CampusId }).FirstOrDefaultAsync(cancellationToken);
         if (context is null || !await campusAccess.CanAccessCampusAsync(User, context.CampusId, cancellationToken)) return Forbid();
         var admissionIds = db.Admissions.AsNoTracking().Where(a => a.ProgrammeId == context.ProgrammeId
             && (!intakeId.HasValue || a.IntakeId == intakeId.Value)).Select(a => a.Id);
         var rosterQuery = db.Students.AsNoTracking().Where(s => !s.IsArchived && s.Status == "Active"
-            && s.AdmissionId.HasValue && admissionIds.Contains(s.AdmissionId.Value));
+            && s.AdmissionId.HasValue && admissionIds.Contains(s.AdmissionId.Value)
+            && db.CourseRegistrations.Any(reg => reg.StudentId == s.Id && reg.SemesterId == context.SemesterId && reg.CourseId == context.CourseId));
         if (context.CampusId.HasValue) rosterQuery = rosterQuery.Where(s => s.CampusId == context.CampusId);
-        var roster = await rosterQuery.OrderBy(s => s.LastName).ThenBy(s => s.FirstName)
-            .Select(s => new { id = s.Id, registrationNumber = s.StudentNumber,
-                name = string.Join(" ", new[] { s.LastName, s.FirstName, s.OtherNames }.Where(v => v != null && v != "")) })
+        var rosterRows = await rosterQuery.OrderBy(s => s.LastName).ThenBy(s => s.FirstName)
+            .Select(s => new { id = s.Id, registrationNumber = s.StudentNumber, s.LastName, s.FirstName, s.OtherNames })
             .ToListAsync(cancellationToken);
+        var roster = rosterRows.Select((s, index) => new { number = index + 1, s.id, s.registrationNumber,
+            name = string.Join(" ", new[] { s.LastName, s.FirstName, s.OtherNames }.Where(v => !string.IsNullOrWhiteSpace(v))) }).ToList();
         var existing = await db.StudentAttendances.AsNoTracking().Where(x => x.AttendanceSessionId == attendanceSessionId)
             .Select(x => new { x.Id, x.StudentId, x.Status, x.Remarks }).ToListAsync(cancellationToken);
         var register = roster.Select((student, index) =>
         {
             var record = existing.FirstOrDefault(x => x.StudentId == student.id);
-            return new { number = index + 1, student.id, student.registrationNumber, student.name,
+            return new { student.number, student.id, student.registrationNumber, student.name,
                 status = record?.Status, remarks = record?.Remarks, attendanceRecordId = record?.Id };
         }).ToList();
         return Ok(new { session, className = string.IsNullOrWhiteSpace(context.Name) ? context.GroupCode : context.GroupCode + " — " + context.Name, students = register });
