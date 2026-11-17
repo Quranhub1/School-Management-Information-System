@@ -35,13 +35,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                 nullable: false,
                 defaultValue: 0u);
 
-            migrationBuilder.AlterColumn<int>(
-                name: "Status",
-                table: "Applicants",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+            migrationBuilder.Sql("ALTER TABLE \"Applicants\" ALTER COLUMN \"Status\" TYPE integer USING \"Status\"::integer;");
 
             migrationBuilder.CreateTable(
                 name: "AdmissionRequirements",
@@ -291,13 +285,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                 name: "xmin",
                 table: "LibraryBooks");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Status",
-                table: "Applicants",
-                type: "text",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            migrationBuilder.Sql("ALTER TABLE \"Applicants\" ALTER COLUMN \"Status\" TYPE text USING \"Status\"::text;");
         }
     }
 }
