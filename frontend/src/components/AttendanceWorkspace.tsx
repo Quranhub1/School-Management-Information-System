@@ -12,7 +12,7 @@ type ReportRow = { month: string; classId: string; className: string; totalAtten
 type HistoryRow = { id: string; attendanceSessionId: string; studentId: string; studentName?: string; studentNumber?: string; status: string; remarks?: string | null; sessionDate: string; className: string; sessionStatus: string; courseName?: string; timetableSlot?: string; room?: string | null }
 type StudentMatch = { id: string; registrationNumber: string; name: string }
 type Session = { id: string; timetableEntryId: string; sessionDate: string; status: string; recordedByUserId?: string | null }
-type SessionContext = { className: string; programmeName: string; semesterName: string; academicYearName: string; courseName: string; courseCode: string; room?: string | null; dayOfWeek: string; startTime: string; endTime: string; totalEnrolled: number }
+type SessionContext = { className: string; programmeName: string; semesterName: string; academicYearName: string; courseName: string; courseCode: string; room?: string | null; dayOfWeek: string; startTime: string; endTime: string; openedByName?: string | null; totalEnrolled: number }
 type RegisterSummary = { present: number; absent: number; late: number; excused: number; marked: number; unmarked: number }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -319,6 +319,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
             <label>Attendance date<input type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} /></label>
             <button type="button" onClick={() => void openSession()} disabled={loading || readOnly || !timetableEntryId}>Open attendance session</button>
           </div>
+          {!session && timetableEntryId && <div className="flex items-center gap-2" style={{ marginTop: 12 }}><span className="status" style={{ background: '#f1f5f9', color: '#475569', padding: '4px 10px', borderRadius: 999 }}>Not started</span></div>}
           {session && <div className="flex flex-wrap items-center justify-between gap-3" style={{ marginTop: 16 }}>
             <div className="space-y-1">
               <strong>{sessionContext?.courseName ?? selectedGroup?.groupCode ?? 'Class'} · {session.sessionDate}</strong>
@@ -328,6 +329,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
                 <span>{sessionContext?.academicYearName} · {sessionContext?.semesterName}</span>
                 <span>{sessionContext?.dayOfWeek} {sessionContext?.startTime}–{sessionContext?.endTime}</span>
                 {sessionContext?.room && <span>Room {sessionContext.room}</span>}
+                {sessionContext?.openedByName && <span>Opened by {sessionContext.openedByName}</span>}
               </div>
             </div>
             <div className="flex flex-wrap gap-2"><button type="button" className="btn btn-secondary" onClick={() => void markAllPresent()} disabled={saving || readOnly || session.status !== 'Open'}>Mark all present</button><button type="button" className="btn btn-secondary" onClick={() => void closeSession()} disabled={saving || readOnly || session.status !== 'Open'}>Close session</button></div>
