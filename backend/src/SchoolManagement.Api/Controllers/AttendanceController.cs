@@ -167,7 +167,9 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         if (from.HasValue && to.HasValue && to.Value < from.Value)
             return BadRequest(new { message = "The end date must be on or after the start date." });
 
-        var fromDate = from;\n        var toDate = to;\n        var history = await (
+        var fromDate = from;
+        var toDate = to;
+        var history = await (
             from record in db.StudentAttendances.AsNoTracking()
             join session in db.AttendanceSessions.AsNoTracking() on record.AttendanceSessionId equals session.Id
             join entry in db.TimetableEntries.AsNoTracking() on session.TimetableEntryId equals entry.Id
