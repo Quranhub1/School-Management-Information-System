@@ -16,3 +16,26 @@ public interface IAttendanceRepository
     Task<IReadOnlyList<StudentAttendance>> GetStudentAttendanceAsync(Guid studentId, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
+
+public sealed record EligibleStudentDto(
+    Guid StudentId,
+    string StudentNumber,
+    string FirstName,
+    string LastName,
+    string? OtherNames,
+    string DisplayName,
+    string? CampusId,
+    bool AlreadyMarked);
+
+public sealed record SessionSummaryDto(
+    Guid SessionId,
+    Guid TimetableEntryId,
+    DateOnly SessionDate,
+    AttendanceSessionStatus Status,
+    int TotalEnrolled,
+    int MarkedPresent,
+    int MarkedAbsent,
+    int MarkedLate,
+    int MarkedExcused,
+    int Unmarked,
+    double AttendancePercentage);

@@ -1,3 +1,5 @@
+using SchoolManagement.Domain.Attendance;
+
 namespace SchoolManagement.Application.Attendance;
 
 public sealed class AttendanceWorkflowService(AttendanceService attendance)
