@@ -48,4 +48,14 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText('Curriculum semester')).toBeTruthy()
     expect(screen.getByText(/CPH 101 — Pharmacy Practice/)).toBeTruthy()
   })
+ 
+  it('shows a separate blank timetable template for every mapped curriculum semester', async () => {
+    render(<TimetableManagement />)
+    expect(await screen.findByRole('heading', { name: /semester templates/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Semester 1' })).toBeTruthy()
+    expect(screen.getByText(/Blank template ready/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /open semester template/i }))
+    expect(await screen.findByRole('heading', { name: /edit the timetable grid/i })).toBeTruthy()
+  })
+
 })
