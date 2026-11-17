@@ -168,6 +168,20 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         return Ok(history);
     }
 
+    [HttpGet("sessions/lookup")]
+    [Authorize(Policy = AuthorizationPolicies.AttendanceRead)]
+    public async Task<IActionResult> FindSession([FromQuery] Guid timetableEntryId, [FromQuery] DateOnly sessionDate, CancellationToken cancellationToken)
+    {
+        if (timetableEntryId == Guid.Empty) return BadRequest(new { message = "A timetable entry is required." });
+        var campusId = await GetTimetableCampusIdAsync(timetableEntryId, cancellationToken);
+        if (campusId is null && !await db.TimetableEntries.AnyAsync(x => x.Id == timetableEntryId, cancellationToken))
+            return NotFound(new { message = "Timetable entry was not found." });
+        if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)) return Forbid();
+        var session = await db.AttendanceSessions.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.TimetableEntryId == timetableEntryId && x.SessionDate == sessionDate, cancellationToken);
+        return Ok(session);
+    }
+
     [HttpGet("options")]
     [Authorize(Policy = AuthorizationPolicies.AttendanceRead)]
     public async Task<IActionResult> Options(CancellationToken cancellationToken)
