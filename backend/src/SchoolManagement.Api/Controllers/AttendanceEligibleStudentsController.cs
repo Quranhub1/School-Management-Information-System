@@ -116,7 +116,7 @@ public sealed class AttendanceEligibleStudentsController(
             {
                 number = index + 1,
                 id = student.Id,
-                student.registrationNumber,
+                registrationNumber = student.studentNumber,
                 name = string.Join(" ", new[] { student.LastName, student.FirstName, student.OtherNames }
                     .Where(value => !string.IsNullOrWhiteSpace(value))),
                 status = record?.Status,
