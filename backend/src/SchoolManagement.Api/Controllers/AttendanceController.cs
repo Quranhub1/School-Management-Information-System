@@ -392,7 +392,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             EntityId = record.Id.ToString(),
             Changes = JsonSerializer.Serialize(new { before = previous, after = new { status = record.Status, remarks = record.Remarks } }),
             IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-            UserAgent = Request.Headers.UserAgent.ToString()
+            UserAgent = Request.Headers["User-Agent"].ToString()
         });
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new { record.Id, record.StudentId, record.Status, record.Remarks });
