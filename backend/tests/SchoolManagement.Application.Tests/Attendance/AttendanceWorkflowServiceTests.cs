@@ -19,14 +19,14 @@ public sealed class AttendanceWorkflowServiceTests
     }
 
     [Fact]
-    public async Task MarkAsync_RejectsBlankStatus()
+    public async Task MarkAsync_RejectsEmptyStudentId()
     {
         var service = CreateService();
 
         await Assert.ThrowsAsync<ArgumentException>(() => service.MarkAsync(
             Guid.NewGuid(),
-            Guid.NewGuid(),
-            "   "));
+            Guid.Empty,
+            AttendanceStatus.Present));
     }
 
     private static AttendanceWorkflowService CreateService() =>

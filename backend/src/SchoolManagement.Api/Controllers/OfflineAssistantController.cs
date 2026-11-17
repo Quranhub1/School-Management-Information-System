@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Application.Administration;
 using SchoolManagement.Domain.Admissions;
+using SchoolManagement.Domain.Attendance;
 
 namespace SchoolManagement.Api.Controllers;
 
