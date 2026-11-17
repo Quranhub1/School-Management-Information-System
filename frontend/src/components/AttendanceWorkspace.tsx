@@ -108,7 +108,8 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     setLoading(true); setError(''); setMessage('')
     try {
       const lookup = new URLSearchParams({ timetableEntryId, sessionDate })
-      const existing = await request<Session | null>(`/api/attendance/sessions/lookup?${lookup.toString()}`)
+      const lookupResult = await request<{ session: Session | null }>(`/api/attendance/sessions/lookup?${lookup.toString()}`)
+      const existing = lookupResult.session
       const opened = existing ?? await request<Session>('/api/attendance/sessions', { method: 'POST', body: JSON.stringify({ timetableEntryId, sessionDate, recordedByUserId: null, remarks: null }) })
       setSession(opened)
       await loadRegister(opened.id)
