@@ -29,7 +29,7 @@ public sealed class OfflineAssistantController(SchoolManagementDbContext db, Ins
         var outstanding = invoices.Sum(x => x.Amount - x.PaidAmount);
         string answer;
         if (q.Contains("student", StringComparison.OrdinalIgnoreCase) || q.Contains("enrol", StringComparison.OrdinalIgnoreCase)) answer = $"The local SMIS database currently contains {students.Count} students, of whom {students.Count(x => x.Status == AttendanceStatus.Active)} are active.";
-        else if (q.Contains("admission", StringComparison.OrdinalIgnoreCase)) answer = $"There are {admissions.Count(x => x.Status == AdmissionStatus.Pending)} pending admissions.";
+        else if (q.Contains("admission", StringComparison.OrdinalIgnoreCase)) answer = $"There are {admissions.Count(x => x.Status == "Pending")} pending admissions.";
         else if (q.Contains("attendance", StringComparison.OrdinalIgnoreCase)) answer = $"Recorded institution-wide attendance is {attendanceRate}%.";
         else if (q.Contains("fee", StringComparison.OrdinalIgnoreCase) || q.Contains("balance", StringComparison.OrdinalIgnoreCase)) answer = $"The recorded outstanding student-invoice balance is {systemCurrency} {outstanding:N0}.";
         else if (q.Contains("mark", StringComparison.OrdinalIgnoreCase) || q.Contains("score", StringComparison.OrdinalIgnoreCase) || q.Contains("exam", StringComparison.OrdinalIgnoreCase)) answer = $"The average recorded assessment percentage is {average}%.";

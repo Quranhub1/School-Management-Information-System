@@ -20,9 +20,9 @@ public sealed class DeputyPrincipalController(SchoolManagementDbContext db) : Co
         var totalStaff = await db.StaffMembers.LongCountAsync(cancellationToken);
         var totalProgrammes = await db.Programmes.LongCountAsync(cancellationToken);
         var totalCourses = await db.Courses.LongCountAsync(cancellationToken);
-        var pendingAdmissions = await db.Admissions.LongCountAsync(x => x.Status == AdmissionStatus.Pending, cancellationToken);
-        var acceptedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == AdmissionStatus.Accepted, cancellationToken);
-        var rejectedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == AdmissionStatus.Rejected, cancellationToken);
+        var pendingAdmissions = await db.Admissions.LongCountAsync(x => x.Status == "Pending", cancellationToken);
+        var acceptedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == "Accepted", cancellationToken);
+        var rejectedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == "Rejected", cancellationToken);
         var totalResults = await db.Results.LongCountAsync(cancellationToken);
         var passedResults = await db.Results.LongCountAsync(x => x.Score.HasValue && x.Score.Value >= 50, cancellationToken);
         var failedResults = totalResults - passedResults;

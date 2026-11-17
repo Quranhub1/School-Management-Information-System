@@ -26,9 +26,9 @@ public sealed class PrincipalController(SchoolManagementDbContext db, Institutio
         var outstandingInvoices = await db.StudentInvoices.LongCountAsync(x => x.OutstandingAmount > 0, cancellationToken);
         var invoiced = await db.StudentInvoices.Where(x => x.Currency == systemCurrency).SumAsync(x => (decimal?)x.NetAmount, cancellationToken) ?? 0m;
         var paid = await db.StudentInvoices.Where(x => x.Currency == systemCurrency).SumAsync(x => (decimal?)x.PaidAmount, cancellationToken) ?? 0m;
-        var pendingAdmissions = await db.Admissions.LongCountAsync(x => x.Status == AdmissionStatus.Pending, cancellationToken);
-        var acceptedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == AdmissionStatus.Accepted, cancellationToken);
-        var rejectedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == AdmissionStatus.Rejected, cancellationToken);
+        var pendingAdmissions = await db.Admissions.LongCountAsync(x => x.Status == "Pending", cancellationToken);
+        var acceptedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == "Accepted", cancellationToken);
+        var rejectedAdmissions = await db.Admissions.LongCountAsync(x => x.Status == "Rejected", cancellationToken);
         var totalResults = await db.Results.LongCountAsync(cancellationToken);
         var passedResults = await db.Results.LongCountAsync(x => x.Score.HasValue && x.Score.Value >= 50, cancellationToken);
         var failedResults = totalResults - passedResults;

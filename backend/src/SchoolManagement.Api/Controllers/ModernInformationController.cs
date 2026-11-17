@@ -38,7 +38,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
         return Ok(new ModernDashboardDto(
             students.Count,
             students.Count(x => string.Equals(x.Status, "Active", StringComparison.OrdinalIgnoreCase)),
-            admissions.Count(x => x.Status == AdmissionStatus.Pending),
+            admissions.Count(x => x.Status == "Pending"),
             billed,
             paid,
             billed - paid,
@@ -129,7 +129,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
         var invoices = await db.StudentInvoices.AsNoTracking().ToListAsync(ct);
         var placements = await db.StudentPlacements.AsNoTracking().ToListAsync(ct);
         return Ok(new WorkflowSummaryDto(
-            admissions.Count(x => x.Status == AdmissionStatus.Pending),
+            admissions.Count(x => x.Status == "Pending"),
             invoices.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase) || x.PaidAmount < x.Amount),
             placements.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase)),
             DateTimeOffset.UtcNow));
