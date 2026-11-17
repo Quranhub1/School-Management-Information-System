@@ -1,7 +1,6 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Application.Admissions;
 using SchoolManagement.Domain.Admissions;
-using SchoolManagement.Domain.Students;
 using Xunit;
 
 namespace SchoolManagement.Application.Tests.Admissions;
@@ -76,7 +75,7 @@ public sealed class AdmissionsWorkflowServiceTests
     }
 
     [Fact]
-    public async Task DecideAsync_updates_status_and_records_decision()
+    public async Task DecideAsync_rejected_updates_status_and_records_decision()
     {
         var admission = new Admission
         {
@@ -87,55 +86,26 @@ public sealed class AdmissionsWorkflowServiceTests
             Status = "Pending"
         };
         var repository = new FakeAdmissionRepository(admission);
-        var studentRepository = new FakeStudentRepository();
-        var workflow = CreateWorkflow(repository, studentRepository);
+        var workflow = CreateWorkflow(repository);
 
         var result = await workflow.DecideAsync(admission.Id,
-            new DecideAdmissionRequest("Accepted", "Meets requirements", "tester"));
+            new DecideAdmissionRequest("Rejected", "Incomplete documents", "tester"));
 
-        Assert.Equal("Accepted", result.Decision);
-        Assert.Equal("Accepted", admission.Status);
+        Assert.Equal("Rejected", result.Decision);
+        Assert.Equal("Rejected", admission.Status);
         Assert.NotNull(repository.LastDecision);
-        Assert.Single(studentRepository.Students);
     }
 
     private static AdmissionsWorkflowService CreateWorkflow(
-        IAdmissionRepository repository,
-        IStudentRepository? studentRepository = null) =>
-        new(new AdmissionService(repository, studentRepository ?? new FakeStudentRepository()));
-
-    private sealed class FakeStudentRepository : IStudentRepository
-    {
-        public List<Student> Students { get; } = new();
-
-        public Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<Student>>(Students);
-
-        public Task<Student?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(Students.SingleOrDefault(x => x.Id == id));
-
-        public Task AddAsync(Student student, CancellationToken cancellationToken = default)
-        {
-            Students.Add(student);
-            return Task.CompletedTask;
-        }
-
-        public Task UpdateAsync(Student student, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-        public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
-        {
-            Students.RemoveAll(x => x.Id == id);
-            return Task.CompletedTask;
-        }
-
-        public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-    }
+        IAdmissionRepository repository) =>
+        new(new AdmissionService(repository));
 
     private sealed class FakeAdmissionRepository : IAdmissionRepository
     {
         private readonly Dictionary<Guid, Admission> _admissions = new();
         private readonly HashSet<Guid> _applicants = new();
         public AdmissionDecision? LastDecision { get; private set; }
+        private readonly List<AdmissionRequirement> _requirements = new();
 
         public FakeAdmissionRepository(Guid applicantId) => _applicants.Add(applicantId);
 
@@ -179,5 +149,11 @@ public sealed class AdmissionsWorkflowServiceTests
         }
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(
+            Guid admissionId, bool mandatoryOnly = false, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<AdmissionRequirement>>([]);
+        }
     }
 }

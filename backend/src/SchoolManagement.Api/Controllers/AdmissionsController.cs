@@ -75,15 +75,26 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
     {
         var applicant = await db.Applicants.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (applicant is null) return NotFound();
-        if (!string.Equals(applicant.Status, "Accepted", StringComparison.OrdinalIgnoreCase)) return Conflict(new { message = "Only an accepted application can be admitted." });
+        if (applicant.Status != "Accepted") return Conflict(new { message = "Only an accepted application can be admitted." });
         if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId, cancellationToken)) return BadRequest(new { message = "The selected programme does not exist." });
         if (!await db.Intakes.AnyAsync(x => x.Id == request.IntakeId, cancellationToken)) return BadRequest(new { message = "The selected intake does not exist." });
         if (!await db.AcademicYears.AnyAsync(x => x.Id == request.AcademicYearId, cancellationToken)) return BadRequest(new { message = "The selected academic year does not exist." });
 
+        var intake = await db.Intakes.SingleOrDefaultAsync(x => x.Id == request.IntakeId, cancellationToken);
+        if (intake is null || !intake.IsOpen) return Conflict(new { message = "The selected intake is not open for admissions." });
+
         var admission = await db.Admissions.SingleOrDefaultAsync(x => x.ApplicantId == id && x.ProgrammeId == request.ProgrammeId && x.IntakeId == request.IntakeId && x.AcademicYearId == request.AcademicYearId, cancellationToken);
         if (admission is null) return Conflict(new { message = "No matching admission record exists for this accepted application." });
-        if (string.Equals(admission.Status, "Admitted", StringComparison.OrdinalIgnoreCase)) return Conflict(new { message = "This applicant has already been admitted." });
-        if (!string.Equals(admission.Status, "Accepted", StringComparison.OrdinalIgnoreCase)) return Conflict(new { message = "The matching admission is not accepted." });
+        if (admission.Status == "Admitted") return Conflict(new { message = "This applicant has already been admitted." });
+        if (admission.Status != "Accepted") return Conflict(new { message = "The matching admission is not accepted." });
+
+        // Enforce mandatory admission requirements before admitting.
+        var mandatoryRequirements = await db.AdmissionRequirements
+            .AsNoTracking()
+            .Where(x => x.ProgrammeId == request.ProgrammeId && x.IsActive && x.IsMandatory)
+            .ToListAsync(cancellationToken);
+        if (!mandatoryRequirements.Any())
+            return Conflict(new { message = "This programme has no active mandatory admission requirements configured. Configure requirements before admitting students." });
 
         var studentNumber = request.StudentNumber?.Trim();
         if (string.IsNullOrWhiteSpace(studentNumber)) return BadRequest(new { message = "Student number is required." });

@@ -197,7 +197,7 @@ public sealed class GlobalSearchController(SchoolManagementDbContext db) : Contr
         if (to.HasValue) query = query.Where(x => x.AppliedAt <= to.Value);
 
         return await query.OrderByDescending(x => x.AppliedAt)
-            .Select(x => new ApplicantSearchResult(x.Id, x.ApplicationNumber, (x.LastName + " " + x.FirstName + " " + (x.OtherNames ?? string.Empty)).Trim().ToUpper(), x.Status))
+            .Select(x => new ApplicantSearchResult(x.Id, x.ApplicationNumber, (x.LastName + " " + x.FirstName + " " + (x.OtherNames ?? string.Empty)).Trim().ToUpper(), x.Status.ToString()))
             .Take(20).ToListAsync(ct);
     }
 

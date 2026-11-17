@@ -1,4 +1,5 @@
 using SchoolManagement.Application.Attendance;
+using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Attendance;
 using Xunit;
 
@@ -18,14 +19,14 @@ public sealed class AttendanceWorkflowServiceTests
     }
 
     [Fact]
-    public async Task MarkAsync_RejectsBlankStatus()
+    public async Task MarkAsync_RejectsEmptyStudentId()
     {
         var service = CreateService();
 
         await Assert.ThrowsAsync<ArgumentException>(() => service.MarkAsync(
             Guid.NewGuid(),
-            Guid.NewGuid(),
-            "   "));
+            Guid.Empty,
+            AttendanceStatus.Present));
     }
 
     private static AttendanceWorkflowService CreateService() =>
@@ -53,5 +54,12 @@ public sealed class AttendanceWorkflowServiceTests
             Task.FromResult<IReadOnlyList<StudentAttendance>>([]);
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<EligibleStudentDto>> GetEligibleStudentsAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<EligibleStudentDto>>([]);
+
+        public Task<SessionSummaryDto> GetSessionSummaryAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new SessionSummaryDto(
+                attendanceSessionId, Guid.Empty, DateOnly.MinValue, AttendanceSessionStatus.Open, 0, 0, 0, 0, 0, 0, 0));
     }
 }

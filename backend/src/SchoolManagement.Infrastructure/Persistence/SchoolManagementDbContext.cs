@@ -63,6 +63,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<UhpabFeeReference> UhpabFeeReferences => Set<UhpabFeeReference>();
     public DbSet<AdmissionEntity> Admissions => Set<AdmissionEntity>();
     public DbSet<AdmissionDecision> AdmissionDecisions => Set<AdmissionDecision>();
+    public DbSet<AdmissionRequirement> AdmissionRequirements => Set<AdmissionRequirement>();
     public DbSet<StudentEnrollment> StudentEnrollments => Set<StudentEnrollment>();
     public DbSet<CourseRegistration> CourseRegistrations => Set<CourseRegistration>();
     public DbSet<CourseOffering> CourseOfferings => Set<CourseOffering>();
@@ -181,6 +182,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<AdmissionDecision>().HasOne<AdmissionEntity>().WithMany().HasForeignKey(x => x.AdmissionId).OnDelete(DeleteBehavior.Cascade);
         m.ApplyConfiguration(new AdmissionsConfiguration());
         m.ApplyConfiguration(new AdmissionDecisionConfiguration());
+        m.ApplyConfiguration(new AdmissionRequirementConfiguration());
         AttendanceConfiguration.Apply(m);
         StaffAttendanceConfiguration.Apply(m);
         m.ApplyConfiguration(new SchoolManagement.Infrastructure.Certificates.CertificateConfiguration());

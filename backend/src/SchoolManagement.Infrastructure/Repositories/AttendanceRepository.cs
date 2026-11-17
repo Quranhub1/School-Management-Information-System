@@ -81,6 +81,97 @@ public sealed class AttendanceRepository(SchoolManagementDbContext db) : IAttend
             .ToListAsync(cancellationToken);
     }
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<EligibleStudentDto>> GetEligibleStudentsAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default)
+    {
+        var session = await db.AttendanceSessions.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == attendanceSessionId, cancellationToken)
+            ?? throw new KeyNotFoundException("Attendance session was not found.");
+
+        // Get the course ID from the timetable entry
+        var courseId = await db.TimetableEntries.AsNoTracking()
+            .Where(x => x.Id == session.TimetableEntryId)
+            .Select(x => x.CourseId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // Get active registrations for that course
+        var registeredStudentIds = await db.CourseRegistrations.AsNoTracking()
+            .Where(x => x.CourseId == courseId
+                && (x.Status == "Registered" || x.Status == "Active"))
+            .Select(x => x.StudentId)
+            .ToListAsync(cancellationToken);
+
+        var enrolled = await db.Students.AsNoTracking()
+            .Where(x => registeredStudentIds.Contains(x.Id) && !x.IsArchived)
+            .Select(x => new EligibleStudentDto(
+                x.Id,
+                x.StudentNumber,
+                x.FirstName,
+                x.LastName,
+                x.OtherNames,
+                x.DisplayName,
+                x.CampusId.HasValue ? x.CampusId.Value.ToString() : null,
+                false))
+            .ToListAsync(cancellationToken);
+
+        var marked = await db.StudentAttendances.AsNoTracking()
+            .Where(x => x.AttendanceSessionId == attendanceSessionId)
+            .Select(x => x.StudentId)
+            .ToListAsync(cancellationToken);
+
+        return enrolled.Select(e => e with { AlreadyMarked = marked.Contains(e.StudentId) }).ToList();
+    }
+
+    public async Task<SessionSummaryDto> GetSessionSummaryAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default)
+    {
+        var session = await db.AttendanceSessions.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == attendanceSessionId, cancellationToken)
+            ?? throw new KeyNotFoundException("Attendance session was not found.");
+
+        var totalEnrolled = await (
+            from registration in db.CourseRegistrations.AsNoTracking()
+            where registration.CourseId == (
+                from timetable in db.TimetableEntries.AsNoTracking()
+                where timetable.Id == session.TimetableEntryId
+                select timetable.CourseId
+            ).FirstOrDefault()
+            && registration.SemesterId == (
+                from offering in db.CourseOfferings.AsNoTracking()
+                join timetable in db.TimetableEntries.AsNoTracking() on offering.Id equals timetable.TeachingGroupId
+                where timetable.Id == session.TimetableEntryId
+                select offering.SemesterId
+            ).FirstOrDefault()
+            && (registration.Status == "Registered" || registration.Status == "Active")
+            select registration
+        ).CountAsync(cancellationToken);
+
+        var records = await db.StudentAttendances.AsNoTracking()
+            .Where(x => x.AttendanceSessionId == attendanceSessionId)
+            .GroupBy(x => x.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var markedPresent = records.FirstOrDefault(r => r.Status == AttendanceStatus.Present)?.Count ?? 0;
+        var markedAbsent = records.FirstOrDefault(r => r.Status == AttendanceStatus.Absent)?.Count ?? 0;
+        var markedLate = records.FirstOrDefault(r => r.Status == AttendanceStatus.Late)?.Count ?? 0;
+        var markedExcused = records.FirstOrDefault(r => r.Status == AttendanceStatus.Excused)?.Count ?? 0;
+        var markedTotal = markedPresent + markedAbsent + markedLate + markedExcused;
+        var unmarked = totalEnrolled - markedTotal;
+        var percentage = totalEnrolled > 0 ? Math.Round((double)markedTotal / totalEnrolled * 100, 1) : 0;
+
+        return new SessionSummaryDto(
+            session.Id,
+            session.TimetableEntryId,
+            session.SessionDate,
+            session.Status,
+            totalEnrolled,
+            markedPresent,
+            markedAbsent,
+            markedLate,
+            markedExcused,
+            unmarked,
+            percentage);
+    }
+
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         db.SaveChangesAsync(cancellationToken);
 }

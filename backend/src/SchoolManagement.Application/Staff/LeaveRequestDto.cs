@@ -5,17 +5,18 @@ namespace SchoolManagement.Application.Staff;
 public sealed record LeaveRequestDto(
     Guid Id,
     Guid StaffMemberId,
-    string LeaveType,
+    LeaveType LeaveType,
     DateOnly StartDate,
     DateOnly EndDate,
     string Reason,
-    string Status,
+    LeaveRequestStatus Status,
     Guid? ApprovedBy,
-    DateTimeOffset? ApprovedAt);
+    DateTimeOffset? ApprovedAt,
+    DateTimeOffset CreatedAt);
 
 public sealed record CreateLeaveRequestDto(
     Guid StaffMemberId,
-    string LeaveType,
+    LeaveType LeaveType,
     DateOnly StartDate,
     DateOnly EndDate,
     string Reason);

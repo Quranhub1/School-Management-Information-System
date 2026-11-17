@@ -1,3 +1,5 @@
+using SchoolManagement.Domain.Admissions;
+
 namespace SchoolManagement.Application.Admissions;
 
 public sealed record CreateAdmissionRequest(

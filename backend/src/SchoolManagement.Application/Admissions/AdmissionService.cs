@@ -1,10 +1,9 @@
 using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Admissions;
-using SchoolManagement.Domain.Students;
 
 namespace SchoolManagement.Application.Admissions;
 
-public sealed class AdmissionService(IAdmissionRepository repository, IStudentRepository studentRepository)
+public sealed class AdmissionService(IAdmissionRepository repository)
 {
     public async Task<IReadOnlyList<Admission>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await repository.GetAllAsync(cancellationToken);
@@ -36,8 +35,8 @@ public sealed class AdmissionService(IAdmissionRepository repository, IStudentRe
         var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken);
         if (admission is null) return null;
 
-        if (!string.IsNullOrWhiteSpace(status))
-            admission.Status = status.Trim();
+        if (status != null)
+            admission.Status = status;
 
         await repository.UpdateAdmissionAsync(admission, cancellationToken);
         return admission;
@@ -57,49 +56,32 @@ public sealed class AdmissionService(IAdmissionRepository repository, IStudentRe
         var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken)
             ?? throw new KeyNotFoundException("Admission was not found.");
 
-        if (!string.Equals(decision, "Accepted", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(decision, "Rejected", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("Decision must be Accepted or Rejected.", nameof(decision));
+        if (admission.Status != "Pending")
+            throw new InvalidOperationException($"Admission is already {admission.Status} and cannot be re-decided.");
 
-        admission.Status = decision.Equals("Accepted", StringComparison.OrdinalIgnoreCase) ? "Accepted" : "Rejected";
+        admission.Status = decision;
         admission.DecidedAt = DateTimeOffset.UtcNow;
 
         var applicant = await repository.GetApplicantAsync(admission.ApplicantId, cancellationToken)
             ?? throw new KeyNotFoundException("Applicant was not found.");
 
-        // Keep the applicant lifecycle state synchronized with the admission decision.
-        // Admission and applicant are separate aggregates, so explicitly persist the
-        // applicant transition rather than relying on navigation-property tracking.
-        applicant.Status = admission.Status;
+        applicant.Status = decision == "Accepted" ? "Accepted" : "Rejected";
 
-        if (admission.Status == "Accepted")
+        // Enforce that mandatory admission requirements exist for the programme before
+        // an applicant can be accepted. Requirements are defined per programme; without
+        // at least one active requirement the programme is not ready to accept students.
+        if (decision == "Accepted")
         {
-            var yearId = admission.AcademicYearId.ToString("N");
-            var guid = Guid.NewGuid().ToString("N");
-            var studentNumber = $"STU-{yearId[..Math.Min(8, yearId.Length)]}-{guid[..Math.Min(6, guid.Length)]}";
-            var student = new Student
-            {
-                StudentNumber = studentNumber,
-                FirstName = applicant.FirstName,
-                LastName = applicant.LastName,
-                OtherNames = applicant.OtherNames,
-                DateOfBirth = applicant.DateOfBirth,
-                Gender = applicant.Gender,
-                NationalId = applicant.NationalId,
-                PhoneNumber = applicant.PhoneNumber,
-                Email = applicant.Email,
-                Status = "Active",
-                AdmissionId = admission.Id
-            };
-
-            await studentRepository.AddAsync(student, cancellationToken);
-            await studentRepository.SaveChangesAsync(cancellationToken);
+            var mandatoryRequirements = await repository.GetAdmissionRequirementsAsync(
+                admission.ProgrammeId, mandatoryOnly: true, cancellationToken);
+            if (!mandatoryRequirements.Any())
+                throw new InvalidOperationException("This programme has no active mandatory admission requirements configured. Configure requirements before accepting applicants.");
         }
 
         var result = new AdmissionDecision
         {
             AdmissionId = admission.Id,
-            Decision = admission.Status,
+            Decision = decision,
             Reason = reason,
             DecidedBy = decidedBy
         };

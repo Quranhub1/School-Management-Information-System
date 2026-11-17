@@ -169,7 +169,7 @@ export const staffCreateRequestSchema = z.object({
 });
 export const leaveRequestSchema = z.object({
   staffMemberId: identifierSchema,
-  leaveType: requiredTextSchema,
+  leaveType: z.enum(['Annual', 'Sick', 'Maternity', 'Paternity', 'Study']),
   startDate: z.iso.date(),
   endDate: z.iso.date(),
   reason: requiredTextSchema.min(5),
@@ -408,4 +408,50 @@ export const semesterResponseSchema = z.looseObject({
   endDate: z.string(),
   isCurrent: z.boolean(),
   isActive: z.boolean(),
+});
+
+// Attendance schemas
+export const attendanceMarkRequestSchema = z.object({
+  studentId: identifierSchema,
+  status: z.enum(['Present', 'Absent', 'Late', 'Excused']),
+  remarks: z.string().trim().optional(),
+});
+export const attendanceBulkMarkRequestSchema = z.object({
+  marks: z.array(z.object({
+    studentId: identifierSchema,
+    status: z.enum(['Present', 'Absent', 'Late', 'Excused']),
+    remarks: z.string().trim().optional(),
+  })).min(1, "Select at least one student."),
+});
+export const attendanceEligibleStudentSchema = z.looseObject({
+  studentId: identifierSchema,
+  studentNumber: requiredTextSchema,
+  firstName: requiredTextSchema,
+  lastName: requiredTextSchema,
+  otherNames: z.string().nullable().optional(),
+  displayName: requiredTextSchema,
+  campusId: z.string().optional(),
+  alreadyMarked: z.boolean(),
+});
+export const attendanceSessionSummarySchema = z.looseObject({
+  sessionId: identifierSchema,
+  timetableEntryId: identifierSchema,
+  sessionDate: z.string(),
+  status: requiredTextSchema,
+  totalEnrolled: z.number().int().nonnegative(),
+  markedPresent: z.number().int().nonnegative(),
+  markedAbsent: z.number().int().nonnegative(),
+  markedLate: z.number().int().nonnegative(),
+  markedExcused: z.number().int().nonnegative(),
+  unmarked: z.number().int().nonnegative(),
+  attendancePercentage: z.number().nonnegative(),
+});
+export const staffCheckEventSchema = z.looseObject({
+  id: identifierSchema,
+  staffMemberId: identifierSchema,
+  staffName: requiredTextSchema,
+  staffNumber: requiredTextSchema,
+  eventType: requiredTextSchema,
+  recordedAtUtc: z.string(),
+  confirmation: requiredTextSchema,
 });

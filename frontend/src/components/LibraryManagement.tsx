@@ -433,8 +433,7 @@ export function LibraryManagement({ canManage }: { canManage?: boolean }) {
     }
 
     // Payment status is ledger-derived. Marking a student Paid records the
-    // exact outstanding amount; partial/unpaid states must come from actual
-    // payment entries rather than a manually editable status flag.
+    // exact outstanding amount; partial/unpaid states come from payment entries.
     if (selected !== 'Paid') {
       setPaymentStatusSelect(current => ({ ...current, [student.studentId]: currentStatus }));
       setError('Partially Paid and Not Paid are calculated from recorded payments. Record a payment amount to update this student’s status.');

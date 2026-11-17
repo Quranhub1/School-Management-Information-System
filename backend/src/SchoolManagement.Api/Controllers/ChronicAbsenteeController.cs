@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using SchoolManagement.Domain.Attendance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +31,7 @@ public sealed class ChronicAbsenteeController(SchoolManagementDbContext db, Camp
             select new
             {
                 StudentId = g.Key,
-                AbsenceCount = g.Count(x => x.Status == "Absent"),
+                AbsenceCount = g.Count(x => x.Status == AttendanceStatus.Absent),
                 TotalSessions = g.Count()
             })
             .Where(x => x.AbsenceCount >= thresholdDays)
@@ -61,7 +63,7 @@ public sealed class ChronicAbsenteeController(SchoolManagementDbContext db, Camp
             where session.SessionDate >= fromDate
                 && (accessibleCampuses == null || (student.CampusId.HasValue && accessibleCampuses.Contains(student.CampusId.Value)))
             group attendance by attendance.StudentId into g
-            select new { StudentId = g.Key, AbsenceCount = g.Count(x => x.Status == "Absent"), TotalSessions = g.Count() }
+            select new { StudentId = g.Key, AbsenceCount = g.Count(x => x.Status == AttendanceStatus.Absent), TotalSessions = g.Count() }
         ).Where(x => x.AbsenceCount >= 5).ToListAsync(cancellationToken);
 
         var studentIds = grouped.Select(x => x.StudentId).ToList();

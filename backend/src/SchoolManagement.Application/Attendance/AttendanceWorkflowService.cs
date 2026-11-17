@@ -1,3 +1,5 @@
+using SchoolManagement.Domain.Attendance;
+
 namespace SchoolManagement.Application.Attendance;
 
 public sealed class AttendanceWorkflowService(AttendanceService attendance)
@@ -22,7 +24,7 @@ public sealed class AttendanceWorkflowService(AttendanceService attendance)
     public async Task<StudentAttendanceDto> MarkAsync(
         Guid attendanceSessionId,
         Guid studentId,
-        string status,
+        AttendanceStatus status,
         string? remarks = null,
         CancellationToken cancellationToken = default)
     {

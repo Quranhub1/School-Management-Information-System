@@ -14,7 +14,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/staff")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public sealed class StaffController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
+public sealed class StaffController(SchoolManagementDbContext db, CampusAccessService campusAccess, LeaveRequestService leaveService) : ControllerBase
 {
     [HttpGet]
     [Authorize(Policy = StaffPolicies.Read)]
@@ -205,7 +205,20 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     {
         var campusId = await db.StaffMembers.Where(x => x.Id == id).Select(x => x.CampusId).SingleOrDefaultAsync(cancellationToken);
         if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)) return Forbid();
-        return Ok(await db.LeaveRequests.AsNoTracking().Where(x => x.StaffMemberId == id).OrderByDescending(x => x.StartDate).ToListAsync(cancellationToken));
+        var leaveRequests = await leaveService.GetByStaffAsync(id, cancellationToken);
+        return Ok(leaveRequests.Select(x => new
+        {
+            x.Id,
+            x.StaffMemberId,
+            LeaveType = x.LeaveType.ToString(),
+            x.StartDate,
+            x.EndDate,
+            x.Reason,
+            Status = x.Status.ToString(),
+            x.ApprovedBy,
+            x.ApprovedAt,
+            x.CreatedAt
+        }));
     }
 
     [HttpPost("{id:guid}/leave")]
@@ -214,24 +227,35 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     {
         var staffCampusId = await db.StaffMembers.Where(x => x.Id == id).Select(x => x.CampusId).SingleOrDefaultAsync(cancellationToken);
         if (!await campusAccess.CanAccessCampusAsync(User, staffCampusId, cancellationToken)) return Forbid();
-        var leaveRequest = new LeaveRequest { StaffMemberId = id, LeaveType = request.LeaveType, StartDate = request.StartDate, EndDate = request.EndDate, Reason = request.Reason, Status = "Pending" };
-        db.LeaveRequests.Add(leaveRequest);
-        await db.SaveChangesAsync(cancellationToken);
-        return Created($"api/staff/{id}/leave/{leaveRequest.Id}", leaveRequest);
+        try
+        {
+            var leaveRequest = await leaveService.RequestAsync(
+                id, request.LeaveType, request.StartDate, request.EndDate, request.Reason, cancellationToken);
+            return Created($"api/staff/{id}/leave/{leaveRequest.Id}", leaveRequest);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpPatch("leave/{id:guid}/approve")]
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> ApproveLeave(Guid id, [FromBody] ApproveLeaveRequest request, CancellationToken cancellationToken)
     {
-        var leaveRequest = await db.LeaveRequests.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        try
+        {
+            var leaveRequest = await leaveService.ApproveAsync(id, request.ApprovedBy, request.Approved, cancellationToken);
+            if (leaveRequest is null) return NotFound();
+            return NoContent();
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPatch("leave/{id:guid}/cancel")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> CancelLeave(Guid id, CancellationToken cancellationToken)
+    {
+        var leaveRequest = await leaveService.CancelAsync(id, cancellationToken);
         if (leaveRequest is null) return NotFound();
-        var staffCampusId = await db.StaffMembers.Where(x => x.Id == leaveRequest.StaffMemberId).Select(x => x.CampusId).SingleOrDefaultAsync(cancellationToken);
-        if (!await campusAccess.CanAccessCampusAsync(User, staffCampusId, cancellationToken)) return Forbid();
-        leaveRequest.Status = request.Approved ? "Approved" : "Rejected";
-        leaveRequest.ApprovedBy = request.ApprovedBy;
-        leaveRequest.ApprovedAt = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
 }
@@ -239,4 +263,4 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
 public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null);
 public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
-public sealed record ApproveLeaveRequest(Guid ApprovedBy, bool Approved);
+public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);

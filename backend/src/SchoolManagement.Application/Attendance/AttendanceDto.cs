@@ -6,7 +6,7 @@ public sealed record AttendanceSessionDto(
     Guid Id,
     Guid TimetableEntryId,
     DateOnly SessionDate,
-    string Status,
+    AttendanceSessionStatus Status,
     Guid? RecordedByUserId,
     string? Remarks)
 {
@@ -18,7 +18,7 @@ public sealed record StudentAttendanceDto(
     Guid Id,
     Guid AttendanceSessionId,
     Guid StudentId,
-    string Status,
+    AttendanceStatus Status,
     string? Remarks)
 {
     public static StudentAttendanceDto FromDomain(StudentAttendance record) =>

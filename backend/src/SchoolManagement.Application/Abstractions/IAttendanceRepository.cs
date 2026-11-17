@@ -1,3 +1,4 @@
+using SchoolManagement.Application.Admissions;
 using SchoolManagement.Domain.Attendance;
 
 namespace SchoolManagement.Application.Abstractions;
@@ -8,8 +9,33 @@ public interface IAttendanceRepository
     Task<AttendanceSession?> GetSessionByIdAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default);
     Task<bool> IsStudentEligibleForSessionAsync(Guid attendanceSessionId, Guid studentId, CancellationToken cancellationToken = default);
     Task<StudentAttendance?> GetStudentAttendanceAsync(Guid attendanceSessionId, Guid studentId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<EligibleStudentDto>> GetEligibleStudentsAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default);
+    Task<SessionSummaryDto> GetSessionSummaryAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default);
     Task AddSessionAsync(AttendanceSession session, CancellationToken cancellationToken = default);
     Task AddStudentAttendanceAsync(StudentAttendance attendance, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentAttendance>> GetStudentAttendanceAsync(Guid studentId, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
+
+public sealed record EligibleStudentDto(
+    Guid StudentId,
+    string StudentNumber,
+    string FirstName,
+    string LastName,
+    string? OtherNames,
+    string DisplayName,
+    string? CampusId,
+    bool AlreadyMarked);
+
+public sealed record SessionSummaryDto(
+    Guid SessionId,
+    Guid TimetableEntryId,
+    DateOnly SessionDate,
+    AttendanceSessionStatus Status,
+    int TotalEnrolled,
+    int MarkedPresent,
+    int MarkedAbsent,
+    int MarkedLate,
+    int MarkedExcused,
+    int Unmarked,
+    double AttendancePercentage);

@@ -4,20 +4,33 @@ import React from 'react'
 
 vi.mock('../api/timetable', () => ({
   listTimetable: vi.fn().mockResolvedValue([]),
+  generateTimetable: vi.fn().mockResolvedValue({
+    entries: [{ id: 'entry-1', teachingGroupId: 'group-1', courseId: 'course-1', teacherId: 'teacher-1', dayOfWeek: 1, startTime: '08:00:00', endTime: '09:00:00', room: 'Room 1', sessionType: 'Lecture', isActive: true }],
+    optimizationScore: 95,
+    isConflictFree: true,
+    conflicts: [],
+    warnings: [],
+    unscheduled: [],
+  }),
   getTimetableOptions: vi.fn().mockResolvedValue({
     teachingGroups: [{ id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' }],
     courses: [{ id: 'course-1', label: 'CPH 101 — Pharmacy Practice' }],
     teachers: [{ id: 'teacher-1', label: 'Test Teacher' }],
-    semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', isCurrent: true, isActive: true }],
+    semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', academicYearLabel: '2026/2027', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
     programmes: [{ id: 'programme-1', label: 'Certificate in Pharmacy' }],
     curricula: [{ id: 'curriculum-1', programmeId: 'programme-1', label: 'Certificate in Pharmacy — 2026' }],
-    curriculumCourses: [{ curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-1', courseLabel: 'CPH 101 — Pharmacy Practice', yearOfStudy: 1, semesterNumber: 1, isCore: true }],
+    curriculumCourses: [
+      { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-1', courseLabel: 'CPH 101 — Pharmacy Practice', yearOfStudy: 1, semesterNumber: 1, isCore: true },
+      { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-2', courseLabel: 'CPH 102 — Pharmaceutics', yearOfStudy: 1, semesterNumber: 2, isCore: true },
+      { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-3', courseLabel: 'CPH 201 — Clinical Pharmacy', yearOfStudy: 2, semesterNumber: 1, isCore: true },
+      { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-4', courseLabel: 'CPH 202 — Dispensing Practice', yearOfStudy: 2, semesterNumber: 2, isCore: true },
+    ],
   }),
 }))
 
 vi.mock('./InstitutionSettingsContext', () => ({
   useInstitutionSettings: vi.fn(() => ({
-    institution: null,
+    institution: { id: 'institution-1', institutionName: 'KAMPALA SCHOOL OF HEALTH SCIENCES', abbreviation: 'KSHS', motto: 'Health is Life', address: '', phone: '', email: '', website: '', postalAddress: '', country: 'Uganda', institutionType: 'School', logoPath: null, primaryColor: '#0505cc', accentColor: '#0735ed', isActive: true, updatedAt: '' },
     loaded: true,
   })),
 }))
@@ -34,6 +47,20 @@ describe('TimetableManagement', () => {
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
+
+  it('prints generated class timetables for the full semester using Institution Settings', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
+    fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
+    fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
+    expect(await screen.findByText('KAMPALA SCHOOL OF HEALTH SCIENCES')).toBeTruthy()
+    expect(screen.getByText(/VALID FOR: 01 Jan 2026 – 30 Jun 2026/)).toBeTruthy()
+  })
+
   it('supports readOnly mode', () => {
     render(<TimetableManagement readOnly />)
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
@@ -48,4 +75,17 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText('Curriculum semester')).toBeTruthy()
     expect(screen.getByText(/CPH 101 — Pharmacy Practice/)).toBeTruthy()
   })
+ 
+  it('shows a separate blank timetable template for every mapped curriculum semester', async () => {
+    render(<TimetableManagement />)
+    expect(await screen.findByRole('heading', { name: /semester templates/i })).toBeTruthy()
+    expect(screen.getByText(/4 separate templates/)).toBeTruthy()
+    expect(screen.getAllByRole('heading', { name: 'Semester 1' })).toHaveLength(2)
+    expect(screen.getAllByRole('heading', { name: 'Semester 2' })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: /open semester template/i })).toHaveLength(4)
+    expect(screen.getAllByText(/Blank template ready/)).toHaveLength(4)
+    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    expect(await screen.findByRole('heading', { name: /edit the timetable grid/i })).toBeTruthy()
+  })
+
 })

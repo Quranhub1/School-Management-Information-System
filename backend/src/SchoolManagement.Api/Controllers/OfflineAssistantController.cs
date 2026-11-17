@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Application.Administration;
+using SchoolManagement.Domain.Admissions;
+using SchoolManagement.Domain.Attendance;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -22,13 +24,13 @@ public sealed class OfflineAssistantController(SchoolManagementDbContext db, Ins
         var attendance = await db.StudentAttendances.AsNoTracking().ToListAsync(ct);
         var assessments = await db.StudentAssessments.AsNoTracking().ToListAsync(ct);
         var admissions = await db.Admissions.AsNoTracking().ToListAsync(ct);
-        var present = attendance.Count(x => x.Status.Equals("Present", StringComparison.OrdinalIgnoreCase));
+        var present = attendance.Count(x => x.Status == AttendanceStatus.Present);
         var attendanceRate = attendance.Count == 0 ? 0 : Math.Round(present * 100m / attendance.Count, 1);
         var average = assessments.Count == 0 ? 0 : Math.Round(assessments.Average(x => x.MaximumScore == 0 ? 0 : x.Score * 100m / x.MaximumScore), 1);
         var outstanding = invoices.Sum(x => x.Amount - x.PaidAmount);
         string answer;
-        if (q.Contains("student", StringComparison.OrdinalIgnoreCase) || q.Contains("enrol", StringComparison.OrdinalIgnoreCase)) answer = $"The local SMIS database currently contains {students.Count} students, of whom {students.Count(x => x.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))} are active.";
-        else if (q.Contains("admission", StringComparison.OrdinalIgnoreCase)) answer = $"There are {admissions.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))} pending admissions.";
+        if (q.Contains("student", StringComparison.OrdinalIgnoreCase) || q.Contains("enrol", StringComparison.OrdinalIgnoreCase)) answer = $"The local SMIS database currently contains {students.Count} students, of whom {students.Count(x => x.Status == "Active")} are active.";
+        else if (q.Contains("admission", StringComparison.OrdinalIgnoreCase)) answer = $"There are {admissions.Count(x => x.Status == "Pending")} pending admissions.";
         else if (q.Contains("attendance", StringComparison.OrdinalIgnoreCase)) answer = $"Recorded institution-wide attendance is {attendanceRate}%.";
         else if (q.Contains("fee", StringComparison.OrdinalIgnoreCase) || q.Contains("balance", StringComparison.OrdinalIgnoreCase)) answer = $"The recorded outstanding student-invoice balance is {systemCurrency} {outstanding:N0}.";
         else if (q.Contains("mark", StringComparison.OrdinalIgnoreCase) || q.Contains("score", StringComparison.OrdinalIgnoreCase) || q.Contains("exam", StringComparison.OrdinalIgnoreCase)) answer = $"The average recorded assessment percentage is {average}%.";

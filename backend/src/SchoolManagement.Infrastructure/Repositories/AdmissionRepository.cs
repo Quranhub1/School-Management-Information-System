@@ -36,6 +36,13 @@ public sealed class AdmissionRepository(SchoolManagementDbContext db) : IAdmissi
     public async Task AddDecisionAsync(AdmissionDecision decision, CancellationToken cancellationToken = default) =>
         await db.AdmissionDecisions.AddAsync(decision, cancellationToken);
 
+    public async Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(Guid programmeId, bool mandatoryOnly = false, CancellationToken cancellationToken = default)
+    {
+        var query = db.AdmissionRequirements.AsNoTracking().Where(x => x.ProgrammeId == programmeId && x.IsActive);
+        if (mandatoryOnly) query = query.Where(x => x.IsMandatory);
+        return await query.ToListAsync(cancellationToken);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         db.SaveChangesAsync(cancellationToken);
 }

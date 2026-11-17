@@ -137,7 +137,7 @@ test.describe('SMIS full-system smoke tests', () => {
     expect(JSON.parse(body)).toEqual(expect.any(Array));
   });
 
-  test('authenticated attendance API protects manual and QR recording paths', async ({ request }) => {
+  test('authenticated attendance API protects manual recording', async ({ request }) => {
     const token = await getAdminToken(request);
     const headers = { Authorization: `Bearer ${token}` };
     const unknownSessionId = '00000000-0000-0000-0000-000000000001';
@@ -149,11 +149,6 @@ test.describe('SMIS full-system smoke tests', () => {
     });
     expect(manual.status()).toBe(404);
 
-    const qr = await request.post(`${API_BASE_URL}/api/attendance/sessions/${unknownSessionId}/qr-records`, {
-      headers,
-      data: { studentId: unknownStudentId, status: 'Present', remarks: 'CI boundary test', token: 'invalid-token' },
-    });
-    expect(qr.status()).toBe(401);
 
     const unauthenticated = await request.post(`${API_BASE_URL}/api/attendance/sessions/${unknownSessionId}/records`, {
       data: { studentId: unknownStudentId, status: 'Present' },
@@ -161,16 +156,6 @@ test.describe('SMIS full-system smoke tests', () => {
     expect([401, 403]).toContain(unauthenticated.status());
   });
 
-  test('attendance QR endpoint rejects token generation for an unknown session', async ({ request }) => {
-    const token = await getAdminToken(request);
-    const sessionId = '00000000-0000-0000-0000-000000000003';
-    const response = await request.get(`${API_BASE_URL}/api/attendance/sessions/${sessionId}/qr`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    expect(response.status()).toBe(404);
-    await expect(response.json()).resolves.toMatchObject({ message: 'Attendance session was not found.' });
-  });
 
   test('frontend loads and administrator can sign in', async ({ page }) => {
     await page.goto(FRONTEND_URL, { waitUntil: 'networkidle' });
@@ -194,11 +179,17 @@ test.describe('SMIS full-system smoke tests', () => {
     await attendanceNav.click();
 
     await expect(page.getByRole('region', { name: 'Attendance management' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Daily' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Students', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Attendance report' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Attendance register' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Student history' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'QR attendance' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Open session' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Record attendance' })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Attendance register' }).click();
+    await expect(page.getByLabel('Programme')).toBeVisible();
+    await expect(page.getByLabel('Intake')).toBeVisible();
+    await expect(page.getByLabel('Class')).toBeVisible();
+    await expect(page.getByLabel('Session')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open attendance session' })).toBeVisible();
   });
 
   test('authenticated frontend request reaches the database-backed API', async ({ page }) => {

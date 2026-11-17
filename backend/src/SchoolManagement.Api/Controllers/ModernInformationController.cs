@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Administration;
+using SchoolManagement.Domain.Admissions;
+using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -28,7 +30,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
 
         var paid = invoices.Sum(x => x.PaidAmount);
         var billed = invoices.Sum(x => x.Amount);
-        var present = attendance.Count(x => string.Equals(x.Status, "Present", StringComparison.OrdinalIgnoreCase));
+        var present = attendance.Count(x => x.Status == AttendanceStatus.Present);
         var attendanceRate = attendance.Count == 0 ? 0 : Math.Round(present * 100m / attendance.Count, 1);
         var averageScore = assessments.Count == 0 ? 0 : Math.Round(assessments.Average(x => x.MaximumScore == 0 ? 0 : x.Score * 100m / x.MaximumScore), 1);
         var placementRate = placements.Count == 0 ? 0 : Math.Round(placements.Count(x => string.Equals(x.Status, "Completed", StringComparison.OrdinalIgnoreCase)) * 100m / placements.Count, 1);
@@ -36,7 +38,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
         return Ok(new ModernDashboardDto(
             students.Count,
             students.Count(x => string.Equals(x.Status, "Active", StringComparison.OrdinalIgnoreCase)),
-            admissions.Count(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase)),
+            admissions.Count(x => x.Status == "Pending"),
             billed,
             paid,
             billed - paid,
@@ -59,7 +61,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
         var placements = await db.StudentPlacements.AsNoTracking().Where(x => x.StudentId == studentId).ToListAsync(ct);
         var certificates = await db.Certificates.AsNoTracking().CountAsync(x => x.StudentId == studentId, ct);
 
-        var present = attendance.Count(x => string.Equals(x.Status, "Present", StringComparison.OrdinalIgnoreCase));
+        var present = attendance.Count(x => x.Status == AttendanceStatus.Present);
         var attendanceRate = attendance.Count == 0 ? 0 : Math.Round(present * 100m / attendance.Count, 1);
         var score = assessments.Count == 0 ? 0 : Math.Round(assessments.Average(x => x.MaximumScore == 0 ? 0 : x.Score * 100m / x.MaximumScore), 1);
         var billed = invoices.Sum(x => x.Amount);
@@ -88,7 +90,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
             var sa = attendance.Where(x => x.StudentId == s.Id).ToList();
             var ss = assessments.Where(x => x.StudentId == s.Id).ToList();
             var si = invoices.Where(x => x.StudentId == s.Id).ToList();
-            var attendanceRate = sa.Count == 0 ? 100m : sa.Count(x => x.Status.Equals("Present", StringComparison.OrdinalIgnoreCase)) * 100m / sa.Count;
+            var attendanceRate = sa.Count == 0 ? 100m : sa.Count(x => x.Status == AttendanceStatus.Present) * 100m / sa.Count;
             var score = ss.Count == 0 ? 100m : ss.Average(x => x.MaximumScore == 0 ? 0 : x.Score * 100m / x.MaximumScore);
             var balance = si.Sum(x => x.Amount - x.PaidAmount);
             var risk = 0;
@@ -127,7 +129,7 @@ public sealed class ModernInformationController(SchoolManagementDbContext db, IW
         var invoices = await db.StudentInvoices.AsNoTracking().ToListAsync(ct);
         var placements = await db.StudentPlacements.AsNoTracking().ToListAsync(ct);
         return Ok(new WorkflowSummaryDto(
-            admissions.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase)),
+            admissions.Count(x => x.Status == "Pending"),
             invoices.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase) || x.PaidAmount < x.Amount),
             placements.Count(x => x.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase)),
             DateTimeOffset.UtcNow));
