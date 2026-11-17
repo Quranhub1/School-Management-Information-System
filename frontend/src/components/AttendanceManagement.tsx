@@ -2,15 +2,12 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react'
 import {
   closeAttendanceSession,
   bulkMarkAttendance,
   getEligibleStudents,
-  getQrImage,
-  getQrToken,
   getSessionSummary,
   getStudentAttendanceHistory,
   markAttendance,
@@ -18,7 +15,6 @@ import {
   type AttendanceRecord,
   type AttendanceSession,
   type EligibleStudent,
-  type QrTokenInfo,
   type SessionSummary,
 } from '../api/attendance'
 import { getAccessToken } from '../api/auth'
@@ -42,7 +38,7 @@ const STATUS_LABELS: Record<string, string> = {
 export function AttendanceManagement({
   readOnly = false,
 }: { readOnly?: boolean } = {}) {
-  const [tab, setTab] = useState<'daily' | 'history' | 'qr'>(
+  const [tab, setTab] = useState<'daily' | 'history'>(
     readOnly ? 'history' : 'daily',
   )
   const [sessionDate, setSessionDate] = useState(() =>
@@ -72,15 +68,10 @@ export function AttendanceManagement({
   const [to, setTo] = useState('')
   const [history, setHistory] = useState<AttendanceRecord[]>([])
   const [summary, setSummary] = useState<SessionSummary | null>(null)
-  const [qrToken, setQrToken] = useState<string | null>(null)
-  const [qrSvg, setQrSvg] = useState<string | null>(null)
-  const [qrExpires, setQrExpires] = useState<string | null>(null)
-  const [qrCountdown, setQrCountdown] = useState(0)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [sessionClosed, setSessionClosed] = useState(false)
-  const qrTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   function clearNotice() {
     setMessage('')
@@ -125,31 +116,6 @@ export function AttendanceManagement({
     return () => window.removeEventListener('smis:attendance-context', handler)
   }, [readOnly])
 
-  useEffect(() => {
-    if (qrTimerRef.current) {
-      clearInterval(qrTimerRef.current)
-      qrTimerRef.current = null
-    }
-    if (tab === 'qr' && qrExpires) {
-      const update = () => {
-        const now = Date.now()
-        const expires = new Date(qrExpires).getTime()
-        const remaining = Math.max(0, Math.ceil((expires - now) / 1000))
-        setQrCountdown(remaining)
-        if (remaining <= 0) {
-          void refreshQr()
-        }
-      }
-      update()
-      qrTimerRef.current = setInterval(update, 1000)
-    }
-    return () => {
-      if (qrTimerRef.current) {
-        clearInterval(qrTimerRef.current)
-        qrTimerRef.current = null
-      }
-    }
-  }, [tab, qrExpires])
 
   const today = new Date().toISOString().slice(0, 10)
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
@@ -345,31 +311,6 @@ export function AttendanceManagement({
     }
   }
 
-  async function refreshQr() {
-    clearNotice()
-    if (!sessionId.trim()) {
-      setError('Open or enter an attendance session first.')
-      return
-    }
-    setLoading(true)
-    try {
-      const result = await getQrToken(sessionId.trim())
-      setQrToken(result.token)
-      setQrExpires(result.expiresAtUtc)
-      const svg = await getQrImage(sessionId.trim())
-      setQrSvg(svg)
-      setMessage('QR token refreshed. Display this screen for students to scan.')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to generate QR code.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (tab === 'qr' && sessionId) void refreshQr()
-  }, [tab, sessionId])
-
   const statusBadge = (status: string) => {
     const style = STATUS_COLORS[status] || STATUS_COLORS.Present
     return (
@@ -398,7 +339,7 @@ export function AttendanceManagement({
             <p>
               {readOnly
                 ? 'Review student attendance history.'
-                : 'Open class sessions, record attendance, review history and use QR check-in.'}
+                : 'Open class sessions, record attendance and review student history.'}
             </p>
           </div>
           <span className="status">
@@ -434,11 +375,6 @@ export function AttendanceManagement({
           <button role="tab" aria-selected={tab === 'history'} className={tab === 'history' ? 'active' : ''} onClick={() => setTab('history')}>
             Student history
           </button>
-          {!readOnly && (
-            <button role="tab" aria-selected={tab === 'qr'} className={tab === 'qr' ? 'active' : ''} onClick={() => setTab('qr')}>
-              QR attendance
-            </button>
-          )}
         </div>
       )}
 
@@ -834,72 +770,6 @@ export function AttendanceManagement({
         </>
       )}
 
-      {/* QR Tab */}
-      {!readOnly && tab === 'qr' && (
-        <div className="panel">
-          <div className="panel-heading">
-            <div>
-              <span className="eyebrow">QR CHECK-IN</span>
-              <h4>Display QR Code</h4>
-              <p className="text-sm text-slate-600">
-                Show this screen to students. They scan the QR code with the student app to check in.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col items-center gap-4 py-6">
-            <div className="w-64 h-64 bg-white border rounded-2xl p-4 shadow-sm flex items-center justify-center">
-              {qrSvg ? (
-                <div dangerouslySetInnerHTML={{ __html: qrSvg }} className="w-full h-full" />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                  <span className="text-4xl">📱</span>
-                  <p className="mt-2 text-sm">Generate QR code</p>
-                </div>
-              )}
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-slate-500">Token expires in</p>
-              <span className="text-2xl font-mono font-bold text-slate-900">
-                {qrCountdown > 0 ? qrCountdown : '—'}s
-              </span>
-            </div>
-            <div className="flex gap-3 w-full max-w-md">
-              <button
-                type="button"
-                onClick={() => void refreshQr()}
-                disabled={loading || !sessionId}
-                className="library-primary flex-1 py-2.5 rounded"
-              >
-                {loading ? 'Refreshing…' : 'Refresh QR Code'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (qrSvg) {
-                    const svgBlob = new Blob([qrSvg], { type: 'image/svg+xml;charset=utf-8' })
-                    const url = URL.createObjectURL(svgBlob)
-                    const link = document.createElement('a')
-                    link.href = url
-                    link.download = `attendance-qr-${sessionId.slice(0, 8)}.svg`
-                    document.body.appendChild(link)
-                    link.click()
-                    document.body.removeChild(link)
-                    URL.revokeObjectURL(url)
-                  }
-                }}
-                disabled={!qrSvg}
-                className="border rounded py-2.5 flex-1 text-slate-700 hover:bg-slate-50"
-              >
-                Download SVG
-              </button>
-            </div>
-            <p className="text-xs text-slate-500 mt-2">
-              QR code rotates every 60 seconds. The system accepts the current
-              and previous token to allow for scanning at rotation boundaries.
-            </p>
-          </div>
-        </div>
-      )}
     </section>
   )
 }
