@@ -411,7 +411,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <p>REPUBLIC OF UGANDA</p>
         <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
         <h4>CLASS TEACHING TIMETABLE</h4>
-        <span>ACADEMIC YEAR {academicYearLabel} · ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}{templateGroupId ? ' · ' + (groupLabels.get(templateGroupId) ?? 'Selected class') : ''}</span>
+        <span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}{templateGroupId ? ' · ' + (groupLabels.get(templateGroupId) ?? 'Selected class') : ''}</span>
       </div>
       <div className="timetable-template-editor-heading">
         <div><p className="timetable-eyebrow">Fillable timetable template</p><h3>Edit the timetable grid</h3><p>Select a class, then fill each period with a course, teacher and venue. Existing sessions for that class are loaded into the grid.</p></div>
@@ -525,7 +525,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <p>REPUBLIC OF UGANDA</p>
         <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
         <p>TEACHING TIMETABLE</p>
-        <small>{selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}</small>
+        <small>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}</small>
       </div>
       <div className="timetable-grid-scroll">
         <table className="timetable-formal-grid">
