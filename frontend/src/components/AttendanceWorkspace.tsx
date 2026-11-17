@@ -114,8 +114,10 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     finally { setLoading(false) }
   }, [semesterId])
 
-  useEffect(() => { void loadOptions() }, [loadOptions])
-  useEffect(() => { void loadReport() }, [loadReport])
+  // Keep the student attendance data pipeline isolated from the staff register.
+  // Student groups, intakes and reports are fetched only while the Students section is active.
+  useEffect(() => { if (section === 'students') void loadOptions() }, [loadOptions, section])
+  useEffect(() => { if (section === 'students') void loadReport() }, [loadReport, section])
 
   async function openSession() {
     if (!timetableEntryId) { setError('Select a class and its timetable session first.'); return }
