@@ -16,7 +16,7 @@ public sealed class AdministrationAssistantService(SchoolManagementDbContext db)
     {
         var totalStudents = await db.Students.AsNoTracking().LongCountAsync(cancellationToken);
         var activeStudents = await db.Students.AsNoTracking().CountAsync(s => s.Status == "Active", cancellationToken);
-        var pendingAdmissions = await db.Admissions.AsNoTracking().CountAsync(a => a.Status == AdmissionStatus.Pending, cancellationToken);
+        var pendingAdmissions = await db.Admissions.AsNoTracking().CountAsync(a => a.Status == "Pending", cancellationToken);
 
         var totalAttendanceRecords = await db.StudentAttendances.AsNoTracking().LongCountAsync(cancellationToken);
         var presentCount = await db.StudentAttendances.AsNoTracking().CountAsync(a => a.Status == AttendanceStatus.Present, cancellationToken);
