@@ -163,7 +163,10 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             query = query.Where(s => s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value));
         var matches = await query.Where(s => s.StudentNumber.ToLower().Contains(term)
                 || s.FirstName.ToLower().Contains(term) || s.LastName.ToLower().Contains(term)
-                || (s.OtherNames != null && s.OtherNames.ToLower().Contains(term)))
+                || (s.OtherNames != null && s.OtherNames.ToLower().Contains(term))
+                || db.Admissions.Any(admission => admission.Id == s.AdmissionId
+                    && db.Applicants.Any(applicant => applicant.Id == admission.ApplicantId
+                        && applicant.ApplicationNumber.ToLower().Contains(term))))
             .OrderBy(s => s.LastName).ThenBy(s => s.FirstName).Take(25)
             .Select(s => new { s.Id, s.StudentNumber, s.LastName, s.FirstName, s.OtherNames })
             .ToListAsync(cancellationToken);
