@@ -37,7 +37,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             .ToListAsync(cancellationToken);
         var semesters = await db.Semesters.AsNoTracking()
             .OrderByDescending(x => x.IsCurrent).ThenByDescending(x => x.StartDate)
-            .Select(x => new { x.Id, Label = x.Name, x.AcademicYearId, x.IsCurrent, x.IsActive })
+            .Select(x => new { x.Id, Label = x.Name, x.AcademicYearId, x.StartDate, x.EndDate, x.IsCurrent, x.IsActive })
             .ToListAsync(cancellationToken);
         var programmes = await db.Programmes.AsNoTracking().Where(x => x.IsActive && !x.IsReferenceOnly)
             .OrderBy(x => x.Name).Select(x => new { x.Id, Label = x.Name + " (" + x.Award + ")" }).ToListAsync(cancellationToken);
