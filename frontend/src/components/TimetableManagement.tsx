@@ -101,6 +101,25 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
   function timetablePdfOptions(title: string, rows: TimetableEntry[], filename: string) {
     const sorted = [...rows].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
+    const slots = [...new Set(sorted.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b))
+    const printableSlots = slots.length ? slots : defaultTemplateSlots.map(slot => slot.startTime)
+    const timetableBody = [
+      [{ text: 'DAY', style: 'tableHeader' }, ...printableSlots.map((slot, index) => ({ text: `PERIOD ${index + 1}\n${timeLabel(slot)}`, style: 'tableHeader' }))],
+      ...weekOrder.filter(day => day !== 0).map(day => [
+        { text: days[day].toUpperCase(), style: 'tableHeader' },
+        ...printableSlots.map(slot => {
+          const sessions = sorted.filter(entry => entry.dayOfWeek === day && entry.startTime === slot)
+          const text = sessions.map(entry => [
+            courseLabels.get(entry.courseId) ?? 'Course not found',
+            teacherLabels.get(entry.teacherId) ?? 'Teacher not found',
+            timeRange(entry),
+            entry.room ? `Venue: ${entry.room}` : '',
+            entry.sessionType || '',
+          ].filter(Boolean).join('\n')).join('\n\n')
+          return { text: text || '—', alignment: 'center' }
+        }),
+      ]),
+    ]
     return {
       title,
       filename,
@@ -110,11 +129,17 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
       accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
       content: [
-        { text: `${selectedSemester?.label ?? 'Academic period'} · ${semesterDateRange(selectedSemester)}`, alignment: 'center', fontSize: 9, margin: [0, 0, 0, 10] },
-        { table: { headerRows: 1, widths: ['auto', 'auto', '*', '*', 'auto', 'auto'], body: [
-          [{ text: 'Day', style: 'tableHeader' }, { text: 'Time', style: 'tableHeader' }, { text: 'Course', style: 'tableHeader' }, { text: 'Teacher', style: 'tableHeader' }, { text: 'Venue', style: 'tableHeader' }, { text: 'Type', style: 'tableHeader' }],
-          ...sorted.map(entry => [days[entry.dayOfWeek] ?? '—', timeRange(entry), courseLabels.get(entry.courseId) ?? 'Course not found', teacherLabels.get(entry.teacherId) ?? 'Teacher not found', entry.room || '—', entry.sessionType || '—']),
-        ] }, layout: 'lightHorizontalLines' },
+        { text: `${selectedSemester?.label ?? 'Academic period'} · VALID FOR ${semesterDateRange(selectedSemester)}`, alignment: 'center', fontSize: 9, margin: [0, 0, 0, 10] },
+        { table: { headerRows: 1, widths: ['auto', ...printableSlots.map(() => '*')], body: timetableBody }, layout: {
+          hLineWidth: () => 0.8,
+          vLineWidth: () => 0.8,
+          hLineColor: () => '#111827',
+          vLineColor: () => '#111827',
+          paddingLeft: () => 4,
+          paddingRight: () => 4,
+          paddingTop: () => 5,
+          paddingBottom: () => 5,
+        } },
         { text: 'Academic Registrar: ______________________________', alignment: 'right', margin: [0, 28, 0, 0] },
       ],
     }
