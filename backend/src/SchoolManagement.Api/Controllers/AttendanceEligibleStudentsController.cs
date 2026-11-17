@@ -126,10 +126,10 @@ public sealed class AttendanceEligibleStudentsController(
             .ToListAsync(cancellationToken);
         var summary = new
         {
-            present = existing.Count(x => x.Status == "Present"),
-            absent = existing.Count(x => x.Status == "Absent"),
-            late = existing.Count(x => x.Status == "Late"),
-            excused = existing.Count(x => x.Status == "Excused"),
+            present = existing.Count(x => x.Status == AttendanceStatus.Present),
+            absent = existing.Count(x => x.Status == AttendanceStatus.Absent),
+            late = existing.Count(x => x.Status == AttendanceStatus.Late),
+            excused = existing.Count(x => x.Status == AttendanceStatus.Excused),
             marked = existing.Count,
             unmarked = Math.Max(0, totalEnrolled - existing.Count)
         };
@@ -183,7 +183,7 @@ public sealed class AttendanceEligibleStudentsController(
     {
         var session = await db.AttendanceSessions.SingleOrDefaultAsync(x => x.Id == sessionId, cancellationToken);
         if (session is null) return NotFound(new { message = "Attendance session was not found." });
-        if (!string.Equals(session.Status, "Open", StringComparison.OrdinalIgnoreCase))
+        if (session.Status != AttendanceSessionStatus.Open)
             return Conflict(new { message = "Attendance cannot be recorded after the session has been closed." });
 
         var context = await (
@@ -223,7 +223,7 @@ public sealed class AttendanceEligibleStudentsController(
             {
                 AttendanceSessionId = sessionId,
                 StudentId = studentId,
-                Status = nameof(AttendanceStatus.Present)
+                Status = AttendanceStatus.Present
             })
             .ToList();
 

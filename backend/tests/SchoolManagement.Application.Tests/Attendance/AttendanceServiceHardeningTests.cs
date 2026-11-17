@@ -1,4 +1,5 @@
 using SchoolManagement.Application.Attendance;
+using SchoolManagement.Application.Abstractions;
 using SchoolManagement.Domain.Attendance;
 using Xunit;
 
@@ -14,7 +15,7 @@ public sealed class AttendanceServiceHardeningTests
         var service = new AttendanceService(repository);
 
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() => service.MarkAsync(
-            session.Id, Guid.NewGuid(), "Present"));
+            session.Id, Guid.NewGuid(), AttendanceStatus.Present));
 
         Assert.Contains("not registered", error.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(repository.AddedRecords);
@@ -28,10 +29,10 @@ public sealed class AttendanceServiceHardeningTests
         var repository = new FakeAttendanceRepository { Session = session, StudentEligible = true };
         var service = new AttendanceService(repository);
 
-        var result = await service.MarkAsync(session.Id, studentId, " late ", "  arrived late  ");
+        var result = await service.MarkAsync(session.Id, studentId, AttendanceStatus.Late, "  arrived late  ");
 
         Assert.Equal(studentId, result.StudentId);
-        Assert.Equal("late", result.Status, ignoreCase: true);
+        Assert.Equal(AttendanceStatus.Late, result.Status);
         Assert.Equal("arrived late", result.Remarks);
         Assert.Single(repository.AddedRecords);
     }
@@ -40,12 +41,12 @@ public sealed class AttendanceServiceHardeningTests
     public async Task MarkAsync_RejectsClosedSessionBeforeEligibilityCheck()
     {
         var session = NewSession();
-        session.Status = "Closed";
+        session.Status = AttendanceSessionStatus.Closed;
         var repository = new FakeAttendanceRepository { Session = session, StudentEligible = true };
         var service = new AttendanceService(repository);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.MarkAsync(
-            session.Id, Guid.NewGuid(), "Present"));
+            session.Id, Guid.NewGuid(), AttendanceStatus.Present));
 
         Assert.False(repository.EligibilityChecked);
     }
@@ -59,8 +60,8 @@ public sealed class AttendanceServiceHardeningTests
 
         var result = await service.CloseSessionAsync(session.Id);
 
-        Assert.Equal("Closed", result.Status);
-        Assert.Equal("Closed", session.Status);
+        Assert.Equal(AttendanceSessionStatus.Closed, result.Status);
+        Assert.Equal(AttendanceSessionStatus.Closed, session.Status);
         Assert.Equal(1, repository.SaveCount);
     }
 
@@ -77,13 +78,13 @@ public sealed class AttendanceServiceHardeningTests
             {
                 AttendanceSessionId = session.Id,
                 StudentId = studentId,
-                Status = "Present"
+                Status = AttendanceStatus.Present
             }
         };
         var service = new AttendanceService(repository);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.MarkAsync(
-            session.Id, studentId, "Present"));
+            session.Id, studentId, AttendanceStatus.Present));
 
         Assert.Empty(repository.AddedRecords);
     }
@@ -92,7 +93,7 @@ public sealed class AttendanceServiceHardeningTests
     {
         TimetableEntryId = Guid.NewGuid(),
         SessionDate = new DateOnly(2026, 9, 8),
-        Status = "Open"
+        Status = AttendanceSessionStatus.Open
     };
 
     private sealed class FakeAttendanceRepository : SchoolManagement.Application.Abstractions.IAttendanceRepository
@@ -138,6 +139,17 @@ public sealed class AttendanceServiceHardeningTests
         {
             SaveCount++;
             return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<EligibleStudentDto>> GetEligibleStudentsAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<EligibleStudentDto>>([]);
+        }
+
+        public Task<SessionSummaryDto> GetSessionSummaryAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new SessionSummaryDto(
+                attendanceSessionId, Guid.Empty, DateOnly.MinValue, AttendanceSessionStatus.Open, 0, 0, 0, 0, 0, 0, 0));
         }
     }
 }

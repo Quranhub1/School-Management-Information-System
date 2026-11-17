@@ -22,7 +22,7 @@ public sealed class AdmissionService(IAdmissionRepository repository)
             ProgrammeId = programmeId,
             AcademicYearId = academicYearId,
             IntakeId = intakeId,
-            Status = AdmissionStatus.Pending
+            Status = "Pending"
         };
 
         await repository.AddAdmissionAsync(admission, cancellationToken);
@@ -30,13 +30,13 @@ public sealed class AdmissionService(IAdmissionRepository repository)
         return admission;
     }
 
-    public async Task<Admission?> UpdateAsync(Guid admissionId, AdmissionStatus? status = null, CancellationToken cancellationToken = default)
+    public async Task<Admission?> UpdateAsync(Guid admissionId, string? status = null, CancellationToken cancellationToken = default)
     {
         var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken);
         if (admission is null) return null;
 
-        if (status.HasValue)
-            admission.Status = status.Value;
+        if (status != null)
+            admission.Status = status;
 
         await repository.UpdateAdmissionAsync(admission, cancellationToken);
         return admission;
@@ -51,12 +51,12 @@ public sealed class AdmissionService(IAdmissionRepository repository)
         return true;
     }
 
-    public async Task<AdmissionDecision> DecideAsync(Guid admissionId, AdmissionStatus decision, string? reason = null, string? decidedBy = null, CancellationToken cancellationToken = default)
+    public async Task<AdmissionDecision> DecideAsync(Guid admissionId, string decision, string? reason = null, string? decidedBy = null, CancellationToken cancellationToken = default)
     {
         var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken)
             ?? throw new KeyNotFoundException("Admission was not found.");
 
-        if (admission.Status != AdmissionStatus.Pending)
+        if (admission.Status != "Pending")
             throw new InvalidOperationException($"Admission is already {admission.Status} and cannot be re-decided.");
 
         admission.Status = decision;
@@ -65,15 +65,12 @@ public sealed class AdmissionService(IAdmissionRepository repository)
         var applicant = await repository.GetApplicantAsync(admission.ApplicantId, cancellationToken)
             ?? throw new KeyNotFoundException("Applicant was not found.");
 
-        // Keep the applicant lifecycle state synchronized with the admission decision.
-        // Admission and applicant are separate aggregates, so explicitly persist the
-        // applicant transition rather than relying on navigation-property tracking.
-        applicant.Status = decision == AdmissionStatus.Accepted ? ApplicantStatus.Accepted : ApplicantStatus.Rejected;
+        applicant.Status = decision == "Accepted" ? "Accepted" : "Rejected";
 
         // Enforce that mandatory admission requirements exist for the programme before
         // an applicant can be accepted. Requirements are defined per programme; without
         // at least one active requirement the programme is not ready to accept students.
-        if (decision == AdmissionStatus.Accepted)
+        if (decision == "Accepted")
         {
             var mandatoryRequirements = await repository.GetAdmissionRequirementsAsync(
                 admission.ProgrammeId, mandatoryOnly: true, cancellationToken);

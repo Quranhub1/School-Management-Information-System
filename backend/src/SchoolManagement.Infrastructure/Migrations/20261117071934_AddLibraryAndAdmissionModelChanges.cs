@@ -35,7 +35,46 @@ namespace SchoolManagement.Infrastructure.Migrations
                 nullable: false,
                 defaultValue: 0u);
 
-            migrationBuilder.Sql("ALTER TABLE \"Applicants\" ALTER COLUMN \"Status\" TYPE integer USING \"Status\"::integer;");
+            migrationBuilder.Sql("""
+                ALTER TABLE "LeaveRequests"
+                ALTER COLUMN "Status" TYPE integer
+                USING CASE lower(trim("Status"))
+                    WHEN 'pending' THEN 0
+                    WHEN 'approved' THEN 1
+                    WHEN 'rejected' THEN 2
+                    WHEN 'cancelled' THEN 3
+                    WHEN '0' THEN 0
+                    WHEN '1' THEN 1
+                    WHEN '2' THEN 2
+                    WHEN '3' THEN 3
+                    ELSE 0
+                END;
+                """);
+
+            migrationBuilder.Sql("""
+                ALTER TABLE "LeaveRequests"
+                ALTER COLUMN "LeaveType" TYPE integer
+                USING CASE lower(trim("LeaveType"))
+                    WHEN 'annual' THEN 0
+                    WHEN 'sick' THEN 1
+                    WHEN 'maternity' THEN 2
+                    WHEN 'paternity' THEN 3
+                    WHEN 'study' THEN 4
+                    WHEN '0' THEN 0
+                    WHEN '1' THEN 1
+                    WHEN '2' THEN 2
+                    WHEN '3' THEN 3
+                    WHEN '4' THEN 4
+                    ELSE 0
+                END;
+                """);
+
+            migrationBuilder.AddColumn<DateTimeOffset>(
+                name: "CreatedAt",
+                table: "LeaveRequests",
+                type: "timestamp with time zone",
+                nullable: false,
+                defaultValueSql: "CURRENT_TIMESTAMP");
 
             migrationBuilder.CreateTable(
                 name: "AdmissionRequirements",
@@ -72,7 +111,30 @@ namespace SchoolManagement.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "AdmissionRequirements");
 
-            migrationBuilder.Sql("ALTER TABLE \"Applicants\" ALTER COLUMN \"Status\" TYPE text USING \"Status\"::text;");
+            migrationBuilder.Sql("""
+                ALTER TABLE "LeaveRequests"
+                ALTER COLUMN "Status" TYPE text
+                USING CASE "Status"
+                    WHEN 0 THEN 'Pending'
+                    WHEN 1 THEN 'Approved'
+                    WHEN 2 THEN 'Rejected'
+                    WHEN 3 THEN 'Cancelled'
+                    ELSE 'Pending'
+                END;
+                """);
+
+            migrationBuilder.Sql("""
+                ALTER TABLE "LeaveRequests"
+                ALTER COLUMN "LeaveType" TYPE text
+                USING CASE "LeaveType"
+                    WHEN 0 THEN 'Annual'
+                    WHEN 1 THEN 'Sick'
+                    WHEN 2 THEN 'Maternity'
+                    WHEN 3 THEN 'Paternity'
+                    WHEN 4 THEN 'Study'
+                    ELSE 'Annual'
+                END;
+                """);
 
             migrationBuilder.DropColumn(
                 name: "FinePerOverdueDay",

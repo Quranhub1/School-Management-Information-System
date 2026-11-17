@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Academic;
+using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Domain.Examinations;
 using SchoolManagement.Infrastructure.Persistence;
 
@@ -100,7 +101,7 @@ public sealed class ExaminationAnalyticsService(SchoolManagementDbContext db)
             .ToDictionary(g => g.Key, g =>
             {
                 var total = g.Count();
-                var present = g.Count(a => a.Status == "Present");
+                var present = g.Count(a => a.Status == AttendanceStatus.Present);
                 return total > 0 ? Math.Round((decimal)present / total * 100m, 2) : 100m;
             });
 

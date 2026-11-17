@@ -74,7 +74,7 @@ public sealed class AttendanceController(AttendanceService service, SchoolManage
         if (campusError is not null) return campusError;
         try
         {
-            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status.ToString(), request.Remarks, cancellationToken);
+            var record = await service.MarkAsync(attendanceSessionId, request.StudentId, request.Status, request.Remarks, cancellationToken);
             return Created($"/api/attendance/records/{record.Id}", record);
         }
         catch (KeyNotFoundException ex)
@@ -290,10 +290,10 @@ public sealed class AttendanceController(AttendanceService service, SchoolManage
                     classId = g.Key.TeachingGroupId,
                     className = string.IsNullOrWhiteSpace(g.Key.Name) ? g.Key.GroupCode : g.Key.GroupCode + " — " + g.Key.Name,
                     totalAttendance = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId)),
-                    totalPresent = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && (r.Status == "Present" || r.Status == "Late")),
-                    totalAbsent = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && r.Status == "Absent"),
-                    totalLate = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && r.Status == "Late"),
-                    totalExcused = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && r.Status == "Excused")
+                    totalPresent = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && (r.Status == AttendanceStatus.Present || r.Status == AttendanceStatus.Late)),
+                    totalAbsent = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && r.Status == AttendanceStatus.Absent),
+                    totalLate = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && r.Status == AttendanceStatus.Late),
+                    totalExcused = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && r.Status == AttendanceStatus.Excused)
                 };
             }).ToList();
 
@@ -357,7 +357,7 @@ public sealed class AttendanceController(AttendanceService service, SchoolManage
         var campusId = await GetSessionCampusIdAsync(session.Id, cancellationToken);
         if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)
             || !await campusAccess.CanAccessStudentAsync(User, record.StudentId, cancellationToken)) return Forbid();
-        var status = request.Status.ToString();
+        var status = request.Status;
         if (!Enum.IsDefined(typeof(AttendanceStatus), request.Status))
             return BadRequest(new { message = "Attendance status is invalid." });
         var previous = new { status = record.Status, remarks = record.Remarks, sessionStatus = session.Status };

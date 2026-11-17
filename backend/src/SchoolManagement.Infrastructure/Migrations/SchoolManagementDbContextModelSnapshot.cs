@@ -1327,8 +1327,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("text");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -4892,12 +4893,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid?>("ApprovedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
-                    b.Property<string>("LeaveType")
+                    b.Property<SchoolManagement.Domain.Staff.LeaveType>("LeaveType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Reason")
                         .IsRequired()
@@ -4909,9 +4913,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 
-                    b.Property<string>("Status")
+                    b.Property<SchoolManagement.Domain.Staff.LeaveRequestStatus>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

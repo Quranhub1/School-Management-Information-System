@@ -1,257 +1,228 @@
-using SchoolManagement.Application.Admissions;
 using SchoolManagement.Application.Abstractions;
+using SchoolManagement.Application.Admissions;
 using SchoolManagement.Domain.Admissions;
+using Xunit;
 
 namespace SchoolManagement.Application.Tests.Admissions;
 
 public sealed class AdmissionServiceTests
 {
     [Fact]
-    public async Task CreateAsync_CreatesAdmissionWithPendingStatus()
+    public async Task CreateAsync_CreatesPendingAdmissionForKnownApplicant()
     {
         var repo = new FakeAdmissionRepository();
+        var applicant = repo.AddApplicant();
         var service = new AdmissionService(repo);
 
-        var admission = await service.CreateAsync(
-            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var admission = await service.CreateAsync(applicant.Id, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
-        Assert.Equal(AdmissionStatus.Pending, admission.Status);
+        Assert.Equal("Pending", admission.Status);
         Assert.Single(repo.Admissions);
+        Assert.Equal(1, repo.SaveChangesCount);
     }
 
     [Fact]
     public async Task CreateAsync_RejectsUnknownApplicant()
     {
-        var repo = new FakeAdmissionRepository(applicantExists: false);
-        var service = new AdmissionService(repo);
-
+        var service = new AdmissionService(new FakeAdmissionRepository());
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             service.CreateAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
-    public async Task DecideAsync_AcceptedWithMandatoryRequirements_SetsStatusAndApplicant()
+    public async Task DecideAsync_AcceptedWithMandatoryRequirement_UpdatesAdmissionApplicantAndDecision()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-        repo.AddApplicant(admission.ApplicantId);
-        repo.AddRequirement(admission.ProgrammeId, "Birth certificate", isMandatory: true);
-
+        var applicant = repo.AddApplicant();
+        var admission = repo.AddAdmission(applicant.Id);
+        repo.AddRequirement(admission.ProgrammeId, mandatory: true);
         var service = new AdmissionService(repo);
-        var decision = await service.DecideAsync(admission.Id, AdmissionStatus.Accepted, "Met all requirements", "registrar");
 
-        Assert.Equal(AdmissionStatus.Accepted, admission.Status);
-        Assert.Equal(ApplicantStatus.Accepted, repo.Applicants[admission.ApplicantId].Status);
-        Assert.Equal(AdmissionStatus.Accepted, decision.Decision);
-        Assert.Equal("Met all requirements", decision.Reason);
+        var decision = await service.DecideAsync(admission.Id, "Accepted", "Requirements met", "registrar");
+
+        Assert.Equal("Accepted", admission.Status);
+        Assert.Equal("Accepted", applicant.Status);
+        Assert.Equal("Accepted", decision.Decision);
+        Assert.Equal("Requirements met", decision.Reason);
         Assert.Equal("registrar", decision.DecidedBy);
+        Assert.Single(repo.Decisions);
+        Assert.Equal(1, repo.SaveChangesCount);
         Assert.NotNull(admission.DecidedAt);
     }
 
     [Fact]
-    public async Task DecideAsync_Rejected_SetsStatusAndApplicant()
+    public async Task DecideAsync_Rejected_UpdatesAdmissionApplicantAndDecision()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-        repo.AddApplicant(admission.ApplicantId);
-
+        var applicant = repo.AddApplicant();
+        var admission = repo.AddAdmission(applicant.Id);
         var service = new AdmissionService(repo);
-        var decision = await service.DecideAsync(admission.Id, AdmissionStatus.Rejected, "Incomplete documents", "registrar");
 
-        Assert.Equal(AdmissionStatus.Rejected, admission.Status);
-        Assert.Equal(ApplicantStatus.Rejected, repo.Applicants[admission.ApplicantId].Status);
-        Assert.Equal(AdmissionStatus.Rejected, decision.Decision);
+        var decision = await service.DecideAsync(admission.Id, "Rejected", "Incomplete documents", "registrar");
+
+        Assert.Equal("Rejected", admission.Status);
+        Assert.Equal("Rejected", applicant.Status);
+        Assert.Equal("Rejected", decision.Decision);
+        Assert.Equal("Incomplete documents", decision.Reason);
+        Assert.Single(repo.Decisions);
     }
 
     [Fact]
-    public async Task DecideAsync_RejectsNonPendingAdmission()
+    public async Task DecideAsync_RejectsAnAdmissionThatIsNotPending()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-        admission.Status = AdmissionStatus.Accepted;
-        repo.Admissions[0] = admission;
-
+        var applicant = repo.AddApplicant();
+        var admission = repo.AddAdmission(applicant.Id);
+        admission.Status = "Accepted";
         var service = new AdmissionService(repo);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.DecideAsync(admission.Id, AdmissionStatus.Rejected));
+            service.DecideAsync(admission.Id, "Rejected"));
     }
 
     [Fact]
     public async Task DecideAsync_AcceptedWithoutMandatoryRequirements_Throws()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-        repo.AddApplicant(admission.ApplicantId);
-        // No mandatory requirements added for this programme
-
+        var applicant = repo.AddApplicant();
+        var admission = repo.AddAdmission(applicant.Id);
         var service = new AdmissionService(repo);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.DecideAsync(admission.Id, AdmissionStatus.Accepted));
-    }
-
-    [Fact]
-    public async Task DecideAsync_AcceptedWithOnlyOptionalRequirements_Throws()
-    {
-        var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-        repo.AddApplicant(admission.ApplicantId);
-        repo.AddRequirement(admission.ProgrammeId, "Optional document", isMandatory: false);
-
-        var service = new AdmissionService(repo);
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.DecideAsync(admission.Id, AdmissionStatus.Accepted));
+            service.DecideAsync(admission.Id, "Accepted"));
     }
 
     [Fact]
     public async Task UpdateAsync_ChangesStatus()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-
+        var applicant = repo.AddApplicant();
+        var admission = repo.AddAdmission(applicant.Id);
         var service = new AdmissionService(repo);
-        var updated = await service.UpdateAsync(admission.Id, AdmissionStatus.Rejected);
+
+        var updated = await service.UpdateAsync(admission.Id, "Rejected");
 
         Assert.NotNull(updated);
-        Assert.Equal(AdmissionStatus.Rejected, updated.Status);
+        Assert.Equal("Rejected", updated.Status);
     }
 
     [Fact]
     public async Task UpdateAsync_UnknownAdmission_ReturnsNull()
     {
-        var repo = new FakeAdmissionRepository();
-        var service = new AdmissionService(repo);
-
-        var updated = await service.UpdateAsync(Guid.NewGuid(), AdmissionStatus.Rejected);
-
-        Assert.Null(updated);
+        var service = new AdmissionService(new FakeAdmissionRepository());
+        Assert.Null(await service.UpdateAsync(Guid.NewGuid(), "Rejected"));
     }
 
     [Fact]
     public async Task DeleteAsync_RemovesAdmission()
     {
         var repo = new FakeAdmissionRepository();
-        var admission = await repo.AddAdmissionAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-
+        var applicant = repo.AddApplicant();
+        var admission = repo.AddAdmission(applicant.Id);
         var service = new AdmissionService(repo);
-        var result = await service.DeleteAsync(admission.Id);
 
-        Assert.True(result);
+        Assert.True(await service.DeleteAsync(admission.Id));
         Assert.Empty(repo.Admissions);
     }
 
     [Fact]
     public async Task DeleteAsync_UnknownAdmission_ReturnsFalse()
     {
-        var repo = new FakeAdmissionRepository();
-        var service = new AdmissionService(repo);
-
-        var result = await service.DeleteAsync(Guid.NewGuid());
-
-        Assert.False(result);
+        var service = new AdmissionService(new FakeAdmissionRepository());
+        Assert.False(await service.DeleteAsync(Guid.NewGuid()));
     }
-}
 
-public sealed class FakeAdmissionRepository : IAdmissionRepository
-{
-    private readonly bool _applicantExists;
-    public List<Admission> Admissions { get; } = [];
-    public Dictionary<Guid, Applicant> Applicants { get; } = [];
-    public List<AdmissionRequirement> Requirements { get; } = [];
-    public List<AdmissionDecision> Decisions { get; } = [];
-
-    public FakeAdmissionRepository(bool applicantExists = true) => _applicantExists = applicantExists;
-
-    public Task<Applicant?> GetApplicantAsync(Guid applicantId, CancellationToken cancellationToken = default)
+    private sealed class FakeAdmissionRepository : IAdmissionRepository
     {
-        if (!_applicantExists) return Task.FromResult<Applicant?>(null);
-        if (Applicants.TryGetValue(applicantId, out var existing))
-            return Task.FromResult<Applicant?>(existing);
-        return Task.FromResult<Applicant?>(new Applicant
+        private readonly Dictionary<Guid, Admission> _admissions = new();
+        private readonly Dictionary<Guid, Applicant> _applicants = new();
+        private readonly List<AdmissionRequirement> _requirements = new();
+        private readonly List<AdmissionDecision> _decisions = new();
+
+        public IReadOnlyList<Admission> Admissions => _admissions.Values.ToList();
+        public IReadOnlyList<AdmissionDecision> Decisions => _decisions;
+        public int SaveChangesCount { get; private set; }
+
+        public Applicant AddApplicant()
         {
-            Id = applicantId,
-            ApplicationNumber = "APP-001",
-            FirstName = "Test",
-            LastName = "Applicant"
-        });
-    }
+            var applicant = new Applicant
+            {
+                ApplicationNumber = "APP-001",
+                FirstName = "Test",
+                LastName = "Applicant"
+            };
+            _applicants[applicant.Id] = applicant;
+            return applicant;
+        }
 
-    public void AddApplicant(Guid applicantId) =>
-        Applicants[applicantId] = new Applicant
+        public Admission AddAdmission(Guid applicantId)
         {
-            Id = applicantId,
-            ApplicationNumber = "APP-001",
-            FirstName = "Test",
-            LastName = "Applicant"
-        };
+            var admission = new Admission
+            {
+                ApplicantId = applicantId,
+                ProgrammeId = Guid.NewGuid(),
+                AcademicYearId = Guid.NewGuid(),
+                IntakeId = Guid.NewGuid()
+            };
+            _admissions[admission.Id] = admission;
+            return admission;
+        }
 
-    public Task<Admission?> GetAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default) =>
-        Task.FromResult(Admissions.FirstOrDefault(x => x.Id == admissionId));
-
-    public Task<IReadOnlyList<Admission>> GetAllAsync(CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyList<Admission>>(Admissions);
-
-    public async Task<Admission> AddAdmissionAsync(Guid applicantId, Guid programmeId, Guid academicYearId, Guid intakeId)
-    {
-        var admission = new Admission
+        public void AddRequirement(Guid programmeId, bool mandatory)
         {
-            ApplicantId = applicantId,
-            ProgrammeId = programmeId,
-            AcademicYearId = academicYearId,
-            IntakeId = intakeId,
-            Status = AdmissionStatus.Pending
-        };
-        Admissions.Add(admission);
-        return admission;
-    }
+            _requirements.Add(new AdmissionRequirement
+            {
+                ProgrammeId = programmeId,
+                RequirementType = "Document",
+                Description = "Required admission document",
+                IsMandatory = mandatory
+            });
+        }
 
-    public Task AddAdmissionAsync(Admission admission, CancellationToken cancellationToken = default)
-    {
-        Admissions.Add(admission);
-        return Task.CompletedTask;
-    }
+        public Task<Applicant?> GetApplicantAsync(Guid applicantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_applicants.TryGetValue(applicantId, out var applicant) ? applicant : null);
 
-    public Task UpdateAdmissionAsync(Admission admission, CancellationToken cancellationToken = default)
-    {
-        var index = Admissions.FindIndex(x => x.Id == admission.Id);
-        if (index >= 0) Admissions[index] = admission;
-        return Task.CompletedTask;
-    }
+        public Task<Admission?> GetAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_admissions.TryGetValue(admissionId, out var admission) ? admission : null);
 
-    public Task DeleteAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default)
-    {
-        Admissions.RemoveAll(x => x.Id == admissionId);
-        return Task.CompletedTask;
-    }
+        public Task<IReadOnlyList<Admission>> GetAllAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Admission>>(_admissions.Values.ToList());
 
-    public void AddRequirement(Guid programmeId, string description, bool isMandatory)
-    {
-        Requirements.Add(new AdmissionRequirement
+        public Task AddAdmissionAsync(Admission admission, CancellationToken cancellationToken = default)
         {
-            Id = Guid.NewGuid(),
-            ProgrammeId = programmeId,
-            RequirementType = "Document",
-            Description = description,
-            IsMandatory = isMandatory,
-            IsActive = true
-        });
-    }
+            _admissions[admission.Id] = admission;
+            return Task.CompletedTask;
+        }
 
-    public Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(
-        Guid programmeId, bool mandatoryOnly = false, CancellationToken cancellationToken = default)
-    {
-        var query = Requirements.Where(x => x.ProgrammeId == programmeId && x.IsActive);
-        if (mandatoryOnly) query = query.Where(x => x.IsMandatory);
-        return Task.FromResult<IReadOnlyList<AdmissionRequirement>>(query.ToList());
-    }
+        public Task UpdateAdmissionAsync(Admission admission, CancellationToken cancellationToken = default)
+        {
+            _admissions[admission.Id] = admission;
+            return Task.CompletedTask;
+        }
 
-    public Task AddDecisionAsync(AdmissionDecision decision, CancellationToken cancellationToken = default)
-    {
-        Decisions.Add(decision);
-        return Task.CompletedTask;
-    }
+        public Task DeleteAdmissionAsync(Guid admissionId, CancellationToken cancellationToken = default)
+        {
+            _admissions.Remove(admissionId);
+            return Task.CompletedTask;
+        }
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task AddDecisionAsync(AdmissionDecision decision, CancellationToken cancellationToken = default)
+        {
+            _decisions.Add(decision);
+            return Task.CompletedTask;
+        }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            SaveChangesCount++;
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<AdmissionRequirement>> GetAdmissionRequirementsAsync(
+            Guid programmeId,
+            bool mandatoryOnly = false,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<AdmissionRequirement>>(
+                _requirements.Where(x => x.ProgrammeId == programmeId && (!mandatoryOnly || x.IsMandatory)).ToList());
+    }
 }

@@ -75,7 +75,7 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
     {
         var applicant = await db.Applicants.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (applicant is null) return NotFound();
-        if (applicant.Status != ApplicantStatus.Accepted) return Conflict(new { message = "Only an accepted application can be admitted." });
+        if (applicant.Status != "Accepted") return Conflict(new { message = "Only an accepted application can be admitted." });
         if (!await db.Programmes.AnyAsync(x => x.Id == request.ProgrammeId, cancellationToken)) return BadRequest(new { message = "The selected programme does not exist." });
         if (!await db.Intakes.AnyAsync(x => x.Id == request.IntakeId, cancellationToken)) return BadRequest(new { message = "The selected intake does not exist." });
         if (!await db.AcademicYears.AnyAsync(x => x.Id == request.AcademicYearId, cancellationToken)) return BadRequest(new { message = "The selected academic year does not exist." });
@@ -85,8 +85,8 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
 
         var admission = await db.Admissions.SingleOrDefaultAsync(x => x.ApplicantId == id && x.ProgrammeId == request.ProgrammeId && x.IntakeId == request.IntakeId && x.AcademicYearId == request.AcademicYearId, cancellationToken);
         if (admission is null) return Conflict(new { message = "No matching admission record exists for this accepted application." });
-        if (admission.Status == AdmissionStatus.Admitted) return Conflict(new { message = "This applicant has already been admitted." });
-        if (admission.Status != AdmissionStatus.Accepted) return Conflict(new { message = "The matching admission is not accepted." });
+        if (admission.Status == "Admitted") return Conflict(new { message = "This applicant has already been admitted." });
+        if (admission.Status != "Accepted") return Conflict(new { message = "The matching admission is not accepted." });
 
         // Enforce mandatory admission requirements before admitting.
         var mandatoryRequirements = await db.AdmissionRequirements
@@ -126,8 +126,8 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
         {
             enrollment.Status = "Active";
         }
-        admission.Status = AdmissionStatus.Admitted;
-        applicant.Status = ApplicantStatus.Admitted;
+        admission.Status = "Admitted";
+        applicant.Status = "Admitted";
         await db.SaveChangesAsync(cancellationToken);
 
         // Admission is the source event for student billing. Select the most specific
