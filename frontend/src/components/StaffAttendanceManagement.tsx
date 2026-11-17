@@ -3,6 +3,8 @@ import { listStaffDailyAttendance, recordManualStaffAttendance, type StaffDailyA
 import { listStaffDepartments, type StaffDepartment } from '../api/staff'
 import LoadingSpinner from './LoadingSpinner'
 
+const shiftDate = (value: string, days: number) => { const [year, month, day] = value.split('-').map(Number); return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10) }
+
 function localDate(value: string | null) {
   if (!value) return '—'
   return new Intl.DateTimeFormat('en-UG', {
@@ -15,7 +17,7 @@ function localDate(value: string | null) {
 
 export function StaffAttendanceManagement() {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Kampala', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
-  const [from, setFrom] = useState(today)
+  const [from, setFrom] = useState(shiftDate(today, -6))
   const [to, setTo] = useState(today)
   const [search, setSearch] = useState('')
   const [departmentId, setDepartmentId] = useState('')
@@ -61,6 +63,7 @@ export function StaffAttendanceManagement() {
   const incomplete = rows.filter(row => row.checkIn && !row.checkOut).length
   const localClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Kampala', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())
   const deadlinePassed = localClock >= checkInDeadline
+  const lastSevenDates = Array.from({ length: 7 }, (_, index) => shiftDate(today, index - 6))
 
   return (
     <section className="space-y-4">
@@ -97,11 +100,11 @@ export function StaffAttendanceManagement() {
       <div className="table-responsive">
         <table className="data-table">
           <thead><tr>
-            <th>Staff No.</th><th>Staff member</th><th>Date</th><th>Check-in</th><th>Check-out</th><th>Hours</th><th>Status</th><th>Action</th>
+            <th>Staff No.</th><th>Staff member</th><th>Date</th><th>Check-in</th><th>Check-out</th><th>Hours</th><th>Last 7 days</th><th>Status</th><th>Action</th>
           </tr></thead>
           <tbody>
-            {loading ? <tr><td colSpan={8}><LoadingSpinner /></td></tr>
-              : rows.length === 0 ? <tr><td colSpan={8}>No staff attendance records found for the selected filters.</td></tr>
+            {loading ? <tr><td colSpan={9}><LoadingSpinner /></td></tr>
+              : rows.length === 0 ? <tr><td colSpan={9}>No staff attendance records found for the selected filters.</td></tr>
               : rows.map(row => <tr key={row.staffMemberId + row.date}>
                 <td>{row.staffNumber}</td>
                 <td>{row.name}</td>
@@ -109,6 +112,7 @@ export function StaffAttendanceManagement() {
                 <td>{localDate(row.checkIn)}</td>
                 <td>{localDate(row.checkOut)}</td>
                 <td>{row.hoursWorked == null ? '—' : row.hoursWorked.toFixed(2)}</td>
+                <td><div aria-label={`Last seven days attendance for ${row.name}`} style={{ display: 'flex', gap: 3 }}>{lastSevenDates.map(date => { const day = rows.find(item => item.staffMemberId === row.staffMemberId && item.date === date); return <span key={date} title={`${date}: ${day?.status ?? 'Not loaded'}`} style={{ width: 10, height: 18, borderRadius: 3, background: day?.checkOut ? '#16a34a' : day?.checkIn ? '#f59e0b' : day ? '#fee2e2' : '#e2e8f0' }} /> })}</div></td>
                 <td><span className={row.status === 'Complete' ? 'status status-success' : row.status === 'Checked in' || (row.date === today && deadlinePassed) ? 'status status-warning' : 'status'}>{row.date === today && row.status === 'Absent' && deadlinePassed ? 'Not checked in by ' + checkInDeadline : row.status}</span></td>
                 <td>{row.date === today && row.status === 'Absent'
                   ? <button type="button" className="btn btn-secondary" disabled={savingStaffId === row.staffMemberId} onClick={() => void recordStaffEvent(row, 'IN')}>{savingStaffId === row.staffMemberId ? 'Saving…' : 'Check in'}</button>
