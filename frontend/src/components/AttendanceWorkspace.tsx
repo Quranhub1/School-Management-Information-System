@@ -341,7 +341,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
             <div className="summary-card"><span>Unmarked</span><strong>{registerSummary.unmarked}</strong></div>
           </div>}
           {session && <div className="flex flex-wrap items-end gap-2" style={{ marginTop: 12 }}>
-            <label className="flex-1 min-w-[220px]">Find enrolled student<input value={eligibleSearch} onChange={e => setEligibleSearch(e.target.value)} placeholder="Student number or name" /></label>
+            <label className="flex-1 min-w-[220px]">Find enrolled student<input value={eligibleSearch} onChange={e => setEligibleSearch(e.target.value)} placeholder="Student or admission number, or name" /></label>
             <button type="button" className="btn btn-secondary" disabled={loading || eligibleSearch.trim().length === 1} onClick={() => void loadRegister(session.id, eligibleSearch)}>Search register</button>
             <button type="button" className="btn btn-secondary" disabled={loading || !eligibleSearch} onClick={() => { setEligibleSearch(''); void loadRegister(session.id, '') }}>Clear search</button>
             <span className="text-xs text-slate-500">{students.length} shown · {sessionContext?.totalEnrolled ?? students.length} enrolled</span>
