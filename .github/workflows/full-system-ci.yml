@@ -179,7 +179,7 @@ jobs:
 
       - name: Install Playwright Chromium
         working-directory: frontend
-        run: "${{ runner.temp }}/smis-playwright/node_modules/.bin/playwright" install --with-deps chromium
+        run: ${{ runner.temp }}/smis-playwright/node_modules/.bin/playwright install --with-deps chromium
 
       - name: Start frontend preview server
         working-directory: frontend
@@ -211,7 +211,7 @@ jobs:
         working-directory: frontend
         env:
           NODE_PATH: ${{ github.workspace }}/frontend/node_modules
-        run: "${{ runner.temp }}/smis-playwright/node_modules/.bin/playwright" test --config=playwright.config.cjs --reporter=line
+        run: ${{ runner.temp }}/smis-playwright/node_modules/.bin/playwright test --config=playwright.config.cjs --reporter=line
 
       - name: Dump service logs on failure
         if: failure()
