@@ -1,3 +1,4 @@
+using SchoolManagement.Application.Admissions;
 using SchoolManagement.Domain.Attendance;
 
 namespace SchoolManagement.Application.Abstractions;
@@ -8,6 +9,8 @@ public interface IAttendanceRepository
     Task<AttendanceSession?> GetSessionByIdAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default);
     Task<bool> IsStudentEligibleForSessionAsync(Guid attendanceSessionId, Guid studentId, CancellationToken cancellationToken = default);
     Task<StudentAttendance?> GetStudentAttendanceAsync(Guid attendanceSessionId, Guid studentId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<EligibleStudentDto>> GetEligibleStudentsAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default);
+    Task<SessionSummaryDto> GetSessionSummaryAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default);
     Task AddSessionAsync(AttendanceSession session, CancellationToken cancellationToken = default);
     Task AddStudentAttendanceAsync(StudentAttendance attendance, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentAttendance>> GetStudentAttendanceAsync(Guid studentId, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
