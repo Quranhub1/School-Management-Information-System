@@ -16,7 +16,7 @@ vi.mock('../api/timetable', () => ({
     teachingGroups: [{ id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' }],
     courses: [{ id: 'course-1', label: 'CPH 101 — Pharmacy Practice' }],
     teachers: [{ id: 'teacher-1', label: 'Test Teacher' }],
-    semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', isCurrent: true, isActive: true }],
+    semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
     programmes: [{ id: 'programme-1', label: 'Certificate in Pharmacy' }],
     curricula: [{ id: 'curriculum-1', programmeId: 'programme-1', label: 'Certificate in Pharmacy — 2026' }],
     curriculumCourses: [{ curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-1', courseLabel: 'CPH 101 — Pharmacy Practice', yearOfStudy: 1, semesterNumber: 1, isCore: true }],
@@ -25,7 +25,7 @@ vi.mock('../api/timetable', () => ({
 
 vi.mock('./InstitutionSettingsContext', () => ({
   useInstitutionSettings: vi.fn(() => ({
-    institution: null,
+    institution: { id: 'institution-1', institutionName: 'KAMPALA SCHOOL OF HEALTH SCIENCES', abbreviation: 'KSHS', motto: 'Health is Life', address: '', phone: '', email: '', website: '', postalAddress: '', country: 'Uganda', institutionType: 'School', logoPath: null, primaryColor: '#0505cc', accentColor: '#0735ed', isActive: true, updatedAt: '' },
     loaded: true,
   })),
 }))
@@ -40,6 +40,20 @@ describe('TimetableManagement', () => {
   it('renders the timetable management shell', () => {
     render(<TimetableManagement />)
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
+  })
+
+
+  it('prints generated class timetables for the full semester using Institution Settings', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
+    fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
+    fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
+    expect(await screen.findByText('KAMPALA SCHOOL OF HEALTH SCIENCES')).toBeTruthy()
+    expect(screen.getByText(/VALID FOR: 01 Jan 2026 – 30 Jun 2026/)).toBeTruthy()
   })
 
   it('supports readOnly mode', () => {
