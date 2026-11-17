@@ -19,6 +19,7 @@ export function StaffAttendanceManagement() {
   const [to, setTo] = useState(today)
   const [search, setSearch] = useState('')
   const [departmentId, setDepartmentId] = useState('')
+  const [checkInDeadline, setCheckInDeadline] = useState('08:30')
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
   const [rows, setRows] = useState<StaffDailyAttendanceRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -58,6 +59,8 @@ export function StaffAttendanceManagement() {
   const checkIns = rows.filter(row => row.checkIn).length
   const checkOuts = rows.filter(row => row.checkOut).length
   const incomplete = rows.filter(row => row.checkIn && !row.checkOut).length
+  const localClock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Kampala', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())
+  const deadlinePassed = localClock >= checkInDeadline
 
   return (
     <section className="space-y-4">
@@ -80,6 +83,8 @@ export function StaffAttendanceManagement() {
             {departments.map(department => <option key={department.id} value={department.id}>{department.name}</option>)}
           </select>
         </label>
+        <label>Late check-in threshold<input type="time" value={checkInDeadline} onChange={e => setCheckInDeadline(e.target.value)} /></label>
+        <button type="button" className="btn btn-secondary" onClick={() => { const [year, month, day] = today.split('-').map(Number); const start = new Date(Date.UTC(year, month - 1, day - 6)).toISOString().slice(0, 10); setFrom(start); setTo(today) }}>Last 7 days</button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -104,7 +109,7 @@ export function StaffAttendanceManagement() {
                 <td>{localDate(row.checkIn)}</td>
                 <td>{localDate(row.checkOut)}</td>
                 <td>{row.hoursWorked == null ? '—' : row.hoursWorked.toFixed(2)}</td>
-                <td><span className={row.status === 'Complete' ? 'status status-success' : row.status === 'Checked in' ? 'status status-warning' : 'status'}>{row.status}</span></td>
+                <td><span className={row.status === 'Complete' ? 'status status-success' : row.status === 'Checked in' || (row.date === today && deadlinePassed) ? 'status status-warning' : 'status'}>{row.date === today && row.status === 'Absent' && deadlinePassed ? 'Not checked in by ' + checkInDeadline : row.status}</span></td>
                 <td>{row.date === today && row.status === 'Absent'
                   ? <button type="button" className="btn btn-secondary" disabled={savingStaffId === row.staffMemberId} onClick={() => void recordStaffEvent(row, 'IN')}>{savingStaffId === row.staffMemberId ? 'Saving…' : 'Check in'}</button>
                   : row.date === today && row.status === 'Checked in'
