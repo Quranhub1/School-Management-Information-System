@@ -1039,7 +1039,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               </div>
               <div className="form-row">
                 <input required type="number" min="0" placeholder="Credit units" value={schoolUnitForm.creditUnits} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, creditUnits: e.target.value })} />
-                <select aria-label={authority === 'UVTAB' ? 'Competence type' : 'School-based course unit type'} required value={schoolUnitForm.courseType} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, courseType: e.target.value })}>
+                <select aria-label={authority === 'UVTAB' ? 'Competence type' : authority === 'UHPAB' ? 'UHPAB course unit type' : 'School-based course unit type'} required value={schoolUnitForm.courseType} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, courseType: e.target.value })}>
                   {authority === 'UVTAB' ? <><option value="">Select competence type</option><option value="Competence Area">Competence Area</option><option value="Competence Unit">Competence Unit</option><option value="Workplace Practice">Workplace Practice</option><option value="Theory">Theory</option><option value="Assessment">Assessment</option><option value="Other">Other</option></> : <><option value="">Select course unit type</option><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Examination">Examination</option><option value="Other">Other</option></>}
                 </select>
               </div>
