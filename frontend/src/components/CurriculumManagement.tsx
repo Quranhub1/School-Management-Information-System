@@ -598,15 +598,15 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     }
   }
 
-  async function saveSchoolBasedCourseUnit(e: React.FormEvent) {
+  async function saveEditableAuthorityCourseUnit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selected || resolveAcademicAuthority(authority) !== 'SCHOOL_BASED') return
+    if (!selected || !['SCHOOL_BASED', 'UVTAB'].includes(resolveAcademicAuthority(authority))) return
     setSaving(true)
     setError('')
     setMessage('')
     try {
       const created = await createCourse({
-        authorityCode: 'SCHOOL_BASED',
+        authorityCode: resolveAcademicAuthority(authority),
         code: schoolUnitForm.code.trim(),
         name: schoolUnitForm.name.trim(),
         creditUnits: Number(schoolUnitForm.creditUnits),
@@ -620,14 +620,14 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         isCore: schoolUnitForm.isCore,
       })
       setSchoolUnitForm({ code: '', name: '', creditUnits: '0', courseType: 'Lecture', description: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
-      setMessage('School-based course unit created and added to the selected curriculum semester.')
-      const [nextCourses] = await Promise.all([getCourses('SCHOOL_BASED'), refreshMappings(selected)])
+      setMessage(`${authority === 'UVTAB' ? 'UVTAB competence area/unit' : 'School-based course unit'} created and added to the selected curriculum semester.`)
+      const [nextCourses] = await Promise.all([getCourses(authority), refreshMappings(selected)])
       setCourses(nextCourses)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to create and map the school-based course unit.')
+      setError(e instanceof Error ? e.message : 'Unable to create and map the course unit.')
       // If the catalogue record was saved but mapping failed, refresh the catalogue
       // so the unit remains available for a retry without creating a duplicate.
-      try { setCourses(await getCourses('SCHOOL_BASED')) } catch { /* retain the original error */ }
+      try { setCourses(await getCourses(authority)) } catch { /* retain the original error */ }
     } finally {
       setSaving(false)
     }
@@ -1029,18 +1029,18 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
           {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
 
-          {selected && resolveAcademicAuthority(authority) === 'SCHOOL_BASED' && (
-            <form className="student-form curriculum-school-course-form" onSubmit={saveSchoolBasedCourseUnit}>
-              <h3>Add school-based course unit directly to this curriculum</h3>
-              <p className="empty">Enter the unit from the institution's approved curriculum. It will be saved in the SCHOOL_BASED catalogue and placed in the selected year and semester.</p>
+          {selected && ['SCHOOL_BASED', 'UVTAB'].includes(resolveAcademicAuthority(authority)) && (
+            <form className="student-form curriculum-school-course-form" onSubmit={saveEditableAuthorityCourseUnit}>
+              <h3>{authority === 'UVTAB' ? 'Add UVTAB competence area / unit' : 'Add school-based course unit directly to this curriculum'}</h3>
+              <p className="empty">{authority === 'UVTAB' ? 'Enter the verified competence area or competence unit from the UVTAB training package. Map it to the appropriate year and semester.' : 'Enter the unit from the institution’s approved curriculum. It will be saved in the SCHOOL_BASED catalogue and placed in the selected year and semester.'}</p>
               <div className="form-row">
-                <input required placeholder="Course/unit code" value={schoolUnitForm.code} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, code: e.target.value })} />
-                <input required placeholder="Course/unit name" value={schoolUnitForm.name} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, name: e.target.value })} />
+                <input required placeholder={authority === 'UVTAB' ? 'Competence code' : 'Course/unit code'} value={schoolUnitForm.code} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, code: e.target.value })} />
+                <input required placeholder={authority === 'UVTAB' ? 'Competence area / unit name' : 'Course/unit name'} value={schoolUnitForm.name} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, name: e.target.value })} />
               </div>
               <div className="form-row">
                 <input required type="number" min="0" placeholder="Credit units" value={schoolUnitForm.creditUnits} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, creditUnits: e.target.value })} />
                 <select aria-label="School-based course unit type" required value={schoolUnitForm.courseType} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, courseType: e.target.value })}>
-                  <option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Competence Area">Competence Area</option><option value="Other">Other</option>
+                  {authority === 'UVTAB' ? <><option value="Competence Area">Competence Area</option><option value="Competence Unit">Competence Unit</option><option value="Workplace Practice">Workplace Practice</option><option value="Theory">Theory</option><option value="Assessment">Assessment</option><option value="Other">Other</option></> : <><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Other">Other</option></>}
                 </select>
               </div>
               <input placeholder="Description / learning outcomes (optional)" value={schoolUnitForm.description} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, description: e.target.value })} />
