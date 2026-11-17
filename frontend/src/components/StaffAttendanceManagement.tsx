@@ -49,9 +49,7 @@ export function StaffAttendanceManagement() {
     <section className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <span className="eyebrow">HR / ATTENDANCE</span>
           <h3 className="text-lg font-semibold">Daily Staff Attendance</h3>
-          <p className="text-xs text-slate-500">Fingerprint check-in and check-out events appear here automatically after the workstation agent confirms each scan.</p>
         </div>
         <button type="button" className="btn btn-secondary" onClick={() => void load()} disabled={loading}>Refresh register</button>
       </div>
@@ -95,7 +93,6 @@ export function StaffAttendanceManagement() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-500">Times are displayed in Uganda local time. An incomplete day remains marked “Checked in” until a checkout is recorded.</p>
     </section>
   )
 }
