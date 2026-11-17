@@ -73,6 +73,12 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
         if (campusId is null && !await db.AttendanceSessions.AnyAsync(x => x.Id == attendanceSessionId, cancellationToken))
             return NotFound(new { message = "Attendance session was not found." });
         if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)) return Forbid();
+        var sessionStatus = await db.AttendanceSessions.AsNoTracking()
+            .Where(x => x.Id == attendanceSessionId)
+            .Select(x => x.Status)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (!string.Equals(sessionStatus, "Open", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "QR attendance is available only while the attendance session is open." });
         var now = DateTimeOffset.UtcNow;
         var slot = now.ToUnixTimeSeconds() / 60;
         var token = CreateQrToken(attendanceSessionId, slot);
