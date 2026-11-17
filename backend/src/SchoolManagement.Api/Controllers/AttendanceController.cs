@@ -177,6 +177,7 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             join session in db.AttendanceSessions.AsNoTracking() on record.AttendanceSessionId equals session.Id
             join entry in db.TimetableEntries.AsNoTracking() on session.TimetableEntryId equals entry.Id
             join teachingGroup in db.TeachingGroups.AsNoTracking() on entry.TeachingGroupId equals teachingGroup.Id
+            join course in db.Courses.AsNoTracking() on entry.CourseId equals course.Id
             where record.StudentId == studentId
                 && (!fromDate.HasValue || session.SessionDate >= fromDate.Value)
                 && (!toDate.HasValue || session.SessionDate <= toDate.Value)
@@ -190,7 +191,10 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
                 record.Remarks,
                 sessionDate = session.SessionDate,
                 sessionStatus = session.Status,
-                className = teachingGroup.Name == null || teachingGroup.Name == "" ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name
+                className = teachingGroup.Name == null || teachingGroup.Name == "" ? teachingGroup.GroupCode : teachingGroup.GroupCode + " — " + teachingGroup.Name,
+                courseName = course.Name,
+                timetableSlot = entry.DayOfWeek + " " + entry.StartTime.ToString("HH:mm") + "–" + entry.EndTime.ToString("HH:mm"),
+                room = entry.Room
             }).ToListAsync(cancellationToken);
         return Ok(history);
     }
