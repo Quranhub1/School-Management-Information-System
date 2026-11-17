@@ -35,7 +35,7 @@ describe('AttendanceManagement', () => {
     render(<AttendanceManagement />)
     expect(screen.getByRole('tab', { name: 'Daily' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Student history' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'QR attendance' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'QR attendance' })).not.toBeInTheDocument()
   })
 
   it('switches tabs when clicked', () => {
