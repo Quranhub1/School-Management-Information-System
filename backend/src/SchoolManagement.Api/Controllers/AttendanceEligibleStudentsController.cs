@@ -110,6 +110,15 @@ public sealed class AttendanceEligibleStudentsController(
             .Where(x => x.AttendanceSessionId == sessionId)
             .Select(x => new { x.Id, x.StudentId, x.Status, x.Remarks })
             .ToListAsync(cancellationToken);
+        var summary = new
+        {
+            present = existing.Count(x => x.Status == "Present"),
+            absent = existing.Count(x => x.Status == "Absent"),
+            late = existing.Count(x => x.Status == "Late"),
+            excused = existing.Count(x => x.Status == "Excused"),
+            marked = existing.Count,
+            unmarked = Math.Max(0, totalEnrolled - existing.Count)
+        };
 
         var students = roster.Select((student, index) =>
         {
@@ -130,6 +139,7 @@ public sealed class AttendanceEligibleStudentsController(
         return Ok(new
         {
             session,
+            summary,
             context = new
             {
                 className = string.IsNullOrWhiteSpace(context.Name)
