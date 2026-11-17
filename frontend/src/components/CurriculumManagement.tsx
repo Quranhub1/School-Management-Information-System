@@ -97,7 +97,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [cf, setCf] = useState({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' as 'FullProgramme' | 'ShortCourse' })
   const [uf, setUf] = useState({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
   const [mf, setMf] = useState({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
-  const [schoolUnitForm, setSchoolUnitForm] = useState({ code: '', name: '', creditUnits: '0', courseType: 'Lecture', description: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+  const [schoolUnitForm, setSchoolUnitForm] = useState({ code: '', name: '', creditUnits: '0', courseType: '', description: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
 
 
   useEffect(() => {
@@ -619,7 +619,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         semesterNumber: Number(schoolUnitForm.semesterNumber),
         isCore: schoolUnitForm.isCore,
       })
-      setSchoolUnitForm({ code: '', name: '', creditUnits: '0', courseType: 'Lecture', description: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+      setSchoolUnitForm({ code: '', name: '', creditUnits: '0', courseType: '', description: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
       setMessage(`${authority === 'UVTAB' ? 'UVTAB competence area/unit' : 'School-based course unit'} created and added to the selected curriculum semester.`)
       const [nextCourses] = await Promise.all([getCourses(authority), refreshMappings(selected)])
       setCourses(nextCourses)
@@ -1039,8 +1039,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               </div>
               <div className="form-row">
                 <input required type="number" min="0" placeholder="Credit units" value={schoolUnitForm.creditUnits} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, creditUnits: e.target.value })} />
-                <select aria-label="School-based course unit type" required value={schoolUnitForm.courseType} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, courseType: e.target.value })}>
-                  {authority === 'UVTAB' ? <><option value="Competence Area">Competence Area</option><option value="Competence Unit">Competence Unit</option><option value="Workplace Practice">Workplace Practice</option><option value="Theory">Theory</option><option value="Assessment">Assessment</option><option value="Other">Other</option></> : <><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Other">Other</option></>}
+                <select aria-label={authority === 'UVTAB' ? 'Competence type' : 'School-based course unit type'} required value={schoolUnitForm.courseType} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, courseType: e.target.value })}>
+                  {authority === 'UVTAB' ? <><option value="">Select competence type</option><option value="Competence Area">Competence Area</option><option value="Competence Unit">Competence Unit</option><option value="Workplace Practice">Workplace Practice</option><option value="Theory">Theory</option><option value="Assessment">Assessment</option><option value="Other">Other</option></>  : <><option value="">Select course unit type</option><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Other">Other</option></>}
                 </select>
               </div>
               <input placeholder="Description / learning outcomes (optional)" value={schoolUnitForm.description} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, description: e.target.value })} />
