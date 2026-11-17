@@ -232,22 +232,26 @@ public sealed class AttendanceController(AttendanceService service, IConfigurati
             join staff in db.StaffMembers.AsNoTracking() on entry.StaffMemberId equals staff.Id
             where offering.SemesterId == semesterId && session.SessionDate >= semester.StartDate && session.SessionDate <= semester.EndDate
                 && (accessibleCampuses == null || (staff.CampusId.HasValue && accessibleCampuses.Contains(staff.CampusId.Value)))
-            select new { session.Id, session.SessionDate, teachingGroup.Id, teachingGroup.GroupCode, teachingGroup.Name }).ToListAsync(cancellationToken);
+            select new { SessionId = session.Id, session.SessionDate, TeachingGroupId = teachingGroup.Id, teachingGroup.GroupCode, teachingGroup.Name }).ToListAsync(cancellationToken);
 
-        var sessionIds = sessions.Select(x => x.Id).ToArray();
+        var sessionIds = sessions.Select(x => x.SessionId).ToArray();
         var records = await db.StudentAttendances.AsNoTracking().Where(x => sessionIds.Contains(x.AttendanceSessionId))
             .Select(x => new { x.AttendanceSessionId, x.Status }).ToListAsync(cancellationToken);
-        var rows = sessions.GroupBy(x => new { x.SessionDate.Year, x.SessionDate.Month, x.Id, x.GroupCode, x.Name })
-            .Select(g => new
+        var rows = sessions.GroupBy(x => new { x.SessionDate.Year, x.SessionDate.Month, x.TeachingGroupId, x.GroupCode, x.Name })
+            .Select(g =>
             {
-                month = $"{g.Key.Year:D4}-{g.Key.Month:D2}",
-                classId = g.Key.Id,
-                className = string.IsNullOrWhiteSpace(g.Key.Name) ? g.Key.GroupCode : g.Key.GroupCode + " — " + g.Key.Name,
-                totalAttendance = records.Count(r => r.AttendanceSessionId == g.Key.Id),
-                totalPresent = records.Count(r => r.AttendanceSessionId == g.Key.Id && (r.Status == "Present" || r.Status == "Late")),
-                totalAbsent = records.Count(r => r.AttendanceSessionId == g.Key.Id && r.Status == "Absent"),
-                totalLate = records.Count(r => r.AttendanceSessionId == g.Key.Id && r.Status == "Late"),
-                totalExcused = records.Count(r => r.AttendanceSessionId == g.Key.Id && r.Status == "Excused")
+                var groupSessionIds = g.Select(x => x.SessionId).ToArray();
+                return new
+                {
+                    month = $"{g.Key.Year:D4}-{g.Key.Month:D2}",
+                    classId = g.Key.TeachingGroupId,
+                    className = string.IsNullOrWhiteSpace(g.Key.Name) ? g.Key.GroupCode : g.Key.GroupCode + " — " + g.Key.Name,
+                    totalAttendance = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId)),
+                    totalPresent = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && (r.Status == "Present" || r.Status == "Late")),
+                    totalAbsent = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && r.Status == "Absent"),
+                    totalLate = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && r.Status == "Late"),
+                    totalExcused = records.Count(r => groupSessionIds.Contains(r.AttendanceSessionId) && r.Status == "Excused")
+                };
             }).ToList();
 
         var monthly = rows.GroupBy(x => new { x.month, x.classId, x.className })
