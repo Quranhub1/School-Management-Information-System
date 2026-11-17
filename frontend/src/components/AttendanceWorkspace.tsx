@@ -334,6 +334,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
           </div>}
           {session && registerSummary && <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2" style={{ marginTop: 12 }}>
             <div className="summary-card"><span>Enrolled</span><strong>{sessionContext?.totalEnrolled ?? students.length}</strong></div>
+            <div className="summary-card"><span>Marked</span><strong>{registerSummary.marked} of {sessionContext?.totalEnrolled ?? students.length}</strong></div>
             <div className="summary-card"><span>Present</span><strong>{registerSummary.present}</strong></div>
             <div className="summary-card"><span>Late</span><strong>{registerSummary.late}</strong></div>
             <div className="summary-card"><span>Absent</span><strong>{registerSummary.absent}</strong></div>
