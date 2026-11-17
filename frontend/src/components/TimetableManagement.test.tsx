@@ -16,7 +16,7 @@ vi.mock('../api/timetable', () => ({
     teachingGroups: [{ id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' }],
     courses: [{ id: 'course-1', label: 'CPH 101 — Pharmacy Practice' }],
     teachers: [{ id: 'teacher-1', label: 'Test Teacher' }],
-    semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
+    semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', academicYearLabel: '2026/2027', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
     programmes: [{ id: 'programme-1', label: 'Certificate in Pharmacy' }],
     curricula: [{ id: 'curriculum-1', programmeId: 'programme-1', label: 'Certificate in Pharmacy — 2026' }],
     curriculumCourses: [{ curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-1', courseLabel: 'CPH 101 — Pharmacy Practice', yearOfStudy: 1, semesterNumber: 1, isCore: true }],
