@@ -30,7 +30,7 @@ public sealed class AdmissionService(IAdmissionRepository repository)
         return admission;
     }
 
-    public async Task<Admission?> UpdateAsync(Guid admissionId, AdmissionStatus? status = null, CancellationToken cancellationToken = default)
+    public async Task<Admission?> UpdateAsync(Guid admissionId, string? status = null, CancellationToken cancellationToken = default)
     {
         var admission = await repository.GetAdmissionAsync(admissionId, cancellationToken);
         if (admission is null) return null;
