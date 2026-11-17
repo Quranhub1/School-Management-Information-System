@@ -182,7 +182,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
         {canViewStaffAttendance && <button type="button" role="tab" aria-selected={section === 'staff'} className={section === 'staff' ? 'active' : ''} onClick={() => setSection('staff')}>Staff</button>}
       </div>
       {error && <div className="error-message" role="alert">{error}</div>}
-      {message && <div className="success-message" role="status">{message}</div>}
+      {message && <div className="success" role="status">{message}</div>}
 
       {section === 'staff' && canViewStaffAttendance && <StaffAttendanceManagement />}
 
