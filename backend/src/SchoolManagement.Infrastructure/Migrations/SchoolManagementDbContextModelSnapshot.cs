@@ -1012,7 +1012,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid>("ProgrammeId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
+                    b.Property<SchoolManagement.Domain.Admissions.AdmissionStatus>("Status")
+                        .HasConversion<string>()
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
@@ -1047,7 +1048,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
-                    b.Property<string>("Decision")
+                    b.Property<SchoolManagement.Domain.Admissions.AdmissionStatus>("Decision")
+                        .HasConversion<string>()
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
@@ -1137,7 +1139,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("text");
 
-                    b.Property<string>("Status")
+                    b.Property<SchoolManagement.Domain.Admissions.ApplicantStatus>("Status")
+                        .HasConversion<string>()
                         .IsRequired()
                         .HasColumnType("text");
 
