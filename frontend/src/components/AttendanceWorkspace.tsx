@@ -128,7 +128,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
       } else {
         await request(`/api/attendance/sessions/${session.id}/records`, { method: 'POST', body: JSON.stringify({ studentId: row.id, status, remarks: row.remarks ?? null }) })
       }
-      setStudents(current => current.map(x => x.id === row.id ? { ...x, status, attendanceRecordId: x.attendanceRecordId ?? 'saved' } : x))
+      await loadRegister(session.id)
       setMessage(`Attendance saved for ${row.name}.`)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to save attendance.') }
     finally { setSaving(false) }
