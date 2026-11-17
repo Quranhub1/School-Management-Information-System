@@ -8,9 +8,11 @@ type SemesterOption = { id: string; name: string; academicYearId: string; startD
 type IntakeOption = { id: string; name: string; code: string }
 type StudentRow = { number: number; id: string; registrationNumber: string; name: string; status: string | null; remarks?: string | null; attendanceRecordId?: string | null }
 type ReportRow = { month: string; classId: string; className: string; totalAttendance: number; totalPresent: number; totalAbsent: number; totalLate: number; totalExcused: number }
-type HistoryRow = { id: string; attendanceSessionId: string; studentId: string; status: string; remarks?: string | null; sessionDate: string; className: string; sessionStatus: string }
+type HistoryRow = { id: string; attendanceSessionId: string; studentId: string; studentName?: string; studentNumber?: string; status: string; remarks?: string | null; sessionDate: string; className: string; sessionStatus: string; courseName?: string; timetableSlot?: string; room?: string | null }
 type StudentMatch = { id: string; registrationNumber: string; name: string }
-type Session = { id: string; timetableEntryId: string; sessionDate: string; status: string }
+type Session = { id: string; timetableEntryId: string; sessionDate: string; status: string; recordedByUserId?: string | null }
+type SessionContext = { className: string; programmeName: string; semesterName: string; academicYearName: string; courseName: string; courseCode: string; room?: string | null; dayOfWeek: string; startTime: string; endTime: string; openedByName?: string | null; totalEnrolled: number }
+type RegisterSummary = { present: number; absent: number; late: number; excused: number; marked: number; unmarked: number }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getAccessToken()
@@ -30,6 +32,8 @@ const statusOptions = ['Present', 'Absent', 'Late', 'Excused']
 const chartColors = ['#2563eb', '#0f9d78', '#d97706', '#9333ea', '#db2777', '#0891b2', '#65a30d', '#ea580c', '#4f46e5', '#64748b']
 const monthLabel = (value: string) => new Date(`${value}-01T00:00:00`).toLocaleDateString('en-UG', { month: 'long', year: 'numeric' })
 const todayKampala = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Kampala', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+const shiftDate = (value: string, days: number) => { const [year, month, day] = value.split('-').map(Number); return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10) }
+const currentWeekStart = () => { const today = todayKampala(); const weekday = (new Date(`${today}T00:00:00`).getDay() + 6) % 7; return shiftDate(today, -weekday) }
 
 export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance = false }: { readOnly?: boolean; canViewStaffAttendance?: boolean }) {
   const [section, setSection] = useState<'students' | 'staff'>('students')
@@ -44,6 +48,9 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   const [timetableEntryId, setTimetableEntryId] = useState('')
   const [sessionDate, setSessionDate] = useState(todayKampala)
   const [session, setSession] = useState<Session | null>(null)
+  const [sessionContext, setSessionContext] = useState<SessionContext | null>(null)
+  const [registerSummary, setRegisterSummary] = useState<RegisterSummary | null>(null)
+  const [eligibleSearch, setEligibleSearch] = useState('')
   const [students, setStudents] = useState<StudentRow[]>([])
   const [semesterId, setSemesterId] = useState('')
   const [monthly, setMonthly] = useState<ReportRow[]>([])
@@ -53,8 +60,9 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   const [studentSearch, setStudentSearch] = useState('')
   const [studentMatches, setStudentMatches] = useState<StudentMatch[]>([])
   const [history, setHistory] = useState<HistoryRow[]>([])
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  const [from, setFrom] = useState(currentWeekStart)
+  const [to, setTo] = useState(todayKampala)
+  const [historyStatus, setHistoryStatus] = useState('All')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -63,6 +71,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
   const selectedGroup = groups.find(x => x.teachingGroupId === groupId)
   const filteredGroups = useMemo(() => Array.from(new Map<string, GroupOption>(groups.filter(x => !programmeId || x.programmeId === programmeId).map(x => [x.teachingGroupId, x] as [string, GroupOption])).values()), [groups, programmeId])
   const availableMonths = useMemo(() => [...new Set(monthly.map(x => x.month))].sort(), [monthly])
+  const filteredHistory = useMemo(() => history.filter(row => historyStatus === 'All' || row.status === historyStatus), [history, historyStatus])
   const chartRows = useMemo(() => {
     const selectedRows = monthly.filter(x => !reportMonth || x.month === reportMonth)
     const rows = reportMonth ? selectedRows : Array.from(selectedRows.reduce((map, row) => {
@@ -105,8 +114,10 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     finally { setLoading(false) }
   }, [semesterId])
 
-  useEffect(() => { void loadOptions() }, [loadOptions])
-  useEffect(() => { void loadReport() }, [loadReport])
+  // Keep the student attendance data pipeline isolated from the staff register.
+  // Student groups, intakes and reports are fetched only while the Students section is active.
+  useEffect(() => { if (section === 'students') void loadOptions() }, [loadOptions, section])
+  useEffect(() => { if (section === 'students') void loadReport() }, [loadReport, section])
 
   async function openSession() {
     if (!timetableEntryId) { setError('Select a class and its timetable session first.'); return }
@@ -123,11 +134,15 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     finally { setLoading(false) }
   }
 
-  async function loadRegister(sessionId: string) {
+  async function loadRegister(sessionId: string, search = eligibleSearch) {
     const params = new URLSearchParams()
     if (intakeId) params.set('intakeId', intakeId)
-    const data = await request<{ session: Session; students: StudentRow[] }>(`/api/attendance/sessions/${sessionId}/register?${params.toString()}`)
-    setSession(data.session); setStudents(data.students)
+    if (search.trim().length >= 2) params.set('search', search.trim())
+    const data = await request<{ session: Session; context: SessionContext; summary: RegisterSummary; students: StudentRow[] }>(`/api/attendance/sessions/${sessionId}/eligible-students?${params.toString()}`)
+    setSession(data.session)
+    setSessionContext(data.context)
+    setRegisterSummary(data.summary)
+    setStudents(data.students)
   }
 
   async function saveStudent(row: StudentRow, status: string) {
@@ -149,10 +164,11 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     if (!session || session.status !== 'Open') { setError('Open an attendance session first.'); return }
     setSaving(true); setError(''); setMessage('')
     try {
-      for (const row of students.filter(x => !x.status)) {
-        await request(`/api/attendance/sessions/${session.id}/records`, { method: 'POST', body: JSON.stringify({ studentId: row.id, status: 'Present', remarks: null }) })
-      }
-      await loadRegister(session.id)
+      const params = new URLSearchParams()
+      if (intakeId) params.set('intakeId', intakeId)
+      await request<{ markedCount: number; alreadyMarkedCount: number; totalEligible: number }>(`/api/attendance/sessions/${session.id}/records/bulk-present?${params.toString()}`, { method: 'POST' })
+      setEligibleSearch('')
+      await loadRegister(session.id, '')
       setMessage('All unmarked students have been marked present. You can now adjust individual records.')
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Bulk attendance marking failed. Refresh the register before retrying.') }
     finally { setSaving(false) }
@@ -189,12 +205,33 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
 
   function changeGroup(value: string) {
     const next = groups.find(x => x.teachingGroupId === value)
-    setGroupId(value); setTimetableEntryId(next?.timetableEntryId ?? ''); setSession(null); setStudents([])
+    setGroupId(value); setTimetableEntryId(next?.timetableEntryId ?? ''); setSession(null); setSessionContext(null); setRegisterSummary(null); setStudents([])
+  }
+
+  function setHistoryRange(preset: 'today' | 'yesterday' | 'week' | 'month') {
+    const today = todayKampala()
+    if (preset === 'today') { setFrom(today); setTo(today) }
+    else if (preset === 'yesterday') { const yesterday = shiftDate(today, -1); setFrom(yesterday); setTo(yesterday) }
+    else if (preset === 'week') { setFrom(shiftDate(today, -6)); setTo(today) }
+    else { setFrom(`${today.slice(0, 7)}-01`); setTo(today) }
+  }
+
+  function exportHistoryCsv() {
+    const headers = ['Date', 'Student', 'Student number', 'Course', 'Class', 'Timetable slot', 'Room', 'Status', 'Remarks']
+    const rows = filteredHistory.map(row => [row.sessionDate, row.studentName ?? '', row.studentNumber ?? '', row.courseName ?? '', row.className, row.timetableSlot ?? '', row.room ?? '', row.status, row.remarks ?? ''])
+    const csv = [headers, ...rows].map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\\r\\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `attendance-history-${studentId.slice(0, 8)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
     <section className="panel" aria-label="Attendance management">
-      <div className="panel-heading"><div><span className="eyebrow">ATTENDANCE</span><h3>Attendance management</h3></div></div>
+      <style>{`@media (max-width: 640px) { .attendance-mobile-table thead { display: none; } .attendance-mobile-table, .attendance-mobile-table tbody, .attendance-mobile-table tr, .attendance-mobile-table td { display: block; width: 100%; } .attendance-mobile-table tr { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; padding: 6px 10px; } .attendance-mobile-table td { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 6px 0; text-align: right; } .attendance-mobile-table td::before { content: attr(data-label); font-weight: 600; color: #475569; text-align: left; } .attendance-mobile-table td button, .attendance-mobile-table td select { min-height: 44px; } }`}</style>
+      <div className="panel-heading"><div><h3>Attendance management</h3></div></div>
       <div className="library-workspace-tabs" role="tablist" aria-label="Attendance categories">
         <button type="button" role="tab" aria-selected={section === 'students'} className={section === 'students' ? 'active' : ''} onClick={() => setSection('students')}>Students</button>
         {canViewStaffAttendance && <button type="button" role="tab" aria-selected={section === 'staff'} className={section === 'staff' ? 'active' : ''} onClick={() => setSection('staff')}>Staff</button>}
@@ -218,7 +255,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
             <button type="button" className="btn btn-secondary" onClick={() => void loadReport()} disabled={loading}>Refresh report</button>
           </div>
           <div className="panel" style={{ marginTop: 16 }}>
-            <div className="panel-heading"><div><h4>Monthly attendance by class</h4><p>Each colour represents a different class. Select a month to compare the classes across the school.</p></div></div>
+            <div className="panel-heading"><div><h4>Monthly attendance by class</h4></div></div>
             {loading ? <p className="empty">Loading attendance report…</p> : chartRows.rows.length === 0 ? <p className="empty">No attendance records are available for this semester and month.</p> : <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 28 }}>
               <div aria-label="Pie chart of present attendance by class" role="img" style={{ width: 220, height: 220, borderRadius: '50%', background: chartRows.gradient, flex: '0 0 220px', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.08)' }} />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 10, flex: '1 1 280px' }}>
@@ -246,20 +283,56 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
             <label>Attendance date<input type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} /></label>
             <button type="button" onClick={() => void openSession()} disabled={loading || readOnly || !timetableEntryId}>Open attendance session</button>
           </div>
+          {!session && timetableEntryId && <div className="flex items-center gap-2" style={{ marginTop: 12 }}><span className="status" style={{ background: '#f1f5f9', color: '#475569', padding: '4px 10px', borderRadius: 999 }}>Not started</span></div>}
           {session && <div className="flex flex-wrap items-center justify-between gap-3" style={{ marginTop: 16 }}>
-            <div><strong>{selectedGroup?.groupCode ?? 'Class'} · {session.sessionDate}</strong><div className="text-xs text-slate-500">Session status: {session.status}</div></div>
+            <div className="space-y-1">
+              <strong>{sessionContext?.courseName ?? selectedGroup?.groupCode ?? 'Class'} · {session.sessionDate}</strong>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span className="status" style={{ display: 'inline-flex', minHeight: 28, alignItems: 'center', padding: '4px 10px', borderRadius: 999, background: session.status === 'Open' ? '#dcfce7' : '#fee2e2', color: session.status === 'Open' ? '#166534' : '#991b1b' }}>{session.status === 'Open' ? 'Open' : 'Closed'}</span>
+                <span>{sessionContext?.className}</span><span>{sessionContext?.programmeName}</span>
+                <span>{sessionContext?.academicYearName} · {sessionContext?.semesterName}</span>
+                <span>{sessionContext?.dayOfWeek} {sessionContext?.startTime}–{sessionContext?.endTime}</span>
+                {sessionContext?.room && <span>Room {sessionContext.room}</span>}
+                {sessionContext?.openedByName && <span>Opened by {sessionContext.openedByName}</span>}
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2"><button type="button" className="btn btn-secondary" onClick={() => void markAllPresent()} disabled={saving || readOnly || session.status !== 'Open'}>Mark all present</button><button type="button" className="btn btn-secondary" onClick={() => void closeSession()} disabled={saving || readOnly || session.status !== 'Open'}>Close session</button></div>
           </div>}
-          {session && <div className="table-responsive" style={{ marginTop: 12 }}><table className="data-table"><thead><tr><th>#</th><th>STUDENT NAME</th><th>REGISTRATION NUMBER</th><th>ATTENDANCE STATUS</th><th>ACTION</th></tr></thead><tbody>
-            {students.map(row => <tr key={row.id}><td>{row.number}</td><td>{row.name}</td><td>{row.registrationNumber}</td><td><select aria-label={`Attendance status for ${row.name}`} value={row.status ?? ''} disabled={readOnly || session.status !== 'Open'} onChange={e => setStudents(current => current.map(x => x.id === row.id ? { ...x, status: e.target.value } : x))}><option value="">Not marked</option>{statusOptions.map(x => <option key={x}>{x}</option>)}</select></td><td><button type="button" className="btn btn-secondary" disabled={saving || readOnly || !row.status || session.status !== 'Open'} onClick={() => void saveStudent(row, row.status!)}>Save</button></td></tr>)}
-            {students.length === 0 && <tr><td colSpan={5}>No active students were found for this class and intake.</td></tr>}
+          {session && registerSummary && <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2" style={{ marginTop: 12 }}>
+            <div className="summary-card"><span>Enrolled</span><strong>{sessionContext?.totalEnrolled ?? students.length}</strong></div>
+            <div className="summary-card"><span>Marked</span><strong>{registerSummary.marked} of {sessionContext?.totalEnrolled ?? students.length}</strong></div>
+            <div className="summary-card"><span>Present</span><strong>{registerSummary.present}</strong></div>
+            <div className="summary-card"><span>Late</span><strong>{registerSummary.late}</strong></div>
+            <div className="summary-card"><span>Absent</span><strong>{registerSummary.absent}</strong></div>
+            <div className="summary-card"><span>Excused</span><strong>{registerSummary.excused}</strong></div>
+            <div className="summary-card"><span>Unmarked</span><strong>{registerSummary.unmarked}</strong></div>
+          </div>}
+          {session && <div className="flex flex-wrap items-end gap-2" style={{ marginTop: 12 }}>
+            <label className="flex-1 min-w-[220px]">Find enrolled student<input value={eligibleSearch} onChange={e => setEligibleSearch(e.target.value)} placeholder="Student or admission number, or name" /></label>
+            <button type="button" className="btn btn-secondary" disabled={loading || eligibleSearch.trim().length === 1} onClick={() => void loadRegister(session.id, eligibleSearch)}>Search register</button>
+            <button type="button" className="btn btn-secondary" disabled={loading || !eligibleSearch} onClick={() => { setEligibleSearch(''); void loadRegister(session.id, '') }}>Clear search</button>
+            <span className="text-xs text-slate-500">{students.length} shown · {sessionContext?.totalEnrolled ?? students.length} enrolled</span>
+          </div>}
+          {session && <div className="table-responsive" style={{ marginTop: 12 }}><table className="data-table attendance-mobile-table"><thead><tr><th>#</th><th>STUDENT NAME</th><th>REGISTRATION NUMBER</th><th>ATTENDANCE STATUS</th><th>RECORD</th><th>ACTION</th></tr></thead><tbody>
+            {students.map(row => <tr key={row.id}><td data-label="#"> {row.number}</td><td data-label="Student">{row.name}</td><td data-label="Student number">{row.registrationNumber}</td><td data-label="Set status"><select style={{ minHeight: 44 }} aria-label={`Attendance status for ${row.name}`} value={row.status ?? ''} disabled={readOnly || session.status !== 'Open'} onKeyDown={e => { const option = statusOptions[Number(e.key) - 1]; if (option) { e.preventDefault(); setStudents(current => current.map(x => x.id === row.id ? { ...x, status: option } : x)) } }} onChange={e => setStudents(current => current.map(x => x.id === row.id ? { ...x, status: e.target.value } : x))}><option value="">Not marked</option>{statusOptions.map(x => <option key={x}>{x}</option>)}</select></td><td data-label="Current status"><span className="status" style={{ display: 'inline-flex', minHeight: 28, alignItems: 'center', padding: '4px 10px', borderRadius: 999, background: row.status === 'Present' ? '#dcfce7' : row.status === 'Late' ? '#fef3c7' : row.status === 'Absent' ? '#fee2e2' : row.status === 'Excused' ? '#dbeafe' : '#f1f5f9', color: row.status === 'Present' ? '#166534' : row.status === 'Late' ? '#92400e' : row.status === 'Absent' ? '#991b1b' : row.status === 'Excused' ? '#1e40af' : '#475569' }}>{row.status ?? 'Unmarked'}</span></td><td data-label="Action"><button type="button" className="btn btn-secondary" style={{ minHeight: 44 }} disabled={saving || readOnly || !row.status || session.status !== 'Open'} onClick={() => void saveStudent(row, row.status!)}>Save</button></td></tr>)}
+            {students.length === 0 && <tr><td colSpan={6}>No eligible students matched this search.</td></tr>}
           </tbody></table></div>}
         </>}
 
         {studentView === 'history' && <>
           <div className="grid-form"><label>Find student<input value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="Name or registration number" /></label><button type="button" className="btn btn-secondary" onClick={() => void searchStudents()} disabled={loading}>Search students</button><label>Student<select value={studentId} onChange={e => setStudentId(e.target.value)}><option value="">Select student</option>{studentMatches.map(x => <option key={x.id} value={x.id}>{x.name} · {x.registrationNumber}</option>)}</select></label><label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label><button type="button" className="btn btn-secondary" onClick={() => void loadHistory()} disabled={loading || !studentId}>Load history</button></div>
+          <div className="flex flex-wrap items-center gap-2" style={{ marginTop: 10 }}>
+            <span className="text-xs text-slate-500">Date range:</span>
+            <button type="button" className="btn btn-secondary" onClick={() => setHistoryRange('today')}>Today</button>
+            <button type="button" className="btn btn-secondary" onClick={() => setHistoryRange('yesterday')}>Yesterday</button>
+            <button type="button" className="btn btn-secondary" onClick={() => setHistoryRange('week')}>Last 7 days</button>
+            <button type="button" className="btn btn-secondary" onClick={() => setHistoryRange('month')}>This month</button>
+            <label className="ml-auto">Status<select aria-label="Filter attendance history by status" value={historyStatus} onChange={e => setHistoryStatus(e.target.value)}><option>All</option>{statusOptions.map(option => <option key={option}>{option}</option>)}</select></label>
+            <button type="button" className="btn btn-secondary" onClick={exportHistoryCsv} disabled={filteredHistory.length === 0}>Export CSV</button>
+            <button type="button" className="btn btn-secondary" onClick={() => window.print()} disabled={filteredHistory.length === 0}>Print / Save PDF</button>
+          </div>
           {history.length > 0 && <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" style={{ marginTop: 12 }}><div className="summary-card"><span>Recorded sessions</span><strong>{history.length}</strong></div><div className="summary-card"><span>Present / late</span><strong>{history.filter(x => x.status === 'Present' || x.status === 'Late').length}</strong></div><div className="summary-card"><span>Recorded attendance rate</span><strong>{Math.round(history.filter(x => x.status !== 'Excused').length ? history.filter(x => x.status === 'Present' || x.status === 'Late').length / history.filter(x => x.status !== 'Excused').length * 100 : 0)}%</strong></div></div>}
-          <div className="table-responsive" style={{ marginTop: 12 }}><table className="data-table"><thead><tr><th>#</th><th>DATE</th><th>CLASS</th><th>STATUS</th><th>REMARKS</th><th>ACTION</th></tr></thead><tbody>{history.map((x,i) => <tr key={x.id}><td>{i+1}</td><td>{x.sessionDate}</td><td>{x.className}</td><td><select aria-label={`Correct attendance for ${x.sessionDate}`} value={x.status} disabled={readOnly} onChange={e => setHistory(current => current.map(row => row.id === x.id ? { ...row, status: e.target.value } : row))}>{statusOptions.map(option => <option key={option}>{option}</option>)}</select></td><td>{x.remarks ?? '—'}</td><td><button type="button" className="btn btn-secondary" disabled={readOnly || x.sessionStatus !== 'Open'} onClick={async () => { try { await request(`/api/attendance/records/${x.id}`, { method: 'PUT', body: JSON.stringify({ status: x.status, remarks: x.remarks ?? null }) }); setMessage('Attendance correction saved.') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to correct attendance.') } }}>Save correction</button></td></tr>)}{history.length === 0 && <tr><td colSpan={6}>No attendance history loaded.</td></tr>}</tbody></table></div>
+          <div className="table-responsive" style={{ marginTop: 12 }}><table className="data-table"><thead><tr><th>#</th><th>DATE</th><th>STUDENT</th><th>STUDENT NO.</th><th>COURSE</th><th>CLASS</th><th>TIMETABLE</th><th>ROOM</th><th>STATUS</th><th>REMARKS</th><th>ACTION</th></tr></thead><tbody>{filteredHistory.map((x,i) => <tr key={x.id}><td>{i+1}</td><td>{x.sessionDate}</td><td>{x.studentName ?? '—'}</td><td>{x.studentNumber ?? '—'}</td><td>{x.courseName ?? '—'}</td><td>{x.className}</td><td>{x.timetableSlot ?? '—'}</td><td>{x.room ?? '—'}</td><td><span className="status" style={{ display: 'inline-flex', minHeight: 28, alignItems: 'center', padding: '4px 10px', borderRadius: 999, background: x.status === 'Present' ? '#dcfce7' : x.status === 'Late' ? '#fef3c7' : x.status === 'Absent' ? '#fee2e2' : '#dbeafe', color: x.status === 'Present' ? '#166534' : x.status === 'Late' ? '#92400e' : x.status === 'Absent' ? '#991b1b' : '#1e40af' }}>{x.status}</span></td><td>{x.remarks ?? '—'}</td><td><button type="button" className="btn btn-secondary" disabled={readOnly || x.sessionStatus !== 'Open'} onClick={async () => { try { await request(`/api/attendance/records/${x.id}`, { method: 'PUT', body: JSON.stringify({ status: x.status, remarks: x.remarks ?? null }) }); setMessage('Attendance correction saved.') } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to correct attendance.') } }}>Save correction</button></td></tr>)}{filteredHistory.length === 0 && <tr><td colSpan={11}>No attendance history matches these filters.</td></tr>}</tbody></table></div>
         </>}
       </>}
     </section>

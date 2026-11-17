@@ -35,10 +35,22 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
             .Select(x => new { x.Id, Label = (x.LastName + " " + x.FirstName).ToUpper() + " (" + x.StaffNumber + ")" })
             .ToListAsync(cancellationToken);
-        var semesters = await db.Semesters.AsNoTracking()
-            .OrderByDescending(x => x.IsCurrent).ThenByDescending(x => x.StartDate)
-            .Select(x => new { x.Id, Label = x.Name, x.AcademicYearId, x.IsCurrent, x.IsActive })
-            .ToListAsync(cancellationToken);
+        var semesters = await (
+            from semester in db.Semesters.AsNoTracking()
+            join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id into academicYears
+            from academicYear in academicYears.DefaultIfEmpty()
+            orderby semester.IsCurrent descending, semester.StartDate descending
+            select new
+            {
+                semester.Id,
+                Label = semester.Name,
+                semester.AcademicYearId,
+                AcademicYearLabel = academicYear == null ? string.Empty : academicYear.Name,
+                semester.StartDate,
+                semester.EndDate,
+                semester.IsCurrent,
+                semester.IsActive
+            }).ToListAsync(cancellationToken);
         var programmes = await db.Programmes.AsNoTracking().Where(x => x.IsActive && !x.IsReferenceOnly)
             .OrderBy(x => x.Name).Select(x => new { x.Id, Label = x.Name + " (" + x.Award + ")" }).ToListAsync(cancellationToken);
         var curricula = await db.Curricula.AsNoTracking().Where(x => x.IsActive).OrderByDescending(x => x.EffectiveFrom)

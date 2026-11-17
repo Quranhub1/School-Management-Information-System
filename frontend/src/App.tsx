@@ -31,7 +31,7 @@ const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard').
 const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard })))
 const HealthRecordsManagement = lazy(() => import('./components/HealthRecordsManagement').then(module => ({ default: module.HealthRecordsManagement })))
 const GuildManagement = lazy(() => import('./components/GuildManagement').then(module => ({ default: module.GuildManagement })))
-const AttendanceManagement = lazy(() => import('./components/AttendanceManagement').then(module => ({ default: module.AttendanceManagement })))
+const AttendanceManagement = lazy(() => import('./components/AttendanceWorkspace').then(module => ({ default: module.AttendanceWorkspace })))
 const RoleSpecificDashboard = lazy(() => import('./components/RoleSpecificDashboard').then(module => ({ default: module.RoleSpecificDashboard })))
 const ResidentDirectorHRDashboard = lazy(() => import('./components/ResidentDirectorHRDashboard').then(module => ({ default: module.ResidentDirectorHRDashboard })))
 const DirectorExecutiveDashboard = lazy(() => import('./components/DirectorExecutiveDashboard').then(module => ({ default: module.DirectorExecutiveDashboard })))
@@ -535,7 +535,7 @@ return <main className="app-shell">
 {activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}
 {activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
 {activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={canReadPayroll(r)} canManagePayroll={canManageFinance(r)} canProcessPayroll={canProcessPayroll(r)} activeSubsection={activeSubsection}/>}
-{activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} />}
+{activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} canViewStaffAttendance={canReadStaff(r)} />}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&(attManage||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement activeSubsection={activeSubsection}/>}
 {activeModule==='laboratories'&&hostel&&((r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:<HostelManagement canManage={hostel}/>)}
