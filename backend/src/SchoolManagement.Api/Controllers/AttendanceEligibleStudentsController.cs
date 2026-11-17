@@ -27,6 +27,15 @@ public sealed class AttendanceEligibleStudentsController(
         if (session is null)
             return NotFound(new { message = "Attendance session was not found." });
 
+        string? openedByName = null;
+        if (session.RecordedByUserId.HasValue)
+        {
+            openedByName = await db.Users.AsNoTracking()
+                .Where(user => user.Id == session.RecordedByUserId.Value)
+                .Select(user => user.LastName + " " + user.FirstName)
+                .SingleOrDefaultAsync(cancellationToken);
+        }
+
         var context = await (
             from entry in db.TimetableEntries.AsNoTracking()
             join teachingGroup in db.TeachingGroups.AsNoTracking() on entry.TeachingGroupId equals teachingGroup.Id
@@ -153,6 +162,7 @@ public sealed class AttendanceEligibleStudentsController(
                 dayOfWeek = context.DayOfWeek.ToString(),
                 context.StartTime,
                 context.EndTime,
+                openedByName,
                 totalEnrolled
             },
             students
