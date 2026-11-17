@@ -8,6 +8,6 @@ public sealed class StudentAttendance
     public Guid Id { get; init; } = Guid.NewGuid();
     public Guid AttendanceSessionId { get; init; }
     public Guid StudentId { get; init; }
-    public required string Status { get; set; }
+    public AttendanceStatus Status { get; set; } = AttendanceStatus.Present;
     public string? Remarks { get; set; }
 }

@@ -11,7 +11,7 @@ public static class AttendanceConfiguration
         {
             entity.HasKey(x => x.Id);
             entity.HasIndex(x => new { x.TimetableEntryId, x.SessionDate }).IsUnique();
-            entity.Property(x => x.Status).HasMaxLength(30).IsRequired();
+            entity.Property(x => x.Status).HasConversion<int>().HasColumnType("integer").IsRequired();
             entity.Property(x => x.Remarks).HasMaxLength(500);
             entity.Property(x => x.RotationIntervalMinutes);
             entity.Property(x => x.QrGeneratedAt);
@@ -25,7 +25,7 @@ public static class AttendanceConfiguration
         {
             entity.HasKey(x => x.Id);
             entity.HasIndex(x => new { x.AttendanceSessionId, x.StudentId }).IsUnique();
-            entity.Property(x => x.Status).HasMaxLength(30).IsRequired();
+            entity.Property(x => x.Status).HasConversion<int>().HasColumnType("integer").IsRequired();
             entity.Property(x => x.Remarks).HasMaxLength(500);
             entity.HasOne<AttendanceSession>()
                 .WithMany()

@@ -10,6 +10,9 @@ public sealed class LeaveRequestRepository(SchoolManagementDbContext db) : ILeav
     public async Task<IReadOnlyList<LeaveRequest>> GetByStaffAsync(Guid staffMemberId, CancellationToken cancellationToken = default) =>
         await db.LeaveRequests.AsNoTracking().Where(x => x.StaffMemberId == staffMemberId).OrderByDescending(x => x.StartDate).ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<LeaveRequest>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await db.LeaveRequests.AsNoTracking().OrderByDescending(x => x.StartDate).ToListAsync(cancellationToken);
+
     public Task<LeaveRequest?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.LeaveRequests.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 

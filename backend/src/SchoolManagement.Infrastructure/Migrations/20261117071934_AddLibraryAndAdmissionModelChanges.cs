@@ -37,6 +37,17 @@ namespace SchoolManagement.Infrastructure.Migrations
 
             migrationBuilder.Sql("ALTER TABLE \"Applicants\" ALTER COLUMN \"Status\" TYPE integer USING \"Status\"::integer;");
 
+            migrationBuilder.Sql("ALTER TABLE \"LeaveRequests\" ALTER COLUMN \"Status\" TYPE integer USING \"Status\"::integer;");
+
+            migrationBuilder.Sql("ALTER TABLE \"LeaveRequests\" ALTER COLUMN \"LeaveType\" TYPE integer USING \"LeaveType\"::integer;");
+
+            migrationBuilder.AddColumn<DateTimeOffset>(
+                name: "CreatedAt",
+                table: "LeaveRequests",
+                type: "timestamp with time zone",
+                nullable: false,
+                defaultValue: new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)));
+
             migrationBuilder.CreateTable(
                 name: "AdmissionRequirements",
                 columns: table => new
@@ -73,6 +84,10 @@ namespace SchoolManagement.Infrastructure.Migrations
                 name: "AdmissionRequirements");
 
             migrationBuilder.Sql("ALTER TABLE \"Applicants\" ALTER COLUMN \"Status\" TYPE text USING \"Status\"::text;");
+
+            migrationBuilder.Sql("ALTER TABLE \"LeaveRequests\" ALTER COLUMN \"Status\" TYPE text USING \"Status\"::text;");
+
+            migrationBuilder.Sql("ALTER TABLE \"LeaveRequests\" ALTER COLUMN \"LeaveType\" TYPE text USING \"LeaveType\"::text;");
 
             migrationBuilder.DropColumn(
                 name: "FinePerOverdueDay",

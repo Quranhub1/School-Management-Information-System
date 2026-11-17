@@ -194,17 +194,11 @@ test.describe('SMIS full-system smoke tests', () => {
     await attendanceNav.click();
 
     await expect(page.getByRole('region', { name: 'Attendance management' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Students', exact: true })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Attendance report' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Attendance register' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Daily' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Student history' })).toBeVisible();
-
-    await page.getByRole('tab', { name: 'Attendance register' }).click();
-    await expect(page.getByLabel('Programme')).toBeVisible();
-    await expect(page.getByLabel('Intake')).toBeVisible();
-    await expect(page.getByLabel('Class')).toBeVisible();
-    await expect(page.getByLabel('Session')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Open attendance session' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'QR attendance' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open session' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Record attendance' })).toBeVisible();
   });
 
   test('authenticated frontend request reaches the database-backed API', async ({ page }) => {

@@ -9,7 +9,7 @@ public sealed class AttendanceSession
     public Guid TimetableEntryId { get; init; }
     public Guid? QrSessionId { get; init; }
     public DateOnly SessionDate { get; init; }
-    public string Status { get; set; } = "Open";
+    public AttendanceSessionStatus Status { get; set; } = AttendanceSessionStatus.Open;
     public Guid? RecordedByUserId { get; init; }
     public string? Remarks { get; set; }
     public DateTimeOffset? ExpiresAt { get; init; }

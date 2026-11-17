@@ -157,17 +157,9 @@ jobs:
         working-directory: frontend
         run: npm test
 
-      - name: Install isolated Playwright test dependencies
+      - name: Install Playwright for E2E tests
         working-directory: frontend
-        run: |
-          set -euo pipefail
-          playwright_dir="${{ runner.temp }}/smis-playwright"
-          mkdir -p "$playwright_dir"
-          npm install --prefix "$playwright_dir" --no-save --package-lock=false @playwright/test@1.65.0
-          mkdir -p node_modules/@playwright
-          ln -s "$playwright_dir/node_modules/@playwright/test" node_modules/@playwright/test
-          ln -s "$playwright_dir/node_modules/playwright" node_modules/playwright
-          ln -s "$playwright_dir/node_modules/playwright-core" node_modules/playwright-core
+        run: npm install --no-save --package-lock=false @playwright/test@1.65.0
 
       - name: Build frontend against running API
         working-directory: frontend
@@ -179,7 +171,7 @@ jobs:
 
       - name: Install Playwright Chromium
         working-directory: frontend
-        run: ${{ runner.temp }}/smis-playwright/node_modules/.bin/playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Start frontend preview server
         working-directory: frontend
@@ -211,7 +203,7 @@ jobs:
         working-directory: frontend
         env:
           NODE_PATH: ${{ github.workspace }}/frontend/node_modules
-        run: ${{ runner.temp }}/smis-playwright/node_modules/.bin/playwright test --config=playwright.config.cjs --reporter=line
+        run: npx playwright test --config=playwright.config.cjs --reporter=line
 
       - name: Dump service logs on failure
         if: failure()
