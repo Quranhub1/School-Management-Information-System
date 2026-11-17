@@ -27,8 +27,6 @@ env:
   Authentication__JwtIssuer: https://ci.school-management.local
   Authentication__JwtAudience: school-management-api
   SEED_ADMIN_PASSWORD: ci-only-strong-admin-password-for-e2e-validation-2026
-  Security__AttendanceQrSecret: ci-only-attendance-qr-secret-for-e2e-validation-2026
-  SMIS_ATTENDANCE_QR_SECRET: ci-only-attendance-qr-secret-for-e2e-validation-2026
   VITE_API_BASE_URL: http://127.0.0.1:5080
   API_BASE_URL: http://127.0.0.1:5080
   FRONTEND_URL: http://127.0.0.1:4173
