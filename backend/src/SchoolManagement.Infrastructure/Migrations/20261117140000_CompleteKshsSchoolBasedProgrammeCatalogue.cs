@@ -18,8 +18,7 @@ public partial class CompleteKshsSchoolBasedProgrammeCatalogue : Migration
 -- as five semesters because Programme.DurationYears is an integer field.
 UPDATE ""Programmes""
 SET ""DurationYears"" = CASE
-        WHEN ""Code"" IN ('SB-CPH','SB-CRM-C','SB-CGC','SB-DPH','SB-DRM','SB-DHCG','SB-DHND') THEN 2
-        WHEN ""Code"" = 'SB-ADDS' THEN 1
+        WHEN ""Code"" IN ('SB-CPH','SB-CRM-C','SB-CGC','SB-DPH','SB-DRM','SB-DHCG') THEN 2
         WHEN ""Code"" = 'SB-BRIDGE' THEN 9
         ELSE ""DurationYears"" END,
     ""DurationUnit"" = CASE
@@ -44,7 +43,7 @@ WITH kshs(""Code"",""Name"",""Award"",""DurationYears"",""DurationUnit"",""Type"
     ('KSHS-CFSN','Certificate in Food Science and Nutrition','Certificate',2,'Years',0),
     ('KSHS-CBME','Certificate in Biomedical Engineering','Certificate',2,'Years',0),
     ('KSHS-CSSOM','Certificate in Secretarial Studies and Office Management','Certificate',2,'Years',0),
-        ('KSHS-DCMCH','Diploma in Clinical Medicine and Community Health','Diploma',3,'Years',0),
+    ('KSHS-DCMCH','Diploma in Clinical Medicine and Community Health','Diploma',3,'Years',0),
     ('KSHS-DPH','Diploma in Pharmacy','Diploma',3,'Years',0),
     ('KSHS-DDS','Diploma in Diagnostic Sonography','Diploma',3,'Years',0),
     ('KSHS-DBME','Diploma in Biomedical Engineering','Diploma',2,'Years',0),
@@ -52,6 +51,8 @@ WITH kshs(""Code"",""Name"",""Award"",""DurationYears"",""DurationUnit"",""Type"
     ('KSHS-DMRHI','Diploma in Medical Records and Health Informatics','Diploma',3,'Years',0),
     ('KSHS-DFSN','Diploma in Food Science and Nutrition','Diploma',2,'Years',0),
     ('KSHS-DFST','Diploma in Food Science and Technology','Diploma',2,'Years',1),
+    ('KSHS-DHND','Diploma in Human Nutrition and Dietetics','Diploma',2,'Years',1),
+    ('KSHS-ADDS','Advanced Diploma in Diagnostic Sonography','Advanced Diploma',1,'Years',1),
     ('KSHS-ADHPE','Advanced Diploma in Health Promotion and Education','Advanced Diploma',2,'Years',1)
 )
 INSERT INTO ""Programmes""
