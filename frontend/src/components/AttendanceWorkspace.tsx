@@ -182,10 +182,7 @@ export function AttendanceWorkspace({ readOnly = false, canViewStaffAttendance =
     try {
       const params = new URLSearchParams()
       if (intakeId) params.set('intakeId', intakeId)
-      const register = await request<{ students: StudentRow[] }>(`/api/attendance/sessions/${session.id}/register?${params.toString()}`)
-      for (const row of register.students.filter(x => !x.status)) {
-        await request(`/api/attendance/sessions/${session.id}/records`, { method: 'POST', body: JSON.stringify({ studentId: row.id, status: 'Present', remarks: null }) })
-      }
+      await request<{ markedCount: number; alreadyMarkedCount: number; totalEligible: number }>(`/api/attendance/sessions/${session.id}/records/bulk-present?${params.toString()}`, { method: 'POST' })
       setEligibleSearch('')
       await loadRegister(session.id, '')
       setMessage('All unmarked students have been marked present. You can now adjust individual records.')
