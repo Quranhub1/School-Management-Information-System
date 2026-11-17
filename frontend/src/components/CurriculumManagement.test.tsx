@@ -200,7 +200,7 @@ describe('CurriculumManagement selectors', () => {
     expect(await screen.findByRole('heading', { name: 'Add or correct UHPAB course unit for this programme' })).toBeInTheDocument()
     fireEvent.change(screen.getByPlaceholderText('UHPAB course-unit code'), { target: { value: 'UHPAB-PH201' } })
     fireEvent.change(screen.getByPlaceholderText('UHPAB course-unit name'), { target: { value: 'Pharmaceutical Chemistry' } })
-    fireEvent.change(screen.getByLabelText('Course unit type'), { target: { value: 'Lecture' } })
+    fireEvent.change(screen.getByLabelText('UHPAB course unit type'), { target: { value: 'Lecture' } })
     fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '2' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save and add to semester' }))
 
