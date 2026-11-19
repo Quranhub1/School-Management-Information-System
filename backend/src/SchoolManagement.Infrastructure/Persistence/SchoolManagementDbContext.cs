@@ -185,6 +185,71 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<Curriculum>(e => e.Property(x => x.IsDeleted).HasDefaultValue(false));
         m.Entity<CurriculumCourse>(e => e.Property(x => x.IsDeleted).HasDefaultValue(false));
         m.Entity<CoursePrerequisite>(e => { e.HasKey(x => x.Id); e.Property(x => x.IsMandatory).HasDefaultValue(true); e.HasIndex(x => new { x.CourseId, x.PrerequisiteCourseId }).IsUnique(); e.HasIndex(x => x.PrerequisiteCourseId); e.ToTable(t => t.HasCheckConstraint("CK_CoursePrerequisites_DifferentCourses", "\"CourseId\" <> \"PrerequisiteCourseId\"")); e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade); e.HasOne<Course>().WithMany().HasForeignKey(x => x.PrerequisiteCourseId).OnDelete(DeleteBehavior.Cascade); });
+        // Keep the curriculum integration model aligned with the migration snapshot.
+        m.Entity<ElectiveGroup>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<ElectiveGroupCourse>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsCoreWithinGroup).HasDefaultValue(false);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<ElectiveGroup>().WithMany().HasForeignKey(x => x.ElectiveGroupId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<CurriculumVersion>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasDefaultValue("Draft");
+            e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<CurriculumVersionCourse>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne<CurriculumVersion>().WithMany().HasForeignKey(x => x.CurriculumVersionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<ElectiveGroup>().WithMany().HasForeignKey(x => x.ElectiveGroupId).OnDelete(DeleteBehavior.SetNull);
+        });
+        m.Entity<CourseEquivalence>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsMandatory).HasDefaultValue(true);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.InternalCourseId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<StudentTransferCredit>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<CourseEquivalence>().WithMany().HasForeignKey(x => x.CourseEquivalenceId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<ProgrammeLearningOutcome>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Programme>().WithMany().HasForeignKey(x => x.ProgrammeId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<CoursePloMapping>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<ProgrammeLearningOutcome>().WithMany().HasForeignKey(x => x.ProgrammeLearningOutcomeId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<LmsCourse>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasDefaultValue("Created");
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<RegulatorImport>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+        });
         m.Entity<CurriculumApprovalHistory>(e => { e.HasKey(x => x.Id); e.Property(x => x.ToStatus).IsRequired(); e.Property(x => x.Notes).HasMaxLength(2000); e.Property(x => x.Actor).HasMaxLength(200).IsRequired(); e.HasIndex(x => new { x.CurriculumId, x.ChangedAtUtc }); e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<AcademicAuthority>(e => { e.HasKey(x => x.Id); e.Property(x => x.Code).HasMaxLength(40).IsRequired(); e.Property(x => x.Name).HasMaxLength(160).IsRequired(); e.Property(x => x.Description).HasMaxLength(1000); e.Property(x => x.SourceReference).HasMaxLength(500); e.HasIndex(x => x.Code).IsUnique(); });
         m.Entity<Programme>().HasOne<AcademicAuthority>().WithMany().HasForeignKey(x => x.Regulator).HasPrincipalKey(x => x.Code).OnDelete(DeleteBehavior.Restrict);
