@@ -71,9 +71,9 @@ public sealed class ElectiveGroupService(
     public async Task<(bool Success, string? Error, Guid? GroupId)> CreateAsync(CreateElectiveGroupRequest request, CancellationToken ct = default)
     {
         var curriculum = await curricula.GetByIdAsync(request.CurriculumId, ct);
-        if (curriculum is null) return (false, "Curriculum not found.", null);
+        if (curriculum is null) return (false, "Curriculum not found.");
         if (await groups.ExistsAsync(request.CurriculumId, request.YearOfStudy, request.SemesterNumber, ct))
-            return (false, "An elective group already exists for this year/semester.", null);
+            return (false, "An elective group already exists for this year/semester.");
 
         var group = new ElectiveGroup
         {
@@ -92,7 +92,7 @@ public sealed class ElectiveGroupService(
     public async Task<(bool Success, string? Error)> AddCourseAsync(AddElectiveGroupCourseRequest request, CancellationToken ct = default)
     {
         var course = await courses.GetByIdAsync(request.CourseId, ct);
-        if (course is null) return (false, "Course not found.", null);
+        if (course is null) return (false, "Course not found.");
         await groups.AddCourseAsync(new ElectiveGroupCourse
         {
             ElectiveGroupId = request.ElectiveGroupId,
@@ -133,7 +133,7 @@ public sealed class CurriculumVersionService(
     public async Task<(bool Success, string? Error, Guid? VersionId)> CreateSnapshotAsync(Guid curriculumId, string version, string title, string? changeNotes, CancellationToken ct = default)
     {
         var curriculum = await curricula.GetByIdAsync(curriculumId, ct);
-        if (curriculum is null) return (false, "Curriculum not found.", null);
+        if (curriculum is null) return (false, "Curriculum not found.");
 
         var cv = new CurriculumVersion
         {
@@ -186,7 +186,7 @@ public sealed class CurriculumVersionService(
     {
         var source = await curricula.GetByIdAsync(sourceCurriculumId, ct);
         var target = await curricula.GetByIdAsync(targetCurriculumId, ct);
-        if (source is null || target is null) return (false, "Source or target curriculum not found.", null);
+        if (source is null || target is null) return (false, "Source or target curriculum not found.");
 
         var sourceMappings = await mappings.GetByCurriculumAsync(sourceCurriculumId, ct);
         foreach (var m in sourceMappings)
@@ -239,7 +239,7 @@ public sealed class FacultyAssignmentService(ICourseRepository courses)
     public async Task<(bool Success, string? Error)> AssignFacultyAsync(Guid offeringId, Guid staffMemberId, CancellationToken ct = default)
     {
         var course = await courses.GetByIdAsync(offeringId, ct);
-        if (course is null) return (false, "Course offering not found.", null);
+        if (course is null) return (false, "Course offering not found.");
         return (true, null);
     }
 }
@@ -382,9 +382,9 @@ public sealed class LmsCourseService(ILmsCourseRepository lmsCourses, ICourseRep
     public async Task<(bool Success, string? Error)> CreateShellAsync(Guid courseId, string platform, string externalCourseId, string externalCourseUrl, CancellationToken ct = default)
     {
         var course = await courses.GetByIdAsync(courseId, ct);
-        if (course is null) return (false, "Course not found.", null);
+        if (course is null) return (false, "Course not found.");
         var existing = await lmsCourses.GetByCourseAsync(courseId, ct);
-        if (existing is not null) return (false, "LMS shell already exists for this course.", null);
+        if (existing is not null) return (false, "LMS shell already exists for this course.");
         await lmsCourses.AddAsync(new LmsCourse
         {
             CourseId = courseId,
