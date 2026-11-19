@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import {
   approveCurriculum,
   cloneCurriculum,
@@ -57,7 +57,7 @@ export function CurriculumGovernancePanel({ curricula, onChanged }: { curricula:
     } finally { setBusy(false) }
   }
 
-  async function handleClone(event: React.FormEvent<HTMLFormElement>) {
+  async function handleClone(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!selected) return
     setBusy(true); setError(''); setMessage('')
