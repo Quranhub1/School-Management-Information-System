@@ -47,6 +47,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [timetableCount, setTimetableCount] = useState('1')
   const [generatedTimetables, setGeneratedTimetables] = useState<Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }>>([])
   const [view, setView] = useState<'week' | 'list'>('week')
+  const [showWeekends, setShowWeekends] = useState(true)
+  const [showSystemData, setShowSystemData] = useState(false)
   const [showTemplateEditor, setShowTemplateEditor] = useState(false)
   const [templateGroupId, setTemplateGroupId] = useState('')
   const [templateLoadedGroupId, setTemplateLoadedGroupId] = useState('')
@@ -111,6 +113,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const distinctTeachers = useMemo(() => new Set(activeEntries.map(item => item.teacherId)).size, [activeEntries])
   const practicalCount = useMemo(() => activeEntries.filter(item => item.sessionType?.toLowerCase() === 'practical').length, [activeEntries])
   const orderedEntries = useMemo(() => [...activeEntries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)), [activeEntries])
+  const displayedWeekDays = showWeekends ? weekOrder.filter(day => day !== 0) : weekOrder.filter(day => day >= 1 && day <= 5)
   const timeSlots = useMemo(() => [...new Set(activeEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b)), [activeEntries])
 
   function timetablePdfOptions(title: string, rows: TimetableEntry[], filename: string) {
@@ -119,7 +122,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     const printableSlots = slots.length ? slots : defaultTemplateSlots.map(slot => slot.startTime)
     const timetableBody = [
       [{ text: 'DAY', style: 'tableHeader' }, ...printableSlots.map((slot, index) => ({ text: `PERIOD ${index + 1}\n${timeLabel(slot)}`, style: 'tableHeader' }))],
-      ...weekOrder.filter(day => day !== 0).map(day => [
+      ...displayedWeekDays.map(day => [
         { text: days[day].toUpperCase(), style: 'tableHeader' },
         ...printableSlots.map(slot => {
           const sessions = sorted.filter(entry => entry.dayOfWeek === day && entry.startTime === slot)
@@ -467,7 +470,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       {templateGroupId && templateLoadedGroupId === templateGroupId && <div className="timetable-grid-scroll">
         <table className="timetable-editable-grid">
           <thead><tr><th>DAY</th>{templateSlots.map((slot, index) => <th key={index}><span>PERIOD {index + 1}</span><label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label></th>)}</tr></thead>
-          <tbody>{weekOrder.filter(day => day !== 0).map(day => <tr key={day}><th>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
+          <tbody>{displayedWeekDays.map(day => <tr key={day}><th>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
             const key = day + '-' + slotIndex
             const cell = templateCells[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture' }
             return <td key={slotIndex}>
@@ -524,7 +527,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 const period = classEntries.find(entry => entry.startTime === slot)
                 return <th key={slot}><span className="timetable-period-label">PERIOD {index + 1}</span><strong>{timeLabel(slot)}–{period ? timeLabel(period.endTime) : ''}</strong></th>
               })}</tr></thead>
-              <tbody>{weekOrder.filter(day => day !== 0).map(dayIndex => <tr key={dayIndex}>
+              <tbody>{displayedWeekDays.map(dayIndex => <tr key={dayIndex}>
                 <th className="timetable-day-column">{days[dayIndex].toUpperCase()}</th>
                 {classTimeSlots.map(slot => {
                   const cellEntries = classEntries.filter(entry => entry.dayOfWeek === dayIndex && entry.startTime === slot)
@@ -557,11 +560,28 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
     <div className="timetable-toolbar">
       <h3>Weekly schedule <span>({activeEntries.length})</span></h3>
-      <div className="timetable-view-switch" role="group" aria-label="Schedule display">
-        <button type="button" aria-pressed={view === 'week'} onClick={() => setView('week')}><LayoutGrid /> Week</button>
-        <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}><List /> List</button>
+      <div className="timetable-toolbar-controls">
+        <label className="timetable-weekend-toggle"><input type="checkbox" checked={showWeekends} onChange={event => setShowWeekends(event.target.checked)} /> Show Saturday</label>
+        {!readOnly && <button className="timetable-action" type="button" aria-expanded={showSystemData} onClick={() => setShowSystemData(value => !value)}>{showSystemData ? 'Hide system data' : 'System Data & Sync'}</button>}
+        <div className="timetable-view-switch" role="group" aria-label="Schedule display">
+          <button type="button" aria-pressed={view === 'week'} onClick={() => setView('week')}><LayoutGrid /> Week</button>
+          <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}><List /> List</button>
+        </div>
       </div>
     </div>
+
+    {showSystemData && !readOnly && <section className="timetable-system-data" aria-label="System data and sync">
+      <div className="timetable-system-data-heading"><div><h3>System Data &amp; SMIS Bridge</h3><p>Live catalogue records supplied by the central SMIS APIs. Changes made in Curriculum &amp; Courses, Staff and Academic Periods appear here after refresh.</p></div><button className="timetable-action primary" type="button" onClick={() => { setLoading(true); void load().finally(() => setLoading(false)) }} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh system data'}</button></div>
+      <div className="timetable-system-data-grid">
+        <article><strong>{options.programmes.length}</strong><span>Programmes</span><small>{options.programmes.slice(0, 5).map(item => item.label).join(' · ') || 'No programmes returned'}</small></article>
+        <article><strong>{options.curricula.length}</strong><span>Curricula</span><small>{options.curricula.slice(0, 5).map(item => item.label).join(' · ') || 'No curricula returned'}</small></article>
+        <article><strong>{options.courses.length}</strong><span>Course units</span><small>{options.courses.slice(0, 5).map(item => item.label).join(' · ') || 'No course units returned'}</small></article>
+        <article><strong>{options.teachers.length}</strong><span>Staff / tutors</span><small>{options.teachers.slice(0, 5).map(item => item.label).join(' · ') || 'No staff returned'}</small></article>
+        <article><strong>{options.teachingGroups.length}</strong><span>Teaching groups</span><small>{options.teachingGroups.slice(0, 5).map(item => item.label).join(' · ') || 'No teaching groups returned'}</small></article>
+        <article><strong>{options.semesters.length}</strong><span>Academic periods</span><small>{options.semesters.slice(0, 5).map(item => item.label).join(' · ') || 'No academic periods returned'}</small></article>
+      </div>
+      <p className="timetable-system-data-footnote">This screen does not keep a separate local programme, course or tutor registry. The central database remains the source of truth.</p>
+    </section>}
 
     {loading && activeEntries.length === 0 ? <div className="timetable-empty"><LoadingSpinner label="Loading timetable…" /></div> : activeEntries.length === 0 ? <div className="timetable-empty"><CalendarDays size={26} /><strong>No sessions scheduled yet</strong><span>Schedule or generate sessions to populate the formal weekly timetable.</span></div> : view === 'week' ? <div className="timetable-print-area">
       <div className="timetable-document-heading">
@@ -574,7 +594,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <div className="timetable-grid-scroll">
         <table className="timetable-formal-grid">
           <thead><tr><th className="timetable-day-column">DAY</th>{timeSlots.map((slot, index) => <th key={slot}><span className="timetable-period-label">PERIOD {index + 1}</span><strong>{timeLabel(slot)}</strong><span>START TIME</span></th>)}</tr></thead>
-          <tbody>{weekOrder.filter(day => day !== 0).map(dayIndex => <tr key={dayIndex}>
+          <tbody>{displayedWeekDays.map(dayIndex => <tr key={dayIndex}>
             <th className="timetable-day-column">{days[dayIndex].toUpperCase()}</th>
             {timeSlots.map(slot => {
               const cellEntries = orderedEntries.filter(entry => entry.dayOfWeek === dayIndex && entry.startTime === slot)

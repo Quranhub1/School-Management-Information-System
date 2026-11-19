@@ -61,6 +61,24 @@ describe('TimetableManagement', () => {
     expect(screen.getByText(/VALID FOR: 01 Jan 2026 – 30 Jun 2026/)).toBeTruthy()
   })
 
+  it('shows live system data from the central timetable options API', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getByRole('button', { name: 'System Data & Sync' }))
+    expect(await screen.findByText('System Data & SMIS Bridge')).toBeTruthy()
+    expect(screen.getByText('Programmes')).toBeTruthy()
+    expect(screen.getByText('Course units')).toBeTruthy()
+    expect(screen.getByText('Staff / tutors')).toBeTruthy()
+    expect(screen.getByText(/central database remains the source of truth/i)).toBeTruthy()
+  })
+
+  it('supports weekend visibility control', () => {
+    render(<TimetableManagement />)
+    const toggle = screen.getByRole('checkbox', { name: /show saturday/i })
+    expect(toggle).toBeTruthy()
+    fireEvent.click(toggle)
+    expect((toggle as HTMLInputElement).checked).toBe(false)
+  })
+
   it('supports readOnly mode', () => {
     render(<TimetableManagement readOnly />)
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
