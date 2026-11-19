@@ -176,7 +176,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   function printTimetableTemplate() {
-    const rows = weekOrder.filter(day => day !== 0).flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
+    const rows = templateDayOrder.filter(day => showWeekends || day <= 5).flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
       const cell = templateCells[day + '-' + slotIndex]
       if (!cell?.courseId && !cell?.teacherId && !cell?.room?.trim()) return []
       return [{
@@ -196,7 +196,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       } as TimetableEntry]
     }))
     const groupLabel = groupLabels.get(templateGroupId) ?? 'Class timetable'
-    printInstitutionalPdf(timetablePdfOptions(groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template'))
+    const pdf = timetablePdfOptions(templateTitle || groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template')
+    printInstitutionalPdf({ ...pdf, title: templateTitle || pdf.title, content: [...pdf.content, { text: `${templateRegistrarRole || 'ACADEMIC REGISTRAR'}: ${templateRegistrarName || '____________________________'}`, alignment: 'right', margin: [0, 28, 0, 0] }, { text: templateFooterText, alignment: 'left', fontSize: 8, margin: [0, 10, 0, 0] }] })
   }
 
   async function handleGenerate(event: React.FormEvent) {
