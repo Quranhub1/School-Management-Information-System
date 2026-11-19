@@ -83,7 +83,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const selectedProgramme = options.programmes.find(item => item.id === programmeId)
   const semesterGroupIds = useMemo(() => new Set(options.teachingGroups.filter(item => item.semesterId === semesterId).map(item => item.id)), [options.teachingGroups, semesterId])
   const programmeCurricula = options.curricula.filter(item => item.programmeId === programmeId)
-  const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? programmeCurricula[0]
+  // Prefer a curriculum that actually has course-unit mappings so the year/semester
+  // selectors are not empty when the first-listed curriculum has none.
+  const curriculumWithMappings = programmeCurricula.find(c =>
+    options.curriculumCourses.some(m => m.curriculumId === c.id)
+  )
+  const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? curriculumWithMappings ?? programmeCurricula[0]
   const curriculumMappings = options.curriculumCourses.filter(item => item.curriculumId === selectedCurriculum?.id)
   // Each distinct year/semester in an active curriculum is represented as its own
   // timetable template for the selected academic period, even before sessions exist.
@@ -426,7 +431,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     {!readOnly && (showGenerator || showTemplateEditor || showScheduleForm) && <section className="timetable-form-panel timetable-curriculum-guide" aria-label="Programme curriculum selection">
       <h3>Programme curriculum guide</h3>
       <div className="timetable-form-grid">
-        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); setCurriculumId(options.curricula.find(item => item.programmeId === next)?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{options.programmes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); setSemesterId(''); setCurriculumId(options.curricula.find(item => item.programmeId === next)?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{options.programmes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Curriculum<select value={selectedCurriculum?.id ?? ''} onChange={event => { setCurriculumId(event.target.value); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select curriculum</option>{programmeCurricula.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Year of study<select value={yearOfStudy} onChange={event => { setYearOfStudy(event.target.value); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All years</option>{studyYears.map(item => <option key={item} value={item}>Year {item}</option>)}</select></label>
         <label>Curriculum semester<select value={curriculumSemester} onChange={event => { setCurriculumSemester(event.target.value); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All semesters</option>{curriculumSemesters.map(item => <option key={item} value={item}>Semester {item}</option>)}</select></label>
