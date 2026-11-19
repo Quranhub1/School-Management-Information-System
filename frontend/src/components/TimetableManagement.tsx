@@ -414,6 +414,32 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     })
   }
 
+  function reorderTemplateSlots(order: number[]) {
+    setTemplateSlots(current => order.map(index => current[index]).filter(Boolean))
+    setTemplateCells(current => {
+      const next: Record<string, TemplateCell> = {}
+      Object.entries(current).forEach(([key, cell]) => {
+        const [day, oldIndex] = key.split('-').map(Number)
+        const newIndex = order.indexOf(oldIndex)
+        if (newIndex >= 0) next[day + '-' + newIndex] = cell
+      })
+      return next
+    })
+    setTemplateBreakAfter(current => current === null ? null : order.indexOf(current) >= 0 ? order.indexOf(current) : null)
+  }
+
+  function removeTemplateSlot(index: number) {
+    reorderTemplateSlots(templateSlots.map((_, slotIndex) => slotIndex).filter(slotIndex => slotIndex !== index))
+  }
+
+  function moveTemplateSlot(index: number, direction: -1 | 1) {
+    const order = templateSlots.map((_, slotIndex) => slotIndex)
+    const target = index + direction
+    if (target < 0 || target >= order.length) return
+    ;[order[index], order[target]] = [order[target], order[index]]
+    reorderTemplateSlots(order)
+  }
+
   function templateCellCovered(day: number, slotIndex: number) {
     const visibleDays = templateDayOrder.filter(item => showWeekends || item <= 5)
     const rowIndex = visibleDays.indexOf(day)
@@ -545,7 +571,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       </div>
       {templateGroupId && templateLoadedGroupId === templateGroupId && <div className="timetable-grid-scroll">
         <table className="timetable-editable-grid">
-          <thead><tr><th>{templateDayLabel || 'DAY'}</th>{templateSlots.map((slot, index) => <th key={index} className={templateBreakAfter === index ? 'timetable-break-after' : ''}><span>PERIOD {index + 1}</span>{templateBreakAfter === index && <span className="timetable-break-label">{templateBreakLabel || 'BREAK'}</span>}<label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label><div className="timetable-period-tools"><button type="button" onClick={() => setTemplateSlots(current => current.filter((_, slotIndex) => slotIndex !== index))} disabled={templateSlots.length <= 1} aria-label={`Remove period ${index + 1}`}>−</button><button type="button" onClick={() => setTemplateSlots(current => { const next = [...current]; const [moved] = next.splice(index, 1); next.splice(Math.min(index + 1, next.length), 0, moved); return next })} disabled={index === templateSlots.length - 1} aria-label={`Move period ${index + 1} right`}>→</button></div></th>)}</tr></thead>
+          <thead><tr><th>{templateDayLabel || 'DAY'}</th>{templateSlots.map((slot, index) => <th key={index} className={templateBreakAfter === index ? 'timetable-break-after' : ''}><span>PERIOD {index + 1}</span>{templateBreakAfter === index && <span className="timetable-break-label">{templateBreakLabel || 'BREAK'}</span>}<label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label><div className="timetable-period-tools"><button type="button" onClick={() => removeTemplateSlot(index)} disabled={templateSlots.length <= 1} aria-label={`Remove period ${index + 1}`}>−</button><button type="button" onClick={() => moveTemplateSlot(index, 1)} disabled={index === templateSlots.length - 1} aria-label={`Move period ${index + 1} right`}>→</button></div></th>)}</tr></thead>
           <tbody>{templateDayOrder.filter(day => showWeekends || day <= 5).map((day, rowIndex) => <tr key={day}><th><div className="timetable-day-tools"><button type="button" onClick={() => moveTemplateDay(day, -1)} disabled={rowIndex === 0} aria-label={`Move ${days[day]} up`}>↑</button><button type="button" onClick={() => moveTemplateDay(day, 1)} disabled={rowIndex === templateDayOrder.filter(item => showWeekends || item <= 5).length - 1} aria-label={`Move ${days[day]} down`}>↓</button></div>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
             if (templateCellCovered(day, slotIndex)) return null
             const key = day + '-' + slotIndex
