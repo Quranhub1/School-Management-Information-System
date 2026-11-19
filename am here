@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kampala School of Health Sciences — Teaching Time Table</title>
+  <style>
+    :root {
+      --bg-workspace: #eef1f5;
+      --bg-paper: #ffffff;
+      --bg-toolbar: #0f172a;
+      --bg-toolbar-btn: #1e293b;
+      --bg-toolbar-btn-hover: #334155;
+      --border-grid: #000000;
+      --border-subtle: #cbd5e1;
+      --text-ink: #000000;
+      --text-muted: #475569;
+      --text-on-dark: #f8fafc;
+      --accent-blue: #1d4ed8;
+      --accent-amber: #d97706;
+      --accent-amber-soft: #fffbeb;
+      --font-official: "Times New Roman", Times, Georgia, serif;
+      --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-ui); background: var(--bg-workspace); color: var(--text-ink); min-height: 100vh; }
+    .control-bar { background: var(--bg-toolbar); color: var(--text-on-dark); padding: 0.75rem 1.25rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+    .control-bar-inner { max-width: 1440px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+    .control-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; }
+    .app-badge { font-weight: 700; font-size: 0.92rem; padding-right: 0.5rem; border-right: 1px solid #334155; }
+    .program-select, .ui-btn { background: var(--bg-toolbar-btn); color: #fff; border: 1px solid #334155; border-radius: 6px; padding: 0.42rem 0.75rem; font-size: 0.84rem; font-weight: 600; cursor: pointer; }
+    .program-select:hover, .ui-btn:hover { background: var(--bg-toolbar-btn-hover); }
+    .ui-btn-edit-active { background: var(--accent-amber); border-color: #f59e0b; color: #fff; }
+    .ui-btn-primary { background: var(--accent-blue); border-color: #2563eb; }
+    .weekend-toggle { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 600; color: #cbd5e1; background: var(--bg-toolbar-btn); border: 1px solid #334155; padding: 0.4rem 0.72rem; border-radius: 6px; cursor: pointer; }
+    .sheet-viewport { max-width: 1320px; margin: 1.25rem auto 2.5rem; padding: 0 1rem; }
+    .document-sheet { background: var(--bg-paper); border: 1px solid var(--border-subtle); box-shadow: 0 10px 30px rgba(15,23,42,0.08); padding: 1.75rem 2rem 2rem; font-family: var(--font-official); color: #000; }
+    .doc-header { text-align: center; margin-bottom: 1rem; }
+    .doc-header-line { text-transform: uppercase; font-weight: 700; color: #000; line-height: 1.32; }
+    .doc-institution { font-size: 1.38rem; }
+    .doc-subtitle { font-size: 1.08rem; }
+    .doc-year, .doc-semester { font-size: 1.02rem; }
+    body.is-editing .doc-header { border: 1.5px dashed var(--accent-amber); background: #fffdf7; padding: 0.6rem; border-radius: 6px; cursor: pointer; }
+    .table-scroll-wrapper { width: 100%; overflow-x: auto; }
+    .timetable-grid { width: 100%; min-width: 960px; border-collapse: collapse; table-layout: fixed; border: 1.5px solid #000; }
+    .timetable-grid th, .timetable-grid td { border: 1px solid #000; text-align: center; vertical-align: middle; color: #000; }
+    .col-day-header, .col-slot-header { font-size: 0.92rem; font-weight: 700; padding: 0.55rem; background: #f8fafc; }
+    body.is-editing .col-day-header, body.is-editing .col-slot-header { background: #fffbeb; cursor: pointer; }
+    .col-divider { width: 36px; padding: 0.4rem 0.15rem; background: #fff; font-weight: 700; font-size: 0.92rem; line-height: 1.15; }
+    body.is-editing .col-divider { background: #fffbeb; cursor: pointer; }
+    .divider-letter-stack { display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; min-height: 290px; }
+    .day-label-cell { font-weight: 700; font-size: 0.95rem; padding: 0.55rem; background: #fff; }
+    body.is-editing .day-label-cell { background: #fffdf7; cursor: pointer; }
+    .lecture-cell { padding: 0.6rem; font-size: 0.9rem; background: #fff; cursor: default; }
+    body.is-editing .lecture-cell:hover { background: #fefce8; cursor: pointer; }
+    .cell-course { font-weight: 700; margin-bottom: 2px; border-radius: 4px; padding: 1px 3px; }
+    .cell-tutor { font-style: italic; color: #1e293b; font-size: 0.85rem; border-radius: 4px; padding: 1px 3px; }
+    body.is-editing .cell-course:hover, body.is-editing .cell-tutor:hover { background: #fde68a; outline: 1px dashed #b45309; }
+    .inline-tutor-picker { font-family: var(--font-ui); font-size: 0.78rem; padding: 3px 5px; border: 1.5px solid #1d4ed8; border-radius: 4px; background: #fff; color: #0f172a; width: 100%; max-width: 190px; margin-top: 2px; }
+    .cell-meta-sub { font-size: 0.78rem; color: #475569; margin-top: 2px; }
+    .cell-empty-placeholder { color: #94a3b8; font-size: 0.76rem; font-style: italic; display: none; }
+    body.is-editing .cell-empty-placeholder { display: inline-block; }
+    .row-controls-bar { display: none; margin-top: 4px; justify-content: center; gap: 3px; }
+    body.is-editing .row-controls-bar { display: flex; }
+    .row-mini-btn { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 3px; font-size: 0.68rem; padding: 1px 5px; cursor: pointer; }
+    .row-mini-btn:hover { background: #e2e8f0; }
+    .doc-footer { margin-top: 1.6rem; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 2rem; min-height: 56px; }
+    .registrar-block { min-width: 240px; }
+    .signature-line { border-bottom: 1.5px dotted #000; height: 28px; margin-bottom: 4px; }
+    .registrar-role, .registrar-name { font-size: 0.88rem; font-weight: 700; text-transform: uppercase; line-height: 1.3; }
+    .registrar-empty-hint { font-family: var(--font-ui); font-size: 0.78rem; color: #94a3b8; font-style: italic; display: none; }
+    body.is-editing .registrar-empty-hint { display: inline-block; }
+    body.is-editing .doc-footer { border: 1.5px dashed var(--accent-amber); background: #fffdf7; padding: 0.65rem; border-radius: 6px; cursor: pointer; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+    .modal-overlay.open { display: flex; }
+    .modal-card { background: #fff; width: 100%; max-width: 500px; border-radius: 10px; box-shadow: 0 24px 48px rgba(15,23,42,0.22); overflow: hidden; font-family: var(--font-ui); color: #0f172a; }
+    .modal-head { background: #0f172a; color: #fff; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+    .modal-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; max-height: 75vh; overflow-y: auto; }
+    .modal-foot { background: #f8fafc; padding: 0.85rem 1.25rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
+    .modal-close-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; }
+    .field-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .field-label { font-size: 0.8rem; font-weight: 700; color: #334155; }
+    .field-input { border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.9rem; outline: none; }
+    .field-input:focus { border-color: var(--accent-blue); }
+    .field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .btn-modal { padding: 0.48rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.84rem; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; }
+    .btn-modal-save { background: var(--accent-blue); color: #fff; border-color: #2563eb; }
+    .btn-modal-danger { background: #fef2f2; color: #dc2626; border-color: #fca5a5; }
+    .sys-tabs { display: flex; border-bottom: 1px solid var(--border-subtle); background: #f8fafc; }
+    .sys-tab-btn { flex: 1; padding: 0.65rem 0.5rem; font-size: 0.8rem; font-weight: 700; border: none; background: transparent; color: #475569; cursor: pointer; border-bottom: 2px solid transparent; }
+    .sys-tab-btn.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); background: #fff; }
+    .sys-panel { display: none; flex-direction: column; gap: 0.8rem; }
+    .sys-panel.active { display: flex; }
+    .sys-list-item { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.45rem 0.65rem; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc; font-size: 0.82rem; }
+    .status-pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: #fef3c7; color: #92400e; }
+    .status-pill.connected { background: #dcfce7; color: #166534; }
+    .toast-notification { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #0f172a; color: #fff; padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translateY(120px); opacity: 0; transition: all 0.25s ease; z-index: 2000; }
+    .toast-notification.show { transform: translateY(0); opacity: 1; }
+    @media print {
+      body { background: #fff; }
+      .control-bar, .edit-strip { display: none !important; }
+      .sheet-viewport { margin: 0; padding: 0; max-width: none; }
+      .document-sheet { border: none; box-shadow: none; padding: 0.5cm; }
+      .table-scroll-wrapper { overflow: visible !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Control Bar -->
+  <header class="control-bar">
+    <div class="control-bar-inner">
+      <div class="control-group">
+        <div class="app-badge">KSHS Timetable</div>
+        <select id="programSelect" class="program-select"></select>
+        <button type="button" id="newProgramBtn" class="ui-btn">+ New Sheet</button>
+        <label class="weekend-toggle">
+          <input type="checkbox" id="toggleWeekends" checked>
+          <span>Sat &amp; Sun</span>
+        </label>
+      </div>
+
+      <div class="control-group">
+        <button type="button" id="editModeBtn" class="ui-btn ui-btn-edit-active">Editing On</button>
+        <button type="button" id="systemSyncBtn" class="ui-btn">System Data &amp; Sync</button>
+        <button type="button" id="manageSlotsBtn" class="ui-btn">Columns &amp; Breaks</button>
+        <button type="button" id="backupBtn" class="ui-btn">Backup / Clear</button>
+        <button type="button" id="syncSaveBtn" class="ui-btn">Sync to System</button>
+        <button type="button" id="printBtn" class="ui-btn ui-btn-primary">Print / PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Printable Document Sheet -->
+  <main class="sheet-viewport">
+    <article class="document-sheet" id="documentSheet">
+      <div class="doc-header" id="docHeaderBlock" title="Click to edit School Name, Course, Academic Year & Semester">
+        <div class="doc-header-line doc-institution" id="hdrInstitution">KAMPALA SCHOOL OF HEALTH SCIENCES</div>
+        <div class="doc-header-line doc-subtitle" id="hdrTitle">TEACHING TIME TABLE FOR CERTIFICATE IN PHARMACY</div>
+        <div class="doc-header-line doc-year" id="hdrYear">ACADEMIC YEAR 2026/2027</div>
+        <div class="doc-header-line doc-semester" id="hdrSemester">YEAR ONE SEMESTER TWO</div>
+      </div>
+
+      <div class="table-scroll-wrapper">
+        <table class="timetable-grid" id="timetableGrid"></table>
+      </div>
+
+      <footer class="doc-footer" id="docFooterBlock" title="Academic Registrar Signature Block"></footer>
+    </article>
+  </main>
+
+  <!-- System Data & Sync Modal -->
+  <div class="modal-overlay" id="systemModal">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-head">
+        <h3>System Data &amp; SMIS Bridge</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="systemModal">&times;</button>
+      </div>
+      <div class="sys-tabs">
+        <button type="button" class="sys-tab-btn active" data-sys-tab="tabEndpoint">API &amp; Sync</button>
+        <button type="button" class="sys-tab-btn" data-sys-tab="tabCourses">Course Units</button>
+        <button type="button" class="sys-tab-btn" data-sys-tab="tabTutors">Tutors</button>
+        <button type="button" class="sys-tab-btn" data-sys-tab="tabRegistrar">Registrar</button>
+      </div>
+      <div class="modal-body">
+        <!-- Tab 1: SMIS API Endpoint -->
+        <div class="sys-panel active" id="tabEndpoint">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.82rem; font-weight:700; color:#334155;">SMIS Bridge Status:</span>
+            <span class="status-pill" id="smisConnectionStatus">Offline Cache Active</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="smisApiUrl">SMIS Lookup Endpoint URL (GET JSON)</label>
+            <input type="text" id="smisApiUrl" class="field-input" placeholder="e.g. /api/timetable/lookup-data">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="smisAuthToken">Bearer Token (Optional)</label>
+            <input type="password" id="smisAuthToken" class="field-input" placeholder="Optional API authorization token">
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button type="button" id="fetchSmisNowBtn" class="btn-modal btn-modal-save" style="flex:1;">Fetch / Sync From System Now</button>
+            <button type="button" id="exportPayloadBtn" class="btn-modal">Copy DB Payload</button>
+          </div>
+          <p style="font-size:0.78rem; color:#64748b; line-height:1.4;">
+            Programmatic hook: <code>window.SMIS_TIMETABLE_BRIDGE.setSystemData({ schoolName, programs, courses, tutors, academicRegistrar })</code> or listen for <code>smis:timetable:sync</code>.
+          </p>
+        </div>
+
+        <!-- Tab 2: System Course Units Registry -->
+        <div class="sys-panel" id="tabCourses">
+          <div class="field-row-2">
+            <input type="text" id="newCourseCode" class="field-input" placeholder="Code (e.g. CPH 1201)">
+            <input type="text" id="newCourseTag" class="field-input" placeholder="Program/Sem (e.g. CPH Y1S2)">
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="newCourseName" class="field-input" style="flex:1;" placeholder="Course Unit Name (e.g. MEDICAL PSYCHOLOGY)">
+            <button type="button" id="addSysCourseBtn" class="btn-modal btn-modal-save">+ Add</button>
+          </div>
+          <div id="sysCoursesList" style="display:flex; flex-direction:column; gap:0.4rem; max-height:230px; overflow-y:auto;"></div>
+        </div>
+
+        <!-- Tab 3: System Tutors Registry -->
+        <div class="sys-panel" id="tabTutors">
+          <div class="field-row-2">
+            <input type="text" id="newTutorId" class="field-input" placeholder="Staff ID (e.g. STF-01)">
+            <input type="text" id="newTutorDept" class="field-input" placeholder="Department (e.g. Pharmacy)">
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="newTutorName" class="field-input" style="flex:1;" placeholder="Tutor Name (e.g. MR. WERE)">
+            <button type="button" id="addSysTutorBtn" class="btn-modal btn-modal-save">+ Add</button>
+          </div>
+          <div id="sysTutorsList" style="display:flex; flex-direction:column; gap:0.4rem; max-height:230px; overflow-y:auto;"></div>
+        </div>
+
+        <!-- Tab 4: Academic Registrar -->
+        <div class="sys-panel" id="tabRegistrar">
+          <p style="font-size: 0.8rem; color: #475569; line-height: 1.4;">
+            When an Academic Registrar is registered in the system, their title and name automatically appear on <strong>every</strong> timetable sheet. Leave blank to keep the footer completely empty.
+          </p>
+          <div class="field-group">
+            <label class="field-label" for="sysRegistrarName">Academic Registrar Full Name</label>
+            <input type="text" id="sysRegistrarName" class="field-input" placeholder="Leave empty for blank footer">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="sysRegistrarRole">Official Title</label>
+            <input type="text" id="sysRegistrarRole" class="field-input" placeholder="ACADEMIC REGISTRAR">
+          </div>
+          <div class="field-row-2">
+            <div class="field-group">
+              <label class="field-label" for="sysSecondaryName">Secondary Signatory (Optional)</label>
+              <input type="text" id="sysSecondaryName" class="field-input" placeholder="Optional name">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="sysSecondaryRole">Secondary Title (Optional)</label>
+              <input type="text" id="sysSecondaryRole" class="field-input" placeholder="Optional title">
+            </div>
+          </div>
+          <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button type="button" id="clearRegistrarBtn" class="btn-modal btn-modal-danger">Unregister / Blank</button>
+            <button type="button" id="saveRegistrarBtn" class="btn-modal btn-modal-save">Save Registrar</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <div style="margin-left: auto;">
+          <button type="button" class="btn-modal btn-modal-save" data-close-modal="systemModal">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cell Modal (Separate Course Unit & Tutor Controls) -->
+  <div class="modal-overlay" id="cellModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="cellModalTitle">Edit Lecture Slot</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="cellModal">&times;</button>
+      </div>
+      <form id="cellForm">
+        <div class="modal-body">
+          <input type="hidden" id="editDayKey">
+          <input type="hidden" id="editSlotId">
+
+          <!-- Independent Course Unit Section -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.75rem; display:flex; flex-direction:column; gap:0.45rem;">
+            <label class="field-label" for="selectSystemCourse">1. Course Unit (From System Registry)</label>
+            <select id="selectSystemCourse" class="field-input"></select>
+            <input type="text" id="inputCourse" class="field-input" placeholder="Or type custom course unit name">
+          </div>
+
+          <!-- Independent Tutor Section -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.75rem; display:flex; flex-direction:column; gap:0.45rem;">
+            <label class="field-label" for="selectSystemTutor">2. Tutor / Lecturer (Editable Independently)</label>
+            <select id="selectSystemTutor" class="field-input"></select>
+            <input type="text" id="inputTutor" class="field-input" placeholder="Or type / override tutor name alone">
+          </div>
+
+          <div class="field-row-2">
+            <div class="field-group">
+              <label class="field-label" for="inputRoom">Room / Lab (Optional)</label>
+              <input type="text" id="inputRoom" class="field-input" placeholder="e.g. Hall A">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="inputCustomTime">Time Override (Optional)</label>
+              <input type="text" id="inputCustomTime" class="field-input" placeholder="e.g. 8:00 AM">
+            </div>
+          </div>
+          <div class="field-row-2">
+            <div class="field-group">
+              <label class="field-label" for="inputRowSpan">Merge Down (Rows)</label>
+              <select id="inputRowSpan" class="field-input">
+                <option value="1">1 Row (Normal)</option>
+                <option value="2">2 Rows</option>
+                <option value="3">3 Rows</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="inputColSpan">Merge Across (Slots)</label>
+              <select id="inputColSpan" class="field-input">
+                <option value="1">1 Slot (Normal)</option>
+                <option value="2">2 Slots</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <div style="display:flex; gap:0.4rem;">
+            <button type="button" id="clearCellBtn" class="btn-modal btn-modal-danger">Clear</button>
+            <button type="button" id="copyCellBtn" class="btn-modal">Copy</button>
+            <button type="button" id="pasteCellBtn" class="btn-modal">Paste</button>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn-modal" data-close-modal="cellModal">Cancel</button>
+            <button type="submit" class="btn-modal btn-modal-save">Save Cell</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Header & Footer Modal -->
+  <div class="modal-overlay" id="docMetaModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Edit School &amp; Course Header</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="docMetaModal">&times;</button>
+      </div>
+      <form id="docMetaForm">
+        <div class="modal-body">
+          <div class="field-group">
+            <label class="field-label" for="metaInstitution">School / Institution Name</label>
+            <input type="text" id="metaInstitution" class="field-input" required>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="selectSystemProgram">Select Program From System (Optional)</label>
+            <select id="selectSystemProgram" class="field-input"></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="metaTitle">Timetable Title &amp; Course</label>
+            <input type="text" id="metaTitle" class="field-input" required>
+          </div>
+          <div class="field-row-2">
+            <div class="field-group">
+              <label class="field-label" for="metaYear">Academic Year</label>
+              <input type="text" id="metaYear" class="field-input" required>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="metaSemester">Semester / Class</label>
+              <input type="text" id="metaSemester" class="field-input" required>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="metaDayCorner">Corner Header Label</label>
+            <input type="text" id="metaDayCorner" class="field-input" placeholder="DAY">
+          </div>
+        </div>
+        <div class="modal-foot">
+          <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+            <button type="button" class="btn-modal" data-close-modal="docMetaModal">Cancel</button>
+            <button type="submit" class="btn-modal btn-modal-save">Save Details</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Slots Manager Modal -->
+  <div class="modal-overlay" id="slotsModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Manage Time Columns &amp; Dividers</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="slotsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="slotManagerList" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" id="addNewSlotColBtn" class="btn-modal" style="flex:1;">+ Add Time Slot</button>
+          <button type="button" id="addNewDividerColBtn" class="btn-modal" style="flex:1;">+ Add Break/Lunch</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <div style="margin-left: auto;">
+          <button type="button" class="btn-modal btn-modal-save" data-close-modal="slotsModal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backup Modal -->
+  <div class="modal-overlay" id="backupModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Backup &amp; Reset Options</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="backupModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <button type="button" id="exportJsonBtn" class="btn-modal btn-modal-save">Download Backup (.json)</button>
+        <label class="btn-modal" style="text-align:center; display:block;">
+          Import Backup (.json)
+          <input type="file" id="importJsonInput" accept=".json" style="display:none;">
+        </label>
+        <button type="button" id="clearAllCellsBtn" class="btn-modal btn-modal-danger">Clear All Lecture Cells</button>
+        <button type="button" id="confirmResetBtn" class="btn-modal btn-modal-danger">Restore Official KSHS Default</button>
+      </div>
+      <div class="modal-foot">
+        <div style="margin-left: auto;">
+          <button type="button" class="btn-modal" data-close-modal="backupModal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-notification" id="toast"></div>
+
+  <script>
+    (function() {
+      'use strict';
+      const STORAGE_KEY = 'kshs_timetable_v5';
+      const REGISTRY_KEY = 'kshs_smis_registry_v1';
+
+      const DEFAULT_SYSTEM_REGISTRY = {
+        apiUrl: '',
+        schoolName: 'KAMPALA SCHOOL OF HEALTH SCIENCES',
+        programs: [
+          { id: 'CPH', code: 'CPH', name: 'CERTIFICATE IN PHARMACY' },
+          { id: 'DPH', code: 'DPH', name: 'DIPLOMA IN PHARMACY' },
+          { id: 'DCM', code: 'DCM', name: 'DIPLOMA IN CLINICAL MEDICINE & COMMUNITY HEALTH' },
+          { id: 'DMLT', code: 'DMLT', name: 'DIPLOMA IN MEDICAL LABORATORY TECHNOLOGY' }
+        ],
+        courses: [
+          { id: 'CRS-101', code: 'CPH 1201', name: 'MEDICAL PSYCHOLOGY', programTag: 'CPH Y1S2' },
+          { id: 'CRS-102', code: 'CPH 1202', name: 'PHARMACEUTICAL CALCULATIONS', programTag: 'CPH Y1S2' },
+          { id: 'CRS-103', code: 'CPH 1203', name: 'PHARMACEUTICAL CHEMISTRY', programTag: 'CPH Y1S2' },
+          { id: 'CRS-104', code: 'CPH 1204', name: 'PHARMACEUTICAL CHEMISTRY II', programTag: 'CPH Y1S2' },
+          { id: 'CRS-105', code: 'CPH 1205', name: 'BASIC PHARMACOGNOSY', programTag: 'CPH Y1S2' },
+          { id: 'CRS-106', code: 'CPH 1206', name: 'PHARMACEUTICAL PRACTICALS', programTag: 'CPH Y1S2' },
+          { id: 'CRS-107', code: 'CPH 1207', name: 'COMMUNICATION SKILLS', programTag: 'CPH Y1S2' },
+          { id: 'CRS-108', code: 'CPH 1208', name: 'ANATOMY & PHYSIOLOGY II', programTag: 'CPH Y1S2' }
+        ],
+        tutors: [
+          { id: 'TUT-01', name: 'MR. WERE', department: 'Health Sciences' },
+          { id: 'TUT-02', name: 'MR. CLIFFE', department: 'Health Sciences' },
+          { id: 'TUT-03', name: 'MR. RICHARD', department: 'Pharmacy' },
+          { id: 'TUT-04', name: 'MR. DAN', department: 'Pharmacognosy' },
+          { id: 'TUT-05', name: 'MR. OTAI', department: 'General Studies' },
+          { id: 'TUT-06', name: 'MS. MUSIMENTA', department: 'Anatomy & Physiology' }
+        ],
+        academicRegistrar: { name: '', role: 'ACADEMIC REGISTRAR', secondaryName: '', secondaryRole: '' }
+      };
+
+      function createDefaultRows() {
+        return [
+          { id: 'Monday', short: 'MON', full: 'Monday', isWeekend: false },
+          { id: 'Tuesday', short: 'TUE', full: 'Tuesday', isWeekend: false },
+          { id: 'Wednesday', short: 'WED', full: 'Wednesday', isWeekend: false },
+          { id: 'Thursday', short: 'THUR', full: 'Thursday', isWeekend: false },
+          { id: 'Friday', short: 'FRID', full: 'Friday', isWeekend: false },
+          { id: 'Saturday', short: 'SAT', full: 'Saturday', isWeekend: true },
+          { id: 'Sunday', short: 'SUN', full: 'Sunday', isWeekend: true }
+        ];
+      }
+
+      const DEFAULT_PROGRAMS = {
+        'CPH-Y1S2': {
+          programId: 'CPH',
+          optionLabel: 'Certificate in Pharmacy — Year 1 Sem 2',
+          meta: {
+            institution: 'KAMPALA SCHOOL OF HEALTH SCIENCES',
+            title: 'TEACHING TIME TABLE FOR CERTIFICATE IN PHARMACY',
+            year: 'ACADEMIC YEAR 2026/2027',
+            semester: 'YEAR ONE SEMESTER TWO',
+            dayCornerLabel: 'DAY'
+          },
+          rows: createDefaultRows(),
+          columns: [
+            { id: 'slot-1', type: 'slot', label: '8:00 AM – 10:30 AM' },
+            { id: 'div-break', type: 'divider', verticalText: 'BREAK' },
+            { id: 'slot-2', type: 'slot', label: '11:00 AM – 1:00 PM' },
+            { id: 'div-lunch', type: 'divider', verticalText: 'LUNCH' },
+            { id: 'slot-3', type: 'slot', label: '2:00 PM – 4:00 PM' },
+            { id: 'slot-4', type: 'slot', label: '5:00 PM – 6:30 PM' }
+          ],
+          cells: {
+            Monday: {
+              'slot-1': { courseId: 'CRS-101', course: 'MEDICAL PSYCHOLOGY', tutorId: 'TUT-01', tutor: 'MR. WERE', rowSpan: 1, colSpan: 1 },
+              'slot-2': { courseId: 'CRS-101', course: 'MEDICAL PSYCHOLOGY', tutorId: 'TUT-01', tutor: 'MR. WERE', rowSpan: 1, colSpan: 1 },
+              'slot-3': { courseId: 'CRS-106', course: 'PHARMACEUTICAL PRACTICALS', tutorId: 'TUT-03', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+              'slot-4': { courseId: 'CRS-106', course: 'PHARMACEUTICAL PRACTICALS', tutorId: 'TUT-03', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 }
+            },
+            Tuesday: {
+              'slot-1': { courseId: 'CRS-101', course: 'MEDICAL PSYCHOLOGY', tutorId: 'TUT-02', tutor: 'MR. CLIFFE', rowSpan: 1, colSpan: 1 },
+              'slot-2': { courseId: 'CRS-101', course: 'MEDICAL PSYCHOLOGY', tutorId: 'TUT-02', tutor: 'MR. CLIFFE', rowSpan: 1, colSpan: 1 },
+              'slot-3': { courseId: 'CRS-105', course: 'BASIC PHARMACOGNOSY', tutorId: 'TUT-04', tutor: 'MR. DAN', rowSpan: 1, colSpan: 1 },
+              'slot-4': { courseId: 'CRS-105', course: 'BASIC PHARMACOGNOSY', tutorId: 'TUT-04', tutor: 'MR. DAN', rowSpan: 1, colSpan: 1 }
+            },
+            Wednesday: {
+              'slot-1': { courseId: 'CRS-102', course: 'PHARMACEUTICAL CALCULATIONS', tutorId: 'TUT-03', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+              'slot-2': { courseId: 'CRS-102', course: 'PHARMACEUTICAL CALCULATIONS', tutorId: 'TUT-03', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+              'slot-3': { courseId: 'CRS-107', course: 'COMMUNICATION SKILLS', tutorId: 'TUT-05', tutor: 'MR. OTAI', rowSpan: 1, colSpan: 1 },
+              'slot-4': { courseId: 'CRS-107', course: 'COMMUNICATION SKILLS', tutorId: 'TUT-05', tutor: 'MR. OTAI', rowSpan: 1, colSpan: 1 }
+            },
+            Thursday: {
+              'slot-1': { courseId: 'CRS-103', course: 'PHARMACEUTICAL CHEMISTRY', tutorId: 'TUT-03', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+              'slot-2': { courseId: 'CRS-103', course: 'PHARMACEUTICAL CHEMISTRY', tutorId: 'TUT-03', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+              'slot-3': { courseId: 'CRS-108', course: 'ANATOMY & PHYSIOLOGY II', tutorId: 'TUT-06', tutor: 'MS. MUSIMENTA', rowSpan: 1, colSpan: 1 },
+              'slot-4': { courseId: 'CRS-108', course: 'ANATOMY & PHYSIOLOGY II', tutorId: 'TUT-06', tutor: 'MS. MUSIMENTA', rowSpan: 1, colSpan: 1 }
+            },
+            Friday: {
+              'slot-1': { courseId: 'CRS-105', course: 'BASIC PHARMACOGNOSY', tutorId: 'TUT-04', tutor: 'MR. DAN', rowSpan: 1, colSpan: 1 },
+              'slot-2': { courseId: 'CRS-105', course: 'BASIC PHARMACOGNOSY', tutorId: 'TUT-04', tutor: 'MR. DAN', rowSpan: 1, colSpan: 1 },
+              'slot-3': { courseId: 'CRS-104', course: 'PHARMACEUTICAL CHEMISTRY II', tutorId: 'TUT-03', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+              'slot-4': { courseId: 'CRS-104', course: 'PHARMACEUTICAL CHEMISTRY II', tutorId: 'TUT-03', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 }
+            }
+          }
+        }
+      };
+
+      function loadRegistry() {
+        try {
+          const saved = localStorage.getItem(REGISTRY_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            return Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_SYSTEM_REGISTRY)), parsed);
+          }
+        } catch(e) {}
+        return JSON.parse(JSON.stringify(DEFAULT_SYSTEM_REGISTRY));
+      }
+
+      function saveRegistry() {
+        try {
+          localStorage.setItem(REGISTRY_KEY, JSON.stringify(state.registry));
+        } catch(e) {}
+      }
+
+      let state = {
+        programs: loadPrograms(),
+        registry: loadRegistry(),
+        activeProgramKey: 'CPH-Y1S2',
+        isEditing: true,
+        showWeekends: true,
+        clipboardCell: null,
+        isConnected: false,
+        saveCallbacks: []
+      };
+
+      function loadPrograms() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) return JSON.parse(saved);
+        } catch(e) {}
+        return JSON.parse(JSON.stringify(DEFAULT_PROGRAMS));
+      }
+
+      function savePrograms() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.programs));
+        } catch(e) {}
+      }
+
+      function getActiveProgram() {
+        if (!state.programs[state.activeProgramKey]) {
+          state.activeProgramKey = Object.keys(state.programs)[0] || 'CPH-Y1S2';
+        }
+        return state.programs[state.activeProgramKey];
+      }
+
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 2300);
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+      }
+
+      // =========================================================================
+      // SYSTEM INTEGRATION HANDLER (window.SMIS_TIMETABLE_BRIDGE)
+      // Connects external SMIS / ASP.NET / Node / PostgreSQL APIs with offline cache
+      // =========================================================================
+      const SMIS_TIMETABLE_BRIDGE = {
+        setSystemData(payload = {}) {
+          if (!payload || typeof payload !== 'object') return;
+          if (payload.schoolName) {
+            state.registry.schoolName = String(payload.schoolName).trim().toUpperCase();
+            Object.values(state.programs).forEach(p => { p.meta.institution = state.registry.schoolName; });
+          }
+          if (Array.isArray(payload.programs)) {
+            state.registry.programs = payload.programs.map(p => ({
+              id: p.id || p.code || ('PRG-' + Date.now()),
+              code: p.code || p.id || '',
+              name: String(p.name || '').toUpperCase()
+            }));
+          }
+          if (Array.isArray(payload.courses)) {
+            state.registry.courses = payload.courses.map((c, idx) => ({
+              id: c.id || c.code || ('CRS-' + idx),
+              code: c.code || '',
+              name: String(c.name || c.title || '').toUpperCase(),
+              programTag: c.programTag || c.semester || ''
+            }));
+          }
+          if (Array.isArray(payload.tutors)) {
+            state.registry.tutors = payload.tutors.map((t, idx) => ({
+              id: t.id || ('TUT-' + idx),
+              name: String(t.name || t.fullName || '').toUpperCase(),
+              department: t.department || ''
+            }));
+          }
+          if (payload.academicRegistrar !== undefined) {
+            if (!payload.academicRegistrar || !payload.academicRegistrar.name) {
+              state.registry.academicRegistrar = { name: '', role: 'ACADEMIC REGISTRAR', secondaryName: '', secondaryRole: '' };
+            } else {
+              state.registry.academicRegistrar = {
+                name: String(payload.academicRegistrar.name || '').toUpperCase(),
+                role: String(payload.academicRegistrar.role || 'ACADEMIC REGISTRAR').toUpperCase(),
+                secondaryName: String(payload.academicRegistrar.secondaryName || '').toUpperCase(),
+                secondaryRole: String(payload.academicRegistrar.secondaryRole || '').toUpperCase()
+              };
+            }
+          }
+          const prog = getActiveProgram();
+          if (payload.activeYear) prog.meta.year = String(payload.activeYear).toUpperCase();
+          if (payload.activeSemester) prog.meta.semester = String(payload.activeSemester).toUpperCase();
+
+          saveRegistry();
+          savePrograms();
+          renderTimetable();
+          renderSystemLists();
+          window.dispatchEvent(new CustomEvent('smis:timetable:sync', { detail: { registry: state.registry } }));
+        },
+
+        async fetchFromEndpoint(apiUrl, authToken) {
+          const url = (apiUrl || state.registry.apiUrl || '').trim();
+          if (!url) {
+            showToast('Enter an SMIS API URL or use offline system registries.');
+            return null;
+          }
+          state.registry.apiUrl = url;
+          saveRegistry();
+          try {
+            const headers = { 'Accept': 'application/json' };
+            if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+            const res = await fetch(url, { headers });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            state.isConnected = true;
+            this.setSystemData(data);
+            updateConnectionPill();
+            showToast('Synced Course Units, Tutors & Registrar from SMIS.');
+            return data;
+          } catch (err) {
+            state.isConnected = false;
+            updateConnectionPill();
+            showToast('Server unreachable — using offline cached SMIS data.');
+            return null;
+          }
+        },
+
+        getTimetablePayload() {
+          const prog = getActiveProgram();
+          const entries = [];
+          Object.keys(prog.cells || {}).forEach(dayId => {
+            Object.keys(prog.cells[dayId] || {}).forEach(slotId => {
+              const c = prog.cells[dayId][slotId];
+              if (c && (c.course || c.tutor)) {
+                entries.push({
+                  dayId,
+                  slotId,
+                  courseId: c.courseId || null,
+                  courseName: c.course || '',
+                  tutorId: c.tutorId || null,
+                  tutorName: c.tutor || '',
+                  room: c.room || '',
+                  customTime: c.customTime || '',
+                  rowSpan: c.rowSpan || 1,
+                  colSpan: c.colSpan || 1
+                });
+              }
+            });
+          });
+          return {
+            timetableKey: state.activeProgramKey,
+            programId: prog.programId || null,
+            meta: prog.meta,
+            columns: prog.columns,
+            rows: prog.rows,
+            entries,
+            academicRegistrar: state.registry.academicRegistrar,
+            exportedAt: new Date().toISOString()
+          };
+        },
+
+        loadTimetablePayload(payload) {
+          if (!payload || !payload.meta) return;
+          const key = payload.timetableKey || ('IMP-' + Date.now());
+          const cells = {};
+          (payload.entries || []).forEach(e => {
+            if (!cells[e.dayId]) cells[e.dayId] = {};
+            cells[e.dayId][e.slotId] = {
+              courseId: e.courseId || '',
+              course: String(e.courseName || e.course || '').toUpperCase(),
+              tutorId: e.tutorId || '',
+              tutor: String(e.tutorName || e.tutor || '').toUpperCase(),
+              room: e.room || '',
+              customTime: e.customTime || '',
+              rowSpan: Number(e.rowSpan) || 1,
+              colSpan: Number(e.colSpan) || 1
+            };
+          });
+          state.programs[key] = {
+            programId: payload.programId || '',
+            optionLabel: (payload.meta.title || key).replace(/^TEACHING TIME TABLE FOR\s*/i, '') + ' — ' + (payload.meta.semester || ''),
+            meta: payload.meta,
+            rows: payload.rows || createDefaultRows(),
+            columns: payload.columns || DEFAULT_PROGRAMS['CPH-Y1S2'].columns,
+            cells
+          };
+          state.activeProgramKey = key;
+          savePrograms();
+          renderTimetable();
+        },
+
+        onSave(callback) {
+          if (typeof callback === 'function') state.saveCallbacks.push(callback);
+        }
+      };
+
+      window.SMIS_TIMETABLE_BRIDGE = SMIS_TIMETABLE_BRIDGE;
+
+      function updateConnectionPill() {
+        const pill = document.getElementById('smisConnectionStatus');
+        if (!pill) return;
+        if (state.isConnected) {
+          pill.textContent = 'Connected to SMIS';
+          pill.classList.add('connected');
+        } else {
+          pill.textContent = 'Offline Cache Active';
+          pill.classList.remove('connected');
+        }
+      }
+
+      function renderProgramSelector() {
+        const select = document.getElementById('programSelect');
+        select.innerHTML = '';
+        Object.keys(state.programs).forEach(key => {
+          const prog = state.programs[key];
+          const opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = prog.optionLabel || prog.meta.title;
+          if (key === state.activeProgramKey) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      function renderFooter() {
+        const footer = document.getElementById('docFooterBlock');
+        const reg = state.registry.academicRegistrar || { name: '', role: 'ACADEMIC REGISTRAR', secondaryName: '', secondaryRole: '' };
+        const hasPrimary = Boolean(reg.name && reg.name.trim());
+        const hasSecondary = Boolean(reg.secondaryName && reg.secondaryName.trim());
+
+        if (!hasPrimary && !hasSecondary) {
+          footer.innerHTML = '<span class="registrar-empty-hint">No Academic Registrar registered in system (click here to register)</span>';
+          return;
+        }
+
+        let html = '';
+        if (hasPrimary) {
+          html += `
+            <div class="registrar-block">
+              <div class="signature-line"></div>
+              <div class="registrar-role">${escapeHtml(reg.role || 'ACADEMIC REGISTRAR')}</div>
+              <div class="registrar-name">${escapeHtml(reg.name)}</div>
+            </div>
+          `;
+        }
+        if (hasSecondary) {
+          html += `
+            <div class="registrar-block">
+              <div class="signature-line"></div>
+              <div class="registrar-role">${escapeHtml(reg.secondaryRole || '')}</div>
+              <div class="registrar-name">${escapeHtml(reg.secondaryName)}</div>
+            </div>
+          `;
+        }
+        footer.innerHTML = html;
+      }
+
+      function renderTimetable() {
+        renderProgramSelector();
+        const prog = getActiveProgram();
+        document.body.classList.toggle('is-editing', state.isEditing);
+
+        const editBtn = document.getElementById('editModeBtn');
+        editBtn.textContent = state.isEditing ? 'Editing On' : 'Edit Mode';
+        editBtn.classList.toggle('ui-btn-edit-active', state.isEditing);
+
+        document.getElementById('hdrInstitution').textContent = prog.meta.institution;
+        document.getElementById('hdrTitle').textContent = prog.meta.title;
+        document.getElementById('hdrYear').textContent = prog.meta.year;
+        document.getElementById('hdrSemester').textContent = prog.meta.semester;
+
+        const visibleRows = state.showWeekends ? prog.rows : prog.rows.filter(r => !r.isWeekend);
+        const table = document.getElementById('timetableGrid');
+
+        let theadHtml = '<thead><tr>';
+        theadHtml += `<th class="col-day-header" id="cornerHeader">${escapeHtml(prog.meta.dayCornerLabel || 'DAY')}</th>`;
+        prog.columns.forEach(col => {
+          if (col.type === 'divider') {
+            theadHtml += `<th class="col-divider" data-col-id="${escapeHtml(col.id)}">${escapeHtml((col.verticalText || 'B')[0])}</th>`;
+          } else {
+            theadHtml += `<th class="col-slot-header" data-col-id="${escapeHtml(col.id)}">${escapeHtml(col.label)}</th>`;
+          }
+        });
+        theadHtml += '</tr></thead>';
+
+        const covered = {};
+        const markCovered = (r, c) => covered[`${r}:${c}`] = true;
+
+        let tbodyHtml = '<tbody>';
+        visibleRows.forEach((rowObj, rIdx) => {
+          tbodyHtml += `<tr>`;
+          tbodyHtml += `<td class="day-label-cell" data-row-id="${escapeHtml(rowObj.id)}">
+            <div>${escapeHtml(rowObj.short)}</div>
+            <div class="row-controls-bar">
+              <button type="button" class="row-mini-btn" data-row-act="up" data-row-id="${escapeHtml(rowObj.id)}" title="Move Up">↑</button>
+              <button type="button" class="row-mini-btn" data-row-act="down" data-row-id="${escapeHtml(rowObj.id)}" title="Move Down">↓</button>
+              <button type="button" class="row-mini-btn" data-row-act="del" data-row-id="${escapeHtml(rowObj.id)}" title="Delete Row">×</button>
+            </div>
+          </td>`;
+
+          prog.columns.forEach((col, cIdx) => {
+            if (col.type === 'divider') {
+              if (rIdx === 0) {
+                const letters = (col.verticalText || 'BREAK').slice(1).split('').map(ch => `<span>${escapeHtml(ch)}</span>`).join('');
+                tbodyHtml += `<td class="col-divider" rowspan="${visibleRows.length}" data-col-id="${escapeHtml(col.id)}"><div class="divider-letter-stack">${letters}</div></td>`;
+              }
+              return;
+            }
+
+            if (covered[`${rIdx}:${cIdx}`]) return;
+
+            const cell = (prog.cells[rowObj.id] && prog.cells[rowObj.id][col.id]) || { course: '', tutor: '', room: '', customTime: '', rowSpan: 1, colSpan: 1 };
+            const rSpan = Math.min(Number(cell.rowSpan) || 1, visibleRows.length - rIdx);
+            let cSpan = 1;
+            while (cSpan < (Number(cell.colSpan) || 1) && cIdx + cSpan < prog.columns.length && prog.columns[cIdx + cSpan].type === 'slot') {
+              cSpan++;
+            }
+
+            if (rSpan > 1 || cSpan > 1) {
+              for (let r = 0; r < rSpan; r++) {
+                for (let c = 0; c < cSpan; c++) {
+                  if (r !== 0 || c !== 0) markCovered(rIdx + r, cIdx + c);
+                }
+              }
+            }
+
+            const hasVal = Boolean(cell.course || cell.tutor || cell.room || cell.customTime);
+            const metaLine = [cell.customTime, cell.room].filter(Boolean).join(' • ');
+            const tutorDisplay = cell.tutor ? `(${escapeHtml(cell.tutor)})` : (cell.course ? '(+ Assign Tutor)' : '');
+            tbodyHtml += `<td class="lecture-cell"${rSpan > 1 ? ` rowspan="${rSpan}"` : ''}${cSpan > 1 ? ` colspan="${cSpan}"` : ''} data-day="${escapeHtml(rowObj.id)}" data-slot="${escapeHtml(col.id)}">
+              ${hasVal
+                ? `<div class="cell-course" data-edit-part="course" title="Click to edit Course Unit">${escapeHtml(cell.course)}</div>
+                   <div class="cell-tutor" data-edit-part="tutor" title="Click to change Tutor alone">${tutorDisplay}</div>
+                   ${metaLine ? `<div class="cell-meta-sub">${escapeHtml(metaLine)}</div>` : ''}`
+                : '<span class="cell-empty-placeholder">+ Edit</span>'}
+            </td>`;
+          });
+          tbodyHtml += '</tr>';
+        });
+        tbodyHtml += '</tbody>';
+
+        table.innerHTML = theadHtml + tbodyHtml;
+        renderFooter();
+      }
+
+      function openModal(id) { document.getElementById(id).classList.add('open'); }
+      function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+      function renderSystemLists() {
+        const cList = document.getElementById('sysCoursesList');
+        if (cList) {
+          cList.innerHTML = state.registry.courses.map((c, i) => `
+            <div class="sys-list-item">
+              <div><strong>${escapeHtml(c.code ? c.code + ' — ' : '')}${escapeHtml(c.name)}</strong> <span style="color:#64748b; font-size:0.75rem;">${escapeHtml(c.programTag || '')}</span></div>
+              <button type="button" class="btn-modal btn-modal-danger" style="padding:0.2rem 0.5rem;" data-del-course="${i}">×</button>
+            </div>
+          `).join('') || '<div style="font-size:0.8rem; color:#94a3b8;">No course units in system registry.</div>';
+        }
+
+        const tList = document.getElementById('sysTutorsList');
+        if (tList) {
+          tList.innerHTML = state.registry.tutors.map((t, i) => `
+            <div class="sys-list-item">
+              <div><strong>${escapeHtml(t.name)}</strong> <span style="color:#64748b; font-size:0.75rem;">${escapeHtml(t.id ? '[' + t.id + '] ' : '')}${escapeHtml(t.department || '')}</span></div>
+              <button type="button" class="btn-modal btn-modal-danger" style="padding:0.2rem 0.5rem;" data-del-tutor="${i}">×</button>
+            </div>
+          `).join('') || '<div style="font-size:0.8rem; color:#94a3b8;">No tutors in system registry.</div>';
+        }
+      }
+
+      function openSystemModal(defaultTab = 'tabEndpoint') {
+        document.getElementById('smisApiUrl').value = state.registry.apiUrl || '';
+        const reg = state.registry.academicRegistrar || { name: '', role: 'ACADEMIC REGISTRAR', secondaryName: '', secondaryRole: '' };
+        document.getElementById('sysRegistrarName').value = reg.name || '';
+        document.getElementById('sysRegistrarRole').value = reg.role || 'ACADEMIC REGISTRAR';
+        document.getElementById('sysSecondaryName').value = reg.secondaryName || '';
+        document.getElementById('sysSecondaryRole').value = reg.secondaryRole || '';
+        updateConnectionPill();
+        renderSystemLists();
+
+        document.querySelectorAll('.sys-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.sysTab === defaultTab));
+        document.querySelectorAll('.sys-panel').forEach(p => p.classList.toggle('active', p.id === defaultTab));
+        openModal('systemModal');
+      }
+
+      function populateCellDropdowns(selectedCourseName, selectedTutorName) {
+        const cSel = document.getElementById('selectSystemCourse');
+        cSel.innerHTML = '<option value="">-- Pick Course Unit from System --</option>';
+        state.registry.courses.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.dataset.name = c.name;
+          opt.textContent = (c.code ? c.code + ' — ' : '') + c.name;
+          if (c.name.toUpperCase() === (selectedCourseName || '').toUpperCase()) opt.selected = true;
+          cSel.appendChild(opt);
+        });
+
+        const tSel = document.getElementById('selectSystemTutor');
+        tSel.innerHTML = '<option value="">-- Pick Tutor from System --</option>';
+        state.registry.tutors.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.dataset.name = t.name;
+          opt.textContent = t.name + (t.department ? ' (' + t.department + ')' : '');
+          if (t.name.toUpperCase() === (selectedTutorName || '').toUpperCase()) opt.selected = true;
+          tSel.appendChild(opt);
+        });
+      }
+
+      function openInlineTutorSelector(tutorEl, day, slot) {
+        if (tutorEl.querySelector('select')) return;
+        const prog = getActiveProgram();
+        const currentCell = (prog.cells[day] && prog.cells[day][slot]) || { course: '', tutor: '', rowSpan: 1, colSpan: 1 };
+
+        const sel = document.createElement('select');
+        sel.className = 'inline-tutor-picker';
+        sel.innerHTML = '<option value="">-- No Tutor --</option>';
+        state.registry.tutors.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.name;
+          opt.dataset.tutorId = t.id;
+          opt.textContent = t.name;
+          if (t.name.toUpperCase() === (currentCell.tutor || '').toUpperCase()) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        const customOpt = document.createElement('option');
+        customOpt.value = '__CUSTOM__';
+        customOpt.textContent = '+ Type Custom Tutor...';
+        sel.appendChild(customOpt);
+
+        tutorEl.innerHTML = '';
+        tutorEl.appendChild(sel);
+        sel.focus();
+
+        const commitTutor = () => {
+          if (sel.value === '__CUSTOM__') {
+            openCellModal(day, slot, 'tutor');
+            return;
+          }
+          if (!prog.cells[day]) prog.cells[day] = {};
+          const chosenOpt = sel.options[sel.selectedIndex];
+          prog.cells[day][slot] = Object.assign({}, currentCell, {
+            tutorId: chosenOpt ? (chosenOpt.dataset.tutorId || '') : '',
+            tutor: sel.value.toUpperCase()
+          });
+          savePrograms();
+          renderTimetable();
+          showToast('Tutor updated independently.');
+        };
+
+        sel.addEventListener('click', ev => ev.stopPropagation());
+        sel.addEventListener('change', commitTutor);
+        sel.addEventListener('blur', () => renderTimetable());
+      }
+
+      function openCellModal(day, slot, focusPart = 'course') {
+        const prog = getActiveProgram();
+        const data = (prog.cells[day] && prog.cells[day][slot]) || { course: '', tutor: '', room: '', customTime: '', rowSpan: 1, colSpan: 1 };
+        document.getElementById('editDayKey').value = day;
+        document.getElementById('editSlotId').value = slot;
+        populateCellDropdowns(data.course, data.tutor);
+        document.getElementById('inputCourse').value = data.course || '';
+        document.getElementById('inputTutor').value = data.tutor || '';
+        document.getElementById('inputRoom').value = data.room || '';
+        document.getElementById('inputCustomTime').value = data.customTime || '';
+        document.getElementById('inputRowSpan').value = data.rowSpan || 1;
+        document.getElementById('inputColSpan').value = data.colSpan || 1;
+        openModal('cellModal');
+        setTimeout(() => {
+          const target = focusPart === 'tutor' ? document.getElementById('selectSystemTutor') : document.getElementById('selectSystemCourse');
+          if (target) target.focus();
+        }, 40);
+      }
+
+      function openSlotManager() {
+        const prog = getActiveProgram();
+        const list = document.getElementById('slotManagerList');
+        list.innerHTML = '';
+        prog.columns.forEach((col, idx) => {
+          const div = document.createElement('div');
+          div.style.display = 'flex';
+          div.style.gap = '0.4rem';
+          div.style.alignItems = 'center';
+          div.innerHTML = `
+            <span style="font-size:0.72rem; font-weight:700; width:46px; color:#64748b;">${col.type === 'divider' ? 'DIV' : 'SLOT'}</span>
+            <input type="text" class="field-input col-edit-input" style="flex:1;" value="${escapeHtml(col.label || col.verticalText)}" data-idx="${idx}">
+            <button type="button" class="btn-modal" style="padding:0.35rem 0.55rem;" data-col-act="left" data-idx="${idx}">←</button>
+            <button type="button" class="btn-modal" style="padding:0.35rem 0.55rem;" data-col-act="right" data-idx="${idx}">→</button>
+            <button type="button" class="btn-modal btn-modal-danger" style="padding:0.35rem 0.55rem;" data-col-act="del" data-idx="${idx}">×</button>
+          `;
+          list.appendChild(div);
+        });
+        openModal('slotsModal');
+      }
+
+      function initEvents() {
+        document.getElementById('programSelect').addEventListener('change', e => {
+          state.activeProgramKey = e.target.value;
+          renderTimetable();
+        });
+
+        document.getElementById('newProgramBtn').addEventListener('click', () => {
+          const id = 'PROG-' + Date.now();
+          state.programs[id] = {
+            optionLabel: 'New Timetable Sheet (' + (Object.keys(state.programs).length + 1) + ')',
+            meta: {
+              institution: state.registry.schoolName || 'KAMPALA SCHOOL OF HEALTH SCIENCES',
+              title: 'TEACHING TIME TABLE FOR NEW COURSE',
+              year: 'ACADEMIC YEAR 2026/2027',
+              semester: 'YEAR ONE SEMESTER ONE',
+              dayCornerLabel: 'DAY'
+            },
+            rows: createDefaultRows(),
+            columns: [
+              { id: 'slot-1', type: 'slot', label: '8:00 AM – 10:30 AM' },
+              { id: 'div-break', type: 'divider', verticalText: 'BREAK' },
+              { id: 'slot-2', type: 'slot', label: '11:00 AM – 1:00 PM' },
+              { id: 'div-lunch', type: 'divider', verticalText: 'LUNCH' },
+              { id: 'slot-3', type: 'slot', label: '2:00 PM – 4:00 PM' }
+            ],
+            cells: {}
+          };
+          state.activeProgramKey = id;
+          savePrograms();
+          renderTimetable();
+          showToast('Created new timetable sheet.');
+        });
+
+        document.getElementById('toggleWeekends').addEventListener('change', e => {
+          state.showWeekends = e.target.checked;
+          renderTimetable();
+        });
+
+        document.getElementById('editModeBtn').addEventListener('click', () => {
+          state.isEditing = !state.isEditing;
+          renderTimetable();
+        });
+
+        // System Data & Sync Modal Controls
+        document.getElementById('systemSyncBtn').addEventListener('click', () => openSystemModal('tabEndpoint'));
+        document.getElementById('docFooterBlock').addEventListener('click', () => {
+          if (state.isEditing) openSystemModal('tabRegistrar');
+        });
+
+        document.querySelectorAll('.sys-tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.sys-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.sys-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.sysTab).classList.add('active');
+          });
+        });
+
+        document.getElementById('fetchSmisNowBtn').addEventListener('click', () => {
+          const url = document.getElementById('smisApiUrl').value;
+          const token = document.getElementById('smisAuthToken').value;
+          SMIS_TIMETABLE_BRIDGE.fetchFromEndpoint(url, token);
+        });
+
+        document.getElementById('exportPayloadBtn').addEventListener('click', () => {
+          const json = JSON.stringify(SMIS_TIMETABLE_BRIDGE.getTimetablePayload(), null, 2);
+          const ta = document.createElement('textarea');
+          ta.value = json;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast('Database payload copied to clipboard.');
+        });
+
+        document.getElementById('addSysCourseBtn').addEventListener('click', () => {
+          const name = document.getElementById('newCourseName').value.trim().toUpperCase();
+          if (!name) return;
+          const code = document.getElementById('newCourseCode').value.trim().toUpperCase();
+          const programTag = document.getElementById('newCourseTag').value.trim().toUpperCase();
+          state.registry.courses.push({ id: code || ('CRS-' + Date.now()), code, name, programTag });
+          document.getElementById('newCourseCode').value = '';
+          document.getElementById('newCourseName').value = '';
+          document.getElementById('newCourseTag').value = '';
+          saveRegistry();
+          renderSystemLists();
+          showToast('Course unit added to system.');
+        });
+
+        document.getElementById('sysCoursesList').addEventListener('click', e => {
+          const btn = e.target.closest('[data-del-course]');
+          if (!btn) return;
+          state.registry.courses.splice(Number(btn.dataset.delCourse), 1);
+          saveRegistry();
+          renderSystemLists();
+        });
+
+        document.getElementById('addSysTutorBtn').addEventListener('click', () => {
+          const name = document.getElementById('newTutorName').value.trim().toUpperCase();
+          if (!name) return;
+          const id = document.getElementById('newTutorId').value.trim().toUpperCase() || ('TUT-' + Date.now());
+          const department = document.getElementById('newTutorDept').value.trim();
+          state.registry.tutors.push({ id, name, department });
+          document.getElementById('newTutorId').value = '';
+          document.getElementById('newTutorName').value = '';
+          document.getElementById('newTutorDept').value = '';
+          saveRegistry();
+          renderSystemLists();
+          showToast('Tutor added to system.');
+        });
+
+        document.getElementById('sysTutorsList').addEventListener('click', e => {
+          const btn = e.target.closest('[data-del-tutor]');
+          if (!btn) return;
+          state.registry.tutors.splice(Number(btn.dataset.delTutor), 1);
+          saveRegistry();
+          renderSystemLists();
+        });
+
+        document.getElementById('saveRegistrarBtn').addEventListener('click', () => {
+          state.registry.academicRegistrar = {
+            name: document.getElementById('sysRegistrarName').value.trim().toUpperCase(),
+            role: document.getElementById('sysRegistrarRole').value.trim().toUpperCase() || 'ACADEMIC REGISTRAR',
+            secondaryName: document.getElementById('sysSecondaryName').value.trim().toUpperCase(),
+            secondaryRole: document.getElementById('sysSecondaryRole').value.trim().toUpperCase()
+          };
+          saveRegistry();
+          renderFooter();
+          showToast(state.registry.academicRegistrar.name ? 'Academic Registrar saved across all timetables.' : 'Footer left blank.');
+        });
+
+        document.getElementById('clearRegistrarBtn').addEventListener('click', () => {
+          state.registry.academicRegistrar = { name: '', role: 'ACADEMIC REGISTRAR', secondaryName: '', secondaryRole: '' };
+          document.getElementById('sysRegistrarName').value = '';
+          document.getElementById('sysSecondaryName').value = '';
+          saveRegistry();
+          renderFooter();
+          showToast('Registrar cleared; footer is blank.');
+        });
+
+        document.getElementById('syncSaveBtn').addEventListener('click', () => {
+          const payload = SMIS_TIMETABLE_BRIDGE.getTimetablePayload();
+          state.saveCallbacks.forEach(cb => { try { cb(payload); } catch(err) {} });
+          window.dispatchEvent(new CustomEvent('smis:timetable:save', { detail: payload }));
+          showToast('Timetable synced & dispatched to SMIS handler.');
+        });
+
+        // Separate Course Unit & Tutor Selectors in Cell Modal
+        document.getElementById('selectSystemCourse').addEventListener('change', e => {
+          const opt = e.target.options[e.target.selectedIndex];
+          if (opt && opt.dataset.name) {
+            document.getElementById('inputCourse').value = opt.dataset.name;
+          }
+        });
+
+        document.getElementById('selectSystemTutor').addEventListener('change', e => {
+          const opt = e.target.options[e.target.selectedIndex];
+          if (opt && opt.dataset.name) {
+            document.getElementById('inputTutor').value = opt.dataset.name;
+          }
+        });
+
+        document.getElementById('manageSlotsBtn').addEventListener('click', openSlotManager);
+
+        document.getElementById('slotManagerList').addEventListener('input', e => {
+          if (!e.target.classList.contains('col-edit-input')) return;
+          const idx = Number(e.target.dataset.idx);
+          const col = getActiveProgram().columns[idx];
+          if (!col) return;
+          if (col.type === 'divider') col.verticalText = e.target.value.trim().toUpperCase() || 'BREAK';
+          else col.label = e.target.value;
+          savePrograms();
+          renderTimetable();
+        });
+
+        document.getElementById('slotManagerList').addEventListener('click', e => {
+          const btn = e.target.closest('[data-col-act]');
+          if (!btn) return;
+          const idx = Number(btn.dataset.idx);
+          const act = btn.dataset.colAct;
+          const cols = getActiveProgram().columns;
+          if (act === 'left' && idx > 0) {
+            [cols[idx - 1], cols[idx]] = [cols[idx], cols[idx - 1]];
+          } else if (act === 'right' && idx < cols.length - 1) {
+            [cols[idx + 1], cols[idx]] = [cols[idx], cols[idx + 1]];
+          } else if (act === 'del' && cols.length > 1) {
+            cols.splice(idx, 1);
+          }
+          savePrograms();
+          renderTimetable();
+          openSlotManager();
+        });
+
+        document.getElementById('addNewSlotColBtn').addEventListener('click', () => {
+          getActiveProgram().columns.push({ id: 'slot-' + Date.now(), type: 'slot', label: '4:00 PM – 5:00 PM' });
+          savePrograms();
+          renderTimetable();
+          openSlotManager();
+        });
+
+        document.getElementById('addNewDividerColBtn').addEventListener('click', () => {
+          getActiveProgram().columns.push({ id: 'div-' + Date.now(), type: 'divider', verticalText: 'BREAK' });
+          savePrograms();
+          renderTimetable();
+          openSlotManager();
+        });
+
+        document.getElementById('backupBtn').addEventListener('click', () => openModal('backupModal'));
+        document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+        document.getElementById('docHeaderBlock').addEventListener('click', () => {
+          if (!state.isEditing) return;
+          const prog = getActiveProgram();
+          const pSel = document.getElementById('selectSystemProgram');
+          pSel.innerHTML = '<option value="">-- Custom / Keep Current Title --</option>';
+          state.registry.programs.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.dataset.name = p.name;
+            opt.textContent = (p.code ? p.code + ' — ' : '') + p.name;
+            if (p.id === prog.programId) opt.selected = true;
+            pSel.appendChild(opt);
+          });
+          document.getElementById('metaInstitution').value = prog.meta.institution;
+          document.getElementById('metaTitle').value = prog.meta.title;
+          document.getElementById('metaYear').value = prog.meta.year;
+          document.getElementById('metaSemester').value = prog.meta.semester;
+          document.getElementById('metaDayCorner').value = prog.meta.dayCornerLabel || 'DAY';
+          openModal('docMetaModal');
+        });
+
+        document.getElementById('selectSystemProgram').addEventListener('change', e => {
+          const opt = e.target.options[e.target.selectedIndex];
+          if (opt && opt.dataset.name) {
+            document.getElementById('metaTitle').value = 'TEACHING TIME TABLE FOR ' + opt.dataset.name;
+          }
+        });
+
+        document.getElementById('docMetaForm').addEventListener('submit', e => {
+          e.preventDefault();
+          const prog = getActiveProgram();
+          const chosenProgId = document.getElementById('selectSystemProgram').value;
+          if (chosenProgId) prog.programId = chosenProgId;
+          prog.meta.institution = document.getElementById('metaInstitution').value.trim();
+          prog.meta.title = document.getElementById('metaTitle').value.trim();
+          prog.meta.year = document.getElementById('metaYear').value.trim();
+          prog.meta.semester = document.getElementById('metaSemester').value.trim();
+          prog.meta.dayCornerLabel = document.getElementById('metaDayCorner').value.trim() || 'DAY';
+          prog.optionLabel = prog.meta.title.replace(/^TEACHING TIME TABLE FOR\s*/i, '') + ' — ' + prog.meta.semester;
+          savePrograms();
+          closeModal('docMetaModal');
+          renderTimetable();
+          showToast('Header updated.');
+        });
+
+        document.getElementById('timetableGrid').addEventListener('click', e => {
+          if (!state.isEditing) return;
+          const prog = getActiveProgram();
+
+          const rowBtn = e.target.closest('[data-row-act]');
+          if (rowBtn) {
+            e.stopPropagation();
+            const rId = rowBtn.dataset.rowId;
+            const act = rowBtn.dataset.rowAct;
+            const idx = prog.rows.findIndex(r => r.id === rId);
+            if (idx === -1) return;
+            if (act === 'up' && idx > 0) {
+              [prog.rows[idx - 1], prog.rows[idx]] = [prog.rows[idx], prog.rows[idx - 1]];
+            } else if (act === 'down' && idx < prog.rows.length - 1) {
+              [prog.rows[idx + 1], prog.rows[idx]] = [prog.rows[idx], prog.rows[idx + 1]];
+            } else if (act === 'del' && prog.rows.length > 1) {
+              prog.rows.splice(idx, 1);
+            }
+            savePrograms();
+            renderTimetable();
+            return;
+          }
+
+          if (e.target.closest('#cornerHeader')) {
+            document.getElementById('docHeaderBlock').click();
+            return;
+          }
+
+          if (e.target.closest('.col-slot-header') || e.target.closest('.col-divider')) {
+            openSlotManager();
+            return;
+          }
+
+          const cell = e.target.closest('.lecture-cell');
+          if (cell) {
+            const day = cell.dataset.day;
+            const slot = cell.dataset.slot;
+            const tutorPart = e.target.closest('[data-edit-part="tutor"]');
+            if (tutorPart) {
+              e.stopPropagation();
+              openInlineTutorSelector(tutorPart, day, slot);
+              return;
+            }
+            const coursePart = e.target.closest('[data-edit-part="course"]');
+            openCellModal(day, slot, coursePart ? 'course' : 'course');
+          }
+        });
+
+        document.getElementById('cellForm').addEventListener('submit', e => {
+          e.preventDefault();
+          const day = document.getElementById('editDayKey').value;
+          const slot = document.getElementById('editSlotId').value;
+          const prog = getActiveProgram();
+          if (!prog.cells[day]) prog.cells[day] = {};
+
+          const courseName = document.getElementById('inputCourse').value.trim().toUpperCase();
+          const tutorName = document.getElementById('inputTutor').value.trim().toUpperCase();
+          const matchedCourse = state.registry.courses.find(c => c.name.toUpperCase() === courseName);
+          const matchedTutor = state.registry.tutors.find(t => t.name.toUpperCase() === tutorName);
+
+          prog.cells[day][slot] = {
+            courseId: matchedCourse ? matchedCourse.id : '',
+            course: courseName,
+            tutorId: matchedTutor ? matchedTutor.id : '',
+            tutor: tutorName,
+            room: document.getElementById('inputRoom').value.trim(),
+            customTime: document.getElementById('inputCustomTime').value.trim(),
+            rowSpan: Number(document.getElementById('inputRowSpan').value) || 1,
+            colSpan: Number(document.getElementById('inputColSpan').value) || 1
+          };
+          savePrograms();
+          closeModal('cellModal');
+          renderTimetable();
+          showToast('Lecture saved.');
+        });
+
+        document.getElementById('clearCellBtn').addEventListener('click', () => {
+          const day = document.getElementById('editDayKey').value;
+          const slot = document.getElementById('editSlotId').value;
+          const prog = getActiveProgram();
+          if (prog.cells[day]) delete prog.cells[day][slot];
+          savePrograms();
+          closeModal('cellModal');
+          renderTimetable();
+          showToast('Cell cleared.');
+        });
+
+        document.getElementById('copyCellBtn').addEventListener('click', () => {
+          state.clipboardCell = {
+            course: document.getElementById('inputCourse').value.trim().toUpperCase(),
+            tutor: document.getElementById('inputTutor').value.trim().toUpperCase(),
+            room: document.getElementById('inputRoom').value.trim(),
+            customTime: document.getElementById('inputCustomTime').value.trim()
+          };
+          showToast('Cell copied.');
+        });
+
+        document.getElementById('pasteCellBtn').addEventListener('click', () => {
+          if (!state.clipboardCell) {
+            showToast('Nothing copied yet.');
+            return;
+          }
+          populateCellDropdowns(state.clipboardCell.course, state.clipboardCell.tutor);
+          document.getElementById('inputCourse').value = state.clipboardCell.course;
+          document.getElementById('inputTutor').value = state.clipboardCell.tutor;
+          document.getElementById('inputRoom').value = state.clipboardCell.room;
+          document.getElementById('inputCustomTime').value = state.clipboardCell.customTime;
+          showToast('Pasted into form.');
+        });
+
+        document.getElementById('clearAllCellsBtn').addEventListener('click', () => {
+          getActiveProgram().cells = {};
+          savePrograms();
+          closeModal('backupModal');
+          renderTimetable();
+          showToast('All cells cleared.');
+        });
+
+        document.getElementById('exportJsonBtn').addEventListener('click', () => {
+          const payload = { programs: state.programs, registry: state.registry };
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'kshs_timetable_backup.json';
+          a.click();
+        });
+
+        document.getElementById('importJsonInput').addEventListener('change', e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = ev => {
+            try {
+              const parsed = JSON.parse(ev.target.result);
+              if (parsed.programs) {
+                state.programs = parsed.programs;
+                savePrograms();
+              }
+              if (parsed.registry) {
+                state.registry = Object.assign(state.registry, parsed.registry);
+                saveRegistry();
+              }
+              closeModal('backupModal');
+              renderTimetable();
+              showToast('Timetable backup imported.');
+            } catch(err) {
+              showToast('Invalid JSON file.');
+            }
+          };
+          reader.readAsText(file);
+        });
+
+        document.getElementById('confirmResetBtn').addEventListener('click', () => {
+          state.programs = JSON.parse(JSON.stringify(DEFAULT_PROGRAMS));
+          state.registry = JSON.parse(JSON.stringify(DEFAULT_SYSTEM_REGISTRY));
+          savePrograms();
+          saveRegistry();
+          closeModal('backupModal');
+          renderTimetable();
+          showToast('Reset to default.');
+        });
+
+        document.querySelectorAll('[data-close-modal]').forEach(btn => {
+          btn.addEventListener('click', () => closeModal(btn.dataset.closeModal));
+        });
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        initEvents();
+        renderTimetable();
+      });
+    })();
+  </script>
+</body>
+</html>
