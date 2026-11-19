@@ -101,6 +101,7 @@ export function CurriculumGovernancePanel({ curricula, canManage = false, onChan
       </div>
       {selected && (
         <>
+          {canManage && <>
           <div className="form-row curriculum-governance-actions">
             {selected.status === 'Draft' && <button type="button" disabled={busy} onClick={() => void runAction(() => submitCurriculumForReview(selected.id, notes), 'Curriculum submitted for review.')}>Submit for review</button>}
             {selected.status === 'Submitted' && <>
@@ -125,6 +126,7 @@ export function CurriculumGovernancePanel({ curricula, canManage = false, onChan
               <button type="submit" disabled={busy}>Clone as draft version</button>
             </div>
           </form>
+          </>}
           <div className="curriculum-version-comparison">
             <h4>Compare curriculum versions</h4>
             <div className="form-row">
