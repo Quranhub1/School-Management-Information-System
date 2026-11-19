@@ -440,3 +440,32 @@
     width: 100%;
   }
 }
+
+
+/* Full-week template grid: click a period to edit it in a focused dialog. */
+.timetable-screen .timetable-editable-grid{min-width:1120px;table-layout:fixed}
+.timetable-screen .timetable-editable-grid td{height:112px;min-width:125px;padding:5px;vertical-align:middle}
+.timetable-screen .timetable-template-cell-trigger{display:flex;width:100%;min-height:96px;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:9px 7px;border:1px solid transparent;border-radius:3px;background:#fff;color:#111827;text-align:center;font:inherit;cursor:pointer}
+.timetable-screen .timetable-template-cell-trigger:hover{border-color:#176b45;background:#f0fdf4}
+.timetable-screen .timetable-template-cell-trigger:focus-visible{outline:3px solid rgba(37,99,235,.35);outline-offset:1px}
+.timetable-screen .timetable-template-cell-trigger strong{font-size:.8rem;line-height:1.25}
+.timetable-screen .timetable-template-cell-trigger>span:not(.timetable-template-cell-edit){font-size:.75rem}
+.timetable-screen .timetable-template-cell-trigger small{font: .68rem Inter,Arial,sans-serif;color:#475569}
+.timetable-screen .timetable-template-cell-empty{color:#64748b;font:italic .75rem Inter,Arial,sans-serif}
+.timetable-screen .timetable-template-cell-edit{display:inline-flex;align-items:center;gap:4px;margin-top:3px;color:#176b45;font:700 .65rem Inter,Arial,sans-serif;opacity:.78}
+.timetable-screen .timetable-cell-modal-overlay{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.58)}
+.timetable-screen .timetable-cell-modal{width:min(100%,520px);max-height:min(88vh,760px);overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:6px;box-shadow:0 24px 70px rgba(15,23,42,.3);font-family:Inter,Arial,sans-serif}
+.timetable-screen .timetable-cell-modal>header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;background:#111827;color:#fff}
+.timetable-screen .timetable-cell-modal>header h3{margin:0;font-size:1rem}
+.timetable-screen .timetable-cell-modal>header p{margin:5px 0 0;color:#d1d5db;font-size:.78rem}
+.timetable-screen .timetable-cell-modal>header button{width:34px;height:34px;border:1px solid #64748b;border-radius:4px;background:#1f2937;color:#fff;font-size:1.35rem;cursor:pointer}
+.timetable-screen .timetable-cell-modal-fields{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:20px}
+.timetable-screen .timetable-cell-modal-fields label{display:flex;min-width:0;flex-direction:column;gap:6px;color:#334155;font-size:.76rem;font-weight:750}
+.timetable-screen .timetable-cell-modal-fields label:nth-child(1),.timetable-screen .timetable-cell-modal-fields label:nth-child(2),.timetable-screen .timetable-cell-modal-fields label:nth-child(3){grid-column:1/-1}
+.timetable-screen .timetable-cell-modal-fields input,.timetable-screen .timetable-cell-modal-fields select{width:100%;min-width:0;min-height:40px;padding:8px 10px;border:1px solid #b9c1cb;border-radius:4px;background:#fff;color:#111827;font:500 .82rem Inter,Arial,sans-serif}
+.timetable-screen .timetable-cell-modal>footer{display:flex;justify-content:space-between;gap:10px;padding:13px 20px;border-top:1px solid #e2e8f0;background:#f8fafc}
+.timetable-screen .timetable-cell-clear,.timetable-screen .timetable-cell-done{min-height:40px;padding:8px 16px;border:1px solid #b9c1cb;border-radius:4px;font:700 .8rem Inter,Arial,sans-serif;cursor:pointer}
+.timetable-screen .timetable-cell-clear{background:#fff;color:#991b1b;border-color:#fecaca}
+.timetable-screen .timetable-cell-done{background:#176b45;color:#fff;border-color:#176b45}
+@media(max-width:560px){.timetable-screen .timetable-cell-modal-fields{grid-template-columns:1fr;padding:14px}.timetable-screen .timetable-cell-modal-fields label{grid-column:1/-1}}
+@media print{.timetable-screen .timetable-template-cell-edit{display:none!important}.timetable-screen .timetable-template-cell-trigger{min-height:0;padding:3px;border:0;cursor:default}}
