@@ -9,11 +9,15 @@ public sealed record UpdateCourseRequest(string AuthorityCode, string Code, stri
 public sealed record UpdateCurriculumRequest(string Version, string Title, int MinimumCredits, DateOnly EffectiveFrom, DateOnly? EffectiveTo, ProgrammeType ProgrammeType, bool IsActive);
 public sealed record AddCurriculumCourseRequest(Guid CourseId, int YearOfStudy, int SemesterNumber, bool IsCore);
 public sealed record UpdateCurriculumCourseRequest(int YearOfStudy, int SemesterNumber, bool IsCore);
+public sealed record AddCoursePrerequisiteRequest(Guid PrerequisiteCourseId, bool IsMandatory, string? MinimumGrade);
+public sealed record UpdateCoursePrerequisiteRequest(bool IsMandatory, string? MinimumGrade);
+public sealed record CoursePrerequisiteDto(Guid Id, Guid PrerequisiteCourseId, string PrerequisiteCode, string PrerequisiteName, bool IsMandatory, string? MinimumGrade);
 
 public sealed class CurriculumManagementService(
     ICurriculumRepository curricula,
     ICourseRepository courses,
     ICurriculumCourseRepository mappings,
+    ICoursePrerequisiteRepository prerequisites,
     IProgrammeRepository programmes)
 {
     public Task<IReadOnlyList<Curriculum>> GetCurriculaAsync(CancellationToken ct = default) => curricula.GetAllAsync(ct);
@@ -24,6 +28,8 @@ public sealed class CurriculumManagementService(
     {
         var existing = await curricula.GetByIdAsync(id, ct);
         if (existing is null) return (false, "Curriculum not found.");
+        if (!string.Equals(existing.Status, "Draft", StringComparison.OrdinalIgnoreCase))
+            return (false, "Only draft curricula can be edited. Clone an approved version to create a new draft.");
         var programme = await programmes.GetByIdAsync(existing.ProgrammeId, ct);
         if (programme is null || programme.Type != request.ProgrammeType) return (false, "Curriculum category must match the programme category.");
         var version = request.Version.Trim(); var title = request.Title.Trim();
@@ -99,6 +105,10 @@ public sealed class CurriculumManagementService(
         if (request.YearOfStudy < 1 || request.SemesterNumber < 1) return (false, "Year and semester numbers must be positive.");
         var mapping = await mappings.GetByIdAsync(mappingId, ct);
         if (mapping is null || mapping.CurriculumId != curriculumId) return (false, "Curriculum course mapping not found.");
+        var curriculum = await curricula.GetByIdAsync(curriculumId, ct);
+        if (curriculum is null) return (false, "Curriculum not found.");
+        if (!string.Equals(curriculum.Status, "Draft", StringComparison.OrdinalIgnoreCase))
+            return (false, "Only draft curricula can have course-unit mappings changed.");
         mapping.YearOfStudy = request.YearOfStudy;
         mapping.SemesterNumber = request.SemesterNumber;
         mapping.IsCore = request.IsCore;
@@ -114,6 +124,8 @@ public sealed class CurriculumManagementService(
         var curriculum = await curricula.GetByIdAsync(curriculumId, ct);
         if (curriculum is null) return (false, "Curriculum not found.", null);
         if (!curriculum.IsActive) return (false, "Activate the curriculum before adding courses.", null);
+        if (!string.Equals(curriculum.Status, "Draft", StringComparison.OrdinalIgnoreCase))
+            return (false, "Only draft curricula can have course-unit mappings changed.", null);
         var programme = await programmes.GetByIdAsync(curriculum.ProgrammeId, ct);
         if (programme is null) return (false, "The curriculum's programme was not found.", null);
         if (!programme.IsActive || programme.IsReferenceOnly)
@@ -124,6 +136,70 @@ public sealed class CurriculumManagementService(
         if (await mappings.ExistsAsync(curriculumId, request.CourseId, ct)) return (false, "Course is already mapped to this curriculum.", null);
         var mapping = new CurriculumCourse { CurriculumId = curriculumId, CourseId = request.CourseId, YearOfStudy = request.YearOfStudy, SemesterNumber = request.SemesterNumber, IsCore = request.IsCore };
         await mappings.AddAsync(mapping, ct); await mappings.SaveChangesAsync(ct); return (true, null, mapping);
+    }
+
+    public async Task<IReadOnlyList<CoursePrerequisiteDto>> GetCoursePrerequisitesAsync(Guid courseId, CancellationToken ct = default)
+    {
+        var prereqs = await prerequisites.GetByCourseAsync(courseId, ct);
+        var result = new List<CoursePrerequisiteDto>();
+        foreach (var p in prereqs)
+        {
+            var prereqCourse = await courses.GetByIdAsync(p.PrerequisiteCourseId, ct);
+            result.Add(new CoursePrerequisiteDto(
+                p.Id, p.PrerequisiteCourseId,
+                prereqCourse?.Code ?? string.Empty,
+                prereqCourse?.Name ?? string.Empty,
+                p.IsMandatory, p.MinimumGrade));
+        }
+        return result;
+    }
+
+    public async Task<(bool Success, string? Error)> AddCoursePrerequisiteAsync(Guid courseId, AddCoursePrerequisiteRequest request, CancellationToken ct = default)
+    {
+        if (courseId == Guid.Empty || request.PrerequisiteCourseId == Guid.Empty) return (false, "Course and prerequisite are required.");
+        if (courseId == request.PrerequisiteCourseId) return (false, "A course cannot be its own prerequisite.");
+        var course = await courses.GetByIdAsync(courseId, ct);
+        if (course is null) return (false, "Course not found.");
+        var prereqCourse = await courses.GetByIdAsync(request.PrerequisiteCourseId, ct);
+        if (prereqCourse is null) return (false, "Prerequisite course not found.");
+        if (await prerequisites.ExistsAsync(courseId, request.PrerequisiteCourseId, ct)) return (false, "This prerequisite is already registered.");
+        var prereq = new CoursePrerequisite { CourseId = courseId, PrerequisiteCourseId = request.PrerequisiteCourseId, IsMandatory = request.IsMandatory, MinimumGrade = request.MinimumGrade };
+        await prerequisites.AddAsync(prereq, ct);
+        await prerequisites.SaveChangesAsync(ct);
+        return (true, null);
+    }
+
+    public async Task<bool> RemoveCoursePrerequisiteAsync(Guid prerequisiteId, CancellationToken ct = default)
+    {
+        var prereq = await prerequisites.GetByIdAsync(prerequisiteId, ct);
+        if (prereq is null) return false;
+        await prerequisites.RemoveAsync(prerequisiteId, ct);
+        await prerequisites.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> ValidatePrerequisitesAsync(Guid curriculumId, Guid courseId, CancellationToken ct = default)
+    {
+        var prereqs = await prerequisites.GetByCourseAsync(courseId, ct);
+        foreach (var p in prereqs.Where(p => p.IsMandatory))
+        {
+            var mappingExists = await mappings.ExistsAsync(curriculumId, p.PrerequisiteCourseId, ct);
+            if (!mappingExists) return false;
+        }
+        return true;
+    }
+
+    public async Task<bool> ValidateCreditLoadAsync(Guid curriculumId, int yearOfStudy, int semesterNumber, CancellationToken ct = default)
+    {
+        var allMappings = await mappings.GetByCurriculumAsync(curriculumId, ct);
+        var semesterMappings = allMappings.Where(m => m.YearOfStudy == yearOfStudy && m.SemesterNumber == semesterNumber);
+        var totalCredits = 0;
+        foreach (var m in semesterMappings)
+        {
+            var course = await courses.GetByIdAsync(m.CourseId, ct);
+            totalCredits += course?.CreditUnits ?? 0;
+        }
+        return totalCredits <= 24;
     }
 
     public async Task<bool> DeleteCourseAsync(Guid id, CancellationToken ct = default)
@@ -139,6 +215,8 @@ public sealed class CurriculumManagementService(
     {
         var mapping = await mappings.GetByIdAsync(mappingId, ct);
         if (mapping is null || mapping.CurriculumId != curriculumId) return false;
+        var curriculum = await curricula.GetByIdAsync(curriculumId, ct);
+        if (curriculum is null || !string.Equals(curriculum.Status, "Draft", StringComparison.OrdinalIgnoreCase)) return false;
         await mappings.RemoveAsync(mappingId, ct);
         await mappings.SaveChangesAsync(ct);
         return true;

@@ -10,4 +10,6 @@ public sealed class Course
     public string? Description { get; set; }
     public string? CourseType { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 }
