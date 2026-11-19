@@ -13,7 +13,7 @@ import {
   type CurriculumComparison,
 } from '../api/curriculumManagement'
 
-export function CurriculumGovernancePanel({ curricula, onChanged }: { curricula: Curriculum[]; onChanged?: () => void }) {
+export function CurriculumGovernancePanel({ curricula, canManage = false, onChanged }: { curricula: Curriculum[]; canManage?: boolean; onChanged?: () => void }) {
   const [curriculumId, setCurriculumId] = useState('')
   const [history, setHistory] = useState<CurriculumApprovalHistory[]>([])
   const [otherId, setOtherId] = useState('')
@@ -24,7 +24,7 @@ export function CurriculumGovernancePanel({ curricula, onChanged }: { curricula:
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const selected = curricula.find(item => item.id === curriculumId)
-  const comparable = curricula.filter(item => item.id !== curriculumId)
+  const comparable = selected ? curricula.filter(item => item.id !== curriculumId && item.programmeId === selected.programmeId) : []
 
   async function refreshHistory(id = curriculumId) {
     if (!id) { setHistory([]); return }
@@ -32,7 +32,8 @@ export function CurriculumGovernancePanel({ curricula, onChanged }: { curricula:
   }
 
   useEffect(() => {
-    if (!curriculumId && curricula.length) setCurriculumId(curricula[0].id)
+    if (curricula.length && !curricula.some(item => item.id === curriculumId)) setCurriculumId(curricula[0].id)
+    else if (!curricula.length && curriculumId) setCurriculumId('')
   }, [curricula, curriculumId])
 
   useEffect(() => {
