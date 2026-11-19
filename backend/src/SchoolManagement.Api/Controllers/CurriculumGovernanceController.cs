@@ -128,14 +128,31 @@ public sealed class CurriculumGovernanceController(CurriculumManagementService s
             select new { mapping.CurriculumId, course.Id, course.Code, course.Name, course.CreditUnits, mapping.YearOfStudy, mapping.SemesterNumber, mapping.IsCore })
             .OrderBy(x => x.YearOfStudy).ThenBy(x => x.SemesterNumber).ThenBy(x => x.Code)
             .ToListAsync(ct);
+        var firstUnits = units.Where(x => x.CurriculumId == curriculumId).ToList();
+        var secondUnits = units.Where(x => x.CurriculumId == otherCurriculumId).ToList();
+        var firstByCourse = firstUnits.ToDictionary(x => x.Id);
+        var secondByCourse = secondUnits.ToDictionary(x => x.Id);
+        var changedPlacement = firstUnits
+            .Where(x => secondByCourse.TryGetValue(x.Id, out var other) &&
+                (other.YearOfStudy != x.YearOfStudy || other.SemesterNumber != x.SemesterNumber || other.IsCore != x.IsCore))
+            .Select(x =>
+            {
+                var other = secondByCourse[x.Id];
+                return new
+                {
+                    x.Id, x.Code, x.Name, x.CreditUnits,
+                    firstYear = x.YearOfStudy, firstSemester = x.SemesterNumber, firstIsCore = x.IsCore,
+                    secondYear = other.YearOfStudy, secondSemester = other.SemesterNumber, secondIsCore = other.IsCore
+                };
+            }).ToList();
         return Ok(new
         {
             programmeCode = curricula[0].ProgrammeCode,
             programmeName = curricula[0].ProgrammeName,
             versions = curricula.Select(x => new { x.Curriculum.Id, x.Curriculum.Version, x.Curriculum.Title, x.Curriculum.EffectiveFrom, x.Curriculum.EffectiveTo, x.Curriculum.Status, x.Curriculum.MinimumCredits }),
-            firstOnly = units.Where(x => x.CurriculumId == curriculumId && units.All(y => y.CurriculumId != otherCurriculumId || y.Id != x.Id)),
-            secondOnly = units.Where(x => x.CurriculumId == otherCurriculumId && units.All(y => y.CurriculumId != curriculumId || y.Id != x.Id)),
-            changedPlacement = units.Where(x => x.CurriculumId == curriculumId && units.Any(y => y.CurriculumId == otherCurriculumId && y.Id == x.Id && (y.YearOfStudy != x.YearOfStudy || y.SemesterNumber != x.SemesterNumber || y.IsCore != x.IsCore)))
+            firstOnly = firstUnits.Where(x => !secondByCourse.ContainsKey(x.Id)),
+            secondOnly = secondUnits.Where(x => !firstByCourse.ContainsKey(x.Id)),
+            changedPlacement
         });
     }
 
