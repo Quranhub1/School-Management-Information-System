@@ -99,6 +99,10 @@ public sealed class CurriculumManagementService(
         if (request.YearOfStudy < 1 || request.SemesterNumber < 1) return (false, "Year and semester numbers must be positive.");
         var mapping = await mappings.GetByIdAsync(mappingId, ct);
         if (mapping is null || mapping.CurriculumId != curriculumId) return (false, "Curriculum course mapping not found.");
+        var curriculum = await curricula.GetByIdAsync(curriculumId, ct);
+        if (curriculum is null) return (false, "Curriculum not found.");
+        if (!string.Equals(curriculum.Status, "Draft", StringComparison.OrdinalIgnoreCase))
+            return (false, "Only draft curricula can have course-unit mappings changed.");
         mapping.YearOfStudy = request.YearOfStudy;
         mapping.SemesterNumber = request.SemesterNumber;
         mapping.IsCore = request.IsCore;
@@ -114,6 +118,8 @@ public sealed class CurriculumManagementService(
         var curriculum = await curricula.GetByIdAsync(curriculumId, ct);
         if (curriculum is null) return (false, "Curriculum not found.", null);
         if (!curriculum.IsActive) return (false, "Activate the curriculum before adding courses.", null);
+        if (!string.Equals(curriculum.Status, "Draft", StringComparison.OrdinalIgnoreCase))
+            return (false, "Only draft curricula can have course-unit mappings changed.", null);
         var programme = await programmes.GetByIdAsync(curriculum.ProgrammeId, ct);
         if (programme is null) return (false, "The curriculum's programme was not found.", null);
         if (!programme.IsActive || programme.IsReferenceOnly)
@@ -139,6 +145,8 @@ public sealed class CurriculumManagementService(
     {
         var mapping = await mappings.GetByIdAsync(mappingId, ct);
         if (mapping is null || mapping.CurriculumId != curriculumId) return false;
+        var curriculum = await curricula.GetByIdAsync(curriculumId, ct);
+        if (curriculum is null || !string.Equals(curriculum.Status, "Draft", StringComparison.OrdinalIgnoreCase)) return false;
         await mappings.RemoveAsync(mappingId, ct);
         await mappings.SaveChangesAsync(ct);
         return true;
