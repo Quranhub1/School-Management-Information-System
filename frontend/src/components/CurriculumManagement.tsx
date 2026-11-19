@@ -14,10 +14,20 @@ import {
   setCourseActive,
   getCourses,
   getCurricula,
+  getCurriculum,
   getCurriculumCourses,
+  getCreditLoad,
+  getPrerequisites,
+  submitCurriculumForReview,
+  approveCurriculum,
+  publishCurriculum,
+  exportCurriculumCsv,
+  bulkAddCurriculumCourses,
   type Course,
   type Curriculum,
   type CurriculumCourse,
+  type CreditLoadInfo,
+  type CoursePrerequisiteDto,
 } from '../api/curriculumManagement'
 import { createProgramme, deleteProgramme, getProgrammes, setProgrammeActive, updateProgramme, type CreateProgrammeRequest, type Programme } from '../api/programmes'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
@@ -82,6 +92,13 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const authorityCoursesRequest = useRef(0)
   const mappingsRequest = useRef(0)
   const [semesterEdit, setSemesterEdit] = useState<{ year: number; semester: number; nextYear: string; nextSemester: string } | null>(null)
+
+  const [creditLoad, setCreditLoad] = useState<Record<string, CreditLoadInfo[]>>({})
+  const [bulkCourseIds, setBulkCourseIds] = useState<string[]>([])
+  const [bulkYear, setBulkYear] = useState('1')
+  const [bulkSemester, setBulkSemester] = useState('1')
+  const [bulkIsCore, setBulkIsCore] = useState(true)
+  const [coursePrereqs, setCoursePrereqs] = useState<Record<string, CoursePrerequisiteDto[]>>({})
 
   const filteredCurricula = useMemo(() => authorityCurricula.filter(item => {
     const programme = programmes.find(row => row.id === item.programmeId)
@@ -271,10 +288,14 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     selectedCurriculumRef.current = id
     setSelected(id)
     setError('')
-    if (!id) { setMappings([]); return }
+    if (!id) { setMappings([]); setCreditLoad({}); return }
     try {
       const nextMappings = await getCurriculumCourses(id)
       if (mappingsRequest.current === requestId) setMappings(nextMappings)
+      try {
+        const load = await getCreditLoad(id)
+        if (mappingsRequest.current === requestId) setCreditLoad(current => ({ ...current, [id]: load }))
+      } catch { /* credit load is non-critical */ }
     } catch (e) {
       if (mappingsRequest.current === requestId) {
         setMappings([])
@@ -628,6 +649,30 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       // If the catalogue record was saved but mapping failed, refresh the catalogue
       // so the unit remains available for a retry without creating a duplicate.
       try { setCourses(await getCourses(authority)) } catch { /* retain the original error */ }
+  async function saveBulkMapping(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selected) return
+    if (bulkCourseIds.length === 0) { setError('Select at least one course.'); return }
+    setSaving(true)
+    try {
+      await bulkAddCurriculumCourses(selected, {
+        courseIds: bulkCourseIds,
+        yearOfStudy: Number(bulkYear),
+        semesterNumber: Number(bulkSemester),
+        isCore: bulkIsCore,
+      })
+      setMessage(`${bulkCourseIds.length} course(s) added to curriculum.`)
+      setBulkCourseIds([])
+      setBulkYear('1')
+      setBulkSemester('1')
+      await refreshMappings(selected)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unable to add courses in bulk.'
+      if (msg.includes('errors')) {
+        setError('Some courses could not be added. Check prerequisites and credit load limits.')
+      } else {
+        setError(msg)
+      }
     } finally {
       setSaving(false)
     }
@@ -694,6 +739,20 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       return groups
     }, new Map<string, { year: number; semester: number; mappings: CurriculumCourse[] }>()).values()
   ).sort((left, right) => left.year - right.year || left.semester - right.semester)
+
+  function getCreditLoadText(curriculumId: string, year: number, semester: number): string {
+    const load = creditLoad[curriculumId]?.find(l => l.year === year && l.semester === semester)
+    if (!load) return ''
+    return `${load.totalCredits} credits / 24 max`
+  }
+
+  function getCreditLoadClass(curriculumId: string, year: number, semester: number): string {
+    const load = creditLoad[curriculumId]?.find(l => l.year === year && l.semester === semester)
+    if (!load) return ''
+    if (load.totalCredits > 24) return 'credit-load-over'
+    if (load.totalCredits >= 20) return 'credit-load-high'
+    return 'credit-load-ok'
+  }
 
   function changeTab(nextTab: Tab) {
     setTab(nextTab)
@@ -1026,6 +1085,21 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               {editingMappingId && <button type="button" className="secondary-button" onClick={() => { setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }) }}>Cancel edit</button>}
             </div>
           </div>
+
+          <div className="form-row curriculum-course-mapping-form bulk-mapping-form">
+            <h4>Bulk add courses</h4>
+            <div className="form-row">
+              <textarea placeholder="Course IDs (comma-separated)" value={bulkCourseIds.join(', ')} onChange={e => setBulkCourseIds(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} rows={2} />
+            </div>
+            <div className="form-row">
+              <input type="number" min="1" placeholder="Year" value={bulkYear} onChange={e => setBulkYear(e.target.value)} />
+              <input type="number" min="1" placeholder="Semester" value={bulkSemester} onChange={e => setBulkSemester(e.target.value)} />
+              <label>
+                <input type="checkbox" checked={bulkIsCore} onChange={e => setBulkIsCore(e.target.checked)} /> Core
+              </label>
+            </div>
+            <button type="button" onClick={saveBulkMapping} disabled={saving || !selected || bulkCourseIds.length === 0}>Add {bulkCourseIds.length} courses in bulk</button>
+          </div>
           {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
           {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
 
@@ -1060,6 +1134,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                   <div className="panel-heading">
                     <h3>Year {group.year} · Semester {group.semester}</h3>
                     <div className="curriculum-semester-actions">
+                      {selected && creditLoad[selected] && (
+                        <span className={`credit-load-badge ${getCreditLoadClass(selected, group.year, group.semester)}`}>
+                          {getCreditLoadText(selected, group.year, group.semester)}
+                        </span>
+                      )}
                       <button type="button" className="secondary-button" onClick={() => beginSemesterEdit(group.year, group.semester)}>Edit semester</button>
                       <button type="button" className="danger-button" onClick={() => void removeSemester(group.year, group.semester, group.mappings.length)}>Delete semester</button>
                     </div>
@@ -1166,6 +1245,21 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               {editingMappingId && <button type="button" className="secondary-button" onClick={() => { setEditingMappingId(null); setMf({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true }) }}>Cancel edit</button>}
             </div>
           </div>
+
+          <div className="form-row curriculum-course-mapping-form bulk-mapping-form">
+            <h4>Bulk add courses</h4>
+            <div className="form-row">
+              <textarea placeholder="Course IDs (comma-separated)" value={bulkCourseIds.join(', ')} onChange={e => setBulkCourseIds(e.target.value.split(',').map(s => s.trim()).filter(Boolean))} rows={2} />
+            </div>
+            <div className="form-row">
+              <input type="number" min="1" placeholder="Year" value={bulkYear} onChange={e => setBulkYear(e.target.value)} />
+              <input type="number" min="1" placeholder="Semester" value={bulkSemester} onChange={e => setBulkSemester(e.target.value)} />
+              <label>
+                <input type="checkbox" checked={bulkIsCore} onChange={e => setBulkIsCore(e.target.checked)} /> Core
+              </label>
+            </div>
+            <button type="button" onClick={saveBulkMapping} disabled={saving || !selected || bulkCourseIds.length === 0}>Add {bulkCourseIds.length} courses in bulk</button>
+          </div>
           {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
           {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
 
@@ -1176,6 +1270,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                   <div className="panel-heading">
                     <h3>Year {group.year} · Semester {group.semester}</h3>
                     <div className="curriculum-semester-actions">
+                      {selected && creditLoad[selected] && (
+                        <span className={`credit-load-badge ${getCreditLoadClass(selected, group.year, group.semester)}`}>
+                          {getCreditLoadText(selected, group.year, group.semester)}
+                        </span>
+                      )}
                       <button type="button" className="secondary-button" onClick={() => beginSemesterEdit(group.year, group.semester)}>Edit semester</button>
                       <button type="button" className="danger-button" onClick={() => void removeSemester(group.year, group.semester, group.mappings.length)}>Delete semester</button>
                     </div>
