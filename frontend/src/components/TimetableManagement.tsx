@@ -594,7 +594,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       </div>}
       {templateGroupId && templateLoadedGroupId !== templateGroupId && <p className="timetable-generator-help">Click “Load class” to fill the template with that class’s saved sessions before editing.</p>}
       <div className="timetable-template-design-tools">
-        <label>Insert break after period<select value={templateBreakAfter ?? ''} onChange={event => setTemplateBreakAfter(event.target.value === '' ? null : Number(event.target.value))}><option value="">No break row</option>{templateSlots.map((_, index) => <option key={index} value={index}>After period {index + 1}</option>)}</select></label>
+        <label>Divider after period<select value={templateBreakAfter ?? ''} onChange={event => setTemplateBreakAfter(event.target.value === '' ? null : Number(event.target.value))}><option value="">No divider</option>{templateSlots.map((_, index) => <option key={index} value={index}>After period {index + 1}</option>)}</select></label>
         <label>Break label<input value={templateBreakLabel} onChange={event => setTemplateBreakLabel(event.target.value)} maxLength={30}/></label>
         <button type="button" className="timetable-action" onClick={() => setTemplateSlots(current => [...current, { startTime: '16:30', endTime: '17:30' }])}>+ Add period</button>
       </div>
