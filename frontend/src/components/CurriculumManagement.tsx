@@ -23,6 +23,7 @@ import { createProgramme, deleteProgramme, getProgrammes, setProgrammeActive, up
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { CurriculumCard } from './CurriculumCard'
 import { CurriculumLogbookManagement } from './CurriculumLogbookManagement'
+import { CurriculumGovernancePanel } from './CurriculumGovernancePanel'
 import { CurriculumFilterPanel, type CurriculumFilters } from './CurriculumFilterPanel'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { createAcademicAuthority, getAcademicAuthorities, setAcademicAuthorityActive, updateAcademicAuthority, type AcademicAuthority } from '../api/academicAuthorities'
@@ -1221,6 +1222,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
         </div>
       )}
       <CurriculumLogbookManagement curricula={authorityCurricula} />
+      <CurriculumGovernancePanel curricula={authorityCurricula} onChanged={() => void load()} />
     </section>
   )
 }
