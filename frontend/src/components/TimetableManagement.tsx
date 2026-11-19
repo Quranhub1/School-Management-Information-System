@@ -176,7 +176,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   function printTimetableTemplate() {
-    const rows = templateDayOrder.filter(day => showWeekends || day <= 5).flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
+    const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
+    const rows = visibleDays.flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
       const cell = templateCells[day + '-' + slotIndex]
       if (!cell?.courseId && !cell?.teacherId && !cell?.room?.trim()) return []
       return [{
@@ -196,8 +197,51 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       } as TimetableEntry]
     }))
     const groupLabel = groupLabels.get(templateGroupId) ?? 'Class timetable'
-    const pdf = timetablePdfOptions(templateTitle || groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template')
-    printInstitutionalPdf({ ...pdf, title: templateTitle || pdf.title, content: [...pdf.content, { text: `${templateRegistrarRole || 'ACADEMIC REGISTRAR'}: ${templateRegistrarName || '____________________________'}`, alignment: 'right', margin: [0, 28, 0, 0] }, { text: templateFooterText, alignment: 'left', fontSize: 8, margin: [0, 10, 0, 0] }] })
+    const base = timetablePdfOptions(templateTitle || groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template')
+    const body = [
+      [{ text: templateDayLabel || 'DAY', style: 'tableHeader' }, ...templateSlots.map((slot, index) => ({
+        text: [`PERIOD ${index + 1}`, `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`, templateBreakAfter === index ? (templateBreakLabel || 'BREAK') : ''].filter(Boolean).join('\\n'),
+        style: 'tableHeader',
+      }))],
+      ...visibleDays.map(day => {
+        const row: Array<Record<string, unknown>> = [{ text: days[day].toUpperCase(), style: 'tableHeader' }]
+        templateSlots.forEach((slot, slotIndex) => {
+          if (templateCellCovered(day, slotIndex)) { row.push({}); return }
+          const cell = templateCells[day + '-' + slotIndex]
+          const rowSpan = Math.max(1, Math.min(visibleDays.length - visibleDays.indexOf(day), Number(cell?.rowSpan) || 1))
+          const colSpan = Math.max(1, Math.min(templateSlots.length - slotIndex, Number(cell?.colSpan) || 1))
+          const text = cell ? [
+            courseLabels.get(cell.courseId) ?? '',
+            teacherLabels.get(cell.teacherId) ?? '',
+            `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`,
+            cell.room ? `Venue: ${cell.room}` : '',
+            cell.sessionType || '',
+          ].filter(Boolean).join('\\n') : '—'
+          row.push({ text: text || '—', alignment: 'center', ...(rowSpan > 1 ? { rowSpan } : {}), ...(colSpan > 1 ? { colSpan } : {}) })
+          for (let covered = 1; covered < colSpan; covered++) row.push({})
+        })
+        return row
+      }),
+    ]
+    printInstitutionalPdf({
+      ...base,
+      title: templateTitle || base.title,
+      content: [
+        base.content[0],
+        { table: { headerRows: 1, widths: ['auto', ...templateSlots.map(() => '*')], body }, layout: {
+          hLineWidth: () => 0.8,
+          vLineWidth: () => 0.8,
+          hLineColor: () => '#111827',
+          vLineColor: () => '#111827',
+          paddingLeft: () => 4,
+          paddingRight: () => 4,
+          paddingTop: () => 5,
+          paddingBottom: () => 5,
+        } },
+        { text: `${templateRegistrarRole || 'ACADEMIC REGISTRAR'}: ${templateRegistrarName || '____________________________'}`, alignment: 'right', margin: [0, 28, 0, 0] },
+        { text: templateFooterText, alignment: 'left', fontSize: 8, margin: [0, 10, 0, 0] },
+      ],
+    })
   }
 
   async function handleGenerate(event: React.FormEvent) {
