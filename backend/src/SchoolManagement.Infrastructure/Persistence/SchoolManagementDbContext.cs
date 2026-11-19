@@ -56,6 +56,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Curriculum> Curricula => Set<Curriculum>();
     public DbSet<CurriculumCourse> CurriculumCourses => Set<CurriculumCourse>();
+    public DbSet<CurriculumApprovalHistory> CurriculumApprovalHistory => Set<CurriculumApprovalHistory>();
     public DbSet<LogbookRequirement> LogbookRequirements => Set<LogbookRequirement>();
     public DbSet<LogbookCompetencyRequirement> LogbookCompetencyRequirements => Set<LogbookCompetencyRequirement>();
     public DbSet<StudentLogbook> StudentLogbooks => Set<StudentLogbook>();
@@ -170,6 +171,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         // Preserve the existing singular table name after exposing StudentCharge as a DbSet.
         m.Entity<StudentCharge>().ToTable("StudentCharge");
         m.Entity<Course>(e => { e.Property(x => x.AuthorityCode).HasMaxLength(40); e.HasIndex(x => x.AuthorityCode); });
+        m.Entity<CurriculumApprovalHistory>(e => { e.HasKey(x => x.Id); e.Property(x => x.ToStatus).IsRequired(); e.Property(x => x.Notes).HasMaxLength(2000); e.Property(x => x.Actor).HasMaxLength(200).IsRequired(); e.HasIndex(x => new { x.CurriculumId, x.ChangedAtUtc }); e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<AcademicAuthority>(e => { e.HasKey(x => x.Id); e.Property(x => x.Code).HasMaxLength(40).IsRequired(); e.Property(x => x.Name).HasMaxLength(160).IsRequired(); e.Property(x => x.Description).HasMaxLength(1000); e.Property(x => x.SourceReference).HasMaxLength(500); e.HasIndex(x => x.Code).IsUnique(); });
         m.Entity<Programme>().HasOne<AcademicAuthority>().WithMany().HasForeignKey(x => x.Regulator).HasPrincipalKey(x => x.Code).OnDelete(DeleteBehavior.Restrict);
         m.Entity<Programme>(e => { e.Property(x => x.ApprovalStatus).HasMaxLength(40).IsRequired(); e.Property(x => x.SourceReference).HasMaxLength(500); e.Property(x => x.Regulator).HasMaxLength(40); e.HasIndex(x => x.Regulator); e.HasIndex(x => x.Code).IsUnique(); });
