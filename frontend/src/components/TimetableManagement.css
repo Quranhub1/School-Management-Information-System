@@ -324,7 +324,7 @@
 .timetable-institution-motto{margin-top:3px;font-size:.72rem;font-style:italic;color:#4b5563}
 .timetable-institution-contact{margin-top:4px;font-size:.66rem;color:#4b5563;line-height:1.4}
 .timetable-official-rule{height:1px;background:#111827;margin:12px 0}
-.timetable-document-title-input{display:block;width:min(100%,640px);margin:8px auto;padding:5px 8px;border:1px dashed #9ca3af;background:#fff;text-align:center;color:#111827;font:800 1rem inherit;letter-spacing:.06em;text-transform:uppercase}
+.timetable-document-title-input{display:block;width:min(100%,640px);margin:8px auto;padding:5px 8px;border:1px dashed #9ca3af;background:#fff;text-align:center;color:#111827;font:inherit;font-size:1rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .timetable-document-programme{display:block;margin-top:7px;font-size:.82rem;color:#111827}
 .timetable-document-period{display:block;margin-top:5px;font-size:.7rem;color:#374151;letter-spacing:.025em}
 .timetable-template-document-footer{background:#fff;padding:15px 18px;border:1px solid #111827;border-top:0}
