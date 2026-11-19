@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Academic;
 using SchoolManagement.Infrastructure.Persistence;
