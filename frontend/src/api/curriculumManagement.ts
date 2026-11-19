@@ -104,3 +104,33 @@ export const getLogbookEligibility = (studentId: string, curriculumId: string) =
 export const issueStudentLogbook = (studentId: string, input: { logbookRequirementId: string; serialNumber: string; issuedOn: string; issuedBy?: string; remarks?: string }) => request<StudentLogbook>(`/api/curriculum-management/students/${encodeURIComponent(studentId)}/logbooks`, { method: 'POST', body: JSON.stringify(input) })
 export const getUhpabFeeReferences = (programmeCode?: string) => request<UhpabFeeReference[]>(`/api/curriculum-management/uhpab-fee-references${programmeCode ? `?programmeCode=${encodeURIComponent(programmeCode)}` : ''}`)
 export const createUhpabFeeReference = (input: Omit<UhpabFeeReference, 'id' | 'isActive'>) => request<UhpabFeeReference>('/api/curriculum-management/uhpab-fee-references', { method: 'POST', body: JSON.stringify(input) })
+
+export interface CurriculumApprovalHistory {
+  id: string
+  curriculumId: string
+  fromStatus?: string | null
+  toStatus: string
+  notes?: string | null
+  actor: string
+  changedAtUtc: string
+}
+export interface CurriculumComparison {
+  programmeCode: string
+  programmeName: string
+  versions: Array<{ id: string; version: string; title: string; effectiveFrom: string; effectiveTo?: string | null; status: string; minimumCredits: number }>
+  firstOnly: Array<{ curriculumId: string; id: string; code: string; name: string; creditUnits: number; yearOfStudy: number; semesterNumber: number; isCore: boolean }>
+  secondOnly: Array<{ curriculumId: string; id: string; code: string; name: string; creditUnits: number; yearOfStudy: number; semesterNumber: number; isCore: boolean }>
+  changedPlacement: Array<{ curriculumId: string; id: string; code: string; name: string; creditUnits: number; yearOfStudy: number; semesterNumber: number; isCore: boolean }>
+}
+export const getCurriculumApprovalHistory = (id: string) =>
+  request<CurriculumApprovalHistory[]>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/approval-history`)
+const curriculumTransition = (id: string, action: 'submit-for-review' | 'approve' | 'reject' | 'retire', notes?: string) =>
+  request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/${action}`, { method: 'POST', body: JSON.stringify({ notes }) })
+export const submitCurriculumForReview = (id: string, notes?: string) => curriculumTransition(id, 'submit-for-review', notes)
+export const approveCurriculum = (id: string, notes?: string) => curriculumTransition(id, 'approve', notes)
+export const rejectCurriculum = (id: string, notes: string) => curriculumTransition(id, 'reject', notes)
+export const retireCurriculum = (id: string, notes: string) => curriculumTransition(id, 'retire', notes)
+export const cloneCurriculum = (id: string, input: { version: string; title: string; effectiveFrom: string; effectiveTo?: string | null }) =>
+  request<Curriculum>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/clone`, { method: 'POST', body: JSON.stringify(input) })
+export const compareCurricula = (id: string, otherId: string) =>
+  request<CurriculumComparison>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/compare/${encodeURIComponent(otherId)}`)
