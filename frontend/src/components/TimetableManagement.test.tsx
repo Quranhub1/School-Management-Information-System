@@ -12,6 +12,8 @@ vi.mock('../api/timetable', () => ({
     warnings: [],
     unscheduled: [],
   }),
+  getTimetableTemplate: vi.fn().mockResolvedValue({ teachingGroupId: 'group-1', layoutJson: null, updatedAtUtc: null }),
+  saveTimetableTemplate: vi.fn().mockResolvedValue([]),
   getTimetableOptions: vi.fn().mockResolvedValue({
     teachingGroups: [{ id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' }],
     courses: [{ id: 'course-1', label: 'CPH 101 — Pharmacy Practice' }],
@@ -77,6 +79,20 @@ describe('TimetableManagement', () => {
     expect(toggle).toBeTruthy()
     fireEvent.click(toggle)
     expect((toggle as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('renders the official document designer with editable heading, signature and merge controls', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
+    expect(await screen.findByLabelText('Timetable document title')).toBeTruthy()
+    expect(screen.getByLabelText('Day column heading')).toBeTruthy()
+    expect(screen.getByLabelText('Registrar name')).toBeTruthy()
+    expect(screen.getByLabelText('Registrar title')).toBeTruthy()
+    expect(screen.getByLabelText('Footer text')).toBeTruthy()
+    expect(screen.getByLabelText(/merge monday 08:00 down/i)).toBeTruthy()
+    expect(screen.getByLabelText(/merge monday 08:00 across/i)).toBeTruthy()
+    expect(screen.getByText('REPUBLIC OF UGANDA')).toBeTruthy()
   })
 
   it('supports readOnly mode', () => {
