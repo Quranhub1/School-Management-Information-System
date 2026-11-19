@@ -370,4 +370,90 @@ public sealed class CurriculumManagementServiceTests
         Assert.NotNull(item.DeletedAt);
         Assert.DoesNotContain(curricula.Items, x => x.Id == id && !x.IsDeleted);
     }
+
+    [Fact]
+    public async Task UpdateCurriculumAsync_rejects_submitted_version()
+    {
+        var curricula = new FakeCurriculumRepository();
+        var id = Guid.NewGuid();
+        curricula.Items.Add(new Curriculum
+        {
+            Id = id, ProgrammeId = Guid.NewGuid(), Version = "1.0", Title = "Submitted",
+            MinimumCredits = 30, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow), Status = "Submitted"
+        });
+        var service = CreateService(curricula);
+
+        var (success, error) = await service.UpdateCurriculumAsync(id,
+            new UpdateCurriculumRequest("2.0", "Changed", 40, DateOnly.FromDateTime(DateTime.UtcNow), null, ProgrammeType.FullProgramme, true));
+
+        Assert.False(success);
+        Assert.Contains("Only draft curricula", error);
+        Assert.Equal("1.0", curricula.Items[0].Version);
+    }
+
+    [Fact]
+    public async Task AddMappingAsync_rejects_approved_version()
+    {
+        var curricula = new FakeCurriculumRepository();
+        var courses = new FakeCourseRepository();
+        var mappings = new FakeCurriculumCourseRepository();
+        var curriculumId = Guid.NewGuid();
+        var courseId = Guid.NewGuid();
+        curricula.Items.Add(new Curriculum
+        {
+            Id = curriculumId, ProgrammeId = Guid.NewGuid(), IsActive = true, Status = "Approved",
+            Version = "1.0", Title = "Approved", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow)
+        });
+        courses.Items.Add(new Course { Id = courseId, Code = "PH101", Name = "Pharmacy", CreditUnits = 3, IsActive = true });
+        var service = CreateService(curricula, courses, mappings);
+
+        var (success, error, _) = await service.AddMappingAsync(curriculumId, new AddCurriculumCourseRequest(courseId, 1, 1, true));
+
+        Assert.False(success);
+        Assert.Contains("Only draft curricula", error);
+        Assert.Empty(mappings.Items);
+    }
+
+    [Fact]
+    public async Task UpdateMappingAsync_rejects_published_version()
+    {
+        var curricula = new FakeCurriculumRepository();
+        var mappings = new FakeCurriculumCourseRepository();
+        var curriculumId = Guid.NewGuid();
+        var mappingId = Guid.NewGuid();
+        curricula.Items.Add(new Curriculum
+        {
+            Id = curriculumId, ProgrammeId = Guid.NewGuid(), IsActive = true, Status = "Published",
+            Version = "1.0", Title = "Published", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow)
+        });
+        mappings.Items.Add(new CurriculumCourse { Id = mappingId, CurriculumId = curriculumId, CourseId = Guid.NewGuid(), YearOfStudy = 1, SemesterNumber = 1, IsCore = true });
+        var service = CreateService(curricula, mappings: mappings);
+
+        var (success, error) = await service.UpdateMappingAsync(curriculumId, mappingId, new UpdateCurriculumCourseRequest(2, 1, false));
+
+        Assert.False(success);
+        Assert.Contains("Only draft curricula", error);
+        Assert.Equal(1, mappings.Items[0].YearOfStudy);
+    }
+
+    [Fact]
+    public async Task DeleteMappingAsync_rejects_approved_version()
+    {
+        var curricula = new FakeCurriculumRepository();
+        var mappings = new FakeCurriculumCourseRepository();
+        var curriculumId = Guid.NewGuid();
+        var mappingId = Guid.NewGuid();
+        curricula.Items.Add(new Curriculum
+        {
+            Id = curriculumId, ProgrammeId = Guid.NewGuid(), IsActive = true, Status = "Approved",
+            Version = "1.0", Title = "Approved", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow)
+        });
+        mappings.Items.Add(new CurriculumCourse { Id = mappingId, CurriculumId = curriculumId, CourseId = Guid.NewGuid(), YearOfStudy = 1, SemesterNumber = 1, IsCore = true });
+        var service = CreateService(curricula, mappings: mappings);
+
+        var deleted = await service.DeleteMappingAsync(curriculumId, mappingId);
+
+        Assert.False(deleted);
+        Assert.Single(mappings.Items);
+    }
 }
