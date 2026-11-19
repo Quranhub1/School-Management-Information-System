@@ -664,6 +664,11 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       // If the catalogue record was saved but mapping failed, refresh the catalogue
       // so the unit remains available for a retry without creating a duplicate.
       try { setCourses(await getCourses(authority)) } catch { /* retain the original error */ }
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function saveBulkMapping(e: React.FormEvent) {
     e.preventDefault()
     if (!selected) return
