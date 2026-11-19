@@ -136,7 +136,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     void Promise.all(eligibleCurricula.map(async item => {
       try {
         const rows = await getCurriculumCourses(item.id)
-        const totalCredits = rows.reduce((sum, row) => sum + (courses.find(course => course.id === row.courseId)?.creditUnits ?? 0), 0)
+        const totalCredits = rows.reduce((sum, row) => sum + (authorityCourses.find(course => course.id === row.courseId)?.creditUnits ?? 0), 0)
         return [item.id, { courseCount: rows.length, totalCredits }] as const
       } catch {
         return [item.id, { courseCount: 0, totalCredits: 0 }] as const

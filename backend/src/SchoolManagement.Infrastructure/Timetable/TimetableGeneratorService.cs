@@ -104,6 +104,18 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             new TimeOnly(11, 0), new TimeOnly(12, 0), new TimeOnly(13, 0), new TimeOnly(14, 0),
             new TimeOnly(15, 0), new TimeOnly(16, 0), new TimeOnly(17, 0)
         };
+        var defaultRooms = new[] { "Room 101", "Room 102", "Room 103", "Hall A", "Hall B" };
+        var roomCounter = 0;
+
+        // Deactivate any existing active sessions for these groups so re-generation
+        // does not leave duplicate active timetable rows.
+        var groupIds = teachingGroups.Select(x => x.Id).ToHashSet();
+        var existingForGroups = await db.TimetableEntries
+            .Where(x => x.IsActive && groupIds.Contains(x.TeachingGroupId))
+            .ToListAsync(cancellationToken);
+        foreach (var existing in existingForGroups) existing.IsActive = false;
+        if (existingForGroups.Count > 0)
+            await db.SaveChangesAsync(cancellationToken);
 
         foreach (var teachingGroup in teachingGroups)
         {
@@ -135,7 +147,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
                 continue;
             }
 
-            var sessionsNeeded = 3;
+            var sessionsNeeded = Math.Max(1, course.CreditUnits);
             var sessionsScheduled = 0;
 
             foreach (var day in days)
@@ -153,7 +165,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
                         continue;
                     }
 
-                    var room = teachingGroup.Capacity > 20 ? "Hall A" : "Room 101";
+                    var room = defaultRooms[roomCounter++ % defaultRooms.Length];
                     if (HasConflict(room, roomSchedules, day, startTime, endTime, out string roomConflict))
                     {
                         conflicts.Add($"Room {room}: {roomConflict}");
