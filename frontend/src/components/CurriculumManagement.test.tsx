@@ -52,6 +52,14 @@ vi.mock('../api/curriculumManagement', () => ({
   issueStudentLogbook: vi.fn(),
   getUhpabFeeReferences: vi.fn(async () => []),
   createUhpabFeeReference: vi.fn(),
+  getCurriculumApprovalHistory: vi.fn(async () => []),
+  submitCurriculumForReview: vi.fn(),
+  approveCurriculum: vi.fn(),
+  rejectCurriculum: vi.fn(),
+  publishCurriculum: vi.fn(),
+  retireCurriculum: vi.fn(),
+  cloneCurriculum: vi.fn(),
+  compareCurricula: vi.fn(),
 }))
 vi.mock('../api/programmes', () => ({
   createProgramme: vi.fn(),
