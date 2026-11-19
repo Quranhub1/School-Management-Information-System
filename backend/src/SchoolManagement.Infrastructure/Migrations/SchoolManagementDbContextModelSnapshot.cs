@@ -367,6 +367,41 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("CurriculumCourses");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumApprovalHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("ChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CurriculumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FromStatus")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CurriculumId", "ChangedAtUtc");
+
+                    b.ToTable("CurriculumApprovalHistory");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Department", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2658,6 +2693,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("BankAccountId", "TransactionDate");
 
                     b.ToTable("BankTransactions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumApprovalHistory", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
+                        .WithMany()
+                        .HasForeignKey("CurriculumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Finance.Bill", b =>
