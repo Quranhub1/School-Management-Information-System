@@ -84,7 +84,7 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         db.Curricula.Add(clone);
         var sourceMappings = await db.CurriculumCourses.AsNoTracking()
-            .Where(x => x.CurriculumId == source.Id).ToListAsync(ct);
+            .Where(x => x.CurriculumId == source.Id && !x.IsDeleted).ToListAsync(ct);
         db.CurriculumCourses.AddRange(sourceMappings.Select(x => new CurriculumCourse
         {
             CurriculumId = clone.Id,
@@ -124,7 +124,7 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
         var units = await (
             from mapping in db.CurriculumCourses.AsNoTracking()
             join course in db.Courses.AsNoTracking() on mapping.CourseId equals course.Id
-            where ids.Contains(mapping.CurriculumId)
+            where ids.Contains(mapping.CurriculumId) && !mapping.IsDeleted && !course.IsDeleted
             select new { mapping.CurriculumId, course.Id, course.Code, course.Name, course.CreditUnits, mapping.YearOfStudy, mapping.SemesterNumber, mapping.IsCore })
             .OrderBy(x => x.YearOfStudy).ThenBy(x => x.SemesterNumber).ThenBy(x => x.Code)
             .ToListAsync(ct);
