@@ -383,7 +383,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           setTemplateFooterText(layout.footerText || 'Prepared for academic use')
           setTemplateBreakAfter(typeof layout.breakAfter === 'number' ? layout.breakAfter : null)
           setTemplateBreakLabel(layout.breakLabel || 'BREAK')
-          setTemplateDayOrder(Array.isArray(layout.dayOrder) && layout.dayOrder.length ? layout.dayOrder : [1, 2, 3, 4, 5, 6, 0])
+          const savedDayOrder = Array.isArray(layout.dayOrder) && layout.dayOrder.length ? layout.dayOrder : [1, 2, 3, 4, 5, 6, 0]
+          setTemplateDayOrder([...savedDayOrder, ...[1, 2, 3, 4, 5, 6, 0].filter(day => !savedDayOrder.includes(day))])
           setTemplateLoadedGroupId(templateGroupId)
           setShowTemplateEditor(true)
           return
