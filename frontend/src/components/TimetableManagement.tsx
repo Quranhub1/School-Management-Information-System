@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, LayoutGrid, List, Plus, Sparkles, Trash2, Pencil, Save } from 'lucide-react'
 import LoadingSpinner from './LoadingSpinner'
-import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, listTimetable, saveTimetableTemplate, updateTimetableEntry, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
+import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, getTimetableTemplate, listTimetable, saveTimetableTemplate, updateTimetableEntry, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
 import './TimetableManagement.css'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
@@ -9,8 +9,28 @@ import { useInstitutionSettings } from './InstitutionSettingsContext'
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const weekOrder = [1, 2, 3, 4, 5, 6, 0]
 const emptyOptions: TimetableOptions = { teachingGroups: [], courses: [], teachers: [], semesters: [], programmes: [], curricula: [], curriculumCourses: [] }
+
+type ProgrammeOption = TimetableOptions['programmes'][number] & { sourceIds: string[] }
+const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
+  programme.code?.trim().toLocaleUpperCase() || programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+const deduplicateProgrammeOptions = (programmes: TimetableOptions['programmes'], curricula: TimetableOptions['curricula'], groups: TimetableOptions['teachingGroups']): ProgrammeOption[] => {
+  const grouped = new Map<string, TimetableOptions['programmes']>()
+  for (const programme of programmes) {
+    const key = programmeIdentity(programme)
+    grouped.set(key, [...(grouped.get(key) ?? []), programme])
+  }
+  return [...grouped.values()].map(items => {
+    const ranked = [...items].sort((left, right) => {
+      const score = (item: TimetableOptions['programmes'][number]) =>
+        curricula.filter(curriculum => curriculum.programmeId === item.id).length * 10 +
+        groups.filter(group => group.programmeId === item.id).length
+      return score(right) - score(left) || left.label.localeCompare(right.label)
+    })
+    return { ...ranked[0], sourceIds: items.map(item => item.id) }
+  }).sort((left, right) => left.label.localeCompare(right.label))
+}
 const defaultTemplateSlots = [{ startTime: '08:00', endTime: '09:00' }, { startTime: '09:00', endTime: '10:00' }, { startTime: '10:30', endTime: '11:30' }, { startTime: '11:30', endTime: '12:30' }, { startTime: '13:30', endTime: '14:30' }, { startTime: '14:30', endTime: '15:30' }, { startTime: '15:30', endTime: '16:30' }]
-type TemplateCell = { id?: string; courseId: string; teacherId: string; room: string; sessionType: string }
+type TemplateCell = { id?: string; courseId: string; teacherId: string; room: string; sessionType: string; rowSpan?: number | string; colSpan?: number | string }
 const timeLabel = (value: string) => value.slice(0, 5)
 const formatSemesterDate = (value?: string) => {
   if (!value) return ''
@@ -47,11 +67,21 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [timetableCount, setTimetableCount] = useState('1')
   const [generatedTimetables, setGeneratedTimetables] = useState<Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }>>([])
   const [view, setView] = useState<'week' | 'list'>('week')
+  const [showWeekends, setShowWeekends] = useState(true)
+  const [showSystemData, setShowSystemData] = useState(false)
   const [showTemplateEditor, setShowTemplateEditor] = useState(false)
   const [templateGroupId, setTemplateGroupId] = useState('')
   const [templateLoadedGroupId, setTemplateLoadedGroupId] = useState('')
   const [templateSlots, setTemplateSlots] = useState(defaultTemplateSlots)
   const [templateCells, setTemplateCells] = useState<Record<string, TemplateCell>>({})
+  const [templateTitle, setTemplateTitle] = useState('CLASS TEACHING TIMETABLE')
+  const [templateDayLabel, setTemplateDayLabel] = useState('DAY')
+  const [templateRegistrarName, setTemplateRegistrarName] = useState('')
+  const [templateRegistrarRole, setTemplateRegistrarRole] = useState('ACADEMIC REGISTRAR')
+  const [templateFooterText, setTemplateFooterText] = useState('Prepared for academic use')
+  const [templateBreakAfter, setTemplateBreakAfter] = useState<number | null>(null)
+  const [templateBreakLabel, setTemplateBreakLabel] = useState('BREAK')
+  const [templateDayOrder, setTemplateDayOrder] = useState([1, 2, 3, 4, 5, 6])
   const [templateSaving, setTemplateSaving] = useState(false)
   const { institution, loaded: institutionLoaded } = useInstitutionSettings()
 
@@ -62,8 +92,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setEntries(loadedEntries)
       setOptions({ ...emptyOptions, ...loadedOptions, programmes: loadedOptions.programmes ?? [], curricula: loadedOptions.curricula ?? [], curriculumCourses: loadedOptions.curriculumCourses ?? [] })
       setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
-      setProgrammeId(current => current || loadedOptions.programmes?.[0]?.id || '')
-      setCurriculumId(current => current || loadedOptions.curricula.find(item => item.programmeId === (loadedOptions.programmes[0]?.id ?? ''))?.id || '')
+      const uniqueProgrammes = deduplicateProgrammeOptions(loadedOptions.programmes ?? [], loadedOptions.curricula ?? [], loadedOptions.teachingGroups ?? [])
+      setProgrammeId(current => current || uniqueProgrammes[0]?.id || '')
+      setCurriculumId(current => current || loadedOptions.curricula.find(item => uniqueProgrammes[0]?.sourceIds.includes(item.programmeId))?.id || '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
     }
@@ -80,15 +111,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const availableSemesters = options.semesters
   const selectedSemester = availableSemesters.find(item => item.id === semesterId)
   const academicYearLabel = selectedSemester?.academicYearLabel || selectedSemester?.label || 'Academic year not set'
-  const selectedProgramme = options.programmes.find(item => item.id === programmeId)
+  const programmeOptions = useMemo(() => deduplicateProgrammeOptions(options.programmes, options.curricula, options.teachingGroups), [options.programmes, options.curricula, options.teachingGroups])
+  const selectedProgramme = programmeOptions.find(item => item.id === programmeId)
+  const selectedProgrammeIds = new Set(selectedProgramme?.sourceIds ?? (programmeId ? [programmeId] : []))
   const semesterGroupIds = useMemo(() => new Set(options.teachingGroups.filter(item => item.semesterId === semesterId).map(item => item.id)), [options.teachingGroups, semesterId])
-  const programmeCurricula = options.curricula.filter(item => item.programmeId === programmeId)
-  // Prefer a curriculum that actually has course-unit mappings so the year/semester
-  // selectors are not empty when the first-listed curriculum has none.
-  const curriculumWithMappings = programmeCurricula.find(c =>
-    options.curriculumCourses.some(m => m.curriculumId === c.id)
-  )
-  const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? curriculumWithMappings ?? programmeCurricula[0]
+  const programmeCurricula = options.curricula.filter(item => selectedProgrammeIds.has(item.programmeId))
+  const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? programmeCurricula[0]
   const curriculumMappings = options.curriculumCourses.filter(item => item.curriculumId === selectedCurriculum?.id)
   // Each distinct year/semester in an active curriculum is represented as its own
   // timetable template for the selected academic period, even before sessions exist.
@@ -108,7 +136,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const eligibleMappings = curriculumMappings.filter(item => (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) && (!curriculumSemester || item.semesterNumber === Number(curriculumSemester)))
   const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
   const availableCourses = options.courses.filter(item => eligibleCourseIds.has(item.id))
-  const availableGroups = options.teachingGroups.filter(item => item.programmeId === programmeId && item.semesterId === semesterId && eligibleCourseIds.has(item.courseId))
+  const availableGroups = options.teachingGroups.filter(item => item.programmeId === selectedCurriculum?.programmeId && item.semesterId === semesterId && eligibleCourseIds.has(item.courseId))
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedGroupCourses = selectedGroup ? options.courses.filter(item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)) : []
   const activeEntries = useMemo(() => entries.filter(item => item.isActive && semesterGroupIds.has(item.teachingGroupId)), [entries, semesterGroupIds])
@@ -116,6 +144,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const distinctTeachers = useMemo(() => new Set(activeEntries.map(item => item.teacherId)).size, [activeEntries])
   const practicalCount = useMemo(() => activeEntries.filter(item => item.sessionType?.toLowerCase() === 'practical').length, [activeEntries])
   const orderedEntries = useMemo(() => [...activeEntries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)), [activeEntries])
+  const displayedWeekDays = showWeekends ? weekOrder.filter(day => day !== 0) : weekOrder.filter(day => day >= 1 && day <= 5)
   const timeSlots = useMemo(() => [...new Set(activeEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b)), [activeEntries])
 
   function timetablePdfOptions(title: string, rows: TimetableEntry[], filename: string) {
@@ -124,7 +153,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     const printableSlots = slots.length ? slots : defaultTemplateSlots.map(slot => slot.startTime)
     const timetableBody = [
       [{ text: 'DAY', style: 'tableHeader' }, ...printableSlots.map((slot, index) => ({ text: `PERIOD ${index + 1}\n${timeLabel(slot)}`, style: 'tableHeader' }))],
-      ...weekOrder.filter(day => day !== 0).map(day => [
+      ...displayedWeekDays.map(day => [
         { text: days[day].toUpperCase(), style: 'tableHeader' },
         ...printableSlots.map(slot => {
           const sessions = sorted.filter(entry => entry.dayOfWeek === day && entry.startTime === slot)
@@ -170,7 +199,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   function printTimetableTemplate() {
-    const rows = weekOrder.filter(day => day !== 0).flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
+    const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
+    const rows = visibleDays.flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
       const cell = templateCells[day + '-' + slotIndex]
       if (!cell?.courseId && !cell?.teacherId && !cell?.room?.trim()) return []
       return [{
@@ -190,7 +220,50 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       } as TimetableEntry]
     }))
     const groupLabel = groupLabels.get(templateGroupId) ?? 'Class timetable'
-    printInstitutionalPdf(timetablePdfOptions(groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template'))
+    const base = timetablePdfOptions(templateTitle || groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template')
+    const body = [
+      [{ text: templateDayLabel || 'DAY', style: 'tableHeader' }, ...templateSlots.map((slot, index) => ({
+        text: [`PERIOD ${index + 1}`, `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`, templateBreakAfter === index ? (templateBreakLabel || 'BREAK') : ''].filter(Boolean).join('\\n'),
+        style: 'tableHeader',
+      }))],
+      ...visibleDays.map(day => {
+        const row: Array<Record<string, unknown>> = [{ text: days[day].toUpperCase(), style: 'tableHeader' }]
+        templateSlots.forEach((slot, slotIndex) => {
+          if (templateCellCovered(day, slotIndex)) { row.push({}); return }
+          const cell = templateCells[day + '-' + slotIndex]
+          const rowSpan = Math.max(1, Math.min(visibleDays.length - visibleDays.indexOf(day), Number(cell?.rowSpan) || 1))
+          const colSpan = Math.max(1, Math.min(templateSlots.length - slotIndex, Number(cell?.colSpan) || 1))
+          const text = cell ? [
+            courseLabels.get(cell.courseId) ?? '',
+            teacherLabels.get(cell.teacherId) ?? '',
+            `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`,
+            cell.room ? `Venue: ${cell.room}` : '',
+            cell.sessionType || '',
+          ].filter(Boolean).join('\\n') : '—'
+          row.push({ text: text || '—', alignment: 'center', ...(rowSpan > 1 ? { rowSpan } : {}), ...(colSpan > 1 ? { colSpan } : {}) })
+        })
+        return row
+      }),
+    ]
+    printInstitutionalPdf({
+      ...base,
+      title: templateTitle || base.title,
+      content: [
+        base.content[0],
+        { table: { headerRows: 1, widths: ['auto', ...templateSlots.map(() => '*')], body }, layout: {
+          hLineWidth: () => 0.8,
+          vLineWidth: () => 0.8,
+          hLineColor: () => '#111827',
+          vLineColor: () => '#111827',
+          paddingLeft: () => 4,
+          paddingRight: () => 4,
+          paddingTop: () => 5,
+          paddingBottom: () => 5,
+        } },
+        { text: `${templateRegistrarRole || 'ACADEMIC REGISTRAR'}: ${templateRegistrarName || '____________________________'}`, alignment: 'right', margin: [0, 28, 0, 0] },
+        { text: templateFooterText, alignment: 'left', fontSize: 8, margin: [0, 10, 0, 0] },
+      ],
+    })
   }
 
   async function handleGenerate(event: React.FormEvent) {
@@ -207,7 +280,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     try {
       const results: Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }> = []
       for (const group of selectedGroups) {
-        const result = await generateTimetable(semesterId, group.id, selectedCurriculum.id, Number(yearOfStudy), Number(curriculumSemester), programmeId)
+        const result = await generateTimetable(semesterId, group.id, selectedCurriculum.id, Number(yearOfStudy), Number(curriculumSemester), group.programmeId)
         results.push({ groupId: group.id, groupLabel: group.label, result })
       }
       setGeneratedTimetables(results)
@@ -272,7 +345,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     const group = options.teachingGroups.find(item => item.id === entry.teachingGroupId)
     const mapping = options.curriculumCourses.find(item => item.courseId === entry.courseId && item.programmeId === group?.programmeId)
     const curriculum = options.curricula.find(item => item.id === mapping?.curriculumId)
-    setProgrammeId(group?.programmeId ?? '')
+    setProgrammeId(programmeOptions.find(item => item.sourceIds.includes(group?.programmeId ?? ''))?.id ?? group?.programmeId ?? '')
     setCurriculumId(curriculum?.id ?? '')
     setYearOfStudy(mapping ? String(mapping.yearOfStudy) : '')
     setCurriculumSemester(mapping ? String(mapping.semesterNumber) : '')
@@ -290,43 +363,79 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setError('')
   }
 
-  function loadTemplate() {
+  async function loadTemplate() {
     if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before loading the template.'); return }
     if (!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)) { setError('Choose a teaching group from the selected programme curriculum and academic period.'); return }
-    const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
-    const slots = [...defaultTemplateSlots.map(slot => ({ ...slot }))]
-    for (const entry of groupEntries) {
-      const start = timeLabel(entry.startTime)
-      const existingSlot = slots.find(slot => slot.startTime === start)
-      if (existingSlot) existingSlot.endTime = timeLabel(entry.endTime)
-      else slots.push({ startTime: start, endTime: timeLabel(entry.endTime) })
-    }
-    slots.sort((a, b) => a.startTime.localeCompare(b.startTime))
-    const cells: Record<string, TemplateCell> = {}
-    for (const entry of groupEntries) {
-      const slotIndex = slots.findIndex(slot => slot.startTime === timeLabel(entry.startTime))
-      const key = entry.dayOfWeek + '-' + slotIndex
-      if (cells[key]) {
-        setError('This class has multiple sessions at the same day and start time. Resolve the duplicate sessions before editing its template.')
-        return
-      }
-      cells[key] = { id: entry.id, courseId: entry.courseId, teacherId: entry.teacherId, room: entry.room ?? '', sessionType: entry.sessionType ?? 'Lecture' }
-    }
-    setTemplateSlots(slots)
-    setTemplateCells(cells)
-    setTemplateLoadedGroupId(templateGroupId)
-    setShowTemplateEditor(true)
     setError('')
+    try {
+      const saved = await getTimetableTemplate(templateGroupId)
+      if (saved.layoutJson) {
+        const layout = JSON.parse(saved.layoutJson) as { slots?: Array<{ startTime: string; endTime: string }>; cells?: Record<string, TemplateCell>; showWeekends?: boolean; title?: string; dayLabel?: string; registrarName?: string; registrarRole?: string; footerText?: string; breakAfter?: number | null; breakLabel?: string; dayOrder?: number[] }
+        if (Array.isArray(layout.slots) && layout.slots.length > 0 && layout.cells && typeof layout.cells === 'object') {
+          setTemplateSlots(layout.slots.map(slot => ({ startTime: slot.startTime, endTime: slot.endTime })))
+          setTemplateCells(layout.cells)
+          if (typeof layout.showWeekends === 'boolean') setShowWeekends(layout.showWeekends)
+          setTemplateTitle(layout.title || 'CLASS TEACHING TIMETABLE')
+          setTemplateDayLabel(layout.dayLabel || 'DAY')
+          setTemplateRegistrarName(layout.registrarName || '')
+          setTemplateRegistrarRole(layout.registrarRole || 'ACADEMIC REGISTRAR')
+          setTemplateFooterText(layout.footerText || 'Prepared for academic use')
+          setTemplateBreakAfter(typeof layout.breakAfter === 'number' ? layout.breakAfter : null)
+          setTemplateBreakLabel(layout.breakLabel || 'BREAK')
+          setTemplateDayOrder(Array.isArray(layout.dayOrder) && layout.dayOrder.length ? layout.dayOrder : [1, 2, 3, 4, 5, 6])
+          setTemplateLoadedGroupId(templateGroupId)
+          setShowTemplateEditor(true)
+          return
+        }
+      }
+
+      // Backward-compatible fallback for groups that have lessons but no saved layout yet.
+      const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
+      const slots = [...defaultTemplateSlots.map(slot => ({ ...slot }))]
+      for (const entry of groupEntries) {
+        const start = timeLabel(entry.startTime)
+        const existingSlot = slots.find(slot => slot.startTime === start)
+        if (existingSlot) existingSlot.endTime = timeLabel(entry.endTime)
+        else slots.push({ startTime: start, endTime: timeLabel(entry.endTime) })
+      }
+      slots.sort((a, b) => a.startTime.localeCompare(b.startTime))
+      const cells: Record<string, TemplateCell> = {}
+      for (const entry of groupEntries) {
+        const slotIndex = slots.findIndex(slot => slot.startTime === timeLabel(entry.startTime))
+        const key = entry.dayOfWeek + '-' + slotIndex
+        if (cells[key]) {
+          setError('This class has multiple sessions at the same day and start time. Resolve the duplicate sessions before editing its template.')
+          return
+        }
+        cells[key] = { id: entry.id, courseId: entry.courseId, teacherId: entry.teacherId, room: entry.room ?? '', sessionType: entry.sessionType ?? 'Lecture' }
+      }
+      setTemplateSlots(slots)
+      setTemplateCells(cells)
+      setTemplateTitle('CLASS TEACHING TIMETABLE')
+      setTemplateDayLabel('DAY')
+      setTemplateRegistrarName('')
+      setTemplateRegistrarRole('ACADEMIC REGISTRAR')
+      setTemplateFooterText('Prepared for academic use')
+      setTemplateBreakAfter(null)
+      setTemplateBreakLabel('BREAK')
+      setTemplateDayOrder([1, 2, 3, 4, 5, 6])
+      setTemplateLoadedGroupId(templateGroupId)
+      setShowTemplateEditor(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load the saved timetable template.')
+    }
   }
 
   function changeTemplateCell(key: string, field: keyof TemplateCell, value: string) {
-    setTemplateCells(current => ({ ...current, [key]: { ...(current[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture' }), [field]: value } }))
+    setTemplateCells(current => ({ ...current, [key]: { ...(current[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture', rowSpan: 1, colSpan: 1 }), [field]: value } }))
   }
 
   async function saveTemplate() {
     if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before saving the template.'); return }
     if (!templateGroupId || templateLoadedGroupId !== templateGroupId) { setError('Choose a class and load it into the template before saving.'); return }
-    const populated = Object.entries(templateCells).filter(([, cell]) => cell.courseId || cell.teacherId)
+    const coveredPopulated = Object.entries(templateCells).filter(([key, cell]) => { const [day, slot] = key.split('-').map(Number); return (cell.courseId || cell.teacherId) && templateCellCovered(day, slot) })
+    if (coveredPopulated.length) { setError('A merged cell covers another populated lesson. Move or clear the covered lesson before saving so no scheduled session is lost.'); return }
+    const populated = Object.entries(templateCells).filter(([key, cell]) => { const [day, slot] = key.split('-').map(Number); return (cell.courseId || cell.teacherId) && !templateCellCovered(day, slot) })
     if (templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)) { setError('Every period must have an end time later than its start time.'); return }
     if (populated.some(([, cell]) => !cell.courseId || !cell.teacherId)) { setError('Every filled timetable cell needs both a course and a teacher.'); return }
 
@@ -351,7 +460,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setTemplateSaving(true)
     setError('')
     try {
-      await saveTimetableTemplate(templateGroupId, entries)
+      await saveTimetableTemplate(templateGroupId, entries, { slots: templateSlots, cells: templateCells, showWeekends, title: templateTitle, dayLabel: templateDayLabel, registrarName: templateRegistrarName, registrarRole: templateRegistrarRole, footerText: templateFooterText, breakAfter: templateBreakAfter, breakLabel: templateBreakLabel, dayOrder: templateDayOrder })
       await load()
       setShowTemplateEditor(false)
       setTemplateCells({})
@@ -361,6 +470,60 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     } finally {
       setTemplateSaving(false)
     }
+  }
+
+  function moveTemplateDay(day: number, direction: -1 | 1) {
+    setTemplateDayOrder(current => {
+      const index = current.indexOf(day)
+      const target = index + direction
+      if (index < 0 || target < 0 || target >= current.length) return current
+      const next = [...current]
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
+  }
+
+  function reorderTemplateSlots(order: number[]) {
+    setTemplateSlots(current => order.map(index => current[index]).filter(Boolean))
+    setTemplateCells(current => {
+      const next: Record<string, TemplateCell> = {}
+      Object.entries(current).forEach(([key, cell]) => {
+        const [day, oldIndex] = key.split('-').map(Number)
+        const newIndex = order.indexOf(oldIndex)
+        if (newIndex >= 0) next[day + '-' + newIndex] = cell
+      })
+      return next
+    })
+    setTemplateBreakAfter(current => current === null ? null : order.indexOf(current) >= 0 ? order.indexOf(current) : null)
+  }
+
+  function removeTemplateSlot(index: number) {
+    reorderTemplateSlots(templateSlots.map((_, slotIndex) => slotIndex).filter(slotIndex => slotIndex !== index))
+  }
+
+  function moveTemplateSlot(index: number, direction: -1 | 1) {
+    const order = templateSlots.map((_, slotIndex) => slotIndex)
+    const target = index + direction
+    if (target < 0 || target >= order.length) return
+    ;[order[index], order[target]] = [order[target], order[index]]
+    reorderTemplateSlots(order)
+  }
+
+  function templateCellCovered(day: number, slotIndex: number) {
+    const visibleDays = templateDayOrder.filter(item => showWeekends || item <= 5)
+    const rowIndex = visibleDays.indexOf(day)
+    for (let r = 0; r <= rowIndex; r++) {
+      const sourceDay = visibleDays[r]
+      const maxSlot = r === rowIndex ? slotIndex - 1 : templateSlots.length - 1
+      for (let c = 0; c <= maxSlot; c++) {
+        const source = templateCells[sourceDay + '-' + c]
+        if (!source) continue
+        const rowSpan = Math.max(1, Math.min(visibleDays.length - r, Number(source.rowSpan) || 1))
+        const colSpan = Math.max(1, Math.min(templateSlots.length - c, Number(source.colSpan) || 1))
+        if (r + rowSpan > rowIndex && c + colSpan > slotIndex) return true
+      }
+    }
+    return false
   }
 
   async function remove(id: string) {
@@ -405,7 +568,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <div className="timetable-semester-template-grid">
           {semesterTemplates.map(item => {
             const courseIds = item.courseIds
-            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === programmeId && group.semesterId === semesterId && courseIds.has(group.courseId))
+            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === selectedCurriculum?.programmeId && group.semesterId === semesterId && courseIds.has(group.courseId))
             const sessionCount = activeEntries.filter(entry => matchingGroups.some(group => group.id === entry.teachingGroupId)).length
             const selected = yearOfStudy === String(item.year) && curriculumSemester === String(item.semester)
             return <article className={`timetable-semester-template-card${selected ? ' is-selected' : ''}`} key={item.year + '-' + item.semester}>
@@ -431,7 +594,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     {!readOnly && (showGenerator || showTemplateEditor || showScheduleForm) && <section className="timetable-form-panel timetable-curriculum-guide" aria-label="Programme curriculum selection">
       <h3>Programme curriculum guide</h3>
       <div className="timetable-form-grid">
-        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); setSemesterId(''); setCurriculumId(options.curricula.find(item => item.programmeId === next)?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{options.programmes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); setCurriculumId(options.curricula.find(item => programmeOptions.find(option => option.id === next)?.sourceIds.includes(item.programmeId))?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{programmeOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Curriculum<select value={selectedCurriculum?.id ?? ''} onChange={event => { setCurriculumId(event.target.value); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select curriculum</option>{programmeCurricula.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Year of study<select value={yearOfStudy} onChange={event => { setYearOfStudy(event.target.value); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All years</option>{studyYears.map(item => <option key={item} value={item}>Year {item}</option>)}</select></label>
         <label>Curriculum semester<select value={curriculumSemester} onChange={event => { setCurriculumSemester(event.target.value); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All semesters</option>{curriculumSemesters.map(item => <option key={item} value={item}>Semester {item}</option>)}</select></label>
@@ -457,10 +620,26 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
     {!readOnly && showTemplateEditor && <section className="timetable-template-editor" aria-label="Editable timetable template">
       <div className="timetable-template-document-heading">
-        <p>REPUBLIC OF UGANDA</p>
-        <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
-        <h4>CLASS TEACHING TIMETABLE</h4>
-        <span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}{templateGroupId ? ' · ' + (groupLabels.get(templateGroupId) ?? 'Selected class') : ''}</span>
+        <div className="timetable-official-identity">
+          {institutionLoaded && institution.isActive && institution.logoPath && <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} />}
+          <div className="timetable-official-identity-copy">
+            <p className="timetable-country-line">REPUBLIC OF UGANDA</p>
+            <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
+            {institutionLoaded && institution.isActive && institution.motto && <p className="timetable-institution-motto">{institution.motto}</p>}
+            {institutionLoaded && institution.isActive && <p className="timetable-institution-contact">{[institution.address, institution.phone, institution.email, institution.website].filter(value => Boolean(value?.trim())).join(' · ')}</p>}
+          </div>
+        </div>
+        <div className="timetable-official-rule" />
+        <input className="timetable-document-title-input" aria-label="Timetable document title" value={templateTitle} onChange={event => setTemplateTitle(event.target.value)} />
+        <strong className="timetable-document-programme">{selectedProgramme?.label ?? 'Programme not selected'}{selectedCurriculum ? ' · ' + selectedCurriculum.label : ''}</strong>
+        <span className="timetable-document-period">ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · YEAR {yearOfStudy || '—'} · CURRICULUM SEMESTER {curriculumSemester || '—'}</span>
+        <span className="timetable-document-period">VALID FOR {semesterDateRange(selectedSemester)}{templateGroupId ? ' · ' + (groupLabels.get(templateGroupId) ?? 'Selected class') : ''}</span>
+      </div>
+      <div className="timetable-document-meta-editor">
+        <label>Day column heading<input value={templateDayLabel} onChange={event => setTemplateDayLabel(event.target.value)} maxLength={20}/></label>
+        <label>Registrar name<input value={templateRegistrarName} onChange={event => setTemplateRegistrarName(event.target.value)} placeholder="Name (optional)" maxLength={120}/></label>
+        <label>Registrar title<input value={templateRegistrarRole} onChange={event => setTemplateRegistrarRole(event.target.value)} maxLength={80}/></label>
+        <label>Footer text<input value={templateFooterText} onChange={event => setTemplateFooterText(event.target.value)} maxLength={160}/></label>
       </div>
       <div className="timetable-template-editor-heading">
         <div><p className="timetable-eyebrow">Fillable timetable template</p><h3>Edit the timetable grid</h3><p>Select a class, then fill each period with a course, teacher and venue. Existing sessions for that class are loaded into the grid.</p></div>
@@ -471,21 +650,31 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       </div>
       {templateGroupId && templateLoadedGroupId === templateGroupId && <div className="timetable-grid-scroll">
         <table className="timetable-editable-grid">
-          <thead><tr><th>DAY</th>{templateSlots.map((slot, index) => <th key={index}><span>PERIOD {index + 1}</span><label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label></th>)}</tr></thead>
-          <tbody>{weekOrder.filter(day => day !== 0).map(day => <tr key={day}><th>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
+          <thead><tr><th>{templateDayLabel || 'DAY'}</th>{templateSlots.map((slot, index) => <th key={index} className={templateBreakAfter === index ? 'timetable-break-after' : ''}><span>PERIOD {index + 1}</span>{templateBreakAfter === index && <span className="timetable-break-label">{templateBreakLabel || 'BREAK'}</span>}<label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label><div className="timetable-period-tools"><button type="button" onClick={() => moveTemplateSlot(index, -1)} disabled={index === 0} aria-label={`Move period ${index + 1} left`}>←</button><button type="button" onClick={() => moveTemplateSlot(index, 1)} disabled={index === templateSlots.length - 1} aria-label={`Move period ${index + 1} right`}>→</button><button type="button" onClick={() => removeTemplateSlot(index)} disabled={templateSlots.length <= 1} aria-label={`Remove period ${index + 1}`}>−</button></div></th>)}</tr></thead>
+          <tbody>{templateDayOrder.filter(day => showWeekends || day <= 5).map((day, rowIndex) => <tr key={day}><th><div className="timetable-day-tools"><button type="button" onClick={() => moveTemplateDay(day, -1)} disabled={rowIndex === 0} aria-label={`Move ${days[day]} up`}>↑</button><button type="button" onClick={() => moveTemplateDay(day, 1)} disabled={rowIndex === templateDayOrder.filter(item => showWeekends || item <= 5).length - 1} aria-label={`Move ${days[day]} down`}>↓</button></div>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
+            if (templateCellCovered(day, slotIndex)) return null
             const key = day + '-' + slotIndex
-            const cell = templateCells[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture' }
-            return <td key={slotIndex}>
+            const cell = templateCells[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture', rowSpan: 1, colSpan: 1 }
+            const rowSpan = Math.max(1, Math.min(templateDayOrder.filter(item => showWeekends || item <= 5).length - rowIndex, Number(cell.rowSpan) || 1))
+            const colSpan = Math.max(1, Math.min(templateSlots.length - slotIndex, Number(cell.colSpan) || 1))
+            return <td key={slotIndex} rowSpan={rowSpan} colSpan={colSpan} className={templateBreakAfter === slotIndex ? 'timetable-break-after' : ''}>
               <select aria-label={`${days[day]} ${slot.startTime} course`} value={cell.courseId} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}><option value="">— Course —</option>{(options.teachingGroups.find(item => item.id === templateGroupId) ? options.courses.filter(item => item.id === options.teachingGroups.find(group => group.id === templateGroupId)?.courseId && eligibleCourseIds.has(item.id)) : availableCourses).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
               <select aria-label={`${days[day]} ${slot.startTime} teacher`} value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}><option value="">— Teacher —</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
               <input aria-label={`${days[day]} ${slot.startTime} venue`} value={cell.room} onChange={event => changeTemplateCell(key, 'room', event.target.value)} placeholder="Venue"/>
               <select aria-label={`${days[day]} ${slot.startTime} session type`} value={cell.sessionType} onChange={event => changeTemplateCell(key, 'sessionType', event.target.value)}><option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option></select>
+              <div className="timetable-cell-merge-tools"><label>Merge down<select aria-label={`Merge ${days[day]} ${slot.startTime} down`} value={rowSpan} onChange={event => changeTemplateCell(key, 'rowSpan', event.target.value)}>{[1,2,3,4,5,6].slice(0, templateDayOrder.filter(item => showWeekends || item <= 5).length - rowIndex).map(value => <option key={value} value={value}>{value} row(s)</option>)}</select></label><label>Across<select aria-label={`Merge ${days[day]} ${slot.startTime} across`} value={colSpan} onChange={event => changeTemplateCell(key, 'colSpan', event.target.value)}>{[1,2,3,4,5,6,7].slice(0, templateSlots.length - slotIndex).map(value => <option key={value} value={value}>{value} period(s)</option>)}</select></label></div>
               {cell.id && <span className="timetable-template-existing">Saved session</span>}
             </td>
           })}</tr>)}</tbody>
         </table>
       </div>}
       {templateGroupId && templateLoadedGroupId !== templateGroupId && <p className="timetable-generator-help">Click “Load class” to fill the template with that class’s saved sessions before editing.</p>}
+      <div className="timetable-template-design-tools">
+        <label>Divider after period<select value={templateBreakAfter ?? ''} onChange={event => setTemplateBreakAfter(event.target.value === '' ? null : Number(event.target.value))}><option value="">No divider</option>{templateSlots.map((_, index) => <option key={index} value={index}>After period {index + 1}</option>)}</select></label>
+        <label>Break label<input value={templateBreakLabel} onChange={event => setTemplateBreakLabel(event.target.value)} maxLength={30}/></label>
+        <button type="button" className="timetable-action" onClick={() => setTemplateSlots(current => [...current, { startTime: '16:30', endTime: '17:30' }])}>+ Add period</button>
+      </div>
+      <div className="timetable-template-document-footer"><span>{templateFooterText}</span><div><div className="timetable-signature-line"></div><strong>{templateRegistrarName || '____________________________'}</strong><small>{templateRegistrarRole || 'ACADEMIC REGISTRAR'}</small></div></div>
       <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !availableCourses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={printTimetableTemplate} disabled={!institutionLoaded || !institution.isActive}>Print template</button></div>
     </section>}
 
@@ -514,7 +703,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         const classEntries = [...result.entries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
         const classTimeSlots = [...new Set(classEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b))
         return <article className="timetable-class-document" key={groupId}>
-          <div className="timetable-class-document-heading"><div className="timetable-class-document-identity"><p>REPUBLIC OF UGANDA</p><h4>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h4><strong>{selectedProgramme?.label ?? 'Programme'} · {groupLabel}</strong><span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Selected academic period'} · YEAR {yearOfStudy} · CURRICULUM SEMESTER {curriculumSemester}</span><span>VALID FOR: {semesterDateRange(selectedSemester)}</span></div>
+          <div className="timetable-class-document-heading"><div className="timetable-class-document-identity"><div className="timetable-official-identity">{institutionLoaded && institution.isActive && institution.logoPath && <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} />}<div className="timetable-official-identity-copy"><h4>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h4>{institutionLoaded && institution.isActive && institution.motto && <span className="timetable-institution-motto">{institution.motto}</span>}{institutionLoaded && institution.isActive && <span className="timetable-institution-contact">{[institution.address, institution.phone, institution.email].filter(value => Boolean(value?.trim())).join(' · ')}</span>}</div></div><strong>{selectedProgramme?.label ?? 'Programme'} · {groupLabel}</strong><span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Selected academic period'} · YEAR {yearOfStudy} · CURRICULUM SEMESTER {curriculumSemester}</span><span>VALID FOR: {semesterDateRange(selectedSemester)}</span></div>
             <div className="timetable-class-actions">
               <button className="timetable-action" type="button" onClick={() => downloadInstitutionalPdf(timetablePdfOptions(groupLabel + ' Teaching Timetable', classEntries, groupLabel + '-timetable'))} disabled={!institutionLoaded || !institution.isActive}>Download PDF</button>
               <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)} disabled={!institutionLoaded || !institution.isActive}>Print</button>
@@ -529,7 +718,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 const period = classEntries.find(entry => entry.startTime === slot)
                 return <th key={slot}><span className="timetable-period-label">PERIOD {index + 1}</span><strong>{timeLabel(slot)}–{period ? timeLabel(period.endTime) : ''}</strong></th>
               })}</tr></thead>
-              <tbody>{weekOrder.filter(day => day !== 0).map(dayIndex => <tr key={dayIndex}>
+              <tbody>{displayedWeekDays.map(dayIndex => <tr key={dayIndex}>
                 <th className="timetable-day-column">{days[dayIndex].toUpperCase()}</th>
                 {classTimeSlots.map(slot => {
                   const cellEntries = classEntries.filter(entry => entry.dayOfWeek === dayIndex && entry.startTime === slot)
@@ -562,24 +751,48 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
     <div className="timetable-toolbar">
       <h3>Weekly schedule <span>({activeEntries.length})</span></h3>
-      <div className="timetable-view-switch" role="group" aria-label="Schedule display">
-        <button type="button" aria-pressed={view === 'week'} onClick={() => setView('week')}><LayoutGrid /> Week</button>
-        <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}><List /> List</button>
+      <div className="timetable-toolbar-controls">
+        <label className="timetable-weekend-toggle"><input type="checkbox" checked={showWeekends} onChange={event => setShowWeekends(event.target.checked)} /> Show Saturday</label>
+        {!readOnly && <button className="timetable-action" type="button" aria-expanded={showSystemData} onClick={() => setShowSystemData(value => !value)}>{showSystemData ? 'Hide system data' : 'System Data & Sync'}</button>}
+        <div className="timetable-view-switch" role="group" aria-label="Schedule display">
+          <button type="button" aria-pressed={view === 'week'} onClick={() => setView('week')}><LayoutGrid /> Week</button>
+          <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}><List /> List</button>
+        </div>
       </div>
     </div>
 
+    {showSystemData && !readOnly && <section className="timetable-system-data" aria-label="System data and sync">
+      <div className="timetable-system-data-heading"><div><h3>System Data &amp; SMIS Bridge</h3><p>Live catalogue records supplied by the central SMIS APIs. Changes made in Curriculum &amp; Courses, Staff and Academic Periods appear here after refresh.</p></div><button className="timetable-action primary" type="button" onClick={() => { setLoading(true); void load().finally(() => setLoading(false)) }} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh system data'}</button></div>
+      <div className="timetable-system-data-grid">
+        <article><strong>{options.programmes.length}</strong><span>Programmes</span><small>{options.programmes.slice(0, 5).map(item => item.label).join(' · ') || 'No programmes returned'}</small></article>
+        <article><strong>{options.curricula.length}</strong><span>Curricula</span><small>{options.curricula.slice(0, 5).map(item => item.label).join(' · ') || 'No curricula returned'}</small></article>
+        <article><strong>{options.courses.length}</strong><span>Course units</span><small>{options.courses.slice(0, 5).map(item => item.label).join(' · ') || 'No course units returned'}</small></article>
+        <article><strong>{options.teachers.length}</strong><span>Staff / tutors</span><small>{options.teachers.slice(0, 5).map(item => item.label).join(' · ') || 'No staff returned'}</small></article>
+        <article><strong>{options.teachingGroups.length}</strong><span>Teaching groups</span><small>{options.teachingGroups.slice(0, 5).map(item => item.label).join(' · ') || 'No teaching groups returned'}</small></article>
+        <article><strong>{options.semesters.length}</strong><span>Academic periods</span><small>{options.semesters.slice(0, 5).map(item => item.label).join(' · ') || 'No academic periods returned'}</small></article>
+      </div>
+      <p className="timetable-system-data-footnote">This screen does not keep a separate local programme, course or tutor registry. The central database remains the source of truth.</p>
+    </section>}
+
     {loading && activeEntries.length === 0 ? <div className="timetable-empty"><LoadingSpinner label="Loading timetable…" /></div> : activeEntries.length === 0 ? <div className="timetable-empty"><CalendarDays size={26} /><strong>No sessions scheduled yet</strong><span>Schedule or generate sessions to populate the formal weekly timetable.</span></div> : view === 'week' ? <div className="timetable-print-area">
       <div className="timetable-document-heading">
-        <div className="timetable-document-mark">{institutionLoaded && institution.isActive ? institution.abbreviation || 'SMIS' : 'SMIS'}</div>
-        <p>REPUBLIC OF UGANDA</p>
-        <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
+        <div className="timetable-official-identity">
+          {institutionLoaded && institution.isActive && institution.logoPath ? <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} /> : <div className="timetable-document-mark">{institutionLoaded && institution.isActive ? institution.abbreviation || 'SMIS' : 'SMIS'}</div>}
+          <div className="timetable-official-identity-copy">
+                <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
+            {institutionLoaded && institution.isActive && institution.motto && <span className="timetable-institution-motto">{institution.motto}</span>}
+            {institutionLoaded && institution.isActive && <span className="timetable-institution-contact">{[institution.address, institution.phone, institution.email].filter(value => Boolean(value?.trim())).join(' · ')}</span>}
+          </div>
+        </div>
+        <div className="timetable-official-rule" />
         <p>TEACHING TIMETABLE</p>
+        <strong className="timetable-document-programme">{selectedProgramme?.label ?? 'All programmes'}</strong>
         <small>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}</small>
       </div>
       <div className="timetable-grid-scroll">
         <table className="timetable-formal-grid">
           <thead><tr><th className="timetable-day-column">DAY</th>{timeSlots.map((slot, index) => <th key={slot}><span className="timetable-period-label">PERIOD {index + 1}</span><strong>{timeLabel(slot)}</strong><span>START TIME</span></th>)}</tr></thead>
-          <tbody>{weekOrder.filter(day => day !== 0).map(dayIndex => <tr key={dayIndex}>
+          <tbody>{displayedWeekDays.map(dayIndex => <tr key={dayIndex}>
             <th className="timetable-day-column">{days[dayIndex].toUpperCase()}</th>
             {timeSlots.map(slot => {
               const cellEntries = orderedEntries.filter(entry => entry.dayOfWeek === dayIndex && entry.startTime === slot)

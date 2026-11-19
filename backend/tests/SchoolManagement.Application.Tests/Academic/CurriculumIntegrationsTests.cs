@@ -221,7 +221,7 @@ public sealed class CurriculumIntegrationsTests
         equivs.Items.Add(new CourseEquivalence { ExternalCourseCode = "EXT-101", ExternalCourseName = "Ext", ExternalInstitution = "Uni", InternalCourseId = course.Id, CreditsAccepted = 3 });
         var service = new CourseEquivalenceService(equivs, courses);
 
-        var (success, error) = await service.AddAsync("EXT-101", "Ext 2", "Uni 2", course.Id, 3, true);
+        var (success, error) = await service.AddAsync("EXT-101", "Ext 2", "Uni", course.Id, 3, true);
         Assert.False(success);
         Assert.Contains("already exists", error);
     }

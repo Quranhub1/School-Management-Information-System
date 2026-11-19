@@ -52,7 +52,8 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
                 semester.IsActive
             }).ToListAsync(cancellationToken);
         var programmes = await db.Programmes.AsNoTracking().Where(x => x.IsActive && !x.IsReferenceOnly)
-            .OrderBy(x => x.Name).Select(x => new { x.Id, Label = x.Name + " (" + x.Award + ")" }).ToListAsync(cancellationToken);
+            .OrderBy(x => x.Name).ThenBy(x => x.Code)
+            .Select(x => new { x.Id, x.Code, Label = x.Name + " (" + x.Award + ")" }).ToListAsync(cancellationToken);
         var curricula = await db.Curricula.AsNoTracking().Where(x => x.IsActive).OrderByDescending(x => x.EffectiveFrom)
             .Select(x => new { x.Id, x.ProgrammeId, Label = x.Title + " — " + x.Version }).ToListAsync(cancellationToken);
         var curriculumCourses = await (
@@ -172,12 +173,34 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     }
 
 
+    [HttpGet("template/{teachingGroupId:guid}")]
+    [Authorize(Policy = TimetablePolicies.Read)]
+    public async Task<IActionResult> GetTemplate(Guid teachingGroupId, CancellationToken cancellationToken)
+    {
+        if (!await db.TeachingGroups.AnyAsync(x => x.Id == teachingGroupId, cancellationToken))
+            return NotFound(new { message = "Teaching group not found." });
+
+        var template = await db.TimetableTemplates.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.TeachingGroupId == teachingGroupId, cancellationToken);
+        return Ok(template is null
+            ? new { teachingGroupId, layoutJson = (string?)null, updatedAtUtc = (DateTimeOffset?)null }
+            : new { teachingGroupId, layoutJson = (string?)template.LayoutJson, updatedAtUtc = (DateTimeOffset?)template.UpdatedAtUtc });
+    }
+
     [HttpPut("template/{teachingGroupId:guid}")]
     [Authorize(Policy = TimetablePolicies.Management)]
     public async Task<IActionResult> SaveTemplate(Guid teachingGroupId, SaveTimetableTemplateRequest request, CancellationToken cancellationToken)
     {
         if (request.TeachingGroupId != teachingGroupId)
             return BadRequest(new { message = "The template class does not match the route." });
+        if (request.LayoutJson is { Length: > 100000 })
+            return BadRequest(new { message = "The timetable layout is too large to save." });
+        if (!string.IsNullOrWhiteSpace(request.LayoutJson))
+        {
+            try { using var document = System.Text.Json.JsonDocument.Parse(request.LayoutJson); }
+            catch (System.Text.Json.JsonException) { return BadRequest(new { message = "The timetable layout is not valid JSON." }); }
+        }
+
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == teachingGroupId && x.IsActive, cancellationToken))
             return BadRequest(new { message = "Teaching group not found." });
 
@@ -231,6 +254,25 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             GenerationSource = "TemplateEditor"
         }).ToList();
         db.TimetableEntries.AddRange(replacement);
+        if (!string.IsNullOrWhiteSpace(request.LayoutJson))
+        {
+            var savedLayout = await db.TimetableTemplates
+                .SingleOrDefaultAsync(x => x.TeachingGroupId == teachingGroupId, cancellationToken);
+            if (savedLayout is null)
+            {
+                db.TimetableTemplates.Add(new Domain.Academic.TimetableTemplate
+                {
+                    TeachingGroupId = teachingGroupId,
+                    LayoutJson = request.LayoutJson,
+                    UpdatedAtUtc = DateTimeOffset.UtcNow
+                });
+            }
+            else
+            {
+                savedLayout.LayoutJson = request.LayoutJson;
+                savedLayout.UpdatedAtUtc = DateTimeOffset.UtcNow;
+            }
+        }
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return Ok(replacement);
@@ -283,4 +325,4 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 }
 
 public sealed record CreateTimetableEntryRequest(Guid TeachingGroupId, Guid CourseId, Guid TeacherId, DayOfWeek DayOfWeek, TimeOnly StartTime, TimeOnly EndTime, string? Room, string? SessionType, Guid CurriculumId, int YearOfStudy, int CurriculumSemesterNumber);
-public sealed record SaveTimetableTemplateRequest(Guid TeachingGroupId, List<CreateTimetableEntryRequest> Entries);
+public sealed record SaveTimetableTemplateRequest(Guid TeachingGroupId, List<CreateTimetableEntryRequest> Entries, string? LayoutJson = null);

@@ -133,7 +133,7 @@ public sealed class CurriculumVersionService(
     public async Task<(bool Success, string? Error, Guid? VersionId)> CreateSnapshotAsync(Guid curriculumId, string version, string title, string? changeNotes, CancellationToken ct = default)
     {
         var curriculum = await curricula.GetByIdAsync(curriculumId, ct);
-        if (curriculum is null) return (false, "Curriculum not found.");
+        if (curriculum is null) return (false, "Curriculum not found.", null);
 
         var cv = new CurriculumVersion
         {

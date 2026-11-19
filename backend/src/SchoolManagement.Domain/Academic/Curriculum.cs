@@ -12,4 +12,6 @@ public sealed class Curriculum
     public ProgrammeType ProgrammeType { get; set; } = ProgrammeType.FullProgramme;
     public string Status { get; set; } = "Draft";
     public bool IsActive { get; set; } = true;
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 }

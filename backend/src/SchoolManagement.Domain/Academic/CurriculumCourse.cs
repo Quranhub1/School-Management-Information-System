@@ -8,4 +8,6 @@ public sealed class CurriculumCourse
     public int YearOfStudy { get; set; }
     public int SemesterNumber { get; set; }
     public bool IsCore { get; set; }
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 }

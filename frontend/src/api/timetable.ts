@@ -21,7 +21,7 @@ export type TimetableOptions = {
   courses: { id: string; label: string }[]
   teachers: { id: string; label: string }[]
   semesters: { id: string; label: string; academicYearId: string; academicYearLabel: string; startDate: string; endDate: string; isCurrent: boolean; isActive: boolean }[]
-  programmes: { id: string; label: string }[]
+  programmes: { id: string; label: string; code?: string }[]
   curricula: { id: string; programmeId: string; label: string }[]
   curriculumCourses: { curriculumId: string; programmeId: string; courseId: string; courseLabel: string; yearOfStudy: number; semesterNumber: number; isCore: boolean }[]
 }
@@ -53,4 +53,15 @@ export const updateTimetableEntry = (id: string, input: CreateTimetableEntry) =>
 export const deactivateTimetableEntry = (id: string) => request<void>(`/api/timetable/${id}`, { method: 'DELETE' })
 export const generateTimetable = (semesterId: string, teachingGroupId: string, curriculumId: string, yearOfStudy: number, curriculumSemesterNumber: number, programmeId: string) => request<GenerateTimetableResult>('/api/timetable/generate', { method: 'POST', body: JSON.stringify({ semesterId, teachingGroupId, curriculumId, yearOfStudy, curriculumSemesterNumber, programmeId, rotationIntervalMinutes: 15, generationSource: 'Manual' }) })
 
-export const saveTimetableTemplate = (teachingGroupId: string, entries: CreateTimetableEntry[]) => request<TimetableEntry[]>(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`, { method: 'PUT', body: JSON.stringify({ teachingGroupId, entries }) })
+
+export type TimetableTemplateLayout = {
+  teachingGroupId: string
+  layoutJson: string | null
+  updatedAtUtc: string | null
+}
+export const getTimetableTemplate = (teachingGroupId: string) => request<TimetableTemplateLayout>(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`)
+export const saveTimetableTemplate = (teachingGroupId: string, entries: CreateTimetableEntry[], layout: unknown) =>
+  request<TimetableEntry[]>(`/api/timetable/template/${encodeURIComponent(teachingGroupId)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ teachingGroupId, entries, layoutJson: JSON.stringify(layout) }),
+  })
