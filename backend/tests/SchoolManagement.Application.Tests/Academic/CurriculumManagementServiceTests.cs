@@ -124,7 +124,7 @@ public sealed class CurriculumManagementServiceTests
         Assert.True(success);
         Assert.Null(error);
         Assert.NotNull(curriculum);
-        Assert.Equal("Pending", curriculum.Status);
+        Assert.Equal("Draft", curriculum.Status);
         Assert.Single(programmes.Items);
     }
 
