@@ -140,7 +140,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == request.TeachingGroupId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teaching group not found." });
         if (!await IsCourseMappedToTeachingGroupAsync(request.TeachingGroupId, request.CourseId, request.CurriculumId, request.YearOfStudy, request.CurriculumSemesterNumber, cancellationToken))
             return BadRequest(new { message = "The selected course is not mapped to the programme curriculum for this teaching group." });
-        if (!await db.StaffMembers.AnyAsync(x => x.Id == request.TeacherId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teacher not found." });
+        if (!await db.StaffMembers.AnyAsync(x => x.Id == request.TeacherId && x.IsActive && x.EmploymentStatus == "Active", cancellationToken)) return BadRequest(new { message = "Teacher not found." });
 
         var roomConflict = await repository.HasRoomConflictAsync(request.DayOfWeek, request.StartTime, request.EndTime, request.Room, excludeEntryId: id, cancellationToken: cancellationToken);
         if (roomConflict) return Conflict(new { message = "The room is already booked for an overlapping session." });
