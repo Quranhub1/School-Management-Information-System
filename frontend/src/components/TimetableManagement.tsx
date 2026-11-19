@@ -83,6 +83,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [templateBreakLabel, setTemplateBreakLabel] = useState('BREAK')
   const [templateDayOrder, setTemplateDayOrder] = useState([1, 2, 3, 4, 5, 6])
   const [templateSaving, setTemplateSaving] = useState(false)
+  const [activeTemplateCellKey, setActiveTemplateCellKey] = useState<string | null>(null)
   const { institution, loaded: institutionLoaded } = useInstitutionSettings()
 
   const load = useCallback(async () => {
@@ -642,7 +643,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <label>Footer text<input value={templateFooterText} onChange={event => setTemplateFooterText(event.target.value)} maxLength={160}/></label>
       </div>
       <div className="timetable-template-editor-heading">
-        <div><p className="timetable-eyebrow">Fillable timetable template</p><h3>Edit the timetable grid</h3><p>Select a class, then fill each period with a course, teacher and venue. Existing sessions for that class are loaded into the grid.</p></div>
+        <div><p className="timetable-eyebrow">Fillable timetable template</p><h3>Edit the timetable grid</h3><p>All teaching days are shown together. Click any period to assign or update its course, lecturer and venue.</p></div>
         <div className="timetable-template-controls">
           <label>Class / teaching group<select value={templateGroupId} onChange={event => { setTemplateGroupId(event.target.value); setTemplateLoadedGroupId(''); setTemplateCells({}); setTemplateSlots(defaultTemplateSlots) }}><option value="">Select class</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
           <button className="timetable-action" type="button" onClick={loadTemplate} disabled={!templateGroupId}><Pencil size={15}/> Load class</button>
@@ -658,17 +659,36 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             const rowSpan = Math.max(1, Math.min(templateDayOrder.filter(item => showWeekends || item <= 5).length - rowIndex, Number(cell.rowSpan) || 1))
             const colSpan = Math.max(1, Math.min(templateSlots.length - slotIndex, Number(cell.colSpan) || 1))
             return <td key={slotIndex} rowSpan={rowSpan} colSpan={colSpan} className={templateBreakAfter === slotIndex ? 'timetable-break-after' : ''}>
-              <select aria-label={`${days[day]} ${slot.startTime} course`} value={cell.courseId} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}><option value="">— Course —</option>{(options.teachingGroups.find(item => item.id === templateGroupId) ? options.courses.filter(item => item.id === options.teachingGroups.find(group => group.id === templateGroupId)?.courseId && eligibleCourseIds.has(item.id)) : availableCourses).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
-              <select aria-label={`${days[day]} ${slot.startTime} teacher`} value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}><option value="">— Teacher —</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
-              <input aria-label={`${days[day]} ${slot.startTime} venue`} value={cell.room} onChange={event => changeTemplateCell(key, 'room', event.target.value)} placeholder="Venue"/>
-              <select aria-label={`${days[day]} ${slot.startTime} session type`} value={cell.sessionType} onChange={event => changeTemplateCell(key, 'sessionType', event.target.value)}><option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option></select>
-              <div className="timetable-cell-merge-tools"><label>Merge down<select aria-label={`Merge ${days[day]} ${slot.startTime} down`} value={rowSpan} onChange={event => changeTemplateCell(key, 'rowSpan', event.target.value)}>{[1,2,3,4,5,6].slice(0, templateDayOrder.filter(item => showWeekends || item <= 5).length - rowIndex).map(value => <option key={value} value={value}>{value} row(s)</option>)}</select></label><label>Across<select aria-label={`Merge ${days[day]} ${slot.startTime} across`} value={colSpan} onChange={event => changeTemplateCell(key, 'colSpan', event.target.value)}>{[1,2,3,4,5,6,7].slice(0, templateSlots.length - slotIndex).map(value => <option key={value} value={value}>{value} period(s)</option>)}</select></label></div>
-              {cell.id && <span className="timetable-template-existing">Saved session</span>}
+              <button type="button" className="timetable-template-cell-trigger" onClick={() => setActiveTemplateCellKey(key)} aria-label={'Edit ' + days[day] + ' ' + timeLabel(slot.startTime) + ' period'}>
+                {cell.courseId || cell.teacherId || cell.room ? <>{cell.courseId && <strong>{courseLabels.get(cell.courseId) ?? 'Course'}</strong>}{cell.teacherId && <span>{teacherLabels.get(cell.teacherId) ?? 'Lecturer'}</span>}{cell.room && <small>{cell.room}</small>}<small>{cell.sessionType}</small></> : <span className="timetable-template-cell-empty">+ Add session</span>}
+                {cell.id && <small className="timetable-template-existing">Saved session</small>}
+                <span className="timetable-template-cell-edit"><Pencil size={12}/> Edit period</span>
+              </button>
             </td>
           })}</tr>)}</tbody>
         </table>
       </div>}
       {templateGroupId && templateLoadedGroupId !== templateGroupId && <p className="timetable-generator-help">Click “Load class” to fill the template with that class’s saved sessions before editing.</p>}
+      {activeTemplateCellKey && (() => {
+        const [dayValue, slotValue] = activeTemplateCellKey.split('-').map(Number)
+        const slot = templateSlots[slotValue]
+        const cell = templateCells[activeTemplateCellKey] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture', rowSpan: 1, colSpan: 1 }
+        if (!slot) return null
+        return <div className="timetable-cell-modal-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setActiveTemplateCellKey(null) }}>
+          <section className="timetable-cell-modal" role="dialog" aria-modal="true" aria-labelledby="timetable-cell-modal-title">
+            <header><div><h3 id="timetable-cell-modal-title">Edit timetable period</h3><p>{days[dayValue]} · {timeLabel(slot.startTime)}–{timeLabel(slot.endTime)}</p></div><button type="button" aria-label="Close period editor" onClick={() => setActiveTemplateCellKey(null)}>×</button></header>
+            <div className="timetable-cell-modal-fields">
+              <label>Course unit<select aria-label="Course unit" value={cell.courseId} onChange={event => changeTemplateCell(activeTemplateCellKey, 'courseId', event.target.value)}><option value="">— Select course —</option>{availableCourses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+              <label>Lecturer / teacher<select aria-label="Lecturer / teacher" value={cell.teacherId} onChange={event => changeTemplateCell(activeTemplateCellKey, 'teacherId', event.target.value)}><option value="">— Select lecturer —</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+              <label>Room / venue<input aria-label="Room / venue" value={cell.room} onChange={event => changeTemplateCell(activeTemplateCellKey, 'room', event.target.value)} placeholder="Enter room or laboratory"/></label>
+              <label>Session type<select aria-label="Session type" value={cell.sessionType} onChange={event => changeTemplateCell(activeTemplateCellKey, 'sessionType', event.target.value)}><option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option></select></label>
+              <label>Merge down (days)<select aria-label="Merge down (days)" value={Number(cell.rowSpan) || 1} onChange={event => changeTemplateCell(activeTemplateCellKey, 'rowSpan', event.target.value)}>{[1,2,3,4,5,6].slice(0, templateDayOrder.filter(item => showWeekends || item <= 5).length - templateDayOrder.filter(item => showWeekends || item <= 5).indexOf(dayValue)).map(value => <option key={value} value={value}>{value} day(s)</option>)}</select></label>
+              <label>Merge across periods<select aria-label="Merge across periods" value={Number(cell.colSpan) || 1} onChange={event => changeTemplateCell(activeTemplateCellKey, 'colSpan', event.target.value)}>{[1,2,3,4,5,6,7].slice(0, templateSlots.length - slotValue).map(value => <option key={value} value={value}>{value} period(s)</option>)}</select></label>
+            </div>
+            <footer><button type="button" className="timetable-cell-clear" onClick={() => { changeTemplateCell(activeTemplateCellKey, 'courseId', ''); changeTemplateCell(activeTemplateCellKey, 'teacherId', ''); changeTemplateCell(activeTemplateCellKey, 'room', ''); changeTemplateCell(activeTemplateCellKey, 'sessionType', 'Lecture'); changeTemplateCell(activeTemplateCellKey, 'rowSpan', '1'); changeTemplateCell(activeTemplateCellKey, 'colSpan', '1') }}>Clear period</button><button type="button" className="timetable-cell-done" onClick={() => setActiveTemplateCellKey(null)}>Done</button></footer>
+          </section>
+        </div>
+      })()}
       <div className="timetable-template-design-tools">
         <label>Divider after period<select value={templateBreakAfter ?? ''} onChange={event => setTemplateBreakAfter(event.target.value === '' ? null : Number(event.target.value))}><option value="">No divider</option>{templateSlots.map((_, index) => <option key={index} value={index}>After period {index + 1}</option>)}</select></label>
         <label>Break label<input value={templateBreakLabel} onChange={event => setTemplateBreakLabel(event.target.value)} maxLength={30}/></label>
