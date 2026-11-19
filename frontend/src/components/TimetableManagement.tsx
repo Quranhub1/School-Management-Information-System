@@ -81,7 +81,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [templateFooterText, setTemplateFooterText] = useState('Prepared for academic use')
   const [templateBreakAfter, setTemplateBreakAfter] = useState<number | null>(null)
   const [templateBreakLabel, setTemplateBreakLabel] = useState('BREAK')
-  const [templateDayOrder, setTemplateDayOrder] = useState([1, 2, 3, 4, 5, 6])
+  const [templateDayOrder, setTemplateDayOrder] = useState([1, 2, 3, 4, 5, 6, 0])
   const [templateSaving, setTemplateSaving] = useState(false)
   const [activeTemplateCellKey, setActiveTemplateCellKey] = useState<string | null>(null)
   const { institution, loaded: institutionLoaded } = useInstitutionSettings()
@@ -383,7 +383,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           setTemplateFooterText(layout.footerText || 'Prepared for academic use')
           setTemplateBreakAfter(typeof layout.breakAfter === 'number' ? layout.breakAfter : null)
           setTemplateBreakLabel(layout.breakLabel || 'BREAK')
-          setTemplateDayOrder(Array.isArray(layout.dayOrder) && layout.dayOrder.length ? layout.dayOrder : [1, 2, 3, 4, 5, 6])
+          setTemplateDayOrder(Array.isArray(layout.dayOrder) && layout.dayOrder.length ? layout.dayOrder : [1, 2, 3, 4, 5, 6, 0])
           setTemplateLoadedGroupId(templateGroupId)
           setShowTemplateEditor(true)
           return
@@ -419,7 +419,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setTemplateFooterText('Prepared for academic use')
       setTemplateBreakAfter(null)
       setTemplateBreakLabel('BREAK')
-      setTemplateDayOrder([1, 2, 3, 4, 5, 6])
+      setTemplateDayOrder([1, 2, 3, 4, 5, 6, 0])
       setTemplateLoadedGroupId(templateGroupId)
       setShowTemplateEditor(true)
     } catch (e) {
