@@ -97,6 +97,8 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const [cf, setCf] = useState({ programmeId: '', version: '1.0', title: '', minimumCredits: '', effectiveFrom: '', effectiveTo: '', type: 'FullProgramme' as 'FullProgramme' | 'ShortCourse' })
   const [uf, setUf] = useState({ code: '', name: '', creditUnits: '', description: '', courseType: '' })
   const [mf, setMf] = useState({ courseId: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+  const [schoolUnitForm, setSchoolUnitForm] = useState({ code: '', name: '', creditUnits: '0', courseType: '', description: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+
 
   useEffect(() => {
     if (canManage) void load()
@@ -596,6 +598,41 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     }
   }
 
+  async function saveEditableAuthorityCourseUnit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selected || !['SCHOOL_BASED', 'UVTAB', 'UHPAB'].includes(resolveAcademicAuthority(authority))) return
+    setSaving(true)
+    setError('')
+    setMessage('')
+    try {
+      const created = await createCourse({
+        authorityCode: resolveAcademicAuthority(authority),
+        code: schoolUnitForm.code.trim(),
+        name: schoolUnitForm.name.trim(),
+        creditUnits: Number(schoolUnitForm.creditUnits),
+        courseType: schoolUnitForm.courseType,
+        description: schoolUnitForm.description,
+      })
+      await addCurriculumCourse(selected, {
+        courseId: created.id,
+        yearOfStudy: Number(schoolUnitForm.yearOfStudy),
+        semesterNumber: Number(schoolUnitForm.semesterNumber),
+        isCore: schoolUnitForm.isCore,
+      })
+      setSchoolUnitForm({ code: '', name: '', creditUnits: '0', courseType: '', description: '', yearOfStudy: '1', semesterNumber: '1', isCore: true })
+      setMessage(`${authority === 'UVTAB' ? 'UVTAB competence area/unit' : authority === 'UHPAB' ? 'UHPAB course unit' : 'School-based course unit'} created and added to the selected programme curriculum semester.`)
+      const [nextCourses] = await Promise.all([getCourses(authority), refreshMappings(selected)])
+      setCourses(nextCourses)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create and map the course unit.')
+      // If the catalogue record was saved but mapping failed, refresh the catalogue
+      // so the unit remains available for a retry without creating a duplicate.
+      try { setCourses(await getCourses(authority)) } catch { /* retain the original error */ }
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function removeCourseUnit(mapping: CurriculumCourse) {
     const course = courses.find(item => item.id === mapping.courseId)
     const confirmed = await showConfirmDialog(`Remove ${course?.code ?? 'this course unit'} from this curriculum? The course remains in the catalogue and historical registrations are not deleted.`, { title: 'Remove course unit', confirmLabel: 'Remove course unit', destructive: true })
@@ -991,6 +1028,30 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
           </div>
           {authorityCurricula.filter(item => item.isActive || item.id === selected).length === 0 && <p className="empty">{authority ? 'No active curricula are available under this authority.' : 'Select a curriculum authority to load curricula.'}</p>}
           {selected && authorityCourses.filter(course => course.isActive || course.id === mf.courseId).length === 0 && <p className="empty">No active courses are available in this authority catalogue.</p>}
+
+          {selected && ['SCHOOL_BASED', 'UVTAB', 'UHPAB'].includes(resolveAcademicAuthority(authority)) && (
+            <form className="student-form curriculum-school-course-form" onSubmit={saveEditableAuthorityCourseUnit}>
+              <h3>{authority === 'UVTAB' ? 'Add UVTAB competence area / unit' : authority === 'UHPAB' ? 'Add or correct UHPAB course unit for this programme' : 'Add school-based course unit directly to this curriculum'}</h3>
+              <p className="empty">{authority === 'UVTAB' ? 'Enter the verified competence area or competence unit from the UVTAB training package. Map it to the appropriate year and semester.' : authority === 'UHPAB' ? 'Enter the course unit exactly as it should appear in this programme curriculum. It is saved to the UHPAB catalogue and linked to this programme curriculum and semester.' : 'Enter the unit from the institution’s approved curriculum. It will be saved in the SCHOOL_BASED catalogue and placed in the selected year and semester.'}</p>
+              <div className="form-row">
+                <input required placeholder={authority === 'UVTAB' ? 'Competence code' : authority === 'UHPAB' ? 'UHPAB course-unit code' : 'Course/unit code'} value={schoolUnitForm.code} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, code: e.target.value })} />
+                <input required placeholder={authority === 'UVTAB' ? 'Competence area / unit name' : authority === 'UHPAB' ? 'UHPAB course-unit name' : 'Course/unit name'} value={schoolUnitForm.name} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, name: e.target.value })} />
+              </div>
+              <div className="form-row">
+                <input required type="number" min="0" placeholder="Credit units" value={schoolUnitForm.creditUnits} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, creditUnits: e.target.value })} />
+                <select aria-label={authority === 'UVTAB' ? 'Competence type' : authority === 'UHPAB' ? 'UHPAB course unit type' : 'School-based course unit type'} required value={schoolUnitForm.courseType} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, courseType: e.target.value })}>
+                  {authority === 'UVTAB' ? <><option value="">Select competence type</option><option value="Competence Area">Competence Area</option><option value="Competence Unit">Competence Unit</option><option value="Workplace Practice">Workplace Practice</option><option value="Theory">Theory</option><option value="Assessment">Assessment</option><option value="Other">Other</option></> : <><option value="">Select course unit type</option><option value="Lecture">Lecture</option><option value="Practical">Practical</option><option value="Tutorial">Tutorial</option><option value="Seminar">Seminar</option><option value="Laboratory">Laboratory</option><option value="Examination">Examination</option><option value="Other">Other</option></>}
+                </select>
+              </div>
+              <input placeholder="Description / learning outcomes (optional)" value={schoolUnitForm.description} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, description: e.target.value })} />
+              <div className="form-row">
+                <label>Year of study<input required type="number" min="1" value={schoolUnitForm.yearOfStudy} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, yearOfStudy: e.target.value })} /></label>
+                <label>Semester<input required type="number" min="1" value={schoolUnitForm.semesterNumber} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, semesterNumber: e.target.value })} /></label>
+                <label><input type="checkbox" checked={schoolUnitForm.isCore} onChange={e => setSchoolUnitForm({ ...schoolUnitForm, isCore: e.target.checked })} /> Core unit</label>
+              </div>
+              <button type="submit" disabled={saving || !selected || !schoolUnitForm.code.trim() || !schoolUnitForm.name.trim()}>Save and add to semester</button>
+            </form>
+          )}
 
           {selected && (
             <div className="curriculum-semester-list">
