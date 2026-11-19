@@ -15,7 +15,10 @@ vi.mock('../api/timetable', () => ({
   getTimetableTemplate: vi.fn().mockResolvedValue({ teachingGroupId: 'group-1', layoutJson: null, updatedAtUtc: null }),
   saveTimetableTemplate: vi.fn().mockResolvedValue([]),
   getTimetableOptions: vi.fn().mockResolvedValue({
-    teachingGroups: [{ id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' }],
+    teachingGroups: [
+      { id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' },
+      { id: 'group-2', label: 'CPH-Y1-S1-B', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-not-in-selected-curriculum' },
+    ],
     courses: [{ id: 'course-1', label: 'CPH 101 — Pharmacy Practice' }],
     teachers: [{ id: 'teacher-1', label: 'Test Teacher' }],
     semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', academicYearLabel: '2026/2027', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
@@ -87,7 +90,7 @@ describe('TimetableManagement', () => {
 
   it('supports weekend visibility control', () => {
     render(<TimetableManagement />)
-    const toggle = screen.getByRole('checkbox', { name: /show saturday/i })
+    const toggle = screen.getByRole('checkbox', { name: /show weekend days/i })
     expect(toggle).toBeTruthy()
     fireEvent.click(toggle)
     expect((toggle as HTMLInputElement).checked).toBe(false)
@@ -146,6 +149,14 @@ describe('TimetableManagement', () => {
     fireEvent.change(programmeSelect, { target: { value: 'programme-1' } })
     const curriculumSelect = screen.getByLabelText('Curriculum') as HTMLSelectElement
     expect(Array.from(curriculumSelect.options).some(option => option.value === 'curriculum-duplicate')).toBe(true)
+  })
+
+  it('lists all active teaching groups for the selected programme and academic period in Load class', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    const classSelect = await screen.findByLabelText('Class / teaching group') as HTMLSelectElement
+    expect(Array.from(classSelect.options).map(option => option.textContent)).toContain('CPH-Y1-S1')
+    expect(Array.from(classSelect.options).map(option => option.textContent)).toContain('CPH-Y1-S1-B')
   })
 
   it('shows programme curriculum selectors when a timetable workflow is opened', async () => {
