@@ -570,7 +570,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       {semesterTemplates.length === 0 ? <p className="timetable-day-empty">This active curriculum has no semester course mappings yet. Add course units and assign each to a year and semester in Curriculum &amp; Courses; its timetable templates will appear here automatically.</p> :
         <div className="timetable-semester-template-grid">
           {semesterTemplates.map(item => {
-            const courseIds = item.courseIds
             const matchingGroups = options.teachingGroups.filter(group => group.programmeId === selectedCurriculum?.programmeId && group.semesterId === semesterId)
             const sessionCount = activeEntries.filter(entry => matchingGroups.some(group => group.id === entry.teachingGroupId)).length
             const selected = yearOfStudy === String(item.year) && curriculumSemester === String(item.semester)
