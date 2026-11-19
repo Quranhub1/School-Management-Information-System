@@ -597,10 +597,20 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
     {!readOnly && showTemplateEditor && <section className="timetable-template-editor" aria-label="Editable timetable template">
       <div className="timetable-template-document-heading">
-        <p>REPUBLIC OF UGANDA</p>
-        <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
+        <div className="timetable-official-identity">
+          {institutionLoaded && institution.isActive && institution.logoPath && <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} />}
+          <div className="timetable-official-identity-copy">
+            <p className="timetable-country-line">REPUBLIC OF UGANDA</p>
+            <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
+            {institutionLoaded && institution.isActive && institution.motto && <p className="timetable-institution-motto">{institution.motto}</p>}
+            {institutionLoaded && institution.isActive && <p className="timetable-institution-contact">{[institution.address, institution.phone, institution.email, institution.website].filter(value => Boolean(value?.trim())).join(' · ')}</p>}
+          </div>
+        </div>
+        <div className="timetable-official-rule" />
         <input className="timetable-document-title-input" aria-label="Timetable document title" value={templateTitle} onChange={event => setTemplateTitle(event.target.value)} />
-        <span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}{templateGroupId ? ' · ' + (groupLabels.get(templateGroupId) ?? 'Selected class') : ''}</span>
+        <strong className="timetable-document-programme">{selectedProgramme?.label ?? 'Programme not selected'}{selectedCurriculum ? ' · ' + selectedCurriculum.label : ''}</strong>
+        <span className="timetable-document-period">ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · YEAR {yearOfStudy || '—'} · CURRICULUM SEMESTER {curriculumSemester || '—'}</span>
+        <span className="timetable-document-period">VALID FOR {semesterDateRange(selectedSemester)}{templateGroupId ? ' · ' + (groupLabels.get(templateGroupId) ?? 'Selected class') : ''}</span>
       </div>
       <div className="timetable-document-meta-editor">
         <label>Day column heading<input value={templateDayLabel} onChange={event => setTemplateDayLabel(event.target.value)} maxLength={20}/></label>
@@ -670,7 +680,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         const classEntries = [...result.entries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
         const classTimeSlots = [...new Set(classEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b))
         return <article className="timetable-class-document" key={groupId}>
-          <div className="timetable-class-document-heading"><div className="timetable-class-document-identity"><p>REPUBLIC OF UGANDA</p><h4>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h4><strong>{selectedProgramme?.label ?? 'Programme'} · {groupLabel}</strong><span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Selected academic period'} · YEAR {yearOfStudy} · CURRICULUM SEMESTER {curriculumSemester}</span><span>VALID FOR: {semesterDateRange(selectedSemester)}</span></div>
+          <div className="timetable-class-document-heading"><div className="timetable-class-document-identity"><div className="timetable-official-identity">{institutionLoaded && institution.isActive && institution.logoPath && <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} />}<div className="timetable-official-identity-copy"><p>REPUBLIC OF UGANDA</p><h4>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h4>{institutionLoaded && institution.isActive && institution.motto && <span className="timetable-institution-motto">{institution.motto}</span>}{institutionLoaded && institution.isActive && <span className="timetable-institution-contact">{[institution.address, institution.phone, institution.email].filter(value => Boolean(value?.trim())).join(' · ')}</span>}</div></div><strong>{selectedProgramme?.label ?? 'Programme'} · {groupLabel}</strong><span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Selected academic period'} · YEAR {yearOfStudy} · CURRICULUM SEMESTER {curriculumSemester}</span><span>VALID FOR: {semesterDateRange(selectedSemester)}</span></div>
             <div className="timetable-class-actions">
               <button className="timetable-action" type="button" onClick={() => downloadInstitutionalPdf(timetablePdfOptions(groupLabel + ' Teaching Timetable', classEntries, groupLabel + '-timetable'))} disabled={!institutionLoaded || !institution.isActive}>Download PDF</button>
               <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)} disabled={!institutionLoaded || !institution.isActive}>Print</button>
@@ -743,10 +753,18 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
     {loading && activeEntries.length === 0 ? <div className="timetable-empty"><LoadingSpinner label="Loading timetable…" /></div> : activeEntries.length === 0 ? <div className="timetable-empty"><CalendarDays size={26} /><strong>No sessions scheduled yet</strong><span>Schedule or generate sessions to populate the formal weekly timetable.</span></div> : view === 'week' ? <div className="timetable-print-area">
       <div className="timetable-document-heading">
-        <div className="timetable-document-mark">{institutionLoaded && institution.isActive ? institution.abbreviation || 'SMIS' : 'SMIS'}</div>
-        <p>REPUBLIC OF UGANDA</p>
-        <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
+        <div className="timetable-official-identity">
+          {institutionLoaded && institution.isActive && institution.logoPath ? <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} /> : <div className="timetable-document-mark">{institutionLoaded && institution.isActive ? institution.abbreviation || 'SMIS' : 'SMIS'}</div>}
+          <div className="timetable-official-identity-copy">
+            <p>REPUBLIC OF UGANDA</p>
+            <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
+            {institutionLoaded && institution.isActive && institution.motto && <span className="timetable-institution-motto">{institution.motto}</span>}
+            {institutionLoaded && institution.isActive && <span className="timetable-institution-contact">{[institution.address, institution.phone, institution.email].filter(value => Boolean(value?.trim())).join(' · ')}</span>}
+          </div>
+        </div>
+        <div className="timetable-official-rule" />
         <p>TEACHING TIMETABLE</p>
+        <strong className="timetable-document-programme">{selectedProgramme?.label ?? 'All programmes'}</strong>
         <small>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}</small>
       </div>
       <div className="timetable-grid-scroll">
