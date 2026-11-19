@@ -2695,15 +2695,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("BankTransactions");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumApprovalHistory", b =>
-                {
-                    b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
-                        .WithMany()
-                        .HasForeignKey("CurriculumId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("SchoolManagement.Domain.Finance.Bill", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5593,6 +5584,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.LogbookRequirement", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
+                        .WithMany()
+                        .HasForeignKey("CurriculumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumApprovalHistory", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
                         .WithMany()
