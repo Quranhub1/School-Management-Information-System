@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/curriculum-governance/curricula/{curriculumId:guid}")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
-public sealed class CurriculumGovernanceController(SchoolManagementDbContext db) : ControllerBase
+public sealed class CurriculumGovernanceController(CurriculumManagementService service, SchoolManagementDbContext db) : ControllerBase
 {
     public sealed record TransitionRequest(string? Notes);
     public sealed record CloneRequest(string Version, string Title, DateOnly EffectiveFrom, DateOnly? EffectiveTo);
@@ -19,7 +19,7 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
     [HttpGet("approval-history")]
     public async Task<IActionResult> GetHistory(Guid curriculumId, CancellationToken ct)
     {
-        if (!await db.Curricula.AsNoTracking().AnyAsync(x => x.Id == curriculumId, ct))
+        if (!await db.Curricula.AsNoTracking().AnyAsync(x => x.Id == curriculumId && !x.IsDeleted, ct))
             return NotFound(new { message = "Curriculum not found." });
         var history = await db.CurriculumApprovalHistory.AsNoTracking()
             .Where(x => x.CurriculumId == curriculumId)
@@ -51,7 +51,7 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
     [HttpPost("clone")]
     public async Task<IActionResult> Clone(Guid curriculumId, [FromBody] CloneRequest request, CancellationToken ct)
     {
-        var source = await db.Curricula.FirstOrDefaultAsync(x => x.Id == curriculumId, ct);
+        var source = await db.Curricula.FirstOrDefaultAsync(x => x.Id == curriculumId && !x.IsDeleted, ct);
         if (source is null) return NotFound(new { message = "Curriculum not found." });
         var version = request.Version?.Trim();
         var title = request.Title?.Trim();
@@ -112,7 +112,7 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
         if (curriculumId == otherCurriculumId)
             return BadRequest(new { message = "Choose two different curriculum versions to compare." });
         var curricula = await db.Curricula.AsNoTracking()
-            .Where(x => x.Id == curriculumId || x.Id == otherCurriculumId)
+            .Where(x => (x.Id == curriculumId || x.Id == otherCurriculumId) && !x.IsDeleted)
             .Join(db.Programmes.AsNoTracking(), c => c.ProgrammeId, p => p.Id,
                 (c, p) => new { Curriculum = c, ProgrammeCode = p.Code, ProgrammeName = p.Name })
             .ToListAsync(ct);
@@ -160,8 +160,32 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
         {
             if (!curriculum.IsActive || !programme.IsActive || programme.IsReferenceOnly)
                 return Conflict(new { message = "Only active curricula for active deliverable programmes can be submitted." });
-            if (!await db.CurriculumCourses.AnyAsync(x => x.CurriculumId == curriculumId, ct))
+            var mappings = await db.CurriculumCourses.AsNoTracking()
+                .Where(x => x.CurriculumId == curriculumId && !x.IsDeleted).ToListAsync(ct);
+            if (mappings.Count == 0)
                 return Conflict(new { message = "Add at least one course unit before submitting this curriculum for review." });
+            var courseIds = mappings.Select(x => x.CourseId).Distinct().ToArray();
+            var activeCourseCount = await db.Courses.AsNoTracking()
+                .CountAsync(x => courseIds.Contains(x.Id) && x.IsActive && !x.IsDeleted, ct);
+            if (activeCourseCount != courseIds.Length)
+                return Conflict(new { message = "Remove or replace inactive course units before submitting this curriculum." });
+            foreach (var courseId in courseIds)
+            {
+                if (!await service.ValidatePrerequisitesAsync(curriculumId, courseId, ct))
+                    return Conflict(new { message = "A mandatory course prerequisite is missing from this curriculum. Add the prerequisite course unit before submitting." });
+            }
+            foreach (var semester in mappings.Select(x => new { x.YearOfStudy, x.SemesterNumber }).Distinct())
+            {
+                if (!await service.ValidateCreditLoadAsync(curriculumId, semester.YearOfStudy, semester.SemesterNumber, ct))
+                    return Conflict(new { message = $"Year {semester.YearOfStudy}, semester {semester.SemesterNumber} exceeds the maximum credit load of 24 units." });
+            }
+            var totalCredits = await db.CurriculumCourses.AsNoTracking()
+                .Where(x => x.CurriculumId == curriculumId && !x.IsDeleted)
+                .Join(db.Courses.AsNoTracking().Where(x => !x.IsDeleted), mapping => mapping.CourseId, course => course.Id,
+                    (mapping, course) => (int?)course.CreditUnits)
+                .SumAsync(ct) ?? 0;
+            if (curriculum.MinimumCredits > 0 && totalCredits < curriculum.MinimumCredits)
+                return Conflict(new { message = $"The curriculum currently contains {totalCredits} credits; at least {curriculum.MinimumCredits} are required." });
         }
 
         db.CurriculumApprovalHistory.Add(new CurriculumApprovalHistory
