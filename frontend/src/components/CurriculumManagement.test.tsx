@@ -121,7 +121,7 @@ describe('CurriculumManagement selectors', () => {
   it('lets administrators create and place a school-based unit directly in a curriculum semester', async () => {
     vi.mocked(createCourse).mockResolvedValue({
       id: 'course-school-new', authorityCode: 'SCHOOL_BASED', code: 'KSHS101',
-      name: 'Foundations of Public Health', creditUnits: 3, courseType: 'Lecture', isActive: true,
+      name: 'Foundations of Public Health', creditUnits: 3, courseType: 'Lecture', isActive: true, isDeleted: false,
     })
     vi.mocked(addCurriculumCourse).mockResolvedValue({
       id: 'mapping-school-new', curriculumId: 'curriculum-school', courseId: 'course-school-new',
@@ -152,7 +152,7 @@ describe('CurriculumManagement selectors', () => {
   it('offers competence-area and competence-unit entry for UVTAB curricula', async () => {
     vi.mocked(createCourse).mockResolvedValue({
       id: 'uvtab-competence-1', authorityCode: 'UVTAB', code: 'UVTAB-COMP-01',
-      name: 'Apply workplace safety', creditUnits: 0, courseType: 'Competence Area', isActive: true,
+      name: 'Apply workplace safety', creditUnits: 0, courseType: 'Competence Area', isActive: true, isDeleted: false,
     })
     vi.mocked(addCurriculumCourse).mockResolvedValue({
       id: 'mapping-uvtab-1', curriculumId: 'curriculum-uvtab', courseId: 'uvtab-competence-1',
@@ -183,7 +183,7 @@ describe('CurriculumManagement selectors', () => {
   it('lets administrators add and correct UHPAB course units for a selected programme curriculum', async () => {
     vi.mocked(createCourse).mockResolvedValue({
       id: 'uhpab-unit-new', authorityCode: 'UHPAB', code: 'UHPAB-PH201',
-      name: 'Pharmaceutical Chemistry', creditUnits: 4, courseType: 'Lecture', isActive: true,
+      name: 'Pharmaceutical Chemistry', creditUnits: 4, courseType: 'Lecture', isActive: true, isDeleted: false,
     })
     vi.mocked(addCurriculumCourse).mockResolvedValue({
       id: 'mapping-uhpab-new', curriculumId: 'curriculum-pharmacy', courseId: 'uhpab-unit-new',
