@@ -381,10 +381,7 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
             csv.AppendLine($"{m.YearOfStudy},{m.SemesterNumber},{course?.Code ?? "Unknown"},{course?.Name ?? "Unknown"},{course?.CreditUnits ?? 0},{(m.IsCore ? "Core" : "Elective")}");
         }
 
-        return Content(csv.ToString(), "text/csv", new System.Net.Mime.MediaTypeHeaderValue("text/csv")
-        {
-            CharSet = "UTF-8"
-        }.ToString());
+        return Content(csv.ToString(), "text/csv", "UTF-8");
     }
 
     [HttpGet("courses/{courseId:guid}/prerequisites")]
