@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 vi.mock('../api/timetable', () => ({
@@ -12,6 +12,8 @@ vi.mock('../api/timetable', () => ({
     warnings: [],
     unscheduled: [],
   }),
+  getTimetableTemplate: vi.fn().mockResolvedValue({ teachingGroupId: 'group-1', layoutJson: null, updatedAtUtc: null }),
+  saveTimetableTemplate: vi.fn().mockResolvedValue([]),
   getTimetableOptions: vi.fn().mockResolvedValue({
     teachingGroups: [{ id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' }],
     courses: [{ id: 'course-1', label: 'CPH 101 — Pharmacy Practice' }],
@@ -35,6 +37,7 @@ vi.mock('./InstitutionSettingsContext', () => ({
   })),
 }))
 
+import { saveTimetableTemplate } from '../api/timetable'
 import { TimetableManagement } from './TimetableManagement'
 
 describe('TimetableManagement', () => {
@@ -59,6 +62,54 @@ describe('TimetableManagement', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
     expect(await screen.findByText('KAMPALA SCHOOL OF HEALTH SCIENCES')).toBeTruthy()
     expect(screen.getByText(/VALID FOR: 01 Jan 2026 – 30 Jun 2026/)).toBeTruthy()
+  })
+
+  it('shows live system data from the central timetable options API', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getByRole('button', { name: 'System Data & Sync' }))
+    expect(await screen.findByText('System Data & SMIS Bridge')).toBeTruthy()
+    expect(screen.getByText('Programmes')).toBeTruthy()
+    expect(screen.getByText('Course units')).toBeTruthy()
+    expect(screen.getByText('Staff / tutors')).toBeTruthy()
+    expect(screen.getByText(/central database remains the source of truth/i)).toBeTruthy()
+  })
+
+  it('supports weekend visibility control', () => {
+    render(<TimetableManagement />)
+    const toggle = screen.getByRole('checkbox', { name: /show saturday/i })
+    expect(toggle).toBeTruthy()
+    fireEvent.click(toggle)
+    expect((toggle as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('renders the official document designer with editable heading, signature and merge controls', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
+    expect(await screen.findByLabelText('Timetable document title')).toBeTruthy()
+    expect(screen.getByLabelText('Day column heading')).toBeTruthy()
+    expect(screen.getByLabelText('Registrar name')).toBeTruthy()
+    expect(screen.getByLabelText('Registrar title')).toBeTruthy()
+    expect(screen.getByLabelText('Footer text')).toBeTruthy()
+    expect(screen.getByLabelText(/merge monday 08:00 down/i)).toBeTruthy()
+    expect(screen.getByLabelText(/merge monday 08:00 across/i)).toBeTruthy()
+    expect(screen.getByText('REPUBLIC OF UGANDA')).toBeTruthy()
+  })
+
+  it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
+    fireEvent.change(await screen.findByLabelText('Timetable document title'), { target: { value: 'OFFICIAL CLASS TIMETABLE' } })
+    fireEvent.change(screen.getByLabelText('Registrar name'), { target: { value: 'JANE DOE' } })
+    fireEvent.change(screen.getByLabelText(/merge monday 08:00 down/i), { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: /save timetable template/i }))
+    await waitFor(() => expect(saveTimetableTemplate).toHaveBeenCalled())
+    expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', [], expect.objectContaining({
+      title: 'OFFICIAL CLASS TIMETABLE',
+      registrarName: 'JANE DOE',
+      cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2' }) }),
+    }))
   })
 
   it('supports readOnly mode', () => {

@@ -68,6 +68,8 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<CourseRegistration> CourseRegistrations => Set<CourseRegistration>();
     public DbSet<CourseOffering> CourseOfferings => Set<CourseOffering>();
     public DbSet<CoursePrerequisite> CoursePrerequisites => Set<CoursePrerequisite>();
+    public DbSet<CurriculumApprovalHistory> CurriculumApprovalHistory => Set<CurriculumApprovalHistory>();
+    public DbSet<TimetableTemplate> TimetableTemplates => Set<TimetableTemplate>();
     public DbSet<TeachingGroup> TeachingGroups => Set<TeachingGroup>();
     public DbSet<TimetableEntry> TimetableEntries => Set<TimetableEntry>();
     public DbSet<AttendanceSession> AttendanceSessions => Set<AttendanceSession>();
@@ -174,6 +176,9 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
 
     protected override void OnModelCreating(ModelBuilder m)
     {
+        m.Entity<CoursePrerequisite>(e => { e.HasKey(x => x.Id); e.Property(x => x.IsMandatory).HasDefaultValue(true); e.HasIndex(x => new { x.CourseId, x.PrerequisiteCourseId }).IsUnique(); e.HasIndex(x => x.PrerequisiteCourseId); e.ToTable(t => t.HasCheckConstraint("CK_CoursePrerequisites_DifferentCourses", "\"CourseId\" <> \"PrerequisiteCourseId\"")); e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade); e.HasOne<Course>().WithMany().HasForeignKey(x => x.PrerequisiteCourseId).OnDelete(DeleteBehavior.Cascade); });
+        m.Entity<CurriculumApprovalHistory>(e => { e.HasKey(x => x.Id); e.Property(x => x.ToStatus).IsRequired(); e.Property(x => x.Notes).HasMaxLength(2000); e.Property(x => x.Actor).HasMaxLength(200).IsRequired(); e.HasIndex(x => new { x.CurriculumId, x.ChangedAtUtc }); e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade); });
+        m.Entity<TimetableTemplate>(e => { e.HasKey(x => x.TeachingGroupId); e.Property(x => x.LayoutJson).HasColumnType("jsonb").IsRequired().HasDefaultValue("{}"); e.Property(x => x.UpdatedAtUtc).IsRequired(); e.HasOne<TeachingGroup>().WithMany().HasForeignKey(x => x.TeachingGroupId).OnDelete(DeleteBehavior.Cascade); });
         // Archived students are excluded from ordinary operational queries. Historical record endpoints opt in with IgnoreQueryFilters().
         m.Entity<SchoolManagement.Domain.Students.Student>().HasQueryFilter(student => !student.IsArchived);
         m.Entity<SchoolManagement.Domain.Students.Student>().HasIndex(student => new { student.IsArchived, student.CampusId, student.StudentNumber });
