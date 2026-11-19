@@ -137,7 +137,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const eligibleMappings = curriculumMappings.filter(item => (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) && (!curriculumSemester || item.semesterNumber === Number(curriculumSemester)))
   const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
   const availableCourses = options.courses.filter(item => eligibleCourseIds.has(item.id))
-  const availableGroups = options.teachingGroups.filter(item => item.programmeId === selectedCurriculum?.programmeId && item.semesterId === semesterId && eligibleCourseIds.has(item.courseId))
+  const availableGroups = options.teachingGroups.filter(item => item.programmeId === selectedCurriculum?.programmeId && item.semesterId === semesterId)
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedGroupCourses = selectedGroup ? options.courses.filter(item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)) : []
   const activeEntries = useMemo(() => entries.filter(item => item.isActive && semesterGroupIds.has(item.teachingGroupId)), [entries, semesterGroupIds])
@@ -366,7 +366,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
   async function loadTemplate() {
     if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before loading the template.'); return }
-    if (!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)) { setError('Choose a teaching group from the selected programme curriculum and academic period.'); return }
+    if (!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)) { setError('Choose a class from the selected programme and academic period. Its course units are still validated against the selected curriculum when saving.'); return }
     setError('')
     try {
       const saved = await getTimetableTemplate(templateGroupId)
@@ -570,8 +570,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       {semesterTemplates.length === 0 ? <p className="timetable-day-empty">This active curriculum has no semester course mappings yet. Add course units and assign each to a year and semester in Curriculum &amp; Courses; its timetable templates will appear here automatically.</p> :
         <div className="timetable-semester-template-grid">
           {semesterTemplates.map(item => {
-            const courseIds = item.courseIds
-            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === selectedCurriculum?.programmeId && group.semesterId === semesterId && courseIds.has(group.courseId))
+            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === selectedCurriculum?.programmeId && group.semesterId === semesterId)
             const sessionCount = activeEntries.filter(entry => matchingGroups.some(group => group.id === entry.teachingGroupId)).length
             const selected = yearOfStudy === String(item.year) && curriculumSemester === String(item.semester)
             return <article className={`timetable-semester-template-card${selected ? ' is-selected' : ''}`} key={item.year + '-' + item.semester}>
@@ -611,7 +610,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     {!readOnly && showGenerator && <form className="timetable-form-panel" onSubmit={handleGenerate}>
       <h3>Generate a timetable</h3>
       <div className="timetable-form-grid">
-        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>{availableGroups.length === 0 && <small className="timetable-class-empty-hint">No active teaching groups are linked to this programme and academic period. Check Course Offerings and Teaching Groups.</small>}</label>
         {!teachingGroupId && <label>Number of timetables<input type="number" min="1" max={Math.max(1, availableGroups.length)} value={timetableCount} onChange={event => setTimetableCount(event.target.value)} required /></label>}
       </div>
       {!teachingGroupId && <p className="timetable-generator-help">Generates one separate timetable for each of the first N teaching groups. Available groups: {availableGroups.length}.</p>}
