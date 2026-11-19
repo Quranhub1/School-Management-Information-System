@@ -19,10 +19,21 @@ vi.mock('../api/timetable', () => ({
     courses: [{ id: 'course-1', label: 'CPH 101 — Pharmacy Practice' }],
     teachers: [{ id: 'teacher-1', label: 'Test Teacher' }],
     semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', academicYearLabel: '2026/2027', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
-    programmes: [{ id: 'programme-1', label: 'Certificate in Pharmacy' }],
-    curricula: [{ id: 'curriculum-1', programmeId: 'programme-1', label: 'Certificate in Pharmacy — 2026' }],
+    programmes: [
+      { id: 'programme-1', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH' },
+      { id: 'programme-duplicate', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH' },
+      { id: 'programme-2', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH' },
+      { id: 'programme-2-duplicate', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH' },
+    ],
+    curricula: [
+      { id: 'curriculum-1', programmeId: 'programme-1', label: 'Certificate in Pharmacy — 2026' },
+      { id: 'curriculum-duplicate', programmeId: 'programme-duplicate', label: 'Certificate in Pharmacy — alternate record' },
+      { id: 'curriculum-2', programmeId: 'programme-2', label: 'Diploma in Pharmacy — 2026' },
+      { id: 'curriculum-2-duplicate', programmeId: 'programme-2-duplicate', label: 'Diploma in Pharmacy — alternate record' },
+    ],
     curriculumCourses: [
       { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-1', courseLabel: 'CPH 101 — Pharmacy Practice', yearOfStudy: 1, semesterNumber: 1, isCore: true },
+      { curriculumId: 'curriculum-duplicate', programmeId: 'programme-duplicate', courseId: 'course-1', courseLabel: 'CPH 101 — Pharmacy Practice', yearOfStudy: 1, semesterNumber: 1, isCore: true },
       { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-2', courseLabel: 'CPH 102 — Pharmaceutics', yearOfStudy: 1, semesterNumber: 2, isCore: true },
       { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-3', courseLabel: 'CPH 201 — Clinical Pharmacy', yearOfStudy: 2, semesterNumber: 1, isCore: true },
       { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-4', courseLabel: 'CPH 202 — Dispensing Practice', yearOfStudy: 2, semesterNumber: 2, isCore: true },
@@ -115,6 +126,19 @@ describe('TimetableManagement', () => {
   it('supports readOnly mode', () => {
     render(<TimetableManagement readOnly />)
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
+  })
+
+  it('shows each programme code only once while retaining curricula attached to duplicate records', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
+    const programmeSelect = await screen.findByLabelText('Programme') as HTMLSelectElement
+    const programmeOptions = Array.from(programmeSelect.options).map(option => option.textContent)
+    expect(programmeOptions.filter(label => label?.includes('(Certificate)'))).toHaveLength(1)
+    expect(programmeOptions.filter(label => label?.includes('(Diploma)'))).toHaveLength(1)
+    expect(programmeOptions).toHaveLength(3)
+    fireEvent.change(programmeSelect, { target: { value: 'programme-1' } })
+    const curriculumSelect = screen.getByLabelText('Curriculum') as HTMLSelectElement
+    expect(Array.from(curriculumSelect.options).some(option => option.value === 'curriculum-duplicate')).toBe(true)
   })
 
   it('shows programme curriculum selectors when a timetable workflow is opened', async () => {
