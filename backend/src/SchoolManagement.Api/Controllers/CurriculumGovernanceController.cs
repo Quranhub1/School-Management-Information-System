@@ -142,7 +142,7 @@ public sealed class CurriculumGovernanceController(CurriculumManagementService s
     private async Task<IActionResult> Transition(Guid curriculumId, string expectedStatus, string nextStatus,
         string? notes, CancellationToken ct, bool deactivate = false, bool requireNotes = false, bool activate = false)
     {
-        var curriculum = await db.Curricula.FirstOrDefaultAsync(x => x.Id == curriculumId, ct);
+        var curriculum = await db.Curricula.FirstOrDefaultAsync(x => x.Id == curriculumId && !x.IsDeleted, ct);
         if (curriculum is null) return NotFound(new { message = "Curriculum not found." });
         var allowedStatuses = expectedStatus.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (!allowedStatuses.Contains(curriculum.Status, StringComparer.OrdinalIgnoreCase))
