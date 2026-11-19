@@ -93,7 +93,7 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText('Footer text')).toBeTruthy()
     expect(screen.getByLabelText(/merge monday 08:00 down/i)).toBeTruthy()
     expect(screen.getByLabelText(/merge monday 08:00 across/i)).toBeTruthy()
-    expect(screen.getByText('REPUBLIC OF UGANDA')).toBeTruthy()
+    expect(screen.queryByText('REPUBLIC OF UGANDA')).toBeNull()
   })
 
   it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
