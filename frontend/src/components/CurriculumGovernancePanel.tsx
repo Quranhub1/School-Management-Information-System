@@ -5,6 +5,7 @@ import {
   compareCurricula,
   getCurriculumApprovalHistory,
   rejectCurriculum,
+  publishCurriculum,
   retireCurriculum,
   submitCurriculumForReview,
   type Curriculum,
@@ -101,11 +102,12 @@ export function CurriculumGovernancePanel({ curricula, onChanged }: { curricula:
         <>
           <div className="form-row curriculum-governance-actions">
             {selected.status === 'Draft' && <button type="button" disabled={busy} onClick={() => void runAction(() => submitCurriculumForReview(selected.id, notes), 'Curriculum submitted for review.')}>Submit for review</button>}
-            {selected.status === 'UnderReview' && <>
+            {selected.status === 'Submitted' && <>
               <button type="button" disabled={busy} onClick={() => void runAction(() => approveCurriculum(selected.id, notes), 'Curriculum approved.')}>Approve</button>
               <button type="button" className="danger-button" disabled={busy || !notes.trim()} onClick={() => void runAction(() => rejectCurriculum(selected.id, notes), 'Curriculum returned to draft.')}>Return to draft</button>
             </>}
-            {selected.status === 'Approved' && <button type="button" className="danger-button" disabled={busy || !notes.trim()} onClick={() => void runAction(() => retireCurriculum(selected.id, notes), 'Curriculum retired.')}>Retire curriculum</button>}
+            {selected.status === 'Approved' && <button type="button" disabled={busy} onClick={() => void runAction(() => publishCurriculum(selected.id, notes), 'Curriculum published.')}>Publish curriculum</button>}
+            {(selected.status === 'Approved' || selected.status === 'Published') && <button type="button" className="danger-button" disabled={busy || !notes.trim()} onClick={() => void runAction(() => retireCurriculum(selected.id, notes), 'Curriculum retired.')}>Retire curriculum</button>}
           </div>
           <label>Review note / action reason
             <textarea rows={2} value={notes} onChange={event => setNotes(event.target.value)} placeholder="Add review notes or explain a rejection / retirement" />
