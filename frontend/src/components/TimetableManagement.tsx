@@ -218,7 +218,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             cell.sessionType || '',
           ].filter(Boolean).join('\\n') : '—'
           row.push({ text: text || '—', alignment: 'center', ...(rowSpan > 1 ? { rowSpan } : {}), ...(colSpan > 1 ? { colSpan } : {}) })
-          for (let covered = 1; covered < colSpan; covered++) row.push({})
         })
         return row
       }),
