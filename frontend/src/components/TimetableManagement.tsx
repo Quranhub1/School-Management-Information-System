@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, LayoutGrid, List, Plus, Sparkles, Trash2, Pencil, Save } from 'lucide-react'
 import LoadingSpinner from './LoadingSpinner'
-import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, listTimetable, saveTimetableTemplate, updateTimetableEntry, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
+import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, getTimetableTemplate, listTimetable, saveTimetableTemplate, updateTimetableEntry, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
 import './TimetableManagement.css'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
@@ -288,33 +288,51 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setError('')
   }
 
-  function loadTemplate() {
+  async function loadTemplate() {
     if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before loading the template.'); return }
     if (!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)) { setError('Choose a teaching group from the selected programme curriculum and academic period.'); return }
-    const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
-    const slots = [...defaultTemplateSlots.map(slot => ({ ...slot }))]
-    for (const entry of groupEntries) {
-      const start = timeLabel(entry.startTime)
-      const existingSlot = slots.find(slot => slot.startTime === start)
-      if (existingSlot) existingSlot.endTime = timeLabel(entry.endTime)
-      else slots.push({ startTime: start, endTime: timeLabel(entry.endTime) })
-    }
-    slots.sort((a, b) => a.startTime.localeCompare(b.startTime))
-    const cells: Record<string, TemplateCell> = {}
-    for (const entry of groupEntries) {
-      const slotIndex = slots.findIndex(slot => slot.startTime === timeLabel(entry.startTime))
-      const key = entry.dayOfWeek + '-' + slotIndex
-      if (cells[key]) {
-        setError('This class has multiple sessions at the same day and start time. Resolve the duplicate sessions before editing its template.')
-        return
-      }
-      cells[key] = { id: entry.id, courseId: entry.courseId, teacherId: entry.teacherId, room: entry.room ?? '', sessionType: entry.sessionType ?? 'Lecture' }
-    }
-    setTemplateSlots(slots)
-    setTemplateCells(cells)
-    setTemplateLoadedGroupId(templateGroupId)
-    setShowTemplateEditor(true)
     setError('')
+    try {
+      const saved = await getTimetableTemplate(templateGroupId)
+      if (saved.layoutJson) {
+        const layout = JSON.parse(saved.layoutJson) as { slots?: Array<{ startTime: string; endTime: string }>; cells?: Record<string, TemplateCell>; showWeekends?: boolean }
+        if (Array.isArray(layout.slots) && layout.slots.length > 0 && layout.cells && typeof layout.cells === 'object') {
+          setTemplateSlots(layout.slots.map(slot => ({ startTime: slot.startTime, endTime: slot.endTime })))
+          setTemplateCells(layout.cells)
+          if (typeof layout.showWeekends === 'boolean') setShowWeekends(layout.showWeekends)
+          setTemplateLoadedGroupId(templateGroupId)
+          setShowTemplateEditor(true)
+          return
+        }
+      }
+
+      // Backward-compatible fallback for groups that have lessons but no saved layout yet.
+      const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
+      const slots = [...defaultTemplateSlots.map(slot => ({ ...slot }))]
+      for (const entry of groupEntries) {
+        const start = timeLabel(entry.startTime)
+        const existingSlot = slots.find(slot => slot.startTime === start)
+        if (existingSlot) existingSlot.endTime = timeLabel(entry.endTime)
+        else slots.push({ startTime: start, endTime: timeLabel(entry.endTime) })
+      }
+      slots.sort((a, b) => a.startTime.localeCompare(b.startTime))
+      const cells: Record<string, TemplateCell> = {}
+      for (const entry of groupEntries) {
+        const slotIndex = slots.findIndex(slot => slot.startTime === timeLabel(entry.startTime))
+        const key = entry.dayOfWeek + '-' + slotIndex
+        if (cells[key]) {
+          setError('This class has multiple sessions at the same day and start time. Resolve the duplicate sessions before editing its template.')
+          return
+        }
+        cells[key] = { id: entry.id, courseId: entry.courseId, teacherId: entry.teacherId, room: entry.room ?? '', sessionType: entry.sessionType ?? 'Lecture' }
+      }
+      setTemplateSlots(slots)
+      setTemplateCells(cells)
+      setTemplateLoadedGroupId(templateGroupId)
+      setShowTemplateEditor(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load the saved timetable template.')
+    }
   }
 
   function changeTemplateCell(key: string, field: keyof TemplateCell, value: string) {
@@ -349,7 +367,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setTemplateSaving(true)
     setError('')
     try {
-      await saveTimetableTemplate(templateGroupId, entries)
+      await saveTimetableTemplate(templateGroupId, entries, { slots: templateSlots, cells: templateCells, showWeekends })
       await load()
       setShowTemplateEditor(false)
       setTemplateCells({})
