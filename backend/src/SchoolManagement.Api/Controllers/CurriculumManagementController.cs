@@ -336,7 +336,7 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
         }
 
         if (errors.Count > 0)
-            return Conflict(new { added: results.Count, errors });
+            return Conflict(new { Added = results.Count, Errors = errors });
 
         return Ok(results);
     }

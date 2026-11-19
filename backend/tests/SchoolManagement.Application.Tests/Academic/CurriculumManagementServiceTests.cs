@@ -15,7 +15,7 @@ public sealed class CurriculumManagementServiceTests
     private sealed class FakeCurriculumRepository : ICurriculumRepository
     {
         private readonly List<Curriculum> _items = new();
-        public IReadOnlyList<Curriculum> Items => _items;
+        public List<Curriculum> Items => _items;
         public Task<IReadOnlyList<Curriculum>> GetAllAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<Curriculum>>(_items.Where(x => !x.IsDeleted).ToList());
         public Task<Curriculum?> GetByIdAsync(Guid id, CancellationToken ct = default) => Task.FromResult(_items.FirstOrDefault(x => x.Id == id && !x.IsDeleted));
         public Task<bool> VersionExistsAsync(Guid programmeId, string version, Guid? excludingId = null, CancellationToken ct = default) =>
@@ -27,7 +27,7 @@ public sealed class CurriculumManagementServiceTests
     private sealed class FakeCourseRepository : ICourseRepository
     {
         private readonly List<Course> _items = new();
-        public IReadOnlyList<Course> Items => _items;
+        public List<Course> Items => _items;
         public Task<IReadOnlyList<Course>> GetAllAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<Course>>(_items.Where(x => !x.IsDeleted).ToList());
         public Task<Course?> GetByIdAsync(Guid id, CancellationToken ct = default) => Task.FromResult(_items.FirstOrDefault(x => x.Id == id && !x.IsDeleted));
         public Task<bool> CodeExistsAsync(string code, Guid? excludingId = null, CancellationToken ct = default) =>
@@ -45,7 +45,7 @@ public sealed class CurriculumManagementServiceTests
     private sealed class FakeCurriculumCourseRepository : ICurriculumCourseRepository
     {
         private readonly List<CurriculumCourse> _items = new();
-        public IReadOnlyList<CurriculumCourse> Items => _items;
+        public List<CurriculumCourse> Items => _items;
         public Task<IReadOnlyList<CurriculumCourse>> GetByCurriculumAsync(Guid curriculumId, CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<CurriculumCourse>>(_items.Where(x => x.CurriculumId == curriculumId && !x.IsDeleted).ToList());
         public Task<CurriculumCourse?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
@@ -65,7 +65,7 @@ public sealed class CurriculumManagementServiceTests
     private sealed class FakeCoursePrerequisiteRepository : ICoursePrerequisiteRepository
     {
         private readonly List<CoursePrerequisite> _items = new();
-        public IReadOnlyList<CoursePrerequisite> Items => _items;
+        public List<CoursePrerequisite> Items => _items;
         public Task<IReadOnlyList<CoursePrerequisite>> GetByCourseAsync(Guid courseId, CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<CoursePrerequisite>>(_items.Where(x => x.CourseId == courseId).ToList());
         public Task<CoursePrerequisite?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
@@ -80,7 +80,7 @@ public sealed class CurriculumManagementServiceTests
     private sealed class FakeProgrammeRepository : IProgrammeRepository
     {
         private readonly List<Programme> _items = new();
-        public IReadOnlyList<Programme> Items => _items;
+        public List<Programme> Items => _items;
         public Task<IReadOnlyList<Programme>> GetAllAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<Programme>>(_items);
         public Task<Programme?> GetByIdAsync(Guid id, CancellationToken ct = default) => Task.FromResult(_items.FirstOrDefault(x => x.Id == id));
         public Task<bool> CodeExistsAsync(string code, Guid? excludingId = null, CancellationToken ct = default) => Task.FromResult(false);
