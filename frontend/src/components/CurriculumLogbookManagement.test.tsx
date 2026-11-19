@@ -18,7 +18,7 @@ vi.mock('../api/curriculumManagement', () => ({
 
 const curricula = [{
   id: 'curriculum-1', programmeId: 'programme-1', version: '1.0', title: 'Diploma in Nursing',
-  minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 0,
+  minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 0,
 }]
 
 describe('CurriculumLogbookManagement', () => {

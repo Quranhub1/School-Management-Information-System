@@ -117,7 +117,35 @@ export const getPrerequisites = (courseId: string) => request<CoursePrerequisite
 export const addPrerequisite = (courseId: string, input: { prerequisiteCourseId: string; isMandatory?: boolean; minimumGrade?: string }) => request<void>(`/api/curriculum-management/courses/${encodeURIComponent(courseId)}/prerequisites`, { method: 'POST', body: JSON.stringify(input) })
 export const removePrerequisite = (courseId: string, prerequisiteId: string) => request<void>(`/api/curriculum-management/courses/${encodeURIComponent(courseId)}/prerequisites/${encodeURIComponent(prerequisiteId)}`, { method: 'DELETE' })
 export const getCreditLoad = (curriculumId: string) => request<CreditLoadInfo[]>(`/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/credit-load`)
-export const submitCurriculumForReview = (id: string) => request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/submit-for-review`, { method: 'POST' })
-export const approveCurriculum = (id: string) => request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/approve`, { method: 'POST' })
-export const publishCurriculum = (id: string) => request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/publish`, { method: 'POST' })
+export const submitCurriculumForReview = (id: string, notes?: string) => request<void>(`/api/curriculum-governance/curricula/${encodeURIComponent(id)}/submit-for-review`, { method: 'POST', body: JSON.stringify({ notes }) })
+export const approveCurriculum = (id: string, notes?: string) => request<void>(`/api/curriculum-governance/curricula/${encodeURIComponent(id)}/approve`, { method: 'POST', body: JSON.stringify({ notes }) })
+export const publishCurriculum = (id: string, notes?: string) => request<void>(`/api/curriculum-governance/curricula/${encodeURIComponent(id)}/publish`, { method: 'POST', body: JSON.stringify({ notes }) })
 export const exportCurriculumCsv = (curriculumId: string) => fetch(`${API_BASE_URL}/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/courses/export`)
+
+export interface CurriculumApprovalHistory {
+  id: string
+  curriculumId: string
+  fromStatus?: string | null
+  toStatus: string
+  notes?: string | null
+  actor: string
+  changedAtUtc: string
+}
+export interface CurriculumComparison {
+  programmeCode: string
+  programmeName: string
+  versions: Array<{ id: string; version: string; title: string; effectiveFrom: string; effectiveTo?: string | null; status: string; minimumCredits: number }>
+  firstOnly: Array<{ curriculumId: string; id: string; code: string; name: string; creditUnits: number; yearOfStudy: number; semesterNumber: number; isCore: boolean }>
+  secondOnly: Array<{ curriculumId: string; id: string; code: string; name: string; creditUnits: number; yearOfStudy: number; semesterNumber: number; isCore: boolean }>
+  changedPlacement: Array<{ id: string; code: string; name: string; creditUnits: number; firstYear: number; firstSemester: number; firstIsCore: boolean; secondYear: number; secondSemester: number; secondIsCore: boolean }>
+}
+const governanceBase = (id: string) => `/api/curriculum-governance/curricula/${encodeURIComponent(id)}`
+export const getCurriculumApprovalHistory = (id: string) => request<CurriculumApprovalHistory[]>(`${governanceBase(id)}/approval-history`)
+const curriculumTransition = (id: string, action: 'submit-for-review' | 'approve' | 'reject' | 'publish' | 'retire', notes?: string) =>
+  request<void>(`${governanceBase(id)}/${action}`, { method: 'POST', body: JSON.stringify({ notes }) })
+export const rejectCurriculum = (id: string, notes: string) => curriculumTransition(id, 'reject', notes)
+export const retireCurriculum = (id: string, notes: string) => curriculumTransition(id, 'retire', notes)
+export const cloneCurriculum = (id: string, input: { version: string; title: string; effectiveFrom: string; effectiveTo?: string | null }) =>
+  request<Curriculum>(`${governanceBase(id)}/clone`, { method: 'POST', body: JSON.stringify(input) })
+export const compareCurricula = (id: string, otherId: string) =>
+  request<CurriculumComparison>(`${governanceBase(id)}/compare/${encodeURIComponent(otherId)}`)

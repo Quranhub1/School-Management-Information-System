@@ -33,6 +33,10 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
             where curriculum.Id == id && authority.IsActive
             select authority.Id).AnyAsync(ct);
         if (!authorityActive) return Conflict(new { message = "The curriculum's academic authority is inactive or no longer registered." });
+        var currentStatus = await db.Curricula.AsNoTracking().Where(x => x.Id == id && !x.IsDeleted).Select(x => x.Status).SingleOrDefaultAsync(ct);
+        if (currentStatus is null) return NotFound(new { message = "Curriculum not found." });
+        if (!string.Equals(currentStatus, "Draft", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "Only draft curricula can be edited. Clone an approved version to create a new draft." });
         var (success, error) = await service.UpdateCurriculumAsync(id, request, ct);
         return success ? NoContent() : error == "Curriculum not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
     }
@@ -40,6 +44,10 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpPatch("curricula/{id:guid}/active")]
     public async Task<IActionResult> SetCurriculumActive(Guid id, [FromBody] SetActiveRequest request, CancellationToken ct)
     {
+        var status = await db.Curricula.AsNoTracking().Where(x => x.Id == id && !x.IsDeleted).Select(x => x.Status).SingleOrDefaultAsync(ct);
+        if (status is null) return NotFound(new { message = "Curriculum not found." });
+        if (string.Equals(status, "Retired", StringComparison.OrdinalIgnoreCase) && request.IsActive)
+            return Conflict(new { message = "A retired curriculum cannot be reactivated. Clone it to create a new draft version." });
         var (success, error) = await service.SetCurriculumActiveAsync(id, request.IsActive, ct);
         return success ? NoContent() : error == "Curriculum not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
     }
@@ -192,6 +200,10 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     {
         if (request.YearOfStudy < 1 || request.SemesterNumber < 1)
             return BadRequest(new { message = "Year and semester numbers must be positive." });
+        var curriculumStatus = await db.Curricula.AsNoTracking().Where(x => x.Id == curriculumId && !x.IsDeleted).Select(x => x.Status).SingleOrDefaultAsync(ct);
+        if (curriculumStatus is null) return NotFound(new { message = "Curriculum not found." });
+        if (!string.Equals(curriculumStatus, "Draft", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "Only draft curricula can have semester placements changed." });
         var mappings = await db.CurriculumCourses.Where(x =>
             x.CurriculumId == curriculumId && x.YearOfStudy == year && x.SemesterNumber == semester).ToListAsync(ct);
         if (mappings.Count == 0) return NotFound(new { message = "Semester not found in this curriculum." });
@@ -207,6 +219,10 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpDelete("curricula/{curriculumId:guid}/semesters/{year:int}/{semester:int}")]
     public async Task<IActionResult> DeleteSemester(Guid curriculumId, int year, int semester, CancellationToken ct)
     {
+        var curriculumStatus = await db.Curricula.AsNoTracking().Where(x => x.Id == curriculumId && !x.IsDeleted).Select(x => x.Status).SingleOrDefaultAsync(ct);
+        if (curriculumStatus is null) return NotFound(new { message = "Curriculum not found." });
+        if (!string.Equals(curriculumStatus, "Draft", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "Only draft curricula can have semesters deleted." });
         var mappings = await db.CurriculumCourses.Where(x =>
             x.CurriculumId == curriculumId && x.YearOfStudy == year && x.SemesterNumber == semester).ToListAsync(ct);
         if (mappings.Count == 0) return NotFound(new { message = "Semester not found in this curriculum." });
@@ -222,6 +238,9 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     {
         var mapping = await db.CurriculumCourses.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mappingId && x.CurriculumId == curriculumId, ct);
         if (mapping is null) return NotFound(new { message = "Curriculum course mapping not found." });
+        var curriculumStatus = await db.Curricula.AsNoTracking().Where(x => x.Id == curriculumId && !x.IsDeleted).Select(x => x.Status).SingleOrDefaultAsync(ct);
+        if (!string.Equals(curriculumStatus, "Draft", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "Only draft curricula can have course-unit placements changed." });
         var creditLoadOk = await service.ValidateCreditLoadAsync(curriculumId, request.YearOfStudy, request.SemesterNumber, ct);
         if (!creditLoadOk)
         {
@@ -248,6 +267,8 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
             return Conflict(new { message = "Only active, non-reference programmes can receive curriculum course mappings." });
         if (!curriculum.Curriculum.IsActive)
             return Conflict(new { message = "Activate the curriculum before changing its course mappings." });
+        if (!string.Equals(curriculum.Curriculum.Status, "Draft", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "Only draft curricula can have course-unit mappings changed. Clone an approved version first." });
 
         var course = await db.Courses.FirstOrDefaultAsync(x => x.Id == request.CourseId && x.IsActive, ct);
         if (course is null) return NotFound(new { message = "The selected active course does not exist." });
