@@ -16,13 +16,13 @@ const { mockAuthorityList, mockProgrammes, mockCurricula, mockCourses } = vi.hoi
   ],
   mockCurricula: [
     // The stale programmeType value must not hide a curriculum whose programme is FullProgramme.
-    { id: 'curriculum-pharmacy', programmeId: 'programme-pharmacy', version: '1.0', title: 'Certificate in Pharmacy Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 1 },
-    { id: 'curriculum-short-inactive', programmeId: 'programme-short', version: '1.0', title: 'Inactive short curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Inactive', isActive: false, programmeType: 1 },
-    { id: 'curriculum-school', programmeId: 'programme-school', version: '1.0', title: 'KSHS School-Based Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 0 },
-    { id: 'curriculum-uvtab', programmeId: 'programme-uvtab', version: '1.0', title: 'UVTAB Business Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, programmeType: 0 },
+    { id: 'curriculum-pharmacy', programmeId: 'programme-pharmacy', version: '1.0', title: 'Certificate in Pharmacy Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 1 },
+    { id: 'curriculum-short-inactive', programmeId: 'programme-short', version: '1.0', title: 'Inactive short curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Inactive', isActive: false, isDeleted: false, programmeType: 1 },
+    { id: 'curriculum-school', programmeId: 'programme-school', version: '1.0', title: 'KSHS School-Based Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 0 },
+    { id: 'curriculum-uvtab', programmeId: 'programme-uvtab', version: '1.0', title: 'UVTAB Business Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 0 },
   ],
   mockCourses: [
-    { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, courseType: 'Lecture' },
+    { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, isDeleted: false, courseType: 'Lecture' },
   ],
 }))
 
@@ -125,7 +125,7 @@ describe('CurriculumManagement selectors', () => {
     })
     vi.mocked(addCurriculumCourse).mockResolvedValue({
       id: 'mapping-school-new', curriculumId: 'curriculum-school', courseId: 'course-school-new',
-      yearOfStudy: 1, semesterNumber: 1, isCore: true,
+      yearOfStudy: 1, semesterNumber: 1, isCore: true, isDeleted: false,
     })
 
     render(<CurriculumManagement canManage />)
@@ -145,7 +145,7 @@ describe('CurriculumManagement selectors', () => {
       authorityCode: 'SCHOOL_BASED', code: 'KSHS101', name: 'Foundations of Public Health',
     })))
     await waitFor(() => expect(addCurriculumCourse).toHaveBeenCalledWith('curriculum-school', expect.objectContaining({
-      courseId: 'course-school-new', yearOfStudy: 1, semesterNumber: 1, isCore: true,
+      courseId: 'course-school-new', yearOfStudy: 1, semesterNumber: 1, isCore: true, isDeleted: false,
     })))
   })
 
@@ -156,7 +156,7 @@ describe('CurriculumManagement selectors', () => {
     })
     vi.mocked(addCurriculumCourse).mockResolvedValue({
       id: 'mapping-uvtab-1', curriculumId: 'curriculum-uvtab', courseId: 'uvtab-competence-1',
-      yearOfStudy: 1, semesterNumber: 1, isCore: true,
+      yearOfStudy: 1, semesterNumber: 1, isCore: true, isDeleted: false,
     })
 
     render(<CurriculumManagement canManage />)
@@ -187,7 +187,7 @@ describe('CurriculumManagement selectors', () => {
     })
     vi.mocked(addCurriculumCourse).mockResolvedValue({
       id: 'mapping-uhpab-new', curriculumId: 'curriculum-pharmacy', courseId: 'uhpab-unit-new',
-      yearOfStudy: 2, semesterNumber: 1, isCore: true,
+      yearOfStudy: 2, semesterNumber: 1, isCore: true, isDeleted: false,
     })
 
     render(<CurriculumManagement canManage />)
@@ -208,7 +208,7 @@ describe('CurriculumManagement selectors', () => {
       authorityCode: 'UHPAB', code: 'UHPAB-PH201', name: 'Pharmaceutical Chemistry', creditUnits: 0,
     })))
     await waitFor(() => expect(addCurriculumCourse).toHaveBeenCalledWith('curriculum-pharmacy', expect.objectContaining({
-      courseId: 'uhpab-unit-new', yearOfStudy: 2, semesterNumber: 1, isCore: true,
+      courseId: 'uhpab-unit-new', yearOfStudy: 2, semesterNumber: 1, isCore: true, isDeleted: false,
     })))
   })
 
