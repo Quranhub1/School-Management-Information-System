@@ -930,6 +930,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("LayoutJson")
+                        .ValueGeneratedOnAdd()
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasDefaultValue("{}");
