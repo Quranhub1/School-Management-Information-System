@@ -140,7 +140,7 @@ export function CurriculumGovernancePanel({ curricula, onChanged }: { curricula:
                 <tbody>
                   {comparison.firstOnly.map(item => <tr key={`a-${item.id}`}><td>Only in first version</td><td>{item.code} — {item.name}</td><td>{item.creditUnits}</td><td>Year {item.yearOfStudy}, semester {item.semesterNumber}</td><td>{item.isCore ? 'Core' : 'Elective'}</td></tr>)}
                   {comparison.secondOnly.map(item => <tr key={`b-${item.id}`}><td>Only in second version</td><td>{item.code} — {item.name}</td><td>{item.creditUnits}</td><td>Year {item.yearOfStudy}, semester {item.semesterNumber}</td><td>{item.isCore ? 'Core' : 'Elective'}</td></tr>)}
-                  {comparison.changedPlacement.map(item => <tr key={`c-${item.id}`}><td>Placement changed</td><td>{item.code} — {item.name}</td><td>{item.creditUnits}</td><td>Year {item.yearOfStudy}, semester {item.semesterNumber}</td><td>{item.isCore ? 'Core' : 'Elective'}</td></tr>)}
+                  {comparison.changedPlacement.map(item => <tr key={`c-${item.id}`}><td>Placement changed</td><td>{item.code} — {item.name}</td><td>{item.creditUnits}</td><td>v1: Year {item.firstYear}, semester {item.firstSemester} → v2: Year {item.secondYear}, semester {item.secondSemester}</td><td>v1: {item.firstIsCore ? 'Core' : 'Elective'} · v2: {item.secondIsCore ? 'Core' : 'Elective'}</td></tr>)}
                   {!comparison.firstOnly.length && !comparison.secondOnly.length && !comparison.changedPlacement.length && <tr><td colSpan={5}>No course-unit or placement differences found.</td></tr>}
                 </tbody>
               </table></div>
