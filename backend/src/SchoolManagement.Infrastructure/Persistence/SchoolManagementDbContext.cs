@@ -177,6 +177,71 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     protected override void OnModelCreating(ModelBuilder m)
     {
         m.Entity<CoursePrerequisite>(e => { e.HasKey(x => x.Id); e.Property(x => x.IsMandatory).HasDefaultValue(true); e.HasIndex(x => new { x.CourseId, x.PrerequisiteCourseId }).IsUnique(); e.HasIndex(x => x.PrerequisiteCourseId); e.ToTable(t => t.HasCheckConstraint("CK_CoursePrerequisites_DifferentCourses", "\"CourseId\" <> \"PrerequisiteCourseId\"")); e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade); e.HasOne<Course>().WithMany().HasForeignKey(x => x.PrerequisiteCourseId).OnDelete(DeleteBehavior.Cascade); });
+        // Keep the curriculum integration model aligned with the migration snapshot.
+        m.Entity<ElectiveGroup>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<ElectiveGroupCourse>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsCoreWithinGroup).HasDefaultValue(false);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<ElectiveGroup>().WithMany().HasForeignKey(x => x.ElectiveGroupId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<CurriculumVersion>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasDefaultValue("Draft");
+            e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<CurriculumVersionCourse>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne<CurriculumVersion>().WithMany().HasForeignKey(x => x.CurriculumVersionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<ElectiveGroup>().WithMany().HasForeignKey(x => x.ElectiveGroupId).OnDelete(DeleteBehavior.SetNull);
+        });
+        m.Entity<CourseEquivalence>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsMandatory).HasDefaultValue(true);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.InternalCourseId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<StudentTransferCredit>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<CourseEquivalence>().WithMany().HasForeignKey(x => x.CourseEquivalenceId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<ProgrammeLearningOutcome>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Programme>().WithMany().HasForeignKey(x => x.ProgrammeId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<CoursePloMapping>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<ProgrammeLearningOutcome>().WithMany().HasForeignKey(x => x.ProgrammeLearningOutcomeId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<LmsCourse>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Status).HasDefaultValue("Created");
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<RegulatorImport>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+        });
         m.Entity<CurriculumApprovalHistory>(e => { e.HasKey(x => x.Id); e.Property(x => x.ToStatus).IsRequired(); e.Property(x => x.Notes).HasMaxLength(2000); e.Property(x => x.Actor).HasMaxLength(200).IsRequired(); e.HasIndex(x => new { x.CurriculumId, x.ChangedAtUtc }); e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Cascade); });
         m.Entity<TimetableTemplate>(e => { e.HasKey(x => x.TeachingGroupId); e.Property(x => x.LayoutJson).HasColumnType("jsonb").IsRequired().HasDefaultValue("{}"); e.Property(x => x.UpdatedAtUtc).IsRequired(); e.HasOne<TeachingGroup>().WithMany().HasForeignKey(x => x.TeachingGroupId).OnDelete(DeleteBehavior.Cascade); });
         // Archived students are excluded from ordinary operational queries. Historical record endpoints opt in with IgnoreQueryFilters().
