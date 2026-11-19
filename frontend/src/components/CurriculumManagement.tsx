@@ -21,7 +21,6 @@ import {
   submitCurriculumForReview,
   approveCurriculum,
   publishCurriculum,
-  exportCurriculumCsv,
   bulkAddCurriculumCourses,
   type Course,
   type Curriculum,
@@ -146,6 +145,21 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     })
     return () => { cancelled = true }
   }, [curricula, programmes, authority, tab, courses])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const prereqs: Record<string, CoursePrerequisiteDto[]> = {}
+      for (const course of authorityCourses) {
+        try {
+          const p = await getPrerequisites(course.id)
+          if (!cancelled) prereqs[course.id] = p
+        } catch { /* non-critical */ }
+      }
+      if (!cancelled) setCoursePrereqs(prereqs)
+    })()
+    return () => { cancelled = true }
+  }, [authorityCourses])
 
   async function load(tabForAuthority: Tab = tab) {
     const loadRequestId = ++loadRequest.current
@@ -1057,7 +1071,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <button type="submit" disabled={saving || !authority}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
             </form>
             <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name} {coursePrereqs[course.id]?.filter(p => p.isMandatory).length > 0 && <span className="prereq-badge" title={`Mandatory prerequisites: ${coursePrereqs[course.id]?.map(p => p.prerequisiteCode).join(', ')}`}>↗</span>}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
               {authorityCourses.length === 0 && <tr><td colSpan={6}>No course units are registered under this authority. Add course units above to make them available for curriculum mapping.</td></tr>}
             </tbody></table></div>
           </div>
@@ -1129,6 +1143,24 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
           {selected && (
             <div className="curriculum-semester-list">
+              <div className="form-row curriculum-semester-actions">
+                <button type="button" onClick={async () => {
+                  try {
+                    const res = await fetch(`${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''}/api/curriculum-management/curricula/${encodeURIComponent(selected)}/courses/export`)
+                    if (res.ok) {
+                      const blob = await res.blob()
+                      const url = window.URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `curriculum-${selected}.csv`
+                      document.body.appendChild(a)
+                      a.click()
+                      window.URL.revokeObjectURL(url)
+                      document.body.removeChild(a)
+                    }
+                  } catch { /* non-critical */ }
+                }}>Export curriculum as CSV</button>
+              </div>
               {semesterGroups.map(group => (
                 <section className="catalogue-board curriculum-semester" key={`${group.year}-${group.semester}`}>
                   <div className="panel-heading">
@@ -1218,7 +1250,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               <button type="submit" disabled={saving || !authority}>{editingCourseId ? 'Save course' : 'Add course'}</button>{editingCourseId && <button type="button" className="secondary-button" onClick={() => { setEditingCourseId(null); setUf({ code: '', name: '', creditUnits: '', description: '', courseType: '' }) }}>Cancel edit</button>}
             </form>
             <div className="table-wrap"><table><thead><tr><th>Code</th><th>Course / unit</th><th>Credits</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
+              {authorityCourses.map(course => <tr key={course.id}><td>{course.code}</td><td>{course.name} {coursePrereqs[course.id]?.filter(p => p.isMandatory).length > 0 && <span className="prereq-badge" title={`Mandatory prerequisites: ${coursePrereqs[course.id]?.map(p => p.prerequisiteCode).join(', ')}`}>↗</span>}</td><td>{course.creditUnits}</td><td>{course.courseType || '—'}</td><td>{!course.authorityCode ? 'Unassigned legacy course' : course.isActive ? 'Active' : 'Inactive'}</td><td><button type="button" onClick={() => editCourse(course)}>Edit</button> <button type="button" className="secondary-button" onClick={() => void toggleCourse(course)}>{course.isActive ? 'Deactivate' : 'Activate'}</button></td></tr>)}
               {authorityCourses.length === 0 && <tr><td colSpan={6}>No courses registered.</td></tr>}
             </tbody></table></div>
           </section>
@@ -1265,6 +1297,24 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
 
           {selected && (
             <div className="curriculum-semester-list">
+              <div className="form-row curriculum-semester-actions">
+                <button type="button" onClick={async () => {
+                  try {
+                    const res = await fetch(`${(import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''}/api/curriculum-management/curricula/${encodeURIComponent(selected)}/courses/export`)
+                    if (res.ok) {
+                      const blob = await res.blob()
+                      const url = window.URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `curriculum-${selected}.csv`
+                      document.body.appendChild(a)
+                      a.click()
+                      window.URL.revokeObjectURL(url)
+                      document.body.removeChild(a)
+                    }
+                  } catch { /* non-critical */ }
+                }}>Export curriculum as CSV</button>
+              </div>
               {semesterGroups.map(group => (
                 <section className="catalogue-board curriculum-semester" key={`${group.year}-${group.semester}`}>
                   <div className="panel-heading">
