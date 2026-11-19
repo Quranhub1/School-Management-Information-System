@@ -375,7 +375,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         if (Array.isArray(layout.slots) && layout.slots.length > 0 && layout.cells && typeof layout.cells === 'object') {
           setTemplateSlots(layout.slots.map(slot => ({ startTime: slot.startTime, endTime: slot.endTime })))
           setTemplateCells(layout.cells)
-          if (typeof layout.showWeekends === 'boolean') setShowWeekends(layout.showWeekends)
+          // The official timetable always opens with the complete seven-day week, including for older saved layouts.
+          setShowWeekends(true)
           setTemplateTitle(layout.title || 'CLASS TEACHING TIMETABLE')
           setTemplateDayLabel(layout.dayLabel || 'DAY')
           setTemplateRegistrarName(layout.registrarName || '')
@@ -773,7 +774,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     <div className="timetable-toolbar">
       <h3>Weekly schedule <span>({activeEntries.length})</span></h3>
       <div className="timetable-toolbar-controls">
-        <label className="timetable-weekend-toggle"><input type="checkbox" checked={showWeekends} onChange={event => setShowWeekends(event.target.checked)} /> Show Saturday</label>
+        <label className="timetable-weekend-toggle"><input type="checkbox" checked={showWeekends} onChange={event => setShowWeekends(event.target.checked)} /> Show weekend days (Saturday & Sunday)</label>
         {!readOnly && <button className="timetable-action" type="button" aria-expanded={showSystemData} onClick={() => setShowSystemData(value => !value)}>{showSystemData ? 'Hide system data' : 'System Data & Sync'}</button>}
         <div className="timetable-view-switch" role="group" aria-label="Schedule display">
           <button type="button" aria-pressed={view === 'week'} onClick={() => setView('week')}><LayoutGrid /> Week</button>
