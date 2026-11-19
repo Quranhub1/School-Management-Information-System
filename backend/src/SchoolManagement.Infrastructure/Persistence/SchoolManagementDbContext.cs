@@ -163,6 +163,16 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<InventoryRegister> InventoryRegisters => Set<InventoryRegister>();
     public DbSet<WelfareCommodity> WelfareCommodities => Set<WelfareCommodity>();
     public DbSet<WelfareStockTransaction> WelfareStockTransactions => Set<WelfareStockTransaction>();
+    public DbSet<ElectiveGroup> ElectiveGroups => Set<ElectiveGroup>();
+    public DbSet<ElectiveGroupCourse> ElectiveGroupCourses => Set<ElectiveGroupCourse>();
+    public DbSet<CurriculumVersion> CurriculumVersions => Set<CurriculumVersion>();
+    public DbSet<CurriculumVersionCourse> CurriculumVersionCourses => Set<CurriculumVersionCourse>();
+    public DbSet<CourseEquivalence> CourseEquivalences => Set<CourseEquivalence>();
+    public DbSet<StudentTransferCredit> StudentTransferCredits => Set<StudentTransferCredit>();
+    public DbSet<ProgrammeLearningOutcome> ProgrammeLearningOutcomes => Set<ProgrammeLearningOutcome>();
+    public DbSet<CoursePloMapping> CoursePloMappings => Set<CoursePloMapping>();
+    public DbSet<LmsCourse> LmsCourses => Set<LmsCourse>();
+    public DbSet<RegulatorImport> RegulatorImports => Set<RegulatorImport>();
 
     protected override void OnModelCreating(ModelBuilder m)
     {
