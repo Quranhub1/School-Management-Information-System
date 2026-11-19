@@ -15,11 +15,11 @@ public sealed class CourseOfferingService(
 
     public async Task<(bool Success, string? Error, Guid? OfferingId)> CreateOfferingAsync(CreateCourseOfferingRequest request, CancellationToken ct = default)
     {
-        var course = await courses.GetByIdAsync(request.CourseId, false, ct);
+        var course = await courses.GetByIdAsync(request.CourseId, ct);
         if (course is null) return (false, "Course not found.");
-        var semester = await semesters.GetByIdAsync(request.SemesterId, false, ct);
+        var semester = await semesters.GetByIdAsync(request.SemesterId, ct);
         if (semester is null) return (false, "Semester not found.");
-        var programme = await programmes.GetByIdAsync(request.ProgrammeId, false, ct);
+        var programme = await programmes.GetByIdAsync(request.ProgrammeId, ct);
         if (programme is null) return (false, "Programme not found.");
 
         var offering = new CourseOffering
