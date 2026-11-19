@@ -48,14 +48,17 @@ body.is-editing .col-divider { background: #fffbeb; cursor: pointer; }
 body.is-editing .day-label-cell { background: #fffdf7; cursor: pointer; }
 .lecture-cell { padding: 0.6rem; font-size: 0.9rem; background: #fff; cursor: default; }
 body.is-editing .lecture-cell:hover { background: #fefce8; cursor: pointer; }
-.cell-course { font-weight: 700; margin-bottom: 2px; }
-.cell-tutor { font-style: italic; color: #1e293b; font-size: 0.85rem; }
+.cell-course { font-weight: 700; margin-bottom: 2px; border-radius: 4px; padding: 1px 3px; }
+.cell-tutor { font-style: italic; color: #1e293b; font-size: 0.85rem; border-radius: 4px; padding: 1px 3px; }
+body.is-editing .cell-course:hover, body.is-editing .cell-tutor:hover { background: #fde68a; outline: 1px dashed #b45309; }
+.inline-tutor-picker { font-family: var(--font-ui); font-size: 0.78rem; padding: 3px 5px; border: 1.5px solid #1d4ed8; border-radius: 4px; background: #fff; color: #0f172a; width: 100%; max-width: 190px; margin-top: 2px; }
 .cell-meta-sub { font-size: 0.78rem; color: #475569; margin-top: 2px; }
 .cell-empty-placeholder { color: #94a3b8; font-size: 0.76rem; font-style: italic; display: none; }
 body.is-editing .cell-empty-placeholder { display: inline-block; }
 .row-controls-bar { display: none; margin-top: 4px; justify-content: center; gap: 3px; }
-.row-mini-btn { border: 1px solid #cbd5e1; background: #fff; border-radius: 4px; padding: 1px 6px; font-size: 0.75rem; cursor: pointer; }
 body.is-editing .row-controls-bar { display: flex; }
+.row-mini-btn { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 3px; font-size: 0.68rem; padding: 1px 5px; cursor: pointer; }
+.row-mini-btn:hover { background: #e2e8f0; }
 .doc-footer { margin-top: 1.6rem; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 2rem; min-height: 56px; }
 .registrar-block { min-width: 240px; }
 .signature-line { border-bottom: 1.5px dotted #000; height: 28px; margin-bottom: 4px; }
@@ -78,6 +81,14 @@ body.is-editing .doc-footer { border: 1.5px dashed var(--accent-amber); backgrou
 .btn-modal { padding: 0.48rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.84rem; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; }
 .btn-modal-save { background: var(--accent-blue); color: #fff; border-color: #2563eb; }
 .btn-modal-danger { background: #fef2f2; color: #dc2626; border-color: #fca5a5; }
+.sys-tabs { display: flex; border-bottom: 1px solid var(--border-subtle); background: #f8fafc; }
+.sys-tab-btn { flex: 1; padding: 0.65rem 0.5rem; font-size: 0.8rem; font-weight: 700; border: none; background: transparent; color: #475569; cursor: pointer; border-bottom: 2px solid transparent; }
+.sys-tab-btn.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); background: #fff; }
+.sys-panel { display: none; flex-direction: column; gap: 0.8rem; }
+.sys-panel.active { display: flex; }
+.sys-list-item { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.45rem 0.65rem; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc; font-size: 0.82rem; }
+.status-pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: #fef3c7; color: #92400e; }
+.status-pill.connected { background: #dcfce7; color: #166534; }
 .toast-notification { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #0f172a; color: #fff; padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translateY(120px); opacity: 0; transition: all 0.25s ease; z-index: 2000; }
 .toast-notification.show { transform: translateY(0); opacity: 1; }
 @media print {
