@@ -9,6 +9,26 @@ import { useInstitutionSettings } from './InstitutionSettingsContext'
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const weekOrder = [1, 2, 3, 4, 5, 6, 0]
 const emptyOptions: TimetableOptions = { teachingGroups: [], courses: [], teachers: [], semesters: [], programmes: [], curricula: [], curriculumCourses: [] }
+
+type ProgrammeOption = TimetableOptions['programmes'][number] & { sourceIds: string[] }
+const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
+  programme.code?.trim().toLocaleUpperCase() || programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+const deduplicateProgrammeOptions = (programmes: TimetableOptions['programmes'], curricula: TimetableOptions['curricula'], groups: TimetableOptions['teachingGroups']): ProgrammeOption[] => {
+  const grouped = new Map<string, TimetableOptions['programmes']>()
+  for (const programme of programmes) {
+    const key = programmeIdentity(programme)
+    grouped.set(key, [...(grouped.get(key) ?? []), programme])
+  }
+  return [...grouped.values()].map(items => {
+    const ranked = [...items].sort((left, right) => {
+      const score = (item: TimetableOptions['programmes'][number]) =>
+        curricula.filter(curriculum => curriculum.programmeId === item.id).length * 10 +
+        groups.filter(group => group.programmeId === item.id).length
+      return score(right) - score(left) || left.label.localeCompare(right.label)
+    })
+    return { ...ranked[0], sourceIds: items.map(item => item.id) }
+  }).sort((left, right) => left.label.localeCompare(right.label))
+}
 const defaultTemplateSlots = [{ startTime: '08:00', endTime: '09:00' }, { startTime: '09:00', endTime: '10:00' }, { startTime: '10:30', endTime: '11:30' }, { startTime: '11:30', endTime: '12:30' }, { startTime: '13:30', endTime: '14:30' }, { startTime: '14:30', endTime: '15:30' }, { startTime: '15:30', endTime: '16:30' }]
 type TemplateCell = { id?: string; courseId: string; teacherId: string; room: string; sessionType: string; rowSpan?: number | string; colSpan?: number | string }
 const timeLabel = (value: string) => value.slice(0, 5)
@@ -72,8 +92,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setEntries(loadedEntries)
       setOptions({ ...emptyOptions, ...loadedOptions, programmes: loadedOptions.programmes ?? [], curricula: loadedOptions.curricula ?? [], curriculumCourses: loadedOptions.curriculumCourses ?? [] })
       setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
-      setProgrammeId(current => current || loadedOptions.programmes?.[0]?.id || '')
-      setCurriculumId(current => current || loadedOptions.curricula.find(item => item.programmeId === (loadedOptions.programmes[0]?.id ?? ''))?.id || '')
+      const uniqueProgrammes = deduplicateProgrammeOptions(loadedOptions.programmes ?? [], loadedOptions.curricula ?? [], loadedOptions.teachingGroups ?? [])
+      setProgrammeId(current => current || uniqueProgrammes[0]?.id || '')
+      setCurriculumId(current => current || loadedOptions.curricula.find(item => uniqueProgrammes[0]?.sourceIds.includes(item.programmeId))?.id || '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
     }
@@ -90,9 +111,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const availableSemesters = options.semesters
   const selectedSemester = availableSemesters.find(item => item.id === semesterId)
   const academicYearLabel = selectedSemester?.academicYearLabel || selectedSemester?.label || 'Academic year not set'
-  const selectedProgramme = options.programmes.find(item => item.id === programmeId)
+  const programmeOptions = useMemo(() => deduplicateProgrammeOptions(options.programmes, options.curricula, options.teachingGroups), [options.programmes, options.curricula, options.teachingGroups])
+  const selectedProgramme = programmeOptions.find(item => item.id === programmeId)
+  const selectedProgrammeIds = new Set(selectedProgramme?.sourceIds ?? (programmeId ? [programmeId] : []))
   const semesterGroupIds = useMemo(() => new Set(options.teachingGroups.filter(item => item.semesterId === semesterId).map(item => item.id)), [options.teachingGroups, semesterId])
-  const programmeCurricula = options.curricula.filter(item => item.programmeId === programmeId)
+  const programmeCurricula = options.curricula.filter(item => selectedProgrammeIds.has(item.programmeId))
   const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? programmeCurricula[0]
   const curriculumMappings = options.curriculumCourses.filter(item => item.curriculumId === selectedCurriculum?.id)
   // Each distinct year/semester in an active curriculum is represented as its own
@@ -113,7 +136,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const eligibleMappings = curriculumMappings.filter(item => (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) && (!curriculumSemester || item.semesterNumber === Number(curriculumSemester)))
   const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
   const availableCourses = options.courses.filter(item => eligibleCourseIds.has(item.id))
-  const availableGroups = options.teachingGroups.filter(item => item.programmeId === programmeId && item.semesterId === semesterId && eligibleCourseIds.has(item.courseId))
+  const availableGroups = options.teachingGroups.filter(item => item.programmeId === selectedCurriculum?.programmeId && item.semesterId === semesterId && eligibleCourseIds.has(item.courseId))
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedGroupCourses = selectedGroup ? options.courses.filter(item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)) : []
   const activeEntries = useMemo(() => entries.filter(item => item.isActive && semesterGroupIds.has(item.teachingGroupId)), [entries, semesterGroupIds])
@@ -257,7 +280,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     try {
       const results: Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }> = []
       for (const group of selectedGroups) {
-        const result = await generateTimetable(semesterId, group.id, selectedCurriculum.id, Number(yearOfStudy), Number(curriculumSemester), programmeId)
+        const result = await generateTimetable(semesterId, group.id, selectedCurriculum.id, Number(yearOfStudy), Number(curriculumSemester), group.programmeId)
         results.push({ groupId: group.id, groupLabel: group.label, result })
       }
       setGeneratedTimetables(results)
@@ -322,7 +345,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     const group = options.teachingGroups.find(item => item.id === entry.teachingGroupId)
     const mapping = options.curriculumCourses.find(item => item.courseId === entry.courseId && item.programmeId === group?.programmeId)
     const curriculum = options.curricula.find(item => item.id === mapping?.curriculumId)
-    setProgrammeId(group?.programmeId ?? '')
+    setProgrammeId(programmeOptions.find(item => item.sourceIds.includes(group?.programmeId ?? ''))?.id ?? group?.programmeId ?? '')
     setCurriculumId(curriculum?.id ?? '')
     setYearOfStudy(mapping ? String(mapping.yearOfStudy) : '')
     setCurriculumSemester(mapping ? String(mapping.semesterNumber) : '')
@@ -545,7 +568,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <div className="timetable-semester-template-grid">
           {semesterTemplates.map(item => {
             const courseIds = item.courseIds
-            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === programmeId && group.semesterId === semesterId && courseIds.has(group.courseId))
+            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === selectedCurriculum?.programmeId && group.semesterId === semesterId && courseIds.has(group.courseId))
             const sessionCount = activeEntries.filter(entry => matchingGroups.some(group => group.id === entry.teachingGroupId)).length
             const selected = yearOfStudy === String(item.year) && curriculumSemester === String(item.semester)
             return <article className={`timetable-semester-template-card${selected ? ' is-selected' : ''}`} key={item.year + '-' + item.semester}>
@@ -571,7 +594,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     {!readOnly && (showGenerator || showTemplateEditor || showScheduleForm) && <section className="timetable-form-panel timetable-curriculum-guide" aria-label="Programme curriculum selection">
       <h3>Programme curriculum guide</h3>
       <div className="timetable-form-grid">
-        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); setCurriculumId(options.curricula.find(item => item.programmeId === next)?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{options.programmes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); setCurriculumId(options.curricula.find(item => programmeOptions.find(option => option.id === next)?.sourceIds.includes(item.programmeId))?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{programmeOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Curriculum<select value={selectedCurriculum?.id ?? ''} onChange={event => { setCurriculumId(event.target.value); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select curriculum</option>{programmeCurricula.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Year of study<select value={yearOfStudy} onChange={event => { setYearOfStudy(event.target.value); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All years</option>{studyYears.map(item => <option key={item} value={item}>Year {item}</option>)}</select></label>
         <label>Curriculum semester<select value={curriculumSemester} onChange={event => { setCurriculumSemester(event.target.value); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All semesters</option>{curriculumSemesters.map(item => <option key={item} value={item}>Semester {item}</option>)}</select></label>

@@ -52,7 +52,8 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
                 semester.IsActive
             }).ToListAsync(cancellationToken);
         var programmes = await db.Programmes.AsNoTracking().Where(x => x.IsActive && !x.IsReferenceOnly)
-            .OrderBy(x => x.Name).Select(x => new { x.Id, Label = x.Name + " (" + x.Award + ")" }).ToListAsync(cancellationToken);
+            .OrderBy(x => x.Name).ThenBy(x => x.Code)
+            .Select(x => new { x.Id, x.Code, Label = x.Name + " (" + x.Award + ")" }).ToListAsync(cancellationToken);
         var curricula = await db.Curricula.AsNoTracking().Where(x => x.IsActive).OrderByDescending(x => x.EffectiveFrom)
             .Select(x => new { x.Id, x.ProgrammeId, Label = x.Title + " — " + x.Version }).ToListAsync(cancellationToken);
         var curriculumCourses = await (
