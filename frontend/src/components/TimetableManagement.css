@@ -259,3 +259,21 @@
 .timetable-semester-template-status{font-size:.8rem;font-weight:600}
 .timetable-semester-template-card .timetable-action{margin-top:auto;width:100%;justify-content:center}
 @media(max-width:640px){.timetable-semester-templates{padding:12px}.timetable-semester-template-grid{grid-template-columns:1fr}}
+
+
+/* Integrated editor controls: all timetable styling remains locally scoped. */
+.timetable-toolbar-controls{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.timetable-weekend-toggle{display:inline-flex;align-items:center;gap:7px;color:#364152;font-size:.8rem;font-weight:650;white-space:nowrap}
+.timetable-weekend-toggle input{width:16px;height:16px;accent-color:#176b45}
+.timetable-system-data{display:grid;gap:14px;padding:16px;background:#fff;border:1px solid #d8dde5;border-radius:4px}
+.timetable-system-data-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.timetable-system-data-heading h3{margin:0 0 5px;color:#1c2738;font-size:1rem}
+.timetable-system-data-heading p{margin:0;color:#596579;font-size:.82rem;max-width:760px}
+.timetable-system-data-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.timetable-system-data-grid article{display:flex;flex-direction:column;gap:4px;min-width:0;padding:11px;border:1px solid #d8dde5;background:#fafbfc}
+.timetable-system-data-grid article strong{font-size:1.35rem;line-height:1.1;color:#172033}
+.timetable-system-data-grid article span{font-size:.78rem;font-weight:750;color:#364152}
+.timetable-system-data-grid article small{font-size:.72rem;line-height:1.4;color:#667085;overflow-wrap:anywhere}
+.timetable-system-data-footnote{margin:0;color:#596579;font-size:.76rem}
+@media(max-width:760px){.timetable-system-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.timetable-system-data-heading{flex-direction:column}.timetable-toolbar-controls{justify-content:flex-start}}
+@media(max-width:480px){.timetable-system-data-grid{grid-template-columns:1fr}}
