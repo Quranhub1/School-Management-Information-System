@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 vi.mock('../api/timetable', () => ({
@@ -37,6 +37,7 @@ vi.mock('./InstitutionSettingsContext', () => ({
   })),
 }))
 
+import { saveTimetableTemplate } from '../api/timetable'
 import { TimetableManagement } from './TimetableManagement'
 
 describe('TimetableManagement', () => {
@@ -93,6 +94,22 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText(/merge monday 08:00 down/i)).toBeTruthy()
     expect(screen.getByLabelText(/merge monday 08:00 across/i)).toBeTruthy()
     expect(screen.getByText('REPUBLIC OF UGANDA')).toBeTruthy()
+  })
+
+  it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
+    fireEvent.change(await screen.findByLabelText('Timetable document title'), { target: { value: 'OFFICIAL CLASS TIMETABLE' } })
+    fireEvent.change(screen.getByLabelText('Registrar name'), { target: { value: 'JANE DOE' } })
+    fireEvent.change(screen.getByLabelText(/merge monday 08:00 down/i), { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: /save timetable template/i }))
+    await waitFor(() => expect(saveTimetableTemplate).toHaveBeenCalled())
+    expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', [], expect.objectContaining({
+      title: 'OFFICIAL CLASS TIMETABLE',
+      registrarName: 'JANE DOE',
+      cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2' }) }),
+    }))
   })
 
   it('supports readOnly mode', () => {
