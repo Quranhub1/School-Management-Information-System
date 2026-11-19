@@ -12,7 +12,7 @@ const emptyOptions: TimetableOptions = { teachingGroups: [], courses: [], teache
 
 type ProgrammeOption = TimetableOptions['programmes'][number] & { sourceIds: string[] }
 const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
-  programme.code?.trim().toLocaleUpperCase() || programme.label.trim().replace(/\\s+/g, ' ').toLocaleLowerCase()
+  programme.code?.trim().toLocaleUpperCase() || programme.label.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
 const deduplicateProgrammeOptions = (programmes: TimetableOptions['programmes'], curricula: TimetableOptions['curricula'], groups: TimetableOptions['teachingGroups']): ProgrammeOption[] => {
   const grouped = new Map<string, TimetableOptions['programmes']>()
   for (const programme of programmes) {
