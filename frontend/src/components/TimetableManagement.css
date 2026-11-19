@@ -345,3 +345,98 @@
  .timetable-template-document-heading{border:0!important;border-bottom:3px double #111827!important}
  .timetable-document-title-input{border:0!important}
 }
+
+
+/* Template actions: consistent full-width controls with clear visual hierarchy. */
+.timetable-screen .timetable-template-editor .timetable-form-footer {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-top: 0;
+}
+.timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action {
+  display: inline-flex;
+  flex: 1 1 220px;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 18px;
+  border: 1px solid #aeb8c5;
+  border-radius: 4px;
+  background: #f8fafc;
+  color: #1f2937;
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: .01em;
+  white-space: normal;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .08);
+  cursor: pointer;
+}
+.timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action.primary {
+  background: #176b45;
+  border-color: #176b45;
+  color: #fff;
+}
+.timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action.primary:hover:not(:disabled) {
+  background: #105538;
+  border-color: #105538;
+}
+.timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action:not(.primary):hover:not(:disabled) {
+  background: #edf1f5;
+  border-color: #8793a3;
+}
+.timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action:focus-visible,
+.timetable-screen .timetable-template-controls > .timetable-action:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .35);
+  outline-offset: 2px;
+}
+.timetable-screen .timetable-template-controls > .timetable-action {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 132px;
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 1px solid #176b45;
+  border-radius: 4px;
+  background: #176b45;
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.timetable-screen .timetable-template-controls > .timetable-action:hover:not(:disabled) {
+  background: #105538;
+  border-color: #105538;
+}
+.timetable-screen .timetable-template-controls > .timetable-action:disabled,
+.timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+@media (max-width: 560px) {
+  .timetable-screen .timetable-template-editor .timetable-form-footer {
+    flex-direction: column;
+    padding: 10px;
+  }
+  .timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+  .timetable-screen .timetable-template-controls > .timetable-action {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
