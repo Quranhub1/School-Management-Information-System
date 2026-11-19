@@ -1723,7 +1723,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 </button>
               </div>
               <p style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.4 }}>
-                Programmatic hook: <code>window.SMIS_TIMETABLE_BRIDGE.setSystemData({ schoolName, programs, courses, tutors, academicRegistrar })</code> or listen for <code>smis:timetable:sync</code>.
+                Programmatic hook: <code>{'window.SMIS_TIMETABLE_BRIDGE.setSystemData({ schoolName, programs, courses, tutors, academicRegistrar })'}</code> or listen for <code>smis:timetable:sync</code>.
               </p>
             </div>
 
