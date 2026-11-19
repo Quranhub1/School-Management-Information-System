@@ -28,6 +28,18 @@ public sealed class ElectiveGroupCourse
 }
 
 /// <summary>
+/// Defines a prerequisite relationship between two courses.
+/// </summary>
+public sealed class CoursePrerequisite
+{
+    public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid CourseId { get; set; }
+    public Guid PrerequisiteCourseId { get; set; }
+    public bool IsMandatory { get; set; } = true;
+    public string? MinimumGrade { get; set; }
+}
+
+/// <summary>
 /// Tracks curriculum versions for diff, clone, and governance purposes.
 /// </summary>
 public sealed class CurriculumVersion
