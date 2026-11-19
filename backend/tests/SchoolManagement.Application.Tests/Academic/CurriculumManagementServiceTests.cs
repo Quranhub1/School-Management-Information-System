@@ -124,7 +124,7 @@ public sealed class CurriculumManagementServiceTests
         Assert.True(success);
         Assert.Null(error);
         Assert.NotNull(curriculum);
-        Assert.Equal("Pending", curriculum.Status);
+        Assert.Equal("Draft", curriculum.Status);
         Assert.Single(programmes.Items);
     }
 
@@ -161,9 +161,12 @@ public sealed class CurriculumManagementServiceTests
     public async Task UpdateCurriculumAsync_updates_fields()
     {
         var curricula = new FakeCurriculumRepository();
+        var programmes = new FakeProgrammeRepository();
+        var progId = Guid.NewGuid();
+        programmes.Items.Add(ActiveProgramme(progId));
         var id = Guid.NewGuid();
-        curricula.Items.Add(new Curriculum { Id = id, ProgrammeId = Guid.NewGuid(), Version = "1.0", Title = "Old", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
-        var service = CreateService(curricula);
+        curricula.Items.Add(new Curriculum { Id = id, ProgrammeId = progId, Version = "1.0", Title = "Old", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
+        var service = CreateService(curricula, programmes: programmes);
 
         var (success, error) = await service.UpdateCurriculumAsync(id, new UpdateCurriculumRequest("2.0", "New Title", 80, DateOnly.FromDateTime(DateTime.UtcNow), null, ProgrammeType.FullProgramme, true));
 
@@ -208,11 +211,14 @@ public sealed class CurriculumManagementServiceTests
         var curricula = new FakeCurriculumRepository();
         var courses = new FakeCourseRepository();
         var mappings = new FakeCurriculumCourseRepository();
+        var programmes = new FakeProgrammeRepository();
+        var progId = Guid.NewGuid();
+        programmes.Items.Add(ActiveProgramme(progId));
         var curriculumId = Guid.NewGuid();
         var courseId = Guid.NewGuid();
-        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), IsActive = true, Version = "1.0", Title = "Test", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
+        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = progId, IsActive = true, Version = "1.0", Title = "Test", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
         courses.Items.Add(new Course { Id = courseId, Code = "PH101", Name = "Pharmacy", CreditUnits = 3, IsActive = true });
-        var service = CreateService(curricula, courses, mappings);
+        var service = CreateService(curricula, courses, mappings, programmes: programmes);
 
         var (success, error, mapping) = await service.AddMappingAsync(curriculumId, new AddCurriculumCourseRequest(courseId, 1, 1, true));
 
@@ -228,11 +234,14 @@ public sealed class CurriculumManagementServiceTests
         var curricula = new FakeCurriculumRepository();
         var courses = new FakeCourseRepository();
         var mappings = new FakeCurriculumCourseRepository();
+        var programmes = new FakeProgrammeRepository();
+        var progId = Guid.NewGuid();
+        programmes.Items.Add(ActiveProgramme(progId));
         var curriculumId = Guid.NewGuid();
         var courseId = Guid.NewGuid();
-        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), IsActive = false, Version = "1.0", Title = "Test", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
+        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = progId, IsActive = false, Version = "1.0", Title = "Test", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
         courses.Items.Add(new Course { Id = courseId, Code = "PH101", Name = "Pharmacy", CreditUnits = 3, IsActive = true });
-        var service = CreateService(curricula, courses, mappings);
+        var service = CreateService(curricula, courses, mappings, programmes: programmes);
 
         var (success, error, _) = await service.AddMappingAsync(curriculumId, new AddCurriculumCourseRequest(courseId, 1, 1, true));
 
