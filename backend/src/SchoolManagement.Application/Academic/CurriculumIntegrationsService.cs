@@ -71,9 +71,9 @@ public sealed class ElectiveGroupService(
     public async Task<(bool Success, string? Error, Guid? GroupId)> CreateAsync(CreateElectiveGroupRequest request, CancellationToken ct = default)
     {
         var curriculum = await curricula.GetByIdAsync(request.CurriculumId, ct);
-        if (curriculum is null) return (false, "Curriculum not found.");
+        if (curriculum is null) return (false, "Curriculum not found.", null);
         if (await groups.ExistsAsync(request.CurriculumId, request.YearOfStudy, request.SemesterNumber, ct))
-            return (false, "An elective group already exists for this year/semester.");
+            return (false, "An elective group already exists for this year/semester.", null);
 
         var group = new ElectiveGroup
         {
