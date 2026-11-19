@@ -8,7 +8,7 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/curriculum-management/curricula/{curriculumId:guid}")]
+[Route("api/curriculum-governance/curricula/{curriculumId:guid}")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class CurriculumGovernanceController(SchoolManagementDbContext db) : ControllerBase
 {
@@ -30,19 +30,23 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
 
     [HttpPost("submit-for-review")]
     public Task<IActionResult> Submit(Guid curriculumId, [FromBody] TransitionRequest request, CancellationToken ct) =>
-        Transition(curriculumId, "Draft", "UnderReview", request.Notes, ct);
+        Transition(curriculumId, "Draft", "Submitted", request.Notes, ct);
 
     [HttpPost("approve")]
     public Task<IActionResult> Approve(Guid curriculumId, [FromBody] TransitionRequest request, CancellationToken ct) =>
-        Transition(curriculumId, "UnderReview", "Approved", request.Notes, ct);
+        Transition(curriculumId, "Submitted", "Approved", request.Notes, ct);
 
     [HttpPost("reject")]
     public Task<IActionResult> Reject(Guid curriculumId, [FromBody] TransitionRequest request, CancellationToken ct) =>
-        Transition(curriculumId, "UnderReview", "Draft", request.Notes, ct, requireNotes: true);
+        Transition(curriculumId, "Submitted", "Draft", request.Notes, ct, requireNotes: true);
+
+    [HttpPost("publish")]
+    public Task<IActionResult> Publish(Guid curriculumId, [FromBody] TransitionRequest request, CancellationToken ct) =>
+        Transition(curriculumId, "Approved", "Published", request.Notes, ct, activate: true);
 
     [HttpPost("retire")]
     public Task<IActionResult> Retire(Guid curriculumId, [FromBody] TransitionRequest request, CancellationToken ct) =>
-        Transition(curriculumId, "Approved", "Retired", request.Notes, ct, deactivate: true, requireNotes: true);
+        Transition(curriculumId, "Approved|Published", "Retired", request.Notes, ct, deactivate: true, requireNotes: true);
 
     [HttpPost("clone")]
     public async Task<IActionResult> Clone(Guid curriculumId, [FromBody] CloneRequest request, CancellationToken ct)
@@ -136,12 +140,13 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
     }
 
     private async Task<IActionResult> Transition(Guid curriculumId, string expectedStatus, string nextStatus,
-        string? notes, CancellationToken ct, bool deactivate = false, bool requireNotes = false)
+        string? notes, CancellationToken ct, bool deactivate = false, bool requireNotes = false, bool activate = false)
     {
         var curriculum = await db.Curricula.FirstOrDefaultAsync(x => x.Id == curriculumId, ct);
         if (curriculum is null) return NotFound(new { message = "Curriculum not found." });
-        if (!string.Equals(curriculum.Status, expectedStatus, StringComparison.OrdinalIgnoreCase))
-            return Conflict(new { message = $"Only a curriculum in '{expectedStatus}' status can move to '{nextStatus}'. Current status: {curriculum.Status}." });
+        var allowedStatuses = expectedStatus.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (!allowedStatuses.Contains(curriculum.Status, StringComparer.OrdinalIgnoreCase))
+            return Conflict(new { message = $"Curriculum status '{curriculum.Status}' is not valid for this action." });
         if (requireNotes && string.IsNullOrWhiteSpace(notes))
             return BadRequest(new { message = "A reason or review note is required for this action." });
 
@@ -151,7 +156,7 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
             .AnyAsync(x => x.Code == programme.Regulator && x.IsActive, ct);
         if (!authorityActive) return Conflict(new { message = "The programme's academic authority is inactive or not registered." });
 
-        if (nextStatus == "UnderReview")
+        if (nextStatus == "Submitted")
         {
             if (!curriculum.IsActive || !programme.IsActive || programme.IsReferenceOnly)
                 return Conflict(new { message = "Only active curricula for active deliverable programmes can be submitted." });
@@ -169,6 +174,7 @@ public sealed class CurriculumGovernanceController(SchoolManagementDbContext db)
         });
         curriculum.Status = nextStatus;
         if (deactivate) curriculum.IsActive = false;
+        if (activate) curriculum.IsActive = true;
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
