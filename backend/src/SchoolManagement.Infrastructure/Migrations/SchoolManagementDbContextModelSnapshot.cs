@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SchoolManagement.Infrastructure.Persistence;
@@ -11,8 +12,9 @@ using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Infrastructure.Migrations
 {
     [DbContext(typeof(SchoolManagementDbContext))]
-    partial class SchoolManagementDbContextModelSnapshot : ModelSnapshot
+        partial class SchoolManagementDbContextModelSnapshot : ModelSnapshot
     {
+        /// <inheritdoc />
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
@@ -214,11 +216,11 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<string>("CourseType")
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("CreditUnits")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -227,8 +229,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
-                        .HasDefaultValue(false)
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -239,6 +242,47 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("AuthorityCode");
 
                     b.ToTable("Courses");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CourseEquivalence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("CreditsAccepted")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ExternalCourseCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalCourseName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalInstitution")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("InternalCourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsMandatory")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CourseEquivalences");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.CourseOffering", b =>
@@ -275,6 +319,63 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("CourseOfferings");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CoursePloMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContributionLevel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProgrammeLearningOutcomeId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CoursePloMappings");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CoursePrerequisite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsMandatory")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("MinimumGrade")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PrerequisiteCourseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PrerequisiteCourseId");
+
+                    b.HasIndex("CourseId", "PrerequisiteCourseId")
+                        .IsUnique();
+
+                    b.ToTable("CoursePrerequisites", t =>
+                        {
+                            t.HasCheckConstraint("CK_CoursePrerequisites_DifferentCourses", "\"CourseId\" <> \"PrerequisiteCourseId\"");
+                        });
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.CourseRegistration", b =>
                 {
                     b.Property<Guid>("Id")
@@ -307,38 +408,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("CourseRegistrations");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Academic.CoursePrerequisite", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsMandatory")
-                        .HasDefaultValue(true)
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("MinimumGrade")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("PrerequisiteCourseId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId", "PrerequisiteCourseId")
-                        .IsUnique();
-
-                    b.HasIndex("PrerequisiteCourseId");
-
-                    b.ToTable("CoursePrerequisites", t =>
-                        {
-                            t.HasCheckConstraint("CK_CoursePrerequisites_DifferentCourses", "\"CourseId\" <> \"PrerequisiteCourseId\"");
-                        });
-                });
-
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Curriculum", b =>
                 {
                     b.Property<Guid>("Id")
@@ -358,8 +427,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
-                        .HasDefaultValue(false)
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<int>("MinimumCredits")
                         .HasColumnType("integer");
@@ -385,39 +455,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Curricula");
-                });
-
-            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumCourse", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CourseId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CurriculumId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsCore")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasDefaultValue(false)
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("SemesterNumber")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("YearOfStudy")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CurriculumCourses");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumApprovalHistory", b =>
@@ -455,6 +492,116 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("CurriculumApprovalHistory");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumCourse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CurriculumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsCore")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("SemesterNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("YearOfStudy")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CurriculumCourses");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ChangeNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CurriculumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<int>("MinimumCredits")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProgrammeType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CurriculumVersions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumVersionCourse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CurriculumVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ElectiveGroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsCore")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("SemesterNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("YearOfStudy")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CurriculumVersionCourses");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Department", b =>
                 {
                     b.Property<Guid>("Id")
@@ -481,6 +628,59 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Departments");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.ElectiveGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CurriculumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MinCourses")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinCredits")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SemesterNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("YearOfStudy")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ElectiveGroups");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.ElectiveGroupCourse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ElectiveGroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsCoreWithinGroup")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ElectiveGroupCourses");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Faculty", b =>
@@ -606,6 +806,45 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("Intakes");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.LmsCourse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LmsCourseId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LmsCourseUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LmsPlatform")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LmsCourses");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.LogbookRequirement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -719,6 +958,74 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("Regulator");
 
                     b.ToTable("Programmes");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.ProgrammeLearningOutcome", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProgrammeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProgrammeLearningOutcomes");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.RegulatorImport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ImportFileRef")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImportType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ImportedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<int>("RecordsInserted")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecordsProcessed")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecordsSkipped")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RegulatorCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RegulatorImports");
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Semester", b =>
@@ -848,6 +1155,39 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("StudentEnrollments");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.StudentTransferCredit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CourseEquivalenceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExternalTranscriptRef")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("GrantedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GrantedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("SemesterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StudentTransferCredits");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.TeachingGroup", b =>
                 {
                     b.Property<Guid>("Id")
@@ -930,8 +1270,8 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("LayoutJson")
-                        .ValueGeneratedOnAdd()
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("jsonb")
                         .HasDefaultValue("{}");
 
@@ -997,15 +1337,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("Category", "ProgrammeCode", "IsActive");
 
                     b.ToTable("UhpabFeeReferences");
-                });
-
-            modelBuilder.Entity("SchoolManagement.Domain.Academic.TimetableTemplate", b =>
-                {
-                    b.HasOne("SchoolManagement.Domain.Academic.TeachingGroup", null)
-                        .WithMany()
-                        .HasForeignKey("TeachingGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.UserCampusAssignment", b =>
@@ -5015,8 +5346,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
-                    b.Property<SchoolManagement.Domain.Staff.LeaveType>("LeaveType")
-                        .IsRequired()
+                    b.Property<int>("LeaveType")
                         .HasColumnType("integer");
 
                     b.Property<string>("Reason")
@@ -5029,8 +5359,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 
-                    b.Property<SchoolManagement.Domain.Staff.LeaveRequestStatus>("Status")
-                        .IsRequired()
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -5656,23 +5985,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("SchoolManagement.Domain.Academic.CourseRegistration", b =>
-                {
-                    b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
-                        .WithMany()
-                        .HasForeignKey("CampusId")
-                        .OnDelete(DeleteBehavior.SetNull);
-                });
-
-            modelBuilder.Entity("SchoolManagement.Domain.Academic.LogbookRequirement", b =>
-                {
-                    b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
-                        .WithMany()
-                        .HasForeignKey("CurriculumId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("SchoolManagement.Domain.Academic.CoursePrerequisite", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Academic.Course", null)
@@ -5688,7 +6000,24 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CourseRegistration", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumApprovalHistory", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
+                        .WithMany()
+                        .HasForeignKey("CurriculumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.LogbookRequirement", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
                         .WithMany()
@@ -5712,6 +6041,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("StaffMemberId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.TimetableTemplate", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.TeachingGroup", null)
+                        .WithMany()
+                        .HasForeignKey("TeachingGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
