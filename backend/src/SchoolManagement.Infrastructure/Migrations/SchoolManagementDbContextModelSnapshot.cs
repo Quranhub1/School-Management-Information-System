@@ -924,6 +924,24 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("TimetableEntries");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.TimetableTemplate", b =>
+                {
+                    b.Property<Guid>("TeachingGroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LayoutJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("{}");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("TeachingGroupId");
+
+                    b.ToTable("TimetableTemplates");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.UhpabFeeReference", b =>
                 {
                     b.Property<Guid>("Id")
@@ -978,6 +996,15 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasIndex("Category", "ProgrammeCode", "IsActive");
 
                     b.ToTable("UhpabFeeReferences");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.TimetableTemplate", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.TeachingGroup", null)
+                        .WithMany()
+                        .HasForeignKey("TeachingGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Academic.UserCampusAssignment", b =>
