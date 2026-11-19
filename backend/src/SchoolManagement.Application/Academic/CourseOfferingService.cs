@@ -17,7 +17,7 @@ public sealed class CourseOfferingService(
     {
         var course = await courses.GetByIdAsync(request.CourseId, ct);
         if (course is null) return (false, "Course not found.");
-        var semester = await semesters.GetByIdAsync(request.SemesterId, ct);
+        var semester = await semesters.GetByIdAsync(request.SemesterId, false, ct);
         if (semester is null) return (false, "Semester not found.");
         var programme = await programmes.GetByIdAsync(request.ProgrammeId, ct);
         if (programme is null) return (false, "Programme not found.");
