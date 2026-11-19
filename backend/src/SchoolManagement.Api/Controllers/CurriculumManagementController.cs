@@ -291,6 +291,81 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
         return result.Success ? Ok(result.Mapping) : BadRequest(new { message = result.Error });
     }
 
+    public sealed record BulkAddCurriculumCoursesRequest(string[] CourseIds, int YearOfStudy, int SemesterNumber, bool IsCore);
+
+    [HttpPost("curricula/{curriculumId:guid}/courses/bulk")]
+    public async Task<IActionResult> BulkAddMapping(Guid curriculumId, [FromBody] BulkAddCurriculumCoursesRequest request, CancellationToken ct)
+    {
+        if (request.CourseIds == null || request.CourseIds.Length == 0)
+            return BadRequest(new { message = "At least one course is required." });
+        if (request.YearOfStudy < 1 || request.SemesterNumber < 1)
+            return BadRequest(new { message = "Year and semester numbers must be positive." });
+
+        var results = new List<object>();
+        var errors = new List<string>();
+
+        foreach (var courseIdStr in request.CourseIds)
+        {
+            if (!Guid.TryParse(courseIdStr, out var courseId))
+            {
+                errors.Add($"Invalid course ID: {courseIdStr}");
+                continue;
+            }
+
+            var prerequisitesMet = await service.ValidatePrerequisitesAsync(curriculumId, courseId, ct);
+            if (!prerequisitesMet)
+            {
+                var missingPrereqs = await service.GetCoursePrerequisitesAsync(courseId, ct);
+                var missing = missingPrereqs.Where(p => p.IsMandatory).Select(p => $"{p.PrerequisiteCode} — {p.PrerequisiteName}").ToList();
+                errors.Add($"Course {courseIdStr}: missing mandatory prerequisites: {string.Join(", ", missing)}");
+                continue;
+            }
+
+            var creditLoadOk = await service.ValidateCreditLoadAsync(curriculumId, request.YearOfStudy, request.SemesterNumber, ct);
+            if (!creditLoadOk)
+            {
+                errors.Add($"Course {courseIdStr}: would exceed credit load for Year {request.YearOfStudy}, Semester {request.SemesterNumber}");
+                continue;
+            }
+
+            var result = await service.AddMappingAsync(curriculumId, new AddCurriculumCourseRequest(courseId, request.YearOfStudy, request.SemesterNumber, request.IsCore), ct);
+            if (result.Success && result.Mapping is not null)
+                results.Add(result.Mapping);
+            else
+                errors.Add($"Course {courseIdStr}: {result.Error}");
+        }
+
+        if (errors.Count > 0)
+            return Conflict(new { added: results.Count, errors });
+
+        return Ok(results);
+    }
+
+    [HttpGet("curricula/{curriculumId:guid}/courses/export")]
+    public async Task<IActionResult> ExportCurriculumCsv(Guid curriculumId, CancellationToken ct)
+    {
+        var curriculum = await db.Curricula.AsNoTracking().FirstOrDefaultAsync(x => x.Id == curriculumId && !x.IsDeleted, ct);
+        if (curriculum is null) return NotFound(new { message = "Curriculum not found." });
+
+        var mappings = await db.CurriculumCourses.AsNoTracking()
+            .Where(x => x.CurriculumId == curriculumId && !x.IsDeleted)
+            .OrderBy(x => x.YearOfStudy).ThenBy(x => x.SemesterNumber).ThenBy(x => x.CourseId)
+            .ToListAsync(ct);
+
+        var csv = new System.Text.StringBuilder();
+        csv.AppendLine("Year,Semester,Course Code,Course Name,Credit Units,Core/Elective");
+        foreach (var m in mappings)
+        {
+            var course = await db.Courses.FirstOrDefaultAsync(x => x.Id == m.CourseId && !x.IsDeleted, ct);
+            csv.AppendLine($"{m.YearOfStudy},{m.SemesterNumber},{course?.Code ?? "Unknown"},{course?.Name ?? "Unknown"},{course?.CreditUnits ?? 0},{(m.IsCore ? "Core" : "Elective")}");
+        }
+
+        return Content(csv.ToString(), "text/csv", new System.Net.Mime.MediaTypeHeaderValue("text/csv")
+        {
+            CharSet = "UTF-8"
+        }.ToString());
+    }
+
     [HttpGet("courses/{courseId:guid}/prerequisites")]
     public async Task<IActionResult> GetPrerequisites(Guid courseId, CancellationToken ct)
     {

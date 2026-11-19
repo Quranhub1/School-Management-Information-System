@@ -16,14 +16,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? undefined as T : response.json() as Promise<T>
 }
 
-export interface Curriculum { id:string; programmeId:string; version:string; title:string; minimumCredits:number; effectiveFrom:string; effectiveTo?:string|null; status:string; isActive:boolean; programmeType:number }
-export interface Course { id:string; authorityCode?:string|null; code:string; name:string; creditUnits:number; description?:string|null; courseType?:string|null; isActive:boolean }
-export interface CurriculumCourse { id:string; curriculumId:string; courseId:string; yearOfStudy:number; semesterNumber:number; isCore:boolean }
+export interface Curriculum { id:string; programmeId:string; version:string; title:string; minimumCredits:number; effectiveFrom:string; effectiveTo?:string|null; status:string; isActive:boolean; isDeleted:boolean; deletedAt?:string|null; programmeType:number }
+export interface Course { id:string; authorityCode?:string|null; code:string; name:string; creditUnits:number; description?:string|null; courseType?:string|null; isActive:boolean; isDeleted:boolean; deletedAt?:string|null }
+export interface CurriculumCourse { id:string; curriculumId:string; courseId:string; yearOfStudy:number; semesterNumber:number; isCore:boolean; isDeleted:boolean; deletedAt?:string|null }
+export interface CoursePrerequisiteDto { id:string; prerequisiteCourseId:string; prerequisiteCode:string; prerequisiteName:string; isMandatory:boolean; minimumGrade?:string|null }
+export interface CreditLoadInfo { year:number; semester:number; courseCount:number; totalCredits:number }
 
 export const getCurricula = () => request<Curriculum[]>('/api/curriculum-management/curricula')
+export const getCurriculum = (id:string) => request<Curriculum>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}`)
 export const getCourses = (authorityCode?: string) => request<Course[]>(authorityCode ? `/api/curriculum-management/courses?authorityCode=${encodeURIComponent(authorityCode)}` : '/api/curriculum-management/courses')
-export const createCurriculum = (input: Omit<Curriculum,'id'|'status'|'isActive'>) => request<Curriculum>('/api/curriculum-management/curricula',{method:'POST',body:JSON.stringify(input)})
-export const createCourse = (input: Omit<Course,'id'|'isActive'> & { authorityCode: string }) => request<Course>('/api/curriculum-management/courses',{method:'POST',body:JSON.stringify(input)})
+export const createCurriculum = (input: Omit<Curriculum,'id'|'status'|'isActive'|'isDeleted'|'deletedAt'>) => request<Curriculum>('/api/curriculum-management/curricula',{method:'POST',body:JSON.stringify(input)})
+export const createCourse = (input: Omit<Course,'id'|'isActive'|'isDeleted'|'deletedAt'> & { authorityCode: string }) => request<Course>('/api/curriculum-management/courses',{method:'POST',body:JSON.stringify(input)})
 export const getCurriculumCourses = (id:string) => {
   if (!id.trim()) throw new Error('Curriculum ID is required.')
   return request<CurriculumCourse[]>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/courses`)
@@ -32,6 +35,11 @@ export const addCurriculumCourse = (id:string,input:{courseId:string;yearOfStudy
   if (!id.trim() || !input.courseId.trim()) throw new Error('Curriculum and course IDs are required.')
   if (input.yearOfStudy < 1 || input.semesterNumber < 1) throw new Error('Year and semester numbers must be positive.')
   return request<CurriculumCourse>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/courses`,{method:'POST',body:JSON.stringify(input)})
+}
+export const bulkAddCurriculumCourses = (id:string,input:{courseIds:string[];yearOfStudy:number;semesterNumber:number;isCore:boolean}) => {
+  if (!id.trim() || !input.courseIds?.length) throw new Error('Curriculum and at least one course ID are required.')
+  if (input.yearOfStudy < 1 || input.semesterNumber < 1) throw new Error('Year and semester numbers must be positive.')
+  return request<CurriculumCourse[]>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/courses/bulk`,{method:'POST',body:JSON.stringify(input)})
 }
 
 export interface UpdateCourseInput {
@@ -104,3 +112,12 @@ export const getLogbookEligibility = (studentId: string, curriculumId: string) =
 export const issueStudentLogbook = (studentId: string, input: { logbookRequirementId: string; serialNumber: string; issuedOn: string; issuedBy?: string; remarks?: string }) => request<StudentLogbook>(`/api/curriculum-management/students/${encodeURIComponent(studentId)}/logbooks`, { method: 'POST', body: JSON.stringify(input) })
 export const getUhpabFeeReferences = (programmeCode?: string) => request<UhpabFeeReference[]>(`/api/curriculum-management/uhpab-fee-references${programmeCode ? `?programmeCode=${encodeURIComponent(programmeCode)}` : ''}`)
 export const createUhpabFeeReference = (input: Omit<UhpabFeeReference, 'id' | 'isActive'>) => request<UhpabFeeReference>('/api/curriculum-management/uhpab-fee-references', { method: 'POST', body: JSON.stringify(input) })
+
+export const getPrerequisites = (courseId: string) => request<CoursePrerequisiteDto[]>(`/api/curriculum-management/courses/${encodeURIComponent(courseId)}/prerequisites`)
+export const addPrerequisite = (courseId: string, input: { prerequisiteCourseId: string; isMandatory?: boolean; minimumGrade?: string }) => request<void>(`/api/curriculum-management/courses/${encodeURIComponent(courseId)}/prerequisites`, { method: 'POST', body: JSON.stringify(input) })
+export const removePrerequisite = (courseId: string, prerequisiteId: string) => request<void>(`/api/curriculum-management/courses/${encodeURIComponent(courseId)}/prerequisites/${encodeURIComponent(prerequisiteId)}`, { method: 'DELETE' })
+export const getCreditLoad = (curriculumId: string) => request<CreditLoadInfo[]>(`/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/credit-load`)
+export const submitCurriculumForReview = (id: string) => request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/submit-for-review`, { method: 'POST' })
+export const approveCurriculum = (id: string) => request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/approve`, { method: 'POST' })
+export const publishCurriculum = (id: string) => request<void>(`/api/curriculum-management/curricula/${encodeURIComponent(id)}/publish`, { method: 'POST' })
+export const exportCurriculumCsv = (curriculumId: string) => fetch(`${API_BASE_URL}/api/curriculum-management/curricula/${encodeURIComponent(curriculumId)}/courses/export`)
