@@ -18,7 +18,7 @@ public sealed class CourseRepository(SchoolManagementDbContext db) : ICourseRepo
         if (course is not null)
         {
             course.IsDeleted = true;
-            course.DeletedAt = DateTimeOffset.UtcNow;
+            course.DeletedAt = DateTime.UtcNow;
             await db.SaveChangesAsync(ct);
         }
     }

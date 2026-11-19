@@ -17,7 +17,7 @@ public sealed class CurriculumCourseRepository(SchoolManagementDbContext db) : I
         if (entity is not null)
         {
             entity.IsDeleted = true;
-            entity.DeletedAt = DateTimeOffset.UtcNow;
+            entity.DeletedAt = DateTime.UtcNow;
         }
     }
     public Task SaveChangesAsync(CancellationToken ct = default) => db.SaveChangesAsync(ct);
