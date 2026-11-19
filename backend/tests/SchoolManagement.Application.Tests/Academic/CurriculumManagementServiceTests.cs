@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -35,7 +36,7 @@ public sealed class CurriculumManagementServiceTests
         public Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
             var c = _items.FirstOrDefault(x => x.Id == id);
-            if (c is not null) { c.IsDeleted = true; c.DeletedAt = DateTimeOffset.UtcNow; }
+            if (c is not null) { c.IsDeleted = true; c.DeletedAt = DateTime.UtcNow; }
             return Task.CompletedTask;
         }
         public Task SaveChangesAsync(CancellationToken ct = default) => Task.CompletedTask;
@@ -55,7 +56,7 @@ public sealed class CurriculumManagementServiceTests
         public Task RemoveAsync(Guid id, CancellationToken ct = default)
         {
             var m = _items.FirstOrDefault(x => x.Id == id);
-            if (m is not null) { m.IsDeleted = true; m.DeletedAt = DateTimeOffset.UtcNow; }
+            if (m is not null) { m.IsDeleted = true; m.DeletedAt = DateTime.UtcNow; }
             return Task.CompletedTask;
         }
         public Task SaveChangesAsync(CancellationToken ct = default) => Task.CompletedTask;
@@ -107,7 +108,7 @@ public sealed class CurriculumManagementServiceTests
     }
 
     private static Programme ActiveProgramme(Guid id, ProgrammeType type = ProgrammeType.FullProgramme) =>
-        new() { Id = id, Code = "PROG-001", Name = "Test Programme", Type = type, IsActive = true, IsReferenceOnly = false };
+        new() { Id = id, Code = "PROG-001", Name = "Test Programme", Award = "Certificate", Type = type, IsActive = true, IsReferenceOnly = false };
 
     [Fact]
     public async Task CreateCurriculumAsync_creates_curriculum()
@@ -146,7 +147,7 @@ public sealed class CurriculumManagementServiceTests
         var programmes = new FakeProgrammeRepository();
         var progId = Guid.NewGuid();
         programmes.Items.Add(ActiveProgramme(progId));
-        curricula.Items.Add(new Curriculum { ProgrammeId = progId, Version = "1.0", Title = "Old", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
+        curricula.Items.Add(new Curriculum { Id = Guid.NewGuid(), ProgrammeId = progId, Version = "1.0", Title = "Old", MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
         var service = CreateService(curricula, programmes: programmes);
 
         var (success, error, _) = await service.CreateCurriculumAsync(new CreateCurriculumRequest(
@@ -282,7 +283,7 @@ public sealed class CurriculumManagementServiceTests
         var curriculumId = Guid.NewGuid();
         var courseId = Guid.NewGuid();
         var prereqId = Guid.NewGuid();
-        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), IsActive = true });
+        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), Version = "1.0", Title = "Test", IsActive = true, MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
         courses.Items.Add(new Course { Id = courseId, Code = "PH201", Name = "Pharmacy 201", CreditUnits = 3, IsActive = true });
         courses.Items.Add(new Course { Id = prereqId, Code = "PH101", Name = "Pharmacy 101", CreditUnits = 3, IsActive = true });
         prerequisites.Items.Add(new CoursePrerequisite { CourseId = courseId, PrerequisiteCourseId = prereqId, IsMandatory = true });
@@ -303,7 +304,7 @@ public sealed class CurriculumManagementServiceTests
         var curriculumId = Guid.NewGuid();
         var courseId = Guid.NewGuid();
         var prereqId = Guid.NewGuid();
-        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), IsActive = true });
+        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), Version = "1.0", Title = "Test", IsActive = true, MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
         courses.Items.Add(new Course { Id = courseId, Code = "PH201", Name = "Pharmacy 201", CreditUnits = 3, IsActive = true });
         courses.Items.Add(new Course { Id = prereqId, Code = "PH101", Name = "Pharmacy 101", CreditUnits = 3, IsActive = true });
         prerequisites.Items.Add(new CoursePrerequisite { CourseId = courseId, PrerequisiteCourseId = prereqId, IsMandatory = true });
@@ -322,8 +323,7 @@ public sealed class CurriculumManagementServiceTests
         var courses = new FakeCourseRepository();
         var mappings = new FakeCurriculumCourseRepository();
         var curriculumId = Guid.NewGuid();
-        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), IsActive = true });
-        // Add 9 courses of 3 credits each = 27 credits > 24 max
+        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), Version = "1.0", Title = "Test", IsActive = true, MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
         for (int i = 0; i < 9; i++)
         {
             var courseId = Guid.NewGuid();
@@ -344,7 +344,7 @@ public sealed class CurriculumManagementServiceTests
         var courses = new FakeCourseRepository();
         var mappings = new FakeCurriculumCourseRepository();
         var curriculumId = Guid.NewGuid();
-        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), IsActive = true });
+        curricula.Items.Add(new Curriculum { Id = curriculumId, ProgrammeId = Guid.NewGuid(), Version = "1.0", Title = "Test", IsActive = true, MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
         var courseId = Guid.NewGuid();
         courses.Items.Add(new Course { Id = courseId, Code = "PH101", Name = "Pharmacy", CreditUnits = 3, IsActive = true });
         mappings.Items.Add(new CurriculumCourse { CurriculumId = curriculumId, CourseId = courseId, YearOfStudy = 1, SemesterNumber = 1, IsCore = true });
@@ -360,13 +360,11 @@ public sealed class CurriculumManagementServiceTests
     {
         var curricula = new FakeCurriculumRepository();
         var id = Guid.NewGuid();
-        curricula.Items.Add(new Curriculum { Id = id, ProgrammeId = Guid.NewGuid(), IsActive = true });
-        var service = CreateService(curricula);
+        curricula.Items.Add(new Curriculum { Id = id, ProgrammeId = Guid.NewGuid(), Version = "1.0", Title = "Test", IsActive = true, MinimumCredits = 0, EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow) });
 
-        // Simulate soft delete via controller-like flow
         var item = curricula.Items[0];
         item.IsDeleted = true;
-        item.DeletedAt = DateTimeOffset.UtcNow;
+        item.DeletedAt = DateTime.UtcNow;
 
         Assert.True(item.IsDeleted);
         Assert.NotNull(item.DeletedAt);
