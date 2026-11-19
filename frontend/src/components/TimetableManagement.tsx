@@ -1,607 +1,1206 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CalendarDays, LayoutGrid, List, Plus, Sparkles, Trash2, Pencil, Save } from 'lucide-react'
-import LoadingSpinner from './LoadingSpinner'
-import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, listTimetable, saveTimetableTemplate, updateTimetableEntry, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
-import './TimetableManagement.css'
-import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
+import { useCallback, useEffect, useState } from 'react'
+import { getUsers } from '../api/administration'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
+import './TimetableManagement.css'
 
-const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const weekOrder = [1, 2, 3, 4, 5, 6, 0]
-const emptyOptions: TimetableOptions = { teachingGroups: [], courses: [], teachers: [], semesters: [], programmes: [], curricula: [], curriculumCourses: [] }
-const defaultTemplateSlots = [{ startTime: '08:00', endTime: '09:00' }, { startTime: '09:00', endTime: '10:00' }, { startTime: '10:30', endTime: '11:30' }, { startTime: '11:30', endTime: '12:30' }, { startTime: '13:30', endTime: '14:30' }, { startTime: '14:30', endTime: '15:30' }, { startTime: '15:30', endTime: '16:30' }]
-type TemplateCell = { id?: string; courseId: string; teacherId: string; room: string; sessionType: string }
-const timeLabel = (value: string) => value.slice(0, 5)
-const formatSemesterDate = (value?: string) => {
-  if (!value) return ''
-  const date = new Date(value.slice(0, 10) + 'T00:00:00')
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+type TimetableCell = {
+  course: string
+  tutor: string
+  room: string
+  customTime: string
+  rowSpan: number
+  colSpan: number
 }
-const semesterDateRange = (semester?: TimetableOptions['semesters'][number]) => semester?.startDate && semester?.endDate
-  ? `${formatSemesterDate(semester.startDate)} – ${formatSemesterDate(semester.endDate)}`
-  : 'Semester dates not configured'
-const timeRange = (entry: TimetableEntry) => timeLabel(entry.startTime) + '–' + timeLabel(entry.endTime)
+
+type TimetableColumn = {
+  id: string
+  type: 'slot' | 'divider'
+  label?: string
+  verticalText?: string
+}
+
+type TimetableRow = {
+  id: string
+  short: string
+  full: string
+  isWeekend: boolean
+}
+
+type TimetableMeta = {
+  institution: string
+  title: string
+  year: string
+  semester: string
+  dayCornerLabel: string
+}
+
+type TimetableProgram = {
+  optionLabel: string
+  meta: TimetableMeta
+  rows: TimetableRow[]
+  columns: TimetableColumn[]
+  cells: Record<string, Record<string, TimetableCell>>
+}
+
+type Registrar = {
+  name: string
+  role: string
+  secondaryName: string
+  secondaryRole: string
+}
+
+type GridCell =
+  | { type: 'divider'; col: TimetableColumn; rowspan: number }
+  | {
+      type: 'cell'
+      cell: TimetableCell
+      rSpan: number
+      cSpan: number
+      rowObj: TimetableRow
+      col: TimetableColumn
+      hasVal: boolean
+    }
+
+const STORAGE_KEY = 'kshs_timetable_v4'
+const REGISTRAR_KEY = 'kshs_registered_registrar_v1'
+
+function createDefaultRows(): TimetableRow[] {
+  return [
+    { id: 'Monday', short: 'MON', full: 'Monday', isWeekend: false },
+    { id: 'Tuesday', short: 'TUE', full: 'Tuesday', isWeekend: false },
+    { id: 'Wednesday', short: 'WED', full: 'Wednesday', isWeekend: false },
+    { id: 'Thursday', short: 'THUR', full: 'Thursday', isWeekend: false },
+    { id: 'Friday', short: 'FRID', full: 'Friday', isWeekend: false },
+    { id: 'Saturday', short: 'SAT', full: 'Saturday', isWeekend: true },
+    { id: 'Sunday', short: 'SUN', full: 'Sunday', isWeekend: true }
+  ]
+}
+
+const DEFAULT_PROGRAMS: Record<string, TimetableProgram> = {
+  'CPH-Y1S2': {
+    optionLabel: 'Certificate in Pharmacy — Year 1 Sem 2',
+    meta: {
+      institution: 'KAMPALA SCHOOL OF HEALTH SCIENCES',
+      title: 'TEACHING TIME TABLE FOR CERTIFICATE IN PHARMACY',
+      year: 'ACADEMIC YEAR 2026/2027',
+      semester: 'YEAR ONE SEMESTER TWO',
+      dayCornerLabel: 'DAY'
+    },
+    rows: createDefaultRows(),
+    columns: [
+      { id: 'slot-1', type: 'slot', label: '8:00 AM – 10:30 AM' },
+      { id: 'div-break', type: 'divider', verticalText: 'BREAK' },
+      { id: 'slot-2', type: 'slot', label: '11:00 AM – 1:00 PM' },
+      { id: 'div-lunch', type: 'divider', verticalText: 'LUNCH' },
+      { id: 'slot-3', type: 'slot', label: '2:00 PM – 4:00 PM' },
+      { id: 'slot-4', type: 'slot', label: '5:00 PM – 6:30 PM' }
+    ],
+    cells: {
+      Monday: {
+        'slot-1': { course: 'MEDICAL PSYCHOLOGY', tutor: 'MR. WERE', rowSpan: 1, colSpan: 1 },
+        'slot-2': { course: 'MEDICAL PSYCHOLOGY', tutor: 'MR. WERE', rowSpan: 1, colSpan: 1 },
+        'slot-3': { course: 'PHARMACEUTICAL PRACTICALS', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+        'slot-4': { course: 'PHARMACEUTICAL PRACTICALS', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 }
+      },
+      Tuesday: {
+        'slot-1': { course: 'MEDICAL PSYCHOLOGY', tutor: 'MR. CLIFFE', rowSpan: 1, colSpan: 1 },
+        'slot-2': { course: 'MEDICAL PSYCHOLOGY', tutor: 'MR. CLIFFE', rowSpan: 1, colSpan: 1 },
+        'slot-3': { course: 'BASIC PHARMACOGNOSY', tutor: 'MR. DAN', rowSpan: 1, colSpan: 1 },
+        'slot-4': { course: 'BASIC PHARMACOGNOSY', tutor: 'MR. DAN', rowSpan: 1, colSpan: 1 }
+      },
+      Wednesday: {
+        'slot-1': { course: 'PHARMACEUTICAL CALCULATIONS', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+        'slot-2': { course: 'PHARMACEUTICAL CALCULATIONS', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+        'slot-3': { course: 'COMMUNICATION SKILLS', tutor: 'MR. OTAI', rowSpan: 1, colSpan: 1 },
+        'slot-4': { course: 'COMMUNICATION SKILLS', tutor: 'MR. OTAI', rowSpan: 1, colSpan: 1 }
+      },
+      Thursday: {
+        'slot-1': { course: 'PHARMACEUTICAL CHEMISTRY', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+        'slot-2': { course: 'PHARMACEUTICAL CHEMISTRY', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+        'slot-3': { course: 'ANATOMY & PHYSIOLOGY II', tutor: 'MS. MUSIMENTA', rowSpan: 1, colSpan: 1 },
+        'slot-4': { course: 'ANATOMY & PHYSIOLOGY II', tutor: 'MS. MUSIMENTA', rowSpan: 1, colSpan: 1 }
+      },
+      Friday: {
+        'slot-1': { course: 'BASIC PHARMACOGNOSY', tutor: 'MR. DAN', rowSpan: 1, colSpan: 1 },
+        'slot-2': { course: 'BASIC PHARMACOGNOSY', tutor: 'MR. DAN', rowSpan: 1, colSpan: 1 },
+        'slot-3': { course: 'PHARMACEUTICAL CHEMISTRY II', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 },
+        'slot-4': { course: 'PHARMACEUTICAL CHEMISTRY II', tutor: 'MR. RICHARD', rowSpan: 1, colSpan: 1 }
+      }
+    }
+  }
+}
+
+function loadPrograms(): Record<string, TimetableProgram> {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) return JSON.parse(saved)
+  } catch {}
+  return JSON.parse(JSON.stringify(DEFAULT_PROGRAMS))
+}
+
+function savePrograms(programs: Record<string, TimetableProgram>): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(programs))
+  } catch {}
+}
+
+function loadRegistrar(): Registrar {
+  try {
+    const saved = localStorage.getItem(REGISTRAR_KEY)
+    if (saved) return JSON.parse(saved)
+  } catch {}
+  return { name: '', role: 'ACADEMIC REGISTRAR', secondaryName: '', secondaryRole: '' }
+}
+
+function saveRegistrar(reg: Registrar): void {
+  try {
+    localStorage.setItem(REGISTRAR_KEY, JSON.stringify(reg))
+  } catch {}
+}
 
 export function TimetableManagement({ readOnly = false }: { readOnly?: boolean } = {}) {
-  const [entries, setEntries] = useState<TimetableEntry[]>([])
-  const [options, setOptions] = useState<TimetableOptions>(emptyOptions)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [semesterId, setSemesterId] = useState('')
-  const [programmeId, setProgrammeId] = useState('')
-  const [curriculumId, setCurriculumId] = useState('')
-  const [yearOfStudy, setYearOfStudy] = useState('')
-  const [curriculumSemester, setCurriculumSemester] = useState('')
-  const [teachingGroupId, setTeachingGroupId] = useState('')
-  const [courseId, setCourseId] = useState('')
-  const [teacherId, setTeacherId] = useState('')
-  const [dayOfWeek, setDayOfWeek] = useState('1')
-  const [startTime, setStartTime] = useState('08:00')
-  const [endTime, setEndTime] = useState('09:00')
-  const [room, setRoom] = useState('')
-  const [sessionType, setSessionType] = useState('Lecture')
-  const [generatedResult, setGeneratedResult] = useState<GenerateTimetableResult | null>(null)
-  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
-  const [showGenerator, setShowGenerator] = useState(false)
-  const [showScheduleForm, setShowScheduleForm] = useState(false)
-  const [timetableCount, setTimetableCount] = useState('1')
-  const [generatedTimetables, setGeneratedTimetables] = useState<Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }>>([])
-  const [view, setView] = useState<'week' | 'list'>('week')
-  const [showTemplateEditor, setShowTemplateEditor] = useState(false)
-  const [templateGroupId, setTemplateGroupId] = useState('')
-  const [templateLoadedGroupId, setTemplateLoadedGroupId] = useState('')
-  const [templateSlots, setTemplateSlots] = useState(defaultTemplateSlots)
-  const [templateCells, setTemplateCells] = useState<Record<string, TemplateCell>>({})
-  const [templateSaving, setTemplateSaving] = useState(false)
   const { institution, loaded: institutionLoaded } = useInstitutionSettings()
 
-  const load = useCallback(async () => {
-    setError('')
-    try {
-      const [loadedEntries, loadedOptions] = await Promise.all([listTimetable(), getTimetableOptions()])
-      setEntries(loadedEntries)
-      setOptions({ ...emptyOptions, ...loadedOptions, programmes: loadedOptions.programmes ?? [], curricula: loadedOptions.curricula ?? [], curriculumCourses: loadedOptions.curriculumCourses ?? [] })
-      setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
-      setProgrammeId(current => current || loadedOptions.programmes?.[0]?.id || '')
-      setCurriculumId(current => current || loadedOptions.curricula.find(item => item.programmeId === (loadedOptions.programmes[0]?.id ?? ''))?.id || '')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
+  const [programs, setPrograms] = useState<Record<string, TimetableProgram>>(() => loadPrograms())
+  const [registrar, setRegistrar] = useState<Registrar>(() => loadRegistrar())
+  const [rolesRegistrar, setRolesRegistrar] = useState<Registrar | null>(null)
+  const [activeProgramKey, setActiveProgramKey] = useState<string>('CPH-Y1S2')
+  const [isEditing, setIsEditing] = useState(true)
+  const [showWeekends, setShowWeekends] = useState(true)
+  const [modals, setModals] = useState<Record<string, boolean>>({})
+  const [toast, setToast] = useState<{ msg: string; show: boolean }>({ msg: '', show: false })
+
+  // Seed the registrar from the roles section (users with the Academic Registrar role)
+  // when no registrar has been registered in localStorage yet.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const users = await getUsers()
+        const regUser = users.find(u => Array.isArray(u.roles) && u.roles.includes('AcademicRegistrar'))
+        if (!cancelled && regUser) {
+          const fullName = `${regUser.firstName ?? ''} ${regUser.lastName ?? ''}`.trim() || regUser.username
+          setRolesRegistrar({
+            name: fullName.toUpperCase(),
+            role: 'ACADEMIC REGISTRAR',
+            secondaryName: '',
+            secondaryRole: ''
+          })
+        }
+      } catch {
+        // Roles section unreachable; keep whatever is in localStorage.
+      }
+    })()
+    return () => {
+      cancelled = true
     }
   }, [])
 
-  useEffect(() => {
-    setLoading(true)
-    void load().finally(() => setLoading(false))
-  }, [load])
+  const effectiveRegistrar: Registrar =
+    registrar && registrar.name ? registrar : rolesRegistrar ?? { name: '', role: 'ACADEMIC REGISTRAR', secondaryName: '', secondaryRole: '' }
 
-  const groupLabels = useMemo(() => new Map(options.teachingGroups.map(item => [item.id, item.label])), [options.teachingGroups])
-  const courseLabels = useMemo(() => new Map(options.courses.map(item => [item.id, item.label])), [options.courses])
-  const teacherLabels = useMemo(() => new Map(options.teachers.map(item => [item.id, item.label])), [options.teachers])
-  const availableSemesters = options.semesters
-  const selectedSemester = availableSemesters.find(item => item.id === semesterId)
-  const academicYearLabel = selectedSemester?.academicYearLabel || selectedSemester?.label || 'Academic year not set'
-  const selectedProgramme = options.programmes.find(item => item.id === programmeId)
-  const semesterGroupIds = useMemo(() => new Set(options.teachingGroups.filter(item => item.semesterId === semesterId).map(item => item.id)), [options.teachingGroups, semesterId])
-  const programmeCurricula = options.curricula.filter(item => item.programmeId === programmeId)
-  const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? programmeCurricula[0]
-  const curriculumMappings = options.curriculumCourses.filter(item => item.curriculumId === selectedCurriculum?.id)
-  // Each distinct year/semester in an active curriculum is represented as its own
-  // timetable template for the selected academic period, even before sessions exist.
-  const semesterTemplates = useMemo(() => {
-    const grouped = new Map<string, { year: number; semester: number; courseIds: Set<string>; courseLabels: string[] }>()
-    for (const mapping of curriculumMappings) {
-      const key = mapping.yearOfStudy + '-' + mapping.semesterNumber
-      const current = grouped.get(key) ?? { year: mapping.yearOfStudy, semester: mapping.semesterNumber, courseIds: new Set<string>(), courseLabels: [] }
-      current.courseIds.add(mapping.courseId)
-      if (!current.courseLabels.includes(mapping.courseLabel)) current.courseLabels.push(mapping.courseLabel)
-      grouped.set(key, current)
+  const getActiveProgram = useCallback((): TimetableProgram => {
+    if (!programs[activeProgramKey]) {
+      const first = Object.keys(programs)[0]
+      setActiveProgramKey(first || 'CPH-Y1S2')
     }
-    return [...grouped.values()].sort((a, b) => a.year - b.year || a.semester - b.semester)
-  }, [curriculumMappings])
-  const studyYears = [...new Set(curriculumMappings.map(item => item.yearOfStudy))].sort((a, b) => a - b)
-  const curriculumSemesters = [...new Set(curriculumMappings.filter(item => !yearOfStudy || item.yearOfStudy === Number(yearOfStudy)).map(item => item.semesterNumber))].sort((a, b) => a - b)
-  const eligibleMappings = curriculumMappings.filter(item => (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) && (!curriculumSemester || item.semesterNumber === Number(curriculumSemester)))
-  const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
-  const availableCourses = options.courses.filter(item => eligibleCourseIds.has(item.id))
-  const availableGroups = options.teachingGroups.filter(item => item.programmeId === programmeId && item.semesterId === semesterId && eligibleCourseIds.has(item.courseId))
-  const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
-  const selectedGroupCourses = selectedGroup ? options.courses.filter(item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)) : []
-  const activeEntries = useMemo(() => entries.filter(item => item.isActive && semesterGroupIds.has(item.teachingGroupId)), [entries, semesterGroupIds])
-  const distinctGroups = useMemo(() => new Set(activeEntries.map(item => item.teachingGroupId)).size, [activeEntries])
-  const distinctTeachers = useMemo(() => new Set(activeEntries.map(item => item.teacherId)).size, [activeEntries])
-  const practicalCount = useMemo(() => activeEntries.filter(item => item.sessionType?.toLowerCase() === 'practical').length, [activeEntries])
-  const orderedEntries = useMemo(() => [...activeEntries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)), [activeEntries])
-  const timeSlots = useMemo(() => [...new Set(activeEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b)), [activeEntries])
+    return programs[activeProgramKey] || DEFAULT_PROGRAMS['CPH-Y1S2']
+  }, [programs, activeProgramKey])
 
-  function timetablePdfOptions(title: string, rows: TimetableEntry[], filename: string) {
-    const sorted = [...rows].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
-    const slots = [...new Set(sorted.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b))
-    const printableSlots = slots.length ? slots : defaultTemplateSlots.map(slot => slot.startTime)
-    const timetableBody = [
-      [{ text: 'DAY', style: 'tableHeader' }, ...printableSlots.map((slot, index) => ({ text: `PERIOD ${index + 1}\n${timeLabel(slot)}`, style: 'tableHeader' }))],
-      ...weekOrder.filter(day => day !== 0).map(day => [
-        { text: days[day].toUpperCase(), style: 'tableHeader' },
-        ...printableSlots.map(slot => {
-          const sessions = sorted.filter(entry => entry.dayOfWeek === day && entry.startTime === slot)
-          const text = sessions.map(entry => [
-            courseLabels.get(entry.courseId) ?? 'Course not found',
-            teacherLabels.get(entry.teacherId) ?? 'Teacher not found',
-            timeRange(entry),
-            entry.room ? `Venue: ${entry.room}` : '',
-            entry.sessionType || '',
-          ].filter(Boolean).join('\n')).join('\n\n')
-          return { text: text || '—', alignment: 'center' }
-        }),
-      ]),
-    ]
-    return {
-      title,
-      filename,
-      orientation: 'landscape' as const,
-      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
-      motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
-      contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
-      accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
-      content: [
-        { text: `ACADEMIC YEAR ${academicYearLabel} · ${selectedSemester?.label ?? 'Academic period'} · VALID FOR ${semesterDateRange(selectedSemester)}`, alignment: 'center', fontSize: 9, margin: [0, 0, 0, 10] },
-        { table: { headerRows: 1, widths: ['auto', ...printableSlots.map(() => '*')], body: timetableBody }, layout: {
-          hLineWidth: () => 0.8,
-          vLineWidth: () => 0.8,
-          hLineColor: () => '#111827',
-          vLineColor: () => '#111827',
-          paddingLeft: () => 4,
-          paddingRight: () => 4,
-          paddingTop: () => 5,
-          paddingBottom: () => 5,
-        } },
-        { text: 'Academic Registrar: ______________________________', alignment: 'right', margin: [0, 28, 0, 0] },
-      ],
+  const showToast = useCallback((msg: string) => {
+    setToast({ msg, show: true })
+    setTimeout(() => setToast({ msg, show: false }), 2200)
+  }, [])
+
+  const openModal = useCallback((id: string) => setModals(m => ({ ...m, [id]: true })), [])
+  const closeModal = useCallback((id: string) => setModals(m => ({ ...m, [id]: false })), [])
+  const isOpen = (id: string) => Boolean(modals[id])
+
+  const escapeHtml = useCallback((text: string) => {
+    const div = document.createElement('div')
+    div.textContent = text || ''
+    return div.innerHTML
+  }, [])
+
+  const renderFooter = useCallback(() => {
+    const footer = document.getElementById('docFooterBlock')
+    if (!footer) return
+    const reg = effectiveRegistrar
+    const hasPrimary = Boolean(reg.name && reg.name.trim())
+    const hasSecondary = Boolean(reg.secondaryName && reg.secondaryName.trim())
+
+    if (!hasPrimary && !hasSecondary) {
+      footer.innerHTML = '<span class="registrar-empty-hint">No Academic Registrar registered in system (click here to register)</span>'
+      return
     }
-  }
 
-  function printGeneratedTimetable(groupId: string) {
-    const target = generatedTimetables.find(item => item.groupId === groupId)
-    if (target) printInstitutionalPdf(timetablePdfOptions(target.groupLabel + ' Teaching Timetable', target.result.entries, target.groupLabel + '-timetable'))
-  }
+    let html = ''
+    if (hasPrimary) {
+      html += `
+        <div class="registrar-block">
+          <div class="signature-line"></div>
+          <div class="registrar-role">${escapeHtml(reg.role || 'ACADEMIC REGISTRAR')}</div>
+          <div class="registrar-name">${escapeHtml(reg.name)}</div>
+        </div>
+      `
+    }
+    if (hasSecondary) {
+      html += `
+        <div class="registrar-block">
+          <div class="signature-line"></div>
+          <div class="registrar-role">${escapeHtml(reg.secondaryRole || '')}</div>
+          <div class="registrar-name">${escapeHtml(reg.secondaryName)}</div>
+        </div>
+      `
+    }
+    footer.innerHTML = html
+  }, [effectiveRegistrar, escapeHtml])
 
-  function printTimetableTemplate() {
-    const rows = weekOrder.filter(day => day !== 0).flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
-      const cell = templateCells[day + '-' + slotIndex]
-      if (!cell?.courseId && !cell?.teacherId && !cell?.room?.trim()) return []
-      return [{
-        id: day + '-' + slotIndex,
-        teachingGroupId: templateGroupId,
-        courseId: cell.courseId,
-        teacherId: cell.teacherId,
-        curriculumId: selectedCurriculum?.id ?? '',
-        yearOfStudy: Number(yearOfStudy),
-        curriculumSemesterNumber: Number(curriculumSemester),
-        dayOfWeek: day,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        room: cell.room,
-        sessionType: cell.sessionType,
-        isActive: true,
-      } as TimetableEntry]
-    }))
-    const groupLabel = groupLabels.get(templateGroupId) ?? 'Class timetable'
-    printInstitutionalPdf(timetablePdfOptions(groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template'))
-  }
+  const buildGrid = useCallback(
+    (visibleRows: TimetableRow[], columns: TimetableColumn[], cells: Record<string, Record<string, TimetableCell>>) => {
+      const R = visibleRows.length
+      const C = columns.length
+      const covered = Array.from({ length: R }, () => Array(C).fill(false))
+      const grid: Array<Array<GridCell | null>> = Array.from({ length: R }, () => Array(C).fill(null))
 
-  async function handleGenerate(event: React.FormEvent) {
-    event.preventDefault()
-    setError('')
-    setGeneratedResult(null)
-    setGeneratedTimetables([])
-    if (!semesterId || !programmeId || !selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a programme, curriculum, year of study, curriculum semester and academic period first.'); return }
-    const selectedGroups = teachingGroupId
-      ? availableGroups.filter(group => group.id === teachingGroupId)
-      : availableGroups.slice(0, Math.max(1, Math.min(availableGroups.length, Number(timetableCount) || 1)))
-    if (selectedGroups.length === 0) { setError('Create teaching groups before generating timetables.'); return }
-    setLoading(true)
-    try {
-      const results: Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }> = []
-      for (const group of selectedGroups) {
-        const result = await generateTimetable(semesterId, group.id, selectedCurriculum.id, Number(yearOfStudy), Number(curriculumSemester), programmeId)
-        results.push({ groupId: group.id, groupLabel: group.label, result })
+      for (let r = 0; r < R; r++) {
+        const rowObj = visibleRows[r]
+        for (let c = 0; c < C; c++) {
+          const col = columns[c]
+          if (covered[r][c]) continue
+          if (col.type === 'divider') {
+            if (r === 0) {
+              grid[r][c] = { type: 'divider', col, rowspan: R }
+            }
+            for (let rr = 0; rr < R; rr++) covered[rr][c] = true
+            continue
+          }
+
+          const cell = (cells[rowObj.id] && cells[rowObj.id][col.id]) || {
+            course: '',
+            tutor: '',
+            room: '',
+            customTime: '',
+            rowSpan: 1,
+            colSpan: 1
+          }
+          const rSpan = Math.min(Number(cell.rowSpan) || 1, R - r)
+          let cSpan = 1
+          while (
+            cSpan < (Number(cell.colSpan) || 1) &&
+            c + cSpan < C &&
+            columns[c + cSpan].type === 'slot'
+          ) {
+            cSpan++
+          }
+
+          for (let rr = 0; rr < rSpan; rr++) {
+            for (let cc = 0; cc < cSpan; cc++) {
+              if (rr !== 0 || cc !== 0) covered[r + rr][c + cc] = true
+            }
+          }
+
+          grid[r][c] = {
+            type: 'cell',
+            cell,
+            rSpan,
+            cSpan,
+            rowObj,
+            col,
+            hasVal: Boolean(cell.course || cell.tutor || cell.room || cell.customTime)
+          }
+        }
       }
-      setGeneratedTimetables(results)
-      if (results.length === 1) setGeneratedResult(results[0].result)
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to generate timetables.')
-    } finally {
-      setLoading(false)
-    }
-  }
+      return grid
+    },
+    []
+  )
 
-  async function submit(event: React.FormEvent) {
-    event.preventDefault()
-    setError('')
-    if (!teachingGroupId || !courseId || !teacherId || !selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a programme, curriculum, year, semester, teaching group, course unit and teacher.'); return }
-    if (!eligibleCourseIds.has(courseId) || options.teachingGroups.find(item => item.id === teachingGroupId)?.courseId !== courseId) { setError('The selected course unit does not belong to this teaching group and curriculum selection.'); return }
-    if (endTime <= startTime) { setError('End time must be later than start time.'); return }
-    setLoading(true)
-    try {
-      if (editingEntryId) {
-        await updateTimetableEntry(editingEntryId, {
-          teachingGroupId,
-          courseId,
-          teacherId,
-          curriculumId: selectedCurriculum.id,
-          yearOfStudy: Number(yearOfStudy),
-          curriculumSemesterNumber: Number(curriculumSemester),
-          dayOfWeek: Number(dayOfWeek),
-          startTime: startTime + ':00',
-          endTime: endTime + ':00',
-          room: room.trim() || undefined,
-          sessionType: sessionType.trim() || undefined,
-        })
-        setEditingEntryId(null)
+  const renderTimetable = useCallback(() => {
+    const prog = getActiveProgram()
+    const visibleRows = showWeekends ? prog.rows : prog.rows.filter(r => !r.isWeekend)
+
+    // Refs to DOM elements manipulated directly (mirrors the original template's imperative rendering)
+    const hdrInstitution = document.getElementById('hdrInstitution')
+    const hdrTitle = document.getElementById('hdrTitle')
+    const hdrYear = document.getElementById('hdrYear')
+    const hdrSemester = document.getElementById('hdrSemester')
+    const editBtn = document.getElementById('editModeBtn')
+    const table = document.getElementById('timetableGrid')
+    const footer = document.getElementById('docFooterBlock')
+    const programSelect = document.getElementById('programSelect') as HTMLSelectElement | null
+
+    if (hdrInstitution) hdrInstitution.textContent = (institutionLoaded && institution.institutionName ? institution.institutionName : prog.meta.institution)
+    if (hdrTitle) hdrTitle.textContent = prog.meta.title
+    if (hdrYear) hdrYear.textContent = prog.meta.year
+    if (hdrSemester) hdrSemester.textContent = prog.meta.semester
+
+    document.body.classList.toggle('is-editing', isEditing && !readOnly)
+
+    if (editBtn) {
+      editBtn.textContent = isEditing ? 'Editing On' : 'Edit Mode'
+      editBtn.classList.toggle('ui-btn-edit-active', isEditing)
+    }
+
+    if (programSelect) {
+      programSelect.innerHTML = ''
+      Object.keys(programs).forEach(key => {
+        const p = programs[key]
+        const opt = document.createElement('option')
+        opt.value = key
+        opt.textContent = p.optionLabel || p.meta.title
+        if (key === activeProgramKey) opt.selected = true
+        programSelect.appendChild(opt)
+      })
+    }
+
+    const grid = buildGrid(visibleRows, prog.columns, prog.cells)
+
+    let theadHtml = '<thead><tr>'
+    theadHtml += `<th class="col-day-header" id="cornerHeader">${escapeHtml(prog.meta.dayCornerLabel || 'DAY')}</th>`
+    prog.columns.forEach(col => {
+      if (col.type === 'divider') {
+        theadHtml += `<th class="col-divider" data-col-id="${escapeHtml(col.id)}">${escapeHtml((col.verticalText || 'B')[0])}</th>`
       } else {
-        await createTimetableEntry({
-          teachingGroupId,
-          courseId,
-          teacherId,
-          curriculumId: selectedCurriculum.id,
-          yearOfStudy: Number(yearOfStudy),
-          curriculumSemesterNumber: Number(curriculumSemester),
-          dayOfWeek: Number(dayOfWeek),
-          startTime: startTime + ':00',
-          endTime: endTime + ':00',
-          room: room.trim() || undefined,
-          sessionType: sessionType.trim() || undefined,
-        })
-      }
-      setShowScheduleForm(false)
-      setError('')
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save timetable entry.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  function editEntry(entry: TimetableEntry) {
-    const group = options.teachingGroups.find(item => item.id === entry.teachingGroupId)
-    const mapping = options.curriculumCourses.find(item => item.courseId === entry.courseId && item.programmeId === group?.programmeId)
-    const curriculum = options.curricula.find(item => item.id === mapping?.curriculumId)
-    setProgrammeId(group?.programmeId ?? '')
-    setCurriculumId(curriculum?.id ?? '')
-    setYearOfStudy(mapping ? String(mapping.yearOfStudy) : '')
-    setCurriculumSemester(mapping ? String(mapping.semesterNumber) : '')
-    setSemesterId(group?.semesterId ?? semesterId)
-    setTeachingGroupId(entry.teachingGroupId)
-    setCourseId(entry.courseId)
-    setTeacherId(entry.teacherId)
-    setDayOfWeek(String(entry.dayOfWeek))
-    setStartTime(timeLabel(entry.startTime))
-    setEndTime(timeLabel(entry.endTime))
-    setRoom(entry.room ?? '')
-    setSessionType(entry.sessionType ?? 'Lecture')
-    setEditingEntryId(entry.id)
-    setShowScheduleForm(true)
-    setError('')
-  }
-
-  function loadTemplate() {
-    if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before loading the template.'); return }
-    if (!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)) { setError('Choose a teaching group from the selected programme curriculum and academic period.'); return }
-    const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
-    const slots = [...defaultTemplateSlots.map(slot => ({ ...slot }))]
-    for (const entry of groupEntries) {
-      const start = timeLabel(entry.startTime)
-      const existingSlot = slots.find(slot => slot.startTime === start)
-      if (existingSlot) existingSlot.endTime = timeLabel(entry.endTime)
-      else slots.push({ startTime: start, endTime: timeLabel(entry.endTime) })
-    }
-    slots.sort((a, b) => a.startTime.localeCompare(b.startTime))
-    const cells: Record<string, TemplateCell> = {}
-    for (const entry of groupEntries) {
-      const slotIndex = slots.findIndex(slot => slot.startTime === timeLabel(entry.startTime))
-      const key = entry.dayOfWeek + '-' + slotIndex
-      if (cells[key]) {
-        setError('This class has multiple sessions at the same day and start time. Resolve the duplicate sessions before editing its template.')
-        return
-      }
-      cells[key] = { id: entry.id, courseId: entry.courseId, teacherId: entry.teacherId, room: entry.room ?? '', sessionType: entry.sessionType ?? 'Lecture' }
-    }
-    setTemplateSlots(slots)
-    setTemplateCells(cells)
-    setTemplateLoadedGroupId(templateGroupId)
-    setShowTemplateEditor(true)
-    setError('')
-  }
-
-  function changeTemplateCell(key: string, field: keyof TemplateCell, value: string) {
-    setTemplateCells(current => ({ ...current, [key]: { ...(current[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture' }), [field]: value } }))
-  }
-
-  async function saveTemplate() {
-    if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before saving the template.'); return }
-    if (!templateGroupId || templateLoadedGroupId !== templateGroupId) { setError('Choose a class and load it into the template before saving.'); return }
-    const populated = Object.entries(templateCells).filter(([, cell]) => cell.courseId || cell.teacherId)
-    if (templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)) { setError('Every period must have an end time later than its start time.'); return }
-    if (populated.some(([, cell]) => !cell.courseId || !cell.teacherId)) { setError('Every filled timetable cell needs both a course and a teacher.'); return }
-
-    const entries: CreateTimetableEntry[] = populated.map(([key, cell]) => {
-      const [day, slotIndexText] = key.split('-')
-      const slot = templateSlots[Number(slotIndexText)]
-      return {
-        teachingGroupId: templateGroupId,
-        courseId: cell.courseId,
-        teacherId: cell.teacherId,
-        curriculumId: selectedCurriculum.id,
-        yearOfStudy: Number(yearOfStudy),
-        curriculumSemesterNumber: Number(curriculumSemester),
-        dayOfWeek: Number(day),
-        startTime: slot.startTime + ':00',
-        endTime: slot.endTime + ':00',
-        room: cell.room.trim() || undefined,
-        sessionType: cell.sessionType || 'Lecture',
+        theadHtml += `<th class="col-slot-header" data-col-id="${escapeHtml(col.id)}">${escapeHtml(col.label)}</th>`
       }
     })
+    theadHtml += '</tr></thead>'
 
-    setTemplateSaving(true)
-    setError('')
-    try {
-      await saveTimetableTemplate(templateGroupId, entries)
-      await load()
-      setShowTemplateEditor(false)
-      setTemplateCells({})
-      setTemplateLoadedGroupId('')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save the timetable template. No changes were saved.')
-    } finally {
-      setTemplateSaving(false)
-    }
-  }
-
-  async function remove(id: string) {
-    if (!window.confirm('Remove this timetable session?')) return
-    setError('')
-    try {
-      await deactivateTimetableEntry(id)
-      await load()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to deactivate entry.')
-    }
-  }
-
-  return <section className="timetable-screen">
-    <header className="timetable-hero">
-      <div>
-        <p className="timetable-eyebrow">Academic planning</p>
-        <h2>{readOnly ? 'Timetable' : 'Timetable management'}</h2>
-        <p>Review the weekly teaching schedule, rooms and staff assignments in one place.</p>
-      </div>
-      <div className="timetable-actions">
-        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowGenerator(value => !value)} aria-expanded={showGenerator}><Sparkles /> {showGenerator ? 'Hide generator' : 'Generate timetable'}</button>}
-        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}><Pencil /> {showTemplateEditor ? 'Close template editor' : 'Edit timetable template'}</button>}
-        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowScheduleForm(value => !value)} aria-expanded={showScheduleForm}><Plus /> {showScheduleForm ? 'Close form' : 'Schedule session'}</button>}
-      </div>
-    </header>
-
-    {error && <div className="timetable-notice" role="alert">{error}</div>}
-
-    <div className="timetable-metrics" aria-label="Timetable summary">
-      <div className="timetable-metric"><span>Scheduled sessions</span><strong>{activeEntries.length}</strong></div>
-      <div className="timetable-metric"><span>Teaching groups</span><strong>{distinctGroups}</strong></div>
-      <div className="timetable-metric"><span>Assigned teachers</span><strong>{distinctTeachers}</strong></div>
-      <div className="timetable-metric"><span>Practical sessions</span><strong>{practicalCount}</strong></div>
-    </div>
-    
-    {!readOnly && selectedCurriculum && <section className="timetable-semester-templates" aria-label="Curriculum semester timetable templates">
-      <div className="timetable-semester-templates-heading">
-        <div><h3>{selectedCurriculum.label} · Semester templates</h3><span>{semesterTemplates.length} separate template{semesterTemplates.length === 1 ? '' : 's'} · {availableSemesters.find(item => item.id === semesterId)?.label ?? 'Select an academic period'}</span></div>
-      </div>
-      {semesterTemplates.length === 0 ? <p className="timetable-day-empty">This active curriculum has no semester course mappings yet. Add course units and assign each to a year and semester in Curriculum &amp; Courses; its timetable templates will appear here automatically.</p> :
-        <div className="timetable-semester-template-grid">
-          {semesterTemplates.map(item => {
-            const courseIds = item.courseIds
-            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === programmeId && group.semesterId === semesterId && courseIds.has(group.courseId))
-            const sessionCount = activeEntries.filter(entry => matchingGroups.some(group => group.id === entry.teachingGroupId)).length
-            const selected = yearOfStudy === String(item.year) && curriculumSemester === String(item.semester)
-            return <article className={`timetable-semester-template-card${selected ? ' is-selected' : ''}`} key={item.year + '-' + item.semester}>
-              <div><span className="timetable-semester-template-kicker">YEAR {item.year}</span><h4>Semester {item.semester}</h4></div>
-              <p>{item.courseLabels.length} course unit{item.courseLabels.length === 1 ? '' : 's'} · {matchingGroups.length} teaching group{matchingGroups.length === 1 ? '' : 's'}</p>
-              <span className="timetable-semester-template-status">{sessionCount > 0 ? sessionCount + ' scheduled session' + (sessionCount === 1 ? '' : 's') : 'Blank template ready'}</span>
-              <button className="timetable-action primary" type="button" onClick={() => {
-                setYearOfStudy(String(item.year))
-                setCurriculumSemester(String(item.semester))
-                setTeachingGroupId(matchingGroups[0]?.id ?? '')
-                setTemplateGroupId(matchingGroups[0]?.id ?? '')
-                setTemplateLoadedGroupId('')
-                setTemplateCells({})
-                setShowTemplateEditor(true)
-                setShowGenerator(false)
-                setShowScheduleForm(false)
-              }}>Open semester template</button>
-            </article>
-          })}
-        </div>}
-    </section>}
-
-    {!readOnly && (showGenerator || showTemplateEditor || showScheduleForm) && <section className="timetable-form-panel timetable-curriculum-guide" aria-label="Programme curriculum selection">
-      <h3>Programme curriculum guide</h3>
-      <div className="timetable-form-grid">
-        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); setCurriculumId(options.curricula.find(item => item.programmeId === next)?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{options.programmes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        <label>Curriculum<select value={selectedCurriculum?.id ?? ''} onChange={event => { setCurriculumId(event.target.value); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select curriculum</option>{programmeCurricula.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        <label>Year of study<select value={yearOfStudy} onChange={event => { setYearOfStudy(event.target.value); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All years</option>{studyYears.map(item => <option key={item} value={item}>Year {item}</option>)}</select></label>
-        <label>Curriculum semester<select value={curriculumSemester} onChange={event => { setCurriculumSemester(event.target.value); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All semesters</option>{curriculumSemesters.map(item => <option key={item} value={item}>Semester {item}</option>)}</select></label>
-        <label>Academic period<select value={semesterId} onChange={event => { setSemesterId(event.target.value); setTeachingGroupId(''); setTemplateGroupId(''); setTemplateLoadedGroupId(''); }}><option value="">Select academic period</option>{availableSemesters.map(item => <option key={item.id} value={item.id}>{item.academicYearLabel || item.label} · {item.label} · {semesterDateRange(item)}{item.isCurrent ? ' (Current)' : ''}</option>)}</select></label>
-      </div>
-      <p className="timetable-generator-help">{eligibleMappings.length} curriculum course unit(s) match this selection. {availableGroups.length} operational teaching group(s) are available for the selected academic period.</p>
-      {eligibleMappings.length > 0 && <p className="timetable-generator-help">Course units: {eligibleMappings.map(item => item.courseLabel).join(' · ')}</p>}
-      {eligibleMappings.length === 0 && <p className="timetable-day-empty">No course units are mapped to this programme, year and semester. Add them under Curriculum &amp; Courses; unrelated courses will not be shown.</p>}
-      {eligibleMappings.length > 0 && availableGroups.length === 0 && <p className="timetable-day-empty">The curriculum has course units, but no active course offerings and teaching groups match this academic period. Set up the offerings and groups before scheduling.</p>}
-    </section>}
-    {!readOnly && showGenerator && <form className="timetable-form-panel" onSubmit={handleGenerate}>
-      <h3>Generate a timetable</h3>
-      <div className="timetable-form-grid">
-        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        {!teachingGroupId && <label>Number of timetables<input type="number" min="1" max={Math.max(1, availableGroups.length)} value={timetableCount} onChange={event => setTimetableCount(event.target.value)} required /></label>}
-      </div>
-      {!teachingGroupId && <p className="timetable-generator-help">Generates one separate timetable for each of the first N teaching groups. Available groups: {availableGroups.length}.</p>}
-      <div className="timetable-form-footer">
-        <button className="timetable-action primary" type="submit" disabled={loading || availableSemesters.length === 0}>{loading ? 'Generating…' : 'Generate schedule'}</button>
-        {availableSemesters.length === 0 && <span className="timetable-day-empty">No academic periods were returned. Create a period under Academic Periods, then reload this screen.</span>}
-      </div>
-    </form>}
-
-    {!readOnly && showTemplateEditor && <section className="timetable-template-editor" aria-label="Editable timetable template">
-      <div className="timetable-template-document-heading">
-        <p>REPUBLIC OF UGANDA</p>
-        <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
-        <h4>CLASS TEACHING TIMETABLE</h4>
-        <span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}{templateGroupId ? ' · ' + (groupLabels.get(templateGroupId) ?? 'Selected class') : ''}</span>
-      </div>
-      <div className="timetable-template-editor-heading">
-        <div><p className="timetable-eyebrow">Fillable timetable template</p><h3>Edit the timetable grid</h3><p>Select a class, then fill each period with a course, teacher and venue. Existing sessions for that class are loaded into the grid.</p></div>
-        <div className="timetable-template-controls">
-          <label>Class / teaching group<select value={templateGroupId} onChange={event => { setTemplateGroupId(event.target.value); setTemplateLoadedGroupId(''); setTemplateCells({}); setTemplateSlots(defaultTemplateSlots) }}><option value="">Select class</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-          <button className="timetable-action" type="button" onClick={loadTemplate} disabled={!templateGroupId}><Pencil size={15}/> Load class</button>
+    let tbodyHtml = '<tbody>'
+    visibleRows.forEach((rowObj, rIdx) => {
+      tbodyHtml += `<tr>`
+      tbodyHtml += `<td class="day-label-cell" data-row-id="${escapeHtml(rowObj.id)}">
+        <div>${escapeHtml(rowObj.short)}</div>
+        <div class="row-controls-bar">
+          <button type="button" class="row-mini-btn" data-row-act="up" data-row-id="${escapeHtml(rowObj.id)}" title="Move Up">↑</button>
+          <button type="button" class="row-mini-btn" data-row-act="down" data-row-id="${escapeHtml(rowObj.id)}" title="Move Down">↓</button>
+          <button type="button" class="row-mini-btn" data-row-act="del" data-row-id="${escapeHtml(rowObj.id)}" title="Delete Row">×</button>
         </div>
-      </div>
-      {templateGroupId && templateLoadedGroupId === templateGroupId && <div className="timetable-grid-scroll">
-        <table className="timetable-editable-grid">
-          <thead><tr><th>DAY</th>{templateSlots.map((slot, index) => <th key={index}><span>PERIOD {index + 1}</span><label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label></th>)}</tr></thead>
-          <tbody>{weekOrder.filter(day => day !== 0).map(day => <tr key={day}><th>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
-            const key = day + '-' + slotIndex
-            const cell = templateCells[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture' }
-            return <td key={slotIndex}>
-              <select aria-label={`${days[day]} ${slot.startTime} course`} value={cell.courseId} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}><option value="">— Course —</option>{(options.teachingGroups.find(item => item.id === templateGroupId) ? options.courses.filter(item => item.id === options.teachingGroups.find(group => group.id === templateGroupId)?.courseId && eligibleCourseIds.has(item.id)) : availableCourses).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
-              <select aria-label={`${days[day]} ${slot.startTime} teacher`} value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}><option value="">— Teacher —</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
-              <input aria-label={`${days[day]} ${slot.startTime} venue`} value={cell.room} onChange={event => changeTemplateCell(key, 'room', event.target.value)} placeholder="Venue"/>
-              <select aria-label={`${days[day]} ${slot.startTime} session type`} value={cell.sessionType} onChange={event => changeTemplateCell(key, 'sessionType', event.target.value)}><option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option></select>
-              {cell.id && <span className="timetable-template-existing">Saved session</span>}
-            </td>
-          })}</tr>)}</tbody>
-        </table>
-      </div>}
-      {templateGroupId && templateLoadedGroupId !== templateGroupId && <p className="timetable-generator-help">Click “Load class” to fill the template with that class’s saved sessions before editing.</p>}
-      <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !availableCourses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={printTimetableTemplate} disabled={!institutionLoaded || !institution.isActive}>Print template</button></div>
-    </section>}
+      </td>`
 
-    {!readOnly && showScheduleForm && <form className="timetable-form-panel" onSubmit={submit}>
-      <h3>{editingEntryId ? 'Edit teaching session' : 'Schedule a teaching session'}</h3>
-      <div className="timetable-form-grid">
-        <label>Teaching group<select value={teachingGroupId} onChange={event => { const next = event.target.value; setTeachingGroupId(next); setCourseId(options.teachingGroups.find(item => item.id === next)?.courseId ?? ''); }} required><option value="">Select group</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        <label>Course<select value={courseId} onChange={event => setCourseId(event.target.value)} required><option value="">Select course</option>{selectedGroupCourses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        <label>Teacher / staff<select value={teacherId} onChange={event => setTeacherId(event.target.value)} required><option value="">Select teacher</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        <label>Day<select value={dayOfWeek} onChange={event => setDayOfWeek(event.target.value)}>{days.map((day, index) => <option key={day} value={index}>{day}</option>)}</select></label>
-        <label>Start time<input type="time" value={startTime} onChange={event => setStartTime(event.target.value)} required /></label>
-        <label>End time<input type="time" value={endTime} onChange={event => setEndTime(event.target.value)} required /></label>
-        <label>Room / venue<input value={room} onChange={event => setRoom(event.target.value)} maxLength={100} /></label>
-        <label>Session type<select value={sessionType} onChange={event => setSessionType(event.target.value)}><option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option></select></label>
-      </div>
-      <div className="timetable-form-footer">
-        <button className="timetable-action primary" type="submit" disabled={loading || !options.teachingGroups.length || !options.courses.length || !options.teachers.length}>{loading ? 'Saving…' : editingEntryId ? 'Update session' : 'Save session'}</button>
-        <button className="timetable-action" type="button" onClick={() => { setShowScheduleForm(false); setEditingEntryId(null); }}>Cancel</button>
-        {(!options.teachingGroups.length || !options.courses.length || !options.teachers.length) && <span className="timetable-day-empty">Add teaching groups, courses and staff before scheduling.</span>}
-      </div>
-    </form>}
+      grid[rIdx].forEach((cell, cIdx) => {
+        if (cell === null) return
+        const col = prog.columns[cIdx]
+        if (cell.type === 'divider') {
+          const letters = (col.verticalText || 'BREAK').slice(1).split('').map(ch => `<span>${escapeHtml(ch)}</span>`).join('')
+          tbodyHtml += `<td class="col-divider" rowspan="${cell.rowspan}" data-col-id="${escapeHtml(col.id)}"><div class="divider-letter-stack">${letters}</div></td>`
+          return
+        }
 
-    {generatedTimetables.length > 0 && <section className="timetable-generated-list" aria-live="polite">
-      <div className="timetable-generated-heading"><h3>Generated class timetables</h3><span>{generatedTimetables.length} timetable{generatedTimetables.length === 1 ? '' : 's'}</span></div>
-      {generatedTimetables.map(({ groupId, groupLabel, result }) => {
-        const classEntries = [...result.entries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
-        const classTimeSlots = [...new Set(classEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b))
-        return <article className="timetable-class-document" key={groupId}>
-          <div className="timetable-class-document-heading"><div className="timetable-class-document-identity"><p>REPUBLIC OF UGANDA</p><h4>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h4><strong>{selectedProgramme?.label ?? 'Programme'} · {groupLabel}</strong><span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Selected academic period'} · YEAR {yearOfStudy} · CURRICULUM SEMESTER {curriculumSemester}</span><span>VALID FOR: {semesterDateRange(selectedSemester)}</span></div>
-            <div className="timetable-class-actions">
-              <button className="timetable-action" type="button" onClick={() => downloadInstitutionalPdf(timetablePdfOptions(groupLabel + ' Teaching Timetable', classEntries, groupLabel + '-timetable'))} disabled={!institutionLoaded || !institution.isActive}>Download PDF</button>
-              <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)} disabled={!institutionLoaded || !institution.isActive}>Print</button>
+        const { cell: data, rSpan, cSpan, hasVal } = cell
+        const metaLine = [data.customTime, data.room].filter(Boolean).join(' • ')
+        tbodyHtml += `<td class="lecture-cell"${rSpan > 1 ? ` rowspan="${rSpan}"` : ''}${cSpan > 1 ? ` colspan="${cSpan}"` : ''} data-day="${escapeHtml(rowObj.id)}" data-slot="${escapeHtml(col.id)}">
+          ${hasVal
+            ? `<div class="cell-course">${escapeHtml(data.course)}</div>${data.tutor ? `<div class="cell-tutor">(${escapeHtml(data.tutor)})</div>` : ''}${metaLine ? `<div class="cell-meta-sub">${escapeHtml(metaLine)}</div>` : ''}`
+            : '<span class="cell-empty-placeholder">+ Edit</span>'}
+        </td>`
+      })
+      tbodyHtml += '</tr>'
+    })
+    tbodyHtml += '</tbody>'
+
+    if (table) table.innerHTML = theadHtml + tbodyHtml
+    renderFooter()
+  }, [
+    programs,
+    activeProgramKey,
+    showWeekends,
+    isEditing,
+    readOnly,
+    institution,
+    institutionLoaded,
+    buildGrid,
+    escapeHtml,
+    renderFooter,
+    getActiveProgram
+  ])
+
+  useEffect(() => {
+    renderTimetable()
+  }, [renderTimetable])
+
+  /* ---------- Modal: registrar ---------- */
+  const openRegistrarModal = useCallback(() => {
+    const reg = effectiveRegistrar
+    document.getElementById('sysRegistrarName')!.value = reg.name || ''
+    document.getElementById('sysRegistrarRole')!.value = reg.role || 'ACADEMIC REGISTRAR'
+    document.getElementById('sysSecondaryName')!.value = reg.secondaryName || ''
+    document.getElementById('sysSecondaryRole')!.value = reg.secondaryRole || ''
+    openModal('registrarModal')
+  }, [effectiveRegistrar, openModal])
+
+  /* ---------- Modal: slot manager ---------- */
+  const openSlotManager = useCallback(() => {
+    const prog = getActiveProgram()
+    const list = document.getElementById('slotManagerList')
+    if (!list) return
+    list.innerHTML = ''
+    prog.columns.forEach((col, idx) => {
+      const div = document.createElement('div')
+      div.style.display = 'flex'
+      div.style.gap = '0.4rem'
+      div.style.alignItems = 'center'
+      div.innerHTML = `
+        <span style="font-size:0.72rem; font-weight:700; width:46px; color:#64748b;">${col.type === 'divider' ? 'DIV' : 'SLOT'}</span>
+        <input type="text" class="col-edit-input" style="flex:1;" value="${escapeHtml(col.label || col.verticalText)}" data-idx="${idx}">
+        <button type="button" class="btn-modal" style="padding:0.35rem 0.55rem;" data-col-act="left" data-idx="${idx}">←</button>
+        <button type="button" class="btn-modal" style="padding:0.35rem 0.55rem;" data-col-act="right" data-idx="${idx}">→</button>
+        <button type="button" class="btn-modal btn-modal-danger" style="padding:0.35rem 0.55rem;" data-col-act="del" data-idx="${idx}">×</button>
+      `
+      list.appendChild(div)
+    })
+    openModal('slotsModal')
+  }, [getActiveProgram, escapeHtml, openModal])
+
+  /* ---------- Event wiring (imperative, mirrors the original template) ---------- */
+  useEffect(() => {
+    const programSelect = document.getElementById('programSelect') as HTMLSelectElement | null
+    const newProgramBtn = document.getElementById('newProgramBtn')
+    const toggleWeekends = document.getElementById('toggleWeekends') as HTMLInputElement | null
+    const editModeBtn = document.getElementById('editModeBtn')
+    const registrarBtn = document.getElementById('registrarBtn')
+    const docFooterBlock = document.getElementById('docFooterBlock')
+    const registrarForm = document.getElementById('registrarForm') as HTMLFormElement | null
+    const clearRegistrarBtn = document.getElementById('clearRegistrarBtn')
+    const manageSlotsBtn = document.getElementById('manageSlotsBtn')
+    const slotManagerList = document.getElementById('slotManagerList')
+    const addNewSlotColBtn = document.getElementById('addNewSlotColBtn')
+    const addNewDividerColBtn = document.getElementById('addNewDividerColBtn')
+    const backupBtn = document.getElementById('backupBtn')
+    const printBtn = document.getElementById('printBtn')
+    const docHeaderBlock = document.getElementById('docHeaderBlock')
+    const docMetaForm = document.getElementById('docMetaForm') as HTMLFormElement | null
+    const timetableGrid = document.getElementById('timetableGrid')
+    const cellForm = document.getElementById('cellForm') as HTMLFormElement | null
+    const clearCellBtn = document.getElementById('clearCellBtn')
+    const clearAllCellsBtn = document.getElementById('clearAllCellsBtn')
+    const exportJsonBtn = document.getElementById('exportJsonBtn')
+    const importJsonInput = document.getElementById('importJsonInput') as HTMLInputElement | null
+    const confirmResetBtn = document.getElementById('confirmResetBtn')
+
+    const unload = () => {
+      programSelect?.removeEventListener('change', handleProgramChange)
+      newProgramBtn?.removeEventListener('click', handleNewProgram)
+      toggleWeekends?.removeEventListener('change', handleToggleWeekends)
+      editModeBtn?.removeEventListener('click', handleEditMode)
+      registrarBtn?.removeEventListener('click', openRegistrarModal)
+      docFooterBlock?.removeEventListener('click', handleFooterClick)
+      registrarForm?.removeEventListener('submit', handleRegistrarSubmit)
+      clearRegistrarBtn?.removeEventListener('click', handleClearRegistrar)
+      manageSlotsBtn?.removeEventListener('click', openSlotManager)
+      slotManagerList?.removeEventListener('input', handleSlotInput)
+      slotManagerList?.removeEventListener('click', handleSlotClick)
+      addNewSlotColBtn?.removeEventListener('click', handleAddSlot)
+      addNewDividerColBtn?.removeEventListener('click', handleAddDivider)
+      backupBtn?.removeEventListener('click', handleBackup)
+      printBtn?.removeEventListener('click', handlePrint)
+      docHeaderBlock?.removeEventListener('click', handleDocHeader)
+      docMetaForm?.removeEventListener('submit', handleDocMetaSubmit)
+      timetableGrid?.removeEventListener('click', handleGridClick)
+      cellForm?.removeEventListener('submit', handleCellSubmit)
+      clearCellBtn?.removeEventListener('click', handleClearCell)
+      clearAllCellsBtn?.removeEventListener('click', handleClearAllCells)
+      exportJsonBtn?.removeEventListener('click', handleExportJson)
+      importJsonInput?.removeEventListener('change', handleImportJson)
+      confirmResetBtn?.removeEventListener('click', handleConfirmReset)
+      document.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.removeEventListener('click', handleCloseModal)
+      })
+    }
+
+    /* handlers */
+    const handleProgramChange = (e: Event) => {
+      const target = e.target as HTMLSelectElement
+      setActiveProgramKey(target.value)
+      renderTimetable()
+    }
+
+    const handleNewProgram = () => {
+      const id = 'PROG-' + Date.now()
+      const p: TimetableProgram = {
+        optionLabel: 'New Timetable Sheet (' + (Object.keys(programs).length + 1) + ')',
+        meta: {
+          institution: institutionLoaded && institution.institutionName ? institution.institutionName : 'KAMPALA SCHOOL OF HEALTH SCIENCES',
+          title: 'TEACHING TIME TABLE FOR NEW COURSE',
+          year: 'ACADEMIC YEAR 2026/2027',
+          semester: 'YEAR ONE SEMESTER ONE',
+          dayCornerLabel: 'DAY'
+        },
+        rows: createDefaultRows(),
+        columns: [
+          { id: 'slot-1', type: 'slot', label: '8:00 AM – 10:30 AM' },
+          { id: 'div-break', type: 'divider', verticalText: 'BREAK' },
+          { id: 'slot-2', type: 'slot', label: '11:00 AM – 1:00 PM' },
+          { id: 'div-lunch', type: 'divider', verticalText: 'LUNCH' },
+          { id: 'slot-3', type: 'slot', label: '2:00 PM – 4:00 PM' }
+        ],
+        cells: {}
+      }
+      setPrograms(prev => {
+        const next = { ...prev, [id]: p }
+        savePrograms(next)
+        return next
+      })
+      setActiveProgramKey(id)
+      renderTimetable()
+      showToast('Created new timetable sheet.')
+    }
+
+    const handleToggleWeekends = (e: Event) => {
+      const target = e.target as HTMLInputElement
+      setShowWeekends(target.checked)
+    }
+
+    const handleEditMode = () => {
+      if (readOnly) return
+      setIsEditing(prev => !prev)
+    }
+
+    const handleFooterClick = () => {
+      if (isEditing && !readOnly) openRegistrarModal()
+    }
+
+    const handleRegistrarSubmit = (e: React.FormEvent | Event) => {
+      if (e.preventDefault) e.preventDefault()
+      const reg: Registrar = {
+        name: (document.getElementById('sysRegistrarName') as HTMLInputElement).value.trim().toUpperCase(),
+        role: (document.getElementById('sysRegistrarRole') as HTMLInputElement).value.trim().toUpperCase() || 'ACADEMIC REGISTRAR',
+        secondaryName: (document.getElementById('sysSecondaryName') as HTMLInputElement).value.trim().toUpperCase(),
+        secondaryRole: (document.getElementById('sysSecondaryRole') as HTMLInputElement).value.trim().toUpperCase()
+      }
+      setRegistrar(reg)
+      saveRegistrar(reg)
+      closeModal('registrarModal')
+      renderFooter()
+      showToast(reg.name ? 'Academic Registrar registered across all timetables.' : 'Registrar cleared (footer blank).')
+    }
+
+    const handleClearRegistrar = () => {
+      const empty: Registrar = { name: '', role: 'ACADEMIC REGISTRAR', secondaryName: '', secondaryRole: '' }
+      setRegistrar(empty)
+      saveRegistrar(empty)
+      closeModal('registrarModal')
+      renderFooter()
+      showToast('Academic Registrar removed; footer is now blank.')
+    }
+
+    const handleSlotInput = (e: Event) => {
+      const target = e.target as HTMLInputElement
+      if (!target.classList.contains('col-edit-input')) return
+      const idx = Number(target.dataset.idx)
+      const prog = getActiveProgram()
+      const col = prog.columns[idx]
+      if (!col) return
+      const nextCols = [...prog.columns]
+      if (col.type === 'divider') nextCols[idx] = { ...col, verticalText: target.value.trim().toUpperCase() || 'BREAK' }
+      else nextCols[idx] = { ...col, label: target.value }
+      const nextProg = { ...prog, columns: nextCols }
+      setPrograms(prev => {
+        const updated = { ...prev, [activeProgramKey]: nextProg }
+        savePrograms(updated)
+        return updated
+      })
+      renderTimetable()
+    }
+
+    const handleSlotClick = (e: Event) => {
+      const btn = (e.target as Element).closest('[data-col-act]')
+      if (!btn) return
+      const idx = Number(btn.dataset.idx)
+      const act = btn.dataset.colAct
+      const prog = getActiveProgram()
+      const cols = [...prog.columns]
+      if (act === 'left' && idx > 0) {
+        ;[cols[idx - 1], cols[idx]] = [cols[idx], cols[idx - 1]]
+      } else if (act === 'right' && idx < cols.length - 1) {
+        ;[cols[idx + 1], cols[idx]] = [cols[idx], cols[idx + 1]]
+      } else if (act === 'del' && cols.length > 1) {
+        cols.splice(idx, 1)
+      }
+      const nextProg = { ...prog, columns: cols }
+      setPrograms(prev => {
+        const updated = { ...prev, [activeProgramKey]: nextProg }
+        savePrograms(updated)
+        return updated
+      })
+      renderTimetable()
+      openSlotManager()
+    }
+
+    const handleAddSlot = () => {
+      const prog = getActiveProgram()
+      const nextCols = [...prog.columns, { id: 'slot-' + Date.now(), type: 'slot', label: '4:00 PM – 5:00 PM' }]
+      const nextProg = { ...prog, columns: nextCols }
+      setPrograms(prev => {
+        const updated = { ...prev, [activeProgramKey]: nextProg }
+        savePrograms(updated)
+        return updated
+      })
+      renderTimetable()
+      openSlotManager()
+    }
+
+    const handleAddDivider = () => {
+      const prog = getActiveProgram()
+      const nextCols = [...prog.columns, { id: 'div-' + Date.now(), type: 'divider', verticalText: 'BREAK' }]
+      const nextProg = { ...prog, columns: nextCols }
+      setPrograms(prev => {
+        const updated = { ...prev, [activeProgramKey]: nextProg }
+        savePrograms(updated)
+        return updated
+      })
+      renderTimetable()
+      openSlotManager()
+    }
+
+    const handleBackup = () => openModal('backupModal')
+    const handlePrint = () => window.print()
+
+    const handleDocHeader = () => {
+      if (!isEditing || readOnly) return
+      const prog = getActiveProgram()
+      document.getElementById('metaInstitution')!.value = prog.meta.institution
+      document.getElementById('metaTitle')!.value = prog.meta.title
+      document.getElementById('metaYear')!.value = prog.meta.year
+      document.getElementById('metaSemester')!.value = prog.meta.semester
+      document.getElementById('metaDayCorner')!.value = prog.meta.dayCornerLabel || 'DAY'
+      openModal('docMetaModal')
+    }
+
+    const handleDocMetaSubmit = (e: React.FormEvent | Event) => {
+      if (e.preventDefault) e.preventDefault()
+      const prog = getActiveProgram()
+      const nextMeta = {
+        ...prog.meta,
+        institution: (document.getElementById('metaInstitution') as HTMLInputElement).value.trim(),
+        title: (document.getElementById('metaTitle') as HTMLInputElement).value.trim(),
+        year: (document.getElementById('metaYear') as HTMLInputElement).value.trim(),
+        semester: (document.getElementById('metaSemester') as HTMLInputElement).value.trim(),
+        dayCornerLabel: (document.getElementById('metaDayCorner') as HTMLInputElement).value.trim() || 'DAY'
+      }
+      const nextProg = { ...prog, meta: nextMeta, optionLabel: nextMeta.title.replace(/^TEACHING TIME TABLE FOR\s*/i, '') + ' — ' + nextMeta.semester }
+      setPrograms(prev => {
+        const updated = { ...prev, [activeProgramKey]: nextProg }
+        savePrograms(updated)
+        return updated
+      })
+      closeModal('docMetaModal')
+      renderTimetable()
+      showToast('Header updated.')
+    }
+
+    const handleGridClick = (e: Event) => {
+      if (!isEditing || readOnly) return
+      const prog = getActiveProgram()
+
+      const rowBtn = (e.target as Element).closest('[data-row-act]')
+      if (rowBtn) {
+        e.stopPropagation()
+        const rId = rowBtn.dataset.rowId!
+        const act = rowBtn.dataset.rowAct!
+        const idx = prog.rows.findIndex(r => r.id === rId)
+        if (idx === -1) return
+        const nextRows = [...prog.rows]
+        if (act === 'up' && idx > 0) {
+          ;[nextRows[idx - 1], nextRows[idx]] = [nextRows[idx], nextRows[idx - 1]]
+        } else if (act === 'down' && idx < nextRows.length - 1) {
+          ;[nextRows[idx + 1], nextRows[idx]] = [nextRows[idx], nextRows[idx + 1]]
+        } else if (act === 'del' && nextRows.length > 1) {
+          nextRows.splice(idx, 1)
+        }
+        const nextProg = { ...prog, rows: nextRows }
+        setPrograms(prev => {
+          const updated = { ...prev, [activeProgramKey]: nextProg }
+          savePrograms(updated)
+          return updated
+        })
+        renderTimetable()
+        return
+      }
+
+      if ((e.target as Element).closest('#cornerHeader')) {
+        ;(document.getElementById('docHeaderBlock') as HTMLElement).click()
+        return
+      }
+
+      if ((e.target as Element).closest('.col-slot-header') || (e.target as Element).closest('.col-divider')) {
+        openSlotManager()
+        return
+      }
+
+      const cell = (e.target as Element).closest('.lecture-cell')
+      if (cell) {
+        const day = cell.dataset.day!
+        const slot = cell.dataset.slot!
+        const data = (prog.cells[day] && prog.cells[day][slot]) || {
+          course: '',
+          tutor: '',
+          room: '',
+          customTime: '',
+          rowSpan: 1,
+          colSpan: 1
+        }
+        document.getElementById('editDayKey')!.value = day
+        document.getElementById('editSlotId')!.value = slot
+        document.getElementById('inputCourse')!.value = data.course || ''
+        document.getElementById('inputTutor')!.value = data.tutor || ''
+        document.getElementById('inputRoom')!.value = data.room || ''
+        document.getElementById('inputCustomTime')!.value = data.customTime || ''
+        document.getElementById('inputRowSpan')!.value = String(data.rowSpan || 1)
+        document.getElementById('inputColSpan')!.value = String(data.colSpan || 1)
+        openModal('cellModal')
+      }
+    }
+
+    const handleCellSubmit = (e: React.FormEvent | Event) => {
+      if (e.preventDefault) e.preventDefault()
+      const day = document.getElementById('editDayKey')!.value
+      const slot = document.getElementById('editSlotId')!.value
+      const prog = getActiveProgram()
+      const nextCells = { ...prog.cells }
+      if (!nextCells[day]) nextCells[day] = {}
+      nextCells[day][slot] = {
+        course: (document.getElementById('inputCourse') as HTMLInputElement).value.trim().toUpperCase(),
+        tutor: (document.getElementById('inputTutor') as HTMLInputElement).value.trim().toUpperCase(),
+        room: (document.getElementById('inputRoom') as HTMLInputElement).value.trim(),
+        customTime: (document.getElementById('inputCustomTime') as HTMLInputElement).value.trim(),
+        rowSpan: Number((document.getElementById('inputRowSpan') as HTMLSelectElement).value) || 1,
+        colSpan: Number((document.getElementById('inputColSpan') as HTMLSelectElement).value) || 1
+      }
+      const nextProg = { ...prog, cells: nextCells }
+      setPrograms(prev => {
+        const updated = { ...prev, [activeProgramKey]: nextProg }
+        savePrograms(updated)
+        return updated
+      })
+      closeModal('cellModal')
+      renderTimetable()
+      showToast('Lecture saved.')
+    }
+
+    const handleClearCell = () => {
+      const day = document.getElementById('editDayKey')!.value
+      const slot = document.getElementById('editSlotId')!.value
+      const prog = getActiveProgram()
+      const nextCells = { ...prog.cells }
+      if (nextCells[day]) delete nextCells[day][slot]
+      const nextProg = { ...prog, cells: nextCells }
+      setPrograms(prev => {
+        const updated = { ...prev, [activeProgramKey]: nextProg }
+        savePrograms(updated)
+        return updated
+      })
+      closeModal('cellModal')
+      renderTimetable()
+      showToast('Cell cleared.')
+    }
+
+    const handleClearAllCells = () => {
+      const prog = getActiveProgram()
+      const nextProg = { ...prog, cells: {} }
+      setPrograms(prev => {
+        const updated = { ...prev, [activeProgramKey]: nextProg }
+        savePrograms(updated)
+        return updated
+      })
+      closeModal('backupModal')
+      renderTimetable()
+      showToast('All cells cleared.')
+    }
+
+    const handleExportJson = () => {
+      const payload = { programs, registrar: effectiveRegistrar }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'kshs_timetable_backup.json'
+      a.click()
+    }
+
+    const handleImportJson = (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = ev => {
+        try {
+          const parsed = JSON.parse(ev.target!.result as string)
+          let next: Record<string, TimetableProgram>
+          if (parsed.programs) {
+            next = parsed.programs
+          } else {
+            next = parsed
+          }
+          setPrograms(next)
+          savePrograms(next)
+          closeModal('backupModal')
+          renderTimetable()
+          showToast('Timetable backup imported.')
+        } catch {
+          showToast('Invalid JSON file.')
+        }
+      }
+      reader.readAsText(file)
+    }
+
+    const handleConfirmReset = () => {
+      setPrograms(JSON.parse(JSON.stringify(DEFAULT_PROGRAMS)))
+      savePrograms(JSON.parse(JSON.stringify(DEFAULT_PROGRAMS)))
+      setActiveProgramKey('CPH-Y1S2')
+      closeModal('backupModal')
+      renderTimetable()
+      showToast('Reset to default.')
+    }
+
+    const handleCloseModal = (e: Event) => {
+      const btn = e.target as HTMLElement
+      closeModal(btn.dataset.closeModal!)
+    }
+
+    /* attach */
+    programSelect?.addEventListener('change', handleProgramChange)
+    newProgramBtn?.addEventListener('click', handleNewProgram)
+    toggleWeekends?.addEventListener('change', handleToggleWeekends)
+    editModeBtn?.addEventListener('click', handleEditMode)
+    registrarBtn?.addEventListener('click', openRegistrarModal)
+    docFooterBlock?.addEventListener('click', handleFooterClick)
+    registrarForm?.addEventListener('submit', handleRegistrarSubmit)
+    clearRegistrarBtn?.addEventListener('click', handleClearRegistrar)
+    manageSlotsBtn?.addEventListener('click', openSlotManager)
+    slotManagerList?.addEventListener('input', handleSlotInput)
+    slotManagerList?.addEventListener('click', handleSlotClick)
+    addNewSlotColBtn?.addEventListener('click', handleAddSlot)
+    addNewDividerColBtn?.addEventListener('click', handleAddDivider)
+    backupBtn?.addEventListener('click', handleBackup)
+    printBtn?.addEventListener('click', handlePrint)
+    docHeaderBlock?.addEventListener('click', handleDocHeader)
+    docMetaForm?.addEventListener('submit', handleDocMetaSubmit)
+    timetableGrid?.addEventListener('click', handleGridClick)
+    cellForm?.addEventListener('submit', handleCellSubmit)
+    clearCellBtn?.addEventListener('click', handleClearCell)
+    clearAllCellsBtn?.addEventListener('click', handleClearAllCells)
+    exportJsonBtn?.addEventListener('click', handleExportJson)
+    importJsonInput?.addEventListener('change', handleImportJson)
+    confirmResetBtn?.addEventListener('click', handleConfirmReset)
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+      btn.addEventListener('click', handleCloseModal)
+    })
+
+    return unload
+  }, [
+    programs,
+    activeProgramKey,
+    isEditing,
+    readOnly,
+    showWeekends,
+    institution,
+    institutionLoaded,
+    openRegistrarModal,
+    openSlotManager,
+    renderTimetable,
+    renderFooter,
+    getActiveProgram,
+    closeModal,
+    openModal,
+    showToast
+  ])
+
+  /* ---------- Render ---------- */
+  const prog = getActiveProgram()
+  const institutionName = institutionLoaded && institution.institutionName ? institution.institutionName : prog.meta.institution
+  const effectiveEditing = isEditing && !readOnly
+
+  useEffect(() => {
+    document.title = 'Kampala School of Health Sciences — Teaching Time Table'
+    document.body.classList.toggle('is-editing', effectiveEditing)
+    return () => {
+      document.body.classList.remove('is-editing')
+    }
+  }, [effectiveEditing])
+
+  return (
+    <section className="timetable-screen">
+      <header className="control-bar">
+          <div className="control-bar-inner">
+            <div className="control-group">
+              <div className="app-badge">KSHS Timetable</div>
+              <select id="programSelect" className="program-select"></select>
+              <button type="button" id="newProgramBtn" className="ui-btn">
+                + New Sheet
+              </button>
+              <label className="weekend-toggle">
+                <input type="checkbox" id="toggleWeekends" defaultChecked={showWeekends} />
+                <span>Sat &amp; Sun</span>
+              </label>
+            </div>
+
+            <div className="control-group">
+              <button type="button" id="editModeBtn" className={`ui-btn${effectiveEditing ? ' ui-btn-edit-active' : ''}`}>
+                {isEditing ? 'Editing On' : 'Edit Mode'}
+              </button>
+              <button type="button" id="registrarBtn" className="ui-btn">
+                System Registrar
+              </button>
+              <button type="button" id="manageSlotsBtn" className="ui-btn">
+                Columns &amp; Breaks
+              </button>
+              <button type="button" id="backupBtn" className="ui-btn">
+                Backup / Clear
+              </button>
+              <button type="button" id="printBtn" className="ui-btn ui-btn-primary">
+                Print / PDF
+              </button>
             </div>
           </div>
-          <p className="timetable-class-status">Score: {result.optimizationScore.toFixed(1)}% · {result.isConflictFree ? 'No conflicts reported' : 'Conflicts detected'}</p>
-          {result.conflicts.length > 0 && <p className="timetable-class-warning">Conflicts: {result.conflicts.join('; ')}</p>}
-          {result.warnings.length > 0 && <p className="timetable-class-warning">Warnings: {result.warnings.join('; ')}</p>}
-          {classEntries.length === 0 ? <p className="timetable-day-empty">No sessions were generated for this class.</p> : <div className="timetable-grid-scroll">
-            <table className="timetable-formal-grid timetable-class-grid">
-              <thead><tr><th className="timetable-day-column">DAY</th>{classTimeSlots.map((slot, index) => {
-                const period = classEntries.find(entry => entry.startTime === slot)
-                return <th key={slot}><span className="timetable-period-label">PERIOD {index + 1}</span><strong>{timeLabel(slot)}–{period ? timeLabel(period.endTime) : ''}</strong></th>
-              })}</tr></thead>
-              <tbody>{weekOrder.filter(day => day !== 0).map(dayIndex => <tr key={dayIndex}>
-                <th className="timetable-day-column">{days[dayIndex].toUpperCase()}</th>
-                {classTimeSlots.map(slot => {
-                  const cellEntries = classEntries.filter(entry => entry.dayOfWeek === dayIndex && entry.startTime === slot)
-                  return <td key={slot} className={cellEntries.length ? 'has-session' : 'empty-session'}>
-                    {cellEntries.map(entry => <article className="timetable-grid-session" key={entry.id}>
-                      <strong>{courseLabels.get(entry.courseId) ?? 'Course not found'}</strong>
-                      <span>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</span>
-                      <span className="timetable-grid-time">{timeRange(entry)}</span>
-                      {entry.room && <span>Venue: {entry.room}</span>}
-                      {entry.sessionType && <span>{entry.sessionType}</span>}
-                    </article>)}
-                    {cellEntries.length === 0 && <span className="timetable-grid-dash">—</span>}
-                  </td>
-                })}
-              </tr>)}</tbody>
-            </table>
-          </div>}
-        </article>
-      })}
-    </section>}
+        </header>
 
-    {generatedResult && <section className="timetable-result" aria-live="polite">
-      <h3>Generation result</h3>
-      <p><strong>Optimization score:</strong> {generatedResult.optimizationScore.toFixed(1)}%</p>
-      <p><strong>Conflict status:</strong> {generatedResult.isConflictFree ? 'No conflicts reported' : 'Conflicts detected'}</p>
-      {generatedResult.conflicts.length > 0 && <div><strong>Conflicts</strong><ul>{generatedResult.conflicts.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
-      {generatedResult.warnings.length > 0 && <div><strong>Warnings</strong><ul>{generatedResult.warnings.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
-      {generatedResult.unscheduled.length > 0 && <div><strong>Unscheduled</strong><ul>{generatedResult.unscheduled.map((item, index) => <li key={index}>{item}</li>)}</ul></div>}
-    </section>}
+        <main className="sheet-viewport">
+          <article className="document-sheet" id="documentSheet">
+            <header className="doc-header" id="docHeaderBlock">
+              <div className="doc-header-line doc-institution" id="hdrInstitution">
+                {institutionName}
+              </div>
+              <div className="doc-header-line doc-subtitle" id="hdrTitle">
+                {prog.meta.title}
+              </div>
+              <div className="doc-header-line doc-year" id="hdrYear">
+                {prog.meta.year}
+              </div>
+              <div className="doc-header-line doc-semester" id="hdrSemester">
+                {prog.meta.semester}
+              </div>
+            </header>
 
-    <div className="timetable-toolbar">
-      <h3>Weekly schedule <span>({activeEntries.length})</span></h3>
-      <div className="timetable-view-switch" role="group" aria-label="Schedule display">
-        <button type="button" aria-pressed={view === 'week'} onClick={() => setView('week')}><LayoutGrid /> Week</button>
-        <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}><List /> List</button>
-      </div>
-    </div>
+            <div className="table-scroll-wrapper">
+              <table className="timetable-grid" id="timetableGrid"></table>
+            </div>
 
-    {loading && activeEntries.length === 0 ? <div className="timetable-empty"><LoadingSpinner label="Loading timetable…" /></div> : activeEntries.length === 0 ? <div className="timetable-empty"><CalendarDays size={26} /><strong>No sessions scheduled yet</strong><span>Schedule or generate sessions to populate the formal weekly timetable.</span></div> : view === 'week' ? <div className="timetable-print-area">
-      <div className="timetable-document-heading">
-        <div className="timetable-document-mark">{institutionLoaded && institution.isActive ? institution.abbreviation || 'SMIS' : 'SMIS'}</div>
-        <p>REPUBLIC OF UGANDA</p>
-        <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
-        <p>TEACHING TIMETABLE</p>
-        <small>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}</small>
-      </div>
-      <div className="timetable-grid-scroll">
-        <table className="timetable-formal-grid">
-          <thead><tr><th className="timetable-day-column">DAY</th>{timeSlots.map((slot, index) => <th key={slot}><span className="timetable-period-label">PERIOD {index + 1}</span><strong>{timeLabel(slot)}</strong><span>START TIME</span></th>)}</tr></thead>
-          <tbody>{weekOrder.filter(day => day !== 0).map(dayIndex => <tr key={dayIndex}>
-            <th className="timetable-day-column">{days[dayIndex].toUpperCase()}</th>
-            {timeSlots.map(slot => {
-              const cellEntries = orderedEntries.filter(entry => entry.dayOfWeek === dayIndex && entry.startTime === slot)
-              return <td key={slot} className={cellEntries.length ? 'has-session' : 'empty-session'}>
-                {cellEntries.map(entry => <article className="timetable-grid-session" key={entry.id}>
-                  <strong>{courseLabels.get(entry.courseId) ?? 'Course not found'}</strong>
-                  <span>{groupLabels.get(entry.teachingGroupId) ?? 'Teaching group'}</span>
-                  <span>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</span>
-                  <span className="timetable-grid-time">{timeRange(entry)}</span>
-                  {entry.room && <span>Venue: {entry.room}</span>}
-                  {!readOnly && (
-                    <>
-                      <button className="timetable-event-remove" type="button" onClick={() => void editEntry(entry)}><Pencil size={12} /> Edit</button>
-                      <button className="timetable-event-remove" type="button" onClick={() => void remove(entry.id)}><Trash2 size={12} /> Remove</button>
-                    </>
-                  )}
-                </article>)}
-                {cellEntries.length === 0 && <span className="timetable-grid-dash">—</span>}
-              </td>
-            })}
-          </tr>)}</tbody>
-        </table>
-      </div>
-      <div className="timetable-document-footer"><span>Prepared for academic use</span><span>Academic Registrar: ____________________</span></div>
-      <div className="timetable-document-print-actions"><button type="button" className="timetable-action" onClick={() => printInstitutionalPdf(timetablePdfOptions((availableSemesters.find(item => item.id === semesterId)?.label ?? 'Academic') + ' Timetable', orderedEntries, 'school-timetable'))} disabled={!institutionLoaded || !institution.isActive}>Print timetable</button></div>
-    </div> : <div className="timetable-table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Room</th><th>Type</th><th>Teaching group</th><th>Course</th><th>Teacher</th>{!readOnly && <th>Actions</th>}</tr></thead><tbody>
-      {orderedEntries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{timeRange(entry)}</td><td>{entry.room || '—'}</td><td>{entry.sessionType || '—'}</td><td>{groupLabels.get(entry.teachingGroupId) ?? 'Group not found'}</td><td>{courseLabels.get(entry.courseId) ?? 'Course not found'}</td><td>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</td>{!readOnly && <td><button className="timetable-action" type="button" onClick={() => void editEntry(entry)}><Pencil size={14} /> Edit</button><button className="timetable-action" type="button" onClick={() => void remove(entry.id)}><Trash2 /> Remove</button></td>}</tr>)}
-    </tbody></table></div>}
-  </section>
+            <footer className="doc-footer" id="docFooterBlock"></footer>
+          </article>
+        </main>
+
+        {/* System Academic Registrar Modal */}
+        <div className={`modal-overlay${isOpen('registrarModal') ? ' open' : ''}`} id="registrarModal">
+          <div className="modal-card">
+            <div className="modal-head">
+              <h3>System Academic Registrar</h3>
+              <button type="button" className="modal-close-btn" data-close-modal="registrarModal">&times;</button>
+            </div>
+            <form id="registrarForm">
+              <div className="modal-body">
+                <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.4 }}>
+                  When an Academic Registrar is registered in the system, their title and name automatically appear on <strong>every</strong> timetable sheet. Leave blank to keep the footer completely empty.
+                </p>
+                <div className="field-group">
+                  <label className="field-label" htmlFor="sysRegistrarName">Academic Registrar Full Name</label>
+                  <input type="text" id="sysRegistrarName" className="field-input" placeholder="e.g. ATUKUUMA CLIFFE (leave empty for blank)" defaultValue={registrar.name} />
+                </div>
+                <div className="field-group">
+                  <label className="field-label" htmlFor="sysRegistrarRole">Official Title</label>
+                  <input type="text" id="sysRegistrarRole" className="field-input" placeholder="ACADEMIC REGISTRAR" defaultValue={registrar.role} />
+                </div>
+                <div className="field-row-2">
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="sysSecondaryName">Secondary Signatory Name (Optional)</label>
+                    <input type="text" id="sysSecondaryName" className="field-input" placeholder="e.g. DR. NAMUKASA" defaultValue={registrar.secondaryName} />
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="sysSecondaryRole">Secondary Title (Optional)</label>
+                    <input type="text" id="sysSecondaryRole" className="field-input" placeholder="e.g. HEAD OF DEPARTMENT" defaultValue={registrar.secondaryRole} />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-foot">
+                <button type="button" id="clearRegistrarBtn" className="btn-modal btn-modal-danger">
+                  Unregister / Blank
+                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="button" className="btn-modal" data-close-modal="registrarModal">
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-modal btn-modal-save">
+                    Save to All Sheets
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Cell Modal */}
+        <div className={`modal-overlay${isOpen('cellModal') ? ' open' : ''}`} id="cellModal">
+          <div className="modal-card">
+            <div className="modal-head">
+              <h3 id="cellModalTitle">Edit Lecture Slot</h3>
+              <button type="button" className="modal-close-btn" data-close-modal="cellModal">&times;</button>
+            </div>
+            <form id="cellForm">
+              <div className="modal-body">
+                <input type="hidden" id="editDayKey" />
+                <input type="hidden" id="editSlotId" />
+                <div className="field-group">
+                  <label className="field-label" htmlFor="inputCourse">Course Unit / Subject Name</label>
+                  <input type="text" id="inputCourse" className="field-input" placeholder="e.g. MEDICAL PSYCHOLOGY" />
+                </div>
+                <div className="field-group">
+                  <label className="field-label" htmlFor="inputTutor">Tutor / Lecturer Name</label>
+                  <input type="text" id="inputTutor" className="field-input" placeholder="e.g. MR. WERE" />
+                </div>
+                <div className="field-row-2">
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="inputRoom">Room / Lab (Optional)</label>
+                    <input type="text" id="inputRoom" className="field-input" placeholder="e.g. Hall A" />
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="inputCustomTime">Time Override (Optional)</label>
+                    <input type="text" id="inputCustomTime" className="field-input" placeholder="e.g. 8:00 AM" />
+                  </div>
+                </div>
+                <div className="field-row-2">
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="inputRowSpan">Merge Down (Rows)</label>
+                    <select id="inputRowSpan" className="field-input" defaultValue="1">
+                      <option value="1">1 Row (Normal)</option>
+                      <option value="2">2 Rows</option>
+                      <option value="3">3 Rows</option>
+                    </select>
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="inputColSpan">Merge Across (Slots)</label>
+                    <select id="inputColSpan" className="field-input" defaultValue="1">
+                      <option value="1">1 Slot (Normal)</option>
+                      <option value="2">2 Slots</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-foot">
+                <button type="button" id="clearCellBtn" className="btn-modal btn-modal-danger">
+                  Clear Cell
+                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="button" className="btn-modal" data-close-modal="cellModal">
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-modal btn-modal-save">
+                    Save Cell
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Header & Footer Modal */}
+        <div className={`modal-overlay${isOpen('docMetaModal') ? ' open' : ''}`} id="docMetaModal">
+          <div className="modal-card">
+            <div className="modal-head">
+              <h3>Edit School &amp; Course Header</h3>
+              <button type="button" className="modal-close-btn" data-close-modal="docMetaModal">&times;</button>
+            </div>
+            <form id="docMetaForm">
+              <div className="modal-body">
+                <div className="field-group">
+                  <label className="field-label" htmlFor="metaInstitution">School / Institution Name</label>
+                  <input type="text" id="metaInstitution" className="field-input" required defaultValue={prog.meta.institution} />
+                </div>
+                <div className="field-group">
+                  <label className="field-label" htmlFor="metaTitle">Timetable Title &amp; Course</label>
+                  <input type="text" id="metaTitle" className="field-input" required defaultValue={prog.meta.title} />
+                </div>
+                <div className="field-row-2">
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="metaYear">Academic Year</label>
+                    <input type="text" id="metaYear" className="field-input" required defaultValue={prog.meta.year} />
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label" htmlFor="metaSemester">Semester / Class</label>
+                    <input type="text" id="metaSemester" className="field-input" required defaultValue={prog.meta.semester} />
+                  </div>
+                </div>
+                <div className="field-group">
+                  <label className="field-label" htmlFor="metaDayCorner">Corner Header Label</label>
+                  <input type="text" id="metaDayCorner" className="field-input" placeholder="DAY" defaultValue={prog.meta.dayCornerLabel} />
+                </div>
+              </div>
+              <div className="modal-foot">
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+                  <button type="button" className="btn-modal" data-close-modal="docMetaModal">
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-modal btn-modal-save">
+                    Save Details
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Slots Manager Modal */}
+        <div className={`modal-overlay${isOpen('slotsModal') ? ' open' : ''}`} id="slotsModal">
+          <div className="modal-card">
+            <div className="modal-head">
+              <h3>Manage Time Columns &amp; Dividers</h3>
+              <button type="button" className="modal-close-btn" data-close-modal="slotsModal">&times;</button>
+            </div>
+            <div className="modal-body">
+              <div id="slotManagerList" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }} />
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button type="button" id="addNewSlotColBtn" className="btn-modal" style={{ flex: 1 }}>
+                  + Add Time Slot
+                </button>
+                <button type="button" id="addNewDividerColBtn" className="btn-modal" style={{ flex: 1 }}>
+                  + Add Break/Lunch
+                </button>
+              </div>
+            </div>
+            <div className="modal-foot">
+              <div style={{ marginLeft: 'auto' }}>
+                <button type="button" className="btn-modal btn-modal-save" data-close-modal="slotsModal">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Backup Modal */}
+        <div className={`modal-overlay${isOpen('backupModal') ? ' open' : ''}`} id="backupModal">
+          <div className="modal-card">
+            <div className="modal-head">
+              <h3>Backup &amp; Reset Options</h3>
+              <button type="button" className="modal-close-btn" data-close-modal="backupModal">&times;</button>
+            </div>
+            <div className="modal-body">
+              <button type="button" id="exportJsonBtn" className="btn-modal btn-modal-save">
+                Download Backup (.json)
+              </button>
+              <label className="btn-modal" style={{ textAlign: 'center', display: 'block' }}>
+                Import Backup (.json)
+                <input type="file" id="importJsonInput" accept=".json" style={{ display: 'none' }} />
+              </label>
+              <button type="button" id="clearAllCellsBtn" className="btn-modal btn-modal-danger">
+                Clear All Lecture Cells
+              </button>
+              <button type="button" id="confirmResetBtn" className="btn-modal btn-modal-danger">
+                Restore Official KSHS Default
+              </button>
+            </div>
+            <div className="modal-foot">
+              <div style={{ marginLeft: 'auto' }}>
+                <button type="button" className="btn-modal" data-close-modal="backupModal">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={`toast-notification${toast.show ? ' show' : ''}`} id="toast">
+          {toast.msg}
+        </div>
+      </section>
+  )
 }
