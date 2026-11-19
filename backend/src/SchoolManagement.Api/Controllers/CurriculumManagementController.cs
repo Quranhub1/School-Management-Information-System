@@ -134,6 +134,10 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     {
         if (request.YearOfStudy < 1 || request.SemesterNumber < 1)
             return BadRequest(new { message = "Year and semester numbers must be positive." });
+        var curriculumStatus = await db.Curricula.AsNoTracking().Where(x => x.Id == curriculumId).Select(x => x.Status).SingleOrDefaultAsync(ct);
+        if (curriculumStatus is null) return NotFound(new { message = "Curriculum not found." });
+        if (!string.Equals(curriculumStatus, "Draft", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "Only draft curricula can have semester placements changed." });
         var mappings = await db.CurriculumCourses.Where(x =>
             x.CurriculumId == curriculumId && x.YearOfStudy == year && x.SemesterNumber == semester).ToListAsync(ct);
         if (mappings.Count == 0) return NotFound(new { message = "Semester not found in this curriculum." });
@@ -149,6 +153,10 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpDelete("curricula/{curriculumId:guid}/semesters/{year:int}/{semester:int}")]
     public async Task<IActionResult> DeleteSemester(Guid curriculumId, int year, int semester, CancellationToken ct)
     {
+        var curriculumStatus = await db.Curricula.AsNoTracking().Where(x => x.Id == curriculumId).Select(x => x.Status).SingleOrDefaultAsync(ct);
+        if (curriculumStatus is null) return NotFound(new { message = "Curriculum not found." });
+        if (!string.Equals(curriculumStatus, "Draft", StringComparison.OrdinalIgnoreCase))
+            return Conflict(new { message = "Only draft curricula can have semesters deleted." });
         var mappings = await db.CurriculumCourses.Where(x =>
             x.CurriculumId == curriculumId && x.YearOfStudy == year && x.SemesterNumber == semester).ToListAsync(ct);
         if (mappings.Count == 0) return NotFound(new { message = "Semester not found in this curriculum." });
