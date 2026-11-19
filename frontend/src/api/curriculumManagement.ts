@@ -137,7 +137,7 @@ export interface CurriculumComparison {
   versions: Array<{ id: string; version: string; title: string; effectiveFrom: string; effectiveTo?: string | null; status: string; minimumCredits: number }>
   firstOnly: Array<{ curriculumId: string; id: string; code: string; name: string; creditUnits: number; yearOfStudy: number; semesterNumber: number; isCore: boolean }>
   secondOnly: Array<{ curriculumId: string; id: string; code: string; name: string; creditUnits: number; yearOfStudy: number; semesterNumber: number; isCore: boolean }>
-  changedPlacement: Array<{ curriculumId: string; id: string; code: string; name: string; creditUnits: number; yearOfStudy: number; semesterNumber: number; isCore: boolean }>
+  changedPlacement: Array<{ id: string; code: string; name: string; creditUnits: number; firstYear: number; firstSemester: number; firstIsCore: boolean; secondYear: number; secondSemester: number; secondIsCore: boolean }>
 }
 const governanceBase = (id: string) => `/api/curriculum-governance/curricula/${encodeURIComponent(id)}`
 export const getCurriculumApprovalHistory = (id: string) => request<CurriculumApprovalHistory[]>(`${governanceBase(id)}/approval-history`)
