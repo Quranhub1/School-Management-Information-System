@@ -15,6 +15,14 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpGet("curricula")]
     public async Task<IActionResult> GetCurricula(CancellationToken ct) => Ok(await service.GetCurriculaAsync(ct));
 
+    [HttpGet("curricula/{id:guid}")]
+    public async Task<IActionResult> GetCurriculum(Guid id, CancellationToken ct)
+    {
+        var curriculum = await db.Curricula.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
+        if (curriculum is null) return NotFound(new { message = "Curriculum not found." });
+        return Ok(curriculum);
+    }
+
     [HttpPut("curricula/{id:guid}")]
     public async Task<IActionResult> UpdateCurriculum(Guid id, [FromBody] UpdateCurriculumRequest request, CancellationToken ct)
     {
@@ -34,6 +42,64 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     {
         var (success, error) = await service.SetCurriculumActiveAsync(id, request.IsActive, ct);
         return success ? NoContent() : error == "Curriculum not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
+    }
+
+    [HttpPost("curricula/{id:guid}/submit-for-review")]
+    public async Task<IActionResult> SubmitForReview(Guid id, CancellationToken ct)
+    {
+        var curriculum = await db.Curricula.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
+        if (curriculum is null) return NotFound(new { message = "Curriculum not found." });
+        if (curriculum.Status != "Draft") return BadRequest(new { message = "Only draft curricula can be submitted for review." });
+        curriculum.Status = "Submitted";
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    [HttpPost("curricula/{id:guid}/approve")]
+    public async Task<IActionResult> Approve(Guid id, CancellationToken ct)
+    {
+        var curriculum = await db.Curricula.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
+        if (curriculum is null) return NotFound(new { message = "Curriculum not found." });
+        if (curriculum.Status != "Submitted") return BadRequest(new { message = "Only submitted curricula can be approved." });
+        curriculum.Status = "Approved";
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    [HttpPost("curricula/{id:guid}/publish")]
+    public async Task<IActionResult> Publish(Guid id, CancellationToken ct)
+    {
+        var curriculum = await db.Curricula.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
+        if (curriculum is null) return NotFound(new { message = "Curriculum not found." });
+        if (curriculum.Status != "Approved") return BadRequest(new { message = "Only approved curricula can be published." });
+        curriculum.Status = "Published";
+        curriculum.IsActive = true;
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    [HttpGet("curricula/{curriculumId:guid}/credit-load")]
+    public async Task<IActionResult> GetCreditLoad(Guid curriculumId, CancellationToken ct)
+    {
+        var mappings = await db.CurriculumCourses.AsNoTracking()
+            .Where(x => x.CurriculumId == curriculumId && !x.IsDeleted)
+            .ToListAsync(ct);
+        var loadBySemester = mappings
+            .GroupBy(m => new { m.YearOfStudy, m.SemesterNumber })
+            .Select(g => new
+            {
+                Year = g.Key.YearOfStudy,
+                Semester = g.Key.SemesterNumber,
+                CourseCount = g.Count(),
+                TotalCredits = g.Sum(m =>
+                {
+                    var course = db.Courses.FirstOrDefault(x => x.Id == m.CourseId && !x.IsDeleted);
+                    return course?.CreditUnits ?? 0;
+                })
+            })
+            .OrderBy(x => x.Year).ThenBy(x => x.Semester)
+            .ToList();
+        return Ok(loadBySemester);
     }
 
     [HttpPost("curricula")]
@@ -154,6 +220,13 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
     [HttpPut("curricula/{curriculumId:guid}/courses/{mappingId:guid}")]
     public async Task<IActionResult> UpdateMapping(Guid curriculumId, Guid mappingId, [FromBody] UpdateCurriculumCourseRequest request, CancellationToken ct)
     {
+        var mapping = await db.CurriculumCourses.AsNoTracking().FirstOrDefaultAsync(x => x.Id == mappingId && x.CurriculumId == curriculumId, ct);
+        if (mapping is null) return NotFound(new { message = "Curriculum course mapping not found." });
+        var creditLoadOk = await service.ValidateCreditLoadAsync(curriculumId, request.YearOfStudy, request.SemesterNumber, ct);
+        if (!creditLoadOk)
+        {
+            return Conflict(new { message = $"Year {request.YearOfStudy}, Semester {request.SemesterNumber} would exceed the maximum credit load (24 units). Remove or move some course units first." });
+        }
         var (success, error) = await service.UpdateMappingAsync(curriculumId, mappingId, request, ct);
         return success ? NoContent() : error == "Curriculum course mapping not found." ? NotFound(new { message = error }) : BadRequest(new { message = error });
     }
@@ -200,8 +273,43 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
             });
         }
 
+        var prerequisitesMet = await service.ValidatePrerequisitesAsync(curriculumId, request.CourseId, ct);
+        if (!prerequisitesMet)
+        {
+            var missingPrereqs = await service.GetCoursePrerequisitesAsync(request.CourseId, ct);
+            var missing = missingPrereqs.Where(p => p.IsMandatory).Select(p => $"{p.PrerequisiteCode} — {p.PrerequisiteName}").ToList();
+            return Conflict(new { message = "Mandatory prerequisites not yet mapped to this curriculum: " + string.Join(", ", missing) });
+        }
+
+        var creditLoadOk = await service.ValidateCreditLoadAsync(curriculumId, request.YearOfStudy, request.SemesterNumber, ct);
+        if (!creditLoadOk)
+        {
+            return Conflict(new { message = $"Year {request.YearOfStudy}, Semester {request.SemesterNumber} would exceed the maximum credit load (24 units). Remove or move some course units first." });
+        }
+
         var result = await service.AddMappingAsync(curriculumId, request, ct);
         return result.Success ? Ok(result.Mapping) : BadRequest(new { message = result.Error });
+    }
+
+    [HttpGet("courses/{courseId:guid}/prerequisites")]
+    public async Task<IActionResult> GetPrerequisites(Guid courseId, CancellationToken ct)
+    {
+        var prereqs = await service.GetCoursePrerequisitesAsync(courseId, ct);
+        return Ok(prereqs);
+    }
+
+    [HttpPost("courses/{courseId:guid}/prerequisites")]
+    public async Task<IActionResult> AddPrerequisite(Guid courseId, [FromBody] AddCoursePrerequisiteRequest request, CancellationToken ct)
+    {
+        var (success, error) = await service.AddCoursePrerequisiteAsync(courseId, request, ct);
+        return success ? NoContent() : BadRequest(new { message = error });
+    }
+
+    [HttpDelete("courses/{courseId:guid}/prerequisites/{prerequisiteId:guid}")]
+    public async Task<IActionResult> RemovePrerequisite(Guid courseId, Guid prerequisiteId, CancellationToken ct)
+    {
+        var deleted = await service.RemoveCoursePrerequisiteAsync(prerequisiteId, ct);
+        return deleted ? NoContent() : NotFound();
     }
 
     public sealed record SetActiveRequest(bool IsActive);
