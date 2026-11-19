@@ -5696,6 +5696,110 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.ElectiveGroup", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
+                        .WithMany()
+                        .HasForeignKey("CurriculumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.ElectiveGroupCourse", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Academic.ElectiveGroup", null)
+                        .WithMany()
+                        .HasForeignKey("ElectiveGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumVersion", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
+                        .WithMany()
+                        .HasForeignKey("CurriculumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumVersionCourse", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.CurriculumVersion", null)
+                        .WithMany()
+                        .HasForeignKey("CurriculumVersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Academic.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Academic.ElectiveGroup", null)
+                        .WithMany()
+                        .HasForeignKey("ElectiveGroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CourseEquivalence", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Course", null)
+                        .WithMany()
+                        .HasForeignKey("InternalCourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.StudentTransferCredit", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.CourseEquivalence", null)
+                        .WithMany()
+                        .HasForeignKey("CourseEquivalenceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.ProgrammeLearningOutcome", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Programme", null)
+                        .WithMany()
+                        .HasForeignKey("ProgrammeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CoursePloMapping", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Academic.ProgrammeLearningOutcome", null)
+                        .WithMany()
+                        .HasForeignKey("ProgrammeLearningOutcomeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.LmsCourse", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Academic.Programme", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Academic.AcademicAuthority", null)
@@ -6713,6 +6817,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Status")
+                        .IsRequired()
                         .HasDefaultValue("Created")
                         .HasColumnType("text");
 
