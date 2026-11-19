@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { SYSTEM_LOCALE } from '../lib/currency'
+import { getStudents, type Student } from '../api/students'
 import LoadingSpinner from './LoadingSpinner';
 import {
   getStudentMedicalRecords,
@@ -14,11 +15,23 @@ type Tab = 'student' | 'clinic'
 export function HealthRecordsManagement({ activeSubsection = null }: { activeSubsection?: string | null }) {
   const [tab, setTab] = useState<Tab>('student')
   const [studentId, setStudentId] = useState('')
+  const [students, setStudents] = useState<Student[]>([])
+  const [studentSearch, setStudentSearch] = useState('')
+  const [registryLoading, setRegistryLoading] = useState(true)
   const [records, setRecords] = useState<MedicalRecord[]>([])
   const [recentVisits, setRecentVisits] = useState<RecentClinicVisit[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  useEffect(() => {
+    let mounted = true
+    getStudents()
+      .then(data => { if (mounted) setStudents(data.filter(student => !student.isArchived)) })
+      .catch(e => { if (mounted) setError(e instanceof Error ? e.message : 'Unable to load the student registry.') })
+      .finally(() => { if (mounted) setRegistryLoading(false) })
+    return () => { mounted = false }
+  }, [])
+
   useEffect(() => {
     if (activeSubsection === 'clinic') setTab('clinic')
     else if (activeSubsection === 'medical-records' || activeSubsection === 'student') setTab('student')
@@ -63,8 +76,9 @@ export function HealthRecordsManagement({ activeSubsection = null }: { activeSub
 
   useEffect(() => {
     if (tab === 'student' && studentId.trim()) void loadStudentRecords()
+    else if (tab === 'student') setRecords([])
     else if (tab === 'clinic') void loadRecentVisits()
-  }, [tab])
+  }, [tab, studentId])
 
   async function handleAddRecord(e: FormEvent) {
     e.preventDefault()
@@ -99,6 +113,12 @@ export function HealthRecordsManagement({ activeSubsection = null }: { activeSub
     return '#059669'
   }
 
+  const filteredStudents = students.filter(student => {
+    const query = studentSearch.trim().toLocaleLowerCase()
+    if (!query) return true
+    return `${student.studentNumber} ${student.firstName} ${student.lastName} ${student.otherNames ?? ''}`.toLocaleLowerCase().includes(query)
+  })
+
   return (
     <section className="panel" aria-label="Health records">
       <div className="panel-heading">
@@ -123,11 +143,24 @@ export function HealthRecordsManagement({ activeSubsection = null }: { activeSub
           <form onSubmit={e => { e.preventDefault(); void loadStudentRecords() }} className="student-form" style={{ marginBottom: 22 }}>
             <div className="form-row">
               <label>
-                Student ID
-                <input value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="Enter student ID" required />
+                Find student
+                <input value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="Search by student number or name" />
               </label>
-              <button type="submit" disabled={loading}>Load Records</button>
+              <label>
+                Student registry
+                <select value={studentId} onChange={e => setStudentId(e.target.value)} required disabled={registryLoading}>
+                  <option value="">{registryLoading ? 'Loading student registry…' : 'Select a student'}</option>
+                  {filteredStudents.map(student => (
+                    <option key={student.id} value={student.id}>
+                      {student.studentNumber} — {student.lastName}, {student.firstName}{student.otherNames ? ` ${student.otherNames}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" disabled={loading || !studentId}>Load Records</button>
             </div>
+            {!registryLoading && students.length === 0 && <p className="empty">No active students are available in the main registry.</p>}
+            {!registryLoading && students.length > 0 && filteredStudents.length === 0 && <p className="empty">No students match that search.</p>}
           </form>
 
           {studentId.trim() && (
