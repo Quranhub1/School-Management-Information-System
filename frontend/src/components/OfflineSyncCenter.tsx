@@ -93,7 +93,7 @@ export function OfflineSyncCenter() {
         resolvedAt: resolvedAt ? new Date(resolvedAt).toISOString() : null,
       })),
     }
-    const blob = new Blob([JSON.stringify(audit, null, 2)], { type: 'application/json' })
+    const blob = new Blob([JSON.stringify(audit, null, 2) ?? '{}'], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
