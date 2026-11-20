@@ -30,7 +30,7 @@ public sealed class AcademicYearRepository(SchoolManagementDbContext db) : IAcad
             """, cancellationToken);
 
         return await db.AcademicYears.AsNoTracking()
-            .OrderByDescending(x => x.StartDate)
+            .OrderBy(x => x.StartDate)
             .ThenBy(x => x.Name)
             .ToListAsync(cancellationToken);
     }
