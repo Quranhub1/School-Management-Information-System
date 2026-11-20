@@ -1,6 +1,6 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-11-08  
+**Last updated:** 2026-11-20  
 **Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
@@ -45,11 +45,6 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [ ] Implement financial idempotency keys with a PostgreSQL unique constraint, atomic ledger posting, request-payload matching and staff-reviewed conflict resolution before enabling any finance replay.
 - [ ] Run frontend build/tests, backend tests, and Windows/Linux desktop CI on the Dexie branch; perform target-device offline acceptance testing.
 
-
-**Last updated:** 2026-10-11  
-**Tracking branch:** `main`  
-**Current release:** `v0.2.0`  
-**Currency:** UGX
 
 
 **Last updated:** 2026-10-11  
@@ -400,24 +395,6 @@ Additional design facts from that review:
 6. Only after approval, implement migrations and code changes on a feature branch; test against a database backup/test database, run backend/frontend tests and CI, and verify existing finance workflows.
 
 **Important:** the SQL above is read-only. The live database has not yet been inspected by the assistant, and no claim is made that the physical database currently matches the source snapshot. Do not rename tables, create tables, or apply migrations until the live inspection and compatibility review are complete.
-
-## System-wide person-name display order — November 2026
-
-**Required display convention:** surname, first name, then other/given names, with every component displayed in uppercase. Example: `NAKIBUULE ALICE MARIA`. This is a presentation rule; do not swap or rewrite the underlying `FirstName`, `LastName` or `OtherNames` database fields or API request semantics.
-
-### Implemented on `fix/system-wide-name-order`
-
-- [x] Add shared frontend `formatPersonName` utility to apply the same order, omit blank name parts and convert the final display name to uppercase.
-- [x] Apply the formatter to student registry, archived student records, admission views, document student selectors and relevant student dashboard displays.
-- [x] Apply surname-first display to staff registry, payroll, staff allowances and related staff selectors/notifications.
-- [x] Update key backend-generated student display names used by student portal profiles, reports/transcripts, certificates, Student 360, examination analytics, defaulter lists, chronic-absence lists and global search.
-- [x] Align the mock API server's student/staff/applicant/alumni name formatting with the same convention.
-- [ ] Audit all remaining frontend modules, PDF/export templates, notifications and API projections for hard-coded first-name-first or mixed-case display strings; apply uppercase consistently.
-- [ ] Run frontend TypeScript checks, Vitest and production build; run backend build and automated tests.
-- [ ] Verify representative student and staff records with and without other names in registry, search, dashboards, payroll, reports, certificates and printed/exported documents.
-
-**Data-integrity rule:** this change must affect display formatting only. Uppercasing is also display-only; Existing stored name components and API input fields remain in their original semantic columns. Do not run a database migration or bulk-update person records to change display order.
-
 
 ## System-wide person-name display order — November 2026
 
