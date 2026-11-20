@@ -9,10 +9,14 @@ public sealed class CreateOpeningBalanceRequestValidator : AbstractValidator<Ope
     public CreateOpeningBalanceRequestValidator()
     {
         RuleFor(x => x.FiscalPeriodId).NotEmpty();
-        RuleFor(x => x.Currency).MaximumLength(3);
+        RuleFor(x => x.Currency).Must(value => string.IsNullOrWhiteSpace(value) || (value.Trim().Length == 3 && value.Trim().All(char.IsLetter)))
+            .WithMessage("Currency must be a three-letter ISO code.");
         RuleFor(x => x.Lines).Cascade(CascadeMode.Stop).NotNull().Must(lines => lines.Count >= 2)
             .WithMessage("At least two opening-balance lines are required.");
         RuleForEach(x => x.Lines).SetValidator(new OpeningBalanceLineRequestValidator());
+        RuleFor(x => x).Must(request => request.Lines is null ||
+            request.Lines.Sum(line => line.Debit) == request.Lines.Sum(line => line.Credit))
+            .WithMessage("Opening balances must balance: total debits must equal total credits.");
     }
 }
 
