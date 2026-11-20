@@ -18,6 +18,7 @@ export function StudentRegistry() {
   const [error, setError] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [guardians, setGuardians] = useState<StudentGuardian[]>([])
+  const [guardianError, setGuardianError] = useState('')
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState('')
 
@@ -54,15 +55,14 @@ export function StudentRegistry() {
   async function openStudent(student: Student) {
     setSelectedStudent(student)
     setGuardians([])
+    setGuardianError('')
     setDetailError('')
     setDetailLoading(true)
     try {
-      const [fullRecord, guardianRecords] = await Promise.all([
-        getStudent(student.id),
-        getStudentGuardians(student.id).catch(() => [] as StudentGuardian[]),
-      ])
+      const fullRecord = await getStudent(student.id)
       setSelectedStudent(fullRecord)
-      setGuardians(guardianRecords)
+      try { setGuardians(await getStudentGuardians(student.id)) }
+      catch (cause) { setGuardianError(cause instanceof Error ? cause.message : 'Unable to load parent or guardian contacts.') }
     } catch (cause) {
       setDetailError(cause instanceof Error ? cause.message : 'Unable to load this student record.')
     } finally {
@@ -159,7 +159,8 @@ export function StudentRegistry() {
                 </section>
                 <section className="student-registry-detail-section">
                   <h3>Parent / guardian contacts</h3>
-                  {guardians.length === 0 ? <p className="empty">No parent or guardian contacts are recorded.</p> : (
+                  {guardianError && <div className="error" role="alert">{guardianError}</div>}
+                  {!guardianError && guardians.length === 0 ? <p className="empty">No parent or guardian contacts are recorded.</p> : guardians.length > 0 ? (
                     <div className="table-wrap"><table><thead><tr><th>Name</th><th>Relationship</th><th>Phone</th><th>Email</th><th>Primary</th></tr></thead>
                       <tbody>{guardians.map(guardian => <tr key={guardian.id}><td>{guardian.fullName}</td><td>{valueOrDash(guardian.relationship)}</td><td>{valueOrDash(guardian.phoneNumber)}</td><td>{valueOrDash(guardian.email)}</td><td>{guardian.isPrimary ? 'Yes' : 'No'}</td></tr>)}</tbody>
                     </table></div>
