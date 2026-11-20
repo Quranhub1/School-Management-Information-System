@@ -44,33 +44,13 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
     [Authorize]
     public async Task<IActionResult> Catalog(CancellationToken cancellationToken)
     {
-        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? User.FindFirstValue("sub")
-            ?? User.FindFirstValue("userId");
-        if (!Guid.TryParse(userIdValue, out var userId)) return Unauthorized();
-
-        var roleCodes = await (from userRole in db.UserRoles
-                               join rolePermission in db.RolePermissions on userRole.RoleId equals rolePermission.RoleId
-                               join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
-                               where userRole.UserId == userId
-                               select permission.Code).Distinct().ToListAsync(cancellationToken);
-        var overrides = await (from assignment in db.UserPermissions
-                               join permission in db.Permissions on assignment.PermissionId equals permission.Id
-                               where assignment.UserId == userId
-                               select new { permission.Code, assignment.IsGranted }).ToListAsync(cancellationToken);
-        var effective = roleCodes.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        foreach (var assignment in overrides)
-        {
-            if (assignment.IsGranted) effective.Add(assignment.Code);
-            else effective.Remove(assignment.Code);
-        }
-
+        // The catalogue contains metadata only. The assignment endpoint and
+        // staff-creation flow enforce which permissions the current manager may delegate.
         var catalog = await db.Permissions.AsNoTracking()
-            .Where(x => effective.Contains(x.Code))
             .OrderBy(x => x.GroupKey).ThenBy(x => x.Name)
             .Select(x => new { x.Id, x.Code, x.Name, x.GroupKey, x.Description })
             .ToListAsync(cancellationToken);
-        return Ok(catalog);
+
     }
 
     [HttpGet("roles")]
