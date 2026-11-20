@@ -61,4 +61,15 @@ describe('OfflineSyncCenter', () => {
     })
     expect(screen.getByText('Automatic replay is disabled')).toBeTruthy()
   })
+  it('allows an operator to discard a conflicting operation without replaying it', async () => {
+    render(<OfflineSyncCenter />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Discard queued operation' }))
+
+    await waitFor(() => {
+      expect(resolveSyncConflict).toHaveBeenCalledWith('conflict-1', 'discarded')
+    })
+    expect(screen.getByText(/Discarded operations remain in the audit journal/)).toBeTruthy()
+  })
+
 })
