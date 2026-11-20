@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
@@ -64,7 +65,7 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
 });
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateStudentRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<SchoolManagement.Api.Validation.CreateStudentRequestValidator>();
 builder.Services.AddControllers().AddJsonOptions(o =>
 {
     o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
