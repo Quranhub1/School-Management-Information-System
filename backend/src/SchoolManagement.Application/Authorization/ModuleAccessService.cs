@@ -4,6 +4,13 @@ namespace SchoolManagement.Application.Authorization;
 
 public sealed class ModuleAccessService
 {
+    private const string AdmissionsManageRole = "StaffAccess.Admissions.Manage";
+    private const string CurriculumManageRole = "StaffAccess.Curriculum.Manage";
+    private const string ClassesDeleteRole = "StaffAccess.Classes.Delete";
+    private const string TimetableManageRole = "StaffAccess.Timetable.Manage";
+    private const string StaffAttendanceRole = "StaffAccess.Staff.Attendance";
+    private const string LibraryManageRole = "StaffAccess.Library.Manage";
+    private const string NoticeboardManageRole = "StaffAccess.Noticeboard.Manage";
     public IReadOnlyList<string> GetAccessibleModules(ClaimsPrincipal user)
     {
         var roles = user.FindAll(ClaimTypes.Role)
@@ -32,16 +39,16 @@ public sealed class ModuleAccessService
         return module switch
         {
             InstitutionalModules.Dashboard => hasAnyStaffPermission,
-            InstitutionalModules.Admissions => Has(StaffAccessRoles.AdmissionsManage),
+            InstitutionalModules.Admissions => Has(AdmissionsManageRole),
             InstitutionalModules.Students => HasPrefix("StaffAccess.Students."),
-            InstitutionalModules.Academic => Has(StaffAccessRoles.CurriculumManage) || Has(StaffAccessRoles.ClassesDelete),
+            InstitutionalModules.Academic => Has(CurriculumManageRole) || Has(ClassesDeleteRole),
             InstitutionalModules.Curriculum => Has(StaffAccessRoles.CurriculumManage),
-            InstitutionalModules.Timetable => Has(StaffAccessRoles.TimetableManage),
-            InstitutionalModules.Attendance => Has(StaffAccessRoles.StaffAttendance),
+            InstitutionalModules.Timetable => Has(TimetableManageRole),
+            InstitutionalModules.Attendance => Has(StaffAttendanceRole),
             InstitutionalModules.Finance => HasPrefix("StaffAccess.Finance."),
             InstitutionalModules.Staff => HasPrefix("StaffAccess.Staff."),
-            "Library" => Has(StaffAccessRoles.LibraryManage),
-            "Communication" => Has(StaffAccessRoles.NoticeboardManage),
+            "Library" => Has(LibraryManageRole),
+            "Communication" => Has(NoticeboardManageRole),
             _ => false
         };
     }
