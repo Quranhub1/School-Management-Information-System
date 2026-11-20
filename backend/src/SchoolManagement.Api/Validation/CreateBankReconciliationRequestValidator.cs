@@ -18,8 +18,8 @@ public sealed class AddStatementLineRequestValidator : AbstractValidator<Finance
     public AddStatementLineRequestValidator()
     {
         RuleFor(x => x.TransactionDate).NotEqual(default(DateTimeOffset));
-        RuleFor(x => x.Amount).NotEqual(0);
-        RuleFor(x => x.TransactionType).Must(value =>
+        RuleFor(x => x.Amount).GreaterThan(0);
+        RuleFor(x => x.TransactionType).Cascade(CascadeMode.Stop).NotEmpty().Must(value =>
             value.Equals("Credit", StringComparison.OrdinalIgnoreCase) ||
             value.Equals("Debit", StringComparison.OrdinalIgnoreCase))
             .WithMessage("Transaction type must be Credit or Debit.");
