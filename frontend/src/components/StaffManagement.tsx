@@ -454,28 +454,21 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                   </div>
                 </>}
               </fieldset>}
-              {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
-                <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                  
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{form.courseUnitIds.length} selected</span>
-                </div>
-                {form.staffType === 'Teaching' && <fieldset className="staff-create-course-units">
-                  <legend>Course units taught</legend>
-                  <div className="staff-create-course-summary">{form.courseUnitIds.length} selected</div>
-                  {courseUnits.length === 0
-                    ? <p className="staff-create-hint">No active course units are available. Populate the course catalogue or check the staff lookup API.</p>
-                    : <div className="staff-create-permissions-grid">
-                      {courseUnits.map(unit => {
-                        const checked = form.courseUnitIds.includes(unit.id)
-                        return <label key={unit.id} className="staff-create-check">
-                          <input type="checkbox" checked={checked} onChange={e => setForm(current => ({ ...current, courseUnitIds: e.target.checked ? [...current.courseUnitIds.filter(id => id !== unit.id), unit.id] : current.courseUnitIds.filter(id => id !== unit.id) }))} />
-                          <span><strong>{unit.code}</strong> — {unit.name} <small>({unit.creditUnits} CU)</small></span>
-                        </label>
-                      })}
-                    </div>}
-                </fieldset>}
-              </section>
+              {form.staffType === 'Teaching' && <fieldset className="staff-create-course-units" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
+                <legend>Course units taught</legend>
+                <div className="staff-create-course-summary">{form.courseUnitIds.length} selected</div>
+                {courseUnits.length === 0
+                  ? <p className="staff-create-hint">No active course units are available. Populate the course catalogue or check the staff lookup API.</p>
+                  : <div className="staff-create-permissions-grid">
+                    {courseUnits.map(unit => {
+                      const checked = form.courseUnitIds.includes(unit.id)
+                      return <label key={unit.id} className="staff-create-check">
+                        <input type="checkbox" checked={checked} onChange={e => setForm(current => ({ ...current, courseUnitIds: e.target.checked ? [...current.courseUnitIds.filter(id => id !== unit.id), unit.id] : current.courseUnitIds.filter(id => id !== unit.id) }))} />
+                        <span><strong>{unit.code}</strong> — {unit.name} <small>({unit.creditUnits} CU)</small></span>
+                      </label>
+                    })}
+                  </div>}
+              </fieldset>}
 
               <div className="staff-create-bottom-grid">
                 <section className="staff-create-card">
