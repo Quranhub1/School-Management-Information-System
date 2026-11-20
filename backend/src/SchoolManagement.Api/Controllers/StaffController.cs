@@ -9,6 +9,7 @@ using SchoolManagement.Domain.Identity;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Domain.People;
 using System.Text.Json;
+using System.Security.Claims;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -86,6 +87,26 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             var deniedCodes = (request.DeniedPermissionCodes ?? Array.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             if (requestedCodes.Intersect(deniedCodes, StringComparer.OrdinalIgnoreCase).Any())
                 return BadRequest(new { message = "A permission cannot be both granted and denied." });
+
+            var actorIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (!Guid.TryParse(actorIdValue, out var actorUserId)) return Forbid();
+            var actorPermissions = await GetEffectivePermissionCodesAsync(actorUserId, cancellationToken);
+            if (requestedRoleNames.Contains("SystemAdministrator", StringComparer.OrdinalIgnoreCase)
+                && !actorPermissions.Contains("administration.manage-users"))
+                return Forbid();
+            if (requestedCodes.Any(code => !actorPermissions.Contains(code)))
+                return Forbid();
+
+            // A staff manager may assign a role, but cannot pass on role defaults
+            // that the manager does not personally hold.
+            var roleIds = roles.Select(x => x.Id).ToArray();
+            var rolePermissionCodes = await (from assignment in db.RolePermissions
+                                             join permission in db.Permissions on assignment.PermissionId equals permission.Id
+                                             where roleIds.Contains(assignment.RoleId)
+                                             select permission.Code).Distinct().ToListAsync(cancellationToken);
+            deniedCodes = deniedCodes.Concat(rolePermissionCodes.Where(code => !actorPermissions.Contains(code)))
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
             var allRequestedCodes = requestedCodes.Concat(deniedCodes).ToArray();
             var permissions = await db.Permissions.Where(x => allRequestedCodes.Contains(x.Code)).ToListAsync(cancellationToken);
             if (permissions.Count != allRequestedCodes.Length)
@@ -229,6 +250,26 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             });
         }
         return NoContent();
+    }
+
+    private async Task<HashSet<string>> GetEffectivePermissionCodesAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var roleCodes = await (from userRole in db.UserRoles
+                               join rolePermission in db.RolePermissions on userRole.RoleId equals rolePermission.RoleId
+                               join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
+                               where userRole.UserId == userId
+                               select permission.Code).Distinct().ToListAsync(cancellationToken);
+        var overrides = await (from assignment in db.UserPermissions
+                               join permission in db.Permissions on assignment.PermissionId equals permission.Id
+                               where assignment.UserId == userId
+                               select new { permission.Code, assignment.IsGranted }).ToListAsync(cancellationToken);
+        var effective = roleCodes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var assignment in overrides)
+        {
+            if (assignment.IsGranted) effective.Add(assignment.Code);
+            else effective.Remove(assignment.Code);
+        }
+        return effective;
     }
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
