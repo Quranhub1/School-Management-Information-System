@@ -22,7 +22,15 @@ public sealed record CreateTimetableEntryDto(
     TimeOnly StartTime,
     TimeOnly EndTime,
     string? Room,
-    string? SessionType);
+    string? SessionType,
+    Guid CurriculumId,
+    int YearOfStudy,
+    int CurriculumSemesterNumber);
+
+public sealed record SaveTimetableTemplateDto(
+    Guid TeachingGroupId,
+    IReadOnlyList<CreateTimetableEntryDto> Entries,
+    string? LayoutJson = null);
 
 public sealed record GenerateTimetableRequest(
     Guid SemesterId,
