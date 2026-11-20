@@ -9,6 +9,8 @@ using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Students;
 using SchoolManagement.Application.Finance;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using SchoolManagement.Api.BackgroundServices;
 using SchoolManagement.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
