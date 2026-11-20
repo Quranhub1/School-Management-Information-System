@@ -39,6 +39,17 @@ public sealed class PermissionCatalogSeeder(SchoolManagementDbContext db)
             db.Permissions.RemoveRange(obsolete.Where(x => !used.Contains(x.Id)));
         }
 
+        var systemAdministrator = await db.Roles.SingleOrDefaultAsync(x => x.Name == "SystemAdministrator", cancellationToken);
+        if (systemAdministrator is not null)
+        {
+            var allPermissionIds = await db.Permissions.Select(x => x.Id).ToListAsync(cancellationToken);
+            var assignedPermissionIds = await db.RolePermissions.Where(x => x.RoleId == systemAdministrator.Id)
+                .Select(x => x.PermissionId).ToListAsync(cancellationToken);
+            var assigned = assignedPermissionIds.ToHashSet();
+            db.RolePermissions.AddRange(allPermissionIds.Where(id => !assigned.Contains(id))
+                .Select(id => new SchoolManagement.Domain.Identity.RolePermission { RoleId = systemAdministrator.Id, PermissionId = id }));
+        }
+
         await db.SaveChangesAsync(cancellationToken);
     }
 }
