@@ -48,7 +48,7 @@ describe('StaffManagement', () => {
   })
 
   it('shows the staff access checklist and supports marking module permissions', async () => {
-    render(<StaffManagement canManage />)
+    render(<StaffManagement canManage canManageAccounts />)
     expect(screen.getByRole('heading', { name: 'Administrator Permissions' })).toBeTruthy()
     expect(screen.getByLabelText('Manage timetable')).toBeTruthy()
     expect(screen.getByLabelText('Manage admissions')).toBeTruthy()
