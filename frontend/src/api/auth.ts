@@ -3,6 +3,7 @@ export interface AuthResponse {
   expiresAt: string
   username: string
   roles: string[]
+  permissions?: string[]
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
@@ -49,6 +50,7 @@ export function saveAuthSession(session: AuthResponse): void {
     expiresAt: session.expiresAt,
     username: session.username,
     roles: session.roles,
+    permissions: session.permissions ?? [],
   }
   const serialized = JSON.stringify(storedSession)
 
