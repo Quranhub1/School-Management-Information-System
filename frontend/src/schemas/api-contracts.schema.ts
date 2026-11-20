@@ -456,3 +456,45 @@ export const staffCheckEventSchema = z.looseObject({
   recordedAtUtc: z.string(),
   confirmation: requiredTextSchema,
 });
+
+
+export const budgetLineCreateRequestSchema = z.object({
+  accountId: identifierSchema,
+  category: requiredTextSchema.max(100),
+  allocatedAmount: z.number().finite().nonnegative(),
+  notes: z.string().trim().max(500).nullable().optional(),
+});
+
+export const createBudgetRequestSchema = z.object({
+  departmentId: identifierSchema,
+  academicYearId: identifierSchema,
+  name: requiredTextSchema.max(150),
+  currency: z.string().trim().max(3).nullable().optional(),
+  startDate: z.iso.datetime({ offset: true }),
+  endDate: z.iso.datetime({ offset: true }),
+  lines: z.array(budgetLineCreateRequestSchema).min(1).max(200),
+}).refine(value => Date.parse(value.endDate) >= Date.parse(value.startDate), {
+  message: "Budget end date cannot be before the start date.",
+  path: ["endDate"],
+});
+
+export const createBankReconciliationRequestSchema = z.object({
+  bankAccountId: identifierSchema,
+  statementDate: z.iso.datetime({ offset: true }),
+  statementBalance: z.number().finite(),
+  bookBalance: z.number().finite(),
+  reconciledAmount: z.number().finite(),
+  notes: z.string().trim().max(1000).nullable().optional(),
+});
+
+export const addBankStatementLineRequestSchema = z.object({
+  transactionDate: z.iso.datetime({ offset: true }),
+  amount: z.number().finite().positive(),
+  transactionType: z.enum(["Credit", "Debit"]),
+  description: z.string().trim().max(500).nullable().optional(),
+  reference: z.string().trim().max(100).nullable().optional(),
+});
+
+export const matchBankStatementLineRequestSchema = z.object({
+  journalEntryId: identifierSchema,
+});
