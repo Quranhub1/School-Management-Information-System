@@ -138,7 +138,7 @@ export function OfflineSyncCenter() {
 
     <div className="offline-sync-safety-note">
       <ShieldAlert size={18} />
-      <div><strong>Automatic replay is disabled</strong><p>Student, attendance and library operations are retained for review only. Financial operations are rejected from the offline journal. Do not treat a local operation as saved on the server.</p></div>
+      <div><strong>Automatic replay is disabled</strong><p>Student, attendance and library operations are retained for review only. Discarded operations remain in the audit journal but are excluded from the active queue. Financial operations are rejected from the offline journal. Do not treat a local operation as saved on the server.</p></div>
     </div>
 
     <section className="panel offline-sync-section">
@@ -172,7 +172,7 @@ export function OfflineSyncCenter() {
           </details>}
           {conflict.resolutionStatus === 'unresolved' && <div className="offline-sync-conflict-actions">
             <button type="button" className="secondary-button" disabled={resolving === conflict.id} onClick={() => void reviewConflict(conflict, 'resolved')}>Mark reviewed</button>
-            <button type="button" className="danger-button" disabled={resolving === conflict.id} onClick={() => void reviewConflict(conflict, 'discarded')}>Discard local change</button>
+            <button type="button" className="danger-button" disabled={resolving === conflict.id} onClick={() => void reviewConflict(conflict, 'discarded')}>Discard queued operation</button>
           </div>}
         </article>
       ))}
