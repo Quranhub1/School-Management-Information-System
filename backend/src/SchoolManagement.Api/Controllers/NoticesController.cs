@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/notices")]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.CommunicationRead)]
 public sealed class NoticesController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("board")]
