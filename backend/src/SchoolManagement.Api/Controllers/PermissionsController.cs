@@ -41,7 +41,7 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
     }
 
     [HttpGet("catalog")]
-    [Authorize]
+    [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> Catalog(CancellationToken cancellationToken)
     {
         // The catalogue contains metadata only. The assignment endpoint and
