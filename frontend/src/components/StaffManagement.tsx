@@ -2,7 +2,7 @@ import { formatPersonName } from '../utils/personName'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
+import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, getStaffAccount, saveStaffAccount, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 import { notify } from './GlobalNotifications'
 import { validateForm } from '../lib/validation'
@@ -12,6 +12,37 @@ import { StaffAttendanceManagement } from './StaffAttendanceManagement'
 import { LEAVE_TYPE_OPTIONS, STAFF_TYPE_OPTIONS } from '../constants/referenceEnums'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment' | 'attendance'
+
+type StaffAccessOption = { code: string; label: string; restricted?: boolean; group: string }
+const STAFF_ACCESS_OPTIONS: StaffAccessOption[] = [
+  { code: 'staff.list', label: 'Staff list', group: 'Staff & attendance' },
+  { code: 'staff.leaves.read', label: 'Staff leaves', group: 'Staff & attendance' },
+  { code: 'staff.attendance', label: 'Staff attendance', group: 'Staff & attendance' },
+  { code: 'students.delete', label: 'Delete students', group: 'Students & academics' },
+  { code: 'staff.manage', label: 'Add / Remove staff', group: 'Staff & attendance' },
+  { code: 'curriculum.course-units.manage', label: 'Manage course units, curriculum', group: 'Students & academics' },
+  { code: 'curriculum.manage', label: 'Manage curriculums', group: 'Students & academics' },
+  { code: 'library.manage', label: 'Manage library', group: 'Other modules' },
+  { code: 'finance.payments.delete', label: 'Delete payments', group: 'Finance' },
+  { code: 'finance.expenses.read', label: 'View stats - Expense', group: 'Finance' },
+  { code: 'admissions.manage', label: 'Manage admissions', group: 'Students & academics' },
+  { code: 'users.manage', label: 'Add / Remove admins', group: 'System administration', restricted: true },
+  { code: 'students.promote', label: 'Student promotion', group: 'Students & academics' },
+  { code: 'students.classes.manage', label: 'Manage classes and students', group: 'Students & academics' },
+  { code: 'timetable.manage', label: 'Manage timetable', group: 'Students & academics' },
+  { code: 'staff.leaves.manage', label: 'Manage staff leaves', group: 'Staff & attendance' },
+  { code: 'noticeboard.manage', label: 'Manage noticeboard', group: 'Other modules' },
+  { code: 'roles.manage', label: 'Manage roles', group: 'System administration', restricted: true },
+  { code: 'students.manage', label: 'Manage students', group: 'Students & academics' },
+  { code: 'finance.income.read', label: 'View stats - Income', group: 'Finance' },
+  { code: 'finance.payments.read', label: 'View stats - Payments', group: 'Finance' },
+  { code: 'settings.manage', label: 'Manage settings', group: 'System administration', restricted: true },
+  { code: 'finance.invoices.delete', label: 'Delete invoices', group: 'Finance' },
+  { code: 'finance.expenses.manage', label: 'Manage expenses', group: 'Finance' },
+  { code: 'classes.delete', label: 'Delete classes', group: 'Students & academics' },
+  { code: 'finance.fee-types.manage', label: 'Manage fee types', group: 'Finance' },
+  { code: 'backups.manage', label: 'Manage logs & backups', group: 'System administration', restricted: true },
+]
 
 export function StaffManagement({ canManage = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; activeSubsection?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
@@ -53,6 +84,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
   const [leaveDuration, setLeaveDuration] = useState<'single' | 'multiple'>('single')
   const [form, setForm] = useState(emptyStaffForm())
+  const [accountForm, setAccountForm] = useState({ mode: 'new' as 'new' | 'existing', username: '', password: '', permissions: [] as string[] })
+  const [accountLinked, setAccountLinked] = useState(false)
+  const [savingAccount, setSavingAccount] = useState(false)
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -91,6 +125,20 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   useEffect(() => { if (canManage && tab === 'leave') void loadLeave() }, [tab, canManage, leaveForm.staffMemberId])
   useEffect(() => { if (canReadPayroll && tab === 'payroll') void loadPayroll() }, [tab, canReadPayroll])
 
+  async function saveAccountForStaff(staffId: string) {
+    const requested = accountForm.username.trim() || accountForm.password.trim() || accountForm.permissions.length > 0
+    if (!requested) return
+    if (!accountForm.username.trim()) throw new Error('Enter a username for the staff login account.')
+    if (accountForm.permissions.length === 0) throw new Error('Select at least one screen or action for this staff account.')
+    if (!accountLinked && accountForm.mode === 'new' && accountForm.password.length < 8) throw new Error('A new staff login password must contain at least 8 characters.')
+    setSavingAccount(true)
+    try {
+      await saveStaffAccount(staffId, { username: accountForm.username.trim(), password: accountForm.password || undefined, permissions: accountForm.permissions })
+      setAccountLinked(true)
+      setAccountForm(current => ({ ...current, mode: 'existing', password: '' }))
+    } finally { setSavingAccount(false) }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -106,12 +154,14 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       setValidationErrors({})
       if (editingStaffId) {
         const updated = await updateStaff(editingStaffId, { id: editingStaffId, ...profile })
+        await saveAccountForStaff(updated.id)
         setStaff(current => current.map(item => item.id === updated.id ? updated : item))
         setSuccess(`${formatPersonName(updated.lastName, updated.firstName)} was updated successfully.`)
         notify(`${formatPersonName(updated.lastName, updated.firstName)} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
         const created = await createStaff(profile)
+        await saveAccountForStaff(created.id)
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
         setSuccess(`${formatPersonName(created.lastName, created.firstName)} was saved and added to the staff table.`)
@@ -133,6 +183,12 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   }
   function beginEdit(person: StaffMember) {
     setEditingStaffId(person.id)
+    setAccountLinked(false)
+    setAccountForm({ mode: 'new', username: '', password: '', permissions: [] })
+    void getStaffAccount(person.id).then(account => {
+      setAccountLinked(account.linked)
+      setAccountForm({ mode: account.linked ? 'existing' : 'new', username: account.username ?? '', password: '', permissions: account.permissions ?? [] })
+    }).catch(e => setError(e instanceof Error ? e.message : 'Unable to load staff login details.'))
     setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', dateJoined: person.dateJoined ?? '', courseUnitIds: person.courseUnitIds ?? [] })
     setError('')
     setSuccess('')
@@ -140,6 +196,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   }
   function cancelEdit() {
     setEditingStaffId(null)
+    setAccountLinked(false)
+    setAccountForm({ mode: 'new', username: '', password: '', permissions: [] })
     setForm(emptyStaffForm())
   }
 
@@ -315,6 +373,41 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   </div>}
                 </section>
               )}
+
+              <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid #e5e7eb' }}>
+                  <div><h3 style={{ margin: '0 0 4px', color: '#111827', fontSize: 16, fontWeight: 750 }}>Administrator Permissions</h3><p style={{ margin: 0, color: '#64748b', fontSize: 12 }}>Choose the screens and actions this staff login can access. Each selection is assigned as a dedicated access role.</p></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <strong style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', borderRadius: 999, padding: '4px 10px' }}>{accountForm.permissions.length} Selected</strong>
+                    <button type="button" className="secondary-button" onClick={() => setAccountForm(current => ({ ...current, permissions: STAFF_ACCESS_OPTIONS.filter(option => !option.restricted).map(option => option.code) }))} style={{ padding: '6px 12px', fontSize: 12 }}>Mark All</button>
+                    <button type="button" className="secondary-button" onClick={() => setAccountForm(current => ({ ...current, permissions: [] }))} style={{ padding: '6px 12px', fontSize: 12 }}>Unmark All</button>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: 10 }}>
+                  {STAFF_ACCESS_OPTIONS.map(option => {
+                    const checked = accountForm.permissions.includes(option.code)
+                    return <label key={option.code} title={option.restricted ? 'System Administrator only; this privilege is not delegated through staff recruitment.' : undefined} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid #e2e8f0', borderRadius: 6, background: checked ? '#eff6ff' : '#f8fafc', color: option.restricted ? '#94a3b8' : '#1f2937', fontSize: 13, cursor: option.restricted ? 'not-allowed' : 'pointer' }}>
+                      <input type="checkbox" checked={checked} disabled={option.restricted} onChange={event => setAccountForm(current => ({ ...current, permissions: event.target.checked ? [...current.permissions, option.code] : current.permissions.filter(code => code !== option.code) }))} />
+                      <span>{option.label}{option.restricted ? ' (System Administrator only)' : ''}</span>
+                    </label>
+                  })}
+                </div>
+              </section>
+
+              <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+                  <h3 style={{ margin: 0, color: '#111827', fontSize: 16, fontWeight: 750 }}>{accountLinked ? 'Change Credentials' : 'Login Details'}</h3>
+                  <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}><input type="radio" name="staffAccountMode" checked={accountForm.mode === 'new'} disabled={accountLinked} onChange={() => setAccountForm(current => ({ ...current, mode: 'new' }))} /> New</label>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}><input type="radio" name="staffAccountMode" checked={accountForm.mode === 'existing'} disabled={!accountLinked} onChange={() => setAccountForm(current => ({ ...current, mode: 'existing' }))} /> Existing</label>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: 14 }}>
+                  <label className="field-label">{accountLinked ? 'Username' : 'Username'}<input aria-label="Staff username" value={accountForm.username} onChange={event => setAccountForm(current => ({ ...current, username: event.target.value }))} placeholder="Enter username" autoComplete="off" /></label>
+                  <label className="field-label">{accountLinked ? 'New password (optional)' : 'Password'}<input aria-label="Staff password" type="password" value={accountForm.password} onChange={event => setAccountForm(current => ({ ...current, password: event.target.value }))} placeholder={accountLinked ? 'Leave blank to keep current password' : 'At least 8 characters'} autoComplete="new-password" /></label>
+                </div>
+                <p style={{ margin: '10px 0 0', color: '#64748b', fontSize: 12 }}>{accountLinked ? 'Existing account will retain its password unless a new one is entered. Selected access roles replace its current staff access profile.' : 'A login account is created when you enter a username, password and select at least one permission. Passwords are stored as secure hashes.'}</p>
+              </section>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '4px 0 10px' }}>
                 <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
