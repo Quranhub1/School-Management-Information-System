@@ -77,7 +77,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             HighestQualification = Clean(request.HighestQualification),
             Speciality = Clean(request.Speciality),
             ProfessionalRegistration = Clean(request.ProfessionalRegistration),
-            CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds)
+            CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds),
+            DateJoined = request.DateJoined
         };
         db.StaffMembers.Add(staff);
         await db.SaveChangesAsync(cancellationToken);
@@ -151,6 +152,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         staff.HighestQualification = Clean(request.HighestQualification);
         staff.Speciality = Clean(request.Speciality);
         staff.ProfessionalRegistration = Clean(request.ProfessionalRegistration);
+        staff.DateJoined = request.DateJoined;
         staff.CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(ToProfile(staff));
@@ -195,7 +197,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         DisplayName = PersonName.Format(staff.LastName, staff.FirstName, staff.OtherNames), staff.NationalId,
         staff.PhoneNumber, staff.Email, staff.EmploymentType, staff.StaffType, staff.IsActive,
         staff.DepartmentId, staff.JobTitle, staff.HighestQualification, staff.Speciality,
-        staff.ProfessionalRegistration,
+        staff.ProfessionalRegistration, staff.DateJoined,
         CourseUnitIds = JsonSerializer.Deserialize<Guid[]>(staff.CourseUnitIdsJson ?? "[]") ?? Array.Empty<Guid>()
     };
 
@@ -276,7 +278,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 }
 
-public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null);
-public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
+public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, DateOnly? DateJoined = null);
+public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, DateOnly? DateJoined = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);
