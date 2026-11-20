@@ -1,3 +1,4 @@
+using SchoolManagement.Api.Controllers;
 using SchoolManagement.Api.Validation;
 using SchoolManagement.Application.Admissions;
 using SchoolManagement.Application.Students;
