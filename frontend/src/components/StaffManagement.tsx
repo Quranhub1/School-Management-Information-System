@@ -15,6 +15,56 @@ import { getUsers, resetUserPassword } from '../api/administration'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment' | 'attendance'
 
+type StaffPermissionGroup = { id: string; label: string; permissions: { id: string; label: string }[] }
+
+const STAFF_PERMISSION_GROUPS: StaffPermissionGroup[] = [
+  { id: 'dashboard', label: 'Dashboard & System Overview', permissions: [
+    ['dashboard.view','View dashboard'],['dashboard.view_academic_statistics','View academic statistics'],['dashboard.view_financial_statistics','View financial statistics'],['dashboard.view_admission_statistics','View admission statistics'],['dashboard.view_staff_statistics','View staff statistics'],['dashboard.export_reports','Export dashboard reports'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'students', label: 'Student Registry & Student Management', permissions: [
+    ['students.view','View student registry'],['students.view_details','View student profiles'],['students.create','Register students'],['students.edit','Edit student information'],['students.delete','Delete student records'],['students.archive','Archive students'],['students.restore','Restore archived students'],['students.transfer','Transfer students'],['students.promote','Promote students'],['students.change_status','Change student status'],['students.assign_programme','Assign or change programmes'],['students.assign_campus','Assign students to campuses'],['students.manage_guardians','Manage parents and guardians'],['students.manage_documents','Manage student documents'],['students.export','Export student records'],['students.view_sensitive_details','View restricted student information'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'admissions', label: 'Admissions', permissions: [
+    ['admissions.view','View applications'],['admissions.create','Create applications'],['admissions.edit','Edit applications'],['admissions.review','Review applications'],['admissions.approve','Approve applications'],['admissions.reject','Reject applications'],['admissions.manage_requirements','Manage admission requirements'],['admissions.manage_intakes','Manage admission intakes'],['admissions.manage_applicant_documents','Manage applicant documents'],['admissions.finalise_admission','Finalise admissions'],['admissions.convert_to_student','Convert applicants into students'],['admissions.export','Export admissions reports'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'academics', label: 'Academic Management', permissions: [
+    ['academics.view','View academic records'],['academics.manage_programmes','Manage programmes'],['academics.manage_departments','Manage departments'],['academics.manage_campuses','Manage campuses'],['academics.manage_intakes','Manage academic intakes'],['academics.manage_academic_years','Manage academic years'],['academics.manage_semesters','Manage semesters'],['academics.manage_course_units','Manage course units'],['academics.manage_curriculum','Manage curricula'],['academics.manage_academic_authorities','Manage academic authorities'],['academics.assign_students','Assign students to programmes'],['academics.manage_enrolments','Manage enrolments'],['academics.manage_class_lists','Manage class lists'],['academics.manage_assessments','Manage assessments'],['academics.enter_marks','Enter marks'],['academics.edit_marks','Edit marks'],['academics.approve_results','Approve results'],['academics.publish_results','Publish results'],['academics.print_results','Print results'],['academics.export_results','Export results'],['academics.view_transcripts','View transcripts'],['academics.generate_transcripts','Generate transcripts'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'timetable', label: 'Timetable Management', permissions: [
+    ['timetable.view','View timetables'],['timetable.create','Create timetables'],['timetable.edit','Edit timetables'],['timetable.delete','Delete timetables'],['timetable.generate','Generate timetables'],['timetable.manage_templates','Manage timetable templates'],['timetable.manage_rooms','Manage rooms and venues'],['timetable.manage_sessions','Schedule academic sessions'],['timetable.assign_lecturers','Assign lecturers'],['timetable.assign_classes','Assign classes'],['timetable.approve','Approve timetables'],['timetable.publish','Publish timetables'],['timetable.export','Export timetables'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'staff', label: 'Human Resources & Staff Management', permissions: [
+    ['staff.view','View staff'],['staff.create','Add staff'],['staff.edit','Edit staff'],['staff.delete','Delete staff records'],['staff.archive','Archive staff'],['staff.restore','Restore archived staff'],['staff.manage_departments','Manage staff departments'],['staff.manage_designations','Manage designations'],['staff.manage_employment_types','Manage employment types'],['staff.manage_contracts','Manage staff contracts'],['staff.manage_documents','Manage staff documents'],['staff.manage_qualifications','Manage qualifications'],['staff.manage_course_assignments','Assign course units to teaching staff'],['staff.manage_login_accounts','Manage staff login accounts'],['staff.manage_roles','Assign staff roles'],['staff.manage_permissions','Manage staff permissions'],['staff.view_salary','View salary information'],['staff.manage_salary','Manage salary information'],['staff.export','Export staff records'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'attendance_leave', label: 'Staff Attendance & Leave', permissions: [
+    ['attendance.view','View attendance'],['attendance.record','Record attendance'],['attendance.edit','Edit attendance'],['attendance.approve','Approve attendance'],['attendance.view_reports','View attendance reports'],['attendance.export','Export attendance reports'],['leave.view','View leave requests'],['leave.apply','Apply for leave'],['leave.edit_own','Edit own pending leave requests'],['leave.approve','Approve leave'],['leave.reject','Reject leave'],['leave.manage_types','Manage leave types'],['leave.manage_balances','Manage leave balances'],['leave.view_reports','View leave reports'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'finance', label: 'Finance & Accounting', permissions: [
+    ['finance.view','Access finance module'],['finance.view_student_balances','View student balances'],['finance.view_fee_structures','View fee structures'],['finance.manage_fee_structures','Manage fee structures'],['finance.manage_fee_types','Manage fee types'],['finance.generate_invoices','Generate invoices'],['finance.view_invoices','View invoices'],['finance.edit_invoices','Edit invoices'],['finance.delete_invoices','Delete invoices'],['finance.record_payments','Record manual payments'],['finance.verify_payments','Verify payments'],['finance.reverse_payments','Reverse payments'],['finance.delete_payments','Delete payments'],['finance.view_transactions','View transactions'],['finance.manage_schoolpay','Manage SchoolPay configuration'],['finance.reconcile_payments','Reconcile payments'],['finance.manage_refunds','Manage refunds'],['finance.approve_refunds','Approve refunds'],['finance.manage_accounts','Manage chart of accounts'],['finance.manage_journals','Manage journal entries'],['finance.approve_journals','Approve journal entries'],['finance.manage_expenses','Manage expenses'],['finance.approve_expenses','Approve expenses'],['finance.manage_budgets','Manage budgets'],['finance.view_income_reports','View income reports'],['finance.view_expense_reports','View expense reports'],['finance.view_payment_reports','View payment reports'],['finance.export_reports','Export financial reports'],['finance.manage_currency','Manage finance currency settings'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'inventory', label: 'Inventory & Stores', permissions: [
+    ['inventory.view','View inventory'],['inventory.create_items','Register inventory items'],['inventory.edit_items','Edit inventory items'],['inventory.delete_items','Delete inventory items'],['inventory.manage_categories','Manage item categories'],['inventory.manage_departments','Manage departmental stores'],['inventory.record_stock_in','Record stock received'],['inventory.record_stock_out','Record stock issued'],['inventory.manage_transfers','Transfer stock'],['inventory.manage_adjustments','Adjust stock balances'],['inventory.manage_requisitions','Manage requisitions'],['inventory.approve_requisitions','Approve requisitions'],['inventory.manage_suppliers','Manage suppliers'],['inventory.manage_purchase_orders','Manage purchase orders'],['inventory.manage_assets','Manage institutional assets'],['inventory.manage_stock_alerts','Manage low-stock alerts'],['inventory.view_stock_reports','View stock reports'],['inventory.export','Export inventory records'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'medical', label: 'Medical Department', permissions: [
+    ['medical.view','Access medical module'],['medical.view_student_list','View students from central registry'],['medical.create_records','Create medical records'],['medical.edit_records','Edit medical records'],['medical.view_records','View medical records'],['medical.manage_visits','Manage medical visits'],['medical.manage_treatments','Manage treatment records'],['medical.manage_prescriptions','Manage prescriptions'],['medical.manage_referrals','Manage referrals'],['medical.manage_sickbay','Manage sickbay records'],['medical.view_reports','View medical reports'],['medical.export_reports','Export permitted medical reports'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'library', label: 'Library Management', permissions: [
+    ['library.view','View library'],['library.manage_books','Manage books'],['library.delete_books','Delete book records'],['library.manage_categories','Manage book categories'],['library.manage_members','Manage library members'],['library.issue_books','Issue books'],['library.return_books','Process book returns'],['library.manage_reservations','Manage reservations'],['library.manage_fines','Manage library fines'],['library.manage_lost_books','Manage lost books'],['library.view_reports','View library reports'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'archives', label: 'Archives & Records Management', permissions: [
+    ['archives.view','View archives'],['archives.view_records','View archived records'],['archives.create','Create archive entries'],['archives.restore','Restore archived records'],['archives.permanently_delete','Permanently delete archived records'],['archives.search','Search archives'],['archives.export','Export archive records'],['records.manage_documents','Manage institutional documents'],['records.manage_retention','Manage document retention rules'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'settings_system', label: 'System Administration & Settings', permissions: [
+    ['settings.view','View settings'],['settings.manage_institution','Manage institution details'],['settings.manage_logo','Manage institutional branding'],['settings.manage_currency','Manage system currency'],['settings.manage_academic_settings','Manage academic settings'],['settings.manage_notifications','Manage notification settings'],['settings.manage_email','Manage institutional email'],['settings.manage_integrations','Manage integrations'],['settings.manage_security','Manage security settings'],['settings.manage_backups','Manage backups'],['settings.restore_backups','Restore backups'],['system.view_audit_logs','View audit logs'],['system.export_audit_logs','Export audit logs'],['system.manage_users','Manage system users'],['system.manage_roles','Manage roles'],['system.manage_permissions','Manage permission catalogue'],['system.assign_roles','Assign roles'],['system.manage_access','Manage user access'],['system.deactivate_users','Deactivate user accounts'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'communications', label: 'Notifications & Communication', permissions: [
+    ['notifications.view','View notifications'],['notifications.manage','Manage notifications'],['notifications.send','Send notifications'],['notices.view','View noticeboard'],['notices.create','Create notices'],['notices.edit','Edit notices'],['notices.delete','Delete notices'],['notices.publish','Publish notices'],['communications.manage_templates','Manage communication templates'],['communications.send_email','Send institutional emails'],
+  ].map(([id,label])=>({id,label})) },
+  { id: 'reports', label: 'Reports & Exports', permissions: [
+    ['reports.view','View general reports'],['reports.generate','Generate reports'],['reports.export_pdf','Export PDF reports'],['reports.export_excel','Export Excel reports'],['reports.export_csv','Export CSV reports'],['reports.schedule','Schedule reports'],['reports.view_restricted','View restricted reports'],
+  ].map(([id,label])=>({id,label})) },
+]
+
 export function StaffManagement({ canManage = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; activeSubsection?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
@@ -61,6 +111,16 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [credentialFeedback, setCredentialFeedback] = useState('')
   const [credentialBusy, setCredentialBusy] = useState(false)
   const [staffStatus, setStaffStatus] = useState<'Active' | 'Inactive'>('Active')
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
+  const [permissionSearch, setPermissionSearch] = useState('')
+  const allPermissionIds = useMemo(() => STAFF_PERMISSION_GROUPS.flatMap(group => group.permissions.map(permission => permission.id)), [])
+  const filteredPermissionGroups = useMemo(() => STAFF_PERMISSION_GROUPS.map(group => ({ ...group, permissions: group.permissions.filter(permission => !permissionSearch.trim() || permission.label.toLowerCase().includes(permissionSearch.toLowerCase()) || permission.id.toLowerCase().includes(permissionSearch.toLowerCase())) })).filter(group => group.permissions.length > 0), [permissionSearch])
+  const togglePermissionGroup = (groupId: string, checked: boolean) => {
+    const group = STAFF_PERMISSION_GROUPS.find(item => item.id === groupId)
+    if (!group) return
+    const ids = group.permissions.map(permission => permission.id)
+    setSelectedPermissions(current => checked ? [...new Set([...current, ...ids])] : current.filter(id => !ids.includes(id)))
+  }
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -391,8 +451,39 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
 
               <div className="staff-create-bottom-grid">
                 <section className="staff-create-card">
-                  <h3 className="staff-create-card-title">Permissions</h3>
-                  <p className="staff-create-hint">Role and permission assignments will be configured from the permissions list you are providing. Staff category and job title do not grant application access.</p>
+                  <div className="staff-create-card-heading">
+                    <div>
+                      <h3 className="staff-create-card-title">Permissions by module</h3>
+                      <p className="staff-create-hint">Select a module to select every permission in that group, or expand it to choose individual actions.</p>
+                    </div>
+                    <strong className="staff-permission-count">{selectedPermissions.length} / {allPermissionIds.length} selected</strong>
+                  </div>
+                  <div className="staff-permission-toolbar">
+                    <input type="search" aria-label="Search permissions" placeholder="Search permissions…" value={permissionSearch} onChange={event => setPermissionSearch(event.target.value)} />
+                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions(allPermissionIds)}>Select all</button>
+                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions([])}>Clear all</button>
+                  </div>
+                  <div className="staff-permission-groups">
+                    {filteredPermissionGroups.map(group => {
+                      const groupIds = group.permissions.map(permission => permission.id)
+                      const selectedCount = groupIds.filter(id => selectedPermissions.includes(id)).length
+                      const allSelected = selectedCount === STAFF_PERMISSION_GROUPS.find(item => item.id === group.id)?.permissions.length
+                      return <details className="staff-permission-group" key={group.id} open={Boolean(permissionSearch.trim())}>
+                        <summary>
+                          <input type="checkbox" aria-label={`Select all ${group.label} permissions`} checked={allSelected} onChange={event => togglePermissionGroup(group.id, event.target.checked)} onClick={event => event.stopPropagation()} />
+                          <span className="staff-permission-group-title">{group.label}</span>
+                          <span className="staff-permission-group-count">{selectedCount} selected</span>
+                        </summary>
+                        <div className="staff-permission-items">
+                          {group.permissions.map(permission => <label className="staff-permission-item" key={permission.id}>
+                            <input type="checkbox" checked={selectedPermissions.includes(permission.id)} onChange={event => setSelectedPermissions(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
+                            <span>{permission.label}<small>{permission.id}</small></span>
+                          </label>)}
+                        </div>
+                      </details>
+                    })}
+                  </div>
+                  <p className="staff-create-hint staff-permission-notice">Permission selections are currently a form draft. The existing identity API does not yet persist or enforce this catalogue; account and role integration must be completed before these selections grant access.</p>
                 </section>
                 <section className="staff-create-card">
                   <h3 className="staff-create-card-title">Account & Status</h3>
