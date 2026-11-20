@@ -4526,14 +4526,13 @@ namespace SchoolManagement.Infrastructure.Migrations
             modelBuilder.Entity("SchoolManagement.Domain.Identity.Permission", b =>
                 {
                     b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
-                    b.Property<string>("Code").IsRequired().HasMaxLength(160).HasColumnType("character varying(160)");
-                    b.Property<string>("Name").IsRequired().HasMaxLength(240).HasColumnType("character varying(240)");
-                    b.Property<string>("GroupCode").IsRequired().HasMaxLength(80).HasColumnType("character varying(80)");
-                    b.Property<string>("GroupName").IsRequired().HasMaxLength(160).HasColumnType("character varying(160)");
-                    b.Property<string>("Description").HasMaxLength(1000).HasColumnType("character varying(1000)");
+                    b.Property<string>("Code").IsRequired().HasMaxLength(120).HasColumnType("character varying(120)");
+                    b.Property<string>("Description").HasMaxLength(500).HasColumnType("character varying(500)");
+                    b.Property<string>("GroupKey").IsRequired().HasMaxLength(80).HasColumnType("character varying(80)");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(160).HasColumnType("character varying(160)");
                     b.HasKey("Id");
                     b.HasIndex("Code").IsUnique();
-                    b.HasIndex("GroupCode", "Code");
+                    b.HasIndex("GroupKey");
                     b.ToTable("Permissions");
                 });
 
@@ -4550,7 +4549,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                 {
                     b.Property<Guid>("StaffId").HasColumnType("uuid");
                     b.Property<Guid>("UserId").HasColumnType("uuid");
-                    b.HasKey("StaffId");
+                    b.HasKey("StaffId", "UserId");
                     b.HasIndex("UserId").IsUnique();
                     b.ToTable("StaffUserLinks");
                 });
@@ -4671,6 +4670,12 @@ namespace SchoolManagement.Infrastructure.Migrations
             modelBuilder.Entity("SchoolManagement.Domain.Staff.StaffMember", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Identity.User", null).WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.StaffUserLink", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null).WithMany().HasForeignKey("StaffId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("SchoolManagement.Domain.Identity.User", null).WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Identity.UserRole", b =>
