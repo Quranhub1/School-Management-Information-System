@@ -4598,6 +4598,23 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.StaffUserLink", b =>
+                {
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("StaffId", "UserId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("StaffUserLinks");
+                });
+
+
             modelBuilder.Entity("SchoolManagement.Domain.Inventory.InventoryRegister", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6306,6 +6323,22 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.StaffUserLink", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null)
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
 
             modelBuilder.Entity("SchoolManagement.Domain.Inventory.InventoryRegister", b =>
                 {
