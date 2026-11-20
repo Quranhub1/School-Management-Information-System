@@ -47,11 +47,6 @@ A dedicated executable target-environment acceptance runbook is now available at
 
 
 
-**Last updated:** 2026-10-11  
-**Tracking branch:** `main`  
-**Current release:** `v0.2.0`  
-**Currency:** UGX
-
 ## Current work — October 2026
 
 - [x] Replaced the institution login page with the approved glassmorphism login design in `frontend/public/institution-login.html`
