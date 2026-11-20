@@ -47,6 +47,18 @@ describe('StaffManagement', () => {
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
+  it('shows the staff access checklist and supports marking module permissions', async () => {
+    render(<StaffManagement canManage />)
+    expect(screen.getByRole('heading', { name: 'Administrator Permissions' })).toBeTruthy()
+    expect(screen.getByLabelText('Manage timetable')).toBeTruthy()
+    expect(screen.getByLabelText('Manage admissions')).toBeTruthy()
+    expect(screen.getByLabelText('Manage settings (System Administrator only)')).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Manage timetable'))
+    expect(screen.getByText('1 Selected')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Unmark All' }))
+    expect(screen.getByText('0 Selected')).toBeTruthy()
+  })
+
   it('shows the redesigned leave request form and only offers active staff', async () => {
     vi.mocked(listStaff).mockResolvedValue([
       { id: 'active-id', staffNumber: 'ST-001', firstName: 'Amina', lastName: 'Nabirye', employmentType: 'Permanent', staffType: 'Teaching', isActive: true },
