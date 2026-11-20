@@ -125,8 +125,12 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
 
         if (selectedRoles.Length > 0)
         {
-            var currentAssignments = await db.UserRoles.Where(x => x.UserId == user.Id).ToListAsync(cancellationToken);
-            db.UserRoles.RemoveRange(currentAssignments);
+            var currentAccessAssignments = await (
+                from assignment in db.UserRoles
+                join role in db.Roles on assignment.RoleId equals role.Id
+                where assignment.UserId == user.Id && role.Name.StartsWith("StaffAccess.")
+                select assignment).ToListAsync(cancellationToken);
+            db.UserRoles.RemoveRange(currentAccessAssignments);
             foreach (var role in roleEntities)
                 db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
         }
