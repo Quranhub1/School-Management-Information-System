@@ -4,7 +4,7 @@ public sealed record PermissionDefinition(string Code, string Name, string Group
 
 /// <summary>
 /// Canonical permission catalogue shared by role administration and staff account access.
-/// Keep permission codes stable: persisted role and user grants refer to these values.
+/// Keep permission codes stable and append new entries only: persisted grants and compact JWT permission bitsets depend on this order.
 /// </summary>
 public static class PermissionCatalog
 {
