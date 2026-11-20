@@ -23,6 +23,7 @@ public static class AuthorizationPolicies
     public const string Student360 = "Student360";
     public const string StudentRead = "StudentRead";
     public const string MedicalRecords = "MedicalRecords";
+    public const string ModuleAccess = "ModuleAccess";
 
     public static class RoleSets
     {
@@ -49,5 +50,6 @@ public static class AuthorizationPolicies
         public static readonly string[] CommunicationRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AssistantRegistrar, InstitutionalRoles.AdminSecretary, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Lecturer, InstitutionalRoles.RecordsOfficer, InstitutionalRoles.SchoolWarden, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.Secretary, InstitutionalRoles.ResidentDirector, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.Receptionist, InstitutionalRoles.HrManager, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.AdmissionsOfficer, InstitutionalRoles.Librarian, StaffAccessRoles.NoticeboardManage];
         public static readonly string[] StudentPortal = [InstitutionalRoles.Student];
         public static readonly string[] Student360 = [InstitutionalRoles.Student, InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar];
+        public static readonly string[] ModuleAccess = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AssistantRegistrar, InstitutionalRoles.AdmissionsOfficer, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.Lecturer, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Student, InstitutionalRoles.SchoolWarden, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.Secretary, InstitutionalRoles.ResidentDirector, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.Receptionist, InstitutionalRoles.AdminSecretary, InstitutionalRoles.RecordsOfficer, InstitutionalRoles.Librarian, InstitutionalRoles.HrManager, InstitutionalRoles.MedicalOfficer];
     }
 }

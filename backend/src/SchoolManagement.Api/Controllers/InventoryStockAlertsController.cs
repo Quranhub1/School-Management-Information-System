@@ -11,7 +11,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/inventory/stock-alerts")]
-[Authorize(Roles = "SystemAdministrator,Records Officer,RecordsOfficer,School Warden,SchoolWarden,HostelWarden")]
+[Authorize(Policy = "Permission:inventory.read-stock-alerts")]
 public sealed class InventoryStockAlertsController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     private static readonly IReadOnlyDictionary<string, string> SectionNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)

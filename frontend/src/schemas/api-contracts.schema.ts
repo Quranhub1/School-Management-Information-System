@@ -466,3 +466,87 @@ export const staffCheckEventSchema = z.looseObject({
   recordedAtUtc: z.string(),
   confirmation: requiredTextSchema,
 });
+
+
+export const budgetLineCreateRequestSchema = z.object({
+  accountId: identifierSchema,
+  category: requiredTextSchema.max(100),
+  allocatedAmount: z.number().finite().nonnegative(),
+  notes: z.string().trim().max(500).nullable().optional(),
+});
+
+export const createBudgetRequestSchema = z.object({
+  departmentId: identifierSchema,
+  academicYearId: identifierSchema,
+  name: requiredTextSchema.max(150),
+  currency: z.string().trim().max(3).nullable().optional(),
+  startDate: z.iso.datetime({ offset: true }),
+  endDate: z.iso.datetime({ offset: true }),
+  lines: z.array(budgetLineCreateRequestSchema).min(1).max(200),
+}).refine(value => Date.parse(value.endDate) >= Date.parse(value.startDate), {
+  message: "Budget end date cannot be before the start date.",
+  path: ["endDate"],
+});
+
+export const createBankReconciliationRequestSchema = z.object({
+  bankAccountId: identifierSchema,
+  statementDate: z.iso.datetime({ offset: true }),
+  statementBalance: z.number().finite(),
+  bookBalance: z.number().finite(),
+  reconciledAmount: z.number().finite(),
+  notes: z.string().trim().max(1000).nullable().optional(),
+});
+
+export const addBankStatementLineRequestSchema = z.object({
+  transactionDate: z.iso.datetime({ offset: true }),
+  amount: z.number().finite().positive(),
+  transactionType: z.enum(["Credit", "Debit"]),
+  description: z.string().trim().max(500).nullable().optional(),
+  reference: z.string().trim().max(100).nullable().optional(),
+});
+
+export const matchBankStatementLineRequestSchema = z.object({
+  journalEntryId: identifierSchema,
+});
+
+
+export const openingBalanceLineRequestSchema = z.object({
+  accountId: identifierSchema,
+  debit: z.number().finite().nonnegative(),
+  credit: z.number().finite().nonnegative(),
+  description: z.string().trim().max(500).nullable().optional(),
+  campusId: identifierSchema.optional(),
+  facultyId: identifierSchema.optional(),
+  departmentId: identifierSchema.optional(),
+  programmeId: identifierSchema.optional(),
+}).refine(line => (line.debit > 0) !== (line.credit > 0), {
+  message: "Each opening-balance line must contain either a debit or a credit, but not both.",
+  path: ["debit"],
+});
+
+export const createOpeningBalanceRequestSchema = z.object({
+  fiscalPeriodId: identifierSchema,
+  currency: z.string().trim().regex(/^[A-Za-z]{3}$/).optional(),
+  lines: z.array(openingBalanceLineRequestSchema).min(2).max(500),
+}).refine(value => {
+  const debit = value.lines.reduce((sum, line) => sum + line.debit, 0);
+  const credit = value.lines.reduce((sum, line) => sum + line.credit, 0);
+  return debit === credit;
+}, {
+  message: "Opening balances must balance: total debits must equal total credits.",
+  path: ["lines"],
+});
+
+export const createFiscalPeriodRequestSchema = z.object({
+  name: requiredTextSchema.max(100),
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+}).refine(value => value.endDate >= value.startDate, {
+  message: "Fiscal period end date cannot be before its start date.",
+  path: ["endDate"],
+});
+
+export const closeFiscalPeriodRequestSchema = z.object({
+  fiscalPeriodId: identifierSchema,
+  retainedEarningsAccountId: identifierSchema,
+});

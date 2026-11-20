@@ -5,6 +5,7 @@ import { AuditLogManagement } from './AuditLog'
 import { BackupRestore } from './BackupRestore'
 import { notify } from './GlobalNotifications'
 import { LibraryIntegrations } from './LibraryIntegrations'
+import { OfflineSyncCenter } from './OfflineSyncCenter'
 
 type SystemAdministrationManagementProps = {
   activeSubsection?: string | null
@@ -16,6 +17,7 @@ const tools = [
   { key: 'backups', title: 'Backups & recovery', description: 'Check backup and recovery readiness for the system database.', icon: Archive },
   { key: 'settings', title: 'System settings', description: 'Review system-level configuration and security controls.', icon: Settings2 },
   { key: 'plugins', title: 'Plugins', description: 'Configure connected library platforms such as Koha and DSpace.', icon: Settings2 },
+  { key: 'sync', title: 'Offline sync', description: 'Review blocked offline operations, conflicts and device audit exports.', icon: Activity },
 ]
 
 export function SystemAdministrationManagement({ activeSubsection, onNavigate }: SystemAdministrationManagementProps) {
@@ -61,9 +63,10 @@ export function SystemAdministrationManagement({ activeSubsection, onNavigate }:
       <button className={selected === 'backups' ? 'active' : ''} aria-current={selected === 'backups' ? 'page' : undefined} onClick={() => onNavigate('system-administration', 'backups')}>Backups</button>
       <button className={selected === 'settings' ? 'active' : ''} aria-current={selected === 'settings' ? 'page' : undefined} onClick={() => onNavigate('system-administration', 'settings')}>System settings</button>
       <button className={selected === 'plugins' ? 'active' : ''} aria-current={selected === 'plugins' ? 'page' : undefined} onClick={() => onNavigate('system-administration', 'plugins')}>Plugins</button>
+      <button className={selected === 'sync' ? 'active' : ''} aria-current={selected === 'sync' ? 'page' : undefined} onClick={() => onNavigate('system-administration', 'sync')}>Offline sync</button>
     </nav>
 
-    {selected === 'plugins' ? <LibraryIntegrations canManage /> : selected === 'logs' ? <AuditLogManagement /> : selected === 'backups' ? (
+    {selected === 'sync' ? <OfflineSyncCenter /> : selected === 'plugins' ? <LibraryIntegrations canManage /> : selected === 'logs' ? <AuditLogManagement /> : selected === 'backups' ? (
       <BackupRestore />
     ) : selected === 'settings' ? (
       <section className="panel" aria-labelledby="system-settings-title">

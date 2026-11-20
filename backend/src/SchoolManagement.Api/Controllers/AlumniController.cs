@@ -26,18 +26,23 @@ public sealed class AlumniController(SchoolManagementDbContext db) : ControllerB
         if (!string.IsNullOrWhiteSpace(programme)) query = query.Where(x => x.alumni.Programme.Contains(programme.Trim()));
         if (fromDate.HasValue) query = query.Where(x => x.alumni.GraduationDate >= fromDate.Value);
         if (toDate.HasValue) query = query.Where(x => x.alumni.GraduationDate <= toDate.Value);
-        return Ok(await query.OrderByDescending(x => x.alumni.GraduationDate).Select(x => new
-        {
-            x.alumni.Id, x.alumni.StudentId, studentNumber = x.student.StudentNumber,
-            studentName = (x.student.LastName + " " + x.student.FirstName + " " + (x.student.OtherNames ?? "")).Trim().ToUpper(), x.alumni.GraduationDate,
-            x.alumni.Programme, x.alumni.CurrentOccupation, x.alumni.Employer, x.alumni.ContactInfo, x.alumni.IsActive
-        }).ToListAsync(cancellationToken));
+        return Ok(await query.OrderByDescending(x => x.alumni.GraduationDate).Select(x => new AlumniResponse(
+            x.alumni.Id, x.alumni.StudentId, x.student.StudentNumber,
+            (x.student.LastName + " " + x.student.FirstName + (x.student.OtherNames == null || x.student.OtherNames == "" ? "" : " " + x.student.OtherNames)).Trim().ToUpper(),
+            x.alumni.GraduationDate, x.alumni.Programme, x.alumni.CurrentOccupation, x.alumni.Employer, x.alumni.ContactInfo, x.alumni.IsActive))
+            .ToListAsync(cancellationToken));
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
-        var alumni = await db.Alumni.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var alumni = await (from record in db.Alumni.AsNoTracking()
+                            join student in db.Students.AsNoTracking() on record.StudentId equals student.Id
+                            where record.Id == id
+                            select new AlumniResponse(record.Id, record.StudentId, student.StudentNumber,
+                                (student.LastName + " " + student.FirstName + (student.OtherNames == null || student.OtherNames == "" ? "" : " " + student.OtherNames)).Trim().ToUpper(),
+                                record.GraduationDate, record.Programme, record.CurrentOccupation, record.Employer, record.ContactInfo, record.IsActive))
+            .SingleOrDefaultAsync(cancellationToken);
         return alumni is null ? NotFound() : Ok(alumni);
     }
 
@@ -49,7 +54,14 @@ public sealed class AlumniController(SchoolManagementDbContext db) : ControllerB
         var alumni = new Domain.Students.Alumni { StudentId = request.StudentId, GraduationDate = request.GraduationDate, Programme = request.Programme.Trim(), IsActive = true };
         db.Alumni.Add(alumni);
         await db.SaveChangesAsync(cancellationToken);
-        return Created($"/api/alumni/{alumni.Id}", alumni);
+        var response = await (from record in db.Alumni.AsNoTracking()
+                              join student in db.Students.AsNoTracking() on record.StudentId equals student.Id
+                              where record.Id == alumni.Id
+                              select new AlumniResponse(record.Id, record.StudentId, student.StudentNumber,
+                                  (student.LastName + " " + student.FirstName + (student.OtherNames == null || student.OtherNames == "" ? "" : " " + student.OtherNames)).Trim().ToUpper(),
+                                  record.GraduationDate, record.Programme, record.CurrentOccupation, record.Employer, record.ContactInfo, record.IsActive))
+            .SingleAsync(cancellationToken);
+        return Created($"/api/alumni/{alumni.Id}", response);
     }
 
     [HttpPatch("{id:guid}")]
@@ -62,6 +74,9 @@ public sealed class AlumniController(SchoolManagementDbContext db) : ControllerB
         return NoContent();
     }
 }
+
+public sealed record AlumniResponse(Guid Id, Guid StudentId, string StudentNumber, string StudentName,
+    DateOnly GraduationDate, string Programme, string? CurrentOccupation, string? Employer, string? ContactInfo, bool IsActive);
 
 public sealed record CreateAlumniRequest(Guid StudentId, DateOnly GraduationDate, string Programme);
 public sealed record UpdateAlumniRequest(string? CurrentOccupation, string? Employer, string? ContactInfo);

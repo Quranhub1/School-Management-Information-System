@@ -6,7 +6,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/modules")]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.ModuleAccess)]
 public sealed class ModulesController(ModuleAccessService moduleAccessService) : ControllerBase
 {
     [HttpGet]

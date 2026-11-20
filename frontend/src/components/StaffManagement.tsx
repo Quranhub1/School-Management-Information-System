@@ -2,7 +2,7 @@ import { formatPersonName } from '../utils/personName'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, getStaffAccount, saveStaffAccount, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
+import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listStaffPermissionCatalog, listStaffRoles, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment, type StaffPermission, type StaffRole } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 import { notify } from './GlobalNotifications'
 import { validateForm } from '../lib/validation'
@@ -48,6 +48,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
+  const [permissionCatalog, setPermissionCatalog] = useState<StaffPermission[]>([])
+  const [staffRoles, setStaffRoles] = useState<StaffRole[]>([])
+  const [accessForm, setAccessForm] = useState({ createLoginAccount: false, username: '', password: '', roleNames: [] as string[], permissionCodes: [] as string[], deniedPermissionCodes: [] as string[] })
   const [error, setError] = useState('')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState('')
@@ -109,6 +112,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     void loadStaff()
     void listStaffCourseUnits().then(setCourseUnits).catch(e => setError(e instanceof Error ? e.message : 'Unable to load course units.'))
     void listStaffDepartments().then(setDepartments).catch(e => setError(e instanceof Error ? e.message : 'Unable to load departments.'))
+    void listStaffPermissionCatalog().then(setPermissionCatalog).catch(e => setError(e instanceof Error ? e.message : 'Unable to load the permission catalogue.'))
+    if (canManage) void listStaffRoles().then(setStaffRoles).catch(e => setError(e instanceof Error ? e.message : 'Unable to load staff roles.'))
     const onStaffChanged = (event: Event) => {
       if (!(event instanceof CustomEvent)) return
       const detail = event.detail as { staff?: StaffMember } | undefined
@@ -160,8 +165,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         notify(`${formatPersonName(updated.lastName, updated.firstName)} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
-        const created = await createStaff(profile)
-        await saveAccountForStaff(created.id)
+        const created = await createStaff({ ...profile, ...accessForm })
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
         setSuccess(`${formatPersonName(created.lastName, created.firstName)} was saved and added to the staff table.`)
@@ -173,8 +177,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         })
       }
       setForm(emptyStaffForm())
-      setAccountLinked(false)
-      setAccountForm({ mode: 'new', username: '', password: '', permissions: [] })
+      setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [], deniedPermissionCodes: [] })
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
       setError(message)
@@ -203,6 +206,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     setAccountLinked(false)
     setAccountForm({ mode: 'new', username: '', password: '', permissions: [] })
     setForm(emptyStaffForm())
+    setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [], deniedPermissionCodes: [] })
   }
 
   function beginEditCourseUnits(person: StaffMember) {
@@ -270,6 +274,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll();       notify('Payroll payment status updated.', 'success', 'Payroll updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to mark payroll as paid.'; setError(message); notify(message, 'error', 'Payroll update failed') } }
 
   const isDuplicateStaffNumber = /staff number is already registered|staff member with this staff number already exists/i.test(error)
+  const roleDefaultPermissionCodes = staffRoles.filter(role => accessForm.roleNames.includes(role.name)).flatMap(role => role.permissionCodes)
+  const isPermissionSelected = (code: string) => accessForm.permissionCodes.includes(code) || (roleDefaultPermissionCodes.includes(code) && !accessForm.deniedPermissionCodes.includes(code))
 
   return (
     <section className="panel">
@@ -333,48 +339,88 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       {tab === 'staff' && (
         <>
           {canManage && (
-            <form onSubmit={submit} className="staff-recruitment-form" style={{ display: 'grid', gap: 16 }}>
-              <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
-                <h3 style={{ margin: '0 0 16px', color: '#111827', fontSize: 16, fontWeight: 750 }}>Personal Details</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px 18px' }}>
-                  <label className="field-label">Staff number<input aria-label="Staff number" placeholder="Enter staff number" value={form.staffNumber} onChange={e => setForm({ ...form, staffNumber: e.target.value })} required /></label>
-                  <label className="field-label">First name<input aria-label="First name" placeholder="Enter first name" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} required /></label>
-                  <label className="field-label">Last name<input aria-label="Last name" placeholder="Enter last name" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} required /></label>
-                  <label className="field-label">National ID<input aria-label="National ID" placeholder="National identification number" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} /></label>
-                  <label className="field-label">Phone<input aria-label="Phone" type="tel" placeholder="Enter phone number" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} /></label>
-                  <label className="field-label">Email<input aria-label="Email" type="email" placeholder="Enter email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></label>
-                  <label className="field-label">Gender<select aria-label="Gender" value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}><option value="">Select gender</option><option value="Female">Female</option><option value="Male">Male</option><option value="Other">Other</option><option value="Prefer not to say">Prefer not to say</option></select></label>
-                  <label className="field-label">Date of birth<input aria-label="Date of birth" type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} /></label>
-                  <label className="field-label" style={{ gridColumn: '1 / -1' }}>Residential address<textarea aria-label="Residential address" rows={2} placeholder="Enter residential address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></label>
-                  <label className="field-label" style={{ gridColumn: '1 / -1' }}>Staff photograph<input aria-label="Staff photograph" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => {
-                    const file = event.target.files?.[0]
-                    if (!file) return
-                    if (file.size > 1_500_000) { setError('Staff photograph must be smaller than 1.5 MB.'); event.target.value = ''; return }
-                    const reader = new FileReader()
-                    reader.onload = () => setForm(current => ({ ...current, photographDataUrl: typeof reader.result === 'string' ? reader.result : '' }))
-                    reader.onerror = () => setError('Unable to read the selected staff photograph.')
-                    reader.readAsDataURL(file)
-                  }} />
-                  {form.photographDataUrl ? <img src={form.photographDataUrl} alt="Selected staff photograph preview" style={{ display: 'block', width: 88, height: 88, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} /> : null}</label>
-                </div>
-              </section>
-
-              <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
-                <h3 style={{ margin: '0 0 16px', color: '#111827', fontSize: 16, fontWeight: 750 }}>Joining Details</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px 18px' }}>
-                  <label className="field-label">Joining date<input aria-label="Joining date" type="date" value={form.dateJoined} onChange={e => setForm({ ...form, dateJoined: e.target.value })} /></label>
-                  <label className="field-label">Staff category<select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>{STAFF_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-                  <label className="field-label">Employment type<select aria-label="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required><option value="Permanent">Permanent</option><option value="Temporary">Temporary</option><option value="Part-time">Part-time</option></select></label>
-                  <label className="field-label">Department<select aria-label="Department" value={form.departmentId} onChange={e => setForm({ ...form, departmentId: e.target.value })}><option value="">Select department</option>{departments.map(d => <option key={d.id} value={d.id}>{d.code} — {d.name}</option>)}</select></label>
-                  <label className="field-label">Designation / job title<input aria-label="Designation / job title" placeholder="Enter designation" value={form.jobTitle} onChange={e => setForm({ ...form, jobTitle: e.target.value })} /></label>
-                  <label className="field-label">Highest qualification<input aria-label="Highest qualification" placeholder="Enter qualification" value={form.highestQualification} onChange={e => setForm({ ...form, highestQualification: e.target.value })} /></label>
-                  <label className="field-label">Speciality<input aria-label="Speciality" placeholder="Area of expertise" value={form.speciality} onChange={e => setForm({ ...form, speciality: e.target.value })} /></label>
-                  <label className="field-label">Professional registration<input aria-label="Professional registration" placeholder="Registration / licence number" value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} /></label>
-                  <label className="field-label">Attendance mode<select aria-label="Attendance mode" value={form.attendanceMode} onChange={e => setForm({ ...form, attendanceMode: e.target.value })}><option value="Biometric">Biometric</option><option value="Manual">Manual</option><option value="Both">Both</option></select></label>
-                  <label className="field-label">Basic monthly salary<input aria-label="Basic monthly salary" type="number" min="0" step="0.01" placeholder="0.00" value={form.basicSalary} onChange={e => setForm({ ...form, basicSalary: e.target.value })} /></label>
-                  <label className="field-label">Bank name<input aria-label="Bank name" placeholder="Enter bank name" value={form.bankName} onChange={e => setForm({ ...form, bankName: e.target.value })} /></label>
-                  <label className="field-label">Bank account number<input aria-label="Bank account number" placeholder="Enter account number" value={form.bankAccountNumber} onChange={e => setForm({ ...form, bankAccountNumber: e.target.value })} /></label>
-                  <label className="field-label" style={{ gridColumn: '1 / -1' }}>Bank address<input aria-label="Bank address" placeholder="Enter bank branch / address" value={form.bankAddress} onChange={e => setForm({ ...form, bankAddress: e.target.value })} /></label>
+            <form className="grid-form" onSubmit={submit}>
+              <input placeholder="Staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
+              <input placeholder="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
+              <input placeholder="Last name" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
+              <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
+              <label className="field-label">Staff category
+                <select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
+                  {STAFF_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <label className="field-label">Employment type
+                <select aria-label="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required>
+                  <option value="Permanent">Permanent</option><option value="Temporary">Temporary</option><option value="Part-time">Part-time</option>
+                </select>
+              </label>
+              <label className="field-label">Department
+                <select aria-label="Department" value={form.departmentId} onChange={e => setForm({ ...form, departmentId: e.target.value })}>
+                  <option value="">Select department</option>{departments.map(d => <option key={d.id} value={d.id}>{d.code} — {d.name}</option>)}
+                </select>
+              </label>
+              <input placeholder="Job title / designation" value={form.jobTitle} onChange={e => setForm({ ...form, jobTitle: e.target.value })} />
+              <input placeholder="Highest qualification" value={form.highestQualification} onChange={e => setForm({ ...form, highestQualification: e.target.value })} />
+              <input placeholder="Speciality / area of expertise" value={form.speciality} onChange={e => setForm({ ...form, speciality: e.target.value })} />
+              <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
+              <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
+              <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              {!editingStaffId && <fieldset className="field-label" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
+                <legend style={{ padding: '0 5px', fontWeight: 700 }}>Login account and screen permissions</legend>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={accessForm.createLoginAccount} onChange={e => setAccessForm(current => ({ ...current, createLoginAccount: e.target.checked }))} />
+                  Create a login account for this staff member
+                </label>
+                {accessForm.createLoginAccount && <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 9, marginTop: 12 }}>
+                    <label className="field-label">Login username
+                      <input value={accessForm.username} onChange={e => setAccessForm(current => ({ ...current, username: e.target.value }))} autoComplete="off" required />
+                    </label>
+                    <label className="field-label">Initial password
+                      <input type="password" value={accessForm.password} onChange={e => setAccessForm(current => ({ ...current, password: e.target.value }))} autoComplete="new-password" minLength={10} required />
+                    </label>
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    <strong style={{ display: 'block', marginBottom: 7 }}>Role defaults</strong>
+                    <p style={{ margin: '0 0 8px', color: '#64748b', fontSize: 12 }}>Roles provide default access. Each checkbox can independently grant or explicitly deny a role permission.</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 6 }}>
+                      {staffRoles.map(role => <label key={role.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 8px', border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={accessForm.roleNames.includes(role.name)} onChange={e => setAccessForm(current => ({ ...current, roleNames: e.target.checked ? [...current.roleNames, role.name] : current.roleNames.filter(name => name !== role.name) }))} />
+                        <span>{role.name}</span>
+                      </label>)}
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 14 }}>
+                    <strong style={{ display: 'block', marginBottom: 4 }}>Individual screen permissions</strong>
+                    <p style={{ margin: '0 0 9px', color: '#64748b', fontSize: 12 }}>Every permission is independent. Selecting a group only selects its listed permissions; it does not create inherited access.</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 270px), 1fr))', gap: 9 }}>
+                      {Array.from(new Set(permissionCatalog.map(permission => permission.groupKey))).map(groupKey => {
+                        const groupPermissions = permissionCatalog.filter(permission => permission.groupKey === groupKey)
+                        const allSelected = groupPermissions.length > 0 && groupPermissions.every(permission => isPermissionSelected(permission.code))
+                        const groupName = ({ 'student-registry': 'Student Registry', admissions: 'Admissions', academics: 'Academic Management', timetable: 'Timetable', examinations: 'Examinations', attendance: 'Attendance', finance: 'Finance', hr: 'Human Resources', inventory: 'Inventory', library: 'Library', hostel: 'Hostel and Welfare', medical: 'Medical', communications: 'Communication', reports: 'Reports and Analytics', archives: 'Archives', settings: 'System Settings', audit: 'Audit Log', administration: 'Administration', 'student-portal': 'Student Portal' } as Record<string, string>)[groupKey] ?? groupKey.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+                        return <section key={groupKey} style={{ border: '1px solid #dbe3ed', borderRadius: 4, padding: 9, minWidth: 0 }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 7, paddingBottom: 7, marginBottom: 6, borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>
+                            <input type="checkbox" checked={allSelected} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...new Set([...current.permissionCodes, ...groupPermissions.map(permission => permission.code)])] : current.permissionCodes.filter(code => !groupPermissions.some(permission => permission.code === code)), deniedPermissionCodes: e.target.checked ? current.deniedPermissionCodes.filter(code => !groupPermissions.some(permission => permission.code === code)) : [...new Set([...current.deniedPermissionCodes, ...groupPermissions.filter(permission => roleDefaultPermissionCodes.includes(permission.code)).map(permission => permission.code)])] }))} />
+                            Select all — {groupName}
+                          </label>
+                          <div style={{ display: 'grid', gap: 5 }}>
+                            {groupPermissions.map(permission => <label key={permission.code} title={permission.description ?? permission.name} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 12, cursor: 'pointer' }}>
+                              <input type="checkbox" checked={isPermissionSelected(permission.code)} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...new Set([...current.permissionCodes, permission.code])] : current.permissionCodes.filter(code => code !== permission.code), deniedPermissionCodes: e.target.checked ? current.deniedPermissionCodes.filter(code => code !== permission.code) : roleDefaultPermissionCodes.includes(permission.code) ? [...new Set([...current.deniedPermissionCodes, permission.code])] : current.deniedPermissionCodes }))} style={{ marginTop: 2 }} />
+                              <span>{permission.name}</span>
+                            </label>)}
+                          </div>
+                        </section>
+                      })}
+                    </div>
+                    <p style={{ margin: '8px 0 0', color: '#475569', fontSize: 11 }}>{permissionCatalog.filter(permission => isPermissionSelected(permission.code)).length} effective permission(s) selected</p>
+                  </div>
+                </>}
+              </fieldset>}
+              {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
+                <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+                  
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{form.courseUnitIds.length} selected</span>
                 </div>
               </section>
 
@@ -444,10 +490,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
           )}
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Staff No.</th><th>Name</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
+              <thead><tr><th>Staff No.</th><th>Name</th><th>Login account</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
-                {loading ? <tr><td colSpan={canManage ? 8 : 7}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 8 : 7} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName)}</td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
+                {loading ? <tr><td colSpan={canManage ? 9 : 8}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName)}</td><td><span className="badge" title={s.userId ?? undefined} style={{ background: s.userId ? "#d1fae5" : "#f1f5f9", color: s.userId ? "#065f46" : "#64748b" }}>{s.userId ? "Linked" : "No account"}</span></td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
                     {editingCourseUnitsStaffId === s.id ? (
                       <div style={{ display: 'grid', gap: 7, minWidth: 250 }}>
                         {courseUnits.length === 0 ? <span className="text-muted">No active course units available.</span> : <div style={{ display: 'grid', gap: 5, maxHeight: 180, overflowY: 'auto', padding: 2 }}>

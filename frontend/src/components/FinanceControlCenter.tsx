@@ -26,10 +26,8 @@ const money = (value: number) => formatCurrency(Number(value) || 0)
 type Props = { onNavigate: (tab: 'student-accounts' | 'collections' | 'fees' | 'reports' | 'accounting') => void }
 
 const channelCards = [
-  { name: 'Mobile Money', detail: 'MTN / Airtel and other mobile-money APIs', icon: 'MM' },
-  { name: 'USSD Payments', detail: 'Direct school-fee payment sessions', icon: 'US' },
-  { name: 'Bank Integrations', detail: 'Automated bank transaction ingestion', icon: 'BK' },
-  { name: 'Online Gateway', detail: 'Card and hosted payment gateway', icon: 'GW' },
+  { name: 'SchoolPay', detail: 'Official school payment provider. Live processing requires the provider API credentials.', icon: 'SP', status: 'Setup pending' },
+  { name: 'Manual payments', detail: 'Record verified cash, bank and mobile-money receipts in the school finance ledger.', icon: 'MN', status: 'Available' },
 ]
 
 export function FinanceControlCenter({ onNavigate }: Props) {
@@ -253,15 +251,14 @@ export function FinanceControlCenter({ onNavigate }: Props) {
 
       <section className="finance-surface">
         <div className="finance-surface-heading">
-          <div><span className="eyebrow">EXTERNAL PAYMENT INTEGRATIONS</span><h3>Payment channels</h3></div>
-          <span className="finance-coming-soon-badge">COMING SOON</span>
+          <div><span className="eyebrow">SUPPORTED PAYMENT CHANNELS</span><h3>SchoolPay and manual payments</h3></div>
         </div>
         <div className="finance-channel-grid">
           {channelCards.map(channel => (
             <div className="finance-channel-card" key={channel.name} aria-disabled="true">
               <span className="finance-channel-icon">{channel.icon}</span>
               <div><strong>{channel.name}</strong><small>{channel.detail}</small></div>
-              <span className="finance-channel-status">Coming soon</span>
+              <span className="finance-channel-status">{channel.status}</span>
             </div>
           ))}
         </div>

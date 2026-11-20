@@ -7,8 +7,10 @@ using SchoolManagement.Application.Staff;
 using SchoolManagement.Application.Authentication;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.Identity;
+using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Domain.People;
 using System.Text.Json;
+using System.Security.Claims;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -16,7 +18,7 @@ namespace SchoolManagement.Api.Controllers;
 [ApiController]
 [Route("api/staff")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public sealed class StaffController(SchoolManagementDbContext db, CampusAccessService campusAccess, LeaveRequestService leaveService) : ControllerBase
+public sealed class StaffController(SchoolManagementDbContext db, CampusAccessService campusAccess, LeaveRequestService leaveService, PasswordHasher passwordHasher) : ControllerBase
 {
     [HttpGet]
     [Authorize(Policy = StaffPolicies.Read)]
@@ -170,9 +172,78 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         if (accessibleCampuses is not null && !campusId.HasValue) return Forbid();
         if (request.CampusId.HasValue && !campusId.HasValue) return Forbid();
 
+        User? loginUser = null;
+        if (request.CreateLoginAccount)
+        {
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 10)
+                return BadRequest(new { message = "A login username and password of at least 10 characters are required when creating a staff account." });
+            var username = request.Username.Trim();
+            if (await db.Users.AnyAsync(x => x.Username.ToLower() == username.ToLower(), cancellationToken))
+                return Conflict(new { message = "That login username is already in use." });
+
+            var requestedRoleNames = (request.RoleNames ?? Array.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            var roles = await db.Roles.Where(x => requestedRoleNames.Contains(x.Name)).ToListAsync(cancellationToken);
+            if (roles.Count != requestedRoleNames.Length)
+                return BadRequest(new { message = "One or more selected staff roles are invalid. Refresh the role list and try again." });
+
+            var requestedCodes = (request.PermissionCodes ?? Array.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            var deniedCodes = (request.DeniedPermissionCodes ?? Array.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            if (requestedCodes.Intersect(deniedCodes, StringComparer.OrdinalIgnoreCase).Any())
+                return BadRequest(new { message = "A permission cannot be both granted and denied." });
+
+            var actorIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (!Guid.TryParse(actorIdValue, out var actorUserId)) return Forbid();
+            var actorPermissions = await GetEffectivePermissionCodesAsync(actorUserId, cancellationToken);
+            if (!actorPermissions.Contains("hr.manage-accounts"))
+                return Forbid();
+            var allPermissionCodes = PermissionCatalog.All.Select(permission => permission.Code)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (requestedRoleNames.Contains("SystemAdministrator", StringComparer.OrdinalIgnoreCase)
+                && !actorPermissions.SetEquals(allPermissionCodes))
+                return Forbid();
+            if (requestedCodes.Any(code => !actorPermissions.Contains(code)))
+                return Forbid();
+
+            // A staff manager may assign a role, but cannot pass on role defaults
+            // that the manager does not personally hold.
+            var roleIds = roles.Select(x => x.Id).ToArray();
+            var rolePermissionCodes = await (from assignment in db.RolePermissions
+                                             join permission in db.Permissions on assignment.PermissionId equals permission.Id
+                                             where roleIds.Contains(assignment.RoleId)
+                                             select permission.Code).Distinct().ToListAsync(cancellationToken);
+            deniedCodes = deniedCodes.Concat(rolePermissionCodes.Where(code => !actorPermissions.Contains(code)))
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
+            var allRequestedCodes = requestedCodes.Concat(deniedCodes).ToArray();
+            var permissions = await db.Permissions.Where(x => allRequestedCodes.Contains(x.Code)).ToListAsync(cancellationToken);
+            if (permissions.Count != allRequestedCodes.Length)
+                return BadRequest(new { message = "One or more selected permissions are invalid. Refresh the permission catalogue and try again." });
+
+            loginUser = new User
+            {
+                Username = username,
+                PasswordHash = passwordHasher.Hash(request.Password),
+                FirstName = request.FirstName.Trim(),
+                LastName = request.LastName.Trim(),
+                Email = Clean(request.Email),
+                IsActive = true
+            };
+            db.Users.Add(loginUser);
+            foreach (var role in roles)
+                db.UserRoles.Add(new UserRole { UserId = loginUser.Id, RoleId = role.Id });
+            foreach (var permission in permissions)
+                db.UserPermissions.Add(new UserPermission
+                {
+                    UserId = loginUser.Id,
+                    PermissionId = permission.Id,
+                    IsGranted = requestedCodes.Contains(permission.Code, StringComparer.OrdinalIgnoreCase)
+                });
+        }
+
         var staff = new StaffMember
         {
             CampusId = campusId,
+            UserId = loginUser?.Id,
             StaffNumber = request.StaffNumber.Trim(), FirstName = request.FirstName.Trim(), LastName = request.LastName.Trim(),
             NationalId = request.NationalId, PhoneNumber = request.PhoneNumber, Email = request.Email,
             EmploymentType = request.EmploymentType.Trim(), StaffType = request.StaffType,
@@ -328,6 +399,26 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         return NoContent();
     }
 
+    private async Task<HashSet<string>> GetEffectivePermissionCodesAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var roleCodes = await (from userRole in db.UserRoles
+                               join rolePermission in db.RolePermissions on userRole.RoleId equals rolePermission.RoleId
+                               join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
+                               where userRole.UserId == userId
+                               select permission.Code).Distinct().ToListAsync(cancellationToken);
+        var overrides = await (from assignment in db.UserPermissions
+                               join permission in db.Permissions on assignment.PermissionId equals permission.Id
+                               where assignment.UserId == userId
+                               select new { permission.Code, assignment.IsGranted }).ToListAsync(cancellationToken);
+        var effective = roleCodes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var assignment in overrides)
+        {
+            if (assignment.IsGranted) effective.Add(assignment.Code);
+            else effective.Remove(assignment.Code);
+        }
+        return effective;
+    }
+
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static string SerializeCourseIds(IEnumerable<Guid>? ids)
@@ -335,7 +426,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
 
     private static object ToProfile(StaffMember staff) => new
     {
-        staff.Id, staff.StaffNumber, staff.FirstName, staff.LastName, staff.OtherNames,
+        staff.Id, staff.UserId, staff.StaffNumber, staff.FirstName, staff.LastName, staff.OtherNames,
         DisplayName = PersonName.Format(staff.LastName, staff.FirstName, staff.OtherNames), staff.NationalId,
         staff.PhoneNumber, staff.Email, staff.EmploymentType, staff.StaffType, staff.IsActive,
         staff.DepartmentId, staff.JobTitle, staff.HighestQualification, staff.Speciality,
@@ -422,8 +513,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 }
 
-public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null, string? PhotographDataUrl = null);
-public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null, string? PhotographDataUrl = null);
+public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, bool CreateLoginAccount = false, string? Username = null, string? Password = null, string[]? RoleNames = null, string[]? PermissionCodes = null, string[]? DeniedPermissionCodes = null);
+public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record SaveStaffAccountRequest(string? Username, string? Password, string[]? Permissions);
 public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);

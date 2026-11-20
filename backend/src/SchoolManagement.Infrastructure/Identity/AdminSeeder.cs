@@ -87,6 +87,8 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
         }
         await db.SaveChangesAsync(cancellationToken);
 
+        await PermissionCatalog.SeedAsync(db, cancellationToken);
+
         var institution = await db.InstitutionSettings
             .SingleOrDefaultAsync(x => x.IsActive, cancellationToken);
         if (institution is null)
