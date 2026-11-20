@@ -465,8 +465,8 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                   </div>
                   <div className="staff-permission-toolbar">
                     <input type="search" aria-label="Search permissions" placeholder="Search permissions…" value={permissionSearch} onChange={event => setPermissionSearch(event.target.value)} />
-                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions(allPermissionIds.filter(id => !inheritedPermissions.includes(id)))}>Select all</button>
-                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions([])} disabled={!canManageAccounts}>Clear all</button>
+                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions(allPermissionIds.filter(id => !inheritedPermissions.includes(id)))} disabled={!canManageAccounts || Boolean(editingStaffId)}>Select all</button>
+                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions([])} disabled={!canManageAccounts || Boolean(editingStaffId)}>Clear all</button>
                   </div>
                   <div className="staff-permission-groups">
                     {filteredPermissionGroups.map(group => {
@@ -475,20 +475,20 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                       const allSelected = groupIds.length > 0 && selectedCount === groupIds.length
                       return <details className="staff-permission-group" key={group.id} open={Boolean(permissionSearch.trim())}>
                         <summary>
-                          <input type="checkbox" aria-label={`Select all ${group.label} permissions`} checked={allSelected} onChange={event => togglePermissionGroup(group.id, event.target.checked)} onClick={event => event.stopPropagation()} />
+                          <input type="checkbox" aria-label={`Select all ${group.label} permissions`} checked={allSelected} disabled={!canManageAccounts || Boolean(editingStaffId)} onChange={event => togglePermissionGroup(group.id, event.target.checked)} onClick={event => event.stopPropagation()} />
                           <span className="staff-permission-group-title">{group.label}</span>
                           <span className="staff-permission-group-count">{selectedCount} selected</span>
                         </summary>
                         <div className="staff-permission-items">
                           {group.permissions.map(permission => <label className="staff-permission-item" key={permission.id}>
-                            <input type="checkbox" checked={selectedPermissions.includes(permission.id) || inheritedPermissions.includes(permission.id)} disabled={!canManageAccounts || inheritedPermissions.includes(permission.id)} onChange={event => setSelectedPermissions(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
+                            <input type="checkbox" checked={selectedPermissions.includes(permission.id) || inheritedPermissions.includes(permission.id)} disabled={!canManageAccounts || Boolean(editingStaffId) || inheritedPermissions.includes(permission.id)} onChange={event => setSelectedPermissions(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
                             <span>{permission.label}<small>{permission.id}</small></span>
                           </label>)}
                         </div>
                       </details>
                     })}
                   </div>
-                  <p className="staff-create-hint staff-permission-notice">Permission selections are currently a form draft. The existing identity API does not yet persist or enforce this catalogue; account and role integration must be completed before these selections grant access.</p>
+                  <p className="staff-create-hint staff-permission-notice">Direct grants are saved with the linked login account, while inherited permissions come from its assigned roles. Staff and leave API actions now enforce granular permission claims; other module APIs still use their existing role policies and require the same permission-policy migration.</p>
                 </section>
                 <section className="staff-create-card">
                   <h3 className="staff-create-card-title">Account & Status</h3>
@@ -502,8 +502,8 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                   <div className="staff-create-card-heading">
                     <h3 className="staff-create-card-title" id="staff-login-card-title">{accountMode === 'existing' ? 'Change Credentials' : 'Login Details'}</h3>
                     <div className="staff-create-radio-row" role="radiogroup" aria-label="Account mode">
-                      <label><input type="radio" name="accountMode" value="new" checked={accountMode === 'new'} onChange={() => { setAccountMode('new'); setCredentialFeedback(''); setError('') }} /> New</label>
-                      <label><input type="radio" name="accountMode" value="existing" checked={accountMode === 'existing'} onChange={() => { setAccountMode('existing'); setCredentialFeedback(''); setError('') }} /> Existing</label>
+                      <label><input type="radio" name="accountMode" value="new" checked={accountMode === 'new'} disabled={!canManageAccounts} onChange={() => { setAccountMode('new'); setCredentialFeedback(''); setError('') }} /> New</label>
+                      <label><input type="radio" name="accountMode" value="existing" checked={accountMode === 'existing'} disabled={!canManageAccounts} onChange={() => { setAccountMode('existing'); setCredentialFeedback(''); setError('') }} /> Existing</label>
                     </div>
                   </div>
                   <label className="staff-create-field">{accountMode === 'existing' ? 'Existing Username' : 'Username'}
