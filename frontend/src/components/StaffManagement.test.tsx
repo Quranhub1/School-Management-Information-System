@@ -14,6 +14,8 @@ vi.mock('../api/staff', () => ({
   listLeave: vi.fn().mockResolvedValue([]),
   requestLeave: vi.fn().mockResolvedValue(null),
   approveLeave: vi.fn().mockResolvedValue(null),
+  getStaffAccount: vi.fn().mockResolvedValue({ linked: false, username: null, permissions: [] }),
+  saveStaffAccount: vi.fn().mockResolvedValue({ linked: true, username: 'staff.user', permissions: [] }),
   STAFF_CHANGED_EVENT: 'smis:staff-changed',
 }))
 
