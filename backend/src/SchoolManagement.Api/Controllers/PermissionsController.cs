@@ -1,0 +1,83 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SchoolManagement.Application.Authorization;
+using SchoolManagement.Infrastructure.Persistence;
+
+namespace SchoolManagement.Api.Controllers;
+
+[ApiController]
+[Route("api/permissions")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+public sealed class PermissionsController(SchoolManagementDbContext db) : ControllerBase
+{
+    [HttpGet("catalog")]
+    [Authorize]
+    public async Task<IActionResult> Catalog(CancellationToken cancellationToken)
+    {
+        var catalog = await db.Permissions.AsNoTracking()
+            .OrderBy(x => x.GroupKey).ThenBy(x => x.Name)
+            .Select(x => new { x.Id, x.Code, x.Name, x.GroupKey, x.Description })
+            .ToListAsync(cancellationToken);
+        return Ok(catalog);
+    }
+
+    [HttpGet("users/{userId:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.Administration)]
+    public async Task<IActionResult> GetUserPermissions(Guid userId, CancellationToken cancellationToken)
+    {
+        if (!await db.Users.AnyAsync(x => x.Id == userId, cancellationToken)) return NotFound();
+        var roles = await (from userRole in db.UserRoles
+                           join role in db.Roles on userRole.RoleId equals role.Id
+                           where userRole.UserId == userId
+                           select role.Name).ToListAsync(cancellationToken);
+        var roleDefaults = await (from userRole in db.UserRoles
+                                  join rolePermission in db.RolePermissions on userRole.RoleId equals rolePermission.RoleId
+                                  join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
+                                  where userRole.UserId == userId
+                                  select permission.Code).Distinct().ToListAsync(cancellationToken);
+        var overrides = await (from assignment in db.UserPermissions
+                               join permission in db.Permissions on assignment.PermissionId equals permission.Id
+                               where assignment.UserId == userId
+                               select new { permission.Code, assignment.IsGranted }).ToListAsync(cancellationToken);
+        return Ok(new { roles, roleDefaults, overrides });
+    }
+
+    [HttpPut("users/{userId:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.Administration)]
+    public async Task<IActionResult> SetUserPermissions(
+        Guid userId,
+        [FromBody] SetUserPermissionsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!await db.Users.AnyAsync(x => x.Id == userId, cancellationToken)) return NotFound();
+        var requested = request.Overrides ?? Array.Empty<PermissionOverrideRequest>();
+        if (requested.Select(x => x.Code).Distinct(StringComparer.OrdinalIgnoreCase).Count() != requested.Length)
+            return BadRequest(new { message = "Each permission may only be assigned once." });
+
+        var codes = requested.Select(x => x.Code.Trim()).ToArray();
+        var permissions = await db.Permissions.Where(x => codes.Contains(x.Code)).ToListAsync(cancellationToken);
+        if (permissions.Count != codes.Length)
+            return BadRequest(new { message = "One or more permission codes are invalid. Refresh the permission catalogue." });
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        var current = await db.UserPermissions.Where(x => x.UserId == userId).ToListAsync(cancellationToken);
+        db.UserPermissions.RemoveRange(current);
+        foreach (var permission in permissions)
+        {
+            var assignment = requested.Single(x => string.Equals(x.Code, permission.Code, StringComparison.OrdinalIgnoreCase));
+            db.UserPermissions.Add(new Domain.Identity.UserPermission
+            {
+                UserId = userId,
+                PermissionId = permission.Id,
+                IsGranted = assignment.IsGranted
+            });
+        }
+        await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return await GetUserPermissions(userId, cancellationToken);
+    }
+}
+
+public sealed record SetUserPermissionsRequest(PermissionOverrideRequest[]? Overrides);
+public sealed record PermissionOverrideRequest(string Code, bool IsGranted);
