@@ -1,9 +1,9 @@
 using FluentValidation;
-using SchoolManagement.Api.Controllers;
+using SchoolManagement.Application.Timetable;
 
 namespace SchoolManagement.Api.Validation;
 
-public sealed class CreateTimetableEntryRequestValidator : AbstractValidator<CreateTimetableEntryRequest>
+public sealed class CreateTimetableEntryDtoValidator : AbstractValidator<CreateTimetableEntryRequest>
 {
     public CreateTimetableEntryRequestValidator()
     {
