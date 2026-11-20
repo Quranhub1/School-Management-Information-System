@@ -66,7 +66,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [permissionSearch, setPermissionSearch] = useState('')
   const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([])
   const [availableRoles, setAvailableRoles] = useState<PermissionRole[]>([])
-  const [selectedAccountRole, setSelectedAccountRole] = useState('')
+  const [selectedAccountRoles, setSelectedAccountRoles] = useState<string[]>([])
   const [inheritedPermissions, setInheritedPermissions] = useState<string[]>([])
   const [permissionsLoading, setPermissionsLoading] = useState(false)
   const allPermissionIds = useMemo(() => permissionGroups.flatMap(group => group.permissions.map(permission => permission.id)), [permissionGroups])
@@ -85,19 +85,20 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       if (cancelled) return
       setPermissionGroups(catalogue)
       setAvailableRoles(roles)
-      setSelectedAccountRole(current => current || roles.find(role => role.name === 'AcademicRegistrar')?.name || roles[0]?.name || '')
+      setSelectedAccountRoles([])
     }).catch(error => { if (!cancelled) { const message = error instanceof Error ? error.message : 'Unable to load the central permission catalogue.'; setError(message); notify(message, 'error', 'Permissions unavailable') } }).finally(() => { if (!cancelled) setPermissionsLoading(false) })
     return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
-    const role = availableRoles.find(item => item.name === selectedAccountRole)
-    if (!role) { setInheritedPermissions([]); return }
+    const selectedRoles = availableRoles.filter(item => selectedAccountRoles.includes(item.name))
+    if (!selectedRoles.length) { setInheritedPermissions([]); return }
     let cancelled = false
-    getRolePermissionCodes(role.id).then(result => { if (!cancelled) setInheritedPermissions(result.permissionCodes) })
+    Promise.all(selectedRoles.map(role => getRolePermissionCodes(role.id)))
+      .then(results => { if (!cancelled) setInheritedPermissions([...new Set(results.flatMap(result => result.permissionCodes))]) })
       .catch(error => { if (!cancelled) { setInheritedPermissions([]); const message = error instanceof Error ? error.message : 'Unable to load inherited role permissions.'; setError(message) } })
     return () => { cancelled = true }
-  }, [availableRoles, selectedAccountRole])
+  }, [availableRoles, selectedAccountRoles])
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -164,8 +165,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
           const hasPassword = Boolean(accountPassword)
           if (hasUsername !== hasPassword) throw new Error('Enter both a username and password to create the staff login account.')
           if (hasUsername) {
-            if (!selectedAccountRole) throw new Error('Select a role for the new staff login account.')
-            account = { username: accountUsername.trim(), password: accountPassword, roles: [selectedAccountRole], permissionCodes: selectedPermissions }
+            if (selectedAccountRoles.length === 0) throw new Error('Select at least one role for the new staff login account.')
+            account = { username: accountUsername.trim(), password: accountPassword, roles: selectedAccountRoles, permissionCodes: selectedPermissions }
           } else if (selectedPermissions.length > 0) {
             throw new Error('Enter login details before assigning permissions to this staff member.')
           }
@@ -197,7 +198,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       setCredentialFeedback('')
       setSelectedPermissions([])
       setInheritedPermissions([])
-      setSelectedAccountRole(availableRoles.find(role => role.name === 'AcademicRegistrar')?.name || availableRoles[0]?.name || '')
+      setSelectedAccountRoles([])
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
       setError(message)
@@ -509,9 +510,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   </label>
                   {credentialFeedback && <div className="staff-create-credential-feedback" role="status" aria-live="polite">{credentialFeedback}</div>}
                   {accountMode === 'new' && <>
-                    <label className="staff-create-field" style={{ marginTop: 12 }}>Login role
-                      <select value={selectedAccountRole} onChange={event => setSelectedAccountRole(event.target.value)} disabled={permissionsLoading}>
-                        <option value="">Select a role</option>
+                    <label className="staff-create-field" style={{ marginTop: 12 }}>Login roles (select one or more)
+                      <select multiple size={4} value={selectedAccountRoles} onChange={event => setSelectedAccountRoles(Array.from(event.target.selectedOptions, option => option.value))} disabled={permissionsLoading}>
                         {availableRoles.map(role => <option key={role.id} value={role.name}>{role.name}</option>)}
                       </select>
                     </label>
