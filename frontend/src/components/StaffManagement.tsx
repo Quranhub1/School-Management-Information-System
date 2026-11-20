@@ -147,7 +147,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   function cancelEdit() {
     setEditingStaffId(null)
     setForm(emptyStaffForm())
-    setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [] })
+    setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [], deniedPermissionCodes: [] })
   }
 
   function beginEditCourseUnits(person: StaffMember) {
