@@ -89,7 +89,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             .SelectMany(g => g)
             .Select(ToDto)
             .ToList();
-        return Ok(conflicts.Select(ToDto).ToArray());
+        return Ok(conflicts.ToArray());
     }
 
     private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, Guid curriculumId, int yearOfStudy, int curriculumSemesterNumber, CancellationToken cancellationToken)
