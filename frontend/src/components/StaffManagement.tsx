@@ -187,10 +187,12 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     setEditingStaffId(person.id)
     setAccountLinked(false)
     setAccountForm({ mode: 'new', username: '', password: '', permissions: [] })
-    void getStaffAccount(person.id).then(account => {
-      setAccountLinked(account.linked)
-      setAccountForm({ mode: account.linked ? 'existing' : 'new', username: account.username ?? '', password: '', permissions: account.permissions ?? [] })
-    }).catch(e => setError(e instanceof Error ? e.message : 'Unable to load staff login details.'))
+    if (canManageAccounts) {
+      void getStaffAccount(person.id).then(account => {
+        setAccountLinked(account.linked)
+        setAccountForm({ mode: account.linked ? 'existing' : 'new', username: account.username ?? '', password: '', permissions: account.permissions ?? [] })
+      }).catch(e => setError(e instanceof Error ? e.message : 'Unable to load staff login details.'))
+    }
     setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', dateJoined: person.dateJoined ?? '', courseUnitIds: person.courseUnitIds ?? [] })
     setError('')
     setSuccess('')
