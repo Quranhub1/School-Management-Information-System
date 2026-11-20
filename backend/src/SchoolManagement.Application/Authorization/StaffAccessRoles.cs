@@ -64,11 +64,18 @@ public static class StaffAccessRoles
         ["backups.manage"] = BackupsManage
     };
 
-    public static readonly IReadOnlyList<string> AllRoles = ByPermission.Values.Distinct(StringComparer.Ordinal).ToArray();
+    public static readonly IReadOnlyList<string> AllRoles = ByPermission.Where(pair => !RestrictedPermissions.Contains(pair.Key)).Select(pair => pair.Value).Distinct(StringComparer.Ordinal).ToArray();
+    public static readonly IReadOnlySet<string> RestrictedPermissions = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "users.manage", "roles.manage", "settings.manage", "backups.manage"
+    };
 
     public static string[] ResolveRoles(IEnumerable<string>? permissionCodes)
     {
         var codes = (permissionCodes ?? Array.Empty<string>()).Distinct(StringComparer.Ordinal).ToArray();
+        var restricted = codes.Where(RestrictedPermissions.Contains).ToArray();
+        if (restricted.Length > 0)
+            throw new ArgumentException($"The following privileges are reserved for the System Administrator: {string.Join(", ", restricted)}");
         var unknown = codes.Where(code => !ByPermission.ContainsKey(code)).ToArray();
         if (unknown.Length > 0)
             throw new ArgumentException($"Unknown staff access permission(s): {string.Join(", ", unknown)}");
