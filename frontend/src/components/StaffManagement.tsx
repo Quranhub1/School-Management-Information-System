@@ -79,7 +79,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   async function loadLeave() { if (!leaveForm.staffMemberId.trim()) { setLeaveRequests([]); return } try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
   async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
 
-  const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', dateJoined: '', courseUnitIds: [] as string[] })
+  const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', gender: '', dateOfBirth: '', address: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', dateJoined: '', bankName: '', bankAccountNumber: '', bankAddress: '', basicSalary: '' as string, attendanceMode: 'Biometric', courseUnitIds: [] as string[] })
   const duplicateErrorPattern = /staff number is already registered|staff member with this staff number already exists/i
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
   const [leaveDuration, setLeaveDuration] = useState<'single' | 'multiple'>('single')
@@ -144,7 +144,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     setError('')
     setSuccess('')
     try {
-      const profile = { ...form, departmentId: form.departmentId || null, dateJoined: form.dateJoined || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
+      const profile = { ...form, departmentId: form.departmentId || null, dateJoined: form.dateJoined || null, dateOfBirth: form.dateOfBirth || null, basicSalary: form.basicSalary.trim() === '' ? null : Number(form.basicSalary), courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
       const validation = validateForm(staffCreateRequestSchema, profile)
       if (!validation.success) {
         setValidationErrors(validation.errors)
@@ -193,7 +193,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         setAccountForm({ mode: account.linked ? 'existing' : 'new', username: account.username ?? '', password: '', permissions: account.permissions ?? [] })
       }).catch(e => setError(e instanceof Error ? e.message : 'Unable to load staff login details.'))
     }
-    setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', dateJoined: person.dateJoined ?? '', courseUnitIds: person.courseUnitIds ?? [] })
+    setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', dateJoined: person.dateJoined ?? '', gender: person.gender ?? '', dateOfBirth: person.dateOfBirth ?? '', address: person.address ?? '', bankName: person.bankName ?? '', bankAccountNumber: person.bankAccountNumber ?? '', bankAddress: person.bankAddress ?? '', basicSalary: person.basicSalary == null ? '' : String(person.basicSalary), attendanceMode: person.attendanceMode ?? 'Biometric', courseUnitIds: person.courseUnitIds ?? [] })
     setError('')
     setSuccess('')
     setTab('staff')
@@ -343,6 +343,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   <label className="field-label">National ID<input aria-label="National ID" placeholder="National identification number" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} /></label>
                   <label className="field-label">Phone<input aria-label="Phone" type="tel" placeholder="Enter phone number" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} /></label>
                   <label className="field-label">Email<input aria-label="Email" type="email" placeholder="Enter email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></label>
+                  <label className="field-label">Gender<select aria-label="Gender" value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}><option value="">Select gender</option><option value="Female">Female</option><option value="Male">Male</option><option value="Other">Other</option><option value="Prefer not to say">Prefer not to say</option></select></label>
+                  <label className="field-label">Date of birth<input aria-label="Date of birth" type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} /></label>
+                  <label className="field-label" style={{ gridColumn: '1 / -1' }}>Residential address<textarea aria-label="Residential address" rows={2} placeholder="Enter residential address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></label>
                 </div>
               </section>
 
@@ -357,6 +360,11 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   <label className="field-label">Highest qualification<input aria-label="Highest qualification" placeholder="Enter qualification" value={form.highestQualification} onChange={e => setForm({ ...form, highestQualification: e.target.value })} /></label>
                   <label className="field-label">Speciality<input aria-label="Speciality" placeholder="Area of expertise" value={form.speciality} onChange={e => setForm({ ...form, speciality: e.target.value })} /></label>
                   <label className="field-label">Professional registration<input aria-label="Professional registration" placeholder="Registration / licence number" value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} /></label>
+                  <label className="field-label">Attendance mode<select aria-label="Attendance mode" value={form.attendanceMode} onChange={e => setForm({ ...form, attendanceMode: e.target.value })}><option value="Biometric">Biometric</option><option value="Manual">Manual</option><option value="Both">Both</option></select></label>
+                  <label className="field-label">Basic monthly salary<input aria-label="Basic monthly salary" type="number" min="0" step="0.01" placeholder="0.00" value={form.basicSalary} onChange={e => setForm({ ...form, basicSalary: e.target.value })} /></label>
+                  <label className="field-label">Bank name<input aria-label="Bank name" placeholder="Enter bank name" value={form.bankName} onChange={e => setForm({ ...form, bankName: e.target.value })} /></label>
+                  <label className="field-label">Bank account number<input aria-label="Bank account number" placeholder="Enter account number" value={form.bankAccountNumber} onChange={e => setForm({ ...form, bankAccountNumber: e.target.value })} /></label>
+                  <label className="field-label" style={{ gridColumn: '1 / -1' }}>Bank address<input aria-label="Bank address" placeholder="Enter bank branch / address" value={form.bankAddress} onChange={e => setForm({ ...form, bankAddress: e.target.value })} /></label>
                 </div>
               </section>
 
