@@ -15,7 +15,39 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
 {
     [HttpGet("years")]
     public async Task<ActionResult<IReadOnlyList<AcademicYear>>> GetYears(CancellationToken ct)
-        => Ok(await db.AcademicYears.AsNoTracking().OrderByDescending(x => x.StartDate).ToListAsync(ct));
+    {
+        // Keep the dropdown continuous from 2001-2002 and always extend it
+        // at least 100 years beyond the current year. This avoids a hard stop
+        // at the range initially inserted by the seed migration.
+        var lastYear = DateTime.UtcNow.Year + 100;
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO "AcademicYears"
+                ("Id", "Name", "StartDate", "EndDate", "IsCurrent", "IsActive")
+            SELECT gen_random_uuid(),
+                   year_value::text || '-' || (year_value + 1)::text,
+                   make_date(year_value, 1, 1),
+                   make_date(year_value + 1, 1, 1) - 1,
+                   FALSE,
+                   TRUE
+            FROM generate_series(2001, {lastYear}) AS years(year_value)
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "AcademicYears" existing
+                WHERE existing."Name" = year_value::text || '-' || (year_value + 1)::text
+            );
+            """, ct);
+
+        return Ok(await db.AcademicYears.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.StartDate)
+            .ToListAsync(ct));
+    }
+
+    [HttpGet("intakes")]
+    public async Task<ActionResult<IReadOnlyList<Intake>>> GetIntakes(CancellationToken ct)
+        => Ok(await db.Intakes.AsNoTracking()
+            .Where(x => x.IsOpen)
+            .OrderBy(x => x.StartDate)
+            .ToListAsync(ct));
 
     [HttpPost("years")]
     public async Task<ActionResult<AcademicYear>> CreateYear(CreateAcademicYearRequest request, CancellationToken ct)

@@ -69,7 +69,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [view, setView] = useState<'week' | 'list'>('week')
   const [showWeekends, setShowWeekends] = useState(true)
   const [showSystemData, setShowSystemData] = useState(false)
-  const [showTemplateEditor, setShowTemplateEditor] = useState(false)
+  const [showTemplateEditor, setShowTemplateEditor] = useState(true)
   const [templateGroupId, setTemplateGroupId] = useState('')
   const [templateLoadedGroupId, setTemplateLoadedGroupId] = useState('')
   const [templateSlots, setTemplateSlots] = useState(defaultTemplateSlots)
@@ -94,8 +94,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setOptions({ ...emptyOptions, ...loadedOptions, programmes: loadedOptions.programmes ?? [], curricula: loadedOptions.curricula ?? [], curriculumCourses: loadedOptions.curriculumCourses ?? [] })
       setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
       const uniqueProgrammes = deduplicateProgrammeOptions(loadedOptions.programmes ?? [], loadedOptions.curricula ?? [], loadedOptions.teachingGroups ?? [])
-      setProgrammeId(current => current || uniqueProgrammes[0]?.id || '')
-      setCurriculumId(current => current || loadedOptions.curricula.find(item => uniqueProgrammes[0]?.sourceIds.includes(item.programmeId))?.id || '')
+      const preferredProgramme = uniqueProgrammes[0]
+      const preferredCurriculum = loadedOptions.curricula.find(item => preferredProgramme?.sourceIds.includes(item.programmeId))
+      const preferredPeriodId = loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || ''
+      const preferredGroup = loadedOptions.teachingGroups.find(item => item.programmeId === preferredCurriculum?.programmeId && item.semesterId === preferredPeriodId)
+      setProgrammeId(current => current || preferredProgramme?.id || '')
+      setCurriculumId(current => current || preferredCurriculum?.id || '')
+      setTemplateGroupId(current => current || preferredGroup?.id || '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
     }
@@ -223,25 +228,36 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     const groupLabel = groupLabels.get(templateGroupId) ?? 'Class timetable'
     const base = timetablePdfOptions(templateTitle || groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template')
     const body = [
-      [{ text: templateDayLabel || 'DAY', style: 'tableHeader' }, ...templateSlots.map((slot, index) => ({
-        text: [`PERIOD ${index + 1}`, `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`, templateBreakAfter === index ? (templateBreakLabel || 'BREAK') : ''].filter(Boolean).join('\\n'),
-        style: 'tableHeader',
-      }))],
-      ...visibleDays.map(day => {
+      [
+        { text: templateDayLabel || 'DAY', style: 'tableHeader' },
+        ...templateSlots.flatMap((slot, index) => [
+          { text: [`PERIOD ${index + 1}`, `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`].join('\\n'), style: 'tableHeader' },
+          ...(templateBreakAfter === index ? [{ text: (templateBreakLabel || 'BREAK').split('').join('\\n'), style: 'tableHeader' }] : []),
+        ]),
+      ],
+      ...visibleDays.map((day, dayIndex) => {
         const row: Array<Record<string, unknown>> = [{ text: days[day].toUpperCase(), style: 'tableHeader' }]
         templateSlots.forEach((slot, slotIndex) => {
-          if (templateCellCovered(day, slotIndex)) { row.push({}); return }
-          const cell = templateCells[day + '-' + slotIndex]
-          const rowSpan = Math.max(1, Math.min(visibleDays.length - visibleDays.indexOf(day), Number(cell?.rowSpan) || 1))
-          const colSpan = Math.max(1, Math.min(templateSlots.length - slotIndex, Number(cell?.colSpan) || 1))
-          const text = cell ? [
-            courseLabels.get(cell.courseId) ?? '',
-            teacherLabels.get(cell.teacherId) ?? '',
-            `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`,
-            cell.room ? `Venue: ${cell.room}` : '',
-            cell.sessionType || '',
-          ].filter(Boolean).join('\\n') : '—'
-          row.push({ text: text || '—', alignment: 'center', ...(rowSpan > 1 ? { rowSpan } : {}), ...(colSpan > 1 ? { colSpan } : {}) })
+          if (templateCellCovered(day, slotIndex)) {
+            row.push({})
+          } else {
+            const cell = templateCells[day + '-' + slotIndex]
+            const rowSpan = Math.max(1, Math.min(visibleDays.length - dayIndex, Number(cell?.rowSpan) || 1))
+            const colSpan = templatePeriodSpan(slotIndex, cell?.colSpan)
+            const text = cell ? [
+              courseLabels.get(cell.courseId) ?? '',
+              teacherLabels.get(cell.teacherId) ?? '',
+              `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`,
+              cell.room ? `Venue: ${cell.room}` : '',
+              cell.sessionType || '',
+            ].filter(Boolean).join('\\n') : '—'
+            row.push({ text: text || '—', alignment: 'center', ...(rowSpan > 1 ? { rowSpan } : {}), ...(colSpan > 1 ? { colSpan } : {}) })
+          }
+          if (templateBreakAfter === slotIndex) {
+            row.push(dayIndex === 0
+              ? { text: (templateBreakLabel || 'BREAK').split('').join('\\n'), alignment: 'center', bold: true, rowSpan: visibleDays.length }
+              : {})
+          }
         })
         return row
       }),
@@ -251,7 +267,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       title: templateTitle || base.title,
       content: [
         base.content[0],
-        { table: { headerRows: 1, widths: ['auto', ...templateSlots.map(() => '*')], body }, layout: {
+        { table: { headerRows: 1, widths: ['auto', ...templateSlots.flatMap((_, index) => templateBreakAfter === index ? ['*', 14] : ['*'])], body }, layout: {
           hLineWidth: () => 0.8,
           vLineWidth: () => 0.8,
           hLineColor: () => '#111827',
@@ -512,6 +528,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     reorderTemplateSlots(order)
   }
 
+  function templatePeriodSpan(slotIndex: number, requestedSpan: number | string = 1) {
+    const availablePeriods = templateBreakAfter !== null && slotIndex <= templateBreakAfter
+      ? templateBreakAfter - slotIndex + 1
+      : templateSlots.length - slotIndex
+    return Math.max(1, Math.min(availablePeriods, Number(requestedSpan) || 1))
+  }
+
   function templateCellCovered(day: number, slotIndex: number) {
     const visibleDays = templateDayOrder.filter(item => showWeekends || item <= 5)
     const rowIndex = visibleDays.indexOf(day)
@@ -522,7 +545,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         const source = templateCells[sourceDay + '-' + c]
         if (!source) continue
         const rowSpan = Math.max(1, Math.min(visibleDays.length - r, Number(source.rowSpan) || 1))
-        const colSpan = Math.max(1, Math.min(templateSlots.length - c, Number(source.colSpan) || 1))
+        const colSpan = templatePeriodSpan(c, source.colSpan)
         if (r + rowSpan > rowIndex && c + colSpan > slotIndex) return true
       }
     }
@@ -545,11 +568,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <div>
         <p className="timetable-eyebrow">Academic planning</p>
         <h2>{readOnly ? 'Timetable' : 'Timetable management'}</h2>
-        <p>Review the weekly teaching schedule, rooms and staff assignments in one place.</p>
+        <p>Load and edit the official class timetable, assign lecturers and venues, then save or print it.</p>
       </div>
       <div className="timetable-actions">
         {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowGenerator(value => !value)} aria-expanded={showGenerator}><Sparkles /> {showGenerator ? 'Hide generator' : 'Generate timetable'}</button>}
-        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}><Pencil /> {showTemplateEditor ? 'Close template editor' : 'Edit timetable template'}</button>}
+        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}><Pencil /> {showTemplateEditor ? 'Hide timetable designer' : 'Open timetable designer'}</button>}
         {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowScheduleForm(value => !value)} aria-expanded={showScheduleForm}><Plus /> {showScheduleForm ? 'Close form' : 'Schedule session'}</button>}
       </div>
     </header>
@@ -625,7 +648,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         <div className="timetable-official-identity">
           {institutionLoaded && institution.isActive && institution.logoPath && <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} />}
           <div className="timetable-official-identity-copy">
-            <p className="timetable-country-line">REPUBLIC OF UGANDA</p>
             <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
             {institutionLoaded && institution.isActive && institution.motto && <p className="timetable-institution-motto">{institution.motto}</p>}
             {institutionLoaded && institution.isActive && <p className="timetable-institution-contact">{[institution.address, institution.phone, institution.email, institution.website].filter(value => Boolean(value?.trim())).join(' · ')}</p>}
@@ -652,20 +674,19 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       </div>
       {templateGroupId && templateLoadedGroupId === templateGroupId && <div className="timetable-grid-scroll">
         <table className="timetable-editable-grid">
-          <thead><tr><th>{templateDayLabel || 'DAY'}</th>{templateSlots.map((slot, index) => <th key={index} className={templateBreakAfter === index ? 'timetable-break-after' : ''}><span>PERIOD {index + 1}</span>{templateBreakAfter === index && <span className="timetable-break-label">{templateBreakLabel || 'BREAK'}</span>}<label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label><div className="timetable-period-tools"><button type="button" onClick={() => moveTemplateSlot(index, -1)} disabled={index === 0} aria-label={`Move period ${index + 1} left`}>←</button><button type="button" onClick={() => moveTemplateSlot(index, 1)} disabled={index === templateSlots.length - 1} aria-label={`Move period ${index + 1} right`}>→</button><button type="button" onClick={() => removeTemplateSlot(index)} disabled={templateSlots.length <= 1} aria-label={`Remove period ${index + 1}`}>−</button></div></th>)}</tr></thead>
+          <thead><tr><th>{templateDayLabel || 'DAY'}</th>{templateSlots.map((slot, index) => <React.Fragment key={index}><th className={templateBreakAfter === index ? 'timetable-break-after' : ''}><span>PERIOD {index + 1}</span><label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label><div className="timetable-period-tools"><button type="button" onClick={() => moveTemplateSlot(index, -1)} disabled={index === 0} aria-label={`Move period ${index + 1} left`}>←</button><button type="button" onClick={() => moveTemplateSlot(index, 1)} disabled={index === templateSlots.length - 1} aria-label={`Move period ${index + 1} right`}>→</button><button type="button" onClick={() => removeTemplateSlot(index)} disabled={templateSlots.length <= 1} aria-label={`Remove period ${index + 1}`}>−</button></div></th>{templateBreakAfter === index && <th className="timetable-template-divider-header" aria-label={templateBreakLabel || 'Break'}>{(templateBreakLabel || 'BREAK').split('').map((letter, letterIndex) => <span key={letterIndex}>{letter}</span>)}</th>}</React.Fragment>)}</tr></thead>
           <tbody>{templateDayOrder.filter(day => showWeekends || day <= 5).map((day, rowIndex) => <tr key={day}><th><div className="timetable-day-tools"><button type="button" onClick={() => moveTemplateDay(day, -1)} disabled={rowIndex === 0} aria-label={`Move ${days[day]} up`}>↑</button><button type="button" onClick={() => moveTemplateDay(day, 1)} disabled={rowIndex === templateDayOrder.filter(item => showWeekends || item <= 5).length - 1} aria-label={`Move ${days[day]} down`}>↓</button></div>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
-            if (templateCellCovered(day, slotIndex)) return null
             const key = day + '-' + slotIndex
             const cell = templateCells[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture', rowSpan: 1, colSpan: 1 }
             const rowSpan = Math.max(1, Math.min(templateDayOrder.filter(item => showWeekends || item <= 5).length - rowIndex, Number(cell.rowSpan) || 1))
-            const colSpan = Math.max(1, Math.min(templateSlots.length - slotIndex, Number(cell.colSpan) || 1))
-            return <td key={slotIndex} rowSpan={rowSpan} colSpan={colSpan} className={templateBreakAfter === slotIndex ? 'timetable-break-after' : ''}>
+            const colSpan = templatePeriodSpan(slotIndex, cell.colSpan)
+            return <React.Fragment key={slotIndex}>{!templateCellCovered(day, slotIndex) && <td rowSpan={rowSpan} colSpan={colSpan} className={templateBreakAfter === slotIndex ? 'timetable-break-after' : ''}>
               <button type="button" className="timetable-template-cell-trigger" onClick={() => setActiveTemplateCellKey(key)} aria-label={'Edit ' + days[day] + ' ' + timeLabel(slot.startTime) + ' period'}>
                 {cell.courseId || cell.teacherId || cell.room ? <>{cell.courseId && <strong>{courseLabels.get(cell.courseId) ?? 'Course'}</strong>}{cell.teacherId && <span>{teacherLabels.get(cell.teacherId) ?? 'Lecturer'}</span>}{cell.room && <small>{cell.room}</small>}<small>{cell.sessionType}</small></> : <span className="timetable-template-cell-empty">+ Add session</span>}
                 {cell.id && <small className="timetable-template-existing">Saved session</small>}
                 <span className="timetable-template-cell-edit"><Pencil size={12}/> Edit period</span>
               </button>
-            </td>
+            </td>}{templateBreakAfter === slotIndex && rowIndex === 0 && <td rowSpan={templateDayOrder.filter(item => showWeekends || item <= 5).length} className="timetable-template-divider-cell" aria-label={templateBreakLabel || 'Break'}><div>{(templateBreakLabel || 'BREAK').split('').map((letter, letterIndex) => <span key={letterIndex}>{letter}</span>)}</div></td>}</React.Fragment>
           })}</tr>)}</tbody>
         </table>
       </div>}

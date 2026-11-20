@@ -10,7 +10,7 @@ import {
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { notify } from './GlobalNotifications'
-import { getAdmissionsAcademicCatalogue, type AdmissionsProgrammeOption, type AdmissionsAuthorityOption } from '../api/admissionsCatalogue'
+import { getAdmissionsAcademicCatalogue, type AdmissionsProgrammeOption, type AdmissionsAuthorityOption, type AdmissionsAcademicYearOption, type AdmissionsIntakeOption } from '../api/admissionsCatalogue'
 import { resolveAcademicAuthority } from '../utils/academicAuthorities'
 import { validateForm } from '../lib/validation'
 import { studentApplicationSubmissionSchema } from '../schemas'
@@ -58,6 +58,8 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
   const [students, setStudents] = useState<Student[]>([])
   const [academicProgrammes, setAcademicProgrammes] = useState<AdmissionsProgrammeOption[]>([])
   const [academicAuthorities, setAcademicAuthorities] = useState<AdmissionsAuthorityOption[]>([])
+  const [academicYears, setAcademicYears] = useState<AdmissionsAcademicYearOption[]>([])
+  const [intakeOptions, setIntakeOptions] = useState<AdmissionsIntakeOption[]>([])
   const [courseOptionsError, setCourseOptionsError] = useState('')
   const [view, setView] = useState<'application' | 'registry'>('application')
   const [application, setApplication] = useState<ApplicationForm>(emptyApplication)
@@ -99,13 +101,27 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
     if (!canManage && !readOnly) return
     getAdmissionsAcademicCatalogue().then(catalogue => {
       const activeAuthorities = catalogue.authorities.filter(authority => authority.isActive)
+      const years = catalogue.academicYears ?? []
+      const intakes = catalogue.intakes ?? []
       setAcademicAuthorities(activeAuthorities)
       setAcademicProgrammes(catalogue.programmes)
-      setApplication(current => current.authority && activeAuthorities.some(authority => authority.code === current.authority)
-        ? current
-        : { ...current, authority: activeAuthorities[0]?.code ?? '', course: '', programmeId: '' })
+      setAcademicYears(years)
+      setIntakeOptions(intakes)
+      const currentYear = new Date().getUTCFullYear()
+      const defaultYear = years.find(year => year.isCurrent)?.name
+        ?? years.find(year => year.name.startsWith(currentYear + '-'))?.name
+        ?? ''
+      setApplication(current => ({
+        ...current,
+        authority: current.authority && activeAuthorities.some(authority => authority.code === current.authority)
+          ? current.authority
+          : activeAuthorities[0]?.code ?? '',
+        course: current.authority && activeAuthorities.some(authority => authority.code === current.authority) ? current.course : '',
+        programmeId: current.authority && activeAuthorities.some(authority => authority.code === current.authority) ? current.programmeId : '',
+        academicYear: current.academicYear || defaultYear,
+      }))
       setCourseOptionsError('')
-    }).catch(e => setCourseOptionsError(e instanceof Error ? e.message : 'Unable to load academic programmes and authorities.'))
+    }).catch(e => setCourseOptionsError(e instanceof Error ? e.message : 'Unable to load programmes, academic years and intakes.'))
   }, [canManage, readOnly])
   const availableProgrammes = academicProgrammes
     .filter(programme => resolveAcademicAuthority(programme.regulator) === application.authority)
@@ -286,8 +302,8 @@ export function StudentManagement({ canManage = false, readOnly = false }: Props
       <div className="application-form-intro"><p>Complete every relevant section in clear BLOCK letters. Fields marked * are required.</p><label>Student / application number *<input value={studentNumber} aria-invalid={Boolean(validationErrors.studentNumber)} onChange={e => { setStudentNumber(e.target.value); setValidationErrors(current => { const next = { ...current }; delete next.studentNumber; return next }) }} required /></label></div>
       <Section number="01" title="Admission information">
         <div className="application-grid">
-          <Field label="Academic year *"><input value={application.academicYear} aria-invalid={Boolean(validationErrors.academicYear)} onChange={e => setApp('academicYear', e.target.value)} placeholder="e.g. 2027" required /></Field>
-          <Field label="Intake *"><input value={application.intake} aria-invalid={Boolean(validationErrors.intake)} onChange={e => setApp('intake', e.target.value)} placeholder="e.g. January / August" required /></Field>
+          <Field label="Academic year *"><select value={application.academicYear} aria-invalid={Boolean(validationErrors.academicYear)} onChange={e => setApp('academicYear', e.target.value)} required><option value="">Select academic year</option>{academicYears.map(year => <option key={year.id} value={year.name}>{year.name}{year.isCurrent ? ' (Current)' : ''}</option>)}</select></Field>
+          <Field label="Intake *"><select value={application.intake} aria-invalid={Boolean(validationErrors.intake)} onChange={e => setApp('intake', e.target.value)} required><option value="">Select intake</option>{intakeOptions.map(intake => <option key={intake.id} value={intake.name}>{intake.name}</option>)}</select></Field>
           <Field label="Academic authority *"><select required value={application.authority} onChange={e => { setApp('authority', e.target.value); setApp('course', ''); setApp('programmeId', '') }}><option value="">Select authority</option>{academicAuthorities.map(authority => <option key={authority.id} value={authority.code}>{authority.name}</option>)}</select></Field>
           <Field label="Course / programme applied for *"><select value={application.programmeId} aria-invalid={Boolean(validationErrors.course)} onChange={e => { const selected = availableProgrammes.find(programme => programme.id === e.target.value); setApp('programmeId', selected?.id ?? ''); setApp('course', selected?.name ?? '') }} required disabled={!application.authority || availableProgrammes.length === 0}><option value="">Select programme</option>{availableProgrammes.map(programme => <option key={programme.id} value={programme.id}>{programme.code} — {programme.name}</option>)}</select></Field>
           <Field label="Entry status"><select value={application.entryStatus} onChange={e => setApp('entryStatus', e.target.value)}><option>Direct</option><option>Mature</option></select></Field>

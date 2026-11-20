@@ -481,3 +481,39 @@
 .timetable-screen .timetable-template-controls>.timetable-action:disabled{opacity:.5;cursor:not-allowed}
 .timetable-screen .timetable-class-empty-hint{display:block;margin-top:5px;color:#9a3412;font-size:.72rem;font-weight:600;line-height:1.4}
 @media(max-width:560px){.timetable-screen .timetable-template-controls{min-width:0;width:100%;align-items:stretch}.timetable-screen .timetable-template-controls>label{min-width:0}.timetable-screen .timetable-template-controls>.timetable-action{width:100%}}
+
+
+/* Match the supplied formal timetable sheet: a narrow, full-height break column
+   separates teaching periods instead of relying only on a border treatment. */
+.timetable-screen .timetable-template-divider-header,
+.timetable-screen .timetable-template-divider-cell{
+  width:30px;min-width:30px;padding:5px 3px!important;text-align:center!important;
+  vertical-align:middle!important;background:#fff!important;border-left:2px solid #111827!important;
+  border-right:2px solid #111827!important;font-family:Georgia,'Times New Roman',serif;
+  font-weight:800;letter-spacing:.04em;
+}
+.timetable-screen .timetable-template-divider-header{background:#f8fafc!important}
+.timetable-screen .timetable-template-divider-header span,
+.timetable-screen .timetable-template-divider-cell span{
+  display:block;margin:0 auto;font-size:.68rem;line-height:1.25;
+}
+.timetable-screen .timetable-template-divider-cell>div{
+  display:flex;min-height:380px;height:100%;flex-direction:column;align-items:center;
+  justify-content:space-around;
+}
+.timetable-screen .timetable-editable-grid .timetable-template-divider-cell{height:auto}
+.timetable-screen .timetable-template-editor{font-family:Georgia,'Times New Roman',serif}
+.timetable-screen .timetable-template-document-heading{color:#000}
+.timetable-screen .timetable-template-document-heading h3,
+.timetable-screen .timetable-template-document-heading h4,
+.timetable-screen .timetable-template-document-heading span{color:#000}
+.timetable-screen .timetable-template-editor-heading,
+.timetable-screen .timetable-document-meta-editor,
+.timetable-screen .timetable-template-design-tools,
+.timetable-screen .timetable-template-editor .timetable-form-footer{font-family:Inter,Arial,sans-serif}
+.timetable-screen .timetable-editable-grid th,
+.timetable-screen .timetable-editable-grid td{border:1px solid #000!important}
+.timetable-screen .timetable-editable-grid thead th{background:#f8fafc;color:#000}
+@media print{
+  .timetable-screen .timetable-template-divider-cell>div{min-height:250px}
+}

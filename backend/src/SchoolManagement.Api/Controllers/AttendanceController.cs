@@ -221,7 +221,7 @@ public sealed class AttendanceController(AttendanceService service, SchoolManage
 
         var programmes = await db.Programmes.AsNoTracking().Where(x => x.IsActive && !x.IsReferenceOnly)
             .OrderBy(x => x.Name).Select(x => new { x.Id, x.Name }).ToListAsync(cancellationToken);
-        var intakes = await db.Intakes.AsNoTracking().OrderByDescending(x => x.StartDate)
+        var intakes = await db.Intakes.AsNoTracking().Where(x => x.IsOpen).OrderBy(x => x.StartDate)
             .Select(x => new { x.Id, x.Name, x.Code }).ToListAsync(cancellationToken);
         var semesters = await db.Semesters.AsNoTracking().OrderByDescending(x => x.IsCurrent).ThenByDescending(x => x.StartDate)
             .Select(x => new { x.Id, x.Name, x.AcademicYearId, x.StartDate, x.EndDate, x.IsCurrent }).ToListAsync(cancellationToken);
