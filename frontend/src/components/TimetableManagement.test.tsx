@@ -64,6 +64,12 @@ describe('TimetableManagement', () => {
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
+  it('shows the editable official timetable designer as the primary management view', () => {
+    render(<TimetableManagement />)
+    expect(screen.getByRole('region', { name: 'Editable timetable template' })).toBeTruthy()
+    expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
+  })
+
 
   it('prints generated class timetables for the full semester using Institution Settings', async () => {
     render(<TimetableManagement />)
@@ -113,6 +119,14 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText('Merge down (days)')).toBeTruthy()
     expect(screen.getByLabelText('Merge across periods')).toBeTruthy()
     expect(screen.queryByText('REPUBLIC OF UGANDA')).toBeNull()
+  })
+
+  it('renders a full-height vertical break divider in the timetable design', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
+    fireEvent.change(screen.getByLabelText('Divider after period'), { target: { value: '1' } })
+    expect(screen.getByLabelText('BREAK')).toBeTruthy()
   })
 
   it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
