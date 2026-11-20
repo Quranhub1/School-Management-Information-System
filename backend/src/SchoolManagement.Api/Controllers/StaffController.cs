@@ -74,7 +74,9 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
 
         var username = request.Username?.Trim();
         var existingLink = await db.StaffUserLinks.SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
-        var selectedRoles = StaffAccessRoles.ResolveRoles(request.Permissions);
+        string[] selectedRoles;
+        try { selectedRoles = StaffAccessRoles.ResolveRoles(request.Permissions); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         if (selectedRoles.Length == 0)
             return BadRequest(new { message = "Select at least one screen or action for this staff account." });
         if (string.IsNullOrWhiteSpace(username))
