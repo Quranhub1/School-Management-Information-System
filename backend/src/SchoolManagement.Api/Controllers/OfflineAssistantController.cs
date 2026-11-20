@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/assistant")]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.ReportingManagement)]
 public sealed class OfflineAssistantController(SchoolManagementDbContext db, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpPost]
