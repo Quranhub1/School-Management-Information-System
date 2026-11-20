@@ -68,6 +68,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
   const [availableRoles, setAvailableRoles] = useState<PermissionRole[]>([])
   const [selectedAccountRoles, setSelectedAccountRoles] = useState<string[]>([])
   const [inheritedPermissions, setInheritedPermissions] = useState<string[]>([])
+  const [existingPermissionsLoaded, setExistingPermissionsLoaded] = useState(false)
   const [permissionsLoading, setPermissionsLoading] = useState(false)
   const allPermissionIds = useMemo(() => permissionGroups.flatMap(group => group.permissions.map(permission => permission.id)), [permissionGroups])
   const filteredPermissionGroups = useMemo(() => permissionGroups.map(group => ({ ...group, permissions: group.permissions.filter(permission => !permissionSearch.trim() || permission.label.toLowerCase().includes(permissionSearch.toLowerCase()) || permission.id.toLowerCase().includes(permissionSearch.toLowerCase())) })).filter(group => group.permissions.length > 0), [permissionGroups, permissionSearch])
@@ -168,7 +169,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
           if (hasUsername) {
             if (!canManageAccounts) throw new Error('Only a System Administrator can create or link staff login accounts.')
             if (selectedAccountRoles.length === 0) throw new Error('Select at least one role for the new staff login account.')
-            account = { username: accountUsername.trim(), password: accountPassword, roles: selectedAccountRoles, permissionCodes: selectedPermissions }
+            account = { username: accountUsername.trim(), password: accountPassword, roles: selectedAccountRoles, permissionCodes: selectedPermissions, replaceDirectPermissions: true }
           } else if (selectedPermissions.length > 0) {
             throw new Error('Enter login details before assigning permissions to this staff member.')
           }
@@ -178,7 +179,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
           const existingUsers = await getUsers()
           const matched = existingUsers.find(user => user.username.toLowerCase() === accountUsername.trim().toLowerCase())
           if (!matched) throw new Error('No existing SMIS account matches that username.')
-          account = { existingUserId: matched.id, password: accountPassword || undefined, permissionCodes: selectedPermissions }
+          account = { existingUserId: matched.id, password: accountPassword || undefined, permissionCodes: selectedPermissions, replaceDirectPermissions: existingPermissionsLoaded }
         }
         const created = await createStaff(profile, account)
         if (staffStatus === 'Inactive') await deactivateStaff(created.id)
@@ -310,6 +311,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
       const summary = await getUserPermissionSummary(matched.id)
       setSelectedPermissions(summary.directPermissionCodes)
       setInheritedPermissions(summary.inheritedPermissionCodes)
+      setExistingPermissionsLoaded(true)
       setCredentialFeedback(`Loaded role-inherited and individual permissions for ${matched.username}.`)
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load existing account permissions.') }
     finally { setCredentialBusy(false) }
@@ -519,12 +521,12 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                   <div className="staff-create-card-heading">
                     <h3 className="staff-create-card-title" id="staff-login-card-title">{accountMode === 'existing' ? 'Change Credentials' : 'Login Details'}</h3>
                     <div className="staff-create-radio-row" role="radiogroup" aria-label="Account mode">
-                      <label><input type="radio" name="accountMode" value="new" checked={accountMode === 'new'} disabled={!canManageAccounts} onChange={() => { setAccountMode('new'); setSelectedAccountRoles([]); setSelectedPermissions([]); setInheritedPermissions([]); setCredentialFeedback(''); setError('') }} /> New</label>
-                      <label><input type="radio" name="accountMode" value="existing" checked={accountMode === 'existing'} disabled={!canManageAccounts} onChange={() => { setAccountMode('existing'); setSelectedAccountRoles([]); setSelectedPermissions([]); setInheritedPermissions([]); setCredentialFeedback(''); setError('') }} /> Existing</label>
+                      <label><input type="radio" name="accountMode" value="new" checked={accountMode === 'new'} disabled={!canManageAccounts} onChange={() => { setAccountMode('new'); setSelectedAccountRoles([]); setSelectedPermissions([]); setInheritedPermissions([]); setExistingPermissionsLoaded(false); setCredentialFeedback(''); setError('') }} /> New</label>
+                      <label><input type="radio" name="accountMode" value="existing" checked={accountMode === 'existing'} disabled={!canManageAccounts} onChange={() => { setAccountMode('existing'); setSelectedAccountRoles([]); setSelectedPermissions([]); setInheritedPermissions([]); setExistingPermissionsLoaded(false); setCredentialFeedback(''); setError('') }} /> Existing</label>
                     </div>
                   </div>
                   <label className="staff-create-field">{accountMode === 'existing' ? 'Existing Username' : 'Username'}
-                    <input autoComplete="username" placeholder={accountMode === 'existing' ? 'Enter existing username' : 'Enter Username'} disabled={!canManageAccounts} value={accountUsername} onChange={e => { setAccountUsername(e.target.value); if (accountMode === 'existing') { setSelectedPermissions([]); setInheritedPermissions([]); setCredentialFeedback('') } }} />
+                    <input autoComplete="username" placeholder={accountMode === 'existing' ? 'Enter existing username' : 'Enter Username'} disabled={!canManageAccounts} value={accountUsername} onChange={e => { setAccountUsername(e.target.value); if (accountMode === 'existing') { setSelectedPermissions([]); setInheritedPermissions([]); setExistingPermissionsLoaded(false); setCredentialFeedback('') } }} />
                   </label>
                   {accountMode === 'existing' && <button type="button" className="secondary-button" style={{ marginTop: 8 }} onClick={() => void loadExistingAccountPermissions()} disabled={!canManageAccounts || credentialBusy}>{credentialBusy ? 'Loading…' : 'Load existing account permissions'}</button>}
                   <label className="staff-create-field" style={{ marginTop: 12 }}>{accountMode === 'existing' ? 'New Password' : 'Password'}
