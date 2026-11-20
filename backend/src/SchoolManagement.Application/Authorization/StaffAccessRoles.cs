@@ -64,11 +64,11 @@ public static class StaffAccessRoles
         ["backups.manage"] = BackupsManage
     };
 
-    public static readonly IReadOnlyList<string> AllRoles = ByPermission.Where(pair => !RestrictedPermissions.Contains(pair.Key)).Select(pair => pair.Value).Distinct(StringComparer.Ordinal).ToArray();
     public static readonly IReadOnlySet<string> RestrictedPermissions = new HashSet<string>(StringComparer.Ordinal)
     {
         "users.manage", "roles.manage", "settings.manage", "backups.manage"
     };
+    public static readonly IReadOnlyList<string> AllRoles = ByPermission.Where(pair => !RestrictedPermissions.Contains(pair.Key)).Select(pair => pair.Value).Distinct(StringComparer.Ordinal).ToArray();
 
     public static string[] ResolveRoles(IEnumerable<string>? permissionCodes)
     {
