@@ -55,6 +55,7 @@ public static class PermissionCatalog
         new PermissionDefinition("inventory", "Inventory", "inventory.create", "Create inventory records", "Create stock and asset records."),
         new PermissionDefinition("inventory", "Inventory", "inventory.update", "Update inventory", "Edit stock, asset and register details."),
         new PermissionDefinition("inventory", "Inventory", "inventory.issue", "Issue and receive stock", "Record stock issues, receipts and adjustments."),
+        new PermissionDefinition("inventory", "Inventory", "inventory.read-stock-alerts", "View stock alerts", "View low-stock and out-of-stock alerts across inventory registers."),
         new PermissionDefinition("inventory", "Inventory", "inventory.approve", "Approve inventory transactions", "Approve stock adjustments and requisitions."),
         new PermissionDefinition("library", "Library", "library.read", "View library", "View library catalogue and circulation."),
         new PermissionDefinition("library", "Library", "library.manage-books", "Manage library books", "Create and edit catalogue records."),
@@ -76,6 +77,7 @@ public static class PermissionCatalog
         new PermissionDefinition("administration", "Administration", "administration.read-users", "View user accounts", "View system user accounts and roles."),
         new PermissionDefinition("administration", "Administration", "administration.manage-users", "Manage user accounts", "Create, edit, activate and deactivate user accounts."),
         new PermissionDefinition("administration", "Administration", "administration.manage-roles", "Manage roles and permissions", "Manage role defaults and individual permission assignments."),
+        new PermissionDefinition("administration", "Administration", "administration.manage-campus-access", "Manage campus access", "Assign and revoke users access to institutional campuses."),
         new PermissionDefinition("administration", "Administration", "administration.backup", "Manage backups", "Create and restore database backups."),
         new PermissionDefinition("student-portal", "Student Portal", "portal.access", "Access student portal", "Access student self-service functions.")
     };
@@ -156,6 +158,7 @@ public static class PermissionCatalog
         AddDefaults(AuthorizationPolicies.RoleSets.AttendanceRead, "attendance.read");
         AddDefaults(AuthorizationPolicies.RoleSets.HostelManagement, "hostel.manage");
         AddDefaults(AuthorizationPolicies.RoleSets.InventoryManagement, "inventory.issue");
+        AddDefaults(new[] { InstitutionalRoles.SystemAdministrator, InstitutionalRoles.RecordsOfficer, InstitutionalRoles.SchoolWarden }, "inventory.read-stock-alerts");
         AddDefaults(AuthorizationPolicies.RoleSets.AdmissionsManagement, "admissions.decide");
         AddDefaults(AuthorizationPolicies.RoleSets.AdmissionsRead, "admissions.read");
         AddDefaults(AuthorizationPolicies.RoleSets.AdministrationManagement, "administration.manage-users");
