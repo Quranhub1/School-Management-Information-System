@@ -26,6 +26,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Return explicit response DTOs from student registry/detail/create/update, alumni list/detail/create, notices board/create, and timetable entry/conflict/create/update/template endpoints; do not serialize student finance navigation collections.
 - [x] Add API validator tests for admissions, students, notices, timetable and finance administration, plus application tests for scoped staff module access.
 - [x] Add an administrator-facing offline queue/conflict review workspace with metadata-only JSON audit export; automatic replay remains disabled.
+- [x] Remove unsupported payment-channel placeholders and show only SchoolPay (provider credentials required for live activation) and manual payments.
 - [x] Verify the EF Core model snapshot exists; add CI checks for pending model changes and generation of an idempotent migration script.
 - [x] Pin migration generation to `main` and fast-forward before committing generated migrations.
 - [x] Remove duplicate progress metadata and the duplicate system-wide name-display section from this file. The lowercase `progress.md` file is not present on the current baseline.
