@@ -106,7 +106,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             user = new SchoolManagement.Domain.Identity.User
             {
                 Username = username,
-                PasswordHash = AuthService.HashPassword(request.Password!),
+                PasswordHash = passwordHasher.Hash(request.Password!),
                 FirstName = staff.FirstName,
                 LastName = staff.LastName,
                 Email = staff.Email,
@@ -123,7 +123,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             user.Email = staff.Email;
             user.IsActive = staff.IsActive;
             if (!string.IsNullOrWhiteSpace(request.Password))
-                user.PasswordHash = AuthService.HashPassword(request.Password);
+                user.PasswordHash = passwordHasher.Hash(request.Password);
         }
 
         if (selectedRoles.Length > 0)
