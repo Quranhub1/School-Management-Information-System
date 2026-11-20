@@ -11,6 +11,7 @@ import { staffCreateRequestSchema } from '../schemas'
 import { SYSTEM_CURRENCY } from '../lib/currency'
 import { StaffAttendanceManagement } from './StaffAttendanceManagement'
 import { LEAVE_TYPE_OPTIONS, STAFF_TYPE_OPTIONS } from '../constants/referenceEnums'
+import { getUsers, resetUserPassword } from '../api/administration'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment' | 'attendance'
 
@@ -54,6 +55,12 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
   const [leaveDuration, setLeaveDuration] = useState<'single' | 'multiple'>('single')
   const [form, setForm] = useState(emptyStaffForm())
+  const [accountMode, setAccountMode] = useState<'new' | 'existing'>('new')
+  const [accountUsername, setAccountUsername] = useState('')
+  const [accountPassword, setAccountPassword] = useState('')
+  const [credentialFeedback, setCredentialFeedback] = useState('')
+  const [credentialBusy, setCredentialBusy] = useState(false)
+  const [staffStatus, setStaffStatus] = useState<'Active' | 'Inactive'>('Active')
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -107,14 +114,18 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       setValidationErrors({})
       if (editingStaffId) {
         const updated = await updateStaff(editingStaffId, { id: editingStaffId, ...profile })
-        setStaff(current => current.map(item => item.id === updated.id ? updated : item))
+        setStaff(current => current.map(item => item.id === updated.id ? { ...updated, isActive: staffStatus === 'Active' } : item))
+        if (staffStatus === 'Active' && !updated.isActive) await activateStaff(updated.id)
+        if (staffStatus === 'Inactive' && updated.isActive) await deactivateStaff(updated.id)
         setSuccess(`${formatPersonName(updated.lastName, updated.firstName)} was updated successfully.`)
         notify(`${formatPersonName(updated.lastName, updated.firstName)} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
         const created = await createStaff(profile)
+        if (staffStatus === 'Inactive') await deactivateStaff(created.id)
+        const savedStaff = { ...created, isActive: staffStatus === 'Active' }
         // Add the server-confirmed record immediately, then reconcile with the API list.
-        setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
+        setStaff(current => [savedStaff, ...current.filter(item => item.id !== created.id)])
         setSuccess(`${formatPersonName(created.lastName, created.firstName)} was saved and added to the staff table.`)
         notify(`${formatPersonName(created.lastName, created.firstName)} saved successfully.`, 'success', 'Staff saved')
         void listStaff(false).then(latest => {
@@ -124,6 +135,11 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         })
       }
       setForm(emptyStaffForm())
+      setStaffStatus('Active')
+      setAccountMode('new')
+      setAccountUsername('')
+      setAccountPassword('')
+      setCredentialFeedback('')
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
       setError(message)
@@ -134,6 +150,11 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   }
   function beginEdit(person: StaffMember) {
     setEditingStaffId(person.id)
+    setStaffStatus(person.isActive ? 'Active' : 'Inactive')
+    setAccountMode('new')
+    setAccountUsername('')
+    setAccountPassword('')
+    setCredentialFeedback('')
     setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', courseUnitIds: person.courseUnitIds ?? [] })
     setError('')
     setSuccess('')
@@ -141,6 +162,11 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   }
   function cancelEdit() {
     setEditingStaffId(null)
+    setStaffStatus('Active')
+    setAccountMode('new')
+    setAccountUsername('')
+    setAccountPassword('')
+    setCredentialFeedback('')
     setForm(emptyStaffForm())
   }
 
@@ -207,6 +233,23 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   async function handleGeneratePayroll() { setError(''); setSuccess(''); try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll(); setSuccess(`Payroll generation completed for ${new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} ${payrollYear}. Existing entries for this period were retained.`)
       notify('Payroll generation completed successfully.', 'success', 'Payroll generated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to generate payroll.'; setError(message); notify(message, 'error', 'Payroll generation failed') } }
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll();       notify('Payroll payment status updated.', 'success', 'Payroll updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to mark payroll as paid.'; setError(message); notify(message, 'error', 'Payroll update failed') } }
+
+  async function updateExistingStaffCredentials() {
+    const username = accountUsername.trim()
+    if (!username && !accountPassword) { setError('Enter the existing username and at least a new password.'); return }
+    if (!accountPassword.trim()) { setError('Enter a new password to update credentials.'); return }
+    if (accountPassword.length < 8) { setError('Password must contain at least 8 characters.'); return }
+    setCredentialBusy(true); setError(''); setCredentialFeedback('')
+    try {
+      const users = await getUsers()
+      const matched = users.find(user => user.username.toLowerCase() === username.toLowerCase())
+      if (!matched) throw new Error('No existing login account matches that username.')
+      await resetUserPassword(matched.id, accountPassword)
+      setCredentialFeedback(`Credentials updated for ${matched.username}.`)
+      setAccountPassword('')
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update login credentials.') }
+    finally { setCredentialBusy(false) }
+  }
 
   const isDuplicateStaffNumber = /staff number is already registered|staff member with this staff number already exists/i.test(error)
 
@@ -349,20 +392,49 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
               <div className="staff-create-bottom-grid">
                 <section className="staff-create-card">
                   <h3 className="staff-create-card-title">Permissions</h3>
-                  <p className="staff-create-hint">System access is assigned through the existing SMIS role and permission management. Staff categories and job titles do not grant application permissions.</p>
+                  <p className="staff-create-hint">Role and permission assignments will be configured from the permissions list you are providing. Staff category and job title do not grant application access.</p>
                 </section>
                 <section className="staff-create-card">
                   <h3 className="staff-create-card-title">Account & Status</h3>
-                  <p className="staff-create-hint">A staff record is stored independently of login credentials. Create or link a user account through the authorised user-management workflow to avoid creating duplicate identities or exposing passwords in the staff profile.</p>
-                  <span className="staff-create-status">New staff record · Active by default</span>
+                  <p className="staff-create-hint">Set the staff member's employment status below. Login credentials are managed by the secure SMIS identity service.</p>
+                  <span className="staff-create-status">{editingStaffId ? 'Editing existing staff record' : 'New staff record'}</span>
+                </section>
+              </div>
+
+              <div className="staff-create-bottom-grid">
+                <section className="staff-create-card">
+                  <div className="staff-create-card-heading">
+                    <h3 className="staff-create-card-title" id="staff-login-card-title">{accountMode === 'existing' ? 'Change Credentials' : 'Login Details'}</h3>
+                    <div className="staff-create-radio-row" role="radiogroup" aria-label="Account mode">
+                      <label><input type="radio" name="accountMode" value="new" checked={accountMode === 'new'} onChange={() => { setAccountMode('new'); setCredentialFeedback(''); setError('') }} /> New</label>
+                      <label><input type="radio" name="accountMode" value="existing" checked={accountMode === 'existing'} onChange={() => { setAccountMode('existing'); setCredentialFeedback(''); setError('') }} /> Existing</label>
+                    </div>
+                  </div>
+                  <label className="staff-create-field">{accountMode === 'existing' ? 'Existing Username' : 'Username'}
+                    <input autoComplete="username" placeholder={accountMode === 'existing' ? 'Enter existing username' : 'Enter Username'} value={accountUsername} onChange={e => setAccountUsername(e.target.value)} />
+                  </label>
+                  <label className="staff-create-field" style={{ marginTop: 12 }}>{accountMode === 'existing' ? 'New Password' : 'Password'}
+                    <input type="password" autoComplete="new-password" minLength={8} placeholder={accountMode === 'existing' ? 'Enter New Password' : 'Enter Password'} value={accountPassword} onChange={e => setAccountPassword(e.target.value)} />
+                  </label>
+                  {credentialFeedback && <div className="staff-create-credential-feedback" role="status" aria-live="polite">{credentialFeedback}</div>}
+                  {accountMode === 'new' && <p className="staff-create-hint" style={{ marginTop: 10 }}>New account creation will be connected to the role selected in the Permissions section once you provide the role and permission list.</p>}
+                  {accountMode === 'existing' && <p className="staff-create-hint" style={{ marginTop: 10 }}>Enter an existing SMIS username and a new password. This securely resets the account password; usernames are not changed by the current identity API.</p>}
+                </section>
+                <section className="staff-create-card">
+                  <h3 className="staff-create-card-title">Status</h3>
+                  <div className="staff-create-radio-row staff-create-status-options" role="radiogroup" aria-label="Staff status">
+                    <label><input type="radio" name="staffStatus" value="Active" checked={staffStatus === 'Active'} onChange={() => setStaffStatus('Active')} /> Active</label>
+                    <label><input type="radio" name="staffStatus" value="Inactive" checked={staffStatus === 'Inactive'} onChange={() => setStaffStatus('Inactive')} /> Inactive</label>
+                  </div>
                 </section>
               </div>
 
               <div className="staff-create-actions">
-                <button type="submit" className="staff-create-primary">{editingStaffId ? 'Save changes' : 'Add New Staff'}</button>
+                <button type="submit" className="staff-create-primary" disabled={accountMode === 'existing'}>{editingStaffId ? 'Save changes' : 'Add New Staff'}</button>
                 <div className="staff-create-actions-right">
+                  {accountMode === 'existing' && <button type="button" className="staff-create-primary" onClick={() => void updateExistingStaffCredentials()} disabled={credentialBusy}>{credentialBusy ? 'Updating…' : 'Update Staff login details'}</button>}
                   {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
-                  <button type="reset" className="secondary-button" onClick={() => { if (editingStaffId) cancelEdit(); else { setForm(emptyStaffForm()); setValidationErrors({}); setError(''); setSuccess('') } }}>Cancel</button>
+                  <button type="button" className="secondary-button" onClick={() => { if (editingStaffId) cancelEdit(); else { setForm(emptyStaffForm()); setStaffStatus('Active'); setAccountMode('new'); setAccountUsername(''); setAccountPassword(''); setCredentialFeedback(''); setValidationErrors({}); setError(''); setSuccess('') } }}>Cancel</button>
                 </div>
               </div>
             </form>
