@@ -104,6 +104,41 @@ public static class PermissionCatalog
             foreach (var permission in permissions.Values.Where(x => !assignedIds.Contains(x.Id)))
                 db.RolePermissions.Add(new RolePermission { RoleId = adminRole.Id, PermissionId = permission.Id });
         }
+        var roleDefaults = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["AcademicRegistrar"] = ["hr.read-staff", "students.read", "students.create", "students.update", "admissions.read", "admissions.review", "admissions.enrol", "academics.read", "academics.manage-programmes", "academics.manage-courses", "academics.manage-registration", "timetable.read", "timetable.generate", "timetable.edit", "timetable.manage-templates", "exams.read", "attendance.read"],
+            ["AssistantRegistrar"] = ["hr.read-staff", "students.read", "students.create", "students.update", "admissions.read", "admissions.create", "academics.read", "timetable.read", "exams.read", "attendance.read"],
+            ["AdmissionsOfficer"] = ["students.read", "students.create", "admissions.read", "admissions.create", "admissions.review"],
+            ["Lecturer"] = ["hr.read-staff", "students.read", "academics.read", "timetable.read", "exams.read", "exams.enter-marks", "attendance.read", "attendance.record"],
+            ["ExaminationsOfficer"] = ["exams.read", "exams.create", "exams.enter-marks", "exams.approve-results", "exams.print-results", "attendance.read"],
+            ["Accountant"] = ["hr.read-staff", "hr.manage-staff", "hr.read-payroll", "finance.read", "finance.manage-fees", "finance.record-payments", "finance.allocate-payments", "finance.refund", "finance.manage-ledger", "finance.reports"],
+            ["AssistantAccountant"] = ["hr.read-staff", "hr.read-payroll", "finance.read", "finance.record-payments", "finance.allocate-payments", "finance.reports"],
+            ["HrManager"] = ["hr.read-staff", "hr.manage-staff", "hr.manage-accounts", "hr.manage-leave", "hr.read-payroll", "hr.manage-payroll", "hr.manage-attendance"],
+            ["ResidentDirector"] = ["hr.read-staff", "hr.manage-staff", "hr.manage-leave", "hr.read-payroll", "hostel.read", "hostel.manage", "inventory.read"],
+            ["RecordsOfficer"] = ["hr.read-staff", "hr.manage-staff", "students.read", "students.documents", "archives.read", "archives.manage", "audit.read"],
+            ["AdminSecretary"] = ["hr.read-staff", "students.read", "students.create", "students.update", "admissions.read"],
+            ["AssistantPrincipal"] = ["hr.read-staff", "students.read", "academics.read", "timetable.read", "exams.read", "attendance.read", "reports.read"],
+            ["HeadOfDepartment"] = ["hr.read-staff", "academics.read", "timetable.read", "exams.read", "attendance.read", "reports.read"],
+            ["Principal"] = ["hr.read-staff", "students.read", "academics.read", "timetable.read", "exams.read", "attendance.read", "finance.read", "reports.read", "reports.export"],
+            ["Director"] = ["hr.read-staff", "students.read", "academics.read", "finance.read", "reports.read", "reports.export"],
+            ["Secretary"] = ["communications.read", "communications.send", "reports.read"],
+            ["Receptionist"] = ["students.read", "admissions.read", "communications.read"],
+            ["Librarian"] = ["library.read", "library.manage-books", "library.manage-circulation"],
+            ["SchoolWarden"] = ["hostel.read", "hostel.manage", "inventory.read", "inventory.issue"],
+            ["MedicalOfficer"] = ["medical.read", "medical.manage", "students.read"]
+        };
+
+        foreach (var (roleName, codes) in roleDefaults)
+        {
+            if (!roles.TryGetValue(roleName, out var role)) continue;
+            var assignedIds = await db.RolePermissions.Where(x => x.RoleId == role.Id).Select(x => x.PermissionId).ToListAsync(cancellationToken);
+            var assigned = assignedIds.ToHashSet();
+            foreach (var code in codes)
+            {
+                if (!permissions.TryGetValue(code, out var permission) || assigned.Contains(permission.Id)) continue;
+                db.RolePermissions.Add(new RolePermission { RoleId = role.Id, PermissionId = permission.Id });
+            }
+        }
         await db.SaveChangesAsync(cancellationToken);
     }
 }
