@@ -149,6 +149,10 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             HighestQualification = Clean(request.HighestQualification),
             Speciality = Clean(request.Speciality),
             ProfessionalRegistration = Clean(request.ProfessionalRegistration),
+            DateJoined = request.DateJoined, Gender = Clean(request.Gender), DateOfBirth = request.DateOfBirth,
+            Address = Clean(request.Address), BankName = Clean(request.BankName), BankAccountNumber = Clean(request.BankAccountNumber),
+            BankAddress = Clean(request.BankAddress), BasicSalary = request.BasicSalary, AttendanceMode = Clean(request.AttendanceMode),
+            PhotographDataUrl = request.PhotographDataUrl,
             CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds)
         };
         db.StaffMembers.Add(staff);
@@ -179,7 +183,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
                 if (roleNames.Length == 0) return BadRequest(new { message = "Select at least one role for the new login account." });
                 var roleEntities = await db.Roles.Where(x => roleNames.Contains(x.Name)).ToListAsync(cancellationToken);
                 if (roleEntities.Count != roleNames.Length) return BadRequest(new { message = "One or more selected roles are invalid." });
-                linkedUser = new User { Username = username, PasswordHash = AuthService.HashPassword(request.Account.Password), FirstName = staff.FirstName, LastName = staff.LastName, Email = staff.Email };
+                linkedUser = new User { Username = username, PasswordHash = passwordHasher.Hash(request.Account.Password), FirstName = staff.FirstName, LastName = staff.LastName, Email = staff.Email };
                 db.Users.Add(linkedUser);
                 db.UserRoles.AddRange(roleEntities.Select(role => new UserRole { UserId = linkedUser.Id, RoleId = role.Id }));
             }
@@ -281,6 +285,10 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         staff.HighestQualification = Clean(request.HighestQualification);
         staff.Speciality = Clean(request.Speciality);
         staff.ProfessionalRegistration = Clean(request.ProfessionalRegistration);
+        staff.DateJoined = request.DateJoined; staff.Gender = Clean(request.Gender); staff.DateOfBirth = request.DateOfBirth;
+        staff.Address = Clean(request.Address); staff.BankName = Clean(request.BankName); staff.BankAccountNumber = Clean(request.BankAccountNumber);
+        staff.BankAddress = Clean(request.BankAddress); staff.BasicSalary = request.BasicSalary; staff.AttendanceMode = Clean(request.AttendanceMode);
+        if (request.PhotographDataUrl is not null) staff.PhotographDataUrl = request.PhotographDataUrl;
         staff.CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(ToProfile(staff));
@@ -427,7 +435,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
 }
 
 public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, bool CreateLoginAccount = false, string? Username = null, string? Password = null, string[]? RoleNames = null, string[]? PermissionCodes = null, string[]? DeniedPermissionCodes = null, StaffAccountRequest? Account = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null, string? PhotographDataUrl = null);
-public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
+public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null, string? PhotographDataUrl = null);
 public sealed record StaffAccountRequest(Guid? ExistingUserId = null, string? Username = null, string? Password = null, string[]? Roles = null, string[]? PermissionCodes = null, bool ReplaceDirectPermissions = false);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);
