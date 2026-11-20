@@ -44,7 +44,7 @@ const STAFF_ACCESS_OPTIONS: StaffAccessOption[] = [
   { code: 'backups.manage', label: 'Manage logs & backups', group: 'System administration', restricted: true },
 ]
 
-export function StaffManagement({ canManage = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; activeSubsection?: string | null }) {
+export function StaffManagement({ canManage = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, canManageAccounts = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; canManageAccounts?: boolean; activeSubsection?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
@@ -376,6 +376,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                 </section>
               )}
 
+              {canManageAccounts && (<>
               <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid #e5e7eb' }}>
                   <div><h3 style={{ margin: '0 0 4px', color: '#111827', fontSize: 16, fontWeight: 750 }}>Administrator Permissions</h3><p style={{ margin: 0, color: '#64748b', fontSize: 12 }}>Choose the screens and actions this staff login can access. Each selection is assigned as a dedicated access role.</p></div>
@@ -410,6 +411,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                 </div>
                 <p style={{ margin: '10px 0 0', color: '#64748b', fontSize: 12 }}>{accountLinked ? 'Existing account will retain its password unless a new one is entered. Selected access roles replace its current staff access profile.' : 'A login account is created when you enter a username, password and select at least one permission. Passwords are stored as secure hashes.'}</p>
               </section>
+              </>)}
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '4px 0 10px' }}>
                 <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
