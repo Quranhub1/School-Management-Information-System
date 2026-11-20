@@ -11,7 +11,7 @@ import { staffCreateRequestSchema } from '../schemas'
 import { SYSTEM_CURRENCY } from '../lib/currency'
 import { StaffAttendanceManagement } from './StaffAttendanceManagement'
 import { LEAVE_TYPE_OPTIONS, STAFF_TYPE_OPTIONS } from '../constants/referenceEnums'
-import { getUsers, resetUserPassword, createUser, getPermissionCatalogue, getPermissionRoles, type PermissionGroup, type PermissionRole } from '../api/administration'
+import { getUsers, resetUserPassword, getPermissionCatalogue, getPermissionRoles, type PermissionGroup, type PermissionRole } from '../api/administration'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment' | 'attendance'
 
@@ -148,7 +148,25 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         notify(`${formatPersonName(updated.lastName, updated.firstName)} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
-        const created = await createStaff(profile)
+        let account: import('../api/staff').StaffAccountInput | undefined
+        if (accountMode === 'new') {
+          const hasUsername = Boolean(accountUsername.trim())
+          const hasPassword = Boolean(accountPassword)
+          if (hasUsername !== hasPassword) throw new Error('Enter both a username and password to create the staff login account.')
+          if (hasUsername) {
+            if (!selectedAccountRole) throw new Error('Select a role for the new staff login account.')
+            account = { username: accountUsername.trim(), password: accountPassword, roles: [selectedAccountRole], permissionCodes: selectedPermissions }
+          } else if (selectedPermissions.length > 0) {
+            throw new Error('Enter login details before assigning permissions to this staff member.')
+          }
+        } else {
+          if (!accountUsername.trim()) throw new Error('Enter the username of the existing account to link.')
+          const existingUsers = await getUsers()
+          const matched = existingUsers.find(user => user.username.toLowerCase() === accountUsername.trim().toLowerCase())
+          if (!matched) throw new Error('No existing SMIS account matches that username.')
+          account = { existingUserId: matched.id, password: accountPassword || undefined, permissionCodes: selectedPermissions }
+        }
+        const created = await createStaff(profile, account)
         if (staffStatus === 'Inactive') await deactivateStaff(created.id)
         const savedStaff = { ...created, isActive: staffStatus === 'Active' }
         // Add the server-confirmed record immediately, then reconcile with the API list.
@@ -479,8 +497,16 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                     <input type="password" autoComplete="new-password" minLength={8} placeholder={accountMode === 'existing' ? 'Enter New Password' : 'Enter Password'} value={accountPassword} onChange={e => setAccountPassword(e.target.value)} />
                   </label>
                   {credentialFeedback && <div className="staff-create-credential-feedback" role="status" aria-live="polite">{credentialFeedback}</div>}
-                  {accountMode === 'new' && <p className="staff-create-hint" style={{ marginTop: 10 }}>New account creation will be connected to the role selected in the Permissions section once you provide the role and permission list.</p>}
-                  {accountMode === 'existing' && <p className="staff-create-hint" style={{ marginTop: 10 }}>Enter an existing SMIS username and a new password. This securely resets the account password; usernames are not changed by the current identity API.</p>}
+                  {accountMode === 'new' && <>
+                    <label className="staff-create-field" style={{ marginTop: 12 }}>Login role
+                      <select value={selectedAccountRole} onChange={event => setSelectedAccountRole(event.target.value)} disabled={permissionsLoading}>
+                        <option value="">Select a role</option>
+                        {availableRoles.map(role => <option key={role.id} value={role.name}>{role.name}</option>)}
+                      </select>
+                    </label>
+                    <p className="staff-create-hint" style={{ marginTop: 10 }}>The new account is created with this role. The selected permissions below are saved as additional individual grants.</p>
+                  </>}
+                  {accountMode === 'existing' && <p className="staff-create-hint" style={{ marginTop: 10 }}>The existing account will be linked to this staff profile. Enter a new password only if you also want to reset it. The selected permissions are saved as individual grants.</p>}
                 </section>
                 <section className="staff-create-card">
                   <h3 className="staff-create-card-title">Status</h3>
@@ -492,7 +518,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
               </div>
 
               <div className="staff-create-actions">
-                <button type="submit" className="staff-create-primary" disabled={accountMode === 'existing'}>{editingStaffId ? 'Save changes' : 'Add New Staff'}</button>
+                <button type="submit" className="staff-create-primary" disabled={permissionsLoading || Boolean(editingStaffId && accountMode === 'existing')}>{editingStaffId ? 'Save changes' : accountMode === 'existing' ? 'Link Account & Add Staff' : 'Add New Staff'}</button>
                 <div className="staff-create-actions-right">
                   {accountMode === 'existing' && <button type="button" className="staff-create-primary" onClick={() => void updateExistingStaffCredentials()} disabled={credentialBusy}>{credentialBusy ? 'Updating…' : 'Update Staff login details'}</button>}
                   {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
