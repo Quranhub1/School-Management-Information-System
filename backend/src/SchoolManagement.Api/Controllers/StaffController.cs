@@ -282,7 +282,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             return BadRequest(new { message = "Staff photograph must be a supported image smaller than 1.5 MB." });
         staff.BasicSalary = request.BasicSalary;
         staff.AttendanceMode = Clean(request.AttendanceMode);
-        staff.PhotographDataUrl = request.PhotographDataUrl;
+        if (request.PhotographDataUrl is not null) staff.PhotographDataUrl = request.PhotographDataUrl;
         staff.CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds);
         var linkedAccount = await db.StaffUserLinks.SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
         if (linkedAccount is not null)
@@ -341,7 +341,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         staff.DepartmentId, staff.JobTitle, staff.HighestQualification, staff.Speciality,
         staff.ProfessionalRegistration, staff.DateJoined, staff.Gender, staff.DateOfBirth,
         staff.Address, staff.BankName, staff.BankAccountNumber, staff.BankAddress,
-        staff.BasicSalary, staff.AttendanceMode, staff.PhotographDataUrl,
+        staff.BasicSalary, staff.AttendanceMode, HasPhotograph = !string.IsNullOrWhiteSpace(staff.PhotographDataUrl),
         CourseUnitIds = JsonSerializer.Deserialize<Guid[]>(staff.CourseUnitIdsJson ?? "[]") ?? Array.Empty<Guid>()
     };
 
