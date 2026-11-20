@@ -341,21 +341,3 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         entry.GeneratedAt,
         entry.GenerationSource);
 }
-
-public sealed record CreateTimetableEntryDto(
-    Guid TeachingGroupId,
-    Guid CourseId,
-    Guid TeacherId,
-    DayOfWeek DayOfWeek,
-    TimeOnly StartTime,
-    TimeOnly EndTime,
-    string? Room,
-    string? SessionType,
-    Guid CurriculumId,
-    int YearOfStudy,
-    int CurriculumSemesterNumber);
-
-public sealed record SaveTimetableTemplateDto(
-    Guid TeachingGroupId,
-    IReadOnlyList<CreateTimetableEntryDto> Entries,
-    string? LayoutJson = null);
