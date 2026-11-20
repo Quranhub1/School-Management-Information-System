@@ -126,10 +126,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   useEffect(() => { if (canReadPayroll && tab === 'payroll') void loadPayroll() }, [tab, canReadPayroll])
 
   async function saveAccountForStaff(staffId: string) {
-    const requested = accountForm.username.trim() || accountForm.password.trim() || accountForm.permissions.length > 0
+    const requested = accountForm.password.trim() || accountForm.permissions.length > 0 || (!accountLinked && accountForm.username.trim())
     if (!requested) return
     if (!accountForm.username.trim()) throw new Error('Enter a username for the staff login account.')
-    if (accountForm.permissions.length === 0) throw new Error('Select at least one screen or action for this staff account.')
+    if (!accountLinked && accountForm.permissions.length === 0) throw new Error('Select at least one screen or action for this staff account.')
     if (!accountLinked && accountForm.mode === 'new' && accountForm.password.length < 8) throw new Error('A new staff login password must contain at least 8 characters.')
     setSavingAccount(true)
     try {
