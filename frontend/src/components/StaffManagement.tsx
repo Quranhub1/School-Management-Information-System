@@ -465,9 +465,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   </div>
                   <div className="staff-permission-groups">
                     {filteredPermissionGroups.map(group => {
-                      const groupIds = group.permissions.map(permission => permission.id)
+                      const groupIds = STAFF_PERMISSION_GROUPS.find(item => item.id === group.id)?.permissions.map(permission => permission.id) ?? []
                       const selectedCount = groupIds.filter(id => selectedPermissions.includes(id)).length
-                      const allSelected = selectedCount === STAFF_PERMISSION_GROUPS.find(item => item.id === group.id)?.permissions.length
+                      const allSelected = groupIds.length > 0 && selectedCount === groupIds.length
                       return <details className="staff-permission-group" key={group.id} open={Boolean(permissionSearch.trim())}>
                         <summary>
                           <input type="checkbox" aria-label={`Select all ${group.label} permissions`} checked={allSelected} onChange={event => togglePermissionGroup(group.id, event.target.checked)} onClick={event => event.stopPropagation()} />
