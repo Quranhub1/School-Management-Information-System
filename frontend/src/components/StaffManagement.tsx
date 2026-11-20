@@ -1,4 +1,5 @@
 import { formatPersonName } from '../utils/personName'
+import './StaffCreateForm.css'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
@@ -271,52 +272,99 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       {tab === 'staff' && (
         <>
           {canManage && (
-            <form className="grid-form" onSubmit={submit}>
-              <input placeholder="Staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
-              <input placeholder="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
-              <input placeholder="Last name" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
-              <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
-              <label className="field-label">Staff category
-                <select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
-                  {STAFF_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-              </label>
-              <label className="field-label">Employment type
-                <select aria-label="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required>
-                  <option value="Permanent">Permanent</option><option value="Temporary">Temporary</option><option value="Part-time">Part-time</option>
-                </select>
-              </label>
-              <label className="field-label">Department
-                <select aria-label="Department" value={form.departmentId} onChange={e => setForm({ ...form, departmentId: e.target.value })}>
-                  <option value="">Select department</option>{departments.map(d => <option key={d.id} value={d.id}>{d.code} — {d.name}</option>)}
-                </select>
-              </label>
-              <input placeholder="Job title / designation" value={form.jobTitle} onChange={e => setForm({ ...form, jobTitle: e.target.value })} />
-              <input placeholder="Highest qualification" value={form.highestQualification} onChange={e => setForm({ ...form, highestQualification: e.target.value })} />
-              <input placeholder="Speciality / area of expertise" value={form.speciality} onChange={e => setForm({ ...form, speciality: e.target.value })} />
-              <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
-              <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
-              <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
-                <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                  
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{form.courseUnitIds.length} selected</span>
+            <form className="staff-create-form" onSubmit={submit}>
+              <section className="staff-create-card">
+                <h3 className="staff-create-card-title">Personal Details</h3>
+                <div className="staff-create-grid staff-create-grid-3">
+                  <label className="staff-create-field">Staff Number
+                    <input placeholder="Enter staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
+                    {validationErrors.staffNumber && <small className="staff-create-error">{validationErrors.staffNumber}</small>}
+                  </label>
+                  <label className="staff-create-field">First Name
+                    <input placeholder="Enter first name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
+                  </label>
+                  <label className="staff-create-field">Last Name
+                    <input placeholder="Enter last name" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
+                  </label>
+                  <label className="staff-create-field">National ID
+                    <input placeholder="National identification number" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
+                  </label>
+                  <label className="staff-create-field">Phone
+                    <input type="tel" placeholder="Enter phone number" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
+                  </label>
+                  <label className="staff-create-field">Email
+                    <input type="email" placeholder="Enter email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                  </label>
                 </div>
-                {courseUnits.length === 0
-                  ? <p role="status" style={{ margin: 0, padding: '8px 0', color: '#64748b', fontSize: 13 }}>No active course units are available. Check that the course catalogue is populated and the API lookup request succeeds.</p>
-                  : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 6, maxHeight: 220, overflowY: 'auto', padding: 2 }}>
-                    {courseUnits.map(unit => {
-                      const checked = form.courseUnitIds.includes(unit.id)
-                      return <label key={unit.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 9px', border: `1px solid ${checked ? '#86efac' : '#e2e8f0'}`, borderRadius: 4, background: checked ? '#f0fdf4' : '#fff', cursor: 'pointer', fontSize: 13 }}>
-                        <input type="checkbox" checked={checked} onChange={e => setForm(current => ({ ...current, courseUnitIds: e.target.checked ? [...current.courseUnitIds.filter(id => id !== unit.id), unit.id] : current.courseUnitIds.filter(id => id !== unit.id) }))} style={{ marginTop: 2, flexShrink: 0 }} />
-                        <span><strong>{unit.code}</strong> — {unit.name} <span style={{ color: '#64748b' }}>({unit.creditUnits} CU)</span></span>
-                      </label>
-                    })}
-                  </div>}
-              </fieldset>}
-              <button type="submit" className={editingStaffId ? undefined : 'staff-add-button'} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #166534', borderRadius: 3, padding: '6px 12px', minHeight: 32, width: 'fit-content', maxWidth: '100%', alignSelf: 'start', fontSize: 13, lineHeight: 1.2, fontWeight: 600, cursor: 'pointer' }}>{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
-              {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
+              </section>
+
+              <section className="staff-create-card">
+                <h3 className="staff-create-card-title">Joining Detail</h3>
+                <div className="staff-create-grid staff-create-grid-3">
+                  <label className="staff-create-field">Staff Category
+                    <select value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
+                      {STAFF_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                  </label>
+                  <label className="staff-create-field">Employment Type
+                    <select value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required>
+                      <option value="Permanent">Permanent</option><option value="Temporary">Temporary</option><option value="Part-time">Part-time</option>
+                    </select>
+                  </label>
+                  <label className="staff-create-field">Department
+                    <select value={form.departmentId} onChange={e => setForm({ ...form, departmentId: e.target.value })}>
+                      <option value="">Select department</option>{departments.map(d => <option key={d.id} value={d.id}>{d.code} — {d.name}</option>)}
+                    </select>
+                  </label>
+                  <label className="staff-create-field">Designation / Job Title
+                    <input placeholder="e.g. Senior Tutor, Administrator" value={form.jobTitle} onChange={e => setForm({ ...form, jobTitle: e.target.value })} />
+                  </label>
+                  <label className="staff-create-field">Highest Qualification
+                    <input placeholder="Enter qualification" value={form.highestQualification} onChange={e => setForm({ ...form, highestQualification: e.target.value })} />
+                  </label>
+                  <label className="staff-create-field">Specialities
+                    <input placeholder="Area of expertise" value={form.speciality} onChange={e => setForm({ ...form, speciality: e.target.value })} />
+                  </label>
+                  <label className="staff-create-field">Professional Registration
+                    <input placeholder="Registration / licence number" value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
+                  </label>
+                </div>
+                {form.staffType === 'Teaching' && <fieldset className="staff-create-course-units">
+                  <legend>Course units taught</legend>
+                  <div className="staff-create-course-summary">{form.courseUnitIds.length} selected</div>
+                  {courseUnits.length === 0
+                    ? <p className="staff-create-hint">No active course units are available. Populate the course catalogue or check the staff lookup API.</p>
+                    : <div className="staff-create-permissions-grid">
+                      {courseUnits.map(unit => {
+                        const checked = form.courseUnitIds.includes(unit.id)
+                        return <label key={unit.id} className="staff-create-check">
+                          <input type="checkbox" checked={checked} onChange={e => setForm(current => ({ ...current, courseUnitIds: e.target.checked ? [...current.courseUnitIds.filter(id => id !== unit.id), unit.id] : current.courseUnitIds.filter(id => id !== unit.id) }))} />
+                          <span><strong>{unit.code}</strong> — {unit.name} <small>({unit.creditUnits} CU)</small></span>
+                        </label>
+                      })}
+                    </div>}
+                </fieldset>}
+              </section>
+
+              <div className="staff-create-bottom-grid">
+                <section className="staff-create-card">
+                  <h3 className="staff-create-card-title">Permissions</h3>
+                  <p className="staff-create-hint">System access is assigned through the existing SMIS role and permission management. Staff categories and job titles do not grant application permissions.</p>
+                </section>
+                <section className="staff-create-card">
+                  <h3 className="staff-create-card-title">Account & Status</h3>
+                  <p className="staff-create-hint">A staff record is stored independently of login credentials. Create or link a user account through the authorised user-management workflow to avoid creating duplicate identities or exposing passwords in the staff profile.</p>
+                  <span className="staff-create-status">New staff record · Active by default</span>
+                </section>
+              </div>
+
+              <div className="staff-create-actions">
+                <button type="submit" className="staff-create-primary">{editingStaffId ? 'Save changes' : 'Add New Staff'}</button>
+                <div className="staff-create-actions-right">
+                  {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
+                  <button type="reset" className="secondary-button" onClick={() => { if (editingStaffId) cancelEdit(); else { setForm(emptyStaffForm()); setValidationErrors({}); setError(''); setSuccess('') } }}>Cancel</button>
+                </div>
+              </div>
             </form>
           )}
           <div className="table-wrap">
