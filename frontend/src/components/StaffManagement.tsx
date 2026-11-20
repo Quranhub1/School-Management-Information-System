@@ -271,52 +271,57 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       {tab === 'staff' && (
         <>
           {canManage && (
-            <form className="grid-form" onSubmit={submit}>
-              <input placeholder="Staff number" aria-invalid={Boolean(validationErrors.staffNumber)} value={form.staffNumber} onChange={e => { setForm({ ...form, staffNumber: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.staffNumber; return next }) }} required />
-              <input placeholder="First name" aria-invalid={Boolean(validationErrors.firstName)} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.firstName; return next }) }} required />
-              <input placeholder="Last name" aria-invalid={Boolean(validationErrors.lastName)} value={form.lastName} onChange={e => { setForm({ ...form, lastName: e.target.value }); setValidationErrors(current => { const next = { ...current }; delete next.lastName; return next }) }} required />
-              <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
-              <label className="field-label">Staff category
-                <select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
-                  {STAFF_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-              </label>
-              <label className="field-label">Employment type
-                <select aria-label="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required>
-                  <option value="Permanent">Permanent</option><option value="Temporary">Temporary</option><option value="Part-time">Part-time</option>
-                </select>
-              </label>
-              <label className="field-label">Department
-                <select aria-label="Department" value={form.departmentId} onChange={e => setForm({ ...form, departmentId: e.target.value })}>
-                  <option value="">Select department</option>{departments.map(d => <option key={d.id} value={d.id}>{d.code} — {d.name}</option>)}
-                </select>
-              </label>
-              <input placeholder="Job title / designation" value={form.jobTitle} onChange={e => setForm({ ...form, jobTitle: e.target.value })} />
-              <input placeholder="Highest qualification" value={form.highestQualification} onChange={e => setForm({ ...form, highestQualification: e.target.value })} />
-              <input placeholder="Speciality / area of expertise" value={form.speciality} onChange={e => setForm({ ...form, speciality: e.target.value })} />
-              <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
-              <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
-              <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
-                <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                  
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{form.courseUnitIds.length} selected</span>
+            <form onSubmit={submit} className="staff-recruitment-form" style={{ display: 'grid', gap:: 16 }}>
+              <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
+                <h3 style={{ margin: '0 0 16px', color: '#111827', fontSize: 16, fontWeight: 750 }}>Personal Details</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px 18px' }}>
+                  <label className="field-label">Staff number<input aria-label="Staff number" placeholder="Enter staff number" value={form.staffNumber} onChange={e => setForm({ ...form, staffNumber: e.target.value })} required /></label>
+                  <label className="field-label">First name<input aria-label="First name" placeholder="Enter first name" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} required /></label>
+                  <label className="field-label">Last name<input aria-label="Last name" placeholder="Enter last name" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} required /></label>
+                  <label className="field-label">National ID<input aria-label="National ID" placeholder="National identification number" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} /></label>
+                  <label className="field-label">Phone<input aria-label="Phone" type="tel" placeholder="Enter phone number" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} /></label>
+                  <label className="field-label">Email<input aria-label="Email" type="email" placeholder="Enter email address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></label>
                 </div>
-                {courseUnits.length === 0
-                  ? <p role="status" style={{ margin: 0, padding: '8px 0', color: '#64748b', fontSize: 13 }}>No active course units are available. Check that the course catalogue is populated and the API lookup request succeeds.</p>
-                  : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 6, maxHeight: 220, overflowY: 'auto', padding: 2 }}>
+              </section>
+
+              <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
+                <h3 style={{ margin: '0 0 16px', color: '#111827', fontSize: 16, fontWeight: 750 }}>Joining Details</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px 18px' }}>
+                  <label className="field-label">Staff category<select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>{STAFF_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+                  <label className="field-label">Employment type<select aria-label="Employment type" value={form.employmentType} onChange={e => setForm({ ...form, employmentType: e.target.value })} required><option value="Permanent">Permanent</option><option value="Temporary">Temporary</option><option value="Part-time">Part-time</option></select></label>
+                  <label className="field-label">Department<select aria-label="Department" value={form.departmentId} onChange={e => setForm({ ...form, departmentId: e.target.value })}><option value="">Select department</option>{departments.map(d => <option key={d.id} value={d.id}>{d.code} — {d.name}</option>)}</select></label>
+                  <label className="field-label">Designation / job title<input aria-label="Designation / job title" placeholder="Enter designation" value={form.jobTitle} onChange={e => setForm({ ...form, jobTitle: e.target.value })} /></label>
+                  <label className="field-label">Highest qualification<input aria-label="Highest qualification" placeholder="Enter qualification" value={form.highestQualification} onChange={e => setForm({ ...form, highestQualification: e.target.value })} /></label>
+                  <label className="field-label">Speciality<input aria-label="Speciality" placeholder="Area of expertise" value={form.speciality} onChange={e => setForm({ ...form, speciality: e.target.value })} /></label>
+                  <label className="field-label">Professional registration<input aria-label="Professional registration" placeholder="Registration / licence number" value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} /></label>
+                </div>
+              </section>
+
+              {form.staffType === 'Teaching' && (
+                <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+                    <h3 style={{ margin: 0, color: '#111827', fontSize: 16, fontWeight: 750 }}>Course Units Assigned</h3>
+                    <span className="badge">{form.courseUnitIds.length} selected</span>
+                  </div>
+                  {courseUnits.length === 0 ? <p className="empty">No active course units are available in the academic catalogue.</p> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,250px),1fr))', gap: 8, maxHeight: 240, overflowY: 'auto' }}>
                     {courseUnits.map(unit => {
                       const checked = form.courseUnitIds.includes(unit.id)
-                      return <label key={unit.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 9px', border: `1px solid ${checked ? '#86efac' : '#e2e8f0'}`, borderRadius: 4, background: checked ? '#f0fdf4' : '#fff', cursor: 'pointer', fontSize: 13 }}>
-                        <input type="checkbox" checked={checked} onChange={e => setForm(current => ({ ...current, courseUnitIds: e.target.checked ? [...current.courseUnitIds.filter(id => id !== unit.id), unit.id] : current.courseUnitIds.filter(id => id !== unit.id) }))} style={{ marginTop: 2, flexShrink: 0 }} />
+                      return <label key={unit.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '9px 10px', border: `1px solid ${checked ? '#93c5fd' : '#e2e8f0'}`, borderRadius: 6, background: checked ? '#eff6ff' : '#f8fafc', cursor: 'pointer', fontSize: 13 }}>
+                        <input type="checkbox" checked={checked} onChange={e => setForm(current => ({ ...current, courseUnitIds: e.target.checked ? [...current.courseUnitIds.filter(id => id !== unit.id), unit.id] : current.courseUnitIds.filter(id => id !== unit.id) }))} />
                         <span><strong>{unit.code}</strong> — {unit.name} <span style={{ color: '#64748b' }}>({unit.creditUnits} CU)</span></span>
                       </label>
                     })}
                   </div>}
-              </fieldset>}
-              <button type="submit" className={editingStaffId ? undefined : 'staff-add-button'} style={{ backgroundColor: '#15803d', color: '#ffffff', border: '1px solid #166534', borderRadius: 3, padding: '6px 12px', minHeight: 32, width: 'fit-content', maxWidth: '100%', alignSelf: 'start', fontSize: 13, lineHeight: 1.2, fontWeight: 600, cursor: 'pointer' }}>{editingStaffId ? 'Save changes' : 'Add staff member'}</button>
-              {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
+                </section>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '4px 0 10px' }}>
+                <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
+                  <button type="submit" disabled={loading} style={{ background: '#15803d', color: '#fff', border: '1px solid #166534', borderRadius: 6, padding: '10px 18px', fontWeight: 700 }}>{editingStaffId ? 'Update Staff' : 'Add New Staff'}</button>
+                  {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
+                </div>
+                <span style={{ color: '#64748b', fontSize: 12 }}>Staff details are validated and saved to the institutional database.</span>
+              </div>
             </form>
           )}
           <div className="table-wrap">
