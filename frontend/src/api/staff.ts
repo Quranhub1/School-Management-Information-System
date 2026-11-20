@@ -27,6 +27,10 @@ export function notifyStaffChanged(staff?: StaffMember) {
   }
 }
 
+export type StaffAccountProfile = { linked: boolean; username?: string | null; permissions: string[]; isActive?: boolean };
+export type SaveStaffAccountInput = { username: string; password?: string; permissions: string[] };
+export function getStaffAccount(id: string) { return request<StaffAccountProfile>(`/api/staff/${encodeURIComponent(id)}/account`); }
+export function saveStaffAccount(id: string, input: SaveStaffAccountInput) { return request<StaffAccountProfile>(`/api/staff/${encodeURIComponent(id)}/account`, { method: 'PUT', body: JSON.stringify(input) }); }
 export function listStaff(activeOnly=true){ return request<StaffMember[]>(`/api/staff?activeOnly=${activeOnly}`); }
 export function listStaffCourseUnits(){ return request<StaffCourseUnit[]>('/api/staff/course-units'); }
 export function listStaffDepartments(){ return request<StaffDepartment[]>('/api/staff/departments'); }
