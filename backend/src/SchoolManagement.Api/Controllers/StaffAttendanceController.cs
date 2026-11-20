@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/staff-attendance")]
-[Authorize]
+[Authorize(Policy = StaffPolicies.Read)]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class StaffAttendanceController(
     SchoolManagementDbContext db,
