@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Application.Students;
 using SchoolManagement.Application.Finance;
 using SchoolManagement.Api.BackgroundServices;
 using SchoolManagement.Infrastructure;
@@ -64,6 +65,12 @@ builder.Services.AddControllers().AddJsonOptions(o =>
     // Accept those strings consistently instead of requiring numeric enum values.
     o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     o.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+}).AddFluentValidation(fv =>
+{
+    // Registers all AbstractValidator<T> types in the Application assembly (where the student
+    // validators live) and integrates them with ASP.NET Core model binding so
+    // [FromBody] request records are validated and ModelState.IsValid reflects the result.
+    fv.RegisterValidatorsFromAssemblyContaining<CreateStudentRequestValidator>();
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
