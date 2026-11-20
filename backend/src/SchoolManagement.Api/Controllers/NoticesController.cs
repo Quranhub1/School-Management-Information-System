@@ -59,18 +59,7 @@ public sealed class NoticesController(SchoolManagementDbContext db) : Controller
     [Authorize(Policy = AuthorizationPolicies.CommunicationManagement)]
     public async Task<ActionResult<NoticeResponse>> Create([FromBody] CreateNoticeRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Body))
-            return BadRequest("A notice title and message are required.");
-
         var audience = request.Audience.Trim();
-        if (!audience.Equals("All", StringComparison.OrdinalIgnoreCase)
-            && !(audience.StartsWith("Role:", StringComparison.OrdinalIgnoreCase)
-                || audience.StartsWith("Department:", StringComparison.OrdinalIgnoreCase)))
-            return BadRequest("Choose All, a role, or a department as the notice audience.");
-
-        if (audience.StartsWith("Role:", StringComparison.OrdinalIgnoreCase)
-            && audience["Role:".Length..].Trim().Equals(InstitutionalRoles.Student, StringComparison.OrdinalIgnoreCase))
-            return BadRequest("Student notices are not supported in the administrative SMIS.");
 
         var createdBy = User.Identity?.Name
             ?? User.FindFirstValue(ClaimTypes.Name)
