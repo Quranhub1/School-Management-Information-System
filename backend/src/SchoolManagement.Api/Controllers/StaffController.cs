@@ -121,12 +121,11 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
                 return BadRequest(new { message = "One or more selected permissions are not in the central catalogue." });
             db.StaffUserLinks.Add(new StaffUserLink { StaffId = staff.Id, UserId = linkedUser.Id });
             var previousDirectGrants = await db.UserPermissions.Where(x => x.UserId == linkedUser.Id).ToListAsync(cancellationToken);
+            var previousPermissionIds = previousDirectGrants.Select(x => x.PermissionId).ToHashSet();
+            var desiredPermissionIds = permissionEntities.Select(x => x.Id).ToHashSet();
             if (request.Account.ReplaceDirectPermissions)
-                db.UserPermissions.RemoveRange(previousDirectGrants);
-            var existingPermissionIds = request.Account.ReplaceDirectPermissions
-                ? new HashSet<Guid>()
-                : previousDirectGrants.Select(x => x.PermissionId).ToHashSet();
-            db.UserPermissions.AddRange(permissionEntities.Where(permission => !existingPermissionIds.Contains(permission.Id))
+                db.UserPermissions.RemoveRange(previousDirectGrants.Where(x => !desiredPermissionIds.Contains(x.PermissionId)));
+            db.UserPermissions.AddRange(permissionEntities.Where(permission => !previousPermissionIds.Contains(permission.Id))
                 .Select(permission => new UserPermission { UserId = linkedUser.Id, PermissionId = permission.Id }));
         }
         await db.SaveChangesAsync(cancellationToken);
