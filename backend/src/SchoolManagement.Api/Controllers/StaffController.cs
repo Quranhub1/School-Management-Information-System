@@ -6,6 +6,7 @@ using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Staff;
 using SchoolManagement.Application.Authentication;
 using SchoolManagement.Domain.Staff;
+using SchoolManagement.Domain.Identity;
 using SchoolManagement.Domain.People;
 using System.Text.Json;
 using SchoolManagement.Infrastructure.Persistence;
