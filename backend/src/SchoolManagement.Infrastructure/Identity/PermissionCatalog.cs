@@ -186,6 +186,10 @@ public static class PermissionCatalog
             {
                 if (!permissions.TryGetValue(code, out var permission) || assigned.Contains(permission.Id)) continue;
                 db.RolePermissions.Add(new RolePermission { RoleId = role.Id, PermissionId = permission.Id });
+                // Keep the in-memory key set in sync while adding multiple defaults.
+                // Database queries do not include unsaved tracked entities, so without
+                // this update duplicate composite keys can be queued in the same seed pass.
+                assigned.Add(permission.Id);
             }
         }
         await db.SaveChangesAsync(cancellationToken);
