@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application.Authentication;
+using SchoolManagement.Application.Authorization;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -35,7 +36,9 @@ public sealed class AuthController(AuthService auth, IConfiguration configuratio
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
-        claims.AddRange(user.Permissions.Select(permission => new Claim("permission", permission)));
+        var grantedPermissions = user.Permissions.ToHashSet(StringComparer.Ordinal);
+        var permissionBits = new string(PermissionCatalog.All.Select(permission => grantedPermissions.Contains(permission.Code) ? '1' : '0').ToArray());
+        claims.Add(new Claim("permission_set", permissionBits));
 
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
