@@ -34,8 +34,8 @@ public sealed class SeedAcademicYearsAndIntakes : Migration
 
             UPDATE "Intakes" SET "IsOpen" = FALSE WHERE upper("Code") NOT IN ('JAN', 'AUG');
 
-            UPDATE "Intakes" SET "Name" = 'January Intake', "StartDate" = DATE '2001-01-01', "IsOpen" = TRUE WHERE upper("Code") = 'JAN';
-            UPDATE "Intakes" SET "Name" = 'August Intake', "StartDate" = DATE '2001-08-01', "IsOpen" = TRUE WHERE upper("Code") = 'AUG';
+            UPDATE "Intakes" SET "Name" = 'January Intake', "IsOpen" = TRUE WHERE upper("Code") = 'JAN';
+            UPDATE "Intakes" SET "Name" = 'August Intake', "IsOpen" = TRUE WHERE upper("Code") = 'AUG';
 
             INSERT INTO "Intakes" ("Id", "Name", "Code", "StartDate", "IsOpen")
             SELECT gen_random_uuid(), 'January Intake', 'JAN', DATE '2001-01-01', TRUE
