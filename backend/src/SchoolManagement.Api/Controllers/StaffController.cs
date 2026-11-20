@@ -92,7 +92,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             if (!Guid.TryParse(actorIdValue, out var actorUserId)) return Forbid();
             var actorPermissions = await GetEffectivePermissionCodesAsync(actorUserId, cancellationToken);
             if (requestedRoleNames.Contains("SystemAdministrator", StringComparer.OrdinalIgnoreCase)
-                && !actorPermissions.Contains("administration.manage-users"))
+                && actorPermissions.Count != await db.Permissions.CountAsync(cancellationToken))
                 return Forbid();
             if (requestedCodes.Any(code => !actorPermissions.Contains(code)))
                 return Forbid();
