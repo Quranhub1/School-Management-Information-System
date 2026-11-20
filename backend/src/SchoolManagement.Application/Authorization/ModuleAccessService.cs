@@ -18,17 +18,26 @@ public sealed class ModuleAccessService
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         if (roles.Contains(InstitutionalRoles.SystemAdministrator))
-            return ModuleAccess.RolesByModule.Keys.OrderBy(module => module).ToArray();
+            return ModuleAccess.RolesByModule.Keys.Concat(new[] { "Library", "Communication" }).OrderBy(module => module).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
         return ModuleAccess.RolesByModule
             .Where(pair => pair.Value.Any(roles.Contains) || HasScopedStaffAccess(pair.Key, roles))
             .Select(pair => pair.Key)
-            .Concat(HasScopedStaffAccess("Library", roles) ? new[] { "Library" } : Array.Empty<string>())
-            .Concat(HasScopedStaffAccess("Communication", roles) ? new[] { "Communication" } : Array.Empty<string>())
+            .Concat(HasLibraryAccess(roles) ? new[] { "Library" } : Array.Empty<string>())
+            .Concat(HasCommunicationAccess(roles) ? new[] { "Communication" } : Array.Empty<string>())
             .OrderBy(module => module)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
+
+    private static bool HasLibraryAccess(IReadOnlySet<string> roles) =>
+        roles.Contains(LibraryManageRole) || roles.Contains(InstitutionalRoles.Librarian) ||
+        roles.Contains(InstitutionalRoles.AcademicRegistrar) || roles.Contains(InstitutionalRoles.AssistantRegistrar) ||
+        roles.Contains(InstitutionalRoles.AdminSecretary) || roles.Contains(InstitutionalRoles.Lecturer);
+
+    private static bool HasCommunicationAccess(IReadOnlySet<string> roles) =>
+        roles.Contains(NoticeboardManageRole) || roles.Contains(InstitutionalRoles.SystemAdministrator) ||
+        roles.Contains(InstitutionalRoles.AcademicRegistrar) || roles.Contains(InstitutionalRoles.HrManager);
 
     private static bool HasScopedStaffAccess(string module, IReadOnlySet<string> roles)
     {
@@ -47,8 +56,6 @@ public sealed class ModuleAccessService
             InstitutionalModules.Attendance => Has(StaffAttendanceRole),
             InstitutionalModules.Finance => HasPrefix("StaffAccess.Finance."),
             InstitutionalModules.Staff => HasPrefix("StaffAccess.Staff."),
-            "Library" => Has(LibraryManageRole),
-            "Communication" => Has(NoticeboardManageRole),
             _ => false
         };
     }
