@@ -4523,6 +4523,47 @@ namespace SchoolManagement.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.Permission", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("Code").IsRequired().HasMaxLength(160).HasColumnType("character varying(160)");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(240).HasColumnType("character varying(240)");
+                    b.Property<string>("GroupCode").IsRequired().HasMaxLength(80).HasColumnType("character varying(80)");
+                    b.Property<string>("GroupName").IsRequired().HasMaxLength(160).HasColumnType("character varying(160)");
+                    b.Property<string>("Description").HasMaxLength(1000).HasColumnType("character varying(1000)");
+                    b.HasKey("Id");
+                    b.HasIndex("Code").IsUnique();
+                    b.HasIndex("GroupCode", "Code");
+                    b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.RolePermission", b =>
+                {
+                    b.Property<Guid>("RoleId").HasColumnType("uuid");
+                    b.Property<Guid>("PermissionId").HasColumnType("uuid");
+                    b.HasKey("RoleId", "PermissionId");
+                    b.HasIndex("PermissionId");
+                    b.ToTable("RolePermissions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.StaffUserLink", b =>
+                {
+                    b.Property<Guid>("StaffId").HasColumnType("uuid");
+                    b.Property<Guid>("UserId").HasColumnType("uuid");
+                    b.HasKey("StaffId");
+                    b.HasIndex("UserId").IsUnique();
+                    b.ToTable("StaffUserLinks");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.UserPermission", b =>
+                {
+                    b.Property<Guid>("UserId").HasColumnType("uuid");
+                    b.Property<Guid>("PermissionId").HasColumnType("uuid");
+                    b.HasKey("UserId", "PermissionId");
+                    b.HasIndex("PermissionId");
+                    b.ToTable("UserPermissions");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Identity.Role", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4581,6 +4622,24 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.RolePermission", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Identity.Permission", null).WithMany().HasForeignKey("PermissionId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("SchoolManagement.Domain.Identity.Role", null).WithMany().HasForeignKey("RoleId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.StaffUserLink", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null).WithMany().HasForeignKey("StaffId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("SchoolManagement.Domain.Identity.User", null).WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.UserPermission", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Identity.Permission", null).WithMany().HasForeignKey("PermissionId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("SchoolManagement.Domain.Identity.User", null).WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Identity.UserRole", b =>
