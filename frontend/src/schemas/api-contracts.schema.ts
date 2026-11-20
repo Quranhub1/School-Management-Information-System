@@ -166,6 +166,7 @@ export const staffCreateRequestSchema = z.object({
   highestQualification: z.string().trim().nullable().optional(),
   speciality: z.string().trim().nullable().optional(),
   professionalRegistration: z.string().trim().nullable().optional(),
+  dateJoined: z.iso.date().nullable().optional(),
   courseUnitIds: z.array(identifierSchema).optional(),
 });
 export const leaveRequestSchema = z.object({
