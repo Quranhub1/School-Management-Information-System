@@ -45,12 +45,13 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   }, [activeSubsection, canManage, canReadPayroll])
 
   async function loadStaff() { setLoading(true); try { setStaff(await listStaff(false)) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load staff.') } finally { setLoading(false) } }
-  async function loadLeave() { if (!leaveForm.staffMemberId.trim()) return; try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
+  async function loadLeave() { if (!leaveForm.staffMemberId.trim()) { setLeaveRequests([]); return } try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
   async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
 
   const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', courseUnitIds: [] as string[] })
   const duplicateErrorPattern = /staff number is already registered|staff member with this staff number already exists/i
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
+  const [leaveDuration, setLeaveDuration] = useState<'single' | 'multiple'>('single')
   const [form, setForm] = useState(emptyStaffForm())
 
   useEffect(() => {
@@ -200,7 +201,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       notify(`${formatPersonName(person.lastName, person.firstName)} deleted successfully.`, 'success', 'Staff deleted')
     } catch (e) { const message = e instanceof Error ? e.message : 'Unable to delete staff. They may be linked to other records.'; setError(message); notify(message, 'error', 'Staff deletion failed') }
   }
-  async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); try { await requestLeave(leaveForm.staffMemberId.trim(), { ...leaveForm, staffMemberId: leaveForm.staffMemberId.trim() }); setLeaveForm({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' }); await loadLeave(); notify('Leave request submitted successfully.', 'success', 'Leave request saved') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to request leave.'; setError(message); notify(message, 'error', 'Leave request failed') } }
+  async function submitLeave(e: React.FormEvent) { e.preventDefault(); setError(''); setSuccess(''); const staffId = leaveForm.staffMemberId.trim(); const endDate = leaveDuration === 'single' ? leaveForm.startDate : leaveForm.endDate; if (!staffId || !leaveForm.startDate || !endDate) { setError('Select a staff member and complete the leave date(s).'); return } if (endDate < leaveForm.startDate) { setError('The end date cannot be earlier than the start date.'); return } try { await requestLeave(staffId, { ...leaveForm, staffMemberId: staffId, endDate }); setLeaveForm(current => ({ ...current, startDate: '', endDate: '', reason: '' })); await loadLeave(); setSuccess('Leave request submitted successfully.'); notify('Leave request submitted successfully.', 'success', 'Leave request saved') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to request leave.'; setError(message); notify(message, 'error', 'Leave request failed') } }
   async function approveLeaveRequest(id: string, approved: boolean) { try { await approveLeave(id, null, approved); await loadLeave(); notify(approved ? 'Leave request approved.' : 'Leave request declined.', 'success', 'Leave updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to approve leave.'; setError(message); notify(message, 'error', 'Leave update failed') } }
   async function handleGeneratePayroll() { setError(''); setSuccess(''); try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll(); setSuccess(`Payroll generation completed for ${new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} ${payrollYear}. Existing entries for this period were retained.`)
       notify('Payroll generation completed successfully.', 'success', 'Payroll generated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to generate payroll.'; setError(message); notify(message, 'error', 'Payroll generation failed') } }
@@ -408,29 +409,60 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       )}
 
       {tab === 'leave' && (
-        <>
-          {canManage && (
-            <form className="grid-form" onSubmit={submitLeave}>
-              <input placeholder="Staff ID" value={leaveForm.staffMemberId} onChange={e => setLeaveForm({ ...leaveForm, staffMemberId: e.target.value })} required />
-              <select value={leaveForm.leaveType} onChange={e => setLeaveForm({ ...leaveForm, leaveType: e.target.value })}>{LEAVE_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-              <input placeholder="Start date" type="date" value={leaveForm.startDate} onChange={e => setLeaveForm({ ...leaveForm, startDate: e.target.value })} required />
-              <input placeholder="End date" type="date" value={leaveForm.endDate} onChange={e => setLeaveForm({ ...leaveForm, endDate: e.target.value })} required />
-              <input placeholder="Reason" value={leaveForm.reason} onChange={e => setLeaveForm({ ...leaveForm, reason: e.target.value })} required />
-              <button type="submit">Request Leave</button>
-              <button type="button" className="secondary-button" onClick={() => void loadLeave()}>Load Leave</button>
-            </form>
-          )}
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>Staff</th><th>Type</th><th>Start</th><th>End</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody>
-                {leaveRequests.length === 0 ? <tr><td colSpan={7} className="empty">No leave requests found.</td></tr> : leaveRequests.map(lr => (
-                  <tr key={lr.id}><td>{lr.staffMemberId}</td><td>{lr.leaveType}</td><td>{lr.startDate}</td><td>{lr.endDate}</td><td>{lr.reason}</td><td><span className="badge" style={{ background: lr.status === 'Approved' ? '#d1fae5' : lr.status === 'Rejected' ? '#fee2e2' : '#fef3c7', color: lr.status === 'Approved' ? '#065f46' : lr.status === 'Rejected' ? '#991b1b' : '#92400e' }}>{lr.status}</span></td><td>{lr.status === 'Pending' && canManage && <><button className="secondary-button" onClick={() => void approveLeaveRequest(lr.id, true)}>Approve</button><button className="secondary-button" onClick={() => void approveLeaveRequest(lr.id, false)}>Reject</button></>}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <div className="leave-workspace">
+          <section className="academic-authority-workspace">
+            <div className="panel-heading"><div><span className="eyebrow">HUMAN RESOURCES</span><h3>Leave request</h3></div><span className="status">{leaveRequests.length} recent request(s)</span></div>
+            {canManage ? (
+              <form className="grid-form" onSubmit={submitLeave}>
+                <label className="field-label">Name of staff
+                  <select value={leaveForm.staffMemberId} onChange={e => { setLeaveForm(current => ({ ...current, staffMemberId: e.target.value })); setLeaveRequests([]) }} required>
+                    <option value="">Select staff member</option>
+                    {staff.map(person => <option key={person.id} value={person.id}>{formatPersonName(person.lastName, person.firstName)} · {person.staffNumber}</option>)}
+                  </select>
+                </label>
+                <label className="field-label">Leave type
+                  <select value={leaveForm.leaveType} onChange={e => setLeaveForm(current => ({ ...current, leaveType: e.target.value }))}>{LEAVE_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
+                </label>
+                <fieldset className="field-label" style={{ border: '1px solid #cbd5e1', borderRadius: 4, padding: '8px 12px', gridColumn: '1 / -1' }}>
+                  <legend>Leave duration</legend>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginRight: 24 }}><input type="radio" name="leave-duration" checked={leaveDuration === 'single'} onChange={() => { setLeaveDuration('single'); setLeaveForm(current => ({ ...current, endDate: current.startDate })) }} /> Single day</label>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><input type="radio" name="leave-duration" checked={leaveDuration === 'multiple'} onChange={() => setLeaveDuration('multiple')} /> Multiple days</label>
+                </fieldset>
+                <label className="field-label">Leave date
+                  <input type="date" value={leaveForm.startDate} onChange={e => setLeaveForm(current => ({ ...current, startDate: e.target.value, endDate: leaveDuration === 'single' ? e.target.value : current.endDate }))} required />
+                </label>
+                {leaveDuration === 'multiple' && <label className="field-label">Last day of leave
+                  <input type="date" min={leaveForm.startDate || undefined} value={leaveForm.endDate} onChange={e => setLeaveForm(current => ({ ...current, endDate: e.target.value }))} required />
+                </label>}
+                <label className="field-label" style={{ gridColumn: '1 / -1' }}>Reason for leave
+                  <textarea rows={3} value={leaveForm.reason} onChange={e => setLeaveForm(current => ({ ...current, reason: e.target.value }))} placeholder="Enter the reason for requesting leave" required />
+                </label>
+                <div className="form-row" style={{ gridColumn: '1 / -1' }}>
+                  <button type="submit" disabled={!leaveForm.staffMemberId || !leaveForm.startDate || (leaveDuration === 'multiple' && !leaveForm.endDate)}>Submit leave request</button>
+                  <button type="button" className="secondary-button" onClick={() => void loadLeave()} disabled={!leaveForm.staffMemberId}>Refresh requests</button>
+                </div>
+              </form>
+            ) : <p className="empty">You do not have permission to submit or process leave requests.</p>}
+          </section>
+          <section className="academic-authority-workspace">
+            <div className="panel-heading"><div><span className="eyebrow">REQUEST REGISTER</span><h3>Recent leave requests</h3></div></div>
+            {!leaveForm.staffMemberId ? <p className="empty">Select a staff member above to view their leave requests.</p> : (
+              <div className="table-wrap"><table>
+                <thead><tr><th>Staff member</th><th>Leave date</th><th>Type</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>{leaveRequests.length === 0 ? <tr><td colSpan={6} className="empty">No leave requests found for this staff member.</td></tr> : leaveRequests.map(lr => {
+                  const person = staff.find(item => item.id === lr.staffMemberId)
+                  return <tr key={lr.id}>
+                    <td>{person ? formatPersonName(person.lastName, person.firstName) : lr.staffMemberId}</td>
+                    <td>{lr.startDate === lr.endDate ? lr.startDate : `${lr.startDate} – ${lr.endDate}`}</td>
+                    <td>{lr.leaveType}</td><td>{lr.reason}</td>
+                    <td><span className="badge" style={{ background: lr.status === 'Approved' ? '#d1fae5' : lr.status === 'Rejected' ? '#fee2e2' : '#fef3c7', color: lr.status === 'Approved' ? '#065f46' : lr.status === 'Rejected' ? '#991b1b' : '#92400e' }}>{lr.status}</span></td>
+                    <td>{lr.status === 'Pending' && canManage && <div className="form-row"><button type="button" className="secondary-button" onClick={() => void approveLeaveRequest(lr.id, true)}>Approve</button><button type="button" className="secondary-button" onClick={() => void approveLeaveRequest(lr.id, false)}>Decline</button></div>}</td>
+                  </tr>
+                })}</tbody>
+              </table></div>
+            )}
+          </section>
+        </div>
       )}
 
       {tab === 'attendance' && <StaffAttendanceManagement />}
