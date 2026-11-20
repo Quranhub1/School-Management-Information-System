@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/campuses/{campusId:guid}/users")]
-[Authorize(Policy = AuthorizationPolicies.Administration)]
+[Authorize(Policy = "Permission:administration.manage-campus-access")]
 public sealed class CampusAssignmentsController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet]
