@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
@@ -12,6 +13,33 @@ namespace SchoolManagement.Api.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class PermissionsController(SchoolManagementDbContext db) : ControllerBase
 {
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> MyPermissions(CancellationToken cancellationToken)
+    {
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub")
+            ?? User.FindFirstValue("userId");
+        if (!Guid.TryParse(userIdValue, out var userId)) return Unauthorized();
+
+        var roleCodes = await (from userRole in db.UserRoles
+                               join rolePermission in db.RolePermissions on userRole.RoleId equals rolePermission.RoleId
+                               join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
+                               where userRole.UserId == userId
+                               select permission.Code).Distinct().ToListAsync(cancellationToken);
+        var overrides = await (from assignment in db.UserPermissions
+                               join permission in db.Permissions on assignment.PermissionId equals permission.Id
+                               where assignment.UserId == userId
+                               select new { permission.Code, assignment.IsGranted }).ToListAsync(cancellationToken);
+        var effective = roleCodes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var assignment in overrides)
+        {
+            if (assignment.IsGranted) effective.Add(assignment.Code);
+            else effective.Remove(assignment.Code);
+        }
+        return Ok(new { permissions = effective.OrderBy(x => x).ToArray() });
+    }
+
     [HttpGet("catalog")]
     [Authorize]
     public async Task<IActionResult> Catalog(CancellationToken cancellationToken)
