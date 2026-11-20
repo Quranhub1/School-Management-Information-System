@@ -58,4 +58,35 @@ public sealed class RequestValidatorTests
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateNoticeRequest.Audience));
     }
+    [Fact]
+    public void UpdateAdmissionRequest_requires_an_id()
+    {
+        var result = new UpdateAdmissionRequestValidator().Validate(new UpdateAdmissionRequest(Guid.Empty));
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(UpdateAdmissionRequest.Id));
+    }
+
+    [Fact]
+    public void DecideAdmissionRequest_requires_a_decision()
+    {
+        var result = new DecideAdmissionRequestValidator().Validate(new DecideAdmissionRequest("", null, null));
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(DecideAdmissionRequest.Decision));
+    }
+
+    [Fact]
+    public void AdmitApplicantRequest_requires_valid_academic_relationships_and_student_number()
+    {
+        var request = new AdmitApplicantRequest(Guid.Empty, Guid.Empty, Guid.Empty, "", null, null, null, null);
+        var result = new AdmitApplicantRequestValidator().Validate(request);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(AdmitApplicantRequest.ProgrammeId));
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(AdmitApplicantRequest.IntakeId));
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(AdmitApplicantRequest.AcademicYearId));
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(AdmitApplicantRequest.StudentNumber));
+    }
+
 }
