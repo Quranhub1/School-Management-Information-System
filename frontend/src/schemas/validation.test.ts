@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addBankStatementLineRequestSchema, applyFeeStructureRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { addBankStatementLineRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -140,6 +140,40 @@ describe("SMIS Zod domain schemas", () => {
       amount: -1000,
       transactionType: "Debit",
     }).success).toBe(false);
+  });
+
+
+  it("validates opening balances and fiscal period closing requests", () => {
+    const openingBalances = {
+      fiscalPeriodId: "period-1",
+      currency: "UGX",
+      lines: [
+        { accountId: "cash", debit: 500000, credit: 0 },
+        { accountId: "capital", debit: 0, credit: 500000 },
+      ],
+    };
+    expect(createOpeningBalanceRequestSchema.safeParse(openingBalances).success).toBe(true);
+    expect(createOpeningBalanceRequestSchema.safeParse({
+      ...openingBalances,
+      lines: [
+        { accountId: "cash", debit: 500000, credit: 0 },
+        { accountId: "capital", debit: 0, credit: 400000 },
+      ],
+    }).success).toBe(false);
+    expect(createOpeningBalanceRequestSchema.safeParse({
+      ...openingBalances,
+      lines: [{ accountId: "cash", debit: 100, credit: 100 }, { accountId: "capital", debit: 0, credit: 0 }],
+    }).success).toBe(false);
+
+    expect(createFiscalPeriodRequestSchema.safeParse({
+      name: "FY2026", startDate: "2026-01-01", endDate: "2026-12-31",
+    }).success).toBe(true);
+    expect(createFiscalPeriodRequestSchema.safeParse({
+      name: "FY2026", startDate: "2026-12-31", endDate: "2026-01-01",
+    }).success).toBe(false);
+    expect(closeFiscalPeriodRequestSchema.safeParse({
+      fiscalPeriodId: "period-1", retainedEarningsAccountId: "equity-1",
+    }).success).toBe(true);
   });
 
   it("throws a field-addressable error before invalid input reaches an API request", () => {
