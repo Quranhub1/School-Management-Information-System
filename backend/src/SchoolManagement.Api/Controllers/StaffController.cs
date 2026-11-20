@@ -119,6 +119,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             var permissionEntities = await db.Permissions.Where(x => permissionCodes.Contains(x.Code)).ToListAsync(cancellationToken);
             if (permissionEntities.Count != permissionCodes.Length)
                 return BadRequest(new { message = "One or more selected permissions are not in the central catalogue." });
+            linkedUser.IsActive = staff.IsActive;
             db.StaffUserLinks.Add(new StaffUserLink { StaffId = staff.Id, UserId = linkedUser.Id });
             var previousDirectGrants = await db.UserPermissions.Where(x => x.UserId == linkedUser.Id).ToListAsync(cancellationToken);
             var previousPermissionIds = previousDirectGrants.Select(x => x.PermissionId).ToHashSet();
