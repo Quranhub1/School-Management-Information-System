@@ -11,7 +11,7 @@ import { staffCreateRequestSchema } from '../schemas'
 import { SYSTEM_CURRENCY } from '../lib/currency'
 import { StaffAttendanceManagement } from './StaffAttendanceManagement'
 import { LEAVE_TYPE_OPTIONS, STAFF_TYPE_OPTIONS } from '../constants/referenceEnums'
-import { getUsers, resetUserPassword, getPermissionCatalogue, getPermissionRoles, type PermissionGroup, type PermissionRole } from '../api/administration'
+import { getUsers, resetUserPassword, getPermissionCatalogue, getPermissionRoles, getRolePermissionCodes, type PermissionGroup, type PermissionRole } from '../api/administration'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment' | 'attendance'
 
@@ -67,6 +67,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([])
   const [availableRoles, setAvailableRoles] = useState<PermissionRole[]>([])
   const [selectedAccountRole, setSelectedAccountRole] = useState('')
+  const [inheritedPermissions, setInheritedPermissions] = useState<string[]>([])
   const [permissionsLoading, setPermissionsLoading] = useState(false)
   const allPermissionIds = useMemo(() => permissionGroups.flatMap(group => group.permissions.map(permission => permission.id)), [permissionGroups])
   const filteredPermissionGroups = useMemo(() => permissionGroups.map(group => ({ ...group, permissions: group.permissions.filter(permission => !permissionSearch.trim() || permission.label.toLowerCase().includes(permissionSearch.toLowerCase()) || permission.id.toLowerCase().includes(permissionSearch.toLowerCase())) })).filter(group => group.permissions.length > 0), [permissionGroups, permissionSearch])
@@ -88,6 +89,15 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     }).catch(error => { if (!cancelled) { const message = error instanceof Error ? error.message : 'Unable to load the central permission catalogue.'; setError(message); notify(message, 'error', 'Permissions unavailable') } }).finally(() => { if (!cancelled) setPermissionsLoading(false) })
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    const role = availableRoles.find(item => item.name === selectedAccountRole)
+    if (!role) { setInheritedPermissions([]); return }
+    let cancelled = false
+    getRolePermissionCodes(role.id).then(result => { if (!cancelled) setInheritedPermissions(result.permissionCodes) })
+      .catch(error => { if (!cancelled) { setInheritedPermissions([]); const message = error instanceof Error ? error.message : 'Unable to load inherited role permissions.'; setError(message) } })
+    return () => { cancelled = true }
+  }, [availableRoles, selectedAccountRole])
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -186,6 +196,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       setAccountPassword('')
       setCredentialFeedback('')
       setSelectedPermissions([])
+      setInheritedPermissions([])
       setSelectedAccountRole(availableRoles.find(role => role.name === 'AcademicRegistrar')?.name || availableRoles[0]?.name || '')
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
@@ -443,9 +454,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   <div className="staff-create-card-heading">
                     <div>
                       <h3 className="staff-create-card-title">Permissions by module</h3>
-                      <p className="staff-create-hint">Select a module to select every permission in that group, or expand it to choose individual actions.</p>
+                      <p className="staff-create-hint">Role permissions are inherited automatically. Checked inherited items are read-only; select additional permissions to grant them directly to this account.</p>
                     </div>
-                    <strong className="staff-permission-count">{selectedPermissions.length} / {allPermissionIds.length} selected</strong>
+                    <strong className="staff-permission-count">{selectedPermissions.length + inheritedPermissions.filter(id => !selectedPermissions.includes(id)).length} / {allPermissionIds.length} effective</strong>
                   </div>
                   <div className="staff-permission-toolbar">
                     <input type="search" aria-label="Search permissions" placeholder="Search permissions…" value={permissionSearch} onChange={event => setPermissionSearch(event.target.value)} />
@@ -455,7 +466,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   <div className="staff-permission-groups">
                     {filteredPermissionGroups.map(group => {
                       const groupIds = permissionGroups.find(item => item.id === group.id)?.permissions.map(permission => permission.id) ?? []
-                      const selectedCount = groupIds.filter(id => selectedPermissions.includes(id)).length
+                      const selectedCount = groupIds.filter(id => selectedPermissions.includes(id) || inheritedPermissions.includes(id)).length
                       const allSelected = groupIds.length > 0 && selectedCount === groupIds.length
                       return <details className="staff-permission-group" key={group.id} open={Boolean(permissionSearch.trim())}>
                         <summary>
@@ -465,7 +476,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                         </summary>
                         <div className="staff-permission-items">
                           {group.permissions.map(permission => <label className="staff-permission-item" key={permission.id}>
-                            <input type="checkbox" checked={selectedPermissions.includes(permission.id)} onChange={event => setSelectedPermissions(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
+                            <input type="checkbox" checked={selectedPermissions.includes(permission.id) || inheritedPermissions.includes(permission.id)} disabled={inheritedPermissions.includes(permission.id)} onChange={event => setSelectedPermissions(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
                             <span>{permission.label}<small>{permission.id}</small></span>
                           </label>)}
                         </div>
