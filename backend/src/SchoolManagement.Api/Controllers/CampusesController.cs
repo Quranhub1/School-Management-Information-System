@@ -6,7 +6,7 @@ using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Administration;
 using SchoolManagement.Infrastructure.Persistence;
 namespace SchoolManagement.Api.Controllers;
-[ApiController, Route("api/campuses"), Authorize(Roles = "SystemAdministrator")]
+[ApiController, Route("api/campuses"), Authorize(Policy = AuthorizationPolicies.Administration)]
 public sealed class CampusesController(SchoolManagementDbContext db) : ControllerBase
 {
  [HttpGet] public async Task<ActionResult<IReadOnlyList<CampusResponse>>> Get(CancellationToken ct) {
