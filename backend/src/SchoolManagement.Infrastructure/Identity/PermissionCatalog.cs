@@ -108,6 +108,11 @@ public static class PermissionCatalog
             foreach (var permission in permissions.Values.Where(x => !assignedIds.Contains(x.Id)))
                 db.RolePermissions.Add(new RolePermission { RoleId = adminRole.Id, PermissionId = permission.Id });
         }
+        // Persist the System Administrator grants before reading role defaults. Without
+        // this boundary, the second pass cannot see newly tracked assignments and adds
+        // duplicate RolePermission composite keys for the administrator role.
+        await db.SaveChangesAsync(cancellationToken);
+
         var roleDefaults = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
         {
             [InstitutionalRoles.SystemAdministrator] = All.Select(permission => permission.Code).ToArray(),
