@@ -16,7 +16,7 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class StudentsController(StudentService service, SchoolManagementDbContext db, StudentRecordsWorkflowService studentRecords, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<object>>> GetAll([FromQuery] Guid? campusId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<StudentResponse>>> GetAll([FromQuery] Guid? campusId, CancellationToken cancellationToken)
     {
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
@@ -30,7 +30,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         {
             query = query.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
         }
-        return Ok(await query.OrderBy(x => x.StudentNumber).ToListAsync(cancellationToken));
+        return Ok(await query.OrderBy(x => x.StudentNumber).Select(x => new StudentResponse(x.Id, x.StudentNumber, x.FirstName, x.LastName, x.OtherNames, x.DisplayName, x.DateOfBirth, x.Gender, x.NationalId, x.PhoneNumber, x.Email, x.Status, x.IsArchived, x.ArchivedAt, x.ArchivedBy, x.ArchiveReason, x.AdmissionId, x.CampusId, x.CreatedAt)).ToListAsync(cancellationToken));
     }
 
     [HttpGet("archived")]
@@ -53,7 +53,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
                 (x.PhoneNumber != null && x.PhoneNumber.Contains(term)) ||
                 (x.NationalId != null && x.NationalId.ToLower().Contains(term)));
         }
-        return Ok(await query.OrderBy(x => x.StudentNumber).ToListAsync(cancellationToken));
+        return Ok(await query.OrderBy(x => x.StudentNumber).Select(x => new StudentResponse(x.Id, x.StudentNumber, x.FirstName, x.LastName, x.OtherNames, x.DisplayName, x.DateOfBirth, x.Gender, x.NationalId, x.PhoneNumber, x.Email, x.Status, x.IsArchived, x.ArchivedAt, x.ArchivedBy, x.ArchiveReason, x.AdmissionId, x.CampusId, x.CreatedAt)).ToListAsync(cancellationToken));
     }
 
     [HttpPost("{id:guid}/archive")]
@@ -99,7 +99,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         var student = await service.GetByIdAsync(id, cancellationToken);
         if (student is null) return NotFound();
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
-        return Ok(student);
+        return Ok(ToResponse(student));
     }
 
     [HttpGet("{id:guid}/clearances")]
@@ -255,7 +255,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         if (request.CampusId.HasValue && !campusId.HasValue) return Forbid();
 
         var student = await service.CreateAsync(request with { CampusId = campusId }, cancellationToken);
-        return CreatedAtAction(nameof(GetById), new { id = student.Id }, student);
+        return CreatedAtAction(nameof(GetById), new { id = student.Id }, ToResponse(student));
     }
 
     [HttpPut("{id:guid}")]
@@ -266,18 +266,17 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         if (id != request.Id)
             return BadRequest(new { message = "Route ID and body ID must match." });
 
-        if (string.IsNullOrWhiteSpace(request.StudentNumber) ||
-            string.IsNullOrWhiteSpace(request.FirstName) ||
-            string.IsNullOrWhiteSpace(request.LastName))
-        {
-            return BadRequest(new { message = "Student number, first name, and last name are required." });
-        }
-
         var existing = await db.Students.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (existing?.IsArchived == true) return Conflict(new { message = "Archived student records are read-only in active student management. Restore the student before editing." });
         var updated = await service.UpdateAsync(request, cancellationToken);
-        return updated is null ? NotFound() : Ok(updated);
+        return updated is null ? NotFound() : Ok(ToResponse(updated));
     }
+
+    private static StudentResponse ToResponse(SchoolManagement.Domain.Students.Student student) =>
+        new(student.Id, student.StudentNumber, student.FirstName, student.LastName, student.OtherNames, student.DisplayName,
+            student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber, student.Email, student.Status,
+            student.IsArchived, student.ArchivedAt, student.ArchivedBy, student.ArchiveReason, student.AdmissionId,
+            student.CampusId, student.CreatedAt);
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
@@ -290,6 +289,11 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         return deleted ? NoContent() : NotFound();
     }
 }
+
+public sealed record StudentResponse(Guid Id, string StudentNumber, string FirstName, string LastName, string? OtherNames,
+    string DisplayName, DateOnly? DateOfBirth, string? Gender, string? NationalId, string? PhoneNumber, string? Email,
+    string Status, bool IsArchived, DateTimeOffset? ArchivedAt, string? ArchivedBy, string? ArchiveReason,
+    Guid? AdmissionId, Guid? CampusId, DateTimeOffset CreatedAt);
 
 public sealed record SaveStudentApplicationFormRequest(System.Text.Json.JsonElement Application, string? PhotographBase64 = null, string? PhotographContentType = null, string? PhotographFileName = null);
 
