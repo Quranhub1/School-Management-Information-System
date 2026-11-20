@@ -104,7 +104,7 @@ describe('TimetableManagement', () => {
 
   it('renders the official document designer with editable heading, signature and merge controls', async () => {
     render(<TimetableManagement />)
-    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
     expect(await screen.findByLabelText('Timetable document title')).toBeTruthy()
     expect(screen.getByLabelText('Day column heading')).toBeTruthy()
@@ -123,7 +123,7 @@ describe('TimetableManagement', () => {
 
   it('renders a full-height vertical break divider in the timetable design', async () => {
     render(<TimetableManagement />)
-    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
     fireEvent.change(screen.getByLabelText('Divider after period'), { target: { value: '1' } })
     expect(screen.getByLabelText('BREAK')).toBeTruthy()
@@ -131,7 +131,7 @@ describe('TimetableManagement', () => {
 
   it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
     render(<TimetableManagement />)
-    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
     fireEvent.change(await screen.findByLabelText('Timetable document title'), { target: { value: 'OFFICIAL CLASS TIMETABLE' } })
     fireEvent.change(screen.getByLabelText('Registrar name'), { target: { value: 'JANE DOE' } })
@@ -167,7 +167,7 @@ describe('TimetableManagement', () => {
 
   it('lists all active teaching groups for the selected programme and academic period in Load class', async () => {
     render(<TimetableManagement />)
-    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     const classSelect = await screen.findByLabelText('Class / teaching group') as HTMLSelectElement
     expect(Array.from(classSelect.options).map(option => option.textContent)).toContain('CPH-Y1-S1')
     expect(Array.from(classSelect.options).map(option => option.textContent)).toContain('CPH-Y1-S1-B')
@@ -191,7 +191,7 @@ describe('TimetableManagement', () => {
     expect(screen.getAllByRole('heading', { name: 'Semester 2' })).toHaveLength(2)
     expect(screen.getAllByRole('button', { name: /open semester template/i })).toHaveLength(4)
     expect(screen.getAllByText(/Blank template ready/)).toHaveLength(4)
-    fireEvent.click(screen.getAllByRole('button', { name: /open semester template/i })[0])
+    fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     expect(await screen.findByRole('heading', { name: /edit the timetable grid/i })).toBeTruthy()
   })
 
