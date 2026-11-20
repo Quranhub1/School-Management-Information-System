@@ -88,7 +88,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     window.addEventListener(STAFF_CHANGED_EVENT, onStaffChanged)
     return () => window.removeEventListener(STAFF_CHANGED_EVENT, onStaffChanged)
   }, [canManage])
-  useEffect(() => { if (canManage && tab === 'leave') void loadLeave() }, [tab, canManage])
+  useEffect(() => { if (canManage && tab === 'leave') void loadLeave() }, [tab, canManage, leaveForm.staffMemberId])
   useEffect(() => { if (canReadPayroll && tab === 'payroll') void loadPayroll() }, [tab, canReadPayroll])
 
   async function submit(e: React.FormEvent) {
