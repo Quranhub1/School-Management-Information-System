@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Domain.Identity;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Api.Controllers;
@@ -21,6 +22,12 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
             .ToListAsync(cancellationToken);
         return Ok(catalog);
     }
+
+    [HttpGet("roles")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> Roles(CancellationToken cancellationToken)
+        => Ok(await db.Roles.AsNoTracking().OrderBy(x => x.Name)
+            .Select(x => new { x.Id, x.Name, x.Description }).ToListAsync(cancellationToken));
 
     [HttpGet("users/{userId:guid}")]
     [Authorize(Policy = AuthorizationPolicies.Administration)]
@@ -66,7 +73,7 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
         foreach (var permission in permissions)
         {
             var assignment = requested.Single(x => string.Equals(x.Code, permission.Code, StringComparison.OrdinalIgnoreCase));
-            db.UserPermissions.Add(new Domain.Identity.UserPermission
+            db.UserPermissions.Add(new UserPermission
             {
                 UserId = userId,
                 PermissionId = permission.Id,
