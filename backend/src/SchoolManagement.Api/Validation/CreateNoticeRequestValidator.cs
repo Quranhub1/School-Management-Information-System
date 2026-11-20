@@ -15,7 +15,7 @@ public sealed class CreateNoticeRequestValidator : AbstractValidator<CreateNotic
             .Must(IsSupportedAudience)
             .WithMessage("Choose All, a role, or a department as the notice audience.");
         RuleFor(x => x.ExpiresAt)
-            .Must(value => value is null || value > DateTimeOffset.UtcNow)
+            .Must(value => value is null || value.Value > DateTimeOffset.UtcNow)
             .WithMessage("Notice expiry must be in the future.");
     }
 
