@@ -15,6 +15,12 @@ type View = 'sessions' | 'marks' | 'report-cards' | 'reports';
 
 export function ExaminationManagement({ canManage = false }: { canManage?: boolean }) {
   const [view, setView] = useState<View>('sessions');
+  const [examSetupMode, setExamSetupMode] = useState<'list' | 'create'>('list');
+  const [printStudentName, setPrintStudentName] = useState('');
+  const [printEnrollmentNumber, setPrintEnrollmentNumber] = useState('');
+  const [printSession, setPrintSession] = useState('');
+  const [printClass, setPrintClass] = useState('');
+  const [printPin, setPrintPin] = useState('');
   const [plans, setPlans] = useState<AssessmentPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -171,10 +177,10 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
 
       <div className="library-workspace-tabs" role="tablist" aria-label="Examination sections">
         {([
-          { key: 'sessions', label: 'Assessment plans' },
-          { key: 'marks', label: 'Marks entry' },
-          { key: 'report-cards', label: 'Student transcript' },
-          { key: 'reports', label: 'Assessment report' },
+          { key: 'sessions', label: 'Manage Exams' },
+          { key: 'marks', label: 'Add Exam Result' },
+          { key: 'report-cards', label: 'Print Exam Results' },
+          { key: 'reports', label: 'Result Summary' },
         ] as { key: View; label: string }[]).map((item) => (
           <button key={item.key} type="button" role="tab" aria-selected={view === item.key} className={view === item.key ? 'active' : ''} onClick={() => setView(item.key)}>{item.label}</button>
         ))}
@@ -182,30 +188,34 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
 
       {view === 'sessions' && (
         <section className="academic-authority-workspace">
-          <h4>Configured assessment plans</h4>
-          <p>Plans are loaded from the API and marks are saved against the selected plan and course registration.</p>
-          <div className="form-row">
-            <label>Filter by course ID
-              <input value={courseId} onChange={e => setCourseId(e.target.value)} placeholder="Optional course UUID" />
-            </label>
-            <button type="button" onClick={() => void loadPlans()} disabled={loadingPlans}>Apply filter</button>
+          <div className="panel-heading"><div><span className="eyebrow">EXAMINATION SETUP</span><h4>Manage exams</h4></div><span className="status">{activePlans.length} active plan(s)</span></div>
+          <div className="form-row" role="group" aria-label="Exam management actions">
+            <button type="button" className={examSetupMode === 'list' ? '' : 'secondary-button'} onClick={() => setExamSetupMode('list')}>View Exams</button>
+            {canManage && <button type="button" className={examSetupMode === 'create' ? '' : 'secondary-button'} onClick={() => setExamSetupMode('create')}>Add New Exam</button>}
+            <button type="button" className="secondary-button" onClick={() => void loadPlans()} disabled={loadingPlans}>Refresh exams</button>
           </div>
-          {canManage && <form onSubmit={submitPlan}>
-            <h5>Create assessment plan</h5>
+          {examSetupMode === 'create' && canManage && <form onSubmit={submitPlan} className="academic-authority-workspace">
+            <h5>Add new exam</h5>
             <div className="form-row">
               <label>Course ID<input required value={courseId} onChange={e => setCourseId(e.target.value)} placeholder="Course UUID" /></label>
-              <label>Plan name<input required maxLength={160} value={planName} onChange={e => setPlanName(e.target.value)} placeholder="e.g. End of semester examination" /></label>
+              <label>Exam name<input required maxLength={160} value={planName} onChange={e => setPlanName(e.target.value)} placeholder="e.g. End of semester examination" /></label>
               <label>Assessment type<input required maxLength={80} value={assessmentType} onChange={e => setAssessmentType(e.target.value)} placeholder="Examination, practical, coursework" /></label>
               <label>Weight (%)<input required type="number" min="0" max="100" step="0.01" value={weightPercentage} onChange={e => setWeightPercentage(e.target.value)} /></label>
             </div>
             <label><input type="checkbox" checked={isCompetencyBased} onChange={e => setIsCompetencyBased(e.target.checked)} /> Competency-based assessment</label>
-            <button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Create assessment plan'}</button>
+            <div className="form-row"><button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save New Exam'}</button><button type="button" className="secondary-button" onClick={() => setExamSetupMode('list')}>Cancel</button></div>
           </form>}
-          {loadingPlans ? <p>Loading assessment plans…</p> : activePlans.length === 0 ? <p className="empty">No active assessment plans were returned by the server.</p> : (
-            <div className="table-wrap"><table><thead><tr><th>Plan</th><th>Course ID</th><th>Type</th><th>Weight</th><th>Assessment mode</th><th>Status</th></tr></thead>
-              <tbody>{activePlans.map(plan => <tr key={plan.id}><td>{plan.name}</td><td>{plan.courseId}</td><td>{plan.assessmentType}</td><td>{plan.weightPercentage}%</td><td>{plan.isCompetencyBased ? 'Competency-based' : 'Score-based'}</td><td>Active</td></tr>)}</tbody>
-            </table></div>
-          )}
+          {examSetupMode === 'list' && <>
+            <div className="form-row">
+              <label>Filter by course ID<input value={courseId} onChange={e => setCourseId(e.target.value)} placeholder="Optional course UUID" /></label>
+              <button type="button" className="secondary-button" onClick={() => void loadPlans()} disabled={loadingPlans}>Apply filter</button>
+            </div>
+            {loadingPlans ? <p>Loading exams…</p> : activePlans.length === 0 ? <p className="empty">No active exams were returned by the school database.</p> : (
+              <div className="table-wrap"><table><thead><tr><th>Exam</th><th>Course ID</th><th>Type</th><th>Weight</th><th>Assessment mode</th><th>Status</th></tr></thead>
+                <tbody>{activePlans.map(plan => <tr key={plan.id}><td>{plan.name}</td><td>{plan.courseId}</td><td>{plan.assessmentType}</td><td>{plan.weightPercentage}%</td><td>{plan.isCompetencyBased ? 'Competency-based' : 'Score-based'}</td><td>Active</td></tr>)}</tbody>
+              </table></div>
+            )}
+          </>}
         </section>
       )}
 
@@ -236,12 +246,62 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
 
       {view === 'report-cards' && (
         <section className="academic-authority-workspace">
-          <h4>Student transcript</h4>
+          <div className="panel-heading"><div><span className="eyebrow">ACADEMIC RECORDS</span><h4>Print exam results</h4></div></div>
           <form onSubmit={loadReport} className="form-row">
             <label>Student ID<input required value={reportStudentId} onChange={e => setReportStudentId(e.target.value)} placeholder="Student UUID" /></label>
-            <button type="submit" disabled={busy}>{busy ? 'Loading…' : 'Load transcript'}</button>
+            <button type="submit" disabled={busy}>{busy ? 'Loading…' : 'Load exam results'}</button>
           </form>
-          {transcript.length === 0 ? <p className="empty">Enter a student ID to retrieve the persisted transcript.</p> : <div className="table-wrap"><table><thead><tr><th>Course</th><th>Title</th><th>Units</th><th>Score</th><th>Grade</th><th>Points</th><th>Outcome</th></tr></thead><tbody>{transcript.map(entry => <tr key={entry.id}><td>{entry.courseCode}</td><td>{entry.courseTitle}</td><td>{entry.creditUnits}</td><td>{entry.score}</td><td>{entry.grade ?? '—'}</td><td>{entry.gradePoint.toFixed(2)}</td><td>{entry.isPass ? 'Pass' : 'Fail'}</td></tr>)}</tbody></table></div>}
+          {transcript.length > 0 && <>
+            <section className="academic-authority-workspace" aria-label="Student details for printed result">
+              <h5>Student details</h5>
+              <div className="form-row">
+                <label>Student name<input value={printStudentName} onChange={e => setPrintStudentName(e.target.value)} placeholder="Enter student name" /></label>
+                <label>Enrollment number<input value={printEnrollmentNumber} onChange={e => setPrintEnrollmentNumber(e.target.value)} placeholder="Enter enrollment number" /></label>
+                <label>Session<input value={printSession} onChange={e => setPrintSession(e.target.value)} placeholder="Academic session" /></label>
+                <label>Class<input value={printClass} onChange={e => setPrintClass(e.target.value)} placeholder="Class / programme" /></label>
+                <label>PIN number<input value={printPin} onChange={e => setPrintPin(e.target.value)} placeholder="Enter PIN number" /></label>
+              </div>
+              <p className="empty">These identity fields are entered for this printout; the current transcript endpoint does not return them automatically.</p>
+            </section>
+            <div className="form-row"><button type="button" onClick={() => window.print()} disabled={!printStudentName.trim() || !printEnrollmentNumber.trim()}>Print Exam Results</button></div>
+            <section id="exam-result-print-area" className="exam-result-print" aria-label="Printable examination result">
+              <header className="exam-result-print__header">
+                <h2>KAMPALA SCHOOL OF HEALTH SCIENCES</h2>
+                <p>EXAMINATION RESULT</p>
+                <div className="exam-result-print__contacts"><span>Phone: __________________</span><span>Email: __________________</span><span>Address: __________________</span></div>
+              </header>
+              <h3>STUDENT DETAILS</h3>
+              <dl className="exam-result-print__details">
+                <div><dt>Student Name</dt><dd>{printStudentName || '—'}</dd></div>
+                <div><dt>Enrollment Number</dt><dd>{printEnrollmentNumber || '—'}</dd></div>
+                <div><dt>Session</dt><dd>{printSession || '—'}</dd></div>
+                <div><dt>Class</dt><dd>{printClass || '—'}</dd></div>
+                <div><dt>PIN Number</dt><dd>{printPin || '—'}</dd></div>
+              </dl>
+              <h3>EXAM RESULT</h3>
+              <table className="exam-result-print__table"><thead><tr><th>Paper Code</th><th>Subject Name</th><th>Score</th><th>Grade</th><th>Outcome</th></tr></thead>
+                <tbody>{transcript.map(entry => <tr key={entry.id}><td>{entry.courseCode}</td><td>{entry.courseTitle}</td><td>{entry.score}</td><td>{entry.grade ?? '—'}</td><td>{entry.isPass ? 'Pass' : 'Fail'}</td></tr>)}</tbody>
+              </table>
+              <footer className="exam-result-print__footer"><span>Prepared by: __________________</span><span>Approved by: __________________</span><span>Date: __________________</span></footer>
+            </section>
+          </>}
+          <style>{`@media print {
+            @page { size: A4; margin: 16mm; }
+            body * { visibility: hidden !important; }
+            #exam-result-print-area, #exam-result-print-area * { visibility: visible !important; }
+            #exam-result-print-area { position: absolute; inset: 0; width: 100%; color: #111827; background: #fff; font-family: Arial, sans-serif; }
+            #exam-result-print-area h2 { text-align: center; font-size: 18pt; margin: 0 0 6px; }
+            #exam-result-print-area h3 { font-size: 11pt; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 22px; }
+            .exam-result-print__header > p { text-align: center; font-weight: 700; letter-spacing: 2px; }
+            .exam-result-print__contacts { display: flex; justify-content: space-between; font-size: 9pt; border-top: 1px solid #777; border-bottom: 1px solid #777; padding: 8px 0; }
+            .exam-result-print__details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 28px; }
+            .exam-result-print__details div { display: flex; gap: 8px; border-bottom: 1px solid #aaa; padding: 5px 0; }
+            .exam-result-print__details dt { font-weight: 700; min-width: 135px; }
+            .exam-result-print__details dd { margin: 0; }
+            .exam-result-print__table { width: 100%; border-collapse: collapse; }
+            .exam-result-print__table th, .exam-result-print__table td { border: 1px solid #444; padding: 8px; text-align: left; }
+            .exam-result-print__footer { display: flex; justify-content: space-between; margin-top: 50px; font-size: 9pt; }
+          }`}</style>
         </section>
       )}
 
