@@ -50,7 +50,7 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
             .OrderBy(x => x.GroupKey).ThenBy(x => x.Name)
             .Select(x => new { x.Id, x.Code, x.Name, x.GroupKey, x.Description })
             .ToListAsync(cancellationToken);
-
+        return Ok(catalog);
     }
 
     [HttpGet("roles")]
