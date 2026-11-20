@@ -1,7 +1,7 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ClipboardCheck, GraduationCap, HeartPulse, Landmark, Library, LockKeyhole, Megaphone, ShieldCheck, UserRound, UsersRound, WalletCards } from 'lucide-react'
-import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, type CreateUserRequest, type UpdateUserRequest, type UserSummary } from '../api/administration'
+import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, getPermissionCatalogue, getPermissionRoles, getRolePermissionCodes, setRolePermissionCodes, type CreateUserRequest, type UpdateUserRequest, type UserSummary, type PermissionGroup, type PermissionRole } from '../api/administration'
 import { type InstitutionSettings } from '../api/institutionSettings'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 
@@ -78,6 +78,13 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
   const [passwordResetUserId, setPasswordResetUserId] = useState<string | null>(null)
   const [passwordResetValue, setPasswordResetValue] = useState('')
   const [viewingUser, setViewingUser] = useState<UserSummary | null>(null)
+  const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([])
+  const [permissionRoles, setPermissionRoles] = useState<PermissionRole[]>([])
+  const [selectedPermissionRole, setSelectedPermissionRole] = useState<PermissionRole | null>(null)
+  const [rolePermissionCodes, setRolePermissionCodes] = useState<string[]>([])
+  const [permissionSearch, setPermissionSearch] = useState('')
+  const [permissionsLoading, setPermissionsLoading] = useState(false)
+  const [permissionsSaving, setPermissionsSaving] = useState(false)
 
   function openWorkspace(workspace?: string) {
     if (!workspace) return
@@ -95,6 +102,46 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
     try { setUsers(await getUsers()) }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to load users.') }
     finally { setLoading(false) }
+  }
+
+  useEffect(() => {
+    if (tab !== 'roles') return
+    let cancelled = false
+    setPermissionsLoading(true)
+    Promise.all([getPermissionRoles(), getPermissionCatalogue()])
+      .then(([roleList, catalogue]) => {
+        if (cancelled) return
+        setPermissionRoles(roleList)
+        setPermissionGroups(catalogue)
+      })
+      .catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load permission catalogue.') })
+      .finally(() => { if (!cancelled) setPermissionsLoading(false) })
+    return () => { cancelled = true }
+  }, [tab])
+
+  async function openRolePermissionEditor(role: PermissionRole) {
+    setSelectedPermissionRole(role)
+    setPermissionSearch('')
+    setPermissionsLoading(true)
+    setError('')
+    try {
+      const current = await getRolePermissionCodes(role.id)
+      setRolePermissionCodes(current.permissionCodes)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load role permissions.')
+    } finally { setPermissionsLoading(false) }
+  }
+
+  async function saveRolePermissions() {
+    if (!selectedPermissionRole) return
+    setPermissionsSaving(true)
+    setError('')
+    try {
+      const result = await setRolePermissionCodes(selectedPermissionRole.id, rolePermissionCodes)
+      setSuccessMessage(`Saved ${result.assignedCount} permissions for ${selectedPermissionRole.name}. New sign-ins will receive the updated permissions.`)
+      setSelectedPermissionRole(null)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to save role permissions.') }
+    finally { setPermissionsSaving(false) }
   }
 
   useEffect(() => {
@@ -368,19 +415,60 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
     {tab === 'roles' && (
       <section className="panel" aria-labelledby="role-directory-title">
         <div className="panel-heading">
-          <div><p className="eyebrow">ACCESS CONTROL</p><h3 id="role-directory-title">Role Directory</h3></div>
+          <div><p className="eyebrow">CENTRAL ACCESS CONTROL</p><h3 id="role-directory-title">Roles & Permissions</h3><p>Configure the permissions inherited by every account assigned to each role.</p></div>
           <button type="button" className="secondary-button" onClick={() => setTab('users')}>Manage user accounts</button>
         </div>
-        <div className="table-wrap">
-          <table>
-            <thead><tr><th>Role</th><th>Accounts assigned</th><th>Action</th></tr></thead>
-            <tbody>{roles.map(role => {
-              const assignedCount = users.filter(user => user.roles.includes(role)).length;
-              return <tr key={role}><td>{role}</td><td>{assignedCount}</td><td><button type="button" className="secondary-button" onClick={() => setTab('users')}>Open user management</button></td></tr>;
-            })}</tbody>
-          </table>
-        </div>
-        
+        {selectedPermissionRole ? (
+          <section className="student-form" aria-label={`Permissions for ${selectedPermissionRole.name}`}>
+            <div className="panel-heading">
+              <div><p className="eyebrow">ROLE PERMISSION PROFILE</p><h3>{selectedPermissionRole.name}</h3><p>Changes are saved centrally and inherited by users assigned to this role.</p></div>
+              <button type="button" className="secondary-button" onClick={() => setSelectedPermissionRole(null)}>Back to roles</button>
+            </div>
+            <div className="staff-permission-toolbar">
+              <input type="search" placeholder="Search permissions…" aria-label="Search role permissions" value={permissionSearch} onChange={event => setPermissionSearch(event.target.value)} />
+              <button type="button" className="secondary-button" onClick={() => setRolePermissionCodes(permissionGroups.flatMap(group => group.permissions.map(permission => permission.id)))}>Select all</button>
+              <button type="button" className="secondary-button" onClick={() => setRolePermissionCodes([])}>Clear all</button>
+              <strong>{rolePermissionCodes.length} selected</strong>
+            </div>
+            <div className="staff-permission-groups">
+              {permissionGroups.map(group => {
+                const filtered = group.permissions.filter(permission => !permissionSearch.trim() || permission.label.toLowerCase().includes(permissionSearch.toLowerCase()) || permission.id.toLowerCase().includes(permissionSearch.toLowerCase()))
+                if (!filtered.length) return null
+                const allIds = group.permissions.map(permission => permission.id)
+                const count = allIds.filter(id => rolePermissionCodes.includes(id)).length
+                return <details className="staff-permission-group" key={group.id}>
+                  <summary>
+                    <input type="checkbox" aria-label={`Select all ${group.label} permissions`} checked={count === allIds.length} onChange={event => setRolePermissionCodes(current => event.target.checked ? [...new Set([...current, ...allIds])] : current.filter(id => !allIds.includes(id)))} onClick={event => event.stopPropagation()} />
+                    <span className="staff-permission-group-title">{group.label}</span>
+                    <span className="staff-permission-group-count">{count} / {allIds.length}</span>
+                  </summary>
+                  <div className="staff-permission-items">
+                    {filtered.map(permission => <label className="staff-permission-item" key={permission.id}>
+                      <input type="checkbox" checked={rolePermissionCodes.includes(permission.id)} onChange={event => setRolePermissionCodes(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
+                      <span>{permission.label}<small>{permission.id}</small></span>
+                    </label>)}
+                  </div>
+                </details>
+              })}
+            </div>
+            <div className="topbar-actions">
+              <button type="button" onClick={() => void saveRolePermissions()} disabled={permissionsSaving || permissionsLoading}>{permissionsSaving ? 'Saving…' : 'Save role permissions'}</button>
+              <button type="button" className="secondary-button" onClick={() => setSelectedPermissionRole(null)}>Cancel</button>
+            </div>
+          </section>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Role</th><th>Accounts assigned</th><th>Permission configuration</th></tr></thead>
+              <tbody>{permissionsLoading ? <tr><td colSpan={3} className="empty">Loading roles and permission catalogue…</td></tr> :
+                permissionRoles.map(role => {
+                  const assignedCount = users.filter(user => user.roles.includes(role.name)).length;
+                  return <tr key={role.id}><td><strong>{role.name}</strong>{role.isSystemRole && <small style={{display:'block',color:'#64748b'}}>System role</small>}</td><td>{assignedCount}</td><td><button type="button" className="secondary-button" onClick={() => void openRolePermissionEditor(role)}>Configure permissions</button></td></tr>;
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     )}
 
