@@ -18,7 +18,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 ### Implemented on `feature/production-hardening-audit`
 
 - [x] Add FluentValidation to the API and register automatic MVC validation plus assembly-scanned validators.
-- [x] Add validators for student create/update, admission create/update/decision/admit, notice creation, timetable entry/template/generation, budget, and bank-reconciliation payloads.
+- [x] Add validators for student create/update, admission create/update/decision/admit, notice creation, timetable entry/template/generation, budget, and bank-reconciliation, opening-balance and fiscal-period-closing payloads.
 - [x] Remove duplicated inline validation for student creation and applicant student-number admission input; retain domain/business checks in workflows.
 - [x] Replace broad controller authorization on timetable, staff attendance, notices, offline assistant, module access and modern information endpoints with named policies.
 - [x] Replace role-string authorization on campuses and campus assignments with the existing Administration policy.
@@ -33,7 +33,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 ### Baseline findings that refine the original audit
 
 - The EF Core snapshot already exists on the baseline; the new CI gate is for ongoing consistency, not creation of a missing snapshot.
-- Existing Zod/API validation is broader than the original audit described: fee-structure creation/application, credit notes, staff advances, staff leave, library book/loan operations, inventory-register saves and inventory row contracts already use schemas. This batch adds Zod contracts and validated API methods for budgets and bank-reconciliation creation/statement lines. Remaining Zod work should target library-member workflows, academic/examination/administration forms and per-row imports; budget/reconciliation entry screens still need UI wiring.
+- Existing Zod/API validation is broader than the original audit described: fee-structure creation/application, credit notes, staff advances, staff leave, library book/loan operations, inventory-register saves and inventory row contracts already use schemas. This batch adds Zod contracts and validated API methods for budgets, bank-reconciliation creation/statement lines, fiscal periods, opening balances and fiscal-period closing. Remaining Zod work should target library-member workflows, academic/examination/administration forms and per-row imports; budget/reconciliation/opening-balance/fiscal-period entry screens still need UI wiring.
 - Finance already has backend report endpoints for General Ledger, Trial Balance, Income Statement and Balance Sheet, plus bank-reconciliation and fiscal-period-closing controllers and opening-balance services. The remaining finance gap is end-to-end workflow coverage (especially opening balances, period close, reconciliation and budget-vs-actual) rather than creating those foundations from scratch.
 - The current shell routes to real academic, hostel, inventory, staff/payroll, timetable and examination-capable workspaces; examination management is nested under Academic Management. Transport and standalone teacher-assignment modules are not currently present in the shell and need an explicit keep/remove decision.
 
