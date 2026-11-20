@@ -20,7 +20,7 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class StaffController(SchoolManagementDbContext db, CampusAccessService campusAccess, LeaveRequestService leaveService) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = StaffPolicies.Read)]
+    [Authorize(Policy = "permission:staff.view")]
     public async Task<IActionResult> List([FromQuery] bool activeOnly = true, CancellationToken cancellationToken = default)
     {
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
@@ -56,7 +56,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             .Select(x => new { x.Id, x.Code, x.Name }).ToListAsync(cancellationToken));
 
     [HttpPost]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:staff.create")]
     public async Task<IActionResult> Create([FromBody] CreateStaffRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.StaffNumber) || string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.EmploymentType))
@@ -127,7 +127,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpPatch("{id:guid}/course-units")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:staff.manage_course_assignments")]
     public async Task<IActionResult> UpdateCourseUnits(Guid id, [FromBody] UpdateStaffCourseUnitsRequest request, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -153,7 +153,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpPatch("{id:guid}/deactivate")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:staff.edit")]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -171,7 +171,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpPatch("{id:guid}/activate")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:staff.edit")]
     public async Task<IActionResult> Activate(Guid id, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -189,7 +189,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:staff.edit")]
     public async Task<IActionResult> Update(Guid id, UpdateStaffRequest request, CancellationToken cancellationToken)
     {
         if (id != request.Id) return BadRequest(new { message = "Route ID and body ID must match." });
@@ -211,7 +211,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:staff.delete")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -276,7 +276,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpPost("{id:guid}/leave")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:leave.apply")]
     public async Task<IActionResult> RequestLeave(Guid id, [FromBody] CreateLeaveRequestDto request, CancellationToken cancellationToken)
     {
         var staffCampusId = await db.StaffMembers.Where(x => x.Id == id).Select(x => x.CampusId).SingleOrDefaultAsync(cancellationToken);
@@ -292,7 +292,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpPatch("leave/{id:guid}/approve")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:leave.approve")]
     public async Task<IActionResult> ApproveLeave(Guid id, [FromBody] ApproveLeaveRequest request, CancellationToken cancellationToken)
     {
         var existingRequest = await leaveService.GetByIdAsync(id, cancellationToken);
@@ -313,7 +313,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpPatch("leave/{id:guid}/cancel")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:leave.approve")]
     public async Task<IActionResult> CancelLeave(Guid id, CancellationToken cancellationToken)
     {
         var existingRequest = await leaveService.GetByIdAsync(id, cancellationToken);
