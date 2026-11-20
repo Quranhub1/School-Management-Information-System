@@ -18,13 +18,13 @@ A dedicated executable target-environment acceptance runbook is now available at
 ### Implemented on `feature/production-hardening-audit`
 
 - [x] Add FluentValidation to the API and register automatic MVC validation plus assembly-scanned validators.
-- [x] Add validators for student create/update, admission create/update/decision/admit, notice creation, and timetable entry/template/generation payloads.
+- [x] Add validators for student create/update, admission create/update/decision/admit, notice creation, timetable entry/template/generation, budget, and bank-reconciliation payloads.
 - [x] Remove duplicated inline validation for student creation and applicant student-number admission input; retain domain/business checks in workflows.
 - [x] Replace broad controller authorization on timetable, staff attendance, notices, offline assistant, module access and modern information endpoints with named policies.
 - [x] Replace role-string authorization on campuses and campus assignments with the existing Administration policy.
 - [x] Add a dedicated ModuleAccess policy that recognizes institutional roles and scoped `StaffAccess.*` role claims.
 - [x] Return explicit response DTOs from student registry/detail/create/update, alumni list/detail/create, notices board/create, and timetable entry/conflict/create/update/template endpoints; do not serialize student finance navigation collections.
-- [x] Add API validator tests and application tests for scoped staff module access.
+- [x] Add API validator tests for admissions, students, notices, timetable and finance administration, plus application tests for scoped staff module access.
 - [x] Verify the EF Core model snapshot exists; add CI checks for pending model changes and generation of an idempotent migration script.
 - [x] Pin migration generation to `main` and fast-forward before committing generated migrations.
 - [x] Remove duplicate progress metadata and the duplicate system-wide name-display section from this file. The lowercase `progress.md` file is not present on the current baseline.
