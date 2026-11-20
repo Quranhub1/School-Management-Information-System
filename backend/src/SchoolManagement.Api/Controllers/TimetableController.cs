@@ -110,7 +110,6 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [Authorize(Policy = TimetablePolicies.Management)]
     public async Task<IActionResult> Create(CreateTimetableEntryRequest request, CancellationToken cancellationToken)
     {
-        if (request.EndTime <= request.StartTime) return BadRequest(new { message = "End time must be after start time." });
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == request.TeachingGroupId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teaching group not found." });
         if (!await IsCourseMappedToTeachingGroupAsync(request.TeachingGroupId, request.CourseId, request.CurriculumId, request.YearOfStudy, request.CurriculumSemesterNumber, cancellationToken))
             return BadRequest(new { message = "The selected course is not mapped to the programme curriculum for this teaching group." });
@@ -135,7 +134,6 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [Authorize(Policy = TimetablePolicies.Management)]
     public async Task<IActionResult> Update(Guid id, CreateTimetableEntryRequest request, CancellationToken cancellationToken)
     {
-        if (request.EndTime <= request.StartTime) return BadRequest(new { message = "End time must be after start time." });
         var existing = await db.TimetableEntries.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, cancellationToken);
         if (existing is null) return NotFound(new { message = "Timetable session was not found or has already changed." });
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == request.TeachingGroupId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teaching group not found." });
@@ -193,26 +191,12 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     {
         if (request.TeachingGroupId != teachingGroupId)
             return BadRequest(new { message = "The template class does not match the route." });
-        if (request.LayoutJson is { Length: > 100000 })
-            return BadRequest(new { message = "The timetable layout is too large to save." });
-        if (!string.IsNullOrWhiteSpace(request.LayoutJson))
-        {
-            try { using var document = System.Text.Json.JsonDocument.Parse(request.LayoutJson); }
-            catch (System.Text.Json.JsonException) { return BadRequest(new { message = "The timetable layout is not valid JSON." }); }
-        }
-
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == teachingGroupId && x.IsActive, cancellationToken))
             return BadRequest(new { message = "Teaching group not found." });
 
         var proposed = request.Entries ?? [];
         foreach (var entry in proposed)
         {
-            if (entry.TeachingGroupId != teachingGroupId)
-                return BadRequest(new { message = "Every session must belong to the selected class." });
-            if (!Enum.IsDefined(entry.DayOfWeek))
-                return BadRequest(new { message = "A session contains an invalid day of week." });
-            if (entry.EndTime <= entry.StartTime)
-                return BadRequest(new { message = "Every session must end after it starts." });
             if (!await IsCourseMappedToTeachingGroupAsync(teachingGroupId, entry.CourseId, entry.CurriculumId, entry.YearOfStudy, entry.CurriculumSemesterNumber, cancellationToken))
                 return BadRequest(new { message = "A selected course is not mapped to the programme curriculum for this teaching group." });
             if (!await db.StaffMembers.AnyAsync(x => x.Id == entry.TeacherId && x.IsActive && x.EmploymentStatus == "Active", cancellationToken))
@@ -309,10 +293,6 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [Authorize(Policy = TimetablePolicies.Management)]
     public async Task<IActionResult> Generate(GenerateTimetableRequest request, CancellationToken cancellationToken)
     {
-        if (!request.CurriculumId.HasValue || !request.ProgrammeId.HasValue ||
-            !request.YearOfStudy.HasValue || request.YearOfStudy.Value < 1 ||
-            !request.CurriculumSemesterNumber.HasValue || request.CurriculumSemesterNumber.Value < 1)
-            return BadRequest(new { message = "Programme, curriculum, year of study and curriculum semester are required for timetable generation." });
         var result = await generator.GenerateAsync(request, cancellationToken);
         return Ok(result);
     }
