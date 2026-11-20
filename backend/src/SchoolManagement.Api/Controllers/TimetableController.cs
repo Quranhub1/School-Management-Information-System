@@ -333,21 +333,3 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     }
 
 }
-
-public sealed record CreateTimetableEntryRequest(
-    Guid TeachingGroupId,
-    Guid CourseId,
-    Guid TeacherId,
-    DayOfWeek DayOfWeek,
-    TimeOnly StartTime,
-    TimeOnly EndTime,
-    string? Room,
-    string? SessionType,
-    Guid CurriculumId,
-    int YearOfStudy,
-    int CurriculumSemesterNumber);
-
-public sealed record SaveTimetableTemplateRequest(
-    Guid TeachingGroupId,
-    List<CreateTimetableEntryRequest> Entries,
-    string? LayoutJson = null);
