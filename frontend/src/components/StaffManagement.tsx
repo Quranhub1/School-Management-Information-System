@@ -417,7 +417,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                 <label className="field-label">Name of staff
                   <select value={leaveForm.staffMemberId} onChange={e => { setLeaveForm(current => ({ ...current, staffMemberId: e.target.value })); setLeaveRequests([]) }} required>
                     <option value="">Select staff member</option>
-                    {staff.map(person => <option key={person.id} value={person.id}>{formatPersonName(person.lastName, person.firstName)} · {person.staffNumber}</option>)}
+                    {staff.filter(person => person.isActive).map(person => <option key={person.id} value={person.id}>{formatPersonName(person.lastName, person.firstName)} · {person.staffNumber}</option>)}
                   </select>
                 </label>
                 <label className="field-label">Leave type
