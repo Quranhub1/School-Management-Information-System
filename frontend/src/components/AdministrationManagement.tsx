@@ -430,6 +430,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
               <button type="button" className="secondary-button" onClick={() => setRolePermissionCodes([])}>Clear all</button>
               <strong>{rolePermissionCodes.length} selected</strong>
             </div>
+            {selectedPermissionRole.name === 'SystemAdministrator' && <p className="staff-create-hint">The System Administrator role is protected and always retains all permissions.</p>}
             <div className="staff-permission-groups">
               {permissionGroups.map(group => {
                 const filtered = group.permissions.filter(permission => !permissionSearch.trim() || permission.label.toLowerCase().includes(permissionSearch.toLowerCase()) || permission.id.toLowerCase().includes(permissionSearch.toLowerCase()))
@@ -438,13 +439,13 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
                 const count = allIds.filter(id => rolePermissionCodes.includes(id)).length
                 return <details className="staff-permission-group" key={group.id} open={Boolean(permissionSearch.trim())}>
                   <summary>
-                    <input type="checkbox" aria-label={`Select all ${group.label} permissions`} checked={count === allIds.length} onChange={event => setRolePermissionCodes(current => event.target.checked ? [...new Set([...current, ...allIds])] : current.filter(id => !allIds.includes(id)))} onClick={event => event.stopPropagation()} />
+                    <input type="checkbox" aria-label={`Select all ${group.label} permissions`} checked={count === allIds.length} disabled={selectedPermissionRole.name === 'SystemAdministrator'} onChange={event => setRolePermissionCodes(current => event.target.checked ? [...new Set([...current, ...allIds])] : current.filter(id => !allIds.includes(id)))} onClick={event => event.stopPropagation()} />
                     <span className="staff-permission-group-title">{group.label}</span>
                     <span className="staff-permission-group-count">{count} / {allIds.length}</span>
                   </summary>
                   <div className="staff-permission-items">
                     {filtered.map(permission => <label className="staff-permission-item" key={permission.id}>
-                      <input type="checkbox" checked={rolePermissionCodes.includes(permission.id)} onChange={event => setRolePermissionCodes(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
+                      <input type="checkbox" checked={rolePermissionCodes.includes(permission.id)} disabled={selectedPermissionRole.name === 'SystemAdministrator'} onChange={event => setRolePermissionCodes(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
                       <span>{permission.label}<small>{permission.id}</small></span>
                     </label>)}
                   </div>
@@ -452,7 +453,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
               })}
             </div>
             <div className="topbar-actions">
-              <button type="button" onClick={() => void saveRolePermissions()} disabled={permissionsSaving || permissionsLoading}>{permissionsSaving ? 'Saving…' : 'Save role permissions'}</button>
+              <button type="button" onClick={() => void saveRolePermissions()} disabled={permissionsSaving || permissionsLoading || selectedPermissionRole.name === 'SystemAdministrator'}>{permissionsSaving ? 'Saving…' : 'Save role permissions'}</button>
               <button type="button" className="secondary-button" onClick={() => setSelectedPermissionRole(null)}>Cancel</button>
             </div>
           </section>
