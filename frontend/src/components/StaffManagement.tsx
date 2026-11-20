@@ -16,7 +16,7 @@ import { getUsers, resetUserPassword, getPermissionCatalogue, getPermissionRoles
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment' | 'attendance'
 
 
-export function StaffManagement({ canManage = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; activeSubsection?: string | null }) {
+export function StaffManagement({ canManage = false, canManageAccounts = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, activeSubsection = null }: { canManage?: boolean; canManageAccounts?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; activeSubsection?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
@@ -79,6 +79,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   }
 
   useEffect(() => {
+    if (!canManage) return
     let cancelled = false
     setPermissionsLoading(true)
     Promise.all([getPermissionCatalogue(), getPermissionRoles()]).then(([catalogue, roles]) => {
@@ -88,7 +89,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       setSelectedAccountRoles([])
     }).catch(error => { if (!cancelled) { const message = error instanceof Error ? error.message : 'Unable to load the central permission catalogue.'; setError(message); notify(message, 'error', 'Permissions unavailable') } }).finally(() => { if (!cancelled) setPermissionsLoading(false) })
     return () => { cancelled = true }
-  }, [])
+  }, [canManage])
 
   useEffect(() => {
     const selectedRoles = availableRoles.filter(item => selectedAccountRoles.includes(item.name))
@@ -165,12 +166,14 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
           const hasPassword = Boolean(accountPassword)
           if (hasUsername !== hasPassword) throw new Error('Enter both a username and password to create the staff login account.')
           if (hasUsername) {
+            if (!canManageAccounts) throw new Error('Only a System Administrator can create or link staff login accounts.')
             if (selectedAccountRoles.length === 0) throw new Error('Select at least one role for the new staff login account.')
             account = { username: accountUsername.trim(), password: accountPassword, roles: selectedAccountRoles, permissionCodes: selectedPermissions }
           } else if (selectedPermissions.length > 0) {
             throw new Error('Enter login details before assigning permissions to this staff member.')
           }
         } else {
+          if (!canManageAccounts) throw new Error('Only a System Administrator can create or link staff login accounts.')
           if (!accountUsername.trim()) throw new Error('Enter the username of the existing account to link.')
           const existingUsers = await getUsers()
           const matched = existingUsers.find(user => user.username.toLowerCase() === accountUsername.trim().toLowerCase())
@@ -455,14 +458,15 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   <div className="staff-create-card-heading">
                     <div>
                       <h3 className="staff-create-card-title">Permissions by module</h3>
-                      <p className="staff-create-hint">Role permissions are inherited automatically. Checked inherited items are read-only; select additional permissions to grant them directly to this account.</p>
+                      {!canManageAccounts && <p className="staff-create-hint">Only a System Administrator can assign staff login roles and permissions. You can view the catalogue here, but the controls are read-only.</p>}
+                  <p className="staff-create-hint">Role permissions are inherited automatically. Checked inherited items are read-only; select additional permissions to grant them directly to this account.</p>
                     </div>
                     <strong className="staff-permission-count">{selectedPermissions.length + inheritedPermissions.filter(id => !selectedPermissions.includes(id)).length} / {allPermissionIds.length} effective</strong>
                   </div>
                   <div className="staff-permission-toolbar">
                     <input type="search" aria-label="Search permissions" placeholder="Search permissions…" value={permissionSearch} onChange={event => setPermissionSearch(event.target.value)} />
                     <button type="button" className="secondary-button" onClick={() => setSelectedPermissions(allPermissionIds.filter(id => !inheritedPermissions.includes(id)))}>Select all</button>
-                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions([])}>Clear all</button>
+                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions([])} disabled={!canManageAccounts}>Clear all</button>
                   </div>
                   <div className="staff-permission-groups">
                     {filteredPermissionGroups.map(group => {
@@ -477,7 +481,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                         </summary>
                         <div className="staff-permission-items">
                           {group.permissions.map(permission => <label className="staff-permission-item" key={permission.id}>
-                            <input type="checkbox" checked={selectedPermissions.includes(permission.id) || inheritedPermissions.includes(permission.id)} disabled={inheritedPermissions.includes(permission.id)} onChange={event => setSelectedPermissions(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
+                            <input type="checkbox" checked={selectedPermissions.includes(permission.id) || inheritedPermissions.includes(permission.id)} disabled={!canManageAccounts || inheritedPermissions.includes(permission.id)} onChange={event => setSelectedPermissions(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
                             <span>{permission.label}<small>{permission.id}</small></span>
                           </label>)}
                         </div>
@@ -503,15 +507,15 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                     </div>
                   </div>
                   <label className="staff-create-field">{accountMode === 'existing' ? 'Existing Username' : 'Username'}
-                    <input autoComplete="username" placeholder={accountMode === 'existing' ? 'Enter existing username' : 'Enter Username'} value={accountUsername} onChange={e => setAccountUsername(e.target.value)} />
+                    <input autoComplete="username" placeholder={accountMode === 'existing' ? 'Enter existing username' : 'Enter Username'} disabled={!canManageAccounts} value={accountUsername} onChange={e => setAccountUsername(e.target.value)} />
                   </label>
                   <label className="staff-create-field" style={{ marginTop: 12 }}>{accountMode === 'existing' ? 'New Password' : 'Password'}
-                    <input type="password" autoComplete="new-password" minLength={8} placeholder={accountMode === 'existing' ? 'Enter New Password' : 'Enter Password'} value={accountPassword} onChange={e => setAccountPassword(e.target.value)} />
+                    <input type="password" autoComplete="new-password" minLength={8} placeholder={accountMode === 'existing' ? 'Enter New Password' : 'Enter Password'} disabled={!canManageAccounts} value={accountPassword} onChange={e => setAccountPassword(e.target.value)} />
                   </label>
                   {credentialFeedback && <div className="staff-create-credential-feedback" role="status" aria-live="polite">{credentialFeedback}</div>}
                   {accountMode === 'new' && <>
                     <label className="staff-create-field" style={{ marginTop: 12 }}>Login roles (select one or more)
-                      <select multiple size={4} value={selectedAccountRoles} onChange={event => setSelectedAccountRoles(Array.from(event.target.selectedOptions, option => option.value))} disabled={permissionsLoading}>
+                      <select multiple size={4} value={selectedAccountRoles} onChange={event => setSelectedAccountRoles(Array.from(event.target.selectedOptions, option => option.value))} disabled={permissionsLoading || !canManageAccounts}>
                         {availableRoles.map(role => <option key={role.id} value={role.name}>{role.name}</option>)}
                       </select>
                     </label>
@@ -531,7 +535,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
               <div className="staff-create-actions">
                 <button type="submit" className="staff-create-primary" disabled={permissionsLoading || Boolean(editingStaffId && accountMode === 'existing')}>{editingStaffId ? 'Save changes' : accountMode === 'existing' ? 'Link Account & Add Staff' : 'Add New Staff'}</button>
                 <div className="staff-create-actions-right">
-                  {accountMode === 'existing' && <button type="button" className="staff-create-primary" onClick={() => void updateExistingStaffCredentials()} disabled={credentialBusy}>{credentialBusy ? 'Updating…' : 'Update Staff login details'}</button>}
+                  {accountMode === 'existing' && <button type="button" className="staff-create-primary" onClick={() => void updateExistingStaffCredentials()} disabled={!canManageAccounts || credentialBusy}>{credentialBusy ? 'Updating…' : 'Update Staff login details'}</button>}
                   {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
                   <button type="button" className="secondary-button" onClick={() => { if (editingStaffId) cancelEdit(); else { setForm(emptyStaffForm()); setStaffStatus('Active'); setAccountMode('new'); setAccountUsername(''); setAccountPassword(''); setCredentialFeedback(''); setValidationErrors({}); setError(''); setSuccess('') } }}>Cancel</button>
                 </div>
