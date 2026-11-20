@@ -196,7 +196,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             var actorPermissions = await GetEffectivePermissionCodesAsync(actorUserId, cancellationToken);
             if (!actorPermissions.Contains("hr.manage-accounts"))
                 return Forbid();
-            var allPermissionCodes = PermissionCatalog.All.Select(permission => permission.Code)
+            var allPermissionCodes = SchoolManagement.Infrastructure.Identity.PermissionCatalog.All.Select(permission => permission.Code)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             if (requestedRoleNames.Contains("SystemAdministrator", StringComparer.OrdinalIgnoreCase)
                 && !actorPermissions.SetEquals(allPermissionCodes))
