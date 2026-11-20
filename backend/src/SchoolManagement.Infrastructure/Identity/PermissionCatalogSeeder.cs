@@ -34,13 +34,11 @@ public sealed class PermissionCatalogSeeder(SchoolManagementDbContext db)
         var obsolete = existing.Where(x => !codes.Contains(x.Code)).ToList();
         if (obsolete.Count > 0)
         {
-            // Retain obsolete permissions while assignments still reference them; they can be retired deliberately.
             var used = await db.RolePermissions.Select(x => x.PermissionId)
                 .Union(db.UserPermissions.Select(x => x.PermissionId)).ToListAsync(cancellationToken);
             db.Permissions.RemoveRange(obsolete.Where(x => !used.Contains(x.Id)));
         }
 
-        // Persist catalogue rows before querying their generated IDs for assignments.
         await db.SaveChangesAsync(cancellationToken);
 
         var staffReadRoles = new[]
@@ -58,7 +56,7 @@ public sealed class PermissionCatalogSeeder(SchoolManagementDbContext db)
         {
             var currentAssignments = await db.RolePermissions.Where(x => x.RoleId == role.Id)
                 .Select(x => x.PermissionId).ToListAsync(cancellationToken);
-            var codes = new HashSet<string>(StringComparer.Ordinal);
+            var assignedCodes = new HashSet<string>(StringComparer.Ordinal);
             if (role.Name == InstitutionalRoles.SystemAdministrator)
             {
                 var assigned = currentAssignments.ToHashSet();
@@ -68,10 +66,10 @@ public sealed class PermissionCatalogSeeder(SchoolManagementDbContext db)
             }
             if (!isInitialCatalogueSeed || currentAssignments.Count > 0) continue;
             if (staffReadRoles.Contains(role.Name, StringComparer.Ordinal))
-                codes.Add("staff.view");
+                assignedCodes.Add("staff.view");
             if (staffManagementRoles.Contains(role.Name, StringComparer.Ordinal))
-                codes.UnionWith(new[] { "staff.create", "staff.edit", "staff.delete", "staff.manage_course_assignments", "leave.view", "leave.apply", "leave.approve" });
-            db.RolePermissions.AddRange(codes.Where(permissionIds.ContainsKey)
+                assignedCodes.UnionWith(new[] { "staff.create", "staff.edit", "staff.delete", "staff.manage_course_assignments", "leave.view", "leave.apply", "leave.approve" });
+            db.RolePermissions.AddRange(assignedCodes.Where(permissionIds.ContainsKey)
                 .Select(code => new SchoolManagement.Domain.Identity.RolePermission { RoleId = role.Id, PermissionId = permissionIds[code] }));
         }
 
