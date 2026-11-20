@@ -23,7 +23,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Replace broad controller authorization on timetable, staff attendance, notices, offline assistant, module access and modern information endpoints with named policies.
 - [x] Replace role-string authorization on campuses and campus assignments with the existing Administration policy.
 - [x] Add a dedicated ModuleAccess policy that recognizes institutional roles and scoped `StaffAccess.*` role claims.
-- [x] Return explicit StudentResponse DTOs from the student registry, archived registry, student detail, create and update endpoints; do not serialize finance navigation collections.
+- [x] Return explicit response DTOs from student registry/detail/create/update, alumni list/detail/create, notices board/create, and timetable entry/conflict/create/update/template endpoints; do not serialize student finance navigation collections.
 - [x] Add API validator unit tests.
 - [x] Verify the EF Core model snapshot exists; add CI checks for pending model changes and generation of an idempotent migration script.
 - [x] Pin migration generation to `main` and fast-forward before committing generated migrations.
