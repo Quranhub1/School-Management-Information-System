@@ -9,7 +9,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/health-records")]
-[Authorize(Policy = AuthorizationPolicies.StudentManagement)]
+[Authorize(Policy = AuthorizationPolicies.MedicalRecords)]
 public sealed class HealthRecordsController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("student/{studentId:guid}")]

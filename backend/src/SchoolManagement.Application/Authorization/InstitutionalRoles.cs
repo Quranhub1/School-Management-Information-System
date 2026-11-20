@@ -23,4 +23,5 @@ public static class InstitutionalRoles
     public const string RecordsOfficer = "Records Officer";
     public const string Librarian = "Librarian";
     public const string HrManager = "HR Manager";
+    public const string MedicalOfficer = "Medical Officer";
 }
