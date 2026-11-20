@@ -44,6 +44,17 @@ public sealed class SeedAcademicYearsAndIntakes : Migration
             INSERT INTO "Intakes" ("Id", "Name", "Code", "StartDate", "IsOpen")
             SELECT gen_random_uuid(), 'August Intake', 'AUG', DATE '2001-08-01', TRUE
             WHERE NOT EXISTS (SELECT 1 FROM "Intakes" WHERE upper("Code") = 'AUG');
+
+            WITH ranked_intakes AS (
+                SELECT "Id",
+                       row_number() OVER (PARTITION BY upper("Code") ORDER BY "StartDate" DESC, "Id") AS position
+                FROM "Intakes"
+                WHERE upper("Code") IN ('JAN', 'AUG')
+            )
+            UPDATE "Intakes" intake
+            SET "IsOpen" = ranked_intakes.position = 1
+            FROM ranked_intakes
+            WHERE intake."Id" = ranked_intakes."Id";
             """);
     }
 
