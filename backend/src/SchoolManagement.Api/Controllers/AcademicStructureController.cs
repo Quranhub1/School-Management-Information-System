@@ -38,7 +38,7 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
 
         return Ok(await db.AcademicYears.AsNoTracking()
             .Where(x => x.IsActive)
-            .OrderByDescending(x => x.StartDate)
+            .OrderBy(x => x.StartDate)
             .ToListAsync(ct));
     }
 
