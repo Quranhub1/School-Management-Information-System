@@ -16,7 +16,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export type StaffCourseUnit = { id: string; code: string; name: string; creditUnits: number };
 export type StaffDepartment = { id: string; code: string; name: string };
-export type StaffMember = { id:string; staffNumber:string; firstName:string; lastName:string; otherNames?:string|null; displayName?:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string; staffType:string; isActive:boolean; departmentId?:string|null; jobTitle?:string|null; highestQualification?:string|null; speciality?:string|null; professionalRegistration?:string|null; courseUnitIds?:string[] };
+export type StaffMember = { id:string; userId?:string|null; staffNumber:string; firstName:string; lastName:string; otherNames?:string|null; displayName?:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string; staffType:string; isActive:boolean; departmentId?:string|null; jobTitle?:string|null; highestQualification?:string|null; speciality?:string|null; professionalRegistration?:string|null; courseUnitIds?:string[] };
 export type StaffProfileInput = Omit<StaffMember, 'id' | 'isActive'>;
 export type StaffPermission = { id: string; code: string; name: string; groupKey: string; description?: string | null };
 export type StaffRole = { id: string; name: string; description?: string | null };
@@ -36,8 +36,12 @@ export function listStaff(activeOnly=true){ return request<StaffMember[]>(`/api/
 export function listStaffCourseUnits(){ return request<StaffCourseUnit[]>('/api/staff/course-units'); }
 export function listStaffDepartments(){ return request<StaffDepartment[]>('/api/staff/departments'); }
 export async function createStaff(input: StaffCreateInput) {
-  const validated = parseApiInput(staffCreateRequestSchema, input, 'create staff record')
-  const created = await request<StaffMember>('/api/staff',{method:'POST',body:JSON.stringify(validated)})
+  const { createLoginAccount, username, password, roleNames, permissionCodes, ...profile } = input
+  const validated = parseApiInput(staffCreateRequestSchema, profile, 'create staff record')
+  const payload = createLoginAccount
+    ? { ...validated, createLoginAccount, username, password, roleNames, permissionCodes }
+    : validated
+  const created = await request<StaffMember>('/api/staff',{method:'POST',body:JSON.stringify(payload)})
   notifyStaffChanged(created)
   return created
 }
