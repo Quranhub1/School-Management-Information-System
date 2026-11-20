@@ -35,6 +35,7 @@ public sealed class AuthController(AuthService auth, IConfiguration configuratio
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        claims.AddRange(user.Permissions.Select(permission => new Claim("permission", permission)));
 
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
@@ -51,7 +52,8 @@ public sealed class AuthController(AuthService auth, IConfiguration configuratio
             accessToken = new JwtSecurityTokenHandler().WriteToken(token),
             expiresAt = expires,
             username = user.Username,
-            roles = user.Roles
+            roles = user.Roles,
+            permissions = user.Permissions
         });
     }
 }
