@@ -108,6 +108,7 @@ public static class PermissionCatalog
         }
         var roleDefaults = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
         {
+            [InstitutionalRoles.SystemAdministrator] = All.Select(permission => permission.Code).ToArray(),
             ["AcademicRegistrar"] = ["hr.read-staff", "students.read", "students.create", "students.update", "admissions.read", "admissions.review", "admissions.enrol", "academics.read", "academics.manage-programmes", "academics.manage-courses", "academics.manage-registration", "timetable.read", "timetable.generate", "timetable.edit", "timetable.manage-templates", "exams.read", "attendance.read"],
             ["AssistantRegistrar"] = ["hr.read-staff", "students.read", "students.create", "students.update", "admissions.read", "admissions.create", "academics.read", "timetable.read", "exams.read", "attendance.read"],
             ["AdmissionsOfficer"] = ["students.read", "students.create", "admissions.read", "admissions.create", "admissions.review"],
@@ -165,8 +166,8 @@ public static class PermissionCatalog
         AddDefaults(AuthorizationPolicies.RoleSets.Student360, "students.read");
         AddDefaults(new[] { "SystemAdministrator", "Librarian", "AcademicRegistrar", "AssistantRegistrar", "Admin Secretary", "Lecturer" }, "library.read");
         AddDefaults(new[] { "SystemAdministrator", "Librarian", "HR Manager" }, "library.manage-books");
-        AddDefaults(new[] { "SystemAdministrator", "AcademicRegistrar", "AssistantRegistrar", "Lecturer", "Principal", "AssistantPrincipal", "HeadOfDepartment", "HrManager" }, "timetable.read");
-        AddDefaults(new[] { "SystemAdministrator", "AcademicRegistrar", "AssistantRegistrar", "Lecturer", "HrManager" }, "timetable.edit");
+        AddDefaults(new[] { "SystemAdministrator", "AcademicRegistrar", "AssistantRegistrar", "Lecturer", "Principal", "AssistantPrincipal", "HeadOfDepartment", InstitutionalRoles.HrManager }, "timetable.read");
+        AddDefaults(new[] { "SystemAdministrator", "AcademicRegistrar", "AssistantRegistrar", "Lecturer", InstitutionalRoles.HrManager }, "timetable.edit");
 
         foreach (var (roleName, codes) in roleDefaults)
         {
