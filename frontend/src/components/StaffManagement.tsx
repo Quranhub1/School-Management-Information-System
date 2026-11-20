@@ -422,7 +422,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{form.courseUnitIds.length} selected</span>
                 </div>
-              </section>
+              </fieldset>}
 
               {form.staffType === 'Teaching' && (
                 <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
