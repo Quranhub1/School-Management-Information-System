@@ -8,6 +8,8 @@ public sealed class CreateFiscalPeriodRequestValidator : AbstractValidator<Fisca
     public CreateFiscalPeriodRequestValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.StartDate).NotEqual(default(DateOnly));
+        RuleFor(x => x.EndDate).NotEqual(default(DateOnly));
         RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate);
     }
 }
