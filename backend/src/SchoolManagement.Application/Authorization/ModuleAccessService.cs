@@ -42,7 +42,7 @@ public sealed class ModuleAccessService
             InstitutionalModules.Admissions => Has(AdmissionsManageRole),
             InstitutionalModules.Students => HasPrefix("StaffAccess.Students."),
             InstitutionalModules.Academic => Has(CurriculumManageRole) || Has(ClassesDeleteRole),
-            InstitutionalModules.Curriculum => Has(StaffAccessRoles.CurriculumManage),
+            InstitutionalModules.Curriculum => Has(CurriculumManageRole),
             InstitutionalModules.Timetable => Has(TimetableManageRole),
             InstitutionalModules.Attendance => Has(StaffAttendanceRole),
             InstitutionalModules.Finance => HasPrefix("StaffAccess.Finance."),
