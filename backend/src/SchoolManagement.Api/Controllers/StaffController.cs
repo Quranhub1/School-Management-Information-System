@@ -75,9 +75,9 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         var username = request.Username?.Trim();
         var existingLink = await db.StaffUserLinks.SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
         string[] selectedRoles;
-        try { selectedRoles = StaffAccessRoles.ResolveRoles(request.Permissions); }
+        try { selectedRoles = request.Permissions is { Length: > 0 } ? StaffAccessRoles.ResolveRoles(request.Permissions) : Array.Empty<string>(); }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
-        if (selectedRoles.Length == 0)
+        if (selectedRoles.Length == 0 && existingLink is null)
             return BadRequest(new { message = "Select at least one screen or action for this staff account." });
         if (string.IsNullOrWhiteSpace(username))
             return BadRequest(new { message = "A username is required." });
@@ -123,10 +123,13 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
                 user.PasswordHash = AuthService.HashPassword(request.Password);
         }
 
-        var currentAssignments = await db.UserRoles.Where(x => x.UserId == user.Id).ToListAsync(cancellationToken);
-        db.UserRoles.RemoveRange(currentAssignments);
-        foreach (var role in roleEntities)
-            db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+        if (selectedRoles.Length > 0)
+        {
+            var currentAssignments = await db.UserRoles.Where(x => x.UserId == user.Id).ToListAsync(cancellationToken);
+            db.UserRoles.RemoveRange(currentAssignments);
+            foreach (var role in roleEntities)
+                db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+        }
 
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new { linked = true, username = user.Username, permissions = request.Permissions, isActive = user.IsActive });
