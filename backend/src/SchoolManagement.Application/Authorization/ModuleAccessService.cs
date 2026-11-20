@@ -23,8 +23,8 @@ public sealed class ModuleAccessService
         return ModuleAccess.RolesByModule
             .Where(pair => pair.Value.Any(roles.Contains) || HasScopedStaffAccess(pair.Key, roles))
             .Select(pair => pair.Key)
-            .Concat(HasScopedStaffAccess("Library", roles) ? ["Library"] : [])
-            .Concat(HasScopedStaffAccess("Communication", roles) ? ["Communication"] : [])
+            .Concat(HasScopedStaffAccess("Library", roles) ? new[] { "Library" } : Array.Empty<string>())
+            .Concat(HasScopedStaffAccess("Communication", roles) ? new[] { "Communication" } : Array.Empty<string>())
             .OrderBy(module => module)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
