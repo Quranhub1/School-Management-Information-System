@@ -10,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/timetable")]
-[Authorize]
+[Authorize(Policy = TimetablePolicies.Read)]
 public sealed class TimetableController(SchoolManagementDbContext db, TimetableGeneratorService generator, ITimetableRepository repository) : ControllerBase
 {
     [HttpGet("options")]
