@@ -10,6 +10,7 @@ public sealed class PermissionCatalogSeeder(SchoolManagementDbContext db)
     {
         var codes = PermissionCatalog.All.Select(x => x.Code).ToHashSet(StringComparer.Ordinal);
         var existing = await db.Permissions.ToListAsync(cancellationToken);
+        var isInitialCatalogueSeed = existing.Count == 0;
         var byCode = existing.ToDictionary(x => x.Code, StringComparer.Ordinal);
         foreach (var definition in PermissionCatalog.All)
         {
@@ -65,7 +66,7 @@ public sealed class PermissionCatalogSeeder(SchoolManagementDbContext db)
                     .Select(pair => new SchoolManagement.Domain.Identity.RolePermission { RoleId = role.Id, PermissionId = pair.Value }));
                 continue;
             }
-            if (currentAssignments.Count > 0) continue;
+            if (!isInitialCatalogueSeed || currentAssignments.Count > 0) continue;
             if (staffReadRoles.Contains(role.Name, StringComparer.Ordinal))
                 codes.Add("staff.view");
             if (staffManagementRoles.Contains(role.Name, StringComparer.Ordinal))
