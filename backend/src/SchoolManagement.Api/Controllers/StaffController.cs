@@ -42,7 +42,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpGet("{id:guid}/account")]
-    [Authorize(Policy = StaffPolicies.Read)]
+    [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> GetAccount(Guid id, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -253,6 +253,12 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         staff.ProfessionalRegistration = Clean(request.ProfessionalRegistration);
         staff.DateJoined = request.DateJoined;
         staff.CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds);
+        var linkedAccount = await db.StaffUserLinks.SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
+        if (linkedAccount is not null)
+        {
+            var user = await db.Users.SingleOrDefaultAsync(x => x.Id == linkedAccount.UserId, cancellationToken);
+            if (user is not null) { user.FirstName = staff.FirstName; user.LastName = staff.LastName; user.Email = staff.Email; }
+        }
         await db.SaveChangesAsync(cancellationToken);
         return Ok(ToProfile(staff));
     }
@@ -270,6 +276,12 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             .Where(x => x.StaffMemberId == id)
             .ToListAsync(cancellationToken);
         db.Librarians.RemoveRange(librarianAssignments);
+        var linkedAccount = await db.StaffUserLinks.SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
+        if (linkedAccount is not null)
+        {
+            var user = await db.Users.SingleOrDefaultAsync(x => x.Id == linkedAccount.UserId, cancellationToken);
+            if (user is not null) user.IsActive = false;
+        }
         db.StaffMembers.Remove(staff);
         try
         {
