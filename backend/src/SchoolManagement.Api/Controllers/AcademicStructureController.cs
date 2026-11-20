@@ -29,7 +29,7 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
                    make_date(year_value + 1, 1, 1) - 1,
                    FALSE,
                    TRUE
-            FROM generate_series(2001, {lastYear}) AS year_value
+            FROM generate_series(2001, {lastYear}) AS years(year_value)
             WHERE NOT EXISTS (
                 SELECT 1 FROM "AcademicYears" existing
                 WHERE existing."Name" = year_value::text || '-' || (year_value + 1)::text
