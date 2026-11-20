@@ -413,7 +413,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '4px 0 10px' }}>
                 <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
-                  <button type="submit" disabled={loading} style={{ background: '#15803d', color: '#fff', border: '1px solid #166534', borderRadius: 6, padding: '10px 18px', fontWeight: 700 }}>{editingStaffId ? 'Update Staff' : 'Add New Staff'}</button>
+                  <button type="submit" disabled={loading || savingAccount} style={{ background: '#15803d', color: '#fff', border: '1px solid #166534', borderRadius: 6, padding: '10px 18px', fontWeight: 700 }}>{savingAccount ? 'Saving account…' : editingStaffId ? 'Update Staff' : 'Add New Staff'}</button>
                   {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
                 </div>
                 <span style={{ color: '#64748b', fontSize: 12 }}>Staff details are validated and saved to the institutional database.</span>
