@@ -168,7 +168,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
       } else {
         const created = await createStaff({ ...profile, ...accessForm })
         // Add the server-confirmed record immediately, then reconcile with the API list.
-        setStaff(current => [savedStaff, ...current.filter(item => item.id !== created.id)])
+        setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
         setSuccess(`${formatPersonName(created.lastName, created.firstName)} was saved and added to the staff table.`)
         notify(`${formatPersonName(created.lastName, created.firstName)} saved successfully.`, 'success', 'Staff saved')
         void listStaff(false).then(latest => {
