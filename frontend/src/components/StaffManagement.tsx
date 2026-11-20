@@ -9,6 +9,7 @@ import { validateForm } from '../lib/validation'
 import { staffCreateRequestSchema } from '../schemas'
 import { SYSTEM_CURRENCY } from '../lib/currency'
 import { StaffAttendanceManagement } from './StaffAttendanceManagement'
+import { LEAVE_TYPE_OPTIONS, STAFF_TYPE_OPTIONS } from '../constants/referenceEnums'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment' | 'attendance'
 
@@ -276,7 +277,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
               <input placeholder="National ID" value={form.nationalId} onChange={e => setForm({ ...form, nationalId: e.target.value })} />
               <label className="field-label">Staff category
                 <select aria-label="Staff category" value={form.staffType} onChange={e => setForm({ ...form, staffType: e.target.value, courseUnitIds: e.target.value === 'Teaching' ? form.courseUnitIds : [] })} required>
-                  <option value="Teaching">Teaching</option><option value="NonTeaching">Non-teaching</option>
+                  {STAFF_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </label>
               <label className="field-label">Employment type
@@ -411,7 +412,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
           {canManage && (
             <form className="grid-form" onSubmit={submitLeave}>
               <input placeholder="Staff ID" value={leaveForm.staffMemberId} onChange={e => setLeaveForm({ ...leaveForm, staffMemberId: e.target.value })} required />
-              <select value={leaveForm.leaveType} onChange={e => setLeaveForm({ ...leaveForm, leaveType: e.target.value })}><option>Annual</option><option>Sick</option><option>Maternity</option><option>Paternity</option><option>Study</option></select>
+              <select value={leaveForm.leaveType} onChange={e => setLeaveForm({ ...leaveForm, leaveType: e.target.value })}>{LEAVE_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
               <input placeholder="Start date" type="date" value={leaveForm.startDate} onChange={e => setLeaveForm({ ...leaveForm, startDate: e.target.value })} required />
               <input placeholder="End date" type="date" value={leaveForm.endDate} onChange={e => setLeaveForm({ ...leaveForm, endDate: e.target.value })} required />
               <input placeholder="Reason" value={leaveForm.reason} onChange={e => setLeaveForm({ ...leaveForm, reason: e.target.value })} required />
