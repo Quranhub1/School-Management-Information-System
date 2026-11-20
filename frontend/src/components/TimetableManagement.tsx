@@ -95,10 +95,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
       const uniqueProgrammes = deduplicateProgrammeOptions(loadedOptions.programmes ?? [], loadedOptions.curricula ?? [], loadedOptions.teachingGroups ?? [])
       const preferredProgramme = uniqueProgrammes[0]
+      const preferredCurriculum = loadedOptions.curricula.find(item => preferredProgramme?.sourceIds.includes(item.programmeId))
       const preferredPeriodId = loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || ''
-      const preferredGroup = loadedOptions.teachingGroups.find(item => preferredProgramme?.sourceIds.includes(item.programmeId) && item.semesterId === preferredPeriodId)
+      const preferredGroup = loadedOptions.teachingGroups.find(item => item.programmeId === preferredCurriculum?.programmeId && item.semesterId === preferredPeriodId)
       setProgrammeId(current => current || preferredProgramme?.id || '')
-      setCurriculumId(current => current || loadedOptions.curricula.find(item => preferredProgramme?.sourceIds.includes(item.programmeId))?.id || '')
+      setCurriculumId(current => current || preferredCurriculum?.id || '')
       setTemplateGroupId(current => current || preferredGroup?.id || '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
