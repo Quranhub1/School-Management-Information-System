@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import './OfflineSyncCenter.css'
 import { Download, RefreshCw, ShieldAlert, Wifi, WifiOff } from 'lucide-react'
 import { getSession } from '../api/auth'
 import { getOnlineStatus } from '../lib/offline/api'
