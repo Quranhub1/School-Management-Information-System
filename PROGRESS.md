@@ -25,6 +25,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Add a dedicated ModuleAccess policy that recognizes institutional roles and scoped `StaffAccess.*` role claims.
 - [x] Return explicit response DTOs from student registry/detail/create/update, alumni list/detail/create, notices board/create, and timetable entry/conflict/create/update/template endpoints; do not serialize student finance navigation collections.
 - [x] Add API validator tests for admissions, students, notices, timetable and finance administration, plus application tests for scoped staff module access.
+- [x] Add an administrator-facing offline queue/conflict review workspace with metadata-only JSON audit export; automatic replay remains disabled.
 - [x] Verify the EF Core model snapshot exists; add CI checks for pending model changes and generation of an idempotent migration script.
 - [x] Pin migration generation to `main` and fast-forward before committing generated migrations.
 - [x] Remove duplicate progress metadata and the duplicate system-wide name-display section from this file. The lowercase `progress.md` file is not present on the current baseline.
@@ -42,7 +43,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [ ] Expand API controller authorization and integration tests, including finance journal balancing, allocation and fiscal-period edge cases.
 - [ ] Complete Zod coverage for remaining forms and validate each imported CSV/Excel row before persistence.
 - [ ] Finish finance accounting workflows and dimension-aware reports; verify existing ledger/report endpoints against the production acceptance requirements.
-- [ ] Build the staff-facing offline operation queue, conflict review and audit export without enabling unsafe automatic replay.
+- [ ] Extend offline queue/conflict review access from System Administration to the appropriate operational staff roles; keep automatic replay disabled until each domain passes idempotency, authorization and conflict tests.
 - [ ] Inventory current shell routes and replace or intentionally remove any genuine placeholder modules.
 - [ ] Run the full backend/frontend test suites and resolve every CI failure before merging.
 
