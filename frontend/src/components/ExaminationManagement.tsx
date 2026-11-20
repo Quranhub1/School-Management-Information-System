@@ -285,7 +285,22 @@ export function ExaminationManagement({ canManage = false }: { canManage?: boole
               <footer className="exam-result-print__footer"><span>Prepared by: __________________</span><span>Approved by: __________________</span><span>Date: __________________</span></footer>
             </section>
           </>}
-          <style>{`@media print {
+          <style>{`.exam-result-print { background: #fff; border: 1px solid #cbd5e1; padding: 28px; color: #1f2937; max-width: 900px; margin: 18px auto; font-family: Arial, sans-serif; }
+            .exam-result-print__header { text-align: center; border-bottom: 2px solid #1f2937; padding-bottom: 14px; }
+            .exam-result-print__header h2 { margin: 0 0 6px; font-size: 20px; letter-spacing: .04em; }
+            .exam-result-print__header > p { margin: 4px 0 14px; font-weight: 700; letter-spacing: .18em; }
+            .exam-result-print__contacts { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; }
+            .exam-result-print h3 { margin: 24px 0 10px; font-size: 13px; letter-spacing: .08em; border-bottom: 1px solid #64748b; padding-bottom: 6px; }
+            .exam-result-print__details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+            .exam-result-print__details div { display: flex; gap: 8px; border-bottom: 1px solid #cbd5e1; padding: 7px 0; }
+            .exam-result-print__details dt { font-weight: 700; min-width: 145px; }
+            .exam-result-print__details dd { margin: 0; }
+            .exam-result-print__table { width: 100%; border-collapse: collapse; }
+            .exam-result-print__table th, .exam-result-print__table td { border: 1px solid #64748b; padding: 9px; text-align: left; }
+            .exam-result-print__table th { background: #f1f5f9; }
+            .exam-result-print__footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 48px; font-size: 12px; }
+            @media (max-width: 640px) { .exam-result-print { padding: 14px; } .exam-result-print__details { grid-template-columns: 1fr; } .exam-result-print__footer { flex-direction: column; } }
+            @media print {
             @page { size: A4; margin: 16mm; }
             body * { visibility: hidden !important; }
             #exam-result-print-area, #exam-result-print-area * { visibility: visible !important; }
