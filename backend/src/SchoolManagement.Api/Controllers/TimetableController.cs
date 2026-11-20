@@ -291,28 +291,6 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         return sameClass || sameTeacher || sameRoom;
     }
 
-    private static bool HasOverlap(CreateTimetableEntryRequest left, CreateTimetableEntryRequest right)
-    {
-        if (left.DayOfWeek != right.DayOfWeek || left.StartTime >= right.EndTime || right.StartTime >= left.EndTime)
-            return false;
-        var sameClass = left.TeachingGroupId == right.TeachingGroupId;
-        var sameTeacher = left.TeacherId == right.TeacherId;
-        var sameRoom = !string.IsNullOrWhiteSpace(left.Room) && !string.IsNullOrWhiteSpace(right.Room)
-            && string.Equals(left.Room.Trim(), right.Room.Trim(), StringComparison.OrdinalIgnoreCase);
-        return sameClass || sameTeacher || sameRoom;
-    }
-
-    private static bool HasOverlap(CreateTimetableEntryDto proposed, Domain.Academic.TimetableEntry existing)
-    {
-        if (proposed.DayOfWeek != existing.DayOfWeek || proposed.StartTime >= existing.EndTime || existing.StartTime >= proposed.EndTime)
-            return false;
-        var sameClass = proposed.TeachingGroupId == existing.TeachingGroupId;
-        var sameTeacher = proposed.TeacherId == existing.TeacherId;
-        var sameRoom = !string.IsNullOrWhiteSpace(proposed.Room) && !string.IsNullOrWhiteSpace(existing.Room)
-            && string.Equals(proposed.Room.Trim(), existing.Room.Trim(), StringComparison.OrdinalIgnoreCase);
-        return sameClass || sameTeacher || sameRoom;
-    }
-
     [HttpPost("generate")]
     [Authorize(Policy = TimetablePolicies.Management)]
     public async Task<IActionResult> Generate(GenerateTimetableRequest request, CancellationToken cancellationToken)

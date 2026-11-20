@@ -1,5 +1,5 @@
 using FluentValidation;
-using FluentValidation.AspNetCore;
+using FluentValidation.DependencyInjectionExtensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
@@ -9,8 +9,6 @@ using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Students;
 using SchoolManagement.Application.Finance;
-using FluentValidation;
-using FluentValidation.AspNetCore;
 using SchoolManagement.Api.BackgroundServices;
 using SchoolManagement.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
@@ -67,6 +65,7 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
 });
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateStudentRequestValidator>();
 builder.Services.AddControllers().AddJsonOptions(o =>
 {
     o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -74,12 +73,6 @@ builder.Services.AddControllers().AddJsonOptions(o =>
     // Accept those strings consistently instead of requiring numeric enum values.
     o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     o.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-}).AddFluentValidation(fv =>
-{
-    // Registers all AbstractValidator<T> types in the Application assembly (where the student
-    // validators live) and integrates them with ASP.NET Core model binding so
-    // [FromBody] request records are validated and ModelState.IsValid reflects the result.
-    fv.RegisterValidatorsFromAssemblyContaining<SchoolManagement.Application.Students.CreateStudentRequestValidator>();
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
