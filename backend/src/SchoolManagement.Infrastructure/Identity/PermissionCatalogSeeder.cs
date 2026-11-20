@@ -39,16 +39,8 @@ public sealed class PermissionCatalogSeeder(SchoolManagementDbContext db)
             db.Permissions.RemoveRange(obsolete.Where(x => !used.Contains(x.Id)));
         }
 
-        var systemAdministrator = await db.Roles.SingleOrDefaultAsync(x => x.Name == "SystemAdministrator", cancellationToken);
-        if (systemAdministrator is not null)
-        {
-            var allPermissionIds = await db.Permissions.Select(x => x.Id).ToListAsync(cancellationToken);
-            var assignedPermissionIds = await db.RolePermissions.Where(x => x.RoleId == systemAdministrator.Id)
-                .Select(x => x.PermissionId).ToListAsync(cancellationToken);
-            var assigned = assignedPermissionIds.ToHashSet();
-            db.RolePermissions.AddRange(allPermissionIds.Where(id => !assigned.Contains(id))
-                .Select(id => new SchoolManagement.Domain.Identity.RolePermission { RoleId = systemAdministrator.Id, PermissionId = id }));
-        }
+        // Persist catalogue rows before querying their generated IDs for assignments.
+        await db.SaveChangesAsync(cancellationToken);
 
         var staffReadRoles = new[]
         {
@@ -63,16 +55,21 @@ public sealed class PermissionCatalogSeeder(SchoolManagementDbContext db)
         var roles = await db.Roles.ToListAsync(cancellationToken);
         foreach (var role in roles)
         {
-            if (await db.RolePermissions.AnyAsync(x => x.RoleId == role.Id, cancellationToken)) continue;
+            var currentAssignments = await db.RolePermissions.Where(x => x.RoleId == role.Id)
+                .Select(x => x.PermissionId).ToListAsync(cancellationToken);
             var codes = new HashSet<string>(StringComparer.Ordinal);
+            if (role.Name == InstitutionalRoles.SystemAdministrator)
+            {
+                var assigned = currentAssignments.ToHashSet();
+                db.RolePermissions.AddRange(permissionIds.Where(pair => !assigned.Contains(pair.Value))
+                    .Select(pair => new SchoolManagement.Domain.Identity.RolePermission { RoleId = role.Id, PermissionId = pair.Value }));
+                continue;
+            }
+            if (currentAssignments.Count > 0) continue;
             if (staffReadRoles.Contains(role.Name, StringComparer.Ordinal))
                 codes.Add("staff.view");
             if (staffManagementRoles.Contains(role.Name, StringComparer.Ordinal))
-            {
                 codes.UnionWith(["staff.create", "staff.edit", "staff.delete", "staff.manage_course_assignments", "leave.view", "leave.apply", "leave.approve"]);
-            }
-            if (role.Name == InstitutionalRoles.SystemAdministrator)
-                codes.UnionWith(PermissionCatalog.All.Select(x => x.Code));
             db.RolePermissions.AddRange(codes.Where(permissionIds.ContainsKey)
                 .Select(code => new SchoolManagement.Domain.Identity.RolePermission { RoleId = role.Id, PermissionId = permissionIds[code] }));
         }
