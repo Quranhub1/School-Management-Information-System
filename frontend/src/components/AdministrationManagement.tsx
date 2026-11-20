@@ -1,7 +1,7 @@
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, BookOpen, BriefcaseBusiness, Building2, CalendarDays, ClipboardCheck, GraduationCap, HeartPulse, Landmark, Library, LockKeyhole, Megaphone, ShieldCheck, UserRound, UsersRound, WalletCards } from 'lucide-react'
-import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, getPermissionCatalogue, getPermissionRoles, getRolePermissionCodes, setRolePermissionCodes, type CreateUserRequest, type UpdateUserRequest, type UserSummary, type PermissionGroup, type PermissionRole } from '../api/administration'
+import { createUser, getUsers, setUserActive, updateUser, resetUserPassword, getPermissionCatalogue, getPermissionRoles, getRolePermissionCodes, setRolePermissionCodes as saveRolePermissionCodes, type CreateUserRequest, type UpdateUserRequest, type UserSummary, type PermissionGroup, type PermissionRole } from '../api/administration'
 import { type InstitutionSettings } from '../api/institutionSettings'
 import { InstitutionSettingsPage } from './InstitutionSettingsPage'
 
@@ -137,7 +137,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
     setPermissionsSaving(true)
     setError('')
     try {
-      const result = await setRolePermissionCodes(selectedPermissionRole.id, rolePermissionCodes)
+      const result = await saveRolePermissionCodes(selectedPermissionRole.id, rolePermissionCodes)
       setSuccessMessage(`Saved ${result.assignedCount} permissions for ${selectedPermissionRole.name}. New sign-ins will receive the updated permissions.`)
       setSelectedPermissionRole(null)
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to save role permissions.') }
