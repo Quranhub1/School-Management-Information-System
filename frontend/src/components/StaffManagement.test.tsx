@@ -59,6 +59,19 @@ describe('StaffManagement', () => {
     expect(screen.getByText('0 Selected')).toBeTruthy()
   })
 
+  it('captures the complete staff recruitment profile including a photograph', () => {
+    render(<StaffManagement canManage />)
+    expect(screen.getByLabelText('Gender')).toBeTruthy()
+    expect(screen.getByLabelText('Date of birth')).toBeTruthy()
+    expect(screen.getByLabelText('Residential address')).toBeTruthy()
+    expect(screen.getByLabelText('Staff photograph')).toBeTruthy()
+    expect(screen.getByLabelText('Attendance mode')).toBeTruthy()
+    expect(screen.getByLabelText('Basic monthly salary')).toBeTruthy()
+    expect(screen.getByLabelText('Bank name')).toBeTruthy()
+    expect(screen.getByLabelText('Bank account number')).toBeTruthy()
+    expect(screen.getByLabelText('Bank address')).toBeTruthy()
+  })
+
   it('shows the redesigned leave request form and only offers active staff', async () => {
     vi.mocked(listStaff).mockResolvedValue([
       { id: 'active-id', staffNumber: 'ST-001', firstName: 'Amina', lastName: 'Nabirye', employmentType: 'Permanent', staffType: 'Teaching', isActive: true },
