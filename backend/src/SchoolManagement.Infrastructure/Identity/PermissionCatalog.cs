@@ -115,10 +115,10 @@ public static class PermissionCatalog
             ["ExaminationsOfficer"] = ["exams.read", "exams.create", "exams.enter-marks", "exams.approve-results", "exams.print-results", "attendance.read"],
             ["Accountant"] = ["hr.read-staff", "hr.manage-staff", "hr.read-payroll", "finance.read", "finance.manage-fees", "finance.record-payments", "finance.allocate-payments", "finance.refund", "finance.manage-ledger", "finance.reports"],
             ["AssistantAccountant"] = ["hr.read-staff", "hr.read-payroll", "finance.read", "finance.record-payments", "finance.allocate-payments", "finance.reports"],
-            ["HrManager"] = ["hr.read-staff", "hr.manage-staff", "hr.manage-accounts", "hr.manage-leave", "hr.read-payroll", "hr.manage-payroll", "hr.manage-attendance", "timetable.read", "timetable.generate", "timetable.edit", "timetable.manage-templates"],
+            ["HR Manager"] = ["hr.read-staff", "hr.manage-staff", "hr.manage-accounts", "hr.manage-leave", "hr.read-payroll", "hr.manage-payroll", "hr.manage-attendance", "timetable.read", "timetable.generate", "timetable.edit", "timetable.manage-templates"],
             ["ResidentDirector"] = ["hr.read-staff", "hr.manage-staff", "hr.manage-leave", "hr.read-payroll", "hostel.read", "hostel.manage", "inventory.read"],
-            ["RecordsOfficer"] = ["hr.read-staff", "hr.manage-staff", "students.read", "students.documents", "archives.read", "archives.manage", "audit.read"],
-            ["AdminSecretary"] = ["hr.read-staff", "students.read", "students.create", "students.update", "admissions.read"],
+            ["Records Officer"] = ["hr.read-staff", "hr.manage-staff", "students.read", "students.documents", "archives.read", "archives.manage", "audit.read"],
+            ["Admin Secretary"] = ["hr.read-staff", "students.read", "students.create", "students.update", "admissions.read"],
             ["AssistantPrincipal"] = ["hr.read-staff", "students.read", "academics.read", "timetable.read", "exams.read", "attendance.read", "reports.read"],
             ["HeadOfDepartment"] = ["hr.read-staff", "academics.read", "timetable.read", "exams.read", "attendance.read", "reports.read"],
             ["Principal"] = ["hr.read-staff", "students.read", "academics.read", "timetable.read", "exams.read", "attendance.read", "finance.read", "reports.read", "reports.export"],
@@ -127,7 +127,7 @@ public static class PermissionCatalog
             ["Receptionist"] = ["students.read", "admissions.read", "communications.read"],
             ["Librarian"] = ["library.read", "library.manage-books", "library.manage-circulation"],
             ["SchoolWarden"] = ["hostel.read", "hostel.manage", "inventory.read", "inventory.issue"],
-            ["MedicalOfficer"] = ["medical.read", "medical.manage", "students.read"]
+            ["Medical Officer"] = ["medical.read", "medical.manage", "students.read"]
         };
 
         void AddDefaults(IEnumerable<string> roleNames, string code)
@@ -163,8 +163,8 @@ public static class PermissionCatalog
         AddDefaults(AuthorizationPolicies.RoleSets.CommunicationRead, "communications.read");
         AddDefaults(AuthorizationPolicies.RoleSets.StudentPortal, "portal.access");
         AddDefaults(AuthorizationPolicies.RoleSets.Student360, "students.read");
-        AddDefaults(new[] { "SystemAdministrator", "Librarian", "AcademicRegistrar", "AssistantRegistrar", "AdminSecretary", "Lecturer" }, "library.read");
-        AddDefaults(new[] { "SystemAdministrator", "Librarian", "HrManager" }, "library.manage-books");
+        AddDefaults(new[] { "SystemAdministrator", "Librarian", "AcademicRegistrar", "AssistantRegistrar", "Admin Secretary", "Lecturer" }, "library.read");
+        AddDefaults(new[] { "SystemAdministrator", "Librarian", "HR Manager" }, "library.manage-books");
         AddDefaults(new[] { "SystemAdministrator", "AcademicRegistrar", "AssistantRegistrar", "Lecturer", "Principal", "AssistantPrincipal", "HeadOfDepartment", "HrManager" }, "timetable.read");
         AddDefaults(new[] { "SystemAdministrator", "AcademicRegistrar", "AssistantRegistrar", "Lecturer", "HrManager" }, "timetable.edit");
 
