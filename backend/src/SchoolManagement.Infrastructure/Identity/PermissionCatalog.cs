@@ -113,7 +113,7 @@ public static class PermissionCatalog
             ["ExaminationsOfficer"] = ["exams.read", "exams.create", "exams.enter-marks", "exams.approve-results", "exams.print-results", "attendance.read"],
             ["Accountant"] = ["hr.read-staff", "hr.manage-staff", "hr.read-payroll", "finance.read", "finance.manage-fees", "finance.record-payments", "finance.allocate-payments", "finance.refund", "finance.manage-ledger", "finance.reports"],
             ["AssistantAccountant"] = ["hr.read-staff", "hr.read-payroll", "finance.read", "finance.record-payments", "finance.allocate-payments", "finance.reports"],
-            ["HrManager"] = ["hr.read-staff", "hr.manage-staff", "hr.manage-accounts", "hr.manage-leave", "hr.read-payroll", "hr.manage-payroll", "hr.manage-attendance"],
+            ["HrManager"] = ["hr.read-staff", "hr.manage-staff", "hr.manage-accounts", "hr.manage-leave", "hr.read-payroll", "hr.manage-payroll", "hr.manage-attendance", "timetable.read", "timetable.generate", "timetable.edit", "timetable.manage-templates"],
             ["ResidentDirector"] = ["hr.read-staff", "hr.manage-staff", "hr.manage-leave", "hr.read-payroll", "hostel.read", "hostel.manage", "inventory.read"],
             ["RecordsOfficer"] = ["hr.read-staff", "hr.manage-staff", "students.read", "students.documents", "archives.read", "archives.manage", "audit.read"],
             ["AdminSecretary"] = ["hr.read-staff", "students.read", "students.create", "students.update", "admissions.read"],
