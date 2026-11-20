@@ -176,6 +176,7 @@ export const staffCreateRequestSchema = z.object({
   basicSalary: z.number().finite().nonnegative().nullable().optional(),
   attendanceMode: z.string().trim().max(40).nullable().optional(),
   photographDataUrl: z.string().max(2_100_000).nullable().optional(),
+  photographDataUrl: z.string().max(2_100_000).nullable().optional(),
   courseUnitIds: z.array(identifierSchema).optional(),
 });
 export const leaveRequestSchema = z.object({
