@@ -79,7 +79,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   async function loadLeave() { if (!leaveForm.staffMemberId.trim()) { setLeaveRequests([]); return } try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
   async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
 
-  const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', gender: '', dateOfBirth: '', address: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', dateJoined: '', bankName: '', bankAccountNumber: '', bankAddress: '', basicSalary: '' as string, attendanceMode: 'Biometric', courseUnitIds: [] as string[] })
+  const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', gender: '', dateOfBirth: '', address: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', dateJoined: '', bankName: '', bankAccountNumber: '', bankAddress: '', basicSalary: '' as string, attendanceMode: 'Biometric', photographDataUrl: '', courseUnitIds: [] as string[] })
   const duplicateErrorPattern = /staff number is already registered|staff member with this staff number already exists/i
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
   const [leaveDuration, setLeaveDuration] = useState<'single' | 'multiple'>('single')
@@ -144,7 +144,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     setError('')
     setSuccess('')
     try {
-      const profile = { ...form, departmentId: form.departmentId || null, dateJoined: form.dateJoined || null, dateOfBirth: form.dateOfBirth || null, basicSalary: form.basicSalary.trim() === '' ? null : Number(form.basicSalary), courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
+      const profile = { ...form, departmentId: form.departmentId || null, dateJoined: form.dateJoined || null, dateOfBirth: form.dateOfBirth || null, photographDataUrl: form.photographDataUrl || null, basicSalary: form.basicSalary.trim() === '' ? null : Number(form.basicSalary), courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
       const validation = validateForm(staffCreateRequestSchema, profile)
       if (!validation.success) {
         setValidationErrors(validation.errors)
@@ -193,7 +193,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         setAccountForm({ mode: account.linked ? 'existing' : 'new', username: account.username ?? '', password: '', permissions: account.permissions ?? [] })
       }).catch(e => setError(e instanceof Error ? e.message : 'Unable to load staff login details.'))
     }
-    setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', dateJoined: person.dateJoined ?? '', gender: person.gender ?? '', dateOfBirth: person.dateOfBirth ?? '', address: person.address ?? '', bankName: person.bankName ?? '', bankAccountNumber: person.bankAccountNumber ?? '', bankAddress: person.bankAddress ?? '', basicSalary: person.basicSalary == null ? '' : String(person.basicSalary), attendanceMode: person.attendanceMode ?? 'Biometric', courseUnitIds: person.courseUnitIds ?? [] })
+    setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', dateJoined: person.dateJoined ?? '', gender: person.gender ?? '', dateOfBirth: person.dateOfBirth ?? '', address: person.address ?? '', bankName: person.bankName ?? '', bankAccountNumber: person.bankAccountNumber ?? '', bankAddress: person.bankAddress ?? '', basicSalary: person.basicSalary == null ? '' : String(person.basicSalary), attendanceMode: person.attendanceMode ?? 'Biometric', photographDataUrl: '', courseUnitIds: person.courseUnitIds ?? [] })
     setError('')
     setSuccess('')
     setTab('staff')
@@ -346,6 +346,16 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   <label className="field-label">Gender<select aria-label="Gender" value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}><option value="">Select gender</option><option value="Female">Female</option><option value="Male">Male</option><option value="Other">Other</option><option value="Prefer not to say">Prefer not to say</option></select></label>
                   <label className="field-label">Date of birth<input aria-label="Date of birth" type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} /></label>
                   <label className="field-label" style={{ gridColumn: '1 / -1' }}>Residential address<textarea aria-label="Residential address" rows={2} placeholder="Enter residential address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></label>
+                  <label className="field-label" style={{ gridColumn: '1 / -1' }}>Staff photograph<input aria-label="Staff photograph" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => {
+                    const file = event.target.files?.[0]
+                    if (!file) return
+                    if (file.size > 1_500_000) { setError('Staff photograph must be smaller than 1.5 MB.'); event.target.value = ''; return }
+                    const reader = new FileReader()
+                    reader.onload = () => setForm(current => ({ ...current, photographDataUrl: typeof reader.result === 'string' ? reader.result : '' }))
+                    reader.onerror = () => setError('Unable to read the selected staff photograph.')
+                    reader.readAsDataURL(file)
+                  }} />
+                  {form.photographDataUrl ? <img src={form.photographDataUrl} alt="Selected staff photograph preview" style={{ display: 'block', width: 88, height: 88, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} /> : null}</label>
                 </div>
               </section>
 
