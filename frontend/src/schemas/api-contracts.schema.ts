@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { identifierSchema, requiredTextSchema } from "./common.schema";
 import { isValidIsbn, normalizeIsbnDigits } from "../lib/isbn";
+import { LEAVE_TYPE_VALUES } from "../constants/referenceEnums";
 
 /**
  * Boundary schemas for API modules migrated to runtime validation.
@@ -169,7 +170,7 @@ export const staffCreateRequestSchema = z.object({
 });
 export const leaveRequestSchema = z.object({
   staffMemberId: identifierSchema,
-  leaveType: z.enum(['Annual', 'Sick', 'Maternity', 'Paternity', 'Study']),
+  leaveType: z.enum(LEAVE_TYPE_VALUES),
   startDate: z.iso.date(),
   endDate: z.iso.date(),
   reason: requiredTextSchema.min(5),
