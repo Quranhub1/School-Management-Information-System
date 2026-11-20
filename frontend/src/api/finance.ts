@@ -3,7 +3,7 @@ import { SYSTEM_CURRENCY } from '../lib/currency'
 import { readApiErrorMessage } from './errors'
 import { z } from 'zod'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
-import { approveStaffAdvanceRequestSchema, applyFeeStructureRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, feeStructureCreateRequestSchema, invoiceNoteRequestSchema, invoiceResponseSchema, recordPaymentRequestSchema, recoverStaffAdvanceRequestSchema, staffAdvanceRequestSchema } from '../schemas'
+import { addBankStatementLineRequestSchema, approveStaffAdvanceRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, applyFeeStructureRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, feeStructureCreateRequestSchema, invoiceNoteRequestSchema, invoiceResponseSchema, matchBankStatementLineRequestSchema, recordPaymentRequestSchema, recoverStaffAdvanceRequestSchema, staffAdvanceRequestSchema } from '../schemas'
 
 export interface Invoice {
   id: string
@@ -60,6 +60,16 @@ export interface InvoiceFeeItem {
   feeType: string
   amount: number
   description?: string
+}
+
+export interface FiscalPeriod {
+  id: string
+  name: string
+  startDate: string
+  endDate: string
+  status: string
+  closedAt?: string
+  closedBy?: string
 }
 
 export interface BudgetLine {
@@ -231,6 +241,45 @@ export const getStudentFinancialStatement = (studentId: string) =>
 export async function createInvoice(body: CreateInvoiceRequest) { const input = parseApiInput(createInvoiceRequestSchema, body, 'create invoice'); return parseApiResponse(invoiceResponseSchema, await request<unknown>('/api/finance/invoices', { method: 'POST', body: JSON.stringify(input) }), 'created invoice') as Invoice }
 export function recordPayment(invoiceId: string, body: RecordPaymentRequest) { if (!invoiceId.trim()) throw new Error('Invoice ID is required.'); const input = parseApiInput(recordPaymentRequestSchema, body, 'record payment'); return request('/api/finance/invoices/' + encodeURIComponent(invoiceId) + '/payments', { method: 'POST', body: JSON.stringify(input) }) }
 
+export const getFiscalPeriods = () => request<FiscalPeriod[]>('/api/finance/fiscal-periods')
+
+export async function createFiscalPeriod(input: { name: string; startDate: string; endDate: string }) {
+  const validated = parseApiInput(createFiscalPeriodRequestSchema, input, 'create fiscal period')
+  return request<FiscalPeriod>('/api/finance/fiscal-periods', {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
+
+export async function createOpeningBalances(input: {
+  fiscalPeriodId: string
+  currency?: string
+  lines: {
+    accountId: string
+    debit: number
+    credit: number
+    description?: string | null
+    campusId?: string
+    facultyId?: string
+    departmentId?: string
+    programmeId?: string
+  }[]
+}) {
+  const validated = parseApiInput(createOpeningBalanceRequestSchema, input, 'create opening balances')
+  return request<unknown>('/api/finance/opening-balances', {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
+
+export async function postFiscalPeriodClosing(input: { fiscalPeriodId: string; retainedEarningsAccountId: string }) {
+  const validated = parseApiInput(closeFiscalPeriodRequestSchema, input, 'close fiscal period')
+  return request<FiscalPeriod>('/api/finance/fiscal-period-closing', {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
+
 export const getBudgets = (params?: { departmentId?: string; academicYearId?: string; activeOnly?: boolean }) => {
   const query = new URLSearchParams()
   if (params?.departmentId) query.set('departmentId', params.departmentId)
@@ -239,8 +288,65 @@ export const getBudgets = (params?: { departmentId?: string; academicYearId?: st
   return request<Budget[]>(`/api/finance/administration/budgets${query.toString() ? `?${query}` : ''}`)
 }
 
+export async function createBudget(input: {
+  departmentId: string
+  academicYearId: string
+  name: string
+  currency?: string | null
+  startDate: string
+  endDate: string
+  lines: { accountId: string; category: string; allocatedAmount: number; notes?: string | null }[]
+}) {
+  const validated = parseApiInput(createBudgetRequestSchema, input, 'create finance budget')
+  return request<Budget>('/api/finance/administration/budgets', {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
+
+
 export const getBankReconciliations = (bankAccountId?: string) =>
   request<BankReconciliation[]>(`/api/finance/administration/bank-reconciliations${bankAccountId ? `?bankAccountId=${encodeURIComponent(bankAccountId)}` : ''}`)
+
+export async function createBankReconciliation(input: {
+  bankAccountId: string
+  statementDate: string
+  statementBalance: number
+  bookBalance: number
+  reconciledAmount: number
+  notes?: string | null
+}) {
+  const validated = parseApiInput(createBankReconciliationRequestSchema, input, 'create bank reconciliation')
+  return request<BankReconciliation>('/api/finance/administration/bank-reconciliations', {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
+
+export async function addBankStatementLine(reconciliationId: string, input: {
+  transactionDate: string
+  amount: number
+  transactionType: 'Credit' | 'Debit'
+  description?: string | null
+  reference?: string | null
+}) {
+  if (!reconciliationId.trim()) throw new Error('Bank reconciliation ID is required.')
+  const validated = parseApiInput(addBankStatementLineRequestSchema, input, 'add bank statement line')
+  return request<BankStatementLine>(`/api/finance/administration/bank-reconciliations/${encodeURIComponent(reconciliationId)}/lines`, {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
+
+export async function matchBankStatementLine(reconciliationId: string, statementLineId: string, journalEntryId: string) {
+  if (!reconciliationId.trim() || !statementLineId.trim()) throw new Error('Bank reconciliation and statement line IDs are required.')
+  const validated = parseApiInput(matchBankStatementLineRequestSchema, { journalEntryId }, 'match bank statement line')
+  return request<BankStatementLine>(`/api/finance/administration/bank-reconciliations/${encodeURIComponent(reconciliationId)}/lines/${encodeURIComponent(statementLineId)}/match`, {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
+
 
 export const getBankStatementLines = (reconciliationId: string) =>
   request<BankStatementLine[]>(`/api/finance/administration/bank-reconciliations/${reconciliationId}/lines`)

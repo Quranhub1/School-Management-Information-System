@@ -125,7 +125,6 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
             return Conflict(new { message = "This programme has no active mandatory admission requirements configured. Configure requirements before admitting students." });
 
         var studentNumber = request.StudentNumber?.Trim();
-        if (string.IsNullOrWhiteSpace(studentNumber)) return BadRequest(new { message = "Student number is required." });
 
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         var student = await db.Students.SingleOrDefaultAsync(x => x.AdmissionId == admission.Id, cancellationToken);

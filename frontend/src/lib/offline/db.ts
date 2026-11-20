@@ -24,7 +24,7 @@ export type AppStateEntry<T = unknown> = {
 }
 
 export type SyncDomain = 'students' | 'attendance' | 'library' | 'messaging' | 'other'
-export type SyncStatus = 'pending' | 'processing' | 'synced' | 'conflict' | 'failed' | 'blocked'
+export type SyncStatus = 'pending' | 'processing' | 'synced' | 'conflict' | 'failed' | 'blocked' | 'discarded'
 
 export type SyncOperation = {
   id: string
@@ -244,5 +244,16 @@ export async function resolveSyncConflict(
   resolutionStatus: 'resolved' | 'discarded',
 ): Promise<void> {
   const now = Date.now()
-  await offlineDb.syncConflicts.update(conflictId, { resolutionStatus, resolvedAt: now })
+  await offlineDb.transaction('rw', offlineDb.syncConflicts, offlineDb.syncOperations, async () => {
+    const conflict = await offlineDb.syncConflicts.get(conflictId)
+    if (!conflict) return
+    await offlineDb.syncConflicts.update(conflictId, { resolutionStatus, resolvedAt: now })
+    await offlineDb.syncOperations.update(conflict.operationId, {
+      status: resolutionStatus === 'discarded' ? 'discarded' : 'blocked',
+      updatedAt: now,
+      lastError: resolutionStatus === 'discarded'
+        ? 'Discarded locally; retained for audit and never replayed.'
+        : 'Conflict reviewed; operation remains blocked pending server reconciliation.',
+    })
+  })
 }

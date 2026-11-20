@@ -1,6 +1,6 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-11-08  
+**Last updated:** 2026-11-20  
 **Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
@@ -12,6 +12,41 @@ The core backend, persistence, security hardening, frontend, automated verificat
 Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed. The later duplicate desktop-workflow cleanup on `main` also passed the full CI suite, including native desktop builds.
 
 A dedicated executable target-environment acceptance runbook is now available at `docs/PRODUCTION_ACCEPTANCE.md`. It records the evidence required for golden-path, authorization, module, finance, attendance, assessment, clinical, staff/student, deployment, backup/restore, desktop, and security sign-off.
+
+## Production hardening audit — 2026-11-20
+
+### Implemented on `feature/production-hardening-audit`
+
+- [x] Add FluentValidation to the API and register automatic MVC validation plus assembly-scanned validators.
+- [x] Add validators for student create/update, admission create/update/decision/admit, notice creation, timetable entry/template/generation, budget, and bank-reconciliation, opening-balance and fiscal-period-closing payloads.
+- [x] Remove duplicated inline validation for student creation and applicant student-number admission input; retain domain/business checks in workflows.
+- [x] Replace broad controller authorization on timetable, staff attendance, notices, offline assistant, module access and modern information endpoints with named policies.
+- [x] Replace role-string authorization on campuses and campus assignments with the existing Administration policy.
+- [x] Add a dedicated ModuleAccess policy that recognizes institutional roles and scoped `StaffAccess.*` role claims.
+- [x] Return explicit response DTOs from student registry/detail/create/update, alumni list/detail/create, notices board/create, and timetable entry/conflict/create/update/template endpoints; do not serialize student finance navigation collections.
+- [x] Add API validator tests for admissions, students, notices, timetable and finance administration, plus application tests for scoped staff module access.
+- [x] Add an administrator-facing offline queue/conflict review workspace with metadata-only JSON audit export; automatic replay remains disabled.
+- [x] Remove unsupported payment-channel placeholders and show only SchoolPay (provider credentials required for live activation) and manual payments.
+- [x] Verify the EF Core model snapshot exists; add CI checks for pending model changes and generation of an idempotent migration script.
+- [x] Pin migration generation to `main` and fast-forward before committing generated migrations.
+- [x] Remove duplicate progress metadata and the duplicate system-wide name-display section from this file. The lowercase `progress.md` file is not present on the current baseline.
+
+### Remaining audit work
+### Baseline findings that refine the original audit
+
+- The EF Core snapshot already exists on the baseline; the new CI gate is for ongoing consistency, not creation of a missing snapshot.
+- Existing Zod/API validation is broader than the original audit described: fee-structure creation/application, credit notes, staff advances, staff leave, library book/loan operations, inventory-register saves and inventory row contracts already use schemas. This batch adds Zod contracts and validated API methods for budgets, bank-reconciliation creation/statement lines, fiscal periods, opening balances and fiscal-period closing. Remaining Zod work should target library-member workflows, academic/examination/administration forms and per-row imports; budget/reconciliation/opening-balance/fiscal-period entry screens still need UI wiring.
+- Finance already has backend report endpoints for General Ledger, Trial Balance, Income Statement and Balance Sheet, plus bank-reconciliation and fiscal-period-closing controllers and opening-balance services. The remaining finance gap is end-to-end workflow coverage (especially opening balances, period close, reconciliation and budget-vs-actual) rather than creating those foundations from scratch.
+- The current shell routes to real academic, hostel, inventory, staff/payroll, timetable and examination-capable workspaces; examination management is nested under Academic Management. Transport and standalone teacher-assignment modules are not currently present in the shell and need an explicit keep/remove decision.
+
+
+- [ ] Expand DTO projections across the remaining controllers; remove direct domain-entity responses only after preserving the existing API contract.
+- [ ] Expand API controller authorization and integration tests, including finance journal balancing, allocation and fiscal-period edge cases.
+- [ ] Complete Zod coverage for remaining forms and validate each imported CSV/Excel row before persistence.
+- [ ] Finish finance accounting workflows and dimension-aware reports; verify existing ledger/report endpoints against the production acceptance requirements.
+- [ ] Extend offline queue/conflict review access from System Administration to the appropriate operational staff roles; keep automatic replay disabled until each domain passes idempotency, authorization and conflict tests.
+- [ ] Inventory current shell routes and replace or intentionally remove any genuine placeholder modules.
+- [ ] Run the full backend/frontend test suites and resolve every CI failure before merging.
 
 ## Structured logging and observability — November 2026
 
@@ -46,16 +81,6 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [ ] Run frontend build/tests, backend tests, and Windows/Linux desktop CI on the Dexie branch; perform target-device offline acceptance testing.
 
 
-**Last updated:** 2026-10-11  
-**Tracking branch:** `main`  
-**Current release:** `v0.2.0`  
-**Currency:** UGX
-
-
-**Last updated:** 2026-10-11  
-**Tracking branch:** `main`  
-**Current release:** `v0.2.0`  
-**Currency:** UGX
 
 ## Current work — October 2026
 
@@ -400,24 +425,6 @@ Additional design facts from that review:
 6. Only after approval, implement migrations and code changes on a feature branch; test against a database backup/test database, run backend/frontend tests and CI, and verify existing finance workflows.
 
 **Important:** the SQL above is read-only. The live database has not yet been inspected by the assistant, and no claim is made that the physical database currently matches the source snapshot. Do not rename tables, create tables, or apply migrations until the live inspection and compatibility review are complete.
-
-## System-wide person-name display order — November 2026
-
-**Required display convention:** surname, first name, then other/given names, with every component displayed in uppercase. Example: `NAKIBUULE ALICE MARIA`. This is a presentation rule; do not swap or rewrite the underlying `FirstName`, `LastName` or `OtherNames` database fields or API request semantics.
-
-### Implemented on `fix/system-wide-name-order`
-
-- [x] Add shared frontend `formatPersonName` utility to apply the same order, omit blank name parts and convert the final display name to uppercase.
-- [x] Apply the formatter to student registry, archived student records, admission views, document student selectors and relevant student dashboard displays.
-- [x] Apply surname-first display to staff registry, payroll, staff allowances and related staff selectors/notifications.
-- [x] Update key backend-generated student display names used by student portal profiles, reports/transcripts, certificates, Student 360, examination analytics, defaulter lists, chronic-absence lists and global search.
-- [x] Align the mock API server's student/staff/applicant/alumni name formatting with the same convention.
-- [ ] Audit all remaining frontend modules, PDF/export templates, notifications and API projections for hard-coded first-name-first or mixed-case display strings; apply uppercase consistently.
-- [ ] Run frontend TypeScript checks, Vitest and production build; run backend build and automated tests.
-- [ ] Verify representative student and staff records with and without other names in registry, search, dashboards, payroll, reports, certificates and printed/exported documents.
-
-**Data-integrity rule:** this change must affect display formatting only. Uppercasing is also display-only; Existing stored name components and API input fields remain in their original semantic columns. Do not run a database migration or bulk-update person records to change display order.
-
 
 ## System-wide person-name display order — November 2026
 

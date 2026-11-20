@@ -35,7 +35,8 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             InstitutionalRoles.Librarian,
             InstitutionalRoles.HrManager,
             InstitutionalRoles.AdminSecretary,
-            InstitutionalRoles.RecordsOfficer
+            InstitutionalRoles.RecordsOfficer,
+            InstitutionalRoles.MedicalOfficer
         };
 
         foreach (var roleName in roles)
@@ -85,6 +86,8 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             db.Roles.Remove(obsoleteRole);
         }
         await db.SaveChangesAsync(cancellationToken);
+
+        await PermissionCatalog.SeedAsync(db, cancellationToken);
 
         var institution = await db.InstitutionSettings
             .SingleOrDefaultAsync(x => x.IsActive, cancellationToken);

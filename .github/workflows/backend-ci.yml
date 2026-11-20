@@ -79,6 +79,21 @@ jobs:
       - name: Restore pinned EF Core CLI
         working-directory: backend
         run: dotnet tool restore
+      - name: Verify EF model snapshot and migration script
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          test -f src/SchoolManagement.Infrastructure/Migrations/SchoolManagementDbContextModelSnapshot.cs
+          dotnet ef migrations has-pending-model-changes \
+            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
+            --configuration Release
+          dotnet ef migrations script --idempotent \
+            --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj \
+            --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj \
+            --configuration Release \
+            --output /tmp/smis-idempotent-migrations.sql
+          test -s /tmp/smis-idempotent-migrations.sql
       - name: Apply database migrations
         working-directory: backend
         run: dotnet ef database update --project src/SchoolManagement.Infrastructure/SchoolManagement.Infrastructure.csproj --startup-project src/SchoolManagement.Api/SchoolManagement.Api.csproj --configuration Release

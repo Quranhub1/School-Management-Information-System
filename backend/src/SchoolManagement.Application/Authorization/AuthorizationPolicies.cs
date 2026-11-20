@@ -22,6 +22,8 @@ public static class AuthorizationPolicies
     public const string StudentPortal = "StudentPortal";
     public const string Student360 = "Student360";
     public const string StudentRead = "StudentRead";
+    public const string MedicalRecords = "MedicalRecords";
+    public const string ModuleAccess = "ModuleAccess";
 
     public static class RoleSets
     {
@@ -29,7 +31,8 @@ public static class AuthorizationPolicies
         public static readonly string[] AcademicRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AssistantRegistrar, InstitutionalRoles.AdminSecretary, InstitutionalRoles.Lecturer, InstitutionalRoles.Principal, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.HrManager];
         public static readonly string[] StudentManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AdminSecretary, InstitutionalRoles.HrManager];
         public static readonly string[] StaffManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Accountant, InstitutionalRoles.HrManager, InstitutionalRoles.RecordsOfficer];
-        public static readonly string[] StudentRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Secretary, InstitutionalRoles.AdminSecretary, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.Receptionist, InstitutionalRoles.HrManager, InstitutionalRoles.RecordsOfficer, InstitutionalRoles.AssistantPrincipal];
+        public static readonly string[] MedicalRecords = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.MedicalOfficer];
+        public static readonly string[] StudentRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Secretary, InstitutionalRoles.AdminSecretary, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.Receptionist, InstitutionalRoles.HrManager, InstitutionalRoles.RecordsOfficer, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.MedicalOfficer];
         public static readonly string[] FinanceManagement = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant];
         public static readonly string[] FinanceOperations = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant];
         public static readonly string[] FinanceRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.ResidentDirector, InstitutionalRoles.Secretary, InstitutionalRoles.HrManager];
@@ -47,5 +50,6 @@ public static class AuthorizationPolicies
         public static readonly string[] CommunicationRead = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AssistantRegistrar, InstitutionalRoles.AdminSecretary, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Lecturer, InstitutionalRoles.RecordsOfficer, InstitutionalRoles.SchoolWarden, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.Secretary, InstitutionalRoles.ResidentDirector, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.Receptionist, InstitutionalRoles.HrManager, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.AdmissionsOfficer, InstitutionalRoles.Librarian];
         public static readonly string[] StudentPortal = [InstitutionalRoles.Student];
         public static readonly string[] Student360 = [InstitutionalRoles.Student, InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar];
+        public static readonly string[] ModuleAccess = [InstitutionalRoles.SystemAdministrator, InstitutionalRoles.AcademicRegistrar, InstitutionalRoles.AssistantRegistrar, InstitutionalRoles.AdmissionsOfficer, InstitutionalRoles.Accountant, InstitutionalRoles.AssistantAccountant, InstitutionalRoles.Lecturer, InstitutionalRoles.ExaminationsOfficer, InstitutionalRoles.Student, InstitutionalRoles.SchoolWarden, InstitutionalRoles.Principal, InstitutionalRoles.Director, InstitutionalRoles.Secretary, InstitutionalRoles.ResidentDirector, InstitutionalRoles.HeadOfDepartment, InstitutionalRoles.AssistantPrincipal, InstitutionalRoles.Receptionist, InstitutionalRoles.AdminSecretary, InstitutionalRoles.RecordsOfficer, InstitutionalRoles.Librarian, InstitutionalRoles.HrManager, InstitutionalRoles.MedicalOfficer];
     }
 }

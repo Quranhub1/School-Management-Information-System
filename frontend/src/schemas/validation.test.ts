@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyFeeStructureRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { addBankStatementLineRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -111,6 +111,69 @@ describe("SMIS Zod domain schemas", () => {
       columns: [{ id: "name", label: "Item" }],
       rows: [{ id: "row-1", values: { name: 123 } }],
     }).success).toBe(false);
+  });
+
+
+  it("validates budget and bank reconciliation API requests", () => {
+    const budget = {
+      departmentId: "department-1",
+      academicYearId: "year-1",
+      name: "ICT Equipment",
+      currency: "UGX",
+      startDate: "2026-01-01T00:00:00Z",
+      endDate: "2026-12-31T23:59:59Z",
+      lines: [{ accountId: "account-1", category: "Equipment", allocatedAmount: 2500000 }],
+    };
+    expect(createBudgetRequestSchema.safeParse(budget).success).toBe(true);
+    expect(createBudgetRequestSchema.safeParse({ ...budget, endDate: "2025-12-31T23:59:59Z" }).success).toBe(false);
+    expect(createBudgetRequestSchema.safeParse({ ...budget, lines: [] }).success).toBe(false);
+
+    expect(createBankReconciliationRequestSchema.safeParse({
+      bankAccountId: "bank-1",
+      statementDate: "2026-11-20T00:00:00Z",
+      statementBalance: 500000,
+      bookBalance: 480000,
+      reconciledAmount: 480000,
+    }).success).toBe(true);
+    expect(addBankStatementLineRequestSchema.safeParse({
+      transactionDate: "2026-11-20T00:00:00Z",
+      amount: -1000,
+      transactionType: "Debit",
+    }).success).toBe(false);
+  });
+
+
+  it("validates opening balances and fiscal period closing requests", () => {
+    const openingBalances = {
+      fiscalPeriodId: "period-1",
+      currency: "UGX",
+      lines: [
+        { accountId: "cash", debit: 500000, credit: 0 },
+        { accountId: "capital", debit: 0, credit: 500000 },
+      ],
+    };
+    expect(createOpeningBalanceRequestSchema.safeParse(openingBalances).success).toBe(true);
+    expect(createOpeningBalanceRequestSchema.safeParse({
+      ...openingBalances,
+      lines: [
+        { accountId: "cash", debit: 500000, credit: 0 },
+        { accountId: "capital", debit: 0, credit: 400000 },
+      ],
+    }).success).toBe(false);
+    expect(createOpeningBalanceRequestSchema.safeParse({
+      ...openingBalances,
+      lines: [{ accountId: "cash", debit: 100, credit: 100 }, { accountId: "capital", debit: 0, credit: 0 }],
+    }).success).toBe(false);
+
+    expect(createFiscalPeriodRequestSchema.safeParse({
+      name: "FY2026", startDate: "2026-01-01", endDate: "2026-12-31",
+    }).success).toBe(true);
+    expect(createFiscalPeriodRequestSchema.safeParse({
+      name: "FY2026", startDate: "2026-12-31", endDate: "2026-01-01",
+    }).success).toBe(false);
+    expect(closeFiscalPeriodRequestSchema.safeParse({
+      fiscalPeriodId: "period-1", retainedEarningsAccountId: "equity-1",
+    }).success).toBe(true);
   });
 
   it("throws a field-addressable error before invalid input reaches an API request", () => {

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Academic;
+using SchoolManagement.Application.Authorization;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Infrastructure.Persistence;
 
@@ -9,7 +10,7 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/campuses/{campusId:guid}/users")]
-[Authorize(Roles = "SystemAdministrator")]
+[Authorize(Policy = "Permission:administration.manage-campus-access")]
 public sealed class CampusAssignmentsController(SchoolManagementDbContext db, CampusAccessService campusAccess) : ControllerBase
 {
     [HttpGet]
