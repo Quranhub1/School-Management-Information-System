@@ -121,8 +121,13 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
                 return BadRequest(new { message = "One or more selected permissions are not in the central catalogue." });
             db.StaffUserLinks.Add(new StaffUserLink { StaffId = staff.Id, UserId = linkedUser.Id });
             var previousDirectGrants = await db.UserPermissions.Where(x => x.UserId == linkedUser.Id).ToListAsync(cancellationToken);
-            db.UserPermissions.RemoveRange(previousDirectGrants);
-            db.UserPermissions.AddRange(permissionEntities.Select(permission => new UserPermission { UserId = linkedUser.Id, PermissionId = permission.Id }));
+            if (request.Account.ReplaceDirectPermissions)
+                db.UserPermissions.RemoveRange(previousDirectGrants);
+            var existingPermissionIds = request.Account.ReplaceDirectPermissions
+                ? new HashSet<Guid>()
+                : previousDirectGrants.Select(x => x.PermissionId).ToHashSet();
+            db.UserPermissions.AddRange(permissionEntities.Where(permission => !existingPermissionIds.Contains(permission.Id))
+                .Select(permission => new UserPermission { UserId = linkedUser.Id, PermissionId = permission.Id }));
         }
         await db.SaveChangesAsync(cancellationToken);
         return Created($"api/staff/{staff.Id}", ToProfile(staff));
@@ -333,7 +338,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
 }
 
 public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, StaffAccountRequest? Account = null);
-public sealed record StaffAccountRequest(string? Username, string? Password, Guid? ExistingUserId, string[]? Roles, string[]? PermissionCodes);
+public sealed record StaffAccountRequest(string? Username, string? Password, Guid? ExistingUserId, string[]? Roles, string[]? PermissionCodes, bool ReplaceDirectPermissions = false);
 public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);
