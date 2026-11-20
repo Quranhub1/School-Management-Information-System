@@ -535,7 +535,7 @@ return <main className="app-shell">
 {activeModule==='academics'&&activeSubsection==='classes'&&ac&&<AcademicStructures canManage={ac}/>} {activeModule==='academics'&&activeSubsection!=='classes'&&(ac||isAdminSecretary||lecturer||r.includes('HeadOfDepartment')||r.includes('Principal')||r.includes('AssistantPrincipal'))&&<AcademicManagement canManage={ac} readOnly={!ac}/>} {activeModule==='curriculum'&&ac&&<CurriculumManagement canManage={ac}/>} 
 {activeModule==='timetable'&&canReadTimetable(r)&&<TimetableManagement readOnly={!canManageTimetable(r)} />}
 {activeModule==='finance'&&fi&&<FinanceManagement readOnly={canReadOnlyFinance(r)} />}
-{activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={canReadPayroll(r)} canManagePayroll={canManageFinance(r)} canProcessPayroll={canProcessPayroll(r)} activeSubsection={activeSubsection}/>}
+{activeModule==='staff'&&sr&&<StaffManagement canManage={sm} canReadPayroll={canReadPayroll(r)} canManagePayroll={canManageFinance(r)} canProcessPayroll={canProcessPayroll(r)} canManageAccounts={r.includes('SystemAdministrator')||r.includes('HR Manager')} activeSubsection={activeSubsection}/>}
 {activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} canViewStaffAttendance={canReadStaff(r)} />}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&(attManage||r.includes('Nurse')||r.includes('ClinicalInstructor')||r.includes('SystemAdministrator'))&&<HealthRecordsManagement activeSubsection={activeSubsection}/>}
