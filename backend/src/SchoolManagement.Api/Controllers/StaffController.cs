@@ -120,6 +120,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             if (permissionEntities.Count != permissionCodes.Length)
                 return BadRequest(new { message = "One or more selected permissions are not in the central catalogue." });
             db.StaffUserLinks.Add(new StaffUserLink { StaffId = staff.Id, UserId = linkedUser.Id });
+            var previousDirectGrants = await db.UserPermissions.Where(x => x.UserId == linkedUser.Id).ToListAsync(cancellationToken);
+            db.UserPermissions.RemoveRange(previousDirectGrants);
             db.UserPermissions.AddRange(permissionEntities.Select(permission => new UserPermission { UserId = linkedUser.Id, PermissionId = permission.Id }));
         }
         await db.SaveChangesAsync(cancellationToken);
