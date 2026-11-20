@@ -164,7 +164,7 @@ export function StudentRegistry() {
                     <div className="table-wrap"><table><thead><tr><th>Name</th><th>Relationship</th><th>Phone</th><th>Email</th><th>Primary</th></tr></thead>
                       <tbody>{guardians.map(guardian => <tr key={guardian.id}><td>{guardian.fullName}</td><td>{valueOrDash(guardian.relationship)}</td><td>{valueOrDash(guardian.phoneNumber)}</td><td>{valueOrDash(guardian.email)}</td><td>{guardian.isPrimary ? 'Yes' : 'No'}</td></tr>)}</tbody>
                     </table></div>
-                  )}
+                  ) : null}
                 </section>
               </>
             )}
