@@ -38,5 +38,7 @@ public sealed class StaffMember
     public string? BankAddress { get; set; }
     public decimal? BasicSalary { get; set; }
     public string? AttendanceMode { get; set; }
+    /// <summary>Validated image data URL; kept in the database for fully offline installations.</summary>
+    public string? PhotographDataUrl { get; set; }
     public bool IsActive { get; set; } = true;
 }
