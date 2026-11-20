@@ -50,9 +50,9 @@ These are candidates for a consistent vocabulary or shared constants. They are *
 | Admissions Management | Admission status list | Reuse the existing admission/application status domain and server transition rules; do not create a second status table |
 | Admissions Student Management | Indexing: Not Indexed/Pending/Indexed/Rejected | Confirm whether this is a regulatory workflow status; centralize with backend enum/validation |
 | Admissions Student Management | Student status list | Reuse existing student academic/lifecycle status |
-| Staff Management | Staff category: Teaching/Non-teaching | Existing staff type/domain enum; centralize display labels |
+| Staff Management | Staff category: Teaching/Non-teaching | Existing `StaffType` backend enum; PR #440 centralizes frontend values and labels |
 | Staff Management | Employment type: Permanent/Temporary/Part-time | Candidate reference data if institution-configurable; otherwise shared enum |
-| Staff Management | Leave type: Annual/Sick/Maternity/Paternity/Study | A `LeaveType` domain entity already exists; inspect and seed/reconcile that entity rather than add a new table |
+| Staff Management | Leave type: Annual/Sick/Maternity/Paternity/Study | Existing `LeaveType` backend enum; PR #440 shares the frontend options and API validation. Do not create a lookup table or seed rows |
 | Staff Management | Payroll month: January–December | Date/month utility, not reference data |
 | Attendance Management | Present/Absent/Late/Excused | Existing attendance status domain exists; ensure UI and API use the same enum/allowed transitions |
 | Academic Structures | Class status: Active/Closed/Cancelled | Reuse existing class status/domain rules |
@@ -94,9 +94,9 @@ These are candidates for a consistent vocabulary or shared constants. They are *
 
 ## Areas needing a deeper backend/data check before migrations
 
-1. **Leave types:** `SchoolManagement.Domain/Staff/LeaveType.cs` exists. Inspect its EF mapping, controller/API exposure, and current seed state. This is the strongest likely next seed candidate.
+1. **Leave types:** `SchoolManagement.Domain/Staff/LeaveType.cs` defines a C# enum (`Annual`, `Sick`, `Maternity`, `Paternity`, `Study`), not a database entity. PR #440 centralizes the frontend values and Zod API validation. Do not create a lookup table or seed rows unless the product requirement explicitly changes to institution-configurable leave categories.
 2. **Departments/faculties/campuses:** domain entities and APIs exist. They are institution-specific setup records, so do not invent departments/campuses without an approved KSHS structure.
-3. **Attendance and admission statuses:** domain status types already exist. Ensure frontend options match backend enums and state-transition rules; avoid lookup-table duplication.
+3. **Attendance and admission statuses:** domain status types already exist. Ensure frontend options match backend enums and state-transition rules; avoid lookup-table duplication. Attendance status values are `Present`, `Absent`, `Late`, and `Excused`.
 4. **Programme metadata:** award, study mode, delivery type and approval status are already programme fields/metadata in the curriculum catalogue. Align UI choices with that model.
 5. **Finance fee categories:** reconcile current UI values against FeeItem/FeeStructureItem, invoice-line and chart-of-accounts behavior before adding any values. A bad seed can affect receivables and revenue posting.
 6. **Inventory movement types:** inspect WelfareStockTransaction and inventory-register APIs. Keep stock movement types constrained and auditable.
@@ -122,11 +122,14 @@ These are candidates for a consistent vocabulary or shared constants. They are *
 - Verify academic-year dropdown sorting and rolling extension.
 
 ### Phase B — Normalize existing vocabularies (no new reference tables yet)
-- Extract shared TypeScript constants/types for true application enums.
-- Align those values with backend enums and validation.
-- Remove duplicate lists and hardcoded roles.
-- Add tests proving UI values match API/domain values.
+- [x] Extract shared TypeScript values/options for staff type and leave type.
+- [x] Reuse leave-type values in API validation instead of maintaining a second list.
+- [x] Add tests proving the dropdown options and API validation accept the same leave values and preserve the backend staff-type values.
+- [ ] Continue the same audit for attendance, admissions, gate-pass, notice priority, and other controlled vocabularies.
+- [ ] Remove duplicate lists and hardcoded roles only after confirming their API contracts and authorization sources.
 - Keep user-configurable data in the database, not in shared constants.
+
+**Implementation:** [PR #440 — Centralize frontend options for backend enum contracts](https://github.com/Quranhub1/School-Management-Information-System/pull/440) (open; CI pending at time of update).
 
 ### Phase C — Seed only approved missing reference records
 - Inspect current database and migrations for each candidate.
