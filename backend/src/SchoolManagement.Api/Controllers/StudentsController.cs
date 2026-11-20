@@ -30,7 +30,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         {
             query = query.Where(x => x.CampusId.HasValue && accessibleCampuses.Contains(x.CampusId.Value));
         }
-        return Ok(await query.OrderBy(x => x.StudentNumber).Select(x => new StudentResponse(x.Id, x.StudentNumber, x.FirstName, x.LastName, x.OtherNames, x.DisplayName, x.DateOfBirth, x.Gender, x.NationalId, x.PhoneNumber, x.Email, x.Status, x.IsArchived, x.ArchivedAt, x.ArchivedBy, x.ArchiveReason, x.AdmissionId, x.CampusId, x.CreatedAt)).ToListAsync(cancellationToken));
+        return Ok(await query.OrderBy(x => x.StudentNumber).Select(x => new StudentResponse(x.Id, x.StudentNumber, x.FirstName, x.LastName, x.OtherNames, (x.LastName + " " + x.FirstName + (x.OtherNames == null || x.OtherNames == "" ? "" : " " + x.OtherNames)).Trim().ToUpper(), x.DateOfBirth, x.Gender, x.NationalId, x.PhoneNumber, x.Email, x.Status, x.IsArchived, x.ArchivedAt, x.ArchivedBy, x.ArchiveReason, x.AdmissionId, x.CampusId, x.CreatedAt)).ToListAsync(cancellationToken));
     }
 
     [HttpGet("archived")]
@@ -53,7 +53,7 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
                 (x.PhoneNumber != null && x.PhoneNumber.Contains(term)) ||
                 (x.NationalId != null && x.NationalId.ToLower().Contains(term)));
         }
-        return Ok(await query.OrderBy(x => x.StudentNumber).Select(x => new StudentResponse(x.Id, x.StudentNumber, x.FirstName, x.LastName, x.OtherNames, x.DisplayName, x.DateOfBirth, x.Gender, x.NationalId, x.PhoneNumber, x.Email, x.Status, x.IsArchived, x.ArchivedAt, x.ArchivedBy, x.ArchiveReason, x.AdmissionId, x.CampusId, x.CreatedAt)).ToListAsync(cancellationToken));
+        return Ok(await query.OrderBy(x => x.StudentNumber).Select(x => new StudentResponse(x.Id, x.StudentNumber, x.FirstName, x.LastName, x.OtherNames, (x.LastName + " " + x.FirstName + (x.OtherNames == null || x.OtherNames == "" ? "" : " " + x.OtherNames)).Trim().ToUpper(), x.DateOfBirth, x.Gender, x.NationalId, x.PhoneNumber, x.Email, x.Status, x.IsArchived, x.ArchivedAt, x.ArchivedBy, x.ArchiveReason, x.AdmissionId, x.CampusId, x.CreatedAt)).ToListAsync(cancellationToken));
     }
 
     [HttpPost("{id:guid}/archive")]
