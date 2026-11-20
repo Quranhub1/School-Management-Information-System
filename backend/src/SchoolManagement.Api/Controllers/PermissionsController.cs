@@ -34,7 +34,7 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
     }
 
     [HttpGet("roles")]
-    [Authorize(Roles = InstitutionalRoles.SystemAdministrator)]
+    [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> Roles(CancellationToken cancellationToken)
         => Ok(await db.Roles.AsNoTracking().OrderBy(x => x.Name)
             .Select(x => new { x.Id, x.Name, x.Description, x.IsSystemRole }).ToListAsync(cancellationToken));
