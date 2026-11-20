@@ -3,7 +3,7 @@ import { SYSTEM_CURRENCY } from '../lib/currency'
 import { readApiErrorMessage } from './errors'
 import { z } from 'zod'
 import { parseApiInput, parseApiResponse } from '../lib/validation'
-import { addBankStatementLineRequestSchema, approveStaffAdvanceRequestSchema, applyFeeStructureRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, feeStructureCreateRequestSchema, invoiceNoteRequestSchema, invoiceResponseSchema, matchBankStatementLineRequestSchema, recordPaymentRequestSchema, recoverStaffAdvanceRequestSchema, staffAdvanceRequestSchema } from '../schemas'
+import { addBankStatementLineRequestSchema, approveStaffAdvanceRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, applyFeeStructureRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, feeStructureCreateRequestSchema, invoiceNoteRequestSchema, invoiceResponseSchema, matchBankStatementLineRequestSchema, recordPaymentRequestSchema, recoverStaffAdvanceRequestSchema, staffAdvanceRequestSchema } from '../schemas'
 
 export interface Invoice {
   id: string
@@ -60,6 +60,16 @@ export interface InvoiceFeeItem {
   feeType: string
   amount: number
   description?: string
+}
+
+export interface FiscalPeriod {
+  id: string
+  name: string
+  startDate: string
+  endDate: string
+  status: string
+  closedAt?: string
+  closedBy?: string
 }
 
 export interface BudgetLine {
@@ -230,6 +240,45 @@ export const getStudentFinancialStatement = (studentId: string) =>
   request<StudentFinancialStatement>(`/api/finance/students/${encodeURIComponent(studentId)}/statement`)
 export async function createInvoice(body: CreateInvoiceRequest) { const input = parseApiInput(createInvoiceRequestSchema, body, 'create invoice'); return parseApiResponse(invoiceResponseSchema, await request<unknown>('/api/finance/invoices', { method: 'POST', body: JSON.stringify(input) }), 'created invoice') as Invoice }
 export function recordPayment(invoiceId: string, body: RecordPaymentRequest) { if (!invoiceId.trim()) throw new Error('Invoice ID is required.'); const input = parseApiInput(recordPaymentRequestSchema, body, 'record payment'); return request('/api/finance/invoices/' + encodeURIComponent(invoiceId) + '/payments', { method: 'POST', body: JSON.stringify(input) }) }
+
+export const getFiscalPeriods = () => request<FiscalPeriod[]>('/api/finance/fiscal-periods')
+
+export async function createFiscalPeriod(input: { name: string; startDate: string; endDate: string }) {
+  const validated = parseApiInput(createFiscalPeriodRequestSchema, input, 'create fiscal period')
+  return request<FiscalPeriod>('/api/finance/fiscal-periods', {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
+
+export async function createOpeningBalances(input: {
+  fiscalPeriodId: string
+  currency?: string
+  lines: {
+    accountId: string
+    debit: number
+    credit: number
+    description?: string | null
+    campusId?: string
+    facultyId?: string
+    departmentId?: string
+    programmeId?: string
+  }[]
+}) {
+  const validated = parseApiInput(createOpeningBalanceRequestSchema, input, 'create opening balances')
+  return request<unknown>('/api/finance/opening-balances', {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
+
+export async function postFiscalPeriodClosing(input: { fiscalPeriodId: string; retainedEarningsAccountId: string }) {
+  const validated = parseApiInput(closeFiscalPeriodRequestSchema, input, 'close fiscal period')
+  return request<FiscalPeriod>('/api/finance/fiscal-period-closing', {
+    method: 'POST',
+    body: JSON.stringify(validated),
+  })
+}
 
 export const getBudgets = (params?: { departmentId?: string; academicYearId?: string; activeOnly?: boolean }) => {
   const query = new URLSearchParams()
