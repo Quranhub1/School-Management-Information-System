@@ -55,7 +55,15 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> Roles(CancellationToken cancellationToken)
         => Ok(await db.Roles.AsNoTracking().OrderBy(x => x.Name)
-            .Select(x => new { x.Id, x.Name, x.Description }).ToListAsync(cancellationToken));
+            .Select(x => new
+            {
+                x.Id,
+                x.Name,
+                x.Description,
+                PermissionCodes = db.RolePermissions.Where(assignment => assignment.RoleId == x.Id)
+                    .Join(db.Permissions, assignment => assignment.PermissionId, permission => permission.Id, (_, permission) => permission.Code)
+                    .ToList()
+            }).ToListAsync(cancellationToken));
 
     [HttpGet("users/{userId:guid}")]
     [Authorize(Policy = AuthorizationPolicies.Administration)]
