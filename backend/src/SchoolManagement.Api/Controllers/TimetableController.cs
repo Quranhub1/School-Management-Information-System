@@ -73,7 +73,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     public async Task<IActionResult> Get([FromQuery] Guid? teachingGroupId, CancellationToken cancellationToken)
     {
         var entries = await repository.GetActiveAsync(teachingGroupId, cancellationToken);
-        return Ok(entries.OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime).ToList());
+        return Ok(entries.OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime).Select(ToDto).ToList());
     }
 
     [HttpGet("conflicts")]
@@ -88,7 +88,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             .Where(g => g.Count() > 1)
             .SelectMany(g => g)
             .ToList();
-        return Ok(conflicts);
+        return Ok(conflicts.Select(ToDto).ToArray());
     }
 
     private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, Guid curriculumId, int yearOfStudy, int curriculumSemesterNumber, CancellationToken cancellationToken)
@@ -128,7 +128,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         var entry = new Domain.Academic.TimetableEntry { TeachingGroupId = request.TeachingGroupId, CourseId = request.CourseId, TeacherId = request.TeacherId, StaffMemberId = request.TeacherId, DayOfWeek = request.DayOfWeek, StartTime = request.StartTime, EndTime = request.EndTime, Room = request.Room, SessionType = request.SessionType };
         db.TimetableEntries.Add(entry);
         await db.SaveChangesAsync(cancellationToken);
-        return Created($"api/timetable/{entry.Id}", entry);
+        return Created($"api/timetable/{entry.Id}", ToDto(entry));
     }
 
     [HttpPut("{id:guid}")]
@@ -169,7 +169,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         };
         db.TimetableEntries.Add(updated);
         await db.SaveChangesAsync(cancellationToken);
-        return Ok(updated);
+        return Ok(ToDto(updated));
     }
 
 
@@ -275,8 +275,13 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         }
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return Ok(replacement);
+        return Ok(replacement.Select(ToDto).ToArray());
     }
+
+    private static TimetableEntryDto ToDto(Domain.Academic.TimetableEntry entry) =>
+        new(entry.Id, entry.TeachingGroupId, entry.CourseId, entry.TeacherId, entry.DayOfWeek,
+            entry.StartTime, entry.EndTime, entry.Room, entry.SessionType, entry.IsActive,
+            entry.GeneratedAt, entry.GenerationSource);
 
     private static bool HasOverlap(CreateTimetableEntryRequest left, CreateTimetableEntryRequest right)
     {
