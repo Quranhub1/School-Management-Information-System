@@ -158,6 +158,10 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     {
         if (string.IsNullOrWhiteSpace(request.StaffNumber) || string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.EmploymentType))
             return BadRequest(new { message = "Staff number, names and employment type are required." });
+        if (request.BasicSalary is < 0)
+            return BadRequest(new { message = "Basic salary cannot be negative." });
+        if (request.PhotographDataUrl is { Length: > 2_100_000 } || (request.PhotographDataUrl is not null && !request.PhotographDataUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase)))
+            return BadRequest(new { message = "Staff photograph must be a supported image smaller than 1.5 MB." });
         if (await db.StaffMembers.AnyAsync(x => x.StaffNumber == request.StaffNumber.Trim(), cancellationToken))
             return Conflict(new { message = "A staff member with this staff number already exists." });
 
@@ -186,7 +190,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             BankAccountNumber = Clean(request.BankAccountNumber),
             BankAddress = Clean(request.BankAddress),
             BasicSalary = request.BasicSalary,
-            AttendanceMode = Clean(request.AttendanceMode)
+            AttendanceMode = Clean(request.AttendanceMode),
+            PhotographDataUrl = request.PhotographDataUrl
         };
         db.StaffMembers.Add(staff);
         await db.SaveChangesAsync(cancellationToken);
@@ -271,8 +276,13 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         staff.BankName = Clean(request.BankName);
         staff.BankAccountNumber = Clean(request.BankAccountNumber);
         staff.BankAddress = Clean(request.BankAddress);
+        if (request.BasicSalary is < 0)
+            return BadRequest(new { message = "Basic salary cannot be negative." });
+        if (request.PhotographDataUrl is { Length: > 2_100_000 } || (request.PhotographDataUrl is not null && !request.PhotographDataUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase)))
+            return BadRequest(new { message = "Staff photograph must be a supported image smaller than 1.5 MB." });
         staff.BasicSalary = request.BasicSalary;
         staff.AttendanceMode = Clean(request.AttendanceMode);
+        staff.PhotographDataUrl = request.PhotographDataUrl;
         staff.CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds);
         var linkedAccount = await db.StaffUserLinks.SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
         if (linkedAccount is not null)
@@ -331,7 +341,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         staff.DepartmentId, staff.JobTitle, staff.HighestQualification, staff.Speciality,
         staff.ProfessionalRegistration, staff.DateJoined, staff.Gender, staff.DateOfBirth,
         staff.Address, staff.BankName, staff.BankAccountNumber, staff.BankAddress,
-        staff.BasicSalary, staff.AttendanceMode,
+        staff.BasicSalary, staff.AttendanceMode, staff.PhotographDataUrl,
         CourseUnitIds = JsonSerializer.Deserialize<Guid[]>(staff.CourseUnitIdsJson ?? "[]") ?? Array.Empty<Guid>()
     };
 
@@ -412,8 +422,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 }
 
-public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null);
-public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null);
+public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null, string? PhotographDataUrl = null);
+public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null, string? PhotographDataUrl = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record SaveStaffAccountRequest(string? Username, string? Password, string[]? Permissions);
 public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);
