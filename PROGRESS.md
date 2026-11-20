@@ -30,6 +30,13 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Remove duplicate progress metadata and the duplicate system-wide name-display section from this file. The lowercase `progress.md` file is not present on the current baseline.
 
 ### Remaining audit work
+### Baseline findings that refine the original audit
+
+- The EF Core snapshot already exists on the baseline; the new CI gate is for ongoing consistency, not creation of a missing snapshot.
+- Existing Zod/API validation is broader than the original audit described: fee-structure creation/application, credit notes, staff advances, staff leave, library book/loan operations, inventory-register saves and inventory row contracts already use schemas. Remaining Zod work should target uncovered budgets, library-member workflows, academic/examination/administration forms and per-row imports rather than duplicate existing schemas.
+- Finance already has backend report endpoints for General Ledger, Trial Balance, Income Statement and Balance Sheet, plus bank-reconciliation and fiscal-period-closing controllers and opening-balance services. The remaining finance gap is end-to-end workflow coverage (especially opening balances, period close, reconciliation and budget-vs-actual) rather than creating those foundations from scratch.
+- The current shell routes to real academic, hostel, inventory, staff/payroll, timetable and examination-capable workspaces; examination management is nested under Academic Management. Transport and standalone teacher-assignment modules are not currently present in the shell and need an explicit keep/remove decision.
+
 
 - [ ] Expand DTO projections across the remaining controllers; remove direct domain-entity responses only after preserving the existing API contract.
 - [ ] Expand API controller authorization and integration tests, including finance journal balancing, allocation and fiscal-period edge cases.
