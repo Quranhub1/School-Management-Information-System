@@ -13,7 +13,7 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class PermissionsController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("catalogue")]
-    [Authorize(Policy = SchoolManagement.Application.Authorization.StaffPolicies.Management)]
+    [Authorize(Policy = "permission:staff.create")]
     public async Task<IActionResult> Catalogue(CancellationToken cancellationToken)
     {
         var rows = await db.Permissions.AsNoTracking()
@@ -36,13 +36,13 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
     }
 
     [HttpGet("roles")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:staff.create")]
     public async Task<IActionResult> Roles(CancellationToken cancellationToken)
         => Ok(await db.Roles.AsNoTracking().OrderBy(x => x.Name)
             .Select(x => new { x.Id, x.Name, x.Description, x.IsSystemRole }).ToListAsync(cancellationToken));
 
     [HttpGet("roles/{roleId:guid}")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = "permission:staff.create")]
     public async Task<IActionResult> GetRolePermissions(Guid roleId, CancellationToken cancellationToken)
     {
         if (!await db.Roles.AnyAsync(x => x.Id == roleId, cancellationToken)) return NotFound();
