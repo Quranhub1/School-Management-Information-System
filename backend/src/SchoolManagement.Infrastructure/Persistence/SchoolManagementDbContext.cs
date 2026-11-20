@@ -36,6 +36,10 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
+    public DbSet<StaffUserLink> StaffUserLinks => Set<StaffUserLink>();
     public DbSet<Institution> Institutions => Set<Institution>();
     public DbSet<Campus> Campuses => Set<Campus>();
     public DbSet<UserCampusAssignment> UserCampusAssignments => Set<UserCampusAssignment>();
@@ -261,6 +265,36 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.HasKey(x => new { x.UserId, x.RoleId });
             e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<Permission>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Code).HasMaxLength(160).IsRequired();
+            e.Property(x => x.Name).HasMaxLength(240).IsRequired();
+            e.Property(x => x.GroupCode).HasMaxLength(80).IsRequired();
+            e.Property(x => x.GroupName).HasMaxLength(160).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(1000);
+            e.HasIndex(x => x.Code).IsUnique();
+            e.HasIndex(x => new { x.GroupCode, x.Code });
+        });
+        m.Entity<RolePermission>(e =>
+        {
+            e.HasKey(x => new { x.RoleId, x.PermissionId });
+            e.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Permission>().WithMany().HasForeignKey(x => x.PermissionId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<UserPermission>(e =>
+        {
+            e.HasKey(x => new { x.UserId, x.PermissionId });
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Permission>().WithMany().HasForeignKey(x => x.PermissionId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<StaffUserLink>(e =>
+        {
+            e.HasKey(x => x.StaffId);
+            e.HasIndex(x => x.UserId).IsUnique();
+            e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
         m.Entity<AdmissionDecision>().HasOne<AdmissionEntity>().WithMany().HasForeignKey(x => x.AdmissionId).OnDelete(DeleteBehavior.Cascade);
         m.ApplyConfiguration(new AdmissionsConfiguration());
