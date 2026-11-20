@@ -68,7 +68,7 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
 
         var academicYears = await db.AcademicYears.AsNoTracking()
             .Where(year => year.IsActive)
-            .OrderByDescending(year => year.StartDate)
+            .OrderBy(year => year.StartDate)
             .Select(year => new { year.Id, year.Name, year.StartDate, year.EndDate, year.IsCurrent, year.IsActive })
             .ToListAsync(cancellationToken);
         var intakes = await db.Intakes.AsNoTracking()
