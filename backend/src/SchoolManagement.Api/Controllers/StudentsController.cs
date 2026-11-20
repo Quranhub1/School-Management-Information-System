@@ -249,13 +249,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> Create(CreateStudentRequest request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.StudentNumber) ||
-            string.IsNullOrWhiteSpace(request.FirstName) ||
-            string.IsNullOrWhiteSpace(request.LastName))
-        {
-            return BadRequest(new { message = "Student number, first name, and last name are required." });
-        }
-
         var campusId = await campusAccess.ResolveCampusForWriteAsync(User, request.CampusId, cancellationToken);
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is not null && !campusId.HasValue) return Forbid();
