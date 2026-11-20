@@ -69,7 +69,7 @@ public sealed class PermissionCatalogSeeder(SchoolManagementDbContext db)
                 codes.Add("staff.view");
             if (staffManagementRoles.Contains(role.Name, StringComparer.Ordinal))
             {
-                codes.UnionWith(["staff.create", "staff.edit", "staff.delete", "staff.manage_course_assignments", "leave.view", "leave.approve"]);
+                codes.UnionWith(["staff.create", "staff.edit", "staff.delete", "staff.manage_course_assignments", "leave.view", "leave.apply", "leave.approve"]);
             }
             if (role.Name == InstitutionalRoles.SystemAdministrator)
                 codes.UnionWith(PermissionCatalog.All.Select(x => x.Code));
