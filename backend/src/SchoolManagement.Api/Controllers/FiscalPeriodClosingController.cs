@@ -16,6 +16,12 @@ public sealed class FiscalPeriodClosingController(FiscalPeriodClosingService ser
     {
         var user = User.Identity?.Name;
         if (string.IsNullOrWhiteSpace(user)) return Unauthorized();
-        return Ok(await service.CloseAsync(request, user, cancellationToken));
+        try
+        {
+            return Ok(await service.CloseAsync(request, user, cancellationToken));
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 }
