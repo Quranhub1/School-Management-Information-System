@@ -94,8 +94,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setOptions({ ...emptyOptions, ...loadedOptions, programmes: loadedOptions.programmes ?? [], curricula: loadedOptions.curricula ?? [], curriculumCourses: loadedOptions.curriculumCourses ?? [] })
       setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
       const uniqueProgrammes = deduplicateProgrammeOptions(loadedOptions.programmes ?? [], loadedOptions.curricula ?? [], loadedOptions.teachingGroups ?? [])
-      setProgrammeId(current => current || uniqueProgrammes[0]?.id || '')
-      setCurriculumId(current => current || loadedOptions.curricula.find(item => uniqueProgrammes[0]?.sourceIds.includes(item.programmeId))?.id || '')
+      const preferredProgramme = uniqueProgrammes[0]
+      const preferredPeriodId = loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || ''
+      const preferredGroup = loadedOptions.teachingGroups.find(item => preferredProgramme?.sourceIds.includes(item.programmeId) && item.semesterId === preferredPeriodId)
+      setProgrammeId(current => current || preferredProgramme?.id || '')
+      setCurriculumId(current => current || loadedOptions.curricula.find(item => preferredProgramme?.sourceIds.includes(item.programmeId))?.id || '')
+      setTemplateGroupId(current => current || preferredGroup?.id || '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
     }
@@ -563,11 +567,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       <div>
         <p className="timetable-eyebrow">Academic planning</p>
         <h2>{readOnly ? 'Timetable' : 'Timetable management'}</h2>
-        <p>Review the weekly teaching schedule, rooms and staff assignments in one place.</p>
+        <p>Load and edit the official class timetable, assign lecturers and venues, then save or print it.</p>
       </div>
       <div className="timetable-actions">
         {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowGenerator(value => !value)} aria-expanded={showGenerator}><Sparkles /> {showGenerator ? 'Hide generator' : 'Generate timetable'}</button>}
-        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}><Pencil /> {showTemplateEditor ? 'Close template editor' : 'Edit timetable template'}</button>}
+        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}><Pencil /> {showTemplateEditor ? 'Hide timetable designer' : 'Open timetable designer'}</button>}
         {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowScheduleForm(value => !value)} aria-expanded={showScheduleForm}><Plus /> {showScheduleForm ? 'Close form' : 'Schedule session'}</button>}
       </div>
     </header>
