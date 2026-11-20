@@ -418,7 +418,7 @@ function canSeeSidebarItem(item:SidebarItem){
   if (!moduleAllowed(item.module)) return false;
   // Class setup is a management screen; do not expose a destination that renders blank for read-only roles.
   if (item.module === 'academics' && item.subsection === 'classes' && !ac) return false;
-  if (item.module === 'staff' && item.subsection === 'payroll') return fi && !isAdminSecretary;
+  if (item.module === 'staff' && item.subsection === 'payroll') return effectivePermissions===null?canReadPayroll(r)&&!isAdminSecretary:Boolean(hasPermission('hr.read-payroll','hr.manage-payroll'));
   if (item.module === 'staff' && (item.subsection === 'leave' || item.subsection === 'recruitment')) return sm;
   if (item.module === 'system-administration') return r.includes('SystemAdministrator');
   return true;
@@ -540,8 +540,8 @@ return <main className="app-shell">
 {activeModule==='attendance'&&att&&<AttendanceManagement readOnly={!attManage} canViewStaffAttendance={canReadStaff(r)} />}
 {activeModule==='library'&&lr&&<LibraryManagementWorkspace canManage={lm}/>}
 {activeModule==='health'&&moduleAllowed('health')&&<HealthRecordsManagement activeSubsection={activeSubsection}/>}
-{activeModule==='laboratories'&&hostel&&((r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:<HostelManagement canManage={hostel}/>)}
-{activeModule==='inventory'&&inv&&<InventoryManagement canManage={inv}/>}
+{activeModule==='laboratories'&&(hostel||hostelRead)&&((r.includes('SchoolWarden')||r.includes('School Warden'))?<SchoolWardenManagement/>:<HostelManagement canManage={hostel}/>)}
+{activeModule==='inventory'&&(inv||inventoryRead)&&<InventoryManagement canManage={inv}/>}
 {activeModule==='communication'&&moduleAllowed('communication')&&<Announcements canManage={cm}/>}
 {activeModule==='guild'&&(st||r.includes('Guild')||r.includes('SystemAdministrator'))&&<GuildManagement canOpenCalendar={ac} canOpenNotices={moduleAllowed('communication')} canOpenFinance={fi && !isAdminSecretary}/>}
 {activeModule==='reports'&&(rp||analytics)&&<div><div className="library-workspace-tabs" style={{marginBottom:18}}><button className={rptTab==='cards'?'active':''} onClick={()=>setRptTab('cards')}>Report Cards</button><button className={rptTab==='receipts'?'active':''} onClick={()=>setRptTab('receipts')}>Receipts</button><button className={rptTab==='certificates'?'active':''} onClick={()=>setRptTab('certificates')}>Certificates</button><button className={rptTab==='analytics'?'active':''} onClick={()=>setRptTab('analytics')}>Analytics</button></div>{rptTab==='cards'&&rp&&<ReportCards canManage/>}{rptTab==='receipts'&&rp&&<Receipts canManage/>}{rptTab==='certificates'&&rp&&<CertificateManagement canManage/>}{rptTab==='analytics'&&analytics&&<AnalyticsDashboard/>}</div>}
