@@ -74,7 +74,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const togglePermissionGroup = (groupId: string, checked: boolean) => {
     const group = permissionGroups.find(item => item.id === groupId)
     if (!group) return
-    const ids = group.permissions.map(permission => permission.id)
+    const ids = group.permissions.map(permission => permission.id).filter(id => !inheritedPermissions.includes(id))
     setSelectedPermissions(current => checked ? [...new Set([...current, ...ids])] : current.filter(id => !ids.includes(id)))
   }
 
@@ -460,7 +460,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   </div>
                   <div className="staff-permission-toolbar">
                     <input type="search" aria-label="Search permissions" placeholder="Search permissions…" value={permissionSearch} onChange={event => setPermissionSearch(event.target.value)} />
-                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions(allPermissionIds)}>Select all</button>
+                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions(allPermissionIds.filter(id => !inheritedPermissions.includes(id)))}>Select all</button>
                     <button type="button" className="secondary-button" onClick={() => setSelectedPermissions([])}>Clear all</button>
                   </div>
                   <div className="staff-permission-groups">
