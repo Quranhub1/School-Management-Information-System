@@ -49,7 +49,35 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
             })
             .ToListAsync(cancellationToken);
 
-        return Ok(new { authorities, programmes });
+        var lastYear = DateTime.UtcNow.Year + 100;
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO "AcademicYears"
+                ("Id", "Name", "StartDate", "EndDate", "IsCurrent", "IsActive")
+            SELECT gen_random_uuid(),
+                   year_value::text || '-' || (year_value + 1)::text,
+                   make_date(year_value, 1, 1),
+                   make_date(year_value + 1, 1, 1) - 1,
+                   FALSE,
+                   TRUE
+            FROM generate_series(2001, {lastYear}) AS years(year_value)
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "AcademicYears" existing
+                WHERE existing."Name" = year_value::text || '-' || (year_value + 1)::text
+            );
+            """, cancellationToken);
+
+        var academicYears = await db.AcademicYears.AsNoTracking()
+            .Where(year => year.IsActive)
+            .OrderByDescending(year => year.StartDate)
+            .Select(year => new { year.Id, year.Name, year.StartDate, year.EndDate, year.IsCurrent, year.IsActive })
+            .ToListAsync(cancellationToken);
+        var intakes = await db.Intakes.AsNoTracking()
+            .Where(intake => intake.IsOpen)
+            .OrderBy(intake => intake.StartDate)
+            .Select(intake => new { intake.Id, intake.Name, intake.Code, intake.IsOpen })
+            .ToListAsync(cancellationToken);
+
+        return Ok(new { authorities, programmes, academicYears, intakes });
     }
 
     [HttpGet]
