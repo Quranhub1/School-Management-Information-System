@@ -18,7 +18,7 @@ export type StaffCourseUnit = { id: string; code: string; name: string; creditUn
 export type StaffDepartment = { id: string; code: string; name: string };
 export type StaffMember = { id:string; staffNumber:string; firstName:string; lastName:string; otherNames?:string|null; displayName?:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string; staffType:string; isActive:boolean; departmentId?:string|null; jobTitle?:string|null; highestQualification?:string|null; speciality?:string|null; professionalRegistration?:string|null; courseUnitIds?:string[] };
 export type StaffProfileInput = Omit<StaffMember, 'id' | 'isActive'>;
-export type StaffAccountInput = { username?: string | null; password?: string | null; existingUserId?: string | null; roles?: string[]; permissionCodes?: string[] };
+export type StaffAccountInput = { username?: string | null; password?: string | null; existingUserId?: string | null; roles?: string[]; permissionCodes?: string[]; replaceDirectPermissions?: boolean };
 export type LeaveRequest = { id:string; staffMemberId:string; leaveType:string; startDate:string; endDate:string; reason:string; status:string; approvedBy?:string; approvedAt?:string };
 export const STAFF_CHANGED_EVENT = 'smis:staff-changed'
 
