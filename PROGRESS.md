@@ -13,6 +13,32 @@ Corrected native release workflow run `34351052149` completed successfully for W
 
 A dedicated executable target-environment acceptance runbook is now available at `docs/PRODUCTION_ACCEPTANCE.md`. It records the evidence required for golden-path, authorization, module, finance, attendance, assessment, clinical, staff/student, deployment, backup/restore, desktop, and security sign-off.
 
+## Production hardening audit — 2026-11-20
+
+### Implemented on `feature/production-hardening-audit`
+
+- [x] Add FluentValidation to the API and register automatic MVC validation plus assembly-scanned validators.
+- [x] Add validators for student create/update, admission create/update/decision/admit, and notice creation.
+- [x] Remove duplicated inline validation for student creation and applicant student-number admission input; retain domain/business checks in workflows.
+- [x] Replace broad controller authorization on timetable, staff attendance, notices, offline assistant, module access and modern information endpoints with named policies.
+- [x] Replace role-string authorization on campuses and campus assignments with the existing Administration policy.
+- [x] Add a dedicated ModuleAccess policy that recognizes institutional roles and scoped `StaffAccess.*` role claims.
+- [x] Return explicit StudentResponse DTOs from the student registry, archived registry, student detail, create and update endpoints; do not serialize finance navigation collections.
+- [x] Add API validator unit tests.
+- [x] Verify the EF Core model snapshot exists; add CI checks for pending model changes and generation of an idempotent migration script.
+- [x] Pin migration generation to `main` and fast-forward before committing generated migrations.
+- [x] Remove duplicate progress metadata and the duplicate system-wide name-display section from this file. The lowercase `progress.md` file is not present on the current baseline.
+
+### Remaining audit work
+
+- [ ] Expand DTO projections across the remaining controllers; remove direct domain-entity responses only after preserving the existing API contract.
+- [ ] Expand API controller authorization and integration tests, including finance journal balancing, allocation and fiscal-period edge cases.
+- [ ] Complete Zod coverage for remaining forms and validate each imported CSV/Excel row before persistence.
+- [ ] Finish finance accounting workflows and dimension-aware reports; verify existing ledger/report endpoints against the production acceptance requirements.
+- [ ] Build the staff-facing offline operation queue, conflict review and audit export without enabling unsafe automatic replay.
+- [ ] Inventory current shell routes and replace or intentionally remove any genuine placeholder modules.
+- [ ] Run the full backend/frontend test suites and resolve every CI failure before merging.
+
 ## Structured logging and observability — November 2026
 
 - [x] Add Serilog to the .NET 8 API with structured console and daily rolling file sinks.
