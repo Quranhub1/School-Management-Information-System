@@ -10,12 +10,12 @@ namespace SchoolManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/notices")]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.CommunicationRead)]
 public sealed class NoticesController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("board")]
     [Authorize(Policy = AuthorizationPolicies.CommunicationRead)]
-    public async Task<ActionResult<IReadOnlyList<Notice>>> GetBoard(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<NoticeResponse>>> GetBoard(CancellationToken ct)
     {
         var now = DateTimeOffset.UtcNow;
         var roles = User.Claims
@@ -52,25 +52,14 @@ public sealed class NoticesController(SchoolManagementDbContext db) : Controller
             return false;
         }).ToArray();
 
-        return Ok(visible);
+        return Ok(visible.Select(ToResponse).ToArray());
     }
 
     [HttpPost("board")]
     [Authorize(Policy = AuthorizationPolicies.CommunicationManagement)]
-    public async Task<ActionResult<Notice>> Create([FromBody] CreateNoticeRequest request, CancellationToken ct)
+    public async Task<ActionResult<NoticeResponse>> Create([FromBody] CreateNoticeRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Body))
-            return BadRequest("A notice title and message are required.");
-
         var audience = request.Audience.Trim();
-        if (!audience.Equals("All", StringComparison.OrdinalIgnoreCase)
-            && !(audience.StartsWith("Role:", StringComparison.OrdinalIgnoreCase)
-                || audience.StartsWith("Department:", StringComparison.OrdinalIgnoreCase)))
-            return BadRequest("Choose All, a role, or a department as the notice audience.");
-
-        if (audience.StartsWith("Role:", StringComparison.OrdinalIgnoreCase)
-            && audience["Role:".Length..].Trim().Equals(InstitutionalRoles.Student, StringComparison.OrdinalIgnoreCase))
-            return BadRequest("Student notices are not supported in the administrative SMIS.");
 
         var createdBy = User.Identity?.Name
             ?? User.FindFirstValue(ClaimTypes.Name)
@@ -88,8 +77,14 @@ public sealed class NoticesController(SchoolManagementDbContext db) : Controller
         };
         db.Notices.Add(notice);
         await db.SaveChangesAsync(ct);
-        return Created($"api/notices/{notice.Id}", notice);
+        return Created($"api/notices/{notice.Id}", ToResponse(notice));
     }
+    private static NoticeResponse ToResponse(Notice notice) =>
+        new(notice.Id, notice.Title, notice.Body, notice.Priority, notice.Audience, notice.ExpiresAt,
+            notice.CreatedBy, notice.CreatedAt, notice.IsActive);
 }
+
+public sealed record NoticeResponse(Guid Id, string Title, string Body, string Priority, string Audience,
+    DateTimeOffset? ExpiresAt, string CreatedBy, DateTimeOffset CreatedAt, bool IsActive);
 
 public sealed record CreateNoticeRequest(string Title, string Body, string Priority, string Audience, DateTimeOffset? ExpiresAt);

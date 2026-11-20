@@ -1,3 +1,5 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
@@ -14,6 +16,7 @@ using SchoolManagement.Infrastructure.Finance;
 using SchoolManagement.Infrastructure.Identity;
 using SchoolManagement.Infrastructure.Persistence;
 using SchoolManagement.Api.Services;
+using SchoolManagement.Api.Validation;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -59,6 +62,8 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
             shared: true,
             flushToDiskInterval: TimeSpan.FromSeconds(2));
 });
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionRequestValidator>();
 builder.Services.AddControllers().AddJsonOptions(o =>
 {
     o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;

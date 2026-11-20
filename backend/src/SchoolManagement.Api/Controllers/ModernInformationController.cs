@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Administration;
+using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.Admissions;
 using SchoolManagement.Domain.Attendance;
 using SchoolManagement.Infrastructure.Persistence;
@@ -14,7 +15,7 @@ namespace SchoolManagement.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/modern")]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.ReportingManagement)]
 public sealed class ModernInformationController(SchoolManagementDbContext db, IWebHostEnvironment environment, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("dashboard")]
