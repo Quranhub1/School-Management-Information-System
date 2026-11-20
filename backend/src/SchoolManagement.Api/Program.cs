@@ -1,5 +1,4 @@
 using FluentValidation;
-using FluentValidation.DependencyInjectionExtensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
