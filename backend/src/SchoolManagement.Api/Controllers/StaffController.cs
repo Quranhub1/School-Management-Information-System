@@ -241,6 +241,14 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> ApproveLeave(Guid id, [FromBody] ApproveLeaveRequest request, CancellationToken cancellationToken)
     {
+        var existingRequest = await leaveService.GetByIdAsync(id, cancellationToken);
+        if (existingRequest is null) return NotFound();
+        var staffCampusId = await db.StaffMembers
+            .Where(x => x.Id == existingRequest.StaffMemberId)
+            .Select(x => x.CampusId)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (!await campusAccess.CanAccessCampusAsync(User, staffCampusId, cancellationToken)) return Forbid();
+
         try
         {
             var leaveRequest = await leaveService.ApproveAsync(id, request.ApprovedBy, request.Approved, cancellationToken);
@@ -254,6 +262,14 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> CancelLeave(Guid id, CancellationToken cancellationToken)
     {
+        var existingRequest = await leaveService.GetByIdAsync(id, cancellationToken);
+        if (existingRequest is null) return NotFound();
+        var staffCampusId = await db.StaffMembers
+            .Where(x => x.Id == existingRequest.StaffMemberId)
+            .Select(x => x.CampusId)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (!await campusAccess.CanAccessCampusAsync(User, staffCampusId, cancellationToken)) return Forbid();
+
         var leaveRequest = await leaveService.CancelAsync(id, cancellationToken);
         if (leaveRequest is null) return NotFound();
         return NoContent();
