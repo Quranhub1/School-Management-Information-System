@@ -173,6 +173,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         })
       }
       setForm(emptyStaffForm())
+      setAccountLinked(false)
+      setAccountForm({ mode: 'new', username: '', password: '', permissions: [] })
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
       setError(message)
