@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
@@ -12,110 +13,123 @@ namespace SchoolManagement.Api.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class PermissionsController(SchoolManagementDbContext db) : ControllerBase
 {
-    [HttpGet("catalogue")]
-    [Authorize(Policy = "permission:staff.create")]
-    public async Task<IActionResult> Catalogue(CancellationToken cancellationToken)
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> MyPermissions(CancellationToken cancellationToken)
     {
-        var rows = await db.Permissions.AsNoTracking()
-            .OrderBy(x => x.GroupName).ThenBy(x => x.Name)
-            .Select(permission => new { permission.GroupCode, permission.GroupName, permission.Code, permission.Name, permission.Description })
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub")
+            ?? User.FindFirstValue("userId");
+        if (!Guid.TryParse(userIdValue, out var userId)) return Unauthorized();
+
+        var roleCodes = await (from userRole in db.UserRoles
+                               join rolePermission in db.RolePermissions on userRole.RoleId equals rolePermission.RoleId
+                               join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
+                               where userRole.UserId == userId
+                               select permission.Code).Distinct().ToListAsync(cancellationToken);
+        var overrides = await (from assignment in db.UserPermissions
+                               join permission in db.Permissions on assignment.PermissionId equals permission.Id
+                               where assignment.UserId == userId
+                               select new { permission.Code, assignment.IsGranted }).ToListAsync(cancellationToken);
+        var effective = roleCodes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var assignment in overrides)
+        {
+            if (assignment.IsGranted) effective.Add(assignment.Code);
+            else effective.Remove(assignment.Code);
+        }
+        return Ok(new { permissions = effective.OrderBy(x => x).ToArray() });
+    }
+
+    [HttpGet("catalog")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> Catalog(CancellationToken cancellationToken)
+    {
+        // The catalogue contains metadata only. The assignment endpoint and
+        // staff-creation flow enforce which permissions the current manager may delegate.
+        var catalog = await db.Permissions.AsNoTracking()
+            .OrderBy(x => x.GroupKey).ThenBy(x => x.Name)
+            .Select(x => new { x.Id, x.Code, x.Name, x.GroupKey, x.Description })
             .ToListAsync(cancellationToken);
-        var groups = rows.GroupBy(x => new { x.GroupCode, x.GroupName })
-            .Select(group => new
-            {
-                id = group.Key.GroupCode,
-                label = group.Key.GroupName,
-                permissions = group.Select(permission => new
-                {
-                    id = permission.Code,
-                    label = permission.Name,
-                    permission.Description
-                }).ToList()
-            }).ToList();
-        return Ok(groups);
+        return Ok(catalog);
     }
 
     [HttpGet("roles")]
-    [Authorize(Policy = "permission:staff.create")]
+    [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> Roles(CancellationToken cancellationToken)
         => Ok(await db.Roles.AsNoTracking().OrderBy(x => x.Name)
-            .Select(x => new { x.Id, x.Name, x.Description, x.IsSystemRole }).ToListAsync(cancellationToken));
-
-    [HttpGet("roles/{roleId:guid}")]
-    [Authorize(Policy = "permission:staff.create")]
-    public async Task<IActionResult> GetRolePermissions(Guid roleId, CancellationToken cancellationToken)
-    {
-        if (!await db.Roles.AnyAsync(x => x.Id == roleId, cancellationToken)) return NotFound();
-        var codes = await (from assignment in db.RolePermissions
-                           join permission in db.Permissions on assignment.PermissionId equals permission.Id
-                           where assignment.RoleId == roleId
-                           orderby permission.Code
-                           select permission.Code).ToListAsync(cancellationToken);
-        return Ok(new { roleId, permissionCodes = codes });
-    }
-
-    [HttpPut("roles/{roleId:guid}")]
-    [Authorize(Roles = InstitutionalRoles.SystemAdministrator)]
-    public async Task<IActionResult> SetRolePermissions(Guid roleId, [FromBody] PermissionCodesRequest request, CancellationToken cancellationToken)
-    {
-        var targetRole = await db.Roles.SingleOrDefaultAsync(x => x.Id == roleId, cancellationToken);
-        if (targetRole is null) return NotFound();
-        if (targetRole.Name == InstitutionalRoles.SystemAdministrator)
-            return BadRequest(new { message = "The System Administrator role is protected and always retains the complete permission catalogue." });
-        var codes = (request.PermissionCodes ?? Array.Empty<string>())
-            .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim())
-            .Distinct(StringComparer.Ordinal).ToArray();
-        var permissions = await db.Permissions.Where(x => codes.Contains(x.Code)).ToListAsync(cancellationToken);
-        if (permissions.Count != codes.Length)
-            return BadRequest(new { message = "One or more permission codes are not in the central catalogue." });
-
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        var current = await db.RolePermissions.Where(x => x.RoleId == roleId).ToListAsync(cancellationToken);
-        db.RolePermissions.RemoveRange(current);
-        db.RolePermissions.AddRange(permissions.Select(x => new RolePermission { RoleId = roleId, PermissionId = x.Id }));
-        await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return Ok(new { roleId, assignedCount = permissions.Count });
-    }
+            .Select(x => new
+            {
+                x.Id,
+                x.Name,
+                x.Description,
+                PermissionCodes = db.RolePermissions.Where(assignment => assignment.RoleId == x.Id)
+                    .Join(db.Permissions, assignment => assignment.PermissionId, permission => permission.Id, (_, permission) => permission.Code)
+                    .ToList()
+            }).ToListAsync(cancellationToken));
 
     [HttpGet("users/{userId:guid}")]
-    [Authorize(Roles = InstitutionalRoles.SystemAdministrator)]
+    [Authorize(Policy = AuthorizationPolicies.Administration)]
     public async Task<IActionResult> GetUserPermissions(Guid userId, CancellationToken cancellationToken)
     {
         if (!await db.Users.AnyAsync(x => x.Id == userId, cancellationToken)) return NotFound();
-        var direct = await (from grant in db.UserPermissions
-                            join permission in db.Permissions on grant.PermissionId equals permission.Id
-                            where grant.UserId == userId
-                            orderby permission.Code
-                            select permission.Code).ToListAsync(cancellationToken);
-        var inherited = await (from assignment in db.UserRoles
-                               join rolePermission in db.RolePermissions on assignment.RoleId equals rolePermission.RoleId
-                               join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
+        var roles = await (from userRole in db.UserRoles
+                           join role in db.Roles on userRole.RoleId equals role.Id
+                           where userRole.UserId == userId
+                           select role.Name).ToListAsync(cancellationToken);
+        var roleDefaults = await (from userRole in db.UserRoles
+                                  join rolePermission in db.RolePermissions on userRole.RoleId equals rolePermission.RoleId
+                                  join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
+                                  where userRole.UserId == userId
+                                  select permission.Code).Distinct().ToListAsync(cancellationToken);
+        var overrides = await (from assignment in db.UserPermissions
+                               join permission in db.Permissions on assignment.PermissionId equals permission.Id
                                where assignment.UserId == userId
-                               select permission.Code).Distinct().OrderBy(x => x).ToListAsync(cancellationToken);
-        return Ok(new { userId, directPermissionCodes = direct, inheritedPermissionCodes = inherited, effectivePermissionCodes = direct.Union(inherited).Distinct().OrderBy(x => x) });
+                               select new { permission.Code, assignment.IsGranted }).ToListAsync(cancellationToken);
+        return Ok(new { roles, roleDefaults, overrides });
     }
 
     [HttpPut("users/{userId:guid}")]
-    [Authorize(Roles = InstitutionalRoles.SystemAdministrator)]
-    public async Task<IActionResult> SetUserPermissions(Guid userId, [FromBody] PermissionCodesRequest request, CancellationToken cancellationToken)
+    [Authorize(Policy = AuthorizationPolicies.Administration)]
+    public async Task<IActionResult> SetUserPermissions(
+        Guid userId,
+        [FromBody] SetUserPermissionsRequest request,
+        CancellationToken cancellationToken)
     {
         if (!await db.Users.AnyAsync(x => x.Id == userId, cancellationToken)) return NotFound();
-        var codes = (request.PermissionCodes ?? Array.Empty<string>())
-            .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim())
-            .Distinct(StringComparer.Ordinal).ToArray();
+        var requested = request.Overrides ?? Array.Empty<PermissionOverrideRequest>();
+        if (requested.Select(x => x.Code).Distinct(StringComparer.OrdinalIgnoreCase).Count() != requested.Length)
+            return BadRequest(new { message = "Each permission may only be assigned once." });
+
+        var codes = requested.Select(x => x.Code.Trim()).ToArray();
         var permissions = await db.Permissions.Where(x => codes.Contains(x.Code)).ToListAsync(cancellationToken);
         if (permissions.Count != codes.Length)
-            return BadRequest(new { message = "One or more permission codes are not in the central catalogue." });
+            return BadRequest(new { message = "One or more permission codes are invalid. Refresh the permission catalogue." });
 
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         var current = await db.UserPermissions.Where(x => x.UserId == userId).ToListAsync(cancellationToken);
-        db.UserPermissions.RemoveRange(current);
-        db.UserPermissions.AddRange(permissions.Select(x => new UserPermission { UserId = userId, PermissionId = x.Id }));
+        var currentByPermission = current.ToDictionary(x => x.PermissionId);
+        var desiredPermissionIds = permissions.Select(x => x.Id).ToHashSet();
+        db.UserPermissions.RemoveRange(current.Where(x => !desiredPermissionIds.Contains(x.PermissionId)));
+        foreach (var permission in permissions)
+        {
+            var assignment = requested.Single(x => string.Equals(x.Code, permission.Code, StringComparison.OrdinalIgnoreCase));
+            if (currentByPermission.TryGetValue(permission.Id, out var existing))
+            {
+                existing.IsGranted = assignment.IsGranted;
+                continue;
+            }
+            db.UserPermissions.Add(new UserPermission
+            {
+                UserId = userId,
+                PermissionId = permission.Id,
+                IsGranted = assignment.IsGranted
+            });
+        }
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return Ok(new { userId, directPermissionCount = permissions.Count });
+        return await GetUserPermissions(userId, cancellationToken);
     }
 }
 
-public sealed record PermissionCodesRequest(string[]? PermissionCodes);
+public sealed record SetUserPermissionsRequest(PermissionOverrideRequest[]? Overrides);
+public sealed record PermissionOverrideRequest(string Code, bool IsGranted);
