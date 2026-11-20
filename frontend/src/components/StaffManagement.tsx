@@ -19,7 +19,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
   const [permissionCatalog, setPermissionCatalog] = useState<StaffPermission[]>([])
   const [staffRoles, setStaffRoles] = useState<StaffRole[]>([])
-  const [accessForm, setAccessForm] = useState({ createLoginAccount: false, username: '', password: '', roleNames: [] as string[], permissionCodes: [] as string[] })
+  const [accessForm, setAccessForm] = useState({ createLoginAccount: false, username: '', password: '', roleNames: [] as string[], permissionCodes: [] as string[], deniedPermissionCodes: [] as string[] })
   const [error, setError] = useState('')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState('')
@@ -128,7 +128,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         })
       }
       setForm(emptyStaffForm())
-      setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [] })
+      setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [], deniedPermissionCodes: [] })
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
       setError(message)
@@ -215,6 +215,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll();       notify('Payroll payment status updated.', 'success', 'Payroll updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to mark payroll as paid.'; setError(message); notify(message, 'error', 'Payroll update failed') } }
 
   const isDuplicateStaffNumber = /staff number is already registered|staff member with this staff number already exists/i.test(error)
+  const roleDefaultPermissionCodes = staffRoles.filter(role => accessForm.roleNames.includes(role.name)).flatMap(role => role.permissionCodes)
+  const isPermissionSelected = (code: string) => accessForm.permissionCodes.includes(code) || (roleDefaultPermissionCodes.includes(code) && !accessForm.deniedPermissionCodes.includes(code))
 
   return (
     <section className="panel">
@@ -321,7 +323,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   </div>
                   <div style={{ marginTop: 12 }}>
                     <strong style={{ display: 'block', marginBottom: 7 }}>Role defaults</strong>
-                    <p style={{ margin: '0 0 8px', color: '#64748b', fontSize: 12 }}>Roles provide default access. Individual permissions below can grant or deny access separately.</p>
+                    <p style={{ margin: '0 0 8px', color: '#64748b', fontSize: 12 }}>Roles provide default access. Each checkbox can independently grant or explicitly deny a role permission.</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 6 }}>
                       {staffRoles.map(role => <label key={role.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 8px', border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer' }}>
                         <input type="checkbox" checked={accessForm.roleNames.includes(role.name)} onChange={e => setAccessForm(current => ({ ...current, roleNames: e.target.checked ? [...current.roleNames, role.name] : current.roleNames.filter(name => name !== role.name) }))} />
@@ -335,23 +337,23 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 270px), 1fr))', gap: 9 }}>
                       {Array.from(new Set(permissionCatalog.map(permission => permission.groupKey))).map(groupKey => {
                         const groupPermissions = permissionCatalog.filter(permission => permission.groupKey === groupKey)
-                        const allSelected = groupPermissions.length > 0 && groupPermissions.every(permission => accessForm.permissionCodes.includes(permission.code))
+                        const allSelected = groupPermissions.length > 0 && groupPermissions.every(permission => isPermissionSelected(permission.code))
                         const groupName = groupKey.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
                         return <section key={groupKey} style={{ border: '1px solid #dbe3ed', borderRadius: 4, padding: 9, minWidth: 0 }}>
                           <label style={{ display: 'flex', alignItems: 'center', gap: 7, paddingBottom: 7, marginBottom: 6, borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>
-                            <input type="checkbox" checked={allSelected} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...new Set([...current.permissionCodes, ...groupPermissions.map(permission => permission.code)])] : current.permissionCodes.filter(code => !groupPermissions.some(permission => permission.code === code)) }))} />
+                            <input type="checkbox" checked={allSelected} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...new Set([...current.permissionCodes, ...groupPermissions.map(permission => permission.code)])] : current.permissionCodes.filter(code => !groupPermissions.some(permission => permission.code === code)), deniedPermissionCodes: e.target.checked ? current.deniedPermissionCodes.filter(code => !groupPermissions.some(permission => permission.code === code)) : [...new Set([...current.deniedPermissionCodes, ...groupPermissions.filter(permission => roleDefaultPermissionCodes.includes(permission.code)).map(permission => permission.code)])] }))} />
                             Select all — {groupName}
                           </label>
                           <div style={{ display: 'grid', gap: 5 }}>
                             {groupPermissions.map(permission => <label key={permission.code} title={permission.description ?? permission.name} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 12, cursor: 'pointer' }}>
-                              <input type="checkbox" checked={accessForm.permissionCodes.includes(permission.code)} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...current.permissionCodes, permission.code] : current.permissionCodes.filter(code => code !== permission.code) }))} style={{ marginTop: 2 }} />
+                              <input type="checkbox" checked={isPermissionSelected(permission.code)} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...new Set([...current.permissionCodes, permission.code])] : current.permissionCodes.filter(code => code !== permission.code), deniedPermissionCodes: e.target.checked ? current.deniedPermissionCodes.filter(code => code !== permission.code) : roleDefaultPermissionCodes.includes(permission.code) ? [...new Set([...current.deniedPermissionCodes, permission.code])] : current.deniedPermissionCodes }))} style={{ marginTop: 2 }} />
                               <span>{permission.name}</span>
                             </label>)}
                           </div>
                         </section>
                       })}
                     </div>
-                    <p style={{ margin: '8px 0 0', color: '#475569', fontSize: 11 }}>{accessForm.permissionCodes.length} individual permission(s) selected</p>
+                    <p style={{ margin: '8px 0 0', color: '#475569', fontSize: 11 }}>{permissionCatalog.filter(permission => isPermissionSelected(permission.code)).length} effective permission(s) selected</p>
                   </div>
                 </>}
               </fieldset>}
