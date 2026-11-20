@@ -42,7 +42,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpGet("{id:guid}/account")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = StaffPolicies.AccountManagement)]
     public async Task<IActionResult> GetAccount(Guid id, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -65,7 +65,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 
     [HttpPut("{id:guid}/account")]
-    [Authorize(Policy = StaffPolicies.Management)]
+    [Authorize(Policy = StaffPolicies.AccountManagement)]
     public async Task<IActionResult> SaveAccount(Guid id, [FromBody] SaveStaffAccountRequest request, CancellationToken cancellationToken)
     {
         var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
