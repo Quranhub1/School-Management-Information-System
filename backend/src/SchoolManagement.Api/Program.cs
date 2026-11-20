@@ -77,7 +77,7 @@ builder.Services.AddControllers().AddJsonOptions(o =>
     // Registers all AbstractValidator<T> types in the Application assembly (where the student
     // validators live) and integrates them with ASP.NET Core model binding so
     // [FromBody] request records are validated and ModelState.IsValid reflects the result.
-    fv.RegisterValidatorsFromAssemblyContaining<CreateStudentRequestValidator>();
+    fv.RegisterValidatorsFromAssemblyContaining<SchoolManagement.Application.Students.CreateStudentRequestValidator>();
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
