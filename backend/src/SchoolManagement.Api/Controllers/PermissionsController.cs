@@ -58,7 +58,10 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
     [Authorize(Roles = InstitutionalRoles.SystemAdministrator)]
     public async Task<IActionResult> SetRolePermissions(Guid roleId, [FromBody] PermissionCodesRequest request, CancellationToken cancellationToken)
     {
-        if (!await db.Roles.AnyAsync(x => x.Id == roleId, cancellationToken)) return NotFound();
+        var targetRole = await db.Roles.SingleOrDefaultAsync(x => x.Id == roleId, cancellationToken);
+        if (targetRole is null) return NotFound();
+        if (targetRole.Name == InstitutionalRoles.SystemAdministrator)
+            return BadRequest(new { message = "The System Administrator role is protected and always retains the complete permission catalogue." });
         var codes = (request.PermissionCodes ?? Array.Empty<string>())
             .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim())
             .Distinct(StringComparer.Ordinal).ToArray();
