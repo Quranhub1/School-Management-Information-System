@@ -13,7 +13,7 @@ namespace SchoolManagement.Infrastructure.Migrations;
 
 [DbContext(typeof(SchoolManagementDbContext))]
 [Migration("20261120190000_AddIndependentStaffPermissions")]
-partial class AddIndependentStaffPermissions : Migration
+public sealed partial class AddIndependentStaffPermissions : Migration
 {
     protected override void BuildTargetModel(ModelBuilder modelBuilder)
             {
