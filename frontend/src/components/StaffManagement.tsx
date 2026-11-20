@@ -200,6 +200,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       setAccountUsername('')
       setAccountPassword('')
       setCredentialFeedback('')
+      setSelectedPermissions([])
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
       setError(message)
@@ -209,6 +210,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     }
   }
   function beginEdit(person: StaffMember) {
+    setSelectedPermissions([])
     setEditingStaffId(person.id)
     setStaffStatus(person.isActive ? 'Active' : 'Inactive')
     setAccountMode('new')
@@ -221,6 +223,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     setTab('staff')
   }
   function cancelEdit() {
+    setSelectedPermissions([])
     setEditingStaffId(null)
     setStaffStatus('Active')
     setAccountMode('new')
