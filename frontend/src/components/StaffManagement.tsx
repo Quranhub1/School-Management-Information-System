@@ -2,7 +2,7 @@ import { formatPersonName } from '../utils/personName'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
+import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listStaffPermissionCatalog, listStaffRoles, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment, type StaffPermission, type StaffRole } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 import { notify } from './GlobalNotifications'
 import { validateForm } from '../lib/validation'
@@ -17,6 +17,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
+  const [permissionCatalog, setPermissionCatalog] = useState<StaffPermission[]>([])
+  const [staffRoles, setStaffRoles] = useState<StaffRole[]>([])
+  const [accessForm, setAccessForm] = useState({ createLoginAccount: false, username: '', password: '', roleNames: [] as string[], permissionCodes: [] as string[] })
   const [error, setError] = useState('')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState('')
@@ -75,6 +78,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     void loadStaff()
     void listStaffCourseUnits().then(setCourseUnits).catch(e => setError(e instanceof Error ? e.message : 'Unable to load course units.'))
     void listStaffDepartments().then(setDepartments).catch(e => setError(e instanceof Error ? e.message : 'Unable to load departments.'))
+    void listStaffPermissionCatalog().then(setPermissionCatalog).catch(e => setError(e instanceof Error ? e.message : 'Unable to load the permission catalogue.'))
+    if (canManage) void listStaffRoles().then(setStaffRoles).catch(e => setError(e instanceof Error ? e.message : 'Unable to load staff roles.'))
     const onStaffChanged = (event: Event) => {
       if (!(event instanceof CustomEvent)) return
       const detail = event.detail as { staff?: StaffMember } | undefined
@@ -111,7 +116,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         notify(`${formatPersonName(updated.lastName, updated.firstName)} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
-        const created = await createStaff(profile)
+        const created = await createStaff({ ...profile, ...accessForm })
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
         setSuccess(`${formatPersonName(created.lastName, created.firstName)} was saved and added to the staff table.`)
@@ -123,6 +128,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         })
       }
       setForm(emptyStaffForm())
+      setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [] })
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
       setError(message)
@@ -141,6 +147,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   function cancelEdit() {
     setEditingStaffId(null)
     setForm(emptyStaffForm())
+    setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [] })
   }
 
   function beginEditCourseUnits(person: StaffMember) {
@@ -297,6 +304,57 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
               <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              {!editingStaffId && <fieldset className="field-label" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
+                <legend style={{ padding: '0 5px', fontWeight: 700 }}>Login account and screen permissions</legend>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={accessForm.createLoginAccount} onChange={e => setAccessForm(current => ({ ...current, createLoginAccount: e.target.checked }))} />
+                  Create a login account for this staff member
+                </label>
+                {accessForm.createLoginAccount && <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 9, marginTop: 12 }}>
+                    <label className="field-label">Login username
+                      <input value={accessForm.username} onChange={e => setAccessForm(current => ({ ...current, username: e.target.value }))} autoComplete="off" required />
+                    </label>
+                    <label className="field-label">Initial password
+                      <input type="password" value={accessForm.password} onChange={e => setAccessForm(current => ({ ...current, password: e.target.value }))} autoComplete="new-password" minLength={10} required />
+                    </label>
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    <strong style={{ display: 'block', marginBottom: 7 }}>Role defaults</strong>
+                    <p style={{ margin: '0 0 8px', color: '#64748b', fontSize: 12 }}>Roles provide default access. Individual permissions below can grant or deny access separately.</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 6 }}>
+                      {staffRoles.map(role => <label key={role.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 8px', border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={accessForm.roleNames.includes(role.name)} onChange={e => setAccessForm(current => ({ ...current, roleNames: e.target.checked ? [...current.roleNames, role.name] : current.roleNames.filter(name => name !== role.name) }))} />
+                        <span>{role.name}</span>
+                      </label>)}
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 14 }}>
+                    <strong style={{ display: 'block', marginBottom: 4 }}>Individual screen permissions</strong>
+                    <p style={{ margin: '0 0 9px', color: '#64748b', fontSize: 12 }}>Every permission is independent. Selecting a group only selects its listed permissions; it does not create inherited access.</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 270px), 1fr))', gap: 9 }}>
+                      {Array.from(new Set(permissionCatalog.map(permission => permission.groupKey))).map(groupKey => {
+                        const groupPermissions = permissionCatalog.filter(permission => permission.groupKey === groupKey)
+                        const allSelected = groupPermissions.length > 0 && groupPermissions.every(permission => accessForm.permissionCodes.includes(permission.code))
+                        const groupName = groupKey.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+                        return <section key={groupKey} style={{ border: '1px solid #dbe3ed', borderRadius: 4, padding: 9, minWidth: 0 }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 7, paddingBottom: 7, marginBottom: 6, borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>
+                            <input type="checkbox" checked={allSelected} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...new Set([...current.permissionCodes, ...groupPermissions.map(permission => permission.code)])] : current.permissionCodes.filter(code => !groupPermissions.some(permission => permission.code === code)) }))} />
+                            Select all — {groupName}
+                          </label>
+                          <div style={{ display: 'grid', gap: 5 }}>
+                            {groupPermissions.map(permission => <label key={permission.code} title={permission.description ?? permission.name} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 12, cursor: 'pointer' }}>
+                              <input type="checkbox" checked={accessForm.permissionCodes.includes(permission.code)} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...current.permissionCodes, permission.code] : current.permissionCodes.filter(code => code !== permission.code) }))} style={{ marginTop: 2 }} />
+                              <span>{permission.name}</span>
+                            </label>)}
+                          </div>
+                        </section>
+                      })}
+                    </div>
+                    <p style={{ margin: '8px 0 0', color: '#475569', fontSize: 11 }}>{accessForm.permissionCodes.length} individual permission(s) selected</p>
+                  </div>
+                </>}
+              </fieldset>}
               {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
                 <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
