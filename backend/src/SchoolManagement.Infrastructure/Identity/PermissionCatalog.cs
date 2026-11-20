@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Domain.Identity;
+using SchoolManagement.Application.Authorization;
 using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Identity;
@@ -75,7 +76,8 @@ public static class PermissionCatalog
         new PermissionDefinition("administration", "Administration", "administration.read-users", "View user accounts", "View system user accounts and roles."),
         new PermissionDefinition("administration", "Administration", "administration.manage-users", "Manage user accounts", "Create, edit, activate and deactivate user accounts."),
         new PermissionDefinition("administration", "Administration", "administration.manage-roles", "Manage roles and permissions", "Manage role defaults and individual permission assignments."),
-        new PermissionDefinition("administration", "Administration", "administration.backup", "Manage backups", "Create and restore database backups.")
+        new PermissionDefinition("administration", "Administration", "administration.backup", "Manage backups", "Create and restore database backups."),
+        new PermissionDefinition("student-portal", "Student Portal", "portal.access", "Access student portal", "Access student self-service functions.")
     };
 
     public static async Task SeedAsync(SchoolManagementDbContext db, CancellationToken cancellationToken = default)
@@ -127,6 +129,44 @@ public static class PermissionCatalog
             ["SchoolWarden"] = ["hostel.read", "hostel.manage", "inventory.read", "inventory.issue"],
             ["MedicalOfficer"] = ["medical.read", "medical.manage", "students.read"]
         };
+
+        void AddDefaults(IEnumerable<string> roleNames, string code)
+        {
+            foreach (var roleName in roleNames)
+            {
+                if (!roleDefaults.TryGetValue(roleName, out var current))
+                    roleDefaults[roleName] = [code];
+                else if (!current.Contains(code, StringComparer.OrdinalIgnoreCase))
+                    roleDefaults[roleName] = [.. current, code];
+            }
+        }
+
+        AddDefaults(AuthorizationPolicies.RoleSets.AcademicManagement, "academics.manage-courses");
+        AddDefaults(AuthorizationPolicies.RoleSets.AcademicRead, "academics.read");
+        AddDefaults(AuthorizationPolicies.RoleSets.StudentManagement, "students.update");
+        AddDefaults(AuthorizationPolicies.RoleSets.StudentRead, "students.read");
+        AddDefaults(AuthorizationPolicies.RoleSets.MedicalRecords, "medical.manage");
+        AddDefaults(AuthorizationPolicies.RoleSets.FinanceManagement, "finance.manage-ledger");
+        AddDefaults(AuthorizationPolicies.RoleSets.FinanceOperations, "finance.record-payments");
+        AddDefaults(AuthorizationPolicies.RoleSets.FinanceRead, "finance.read");
+        AddDefaults(AuthorizationPolicies.RoleSets.PayrollRead, "hr.read-payroll");
+        AddDefaults(AuthorizationPolicies.RoleSets.ExaminationManagement, "exams.approve-results");
+        AddDefaults(AuthorizationPolicies.RoleSets.AttendanceManagement, "attendance.record");
+        AddDefaults(AuthorizationPolicies.RoleSets.AttendanceRead, "attendance.read");
+        AddDefaults(AuthorizationPolicies.RoleSets.HostelManagement, "hostel.manage");
+        AddDefaults(AuthorizationPolicies.RoleSets.InventoryManagement, "inventory.issue");
+        AddDefaults(AuthorizationPolicies.RoleSets.AdmissionsManagement, "admissions.decide");
+        AddDefaults(AuthorizationPolicies.RoleSets.AdmissionsRead, "admissions.read");
+        AddDefaults(AuthorizationPolicies.RoleSets.AdministrationManagement, "administration.manage-users");
+        AddDefaults(AuthorizationPolicies.RoleSets.ReportingManagement, "reports.read");
+        AddDefaults(AuthorizationPolicies.RoleSets.CommunicationManagement, "communications.send");
+        AddDefaults(AuthorizationPolicies.RoleSets.CommunicationRead, "communications.read");
+        AddDefaults(AuthorizationPolicies.RoleSets.StudentPortal, "portal.access");
+        AddDefaults(AuthorizationPolicies.RoleSets.Student360, "students.read");
+        AddDefaults(new[] { "SystemAdministrator", "Librarian", "AcademicRegistrar", "AssistantRegistrar", "AdminSecretary", "Lecturer" }, "library.read");
+        AddDefaults(new[] { "SystemAdministrator", "Librarian", "HrManager" }, "library.manage-books");
+        AddDefaults(new[] { "SystemAdministrator", "AcademicRegistrar", "AssistantRegistrar", "Lecturer", "Principal", "AssistantPrincipal", "HeadOfDepartment", "HrManager" }, "timetable.read");
+        AddDefaults(new[] { "SystemAdministrator", "AcademicRegistrar", "AssistantRegistrar", "Lecturer", "HrManager" }, "timetable.edit");
 
         foreach (var (roleName, codes) in roleDefaults)
         {
