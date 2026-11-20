@@ -96,7 +96,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     setError('')
     setSuccess('')
     try {
-      const profile = { ...form, departmentId: form.departmentId || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
+      const profile = { ...form, departmentId: form.departmentId || null, dateJoined: form.dateJoined || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
       const validation = validateForm(staffCreateRequestSchema, profile)
       if (!validation.success) {
         setValidationErrors(validation.errors)
