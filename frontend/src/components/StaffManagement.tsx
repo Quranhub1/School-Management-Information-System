@@ -271,7 +271,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       {tab === 'staff' && (
         <>
           {canManage && (
-            <form onSubmit={submit} className="staff-recruitment-form" style={{ display: 'grid', gap:: 16 }}>
+            <form onSubmit={submit} className="staff-recruitment-form" style={{ display: 'grid', gap: 16 }}>
               <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
                 <h3 style={{ margin: '0 0 16px', color: '#111827', fontSize: 16, fontWeight: 750 }}>Personal Details</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: '14px 18px' }}>
