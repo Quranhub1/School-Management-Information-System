@@ -26,11 +26,16 @@ public sealed class SeedAcademicYearsAndIntakes : Migration
             FROM generate_series(
                 2001,
                 GREATEST(2125, EXTRACT(YEAR FROM CURRENT_DATE)::integer + 100)
-            ) AS year_value
+            ) AS years(year_value)
             WHERE NOT EXISTS (
                 SELECT 1 FROM "AcademicYears" existing
                 WHERE existing."Name" = year_value::text || '-' || (year_value + 1)::text
             );
+
+            UPDATE "Intakes" SET "IsOpen" = FALSE WHERE upper("Code") NOT IN ('JAN', 'AUG');
+
+            UPDATE "Intakes" SET "Name" = 'January Intake', "StartDate" = DATE '2001-01-01', "IsOpen" = TRUE WHERE upper("Code") = 'JAN';
+            UPDATE "Intakes" SET "Name" = 'August Intake', "StartDate" = DATE '2001-08-01', "IsOpen" = TRUE WHERE upper("Code") = 'AUG';
 
             INSERT INTO "Intakes" ("Id", "Name", "Code", "StartDate", "IsOpen")
             SELECT gen_random_uuid(), 'January Intake', 'JAN', DATE '2001-01-01', TRUE
