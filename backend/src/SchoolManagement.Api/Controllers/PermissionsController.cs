@@ -42,7 +42,7 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
             .Select(x => new { x.Id, x.Name, x.Description, x.IsSystemRole }).ToListAsync(cancellationToken));
 
     [HttpGet("roles/{roleId:guid}")]
-    [Authorize(Roles = InstitutionalRoles.SystemAdministrator)]
+    [Authorize(Policy = StaffPolicies.Management)]
     public async Task<IActionResult> GetRolePermissions(Guid roleId, CancellationToken cancellationToken)
     {
         if (!await db.Roles.AnyAsync(x => x.Id == roleId, cancellationToken)) return NotFound();
