@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 
 vi.mock('../api/staff', () => ({
@@ -42,5 +42,15 @@ describe('StaffManagement', () => {
   it('supports permission flags', () => {
     render(<StaffManagement canManage canReadPayroll />)
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
+  })
+
+  it('shows the redesigned leave request form and recent-request register', () => {
+    render(<StaffManagement canManage />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Leave' }))
+    expect(screen.getByRole('heading', { name: 'Leave request' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Recent leave requests' })).toBeTruthy()
+    expect(screen.getByLabelText('Name of staff')).toBeTruthy()
+    expect(screen.getByText('Single day')).toBeTruthy()
+    expect(screen.getByText('Multiple days')).toBeTruthy()
   })
 })
