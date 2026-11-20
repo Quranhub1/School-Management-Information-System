@@ -36,6 +36,7 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<StaffUserLink> StaffUserLinks => Set<StaffUserLink>();
     public DbSet<Institution> Institutions => Set<Institution>();
     public DbSet<Campus> Campuses => Set<Campus>();
     public DbSet<UserCampusAssignment> UserCampusAssignments => Set<UserCampusAssignment>();
@@ -261,6 +262,13 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
             e.HasKey(x => new { x.UserId, x.RoleId });
             e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Cascade);
+        });
+        m.Entity<StaffUserLink>(e =>
+        {
+            e.HasKey(x => new { x.StaffId, x.UserId });
+            e.HasIndex(x => x.UserId).IsUnique();
+            e.HasOne<StaffMember>().WithMany().HasForeignKey(x => x.StaffId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
         m.Entity<AdmissionDecision>().HasOne<AdmissionEntity>().WithMany().HasForeignKey(x => x.AdmissionId).OnDelete(DeleteBehavior.Cascade);
         m.ApplyConfiguration(new AdmissionsConfiguration());
