@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 vi.mock('../api/staff', () => ({
@@ -28,6 +28,7 @@ vi.mock('./GlobalNotifications', () => ({
 }))
 
 import { StaffManagement } from './StaffManagement'
+import { listStaff } from '../api/staff'
 
 describe('StaffManagement', () => {
   beforeEach(() => {
@@ -44,7 +45,11 @@ describe('StaffManagement', () => {
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
-  it('shows the redesigned leave request form and recent-request register', () => {
+  it('shows the redesigned leave request form and only offers active staff', async () => {
+    vi.mocked(listStaff).mockResolvedValue([
+      { id: 'active-id', staffNumber: 'ST-001', firstName: 'Amina', lastName: 'Nabirye', employmentType: 'Permanent', staffType: 'Teaching', isActive: true },
+      { id: 'inactive-id', staffNumber: 'ST-002', firstName: 'John', lastName: 'Okello', employmentType: 'Permanent', staffType: 'Teaching', isActive: false },
+    ])
     render(<StaffManagement canManage />)
     fireEvent.click(screen.getByRole('tab', { name: 'Leave' }))
     expect(screen.getByRole('heading', { name: 'Leave request' })).toBeTruthy()
@@ -52,5 +57,7 @@ describe('StaffManagement', () => {
     expect(screen.getByLabelText('Name of staff')).toBeTruthy()
     expect(screen.getByText('Single day')).toBeTruthy()
     expect(screen.getByText('Multiple days')).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('option', { name: /Amina Nabirye/ })).toBeTruthy())
+    expect(screen.queryByRole('option', { name: /John Okello/ })).toBeNull()
   })
 })
