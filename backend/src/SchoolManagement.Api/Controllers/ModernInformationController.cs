@@ -14,7 +14,7 @@ namespace SchoolManagement.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/modern")]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.ReportingManagement)]
 public sealed class ModernInformationController(SchoolManagementDbContext db, IWebHostEnvironment environment, InstitutionSettingsService institutionSettings) : ControllerBase
 {
     [HttpGet("dashboard")]
