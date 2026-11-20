@@ -18,6 +18,9 @@ export type StaffCourseUnit = { id: string; code: string; name: string; creditUn
 export type StaffDepartment = { id: string; code: string; name: string };
 export type StaffMember = { id:string; staffNumber:string; firstName:string; lastName:string; otherNames?:string|null; displayName?:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string; staffType:string; isActive:boolean; departmentId?:string|null; jobTitle?:string|null; highestQualification?:string|null; speciality?:string|null; professionalRegistration?:string|null; courseUnitIds?:string[] };
 export type StaffProfileInput = Omit<StaffMember, 'id' | 'isActive'>;
+export type StaffPermission = { id: string; code: string; name: string; groupKey: string; description?: string | null };
+export type StaffRole = { id: string; name: string; description?: string | null };
+export type StaffCreateInput = StaffProfileInput & { createLoginAccount?: boolean; username?: string; password?: string; roleNames?: string[]; permissionCodes?: string[] };
 export type LeaveRequest = { id:string; staffMemberId:string; leaveType:string; startDate:string; endDate:string; reason:string; status:string; approvedBy?:string; approvedAt?:string };
 export const STAFF_CHANGED_EVENT = 'smis:staff-changed'
 
@@ -27,10 +30,12 @@ export function notifyStaffChanged(staff?: StaffMember) {
   }
 }
 
+export function listStaffPermissionCatalog(){ return request<StaffPermission[]>('/api/permissions/catalog'); }
+export function listStaffRoles(){ return request<StaffRole[]>('/api/permissions/roles'); }
 export function listStaff(activeOnly=true){ return request<StaffMember[]>(`/api/staff?activeOnly=${activeOnly}`); }
 export function listStaffCourseUnits(){ return request<StaffCourseUnit[]>('/api/staff/course-units'); }
 export function listStaffDepartments(){ return request<StaffDepartment[]>('/api/staff/departments'); }
-export async function createStaff(input: StaffProfileInput) {
+export async function createStaff(input: StaffCreateInput) {
   const validated = parseApiInput(staffCreateRequestSchema, input, 'create staff record')
   const created = await request<StaffMember>('/api/staff',{method:'POST',body:JSON.stringify(validated)})
   notifyStaffChanged(created)
