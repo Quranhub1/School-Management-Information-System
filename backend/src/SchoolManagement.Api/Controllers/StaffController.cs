@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Staff;
+using SchoolManagement.Application.Authentication;
 using SchoolManagement.Domain.Staff;
 using SchoolManagement.Domain.People;
 using System.Text.Json;
@@ -38,6 +39,95 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         if (staff is null) return NotFound();
         if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         return Ok(ToProfile(staff));
+    }
+
+    [HttpGet("{id:guid}/account")]
+    [Authorize(Policy = StaffPolicies.Read)]
+    public async Task<IActionResult> GetAccount(Guid id, CancellationToken cancellationToken)
+    {
+        var staff = await db.StaffMembers.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (staff is null) return NotFound();
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
+        var link = await db.StaffUserLinks.AsNoTracking().SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
+        if (link is null) return Ok(new { linked = false, username = (string?)null, permissions = Array.Empty<string>() });
+        var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == link.UserId, cancellationToken);
+        if (user is null) return Ok(new { linked = false, username = (string?)null, permissions = Array.Empty<string>() });
+        var roleNames = await (from assignment in db.UserRoles
+                               join role in db.Roles on assignment.RoleId equals role.Id
+                               where assignment.UserId == user.Id
+                               select role.Name).ToListAsync(cancellationToken);
+        var permissions = StaffAccessRoles.ByPermission
+            .Where(pair => roleNames.Contains(pair.Value, StringComparer.Ordinal))
+            .Select(pair => pair.Key)
+            .OrderBy(x => x)
+            .ToArray();
+        return Ok(new { linked = true, username = user.Username, permissions, isActive = user.IsActive });
+    }
+
+    [HttpPut("{id:guid}/account")]
+    [Authorize(Policy = StaffPolicies.Management)]
+    public async Task<IActionResult> SaveAccount(Guid id, [FromBody] SaveStaffAccountRequest request, CancellationToken cancellationToken)
+    {
+        var staff = await db.StaffMembers.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (staff is null) return NotFound();
+        if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
+
+        var username = request.Username?.Trim();
+        var existingLink = await db.StaffUserLinks.SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
+        var selectedRoles = StaffAccessRoles.ResolveRoles(request.Permissions);
+        if (selectedRoles.Length == 0)
+            return BadRequest(new { message = "Select at least one screen or action for this staff account." });
+        if (string.IsNullOrWhiteSpace(username))
+            return BadRequest(new { message = "A username is required." });
+        if (request.Password is { Length: > 0 } && request.Password.Length < 8)
+            return BadRequest(new { message = "Password must contain at least 8 characters." });
+
+        var user = existingLink is null
+            ? null
+            : await db.Users.SingleOrDefaultAsync(x => x.Id == existingLink.UserId, cancellationToken);
+        if (existingLink is not null && user is null)
+            return Conflict(new { message = "The linked login account no longer exists. Remove the stale staff account link before continuing." });
+        if (user is null && string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest(new { message = "A password of at least 8 characters is required for a new login account." });
+        if (await db.Users.AnyAsync(x => x.Username == username && (user == null || x.Id != user.Id), cancellationToken))
+            return Conflict(new { message = "That username is already in use." });
+
+        var roleEntities = await db.Roles.Where(x => selectedRoles.Contains(x.Name)).ToListAsync(cancellationToken);
+        if (roleEntities.Count != selectedRoles.Length)
+            return Conflict(new { message = "The staff access roles have not been seeded yet. Run the application database seeder and try again." });
+
+        if (user is null)
+        {
+            user = new SchoolManagement.Domain.Identity.User
+            {
+                Username = username,
+                PasswordHash = AuthService.HashPassword(request.Password!),
+                FirstName = staff.FirstName,
+                LastName = staff.LastName,
+                Email = staff.Email,
+                IsActive = staff.IsActive
+            };
+            db.Users.Add(user);
+            db.StaffUserLinks.Add(new SchoolManagement.Domain.Identity.StaffUserLink { StaffId = staff.Id, UserId = user.Id });
+        }
+        else
+        {
+            user.Username = username;
+            user.FirstName = staff.FirstName;
+            user.LastName = staff.LastName;
+            user.Email = staff.Email;
+            user.IsActive = staff.IsActive;
+            if (!string.IsNullOrWhiteSpace(request.Password))
+                user.PasswordHash = AuthService.HashPassword(request.Password);
+        }
+
+        var currentAssignments = await db.UserRoles.Where(x => x.UserId == user.Id).ToListAsync(cancellationToken);
+        db.UserRoles.RemoveRange(currentAssignments);
+        foreach (var role in roleEntities)
+            db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
+
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { linked = true, username = user.Username, permissions = request.Permissions, isActive = user.IsActive });
     }
 
     [HttpGet("course-units")]
@@ -119,6 +209,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         if (staff is null) return NotFound();
         if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         staff.IsActive = false;
+        var accountLink = await db.StaffUserLinks.SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
+        if (accountLink is not null) { var account = await db.Users.SingleOrDefaultAsync(x => x.Id == accountLink.UserId, cancellationToken); if (account is not null) account.IsActive = false; }
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -131,6 +223,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         if (staff is null) return NotFound();
         if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         staff.IsActive = true;
+        var accountLink = await db.StaffUserLinks.SingleOrDefaultAsync(x => x.StaffId == id, cancellationToken);
+        if (accountLink is not null) { var account = await db.Users.SingleOrDefaultAsync(x => x.Id == accountLink.UserId, cancellationToken); if (account is not null) account.IsActive = true; }
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -281,4 +375,5 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
 public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, DateOnly? DateJoined = null);
 public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, DateOnly? DateJoined = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
+public sealed record SaveStaffAccountRequest(string? Username, string? Password, string[]? Permissions);
 public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);
