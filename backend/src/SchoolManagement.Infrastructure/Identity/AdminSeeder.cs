@@ -36,7 +36,8 @@ public sealed class AdminSeeder(SchoolManagementDbContext db, PasswordHasher has
             InstitutionalRoles.HrManager,
             InstitutionalRoles.AdminSecretary,
             InstitutionalRoles.RecordsOfficer,
-            InstitutionalRoles.MedicalOfficer
+            InstitutionalRoles.MedicalOfficer,
+            ..StaffAccessRoles.AllRoles
         };
 
         foreach (var roleName in roles)
