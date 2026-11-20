@@ -1,5 +1,4 @@
 using Xunit;
-using SchoolManagement.Api.Controllers;
 using SchoolManagement.Api.Validation;
 using SchoolManagement.Application.Timetable;
 
@@ -10,29 +9,29 @@ public sealed class TimetableValidatorTests
     [Fact]
     public void CreateTimetableEntry_rejects_missing_relationships_and_invalid_time_range()
     {
-        var request = new CreateTimetableEntryRequest(
+        var request = new CreateTimetableEntryDto(
             Guid.Empty, Guid.Empty, Guid.Empty, (DayOfWeek)99,
             new TimeOnly(10, 0), new TimeOnly(9, 0), null, null,
             Guid.Empty, 0, 0);
 
-        var result = new CreateTimetableEntryRequestValidator().Validate(request);
+        var result = new CreateTimetableEntryDtoValidator().Validate(request);
 
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateTimetableEntryRequest.TeachingGroupId));
-        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateTimetableEntryRequest.EndTime));
-        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateTimetableEntryRequest.DayOfWeek));
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateTimetableEntryDto.TeachingGroupId));
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateTimetableEntryDto.EndTime));
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(CreateTimetableEntryDto.DayOfWeek));
     }
 
     [Fact]
     public void SaveTimetableTemplate_rejects_sessions_assigned_to_another_group()
     {
-        var request = new SaveTimetableTemplateRequest(
+        var request = new SaveTimetableTemplateDto(
             Guid.NewGuid(),
-            [new CreateTimetableEntryRequest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DayOfWeek.Monday,
+            [new CreateTimetableEntryDto(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DayOfWeek.Monday,
                 new TimeOnly(9, 0), new TimeOnly(10, 0), "Room 1", "Lecture", Guid.NewGuid(), 1, 1)],
             "{\"layout\":true}");
 
-        var result = new SaveTimetableTemplateRequestValidator().Validate(request);
+        var result = new SaveTimetableTemplateDtoValidator().Validate(request);
 
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, error => error.ErrorMessage.Contains("selected class", StringComparison.OrdinalIgnoreCase));
@@ -41,12 +40,12 @@ public sealed class TimetableValidatorTests
     [Fact]
     public void SaveTimetableTemplate_rejects_invalid_layout_json()
     {
-        var request = new SaveTimetableTemplateRequest(Guid.NewGuid(), [], "{invalid");
+        var request = new SaveTimetableTemplateDto(Guid.NewGuid(), [], "{invalid");
 
-        var result = new SaveTimetableTemplateRequestValidator().Validate(request);
+        var result = new SaveTimetableTemplateDtoValidator().Validate(request);
 
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, error => error.PropertyName == nameof(SaveTimetableTemplateRequest.LayoutJson));
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(SaveTimetableTemplateDto.LayoutJson));
     }
 
     [Fact]
