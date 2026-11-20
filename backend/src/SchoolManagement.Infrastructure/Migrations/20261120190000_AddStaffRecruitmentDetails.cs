@@ -28,6 +28,8 @@ public sealed class AddStaffRecruitmentDetails : Migration
             name: "Gender", table: "StaffMembers", type: "character varying(30)", maxLength: 30, nullable: true);
         migrationBuilder.AddColumn<string>(
             name: "AttendanceMode", table: "StaffMembers", type: "character varying(40)", maxLength: 40, nullable: true);
+        migrationBuilder.AddColumn<string>(
+            name: "PhotographDataUrl", table: "StaffMembers", type: "text", nullable: true);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
@@ -40,5 +42,6 @@ public sealed class AddStaffRecruitmentDetails : Migration
         migrationBuilder.DropColumn(name: "DateOfBirth", table: "StaffMembers");
         migrationBuilder.DropColumn(name: "Gender", table: "StaffMembers");
         migrationBuilder.DropColumn(name: "AttendanceMode", table: "StaffMembers");
+        migrationBuilder.DropColumn(name: "PhotographDataUrl", table: "StaffMembers");
     }
 }
