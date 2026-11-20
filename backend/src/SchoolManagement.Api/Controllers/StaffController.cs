@@ -5,6 +5,9 @@ using SchoolManagement.Application.Authorization;
 using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Staff;
 using SchoolManagement.Domain.Staff;
+using SchoolManagement.Domain.Identity;
+using SchoolManagement.Application.Authentication;
+using SchoolManagement.Application.Authorization;
 using SchoolManagement.Domain.People;
 using System.Text.Json;
 using SchoolManagement.Infrastructure.Persistence;
@@ -80,6 +83,45 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds)
         };
         db.StaffMembers.Add(staff);
+        if (request.Account is not null)
+        {
+            if (!User.IsInRole(InstitutionalRoles.SystemAdministrator)) return Forbid();
+            User linkedUser;
+            if (request.Account.ExistingUserId.HasValue)
+            {
+                linkedUser = await db.Users.SingleOrDefaultAsync(x => x.Id == request.Account.ExistingUserId.Value, cancellationToken);
+                if (linkedUser is null) return BadRequest(new { message = "The selected login account does not exist." });
+                if (await db.StaffUserLinks.AnyAsync(x => x.UserId == linkedUser.Id, cancellationToken))
+                    return Conflict(new { message = "This login account is already linked to another staff profile." });
+                if (!string.IsNullOrWhiteSpace(request.Account.Password))
+                {
+                    if (request.Account.Password.Length < 8) return BadRequest(new { message = "Passwords must contain at least 8 characters." });
+                    linkedUser.PasswordHash = AuthService.HashPassword(request.Account.Password);
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(request.Account.Username) || string.IsNullOrWhiteSpace(request.Account.Password) || request.Account.Password.Length < 8)
+                    return BadRequest(new { message = "A username and password of at least 8 characters are required for a new login account." });
+                var username = request.Account.Username.Trim();
+                if (await db.Users.AnyAsync(x => x.Username.ToLower() == username.ToLower(), cancellationToken))
+                    return Conflict(new { message = "That username is already in use." });
+                var roleNames = (request.Account.Roles ?? Array.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                if (roleNames.Length == 0) return BadRequest(new { message = "Select at least one role for the new login account." });
+                var roleEntities = await db.Roles.Where(x => roleNames.Contains(x.Name)).ToListAsync(cancellationToken);
+                if (roleEntities.Count != roleNames.Length) return BadRequest(new { message = "One or more selected roles are invalid." });
+                linkedUser = new User { Username = username, PasswordHash = AuthService.HashPassword(request.Account.Password), FirstName = staff.FirstName, LastName = staff.LastName, Email = staff.Email };
+                db.Users.Add(linkedUser);
+                db.UserRoles.AddRange(roleEntities.Select(role => new UserRole { UserId = linkedUser.Id, RoleId = role.Id }));
+            }
+
+            var permissionCodes = (request.Account.PermissionCodes ?? Array.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.Ordinal).ToArray();
+            var permissionEntities = await db.Permissions.Where(x => permissionCodes.Contains(x.Code)).ToListAsync(cancellationToken);
+            if (permissionEntities.Count != permissionCodes.Length)
+                return BadRequest(new { message = "One or more selected permissions are not in the central catalogue." });
+            db.StaffUserLinks.Add(new StaffUserLink { StaffId = staff.Id, UserId = linkedUser.Id });
+            db.UserPermissions.AddRange(permissionEntities.Select(permission => new UserPermission { UserId = linkedUser.Id, PermissionId = permission.Id }));
+        }
         await db.SaveChangesAsync(cancellationToken);
         return Created($"api/staff/{staff.Id}", ToProfile(staff));
     }
@@ -118,6 +160,12 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         if (staff is null) return NotFound();
         if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         staff.IsActive = false;
+        var linkedUserId = await db.StaffUserLinks.Where(x => x.StaffId == id).Select(x => (Guid?)x.UserId).SingleOrDefaultAsync(cancellationToken);
+        if (linkedUserId.HasValue)
+        {
+            var linkedUser = await db.Users.SingleOrDefaultAsync(x => x.Id == linkedUserId.Value, cancellationToken);
+            if (linkedUser is not null) linkedUser.IsActive = false;
+        }
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -130,6 +178,12 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         if (staff is null) return NotFound();
         if (!await campusAccess.CanAccessCampusAsync(User, staff.CampusId, cancellationToken)) return Forbid();
         staff.IsActive = true;
+        var linkedUserId = await db.StaffUserLinks.Where(x => x.StaffId == id).Select(x => (Guid?)x.UserId).SingleOrDefaultAsync(cancellationToken);
+        if (linkedUserId.HasValue)
+        {
+            var linkedUser = await db.Users.SingleOrDefaultAsync(x => x.Id == linkedUserId.Value, cancellationToken);
+            if (linkedUser is not null) linkedUser.IsActive = true;
+        }
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -276,7 +330,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 }
 
-public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null);
+public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, StaffAccountRequest? Account = null);
+public sealed record StaffAccountRequest(string? Username, string? Password, Guid? ExistingUserId, string[]? Roles, string[]? PermissionCodes);
 public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);
