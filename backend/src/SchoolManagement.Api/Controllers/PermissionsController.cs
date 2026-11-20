@@ -127,10 +127,17 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
 
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         var current = await db.UserPermissions.Where(x => x.UserId == userId).ToListAsync(cancellationToken);
-        db.UserPermissions.RemoveRange(current);
+        var currentByPermission = current.ToDictionary(x => x.PermissionId);
+        var desiredPermissionIds = permissions.Select(x => x.Id).ToHashSet();
+        db.UserPermissions.RemoveRange(current.Where(x => !desiredPermissionIds.Contains(x.PermissionId)));
         foreach (var permission in permissions)
         {
             var assignment = requested.Single(x => string.Equals(x.Code, permission.Code, StringComparison.OrdinalIgnoreCase));
+            if (currentByPermission.TryGetValue(permission.Id, out var existing))
+            {
+                existing.IsGranted = assignment.IsGranted;
+                continue;
+            }
             db.UserPermissions.Add(new UserPermission
             {
                 UserId = userId,
