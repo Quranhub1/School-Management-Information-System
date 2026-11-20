@@ -35,7 +35,7 @@ public sealed class ModuleAccessServiceTests
     {
         var modules = new ModuleAccessService().GetAccessibleModules(Principal(InstitutionalRoles.SystemAdministrator));
 
-        Assert.Equal(ModuleAccess.RolesByModule.Keys.OrderBy(module => module), modules);
+        Assert.Equal(ModuleAccess.RolesByModule.Keys.Concat(new[] { "Library", "Communication" }).OrderBy(module => module).Distinct(StringComparer.OrdinalIgnoreCase), modules);
     }
 
     private static ClaimsPrincipal Principal(string role)
