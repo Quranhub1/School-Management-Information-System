@@ -710,6 +710,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
+                    b.Property<string>("PhotographDataUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("DurationUnit")
                         .IsRequired()
                         .HasColumnType("text");
