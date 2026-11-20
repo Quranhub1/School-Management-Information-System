@@ -42,6 +42,13 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
             .ToListAsync(ct));
     }
 
+    [HttpGet("intakes")]
+    public async Task<ActionResult<IReadOnlyList<Intake>>> GetIntakes(CancellationToken ct)
+        => Ok(await db.Intakes.AsNoTracking()
+            .Where(x => x.IsOpen)
+            .OrderBy(x => x.StartDate)
+            .ToListAsync(ct));
+
     [HttpPost("years")]
     public async Task<ActionResult<AcademicYear>> CreateYear(CreateAcademicYearRequest request, CancellationToken ct)
     {
