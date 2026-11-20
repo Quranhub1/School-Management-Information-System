@@ -310,17 +310,22 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         return NoContent();
     }
 
-    private static TimetableEntryDto ToDto(Domain.Academic.TimetableEntry entry) => new(
-        entry.Id,
-        entry.TeachingGroupId,
-        entry.CourseId,
-        entry.TeacherId,
-        entry.DayOfWeek,
-        entry.StartTime,
-        entry.EndTime,
-        entry.Room,
-        entry.SessionType,
-        entry.IsActive,
-        entry.GeneratedAt,
-        entry.GenerationSource);
 }
+
+public sealed record CreateTimetableEntryRequest(
+    Guid TeachingGroupId,
+    Guid CourseId,
+    Guid TeacherId,
+    DayOfWeek DayOfWeek,
+    TimeOnly StartTime,
+    TimeOnly EndTime,
+    string? Room,
+    string? SessionType,
+    Guid CurriculumId,
+    int YearOfStudy,
+    int CurriculumSemesterNumber);
+
+public sealed record SaveTimetableTemplateRequest(
+    Guid TeachingGroupId,
+    List<CreateTimetableEntryRequest> Entries,
+    string? LayoutJson = null);
