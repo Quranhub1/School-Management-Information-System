@@ -436,7 +436,7 @@ export function AdministrationManagement({ institution, onInstitutionSaved, acti
                 if (!filtered.length) return null
                 const allIds = group.permissions.map(permission => permission.id)
                 const count = allIds.filter(id => rolePermissionCodes.includes(id)).length
-                return <details className="staff-permission-group" key={group.id}>
+                return <details className="staff-permission-group" key={group.id} open={Boolean(permissionSearch.trim())}>
                   <summary>
                     <input type="checkbox" aria-label={`Select all ${group.label} permissions`} checked={count === allIds.length} onChange={event => setRolePermissionCodes(current => event.target.checked ? [...new Set([...current, ...allIds])] : current.filter(id => !allIds.includes(id)))} onClick={event => event.stopPropagation()} />
                     <span className="staff-permission-group-title">{group.label}</span>
