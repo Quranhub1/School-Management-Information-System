@@ -93,7 +93,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             var actorPermissions = await GetEffectivePermissionCodesAsync(actorUserId, cancellationToken);
             if (!actorPermissions.Contains("hr.manage-accounts"))
                 return Forbid();
-            var allPermissionCodes = PermissionCatalog.All.Select(permission => permission.Code)
+            var allPermissionCodes = SchoolManagement.Infrastructure.Identity.PermissionCatalog.All.Select(permission => permission.Code)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             if (requestedRoleNames.Contains("SystemAdministrator", StringComparer.OrdinalIgnoreCase)
                 && !actorPermissions.SetEquals(allPermissionCodes))
@@ -165,7 +165,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
                 if (!string.IsNullOrWhiteSpace(request.Account.Password))
                 {
                     if (request.Account.Password.Length < 8) return BadRequest(new { message = "Passwords must contain at least 8 characters." });
-                    linkedUser.PasswordHash = AuthService.HashPassword(request.Account.Password);
+                    linkedUser.PasswordHash = passwordHasher.Hash(request.Account.Password);
                 }
             }
             else
@@ -426,7 +426,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 }
 
-public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, bool CreateLoginAccount = false, string? Username = null, string? Password = null, string[]? RoleNames = null, string[]? PermissionCodes = null, string[]? DeniedPermissionCodes = null);
+public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, bool CreateLoginAccount = false, string? Username = null, string? Password = null, string[]? RoleNames = null, string[]? PermissionCodes = null, string[]? DeniedPermissionCodes = null, StaffAccountRequest? Account = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null, string? PhotographDataUrl = null);
 public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);
