@@ -2,7 +2,7 @@ import { formatPersonName } from '../utils/personName'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment } from '../api/staff'
+import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listStaffPermissionCatalog, listStaffRoles, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment, type StaffPermission, type StaffRole } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 import { notify } from './GlobalNotifications'
 import { validateForm } from '../lib/validation'
@@ -17,6 +17,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
+  const [permissionCatalog, setPermissionCatalog] = useState<StaffPermission[]>([])
+  const [staffRoles, setStaffRoles] = useState<StaffRole[]>([])
+  const [accessForm, setAccessForm] = useState({ createLoginAccount: false, username: '', password: '', roleNames: [] as string[], permissionCodes: [] as string[], deniedPermissionCodes: [] as string[] })
   const [error, setError] = useState('')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState('')
@@ -75,6 +78,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     void loadStaff()
     void listStaffCourseUnits().then(setCourseUnits).catch(e => setError(e instanceof Error ? e.message : 'Unable to load course units.'))
     void listStaffDepartments().then(setDepartments).catch(e => setError(e instanceof Error ? e.message : 'Unable to load departments.'))
+    void listStaffPermissionCatalog().then(setPermissionCatalog).catch(e => setError(e instanceof Error ? e.message : 'Unable to load the permission catalogue.'))
+    if (canManage) void listStaffRoles().then(setStaffRoles).catch(e => setError(e instanceof Error ? e.message : 'Unable to load staff roles.'))
     const onStaffChanged = (event: Event) => {
       if (!(event instanceof CustomEvent)) return
       const detail = event.detail as { staff?: StaffMember } | undefined
@@ -111,7 +116,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         notify(`${formatPersonName(updated.lastName, updated.firstName)} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
       } else {
-        const created = await createStaff(profile)
+        const created = await createStaff({ ...profile, ...accessForm })
         // Add the server-confirmed record immediately, then reconcile with the API list.
         setStaff(current => [created, ...current.filter(item => item.id !== created.id)])
         setSuccess(`${formatPersonName(created.lastName, created.firstName)} was saved and added to the staff table.`)
@@ -123,6 +128,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
         })
       }
       setForm(emptyStaffForm())
+      setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [], deniedPermissionCodes: [] })
     } catch (e) {
       const message = e instanceof Error ? e.message : editingStaffId ? 'Unable to update staff.' : 'Unable to create staff.'
       setError(message)
@@ -141,6 +147,7 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   function cancelEdit() {
     setEditingStaffId(null)
     setForm(emptyStaffForm())
+    setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [], deniedPermissionCodes: [] })
   }
 
   function beginEditCourseUnits(person: StaffMember) {
@@ -208,6 +215,8 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll();       notify('Payroll payment status updated.', 'success', 'Payroll updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to mark payroll as paid.'; setError(message); notify(message, 'error', 'Payroll update failed') } }
 
   const isDuplicateStaffNumber = /staff number is already registered|staff member with this staff number already exists/i.test(error)
+  const roleDefaultPermissionCodes = staffRoles.filter(role => accessForm.roleNames.includes(role.name)).flatMap(role => role.permissionCodes)
+  const isPermissionSelected = (code: string) => accessForm.permissionCodes.includes(code) || (roleDefaultPermissionCodes.includes(code) && !accessForm.deniedPermissionCodes.includes(code))
 
   return (
     <section className="panel">
@@ -297,6 +306,57 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
               <input placeholder="Professional registration / licence no." value={form.professionalRegistration} onChange={e => setForm({ ...form, professionalRegistration: e.target.value })} />
               <input placeholder="Phone" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} />
               <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              {!editingStaffId && <fieldset className="field-label" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
+                <legend style={{ padding: '0 5px', fontWeight: 700 }}>Login account and screen permissions</legend>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={accessForm.createLoginAccount} onChange={e => setAccessForm(current => ({ ...current, createLoginAccount: e.target.checked }))} />
+                  Create a login account for this staff member
+                </label>
+                {accessForm.createLoginAccount && <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 9, marginTop: 12 }}>
+                    <label className="field-label">Login username
+                      <input value={accessForm.username} onChange={e => setAccessForm(current => ({ ...current, username: e.target.value }))} autoComplete="off" required />
+                    </label>
+                    <label className="field-label">Initial password
+                      <input type="password" value={accessForm.password} onChange={e => setAccessForm(current => ({ ...current, password: e.target.value }))} autoComplete="new-password" minLength={10} required />
+                    </label>
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    <strong style={{ display: 'block', marginBottom: 7 }}>Role defaults</strong>
+                    <p style={{ margin: '0 0 8px', color: '#64748b', fontSize: 12 }}>Roles provide default access. Each checkbox can independently grant or explicitly deny a role permission.</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 6 }}>
+                      {staffRoles.map(role => <label key={role.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 8px', border: '1px solid #e2e8f0', borderRadius: 3, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={accessForm.roleNames.includes(role.name)} onChange={e => setAccessForm(current => ({ ...current, roleNames: e.target.checked ? [...current.roleNames, role.name] : current.roleNames.filter(name => name !== role.name) }))} />
+                        <span>{role.name}</span>
+                      </label>)}
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 14 }}>
+                    <strong style={{ display: 'block', marginBottom: 4 }}>Individual screen permissions</strong>
+                    <p style={{ margin: '0 0 9px', color: '#64748b', fontSize: 12 }}>Every permission is independent. Selecting a group only selects its listed permissions; it does not create inherited access.</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 270px), 1fr))', gap: 9 }}>
+                      {Array.from(new Set(permissionCatalog.map(permission => permission.groupKey))).map(groupKey => {
+                        const groupPermissions = permissionCatalog.filter(permission => permission.groupKey === groupKey)
+                        const allSelected = groupPermissions.length > 0 && groupPermissions.every(permission => isPermissionSelected(permission.code))
+                        const groupName = ({ 'student-registry': 'Student Registry', admissions: 'Admissions', academics: 'Academic Management', timetable: 'Timetable', examinations: 'Examinations', attendance: 'Attendance', finance: 'Finance', hr: 'Human Resources', inventory: 'Inventory', library: 'Library', hostel: 'Hostel and Welfare', medical: 'Medical', communications: 'Communication', reports: 'Reports and Analytics', archives: 'Archives', settings: 'System Settings', audit: 'Audit Log', administration: 'Administration', 'student-portal': 'Student Portal' } as Record<string, string>)[groupKey] ?? groupKey.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+                        return <section key={groupKey} style={{ border: '1px solid #dbe3ed', borderRadius: 4, padding: 9, minWidth: 0 }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 7, paddingBottom: 7, marginBottom: 6, borderBottom: '1px solid #e2e8f0', fontWeight: 700 }}>
+                            <input type="checkbox" checked={allSelected} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...new Set([...current.permissionCodes, ...groupPermissions.map(permission => permission.code)])] : current.permissionCodes.filter(code => !groupPermissions.some(permission => permission.code === code)), deniedPermissionCodes: e.target.checked ? current.deniedPermissionCodes.filter(code => !groupPermissions.some(permission => permission.code === code)) : [...new Set([...current.deniedPermissionCodes, ...groupPermissions.filter(permission => roleDefaultPermissionCodes.includes(permission.code)).map(permission => permission.code)])] }))} />
+                            Select all — {groupName}
+                          </label>
+                          <div style={{ display: 'grid', gap: 5 }}>
+                            {groupPermissions.map(permission => <label key={permission.code} title={permission.description ?? permission.name} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 12, cursor: 'pointer' }}>
+                              <input type="checkbox" checked={isPermissionSelected(permission.code)} onChange={e => setAccessForm(current => ({ ...current, permissionCodes: e.target.checked ? [...new Set([...current.permissionCodes, permission.code])] : current.permissionCodes.filter(code => code !== permission.code), deniedPermissionCodes: e.target.checked ? current.deniedPermissionCodes.filter(code => code !== permission.code) : roleDefaultPermissionCodes.includes(permission.code) ? [...new Set([...current.deniedPermissionCodes, permission.code])] : current.deniedPermissionCodes }))} style={{ marginTop: 2 }} />
+                              <span>{permission.name}</span>
+                            </label>)}
+                          </div>
+                        </section>
+                      })}
+                    </div>
+                    <p style={{ margin: '8px 0 0', color: '#475569', fontSize: 11 }}>{permissionCatalog.filter(permission => isPermissionSelected(permission.code)).length} effective permission(s) selected</p>
+                  </div>
+                </>}
+              </fieldset>}
               {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
                 <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
@@ -321,10 +381,10 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
           )}
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Staff No.</th><th>Name</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
+              <thead><tr><th>Staff No.</th><th>Name</th><th>Login account</th><th>Category / Designation</th><th>Department / Speciality</th><th>Course units</th><th>Contact</th><th>Status</th>{canManage && <th>Actions</th>}</tr></thead>
               <tbody>
-                {loading ? <tr><td colSpan={canManage ? 8 : 7}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 8 : 7} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
-                  <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName)}</td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
+                {loading ? <tr><td colSpan={canManage ? 9 : 8}><LoadingSpinner label="Loading staff…" /></td></tr> : staff.length === 0 ? <tr><td colSpan={canManage ? 9 : 8} className="empty">No staff records found. If a staff number is reported as a duplicate, check the list-loading warning or your access permissions.</td></tr> : staff.map(s => (
+                  <tr key={s.id}><td>{s.staffNumber}</td><td>{formatPersonName(s.lastName, s.firstName)}</td><td><span className="badge" title={s.userId ?? undefined} style={{ background: s.userId ? "#d1fae5" : "#f1f5f9", color: s.userId ? "#065f46" : "#64748b" }}>{s.userId ? "Linked" : "No account"}</span></td><td>{s.staffType === 'Teaching' ? 'Teaching' : 'Non-teaching'}{s.jobTitle && <div className="text-muted">{s.jobTitle}</div>}<small>{s.highestQualification || '—'}</small></td><td>{departments.find(d => d.id === s.departmentId)?.name || '—'}{s.speciality && <div>{s.speciality}</div>}</td><td style={{ minWidth: editingCourseUnitsStaffId === s.id ? 280 : 140 }}>
                     {editingCourseUnitsStaffId === s.id ? (
                       <div style={{ display: 'grid', gap: 7, minWidth: 250 }}>
                         {courseUnits.length === 0 ? <span className="text-muted">No active course units available.</span> : <div style={{ display: 'grid', gap: 5, maxHeight: 180, overflowY: 'auto', padding: 2 }}>
