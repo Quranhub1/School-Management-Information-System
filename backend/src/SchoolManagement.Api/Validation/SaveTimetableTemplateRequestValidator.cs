@@ -1,15 +1,15 @@
 using System.Text.Json;
 using FluentValidation;
-using SchoolManagement.Api.Controllers;
+using SchoolManagement.Application.Timetable;
 
 namespace SchoolManagement.Api.Validation;
 
-public sealed class SaveTimetableTemplateRequestValidator : AbstractValidator<SaveTimetableTemplateRequest>
+public sealed class SaveTimetableTemplateDtoValidator : AbstractValidator<SaveTimetableTemplateRequest>
 {
     public SaveTimetableTemplateRequestValidator()
     {
         RuleFor(x => x.TeachingGroupId).NotEmpty();
-        RuleFor(x => x.Entries).NotNull().Must(entries => entries.Count <= 200)
+        RuleFor(x => x.Entries).Must(entries => entries.Count <= 200)
             .WithMessage("A timetable template cannot contain more than 200 sessions.");
         RuleForEach(x => x.Entries).SetValidator(new CreateTimetableEntryRequestValidator());
         RuleForEach(x => x.Entries).Must((request, entry) => entry.TeachingGroupId == request.TeachingGroupId)
