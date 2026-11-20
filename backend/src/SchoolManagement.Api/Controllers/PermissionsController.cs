@@ -16,9 +16,11 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
     [Authorize(Policy = SchoolManagement.Application.Authorization.StaffPolicies.Management)]
     public async Task<IActionResult> Catalogue(CancellationToken cancellationToken)
     {
-        var groups = await db.Permissions.AsNoTracking()
+        var rows = await db.Permissions.AsNoTracking()
             .OrderBy(x => x.GroupName).ThenBy(x => x.Name)
-            .GroupBy(x => new { x.GroupCode, x.GroupName })
+            .Select(permission => new { permission.GroupCode, permission.GroupName, permission.Code, permission.Name, permission.Description })
+            .ToListAsync(cancellationToken);
+        var groups = rows.GroupBy(x => new { x.GroupCode, x.GroupName })
             .Select(group => new
             {
                 id = group.Key.GroupCode,
@@ -29,7 +31,7 @@ public sealed class PermissionsController(SchoolManagementDbContext db) : Contro
                     label = permission.Name,
                     permission.Description
                 }).ToList()
-            }).ToListAsync(cancellationToken);
+            }).ToList();
         return Ok(groups);
     }
 
