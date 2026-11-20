@@ -13,6 +13,15 @@ public sealed class SeedAcademicYearsAndIntakes : Migration
     protected override void Up(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.Sql("""
+            -- Preserve existing IDs and semester relationships while standardizing
+            -- legacy academic-year labels such as 2025/2026 to 2025-2026.
+            UPDATE "AcademicYears"
+            SET "Name" = replace("Name", '/', '-')
+            WHERE length("Name") = 9
+              AND substring("Name", 5, 1) = '/'
+              AND substring("Name", 1, 4) ~ '^[0-9]{4}'
+              AND substring("Name", 6, 4) ~ '^[0-9]{4}';
+
             INSERT INTO "AcademicYears"
                 ("Id", "Name", "StartDate", "EndDate", "IsCurrent", "IsActive")
             SELECT
