@@ -679,9 +679,6 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid?>("DepartmentId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("DurationUnit")
                         .IsRequired()
                         .HasColumnType("text");
@@ -5229,6 +5226,9 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("date");
 
                     b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Email")
