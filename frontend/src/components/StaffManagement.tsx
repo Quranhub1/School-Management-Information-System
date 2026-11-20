@@ -524,7 +524,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
                     </div>
                   </div>
                   <label className="staff-create-field">{accountMode === 'existing' ? 'Existing Username' : 'Username'}
-                    <input autoComplete="username" placeholder={accountMode === 'existing' ? 'Enter existing username' : 'Enter Username'} disabled={!canManageAccounts} value={accountUsername} onChange={e => setAccountUsername(e.target.value)} />
+                    <input autoComplete="username" placeholder={accountMode === 'existing' ? 'Enter existing username' : 'Enter Username'} disabled={!canManageAccounts} value={accountUsername} onChange={e => { setAccountUsername(e.target.value); if (accountMode === 'existing') { setSelectedPermissions([]); setInheritedPermissions([]); setCredentialFeedback('') } }} />
                   </label>
                   {accountMode === 'existing' && <button type="button" className="secondary-button" style={{ marginTop: 8 }} onClick={() => void loadExistingAccountPermissions()} disabled={!canManageAccounts || credentialBusy}>{credentialBusy ? 'Loading…' : 'Load existing account permissions'}</button>}
                   <label className="staff-create-field" style={{ marginTop: 12 }}>{accountMode === 'existing' ? 'New Password' : 'Password'}
