@@ -22,9 +22,27 @@ export interface AdmissionsProgrammeOption {
   authorityName: string
 }
 
+export interface AdmissionsAcademicYearOption {
+  id: string
+  name: string
+  startDate: string
+  endDate: string
+  isCurrent: boolean
+  isActive: boolean
+}
+
+export interface AdmissionsIntakeOption {
+  id: string
+  name: string
+  code: string
+  isOpen: boolean
+}
+
 export interface AdmissionsAcademicCatalogue {
   authorities: AdmissionsAuthorityOption[]
   programmes: AdmissionsProgrammeOption[]
+  academicYears: AdmissionsAcademicYearOption[]
+  intakes: AdmissionsIntakeOption[]
 }
 
 export async function getAdmissionsAcademicCatalogue(): Promise<AdmissionsAcademicCatalogue> {
