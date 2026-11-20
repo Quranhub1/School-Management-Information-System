@@ -83,8 +83,12 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
                 return BadRequest(new { message = "One or more selected staff roles are invalid. Refresh the role list and try again." });
 
             var requestedCodes = (request.PermissionCodes ?? Array.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-            var permissions = await db.Permissions.Where(x => requestedCodes.Contains(x.Code)).ToListAsync(cancellationToken);
-            if (permissions.Count != requestedCodes.Length)
+            var deniedCodes = (request.DeniedPermissionCodes ?? Array.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            if (requestedCodes.Intersect(deniedCodes, StringComparer.OrdinalIgnoreCase).Any())
+                return BadRequest(new { message = "A permission cannot be both granted and denied." });
+            var allRequestedCodes = requestedCodes.Concat(deniedCodes).ToArray();
+            var permissions = await db.Permissions.Where(x => allRequestedCodes.Contains(x.Code)).ToListAsync(cancellationToken);
+            if (permissions.Count != allRequestedCodes.Length)
                 return BadRequest(new { message = "One or more selected permissions are invalid. Refresh the permission catalogue and try again." });
 
             loginUser = new User
@@ -100,7 +104,12 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             foreach (var role in roles)
                 db.UserRoles.Add(new UserRole { UserId = loginUser.Id, RoleId = role.Id });
             foreach (var permission in permissions)
-                db.UserPermissions.Add(new UserPermission { UserId = loginUser.Id, PermissionId = permission.Id, IsGranted = true });
+                db.UserPermissions.Add(new UserPermission
+                {
+                    UserId = loginUser.Id,
+                    PermissionId = permission.Id,
+                    IsGranted = requestedCodes.Contains(permission.Code, StringComparer.OrdinalIgnoreCase)
+                });
         }
 
         var staff = new StaffMember
@@ -314,7 +323,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     }
 }
 
-public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, bool CreateLoginAccount = false, string? Username = null, string? Password = null, string[]? RoleNames = null, string[]? PermissionCodes = null);
+public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, bool CreateLoginAccount = false, string? Username = null, string? Password = null, string[]? RoleNames = null, string[]? PermissionCodes = null, string[]? DeniedPermissionCodes = null);
 public sealed record UpdateStaffRequest(Guid Id, string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null);
 public sealed record UpdateStaffCourseUnitsRequest(Guid[]? CourseUnitIds);
 public sealed record ApproveLeaveRequest(Guid? ApprovedBy, bool Approved);
