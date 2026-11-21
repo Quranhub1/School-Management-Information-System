@@ -19,6 +19,15 @@ vi.mock('../api/staff', () => ({
   STAFF_CHANGED_EVENT: 'smis:staff-changed',
 }))
 
+vi.mock('../api/administration', () => ({
+  getUsers: vi.fn().mockResolvedValue([]),
+  resetUserPassword: vi.fn().mockResolvedValue(null),
+  getPermissionCatalogue: vi.fn().mockResolvedValue([]),
+  getPermissionRoles: vi.fn().mockResolvedValue([]),
+  getRolePermissionCodes: vi.fn().mockResolvedValue({ permissionCodes: [] }),
+  getUserPermissionSummary: vi.fn().mockResolvedValue({ directPermissionCodes: [], inheritedPermissionCodes: [] }),
+}))
+
 vi.mock('../api/payroll', () => ({
   listPayroll: vi.fn().mockResolvedValue([]),
   generatePayroll: vi.fn().mockResolvedValue(null),
