@@ -1,5 +1,7 @@
 import type { AcademicResultSummary, TranscriptEntry } from '../types/academic'
 import { getAccessToken } from './auth'
+import { parseApiInput } from '../lib/validation'
+import { assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema } from '../schemas'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -83,7 +85,8 @@ export function createAssessmentPlan(input: {
   weightPercentage: number
   isCompetencyBased: boolean
 }): Promise<AssessmentPlan> {
-  return sendJson<AssessmentPlan>('/api/assessments/plans', input)
+  const validated = parseApiInput(assessmentPlanCreateRequestSchema, input, 'create assessment plan')
+  return sendJson<AssessmentPlan>('/api/assessments/plans', validated)
 }
 
 export function getStudentAssessments(courseRegistrationId: string): Promise<StudentAssessment[]> {
@@ -98,10 +101,11 @@ export function recordAssessment(input: {
   maximumScore: number
   competencyLevel?: string
 }): Promise<StudentAssessment> {
-  return sendJson<StudentAssessment>('/api/assessments', input)
+  const validated = parseApiInput(recordAssessmentRequestSchema, input, 'record student assessment')
+  return sendJson<StudentAssessment>('/api/assessments', validated)
 }
 
-export async function finalizeAssessment(id: string): Promise<StudentAssessment> {
+export async function finalizeAssessment(id: string): Promise<StudentAssessment> {\n  if (!id.trim()) throw new Error('Assessment ID is required.')
   const token = getAccessToken()
   const response = await fetch(`${API_BASE_URL}/api/assessments/records/${encodeURIComponent(id)}/finalize`, {
     method: 'PATCH',
