@@ -9,8 +9,6 @@ namespace SchoolManagement.Infrastructure.Timetable;
 
 public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
 {
-    private const int DefaultRotationInterval = 15;
-
     public async Task<GeneratedTimetableResult> GenerateAsync(GenerateTimetableRequest request, CancellationToken cancellationToken = default)
     {
         var conflicts = new List<string>();
