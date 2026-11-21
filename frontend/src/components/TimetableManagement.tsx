@@ -448,7 +448,7 @@ const layout = JSON.parse(saved.layoutJson) as { slots?: Array<{ startTime: stri
 if (Array.isArray(layout.slots) && layout.slots.length > 0 && layout.cells && typeof layout.cells === 'object') {
 setTemplateSlots(layout.slots.map(slot => ({ startTime: slot.startTime, endTime: slot.endTime })))
 setTemplateCells(layout.cells)
-setShowWeekends(true)
+setShowWeekends(layout.showWeekends ?? true)
 if (layout.institutionName) setTemplateInstitution(layout.institutionName)
 setTemplateTitle(layout.title || `TEACHING TIME TABLE FOR ${selectedProgramme?.label || 'ENTER PROGRAMME'}`)
 setTemplateYearLabel(layout.yearLabel || '')
@@ -463,7 +463,10 @@ setTemplateBreakAfter(typeof layout.breakAfter === 'number' ? layout.breakAfter 
 setTemplateBreakLabel(layout.breakLabel || 'BREAK')
 setTemplateLunchAfter(typeof layout.lunchAfter === 'number' ? layout.lunchAfter : 1)
 setTemplateLunchLabel(layout.lunchLabel || 'LUNCH')
-const savedDayOrder = Array.isArray(layout.dayOrder) && layout.dayOrder.length ? layout.dayOrder : [1, 2, 3, 4, 5, 6, 0]
+const validDayOrder = Array.isArray(layout.dayOrder)
+  ? [...new Set(layout.dayOrder.filter(day => Number.isInteger(day) && day >= 0 && day <= 6))]
+  : []
+const savedDayOrder = validDayOrder.length ? validDayOrder : [1, 2, 3, 4, 5, 6, 0]
 setTemplateDayOrder([...savedDayOrder, ...[1, 2, 3, 4, 5, 6, 0].filter(day => !savedDayOrder.includes(day))])
 setTemplateLoadedGroupId(targetGroupId)
 setShowTemplateEditor(true)
@@ -523,13 +526,19 @@ setTemplateCells(current => ({ ...current, [key]: { ...(current[key] ?? { course
 async function saveTemplate() {
 if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before saving the template.'); return }
 if (!templateGroupId || templateLoadedGroupId !== templateGroupId) { setError('Choose a class and load it into the template before saving.'); return }
-const coveredPopulated = Object.entries(templateCells).filter(([key, cell]) => { const [day, slot] = key.split('-').map(Number); return (cell.courseId || cell.teacherId) && templateCellCovered(day, slot) })
+const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
+const visibleDaySet = new Set(visibleDays)
+const coveredPopulated = Object.entries(templateCells).filter(([key, cell]) => {
+  const [day, slot] = key.split('-').map(Number)
+  return visibleDaySet.has(day) && (cell.courseId || cell.teacherId) && templateCellCovered(day, slot)
+})
 if (coveredPopulated.length) { setError('A merged cell covers another populated lesson. Move or clear the covered lesson before saving so no scheduled session is lost.'); return }
-const populated = Object.entries(templateCells).filter(([key, cell]) => { const [day, slot] = key.split('-').map(Number); return (cell.courseId || cell.teacherId) && !templateCellCovered(day, slot) })
+const populated = Object.entries(templateCells).filter(([key, cell]) => {
+  const [day, slot] = key.split('-').map(Number)
+  return visibleDaySet.has(day) && (cell.courseId || cell.teacherId) && !templateCellCovered(day, slot)
+})
 if (templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)) { setError('Every period must have an end time later than its start time.'); return }
 if (populated.some(([, cell]) => !cell.courseId || !cell.teacherId)) { setError('Every filled timetable cell needs both a course unit and a tutor.'); return }
-
-const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
 for (const [key, cell] of populated) {
   const customTime = cell.customTime?.trim()
   if (!customTime) continue
@@ -539,8 +548,12 @@ for (const [key, cell] of populated) {
     const [hours, minutes] = value.split(':').map(Number)
     return hours * 60 + minutes
   }
-  if (toMinutes(match[1]) >= toMinutes(match[2]) || toMinutes(match[2]) > 24 * 60 || toMinutes(match[1]) < 0) {
-    setError('Custom time must have a valid start time before its end time.'); return
+  const isValidClock = (value: string) => {
+    const [hours, minutes] = value.split(':').map(Number)
+    return Number.isInteger(hours) && Number.isInteger(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59
+  }
+  if (!isValidClock(match[1]) || !isValidClock(match[2]) || toMinutes(match[1]) >= toMinutes(match[2])) {
+    setError('Custom time must have valid 24-hour clock values and an end time after its start time.'); return
   }
 }
 const entries: CreateTimetableEntry[] = populated.flatMap(([key, cell]) => {
