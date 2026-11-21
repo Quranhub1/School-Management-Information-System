@@ -44,7 +44,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         };
         db.LogbookRequirements.Add(entity);
         await db.SaveChangesAsync(ct);
-        return Created($"/api/curriculum-management/curricula/{curriculumId}/logbook-requirements/{entity.Id}", ToResponse(entity, []));
+        return Ok(ToResponse(entity, []));
     }
 
     [HttpPost("logbook-requirements/{requirementId:guid}/competencies")]
@@ -62,7 +62,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         };
         db.LogbookCompetencyRequirements.Add(entity);
         await db.SaveChangesAsync(ct);
-        return Created($"/api/curriculum-management/logbook-requirements/{requirementId}/competencies/{entity.Id}", ToResponse(entity));
+        return Ok(ToResponse(entity));
     }
 
     [HttpGet("students/{studentId:guid}/logbooks")]
@@ -114,7 +114,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         await db.SaveChangesAsync(ct);
         var issuedAssessments = await db.StudentLogbookCompetencies.AsNoTracking()
             .Where(x => x.StudentLogbookId == entity.Id).ToListAsync(ct);
-        return Created($"/api/curriculum-management/students/{studentId}/logbooks/{entity.Id}",
+        return Ok(
             new StudentLogbookDetailResponse(
                 ToResponse(entity),
                 new LogbookRequirementSummaryResponse(requirement.Id, requirement.Title, requirement.YearOfStudy, requirement.SemesterNumber, requirement.RequiredQuantity, requirement.IsMandatory),
@@ -233,7 +233,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         };
         db.UhpabFeeReferences.Add(entity);
         await db.SaveChangesAsync(ct);
-        return Created($"/api/finance/uhpab-fee-references/{entity.Id}", ToResponse(entity));
+        return Ok(ToResponse(entity));
     }
 
     private static LogbookCompetencyRequirementResponse ToResponse(LogbookCompetencyRequirement entity) =>
