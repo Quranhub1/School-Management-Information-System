@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, createUserRequestSchema, permissionCodesRequestSchema, resetUserPasswordRequestSchema, setUserActiveRequestSchema, updateUserRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -144,6 +144,29 @@ describe("SMIS Zod domain schemas", () => {
 
 
 
+
+
+  it("validates administration users, passwords, status and permission lists", () => {
+    const user = {
+      username: "operator.one",
+      password: "SecurePass123",
+      firstName: "Operator",
+      lastName: "One",
+      email: "operator@example.com",
+      roles: ["Accountant", "RecordsOfficer"],
+    };
+    expect(createUserRequestSchema.safeParse(user).success).toBe(true);
+    expect(createUserRequestSchema.safeParse({ ...user, password: "short" }).success).toBe(false);
+    expect(createUserRequestSchema.safeParse({ ...user, roles: ["Accountant", "accountant"] }).success).toBe(false);
+
+    const update = { firstName: "Operator", lastName: "One", email: null, roles: ["Accountant"] };
+    expect(updateUserRequestSchema.safeParse(update).success).toBe(true);
+    expect(resetUserPasswordRequestSchema.safeParse({ newPassword: "new-secure-password" }).success).toBe(true);
+    expect(resetUserPasswordRequestSchema.safeParse({ newPassword: "short" }).success).toBe(false);
+    expect(setUserActiveRequestSchema.safeParse({ active: false }).success).toBe(true);
+    expect(permissionCodesRequestSchema.safeParse({ permissionCodes: ["Students.Read", "Finance.Read"] }).success).toBe(true);
+    expect(permissionCodesRequestSchema.safeParse({ permissionCodes: ["Students.Read", "Students.Read"] }).success).toBe(false);
+  });
 
   it("validates academic year and period date boundaries and sequence numbers", () => {
     const year = { name: "2026-2027", startDate: "2026-01-01", endDate: "2026-12-31" };
