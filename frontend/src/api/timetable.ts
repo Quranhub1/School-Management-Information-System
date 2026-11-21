@@ -42,7 +42,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   })
   if (response.status === 401) throw new Error('Your session has expired. Please sign in again.')
   if (response.status === 403) throw new Error('Your role is not authorized to manage timetables.')
-  if (!response.ok) throw new Error(`Request failed with status ${response.status}`)
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { message?: string; title?: string; detail?: string; errors?: Record<string, string[]> } | null
+    const validationMessage = payload?.errors
+      ? Object.values(payload.errors).flat().filter(Boolean).join(' ')
+      : ''
+    throw new Error(payload?.message || payload?.detail || validationMessage || payload?.title || `Request failed with status ${response.status}`)
+  }
   return response.status === 204 ? (undefined as T) : response.json() as Promise<T>
 }
 
@@ -50,7 +56,7 @@ export const getTimetableOptions = () => request<TimetableOptions>('/api/timetab
 export const listTimetable = (teachingGroupId?: string) => request<TimetableEntry[]>(`/api/timetable${teachingGroupId ? `?teachingGroupId=${encodeURIComponent(teachingGroupId)}` : ''}`)
 export const createTimetableEntry = (input: CreateTimetableEntry) => request<TimetableEntry>('/api/timetable', { method: 'POST', body: JSON.stringify(input) })
 export const updateTimetableEntry = (id: string, input: CreateTimetableEntry) => request<TimetableEntry>(`/api/timetable/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
-export const deactivateTimetableEntry = (id: string) => request<void>(`/api/timetable/${id}`, { method: 'DELETE' })
+export const deactivateTimetableEntry = (id: string) => request<void>(`/api/timetable/${encodeURIComponent(id)}`, { method: 'DELETE' })
 export const generateTimetable = (semesterId: string, teachingGroupId: string, curriculumId: string, yearOfStudy: number, curriculumSemesterNumber: number, programmeId: string) => request<GenerateTimetableResult>('/api/timetable/generate', { method: 'POST', body: JSON.stringify({ semesterId, teachingGroupId, curriculumId, yearOfStudy, curriculumSemesterNumber, programmeId, rotationIntervalMinutes: 15, generationSource: 'Manual' }) })
 
 
