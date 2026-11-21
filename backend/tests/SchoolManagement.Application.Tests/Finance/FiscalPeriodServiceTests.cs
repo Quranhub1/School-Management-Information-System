@@ -57,6 +57,27 @@ public sealed class FiscalPeriodServiceTests
         Assert.Equal("Open", result.Status);
     }
 
+
+    [Fact]
+    public async Task RequireOpenPeriod_accepts_both_start_and_end_dates_inclusively()
+    {
+        var repository = new InMemoryFiscalPeriodRepository();
+        var period = new FiscalPeriod
+        {
+            Name = "FY2026",
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 12, 31)
+        };
+        repository.Periods.Add(period);
+        var service = new FiscalPeriodService(repository);
+
+        var firstDay = await service.RequireOpenPeriodAsync(period.StartDate);
+        var lastDay = await service.RequireOpenPeriodAsync(period.EndDate);
+
+        Assert.Equal(period.Id, firstDay.Id);
+        Assert.Equal(period.Id, lastDay.Id);
+    }
+
     private sealed class InMemoryFiscalPeriodRepository : IFiscalPeriodRepository
     {
         public List<FiscalPeriod> Periods { get; } = [];
