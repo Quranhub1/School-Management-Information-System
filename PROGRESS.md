@@ -37,6 +37,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Replace direct finance entity responses for fee structures, charges, credit notes, discounts, installments and journal reversals with DTOs.
 - [x] Replace direct entity responses in curriculum logbook requirements, competency requirements, student logbooks/assessments and UHPAB fee references with contract-preserving DTOs.
 - [x] Replace direct payroll, academic year/intake/semester/stream, curriculum/course/mapping, calendar event, message/conversation, gate log, assessment plan/record and staff leave responses with explicit DTOs.
+- [x] Replace direct admission-completion, nested hostel, stream, subject and librarian-update entity responses with explicit DTOs.
 - [x] Add API/application tests for DTO projections, retained API fields, payment allocation bounds and inclusive fiscal-period start/end boundaries.
 - [ ] Run and pass the complete backend/frontend/E2E CI for this branch before opening or merging its PR.
 
