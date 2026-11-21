@@ -561,3 +561,26 @@ export const recordAssessmentRequestSchema = z.object({
   path: ["score"],
   message: "Score cannot exceed the maximum score.",
 });
+
+
+export const academicYearRequestSchema = z.object({
+  name: requiredTextSchema.max(100),
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+}).refine(value => value.endDate >= value.startDate, {
+  path: ["endDate"],
+  message: "Academic year end date cannot be before its start date.",
+});
+
+export const academicPeriodRequestSchema = z.object({
+  academicYearId: identifierSchema,
+  name: requiredTextSchema.max(100),
+  sequence: z.number().int().positive(),
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+}).refine(value => value.endDate >= value.startDate, {
+  path: ["endDate"],
+  message: "Academic period end date cannot be before its start date.",
+});
+
+export const academicPeriodUpdateRequestSchema = academicPeriodRequestSchema.omit({ academicYearId: true });
