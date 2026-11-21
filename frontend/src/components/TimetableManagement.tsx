@@ -119,7 +119,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
   const [showGenerator, setShowGenerator] = useState(false)
   const [showScheduleForm, setShowScheduleForm] = useState(false)
-  const [timetableCount, setTimetableCount] = useState('1')
+  const [selectedTeachingGroupIds, setSelectedTeachingGroupIds] = useState<string[]>([])
   const [generatedTimetables, setGeneratedTimetables] = useState<
     Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }>
   >([])
@@ -573,11 +573,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       )
       return
     }
-    const selectedGroups = teachingGroupId
-      ? availableGroups.filter(group => group.id === teachingGroupId)
-      : availableGroups.slice(0, Math.max(1, Math.min(availableGroups.length, Number(timetableCount) || 1)))
+    const selectedGroups = availableGroups.filter(group => selectedTeachingGroupIds.includes(group.id))
     if (selectedGroups.length === 0) {
-      setError('Create teaching groups before generating timetables.')
+      setError('Select at least one teaching group to generate its timetable.')
       return
     }
     setLoading(true)
@@ -1270,45 +1268,37 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           <h3>Generate a timetable</h3>
           <div className="timetable-form-grid">
             <label>
-              Teaching group
+              Teaching groups
               <select
-                value={teachingGroupId}
-                onChange={event => setTeachingGroupId(event.target.value)}
+                multiple
+                size={Math.min(6, Math.max(2, availableGroups.length))}
+                value={selectedTeachingGroupIds}
+                onChange={event =>
+                  setSelectedTeachingGroupIds(
+                    Array.from(event.target.selectedOptions, option => option.value)
+                  )
+                }
               >
-                <option value="">Generate for multiple classes</option>
                 {availableGroups.map(item => (
                   <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
                 ))}
               </select>
-              {availableGroups.length === 0 && (
+              {availableGroups.length === 0 ? (
                 <small className="timetable-class-empty-hint">
                   No active teaching groups are linked to this programme and academic period. Check
                   Course Offerings and Teaching Groups.
                 </small>
+              ) : (
+                <small className="timetable-generator-help">
+                  Select every class that should receive a timetable. Use Ctrl-click to select
+                  multiple groups.
+                </small>
               )}
             </label>
-            {!teachingGroupId && (
-              <label>
-                Number of timetables
-                <input
-                  type="number"
-                  min="1"
-                  max={Math.max(1, availableGroups.length)}
-                  value={timetableCount}
-                  onChange={event => setTimetableCount(event.target.value)}
-                  required
-                />
-              </label>
-            )}
           </div>
-          {!teachingGroupId && (
-            <p className="timetable-generator-help">
-              Generates one separate timetable for each of the first N teaching groups. Available
-              groups: {availableGroups.length}.
-            </p>
-          )}
+          <p className="timetable-generator-help">Selected teaching groups: {selectedTeachingGroupIds.filter(id => availableGroups.some(group => group.id === id)).length} of {availableGroups.length} available.</p>
           <div className="timetable-form-footer">
             <button
               className="timetable-action primary"
