@@ -161,6 +161,8 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
                 invoice.Currency,
                 invoice.Status
             });
+        if (!string.IsNullOrWhiteSpace(currency))
+            dataQuery = dataQuery.Where(x => x.Currency == currency.Trim().ToUpperInvariant());
         if (accessibleCampuses is not null)
             dataQuery = dataQuery.Where(x => db.Students.Any(s => s.Id == x.studentId && s.CampusId.HasValue && accessibleCampuses.Contains(s.CampusId.Value)));
         var data = await dataQuery.ToListAsync(cancellationToken);
