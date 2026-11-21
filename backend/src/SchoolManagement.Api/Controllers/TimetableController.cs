@@ -80,16 +80,25 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [Authorize(Policy = TimetablePolicies.Read)]
     public async Task<IActionResult> Conflicts([FromQuery] Guid? teachingGroupId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
     {
-        var query = db.TimetableEntries.AsNoTracking().Where(x => x.IsActive);
-        if (teachingGroupId.HasValue) query = query.Where(x => x.TeachingGroupId == teachingGroupId.Value);
-        var entries = await query.ToListAsync(cancellationToken);
-        var conflicts = entries
-            .GroupBy(x => new { x.DayOfWeek, x.Room })
-            .Where(g => g.Count() > 1)
-            .SelectMany(g => g)
-            .Select(ToDto)
-            .ToList();
-        return Ok(conflicts.ToArray());
+        var candidateQuery = db.TimetableEntries.AsNoTracking().Where(x => x.IsActive);
+        if (teachingGroupId.HasValue)
+            candidateQuery = candidateQuery.Where(x => x.TeachingGroupId == teachingGroupId.Value);
+        if (semesterId.HasValue)
+        {
+            candidateQuery = candidateQuery.Where(entry => db.TeachingGroups
+                .Where(group => group.Id == entry.TeachingGroupId)
+                .Join(db.CourseOfferings, group => group.CourseOfferingId, offering => offering.Id,
+                    (group, offering) => offering.SemesterId)
+                .Any(id => id == semesterId.Value));
+        }
+
+        var candidates = await candidateQuery.ToListAsync(cancellationToken);
+        var allActiveEntries = await db.TimetableEntries.AsNoTracking()
+            .Where(entry => entry.IsActive)
+            .ToListAsync(cancellationToken);
+        var conflicts = candidates.Where(candidate => allActiveEntries.Any(other =>
+            candidate.Id != other.Id && HasOverlap(candidate, other)));
+        return Ok(conflicts.OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime).Select(ToDto).ToArray());
     }
 
     private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, Guid curriculumId, int yearOfStudy, int curriculumSemesterNumber, CancellationToken cancellationToken)
@@ -109,7 +118,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     [HttpPost]
     [Authorize(Policy = TimetablePolicies.Management)]
-    public async Task<IActionResult> Create(CreateTimetableEntryDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(CreateTimetableEntryRequest request, CancellationToken cancellationToken)
     {
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == request.TeachingGroupId && x.IsActive, cancellationToken)) return BadRequest(new { message = "Teaching group not found." });
         if (!await IsCourseMappedToTeachingGroupAsync(request.TeachingGroupId, request.CourseId, request.CurriculumId, request.YearOfStudy, request.CurriculumSemesterNumber, cancellationToken))
@@ -133,7 +142,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     [HttpPut("{id:guid}")]
     [Authorize(Policy = TimetablePolicies.Management)]
-    public async Task<IActionResult> Update(Guid id, CreateTimetableEntryDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(Guid id, CreateTimetableEntryRequest request, CancellationToken cancellationToken)
     {
         var existing = await db.TimetableEntries.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, cancellationToken);
         if (existing is null) return NotFound(new { message = "Timetable session was not found or has already changed." });
@@ -188,9 +197,8 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
 
     [HttpPut("template/{teachingGroupId:guid}")]
     [Authorize(Policy = TimetablePolicies.Management)]
-    public async Task<IActionResult> SaveTemplate(Guid teachingGroupId, SaveTimetableTemplateDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> SaveTemplate(Guid teachingGroupId, SaveTimetableTemplateRequest request, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return ValidationProblem(ModelState);
         if (request.TeachingGroupId != teachingGroupId)
             return BadRequest(new { message = "The template class does not match the route." });
         if (!await db.TeachingGroups.AnyAsync(x => x.Id == teachingGroupId && x.IsActive, cancellationToken))
@@ -269,7 +277,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             entry.StartTime, entry.EndTime, entry.Room, entry.SessionType, entry.IsActive,
             entry.GeneratedAt, entry.GenerationSource);
 
-    private static bool HasOverlap(CreateTimetableEntryDto left, CreateTimetableEntryDto right)
+    private static bool HasOverlap(Domain.Academic.TimetableEntry left, Domain.Academic.TimetableEntry right)
     {
         if (left.DayOfWeek != right.DayOfWeek || left.StartTime >= right.EndTime || right.StartTime >= left.EndTime)
             return false;
@@ -280,7 +288,18 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         return sameClass || sameTeacher || sameRoom;
     }
 
-    private static bool HasOverlap(CreateTimetableEntryDto proposed, Domain.Academic.TimetableEntry existing)
+    private static bool HasOverlap(CreateTimetableEntryRequest left, CreateTimetableEntryRequest right)
+    {
+        if (left.DayOfWeek != right.DayOfWeek || left.StartTime >= right.EndTime || right.StartTime >= left.EndTime)
+            return false;
+        var sameClass = left.TeachingGroupId == right.TeachingGroupId;
+        var sameTeacher = left.TeacherId == right.TeacherId;
+        var sameRoom = !string.IsNullOrWhiteSpace(left.Room) && !string.IsNullOrWhiteSpace(right.Room)
+            && string.Equals(left.Room.Trim(), right.Room.Trim(), StringComparison.OrdinalIgnoreCase);
+        return sameClass || sameTeacher || sameRoom;
+    }
+
+    private static bool HasOverlap(CreateTimetableEntryRequest proposed, Domain.Academic.TimetableEntry existing)
     {
         if (proposed.DayOfWeek != existing.DayOfWeek || proposed.StartTime >= existing.EndTime || existing.StartTime >= proposed.EndTime)
             return false;
@@ -309,5 +328,7 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
-
 }
+
+public sealed record CreateTimetableEntryRequest(Guid TeachingGroupId, Guid CourseId, Guid TeacherId, DayOfWeek DayOfWeek, TimeOnly StartTime, TimeOnly EndTime, string? Room, string? SessionType, Guid CurriculumId, int YearOfStudy, int CurriculumSemesterNumber);
+public sealed record SaveTimetableTemplateRequest(Guid TeachingGroupId, List<CreateTimetableEntryRequest> Entries, string? LayoutJson = null);
