@@ -79,7 +79,9 @@ describe('TimetableManagement', () => {
     fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
-    fireEvent.change(screen.getByLabelText('Teaching groups'), { target: { value: ['group-1'] } })
+    const teachingGroups = screen.getByLabelText('Teaching groups') as HTMLSelectElement
+    teachingGroups.options[0].selected = true
+    fireEvent.change(teachingGroups)
     fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
     expect(await screen.findByText('KAMPALA SCHOOL OF HEALTH SCIENCES')).toBeTruthy()
     expect(screen.getByText(/VALID FOR: 01 Jan 2026 – 30 Jun 2026/)).toBeTruthy()
@@ -93,7 +95,9 @@ describe('TimetableManagement', () => {
     fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
-    fireEvent.change(screen.getByLabelText('Teaching groups'), { target: { value: ['group-1', 'group-2'] } })
+    const teachingGroups = screen.getByLabelText('Teaching groups') as HTMLSelectElement
+    Array.from(teachingGroups.options).forEach(option => { option.selected = true })
+    fireEvent.change(teachingGroups)
     fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
     await waitFor(() => expect(generateTimetable).toHaveBeenCalledTimes(1))
     expect(generateTimetable).toHaveBeenCalledWith('period-1', ['group-1', 'group-2'], 'curriculum-1', 1, 1, 'programme-1')
