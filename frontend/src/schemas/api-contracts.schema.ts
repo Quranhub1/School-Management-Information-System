@@ -618,7 +618,7 @@ export const setUserActiveRequestSchema = z.object({
 
 export const permissionCodesRequestSchema = z.object({
   permissionCodes: z.array(requiredTextSchema.max(160)).max(500),
-}).refine(value => new Set(value.permissionCodes).size === value.permissionCodes.length, {
+}).refine(value => new Set(value.permissionCodes.map(code => code.toLowerCase())).size === value.permissionCodes.length, {
   path: ["permissionCodes"],
   message: "Permission codes must not contain duplicates.",
 });
