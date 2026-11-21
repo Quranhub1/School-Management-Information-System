@@ -44,6 +44,11 @@ vi.mock('../api/timetable', () => ({
   }),
 }))
 
+vi.mock('../lib/pdfmake', () => ({
+  downloadInstitutionalPdf: vi.fn(),
+  printInstitutionalPdf: vi.fn(),
+}))
+
 vi.mock('./InstitutionSettingsContext', () => ({
   useInstitutionSettings: vi.fn(() => ({
     institution: { id: 'institution-1', institutionName: 'KAMPALA SCHOOL OF HEALTH SCIENCES', abbreviation: 'KSHS', motto: 'Health is Life', address: '', phone: '', email: '', website: '', postalAddress: '', country: 'Uganda', institutionType: 'School', logoPath: null, primaryColor: '#0505cc', accentColor: '#0735ed', isActive: true, updatedAt: '' },
@@ -52,6 +57,7 @@ vi.mock('./InstitutionSettingsContext', () => ({
 }))
 
 import { generateTimetable, saveTimetableTemplate } from '../api/timetable'
+import { downloadInstitutionalPdf } from '../lib/pdfmake'
 import { TimetableManagement } from './TimetableManagement'
 
 describe('TimetableManagement', () => {
@@ -170,6 +176,19 @@ describe('TimetableManagement', () => {
       registrarName: 'JANE DOE',
       cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2', colSpan: '2' }) }),
     }))
+    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }))
+    expect(downloadInstitutionalPdf).toHaveBeenCalledWith(expect.objectContaining({
+      orientation: 'landscape',
+      title: 'OFFICIAL CLASS TIMETABLE',
+    }))
+    const pdfOptions = vi.mocked(downloadInstitutionalPdf).mock.calls[0][0]
+    expect(pdfOptions.content[1]).toMatchObject({
+      table: {
+        body: expect.arrayContaining([
+          expect.arrayContaining([expect.objectContaining({ rowSpan: 2, colSpan: 2 })]),
+        ]),
+      },
+    })
   })
 
   it('supports readOnly mode', () => {
