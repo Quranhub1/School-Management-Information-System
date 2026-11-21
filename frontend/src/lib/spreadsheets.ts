@@ -83,3 +83,26 @@ export function exportRowsToExcel<T extends object>(rows: T[], filename: string,
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName.slice(0, 31) || 'Data')
   XLSX.writeFile(workbook, filename.replace(/\.xlsx$/i, '') + '.xlsx', { bookType: 'xlsx', compression: true })
 }
+
+/** Parse pasted CSV through the same bounded worksheet path used for uploaded files. */
+export function parseCsvText(csvData: string): ParsedSpreadsheet {
+  const byteLength = new TextEncoder().encode(csvData).length
+  if (byteLength <= 0 || byteLength > MAX_SPREADSHEET_BYTES) {
+    throw new Error('CSV data must be between 1 byte and 10 MB.')
+  }
+  const workbook = XLSX.read(csvData, { type: 'string', raw: false, cellDates: true, dense: true, WTF: true })
+  if (!workbook.SheetNames.length) throw new Error('CSV data is empty or missing a header row.')
+  const sheetName = workbook.SheetNames[0]
+  const worksheet = workbook.Sheets[sheetName]
+  if (!worksheet) throw new Error('CSV data is empty or missing a header row.')
+  const range = XLSX.utils.decode_range(worksheet['!ref'] ?? 'A1:A1')
+  const columnCount = range.e.c - range.s.c + 1
+  const rowCount = range.e.r - range.s.r + 1
+  if (columnCount > MAX_SPREADSHEET_COLUMNS) throw new Error(`CSV may contain at most ${MAX_SPREADSHEET_COLUMNS} columns.`)
+  if (rowCount > MAX_SPREADSHEET_ROWS) throw new Error(`CSV may contain at most ${MAX_SPREADSHEET_ROWS} rows.`)
+  const headers = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, blankrows: false, raw: false })[0] ?? []
+  assertSafeHeaders(headers)
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: '', raw: false, blankrows: false })
+  if (!rows.length) throw new Error('CSV data must contain at least one data row.')
+  return { sheetName, sheetNames: [sheetName], rows, csvData: XLSX.utils.sheet_to_csv(worksheet, { blankrows: false }) }
+}
