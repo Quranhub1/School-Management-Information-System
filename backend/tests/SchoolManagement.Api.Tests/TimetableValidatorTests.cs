@@ -50,6 +50,18 @@ public sealed class TimetableValidatorTests
     }
 
     [Fact]
+    public void GenerateTimetable_rejects_an_explicit_empty_teaching_group_list()
+    {
+        var request = new GenerateTimetableRequest(
+            Guid.NewGuid(), null, 30, "Manual", Guid.NewGuid(), 1, 1, Guid.NewGuid(), []);
+
+        var result = new GenerateTimetableRequestValidator().Validate(request);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(GenerateTimetableRequest.TeachingGroupIds));
+    }
+
+    [Fact]
     public void GenerateTimetable_requires_academic_scope()
     {
         var request = new GenerateTimetableRequest(Guid.Empty, null, 30, null);
