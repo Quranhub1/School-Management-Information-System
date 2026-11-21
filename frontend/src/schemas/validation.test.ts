@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calendarEventCreateRequestSchema, calendarReminderCreateRequestSchema, academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, createUserRequestSchema, permissionCodesRequestSchema, resetUserPasswordRequestSchema, setUserActiveRequestSchema, updateUserRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { bulkCurriculumCourseMappingRequestSchema, calendarEventCreateRequestSchema, calendarReminderCreateRequestSchema, createCourseRequestSchema, createCurriculumRequestSchema, curriculumCourseMappingRequestSchema, logbookCompetencyRequestSchema, logbookRequirementRequestSchema, studentLogbookCompetencyAssessmentRequestSchema, updateCourseRequestSchema, updateCurriculumRequestSchema, academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, createUserRequestSchema, permissionCodesRequestSchema, resetUserPasswordRequestSchema, setUserActiveRequestSchema, updateUserRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -146,6 +146,43 @@ describe("SMIS Zod domain schemas", () => {
 
 
 
+
+
+  it("validates curriculum, course, mapping and logbook payloads", () => {
+    const curriculum = {
+      programmeId: "programme-1", version: "1.0", title: "Diploma curriculum",
+      minimumCredits: 120, effectiveFrom: "2026-01-01", effectiveTo: null, programmeType: 0,
+    };
+    expect(createCurriculumRequestSchema.safeParse(curriculum).success).toBe(true);
+    expect(createCurriculumRequestSchema.safeParse({ ...curriculum, minimumCredits: -1 }).success).toBe(false);
+
+    const course = { authorityCode: "UHPAB", code: "PHA101", name: "Pharmacology", creditUnits: 4 };
+    expect(createCourseRequestSchema.safeParse(course).success).toBe(true);
+    expect(updateCourseRequestSchema.safeParse({ ...course, isActive: true }).success).toBe(true);
+
+    const mapping = { courseId: "course-1", yearOfStudy: 1, semesterNumber: 1, isCore: true };
+    expect(curriculumCourseMappingRequestSchema.safeParse(mapping).success).toBe(true);
+    expect(bulkCurriculumCourseMappingRequestSchema.safeParse({
+      courseIds: ["course-1", "course-2"], yearOfStudy: 1, semesterNumber: 1, isCore: true,
+    }).success).toBe(true);
+    expect(bulkCurriculumCourseMappingRequestSchema.safeParse({
+      courseIds: ["course-1", "course-1"], yearOfStudy: 1, semesterNumber: 1, isCore: true,
+    }).success).toBe(false);
+
+    expect(updateCurriculumRequestSchema.safeParse({
+      version: "1.1", title: "Updated curriculum", minimumCredits: 100,
+      effectiveFrom: "2026-01-01", programmeType: 0, isActive: true,
+    }).success).toBe(true);
+    expect(logbookRequirementRequestSchema.safeParse({
+      title: "Clinical logbook", yearOfStudy: 1, semesterNumber: 1, requiredQuantity: 1, isMandatory: true,
+    }).success).toBe(true);
+    expect(logbookCompetencyRequestSchema.safeParse({
+      code: "COMP-1", name: "Dispensing", requiredCount: 5, isMandatory: true,
+    }).success).toBe(true);
+    expect(studentLogbookCompetencyAssessmentRequestSchema.safeParse({
+      outcome: "Competent", assessedOn: "2026-11-21",
+    }).success).toBe(true);
+  });
 
   it("validates calendar event ranges and reminder recipient/channel values", () => {
     const event = {
