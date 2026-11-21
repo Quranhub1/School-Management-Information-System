@@ -179,7 +179,7 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
 
 
     private static string NormalizeHeader(string header) =>
-        new(header.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
+        new string(header.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
 
     private static string Escape(string? value)
     {
