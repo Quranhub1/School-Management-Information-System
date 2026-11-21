@@ -45,16 +45,16 @@ const h = Number(hStr)
 if (Number.isNaN(h)) return time24
 const period = h >= 12 ? 'PM' : 'AM'
 const h12 = h % 12 === 0 ? 12 : h % 12
-return ${h12}:${mStr || '00'} ${period}
+return `${h12}:${mStr || '00'} ${period}`
 }
-const formatSlotRange12 = (startTime: string, endTime: string) => ${format12Hour(startTime)} – ${format12Hour(endTime)}
+const formatSlotRange12 = (startTime: string, endTime: string) => `${format12Hour(startTime)} – ${format12Hour(endTime)}`
 const formatSemesterDate = (value?: string) => {
 if (!value) return ''
 const date = new Date(value.slice(0, 10) + 'T00:00:00')
 return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 const semesterDateRange = (semester?: TimetableOptions['semesters'][number]) => semester?.startDate && semester?.endDate
-? ${formatSemesterDate(semester.startDate)} – ${formatSemesterDate(semester.endDate)}
+? `${formatSemesterDate(semester.startDate)} – ${formatSemesterDate(semester.endDate)}`
 : 'Semester dates not configured'
 const timeRange = (entry: TimetableEntry) => timeLabel(entry.startTime) + '–' + timeLabel(entry.endTime)
 
@@ -206,7 +206,7 @@ const text = sessions.map(entry => [
 courseLabels.get(entry.courseId) ?? 'ENTER COURSE UNIT',
 teacherLabels.get(entry.teacherId) ?? 'TUTOR',
 timeRange(entry),
-entry.room ? Venue: ${entry.room} : '',
+entry.room ? `Venue: ${entry.room}` : '',
 entry.sessionType || '',
 ].filter(Boolean).join('\n')).join('\n\n')
 return { text: text || '—', alignment: 'center' }
@@ -222,7 +222,7 @@ motto: institutionLoaded && institution.isActive ? institution.motto : undefined
 contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
 accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
 content: [
-{ text: ACADEMIC YEAR ${academicYearLabel} · ${selectedSemester?.label ?? 'ENTER SEMESTER'} · VALID FOR ${semesterDateRange(selectedSemester)}, alignment: 'center', fontSize: 9, margin: [0, 0, 0, 10] },
+{ text: `ACADEMIC YEAR ${academicYearLabel} · ${selectedSemester?.label ?? 'ENTER SEMESTER'} · VALID FOR ${semesterDateRange(selectedSemester)}`,  alignment: 'center', fontSize: 9, margin: [0, 0, 0, 10] },
 { table: { headerRows: 1, widths: ['auto', ...printableSlots.map(() => '*')], body: timetableBody }, layout: {
 hLineWidth: () => 0.8,
 vLineWidth: () => 0.8,
@@ -234,7 +234,7 @@ paddingTop: () => 5,
 paddingBottom: () => 5,
 } },
 ...(templateRegistrarName.trim()
-? [{ text: ${templateRegistrarRole || 'ACADEMIC REGISTRAR'}: ${templateRegistrarName.trim().toUpperCase()}, alignment: 'left' as const, margin: [0, 28, 0, 0] }]
+? [{ text: `${templateRegistrarRole || 'ACADEMIC REGISTRAR'}: ${templateRegistrarName.trim().toUpperCase()}`, alignment: 'left' as const, margin: [0, 28, 0, 0] }]
 : []),
 ],
 }
@@ -287,7 +287,7 @@ const cell = templateCells[day + '-' + slotIndex]
 const rowSpan = Math.max(1, Math.min(visibleDays.length - dayIndex, Number(cell?.rowSpan) || 1))
 const colSpan = templatePeriodSpan(slotIndex, cell?.colSpan)
 const cName = cell?.courseId ? (courseLabels.get(cell.courseId) ?? 'ENTER COURSE UNIT') : ''
-const tName = cell?.teacherId ? (${teacherLabels.get(cell.teacherId) ?? 'TUTOR'}) : ''
+const tName = cell?.teacherId ? `(${teacherLabels.get(cell.teacherId) ?? 'TUTOR'})` : ''
 const text = cell ? [
 cName,
 tName,
@@ -315,7 +315,7 @@ printInstitutionalPdf({
 title: templateTitle || base.title,
 institutionName: templateInstitution || base.institutionName,
 content: [
-{ text: ${templateYearLabel || ACADEMIC YEAR ${academicYearLabel}} · ${templateSemesterLabel || selectedSemester?.label || 'ENTER SEMESTER'}, alignment: 'center', fontSize: 10, bold: true, margin: [0, 0, 0, 10] },
+{ text: `${templateYearLabel || `ACADEMIC YEAR ${academicYearLabel}`} · ${templateSemesterLabel || selectedSemester?.label || 'ENTER SEMESTER'}`,  alignment: 'center', fontSize: 10, bold: true, margin: [0, 0, 0, 10] },
 { table: { headerRows: 1, widths: ['auto', ...templateSlots.flatMap((_, index) => {
 const cols: Array<string | number> = ['*']
 if (templateBreakAfter === index) cols.push(16)
@@ -449,7 +449,7 @@ setTemplateSlots(layout.slots.map(slot => ({ startTime: slot.startTime, endTime:
 setTemplateCells(layout.cells)
 setShowWeekends(true)
 if (layout.institutionName) setTemplateInstitution(layout.institutionName)
-setTemplateTitle(layout.title || TEACHING TIME TABLE FOR ${selectedProgramme?.label || 'ENTER PROGRAMME'})
+setTemplateTitle(layout.title || `TEACHING TIME TABLE FOR ${selectedProgramme?.label || 'ENTER PROGRAMME'}`)
 setTemplateYearLabel(layout.yearLabel || '')
 setTemplateSemesterLabel(layout.semesterLabel || 'ENTER SEMESTER')
 setTemplateDayLabel(layout.dayLabel || 'DAY')
@@ -657,17 +657,20 @@ setError(e instanceof Error ? e.message : 'Unable to deactivate entry.')
 }
 }
 
-return 
-
-
-Academic planning
-{readOnly ? 'Timetable' : 'Timetable management'}
-Load and edit the official class timetable, assign course units and tutors independently, then save or print it.
-
-
-{!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowGenerator(value => !value)} aria-expanded={showGenerator}> {showGenerator ? 'Hide generator' : 'Generate timetable'}}
-{!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}> {showTemplateEditor ? 'Hide timetable designer' : 'Open timetable designer'}}
-{!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowScheduleForm(value => !value)} aria-expanded={showScheduleForm}> {showScheduleForm ? 'Close form' : 'Schedule session'}}
+return (
+<div className="timetable-screen">
+  <div className="timetable-hero">
+    <div>
+      <p className="timetable-eyebrow">Academic planning</p>
+      <h2>{readOnly ? 'Timetable' : 'Timetable management'}</h2>
+      <p>Load and edit the official class timetable, assign course units and tutors independently, then save or print it.</p>
+    </div>
+    {!readOnly && <div className="timetable-actions">
+      <button className="timetable-action primary" type="button" onClick={() => setShowGenerator(value => !value)} aria-expanded={showGenerator}>{showGenerator ? 'Hide generator' : 'Generate timetable'}</button>
+      <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}>{showTemplateEditor ? 'Hide timetable designer' : 'Open timetable designer'}</button>
+      <button className="timetable-action primary" type="button" onClick={() => setShowScheduleForm(value => !value)} aria-expanded={showScheduleForm}>{showScheduleForm ? 'Close form' : 'Schedule session'}</button>
+    </div>}
+  </div>
 
 
 
@@ -1254,3 +1257,6 @@ Load and edit the official class timetable, assign course units and tutors indep
 </div> : <div className="timetable-table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Room</th><th>Type</th><th>Teaching group</th><th>Course unit</th><th>Tutor</th>{!readOnly && <th>Actions</th>}</tr></thead><tbody>
   {orderedEntries.map(entry => <tr key={entry.id}><td>{days[entry.dayOfWeek] ?? '—'}</td><td>{timeRange(entry)}</td><td>{entry.room || '—'}</td><td>{entry.sessionType || '—'}</td><td>{groupLabels.get(entry.teachingGroupId) ?? 'Group not found'}</td><td>{courseLabels.get(entry.courseId) ?? 'ENTER COURSE UNIT'}</td><td>{teacherLabels.get(entry.teacherId) ?? 'TUTOR'}</td>{!readOnly && <td><button className="timetable-action" type="button" onClick={() => void editEntry(entry)}><Pencil size={14} /> Edit</button><button className="timetable-action" type="button" onClick={() => void remove(entry.id)}><Trash2 /> Remove</button></td>}</tr>)}
 </tbody></table></div>}
+</div>
+)
+}
