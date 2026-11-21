@@ -622,3 +622,24 @@ export const permissionCodesRequestSchema = z.object({
   path: ["permissionCodes"],
   message: "Permission codes must not contain duplicates.",
 });
+
+
+export const calendarEventCreateRequestSchema = z.object({
+  title: requiredTextSchema.max(160),
+  description: z.string().trim().max(1000).optional().or(z.literal("")),
+  eventType: requiredTextSchema.max(80),
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+  location: z.string().trim().max(200).optional().or(z.literal("")),
+}).refine(value => value.endDate >= value.startDate, {
+  path: ["endDate"],
+  message: "Event end date cannot be before its start date.",
+});
+
+export const calendarReminderCreateRequestSchema = z.object({
+  recipientType: z.enum(["All", "Student", "Staff"]),
+  recipientId: z.string().trim().max(100).optional().or(z.literal("")),
+  message: requiredTextSchema.max(1000),
+  remindOnUtc: z.iso.date(),
+  channel: z.enum(["InApp", "SMS", "Email"]),
+});
