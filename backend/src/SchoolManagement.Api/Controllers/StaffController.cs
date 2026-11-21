@@ -126,17 +126,14 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
                 user.PasswordHash = passwordHasher.Hash(request.Password);
         }
 
-        if (selectedRoles.Length > 0)
-        {
-            var currentAccessAssignments = await (
-                from assignment in db.UserRoles
-                join role in db.Roles on assignment.RoleId equals role.Id
-                where assignment.UserId == user.Id && role.Name.StartsWith("StaffAccess.")
-                select assignment).ToListAsync(cancellationToken);
-            db.UserRoles.RemoveRange(currentAccessAssignments);
-            foreach (var role in roleEntities)
-                db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
-        }
+        var currentAccessAssignments = await (
+            from assignment in db.UserRoles
+            join role in db.Roles on assignment.RoleId equals role.Id
+            where assignment.UserId == user.Id && role.Name.StartsWith("StaffAccess.")
+            select assignment).ToListAsync(cancellationToken);
+        db.UserRoles.RemoveRange(currentAccessAssignments);
+        foreach (var role in roleEntities)
+            db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
 
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new { linked = true, username = user.Username, permissions = request.Permissions, isActive = user.IsActive });
