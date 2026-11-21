@@ -364,19 +364,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         var campusId = await db.StaffMembers.Where(x => x.Id == id).Select(x => x.CampusId).SingleOrDefaultAsync(cancellationToken);
         if (!await campusAccess.CanAccessCampusAsync(User, campusId, cancellationToken)) return Forbid();
         var leaveRequests = await leaveService.GetByStaffAsync(id, cancellationToken);
-        return Ok(leaveRequests.Select(x => new
-        {
-            x.Id,
-            x.StaffMemberId,
-            LeaveType = x.LeaveType.ToString(),
-            x.StartDate,
-            x.EndDate,
-            x.Reason,
-            Status = x.Status.ToString(),
-            x.ApprovedBy,
-            x.ApprovedAt,
-            x.CreatedAt
-        }));
+        return Ok(leaveRequests.Select(LeaveRequestResponseDto.FromDomain).ToArray());
     }
 
     [HttpPost("{id:guid}/leave")]
