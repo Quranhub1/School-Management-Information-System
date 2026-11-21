@@ -255,7 +255,10 @@ public sealed record CreditNoteDto(
     string Status,
     DateTimeOffset IssuedAt,
     string? IssuedBy,
-    DateTimeOffset? AppliedAt)
+    DateTimeOffset? AppliedAt,
+    DateTimeOffset? CancelledAt,
+    string? CancelledBy,
+    string? CancellationReason)
 {
     public static CreditNoteDto FromDomain(CreditNote c) => new(
         c.Id,
@@ -266,7 +269,10 @@ public sealed record CreditNoteDto(
         c.Status,
         c.IssuedAt,
         c.IssuedBy,
-        c.AppliedAt);
+        c.AppliedAt,
+        c.CancelledAt,
+        c.CancelledBy,
+        c.CancellationReason);
 }
 
 public sealed record InvoiceNoteDto(
