@@ -126,6 +126,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
                 user.PasswordHash = passwordHasher.Hash(request.Password);
         }
 
+        staff.UserId = user.Id;
+
         var currentAccessAssignments = await (
             from assignment in db.UserRoles
             join role in db.Roles on assignment.RoleId equals role.Id
@@ -297,7 +299,10 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             var permissionEntities = await db.Permissions.Where(x => permissionCodes.Contains(x.Code)).ToListAsync(cancellationToken);
             if (permissionEntities.Count != permissionCodes.Length)
                 return BadRequest(new { message = "One or more selected permissions are not in the central catalogue." });
+            if (await db.StaffMembers.AnyAsync(x => x.Id != staff.Id && x.UserId == linkedUser.Id, cancellationToken))
+                return Conflict(new { message = "This login account is already linked to another staff profile." });
             linkedUser.IsActive = staff.IsActive;
+            staff.UserId = linkedUser.Id;
             db.StaffUserLinks.Add(new StaffUserLink { StaffId = staff.Id, UserId = linkedUser.Id });
             var previousDirectGrants = await db.UserPermissions.Where(x => x.UserId == linkedUser.Id).ToListAsync(cancellationToken);
             var previousPermissionIds = previousDirectGrants.Select(x => x.PermissionId).ToHashSet();
