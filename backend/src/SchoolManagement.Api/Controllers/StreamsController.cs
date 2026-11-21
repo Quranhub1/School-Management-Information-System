@@ -13,7 +13,7 @@ public sealed class StreamsController(StreamService service) : ControllerBase
 {
     [HttpGet("by-class/{classId:guid}")]
     public async Task<ActionResult<IReadOnlyList<Stream>>> GetByClass(Guid classId, CancellationToken ct)
-        => Ok(await service.GetByClassAsync(classId, ct));
+        => Ok((await service.GetByClassAsync(classId, ct)).Select(StreamResponseDto.FromDomain).ToArray());
 
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] SchoolManagement.Application.Academic.UpdateStreamRequest request, CancellationToken ct)
@@ -27,6 +27,13 @@ public sealed class StreamsController(StreamService service) : ControllerBase
     {
         var result = await service.CreateAsync(request, ct);
         if (!result.Success) return BadRequest(new { message = result.Error });
-        return Created($"/api/streams/{result.Stream!.Id}", result.Stream);
+        return Created($"/api/streams/{result.Stream!.Id}", StreamResponseDto.FromDomain(result.Stream));
     }
+}
+
+
+public sealed record StreamResponseDto(Guid Id, string Name, string Code, Guid AcademicClassId, string? ClassFormId, bool IsActive)
+{
+    public static StreamResponseDto FromDomain(Stream stream) =>
+        new(stream.Id, stream.Name, stream.Code, stream.AcademicClassId, stream.ClassFormId, stream.IsActive);
 }
