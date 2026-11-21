@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, createUserRequestSchema, permissionCodesRequestSchema, resetUserPasswordRequestSchema, setUserActiveRequestSchema, updateUserRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { calendarEventCreateRequestSchema, calendarReminderCreateRequestSchema, academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, createUserRequestSchema, permissionCodesRequestSchema, resetUserPasswordRequestSchema, setUserActiveRequestSchema, updateUserRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -145,6 +145,31 @@ describe("SMIS Zod domain schemas", () => {
 
 
 
+
+
+  it("validates calendar event ranges and reminder recipient/channel values", () => {
+    const event = {
+      title: "Semester opening",
+      description: "Opening day",
+      eventType: "Academic",
+      startDate: "2026-12-01",
+      endDate: "2026-12-01",
+      location: "Main campus",
+    };
+    expect(calendarEventCreateRequestSchema.safeParse(event).success).toBe(true);
+    expect(calendarEventCreateRequestSchema.safeParse({ ...event, endDate: "2026-11-30" }).success).toBe(false);
+
+    const reminder = {
+      recipientType: "All",
+      recipientId: "",
+      message: "Semester begins tomorrow",
+      remindOnUtc: "2026-11-30",
+      channel: "InApp",
+    };
+    expect(calendarReminderCreateRequestSchema.safeParse(reminder).success).toBe(true);
+    expect(calendarReminderCreateRequestSchema.safeParse({ ...reminder, recipientType: "Everyone" }).success).toBe(false);
+    expect(calendarReminderCreateRequestSchema.safeParse({ ...reminder, channel: "Push" }).success).toBe(false);
+  });
 
   it("validates administration users, passwords, status and permission lists", () => {
     const user = {
