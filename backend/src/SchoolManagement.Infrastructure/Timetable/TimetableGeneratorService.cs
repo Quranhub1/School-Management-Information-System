@@ -68,7 +68,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
 
         var teacherIds = allocations.Select(a => a.StaffMemberId).ToHashSet();
         var teachers = await db.StaffMembers.AsNoTracking()
-            .Where(x => teacherIds.Contains(x.Id))
+            .Where(x => teacherIds.Contains(x.Id) && x.IsActive && x.EmploymentStatus == "Active")
             .ToListAsync(cancellationToken);
 
         var existingEntries = await db.TimetableEntries.AsNoTracking()
@@ -274,7 +274,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             warnings,
             optimizationScore,
             unscheduled,
-            conflicts.Count == 0);
+            conflicts.Count == 0 && warnings.Count == 0 && unscheduled.Count == 0);
     }
 
     private static bool HasConflict(Guid entityId, Dictionary<Guid, List<(DayOfWeek, TimeOnly, TimeOnly)>> schedules, DayOfWeek day, TimeOnly start, TimeOnly end, out string reason)
