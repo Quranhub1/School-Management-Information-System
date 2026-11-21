@@ -53,6 +53,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             return new GeneratedTimetableResult([], [], [], 0,
                 ["The selected teaching group does not belong to the selected programme curriculum and academic period."], false);
         var selectedOfferingIds = teachingGroups.Select(x => x.CourseOfferingId).ToHashSet();
+        var groupIds = teachingGroups.Select(x => x.Id).ToHashSet();
         courseOfferings = courseOfferings.Where(x => selectedOfferingIds.Contains(x.Id)).ToList();
 
         var courses = await db.Courses.AsNoTracking()
@@ -75,7 +76,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             .ToListAsync(cancellationToken);
 
         var teacherSchedules = new Dictionary<Guid, List<(DayOfWeek, TimeOnly, TimeOnly)>>();
-        var roomSchedules = new Dictionary<string, List<(DayOfWeek, TimeOnly, TimeOnly)>>();
+        var roomSchedules = new Dictionary<string, List<(DayOfWeek, TimeOnly, TimeOnly)>>(StringComparer.OrdinalIgnoreCase);
         var groupSchedules = new Dictionary<Guid, List<(DayOfWeek, TimeOnly, TimeOnly)>>();
 
         foreach (var entry in existingEntries)
@@ -86,11 +87,12 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
                     teacherSchedules[entry.TeacherId] = [];
                 teacherSchedules[entry.TeacherId].Add((entry.DayOfWeek, entry.StartTime, entry.EndTime));
             }
-            if (!string.IsNullOrEmpty(entry.Room))
+            if (!string.IsNullOrWhiteSpace(entry.Room))
             {
-                if (!roomSchedules.ContainsKey(entry.Room))
-                    roomSchedules[entry.Room] = [];
-                roomSchedules[entry.Room].Add((entry.DayOfWeek, entry.StartTime, entry.EndTime));
+                var roomKey = entry.Room.Trim();
+                if (!roomSchedules.ContainsKey(roomKey))
+                    roomSchedules[roomKey] = [];
+                roomSchedules[roomKey].Add((entry.DayOfWeek, entry.StartTime, entry.EndTime));
             }
             if (!groupSchedules.ContainsKey(entry.TeachingGroupId))
                 groupSchedules[entry.TeachingGroupId] = [];
@@ -107,15 +109,40 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
         var defaultRooms = new[] { "Room 101", "Room 102", "Room 103", "Hall A", "Hall B" };
         var roomCounter = 0;
 
-        // Deactivate any existing active sessions for these groups so re-generation
-        // does not leave duplicate active timetable rows.
-        var groupIds = teachingGroups.Select(x => x.Id).ToHashSet();
+        // Keep the previous timetable intact until a complete replacement has been generated.
         var existingForGroups = await db.TimetableEntries
             .Where(x => x.IsActive && groupIds.Contains(x.TeachingGroupId))
             .ToListAsync(cancellationToken);
-        foreach (var existing in existingForGroups) existing.IsActive = false;
-        if (existingForGroups.Count > 0)
-            await db.SaveChangesAsync(cancellationToken);
+        var successfullyScheduledGroupIds = new HashSet<Guid>();
+
+        void AddToSchedules(TimetableEntry entry)
+        {
+            var slot = (entry.DayOfWeek, entry.StartTime, entry.EndTime);
+            if (entry.TeacherId != default)
+            {
+                if (!teacherSchedules.ContainsKey(entry.TeacherId)) teacherSchedules[entry.TeacherId] = [];
+                teacherSchedules[entry.TeacherId].Add(slot);
+            }
+            if (!string.IsNullOrWhiteSpace(entry.Room))
+            {
+                var roomKey = entry.Room.Trim();
+                if (!roomSchedules.ContainsKey(roomKey)) roomSchedules[roomKey] = [];
+                roomSchedules[roomKey].Add(slot);
+            }
+            if (!groupSchedules.ContainsKey(entry.TeachingGroupId)) groupSchedules[entry.TeachingGroupId] = [];
+            groupSchedules[entry.TeachingGroupId].Add(slot);
+        }
+
+        void RemoveFromSchedules(TimetableEntry entry)
+        {
+            var slot = (entry.DayOfWeek, entry.StartTime, entry.EndTime);
+            if (entry.TeacherId != default && teacherSchedules.TryGetValue(entry.TeacherId, out var teacherSlots))
+                teacherSlots.Remove(slot);
+            if (!string.IsNullOrWhiteSpace(entry.Room) && roomSchedules.TryGetValue(entry.Room.Trim(), out var roomSlots))
+                roomSlots.Remove(slot);
+            if (groupSchedules.TryGetValue(entry.TeachingGroupId, out var groupSlots))
+                groupSlots.Remove(slot);
+        }
 
         foreach (var teachingGroup in teachingGroups)
         {
@@ -147,6 +174,10 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
                 continue;
             }
 
+            var previousGroupEntries = existingForGroups.Where(x => x.TeachingGroupId == teachingGroup.Id).ToList();
+            foreach (var previous in previousGroupEntries) RemoveFromSchedules(previous);
+
+            var groupGeneratedEntries = new List<TimetableEntry>();
             var sessionsNeeded = Math.Max(1, course.CreditUnits);
             var sessionsScheduled = 0;
 
@@ -194,7 +225,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
                         GenerationSource = request.GenerationSource ?? "Auto"
                     };
 
-                    generatedEntries.Add(entry);
+                    groupGeneratedEntries.Add(entry);
 
                     if (!teacherSchedules.ContainsKey(teacher.Id))
                         teacherSchedules[teacher.Id] = [];
@@ -214,14 +245,25 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
 
             if (sessionsScheduled < sessionsNeeded)
             {
-                warnings.Add($"Only {sessionsScheduled} of {sessionsNeeded} sessions scheduled for {teachingGroup.GroupCode}.");
+                // Discard partial candidates and restore the previous active timetable.
+                foreach (var candidate in groupGeneratedEntries) RemoveFromSchedules(candidate);
+                foreach (var previous in previousGroupEntries) AddToSchedules(previous);
+                warnings.Add($"Only {sessionsScheduled} of {sessionsNeeded} sessions scheduled for {teachingGroup.GroupCode}; the existing timetable was retained.");
+                continue;
             }
+
+            generatedEntries.AddRange(groupGeneratedEntries);
+            successfullyScheduledGroupIds.Add(teachingGroup.Id);
         }
 
         if (generatedEntries.Count > 0)
         {
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            foreach (var previous in existingForGroups.Where(x => successfullyScheduledGroupIds.Contains(x.TeachingGroupId)))
+                previous.IsActive = false;
             db.TimetableEntries.AddRange(generatedEntries);
             await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
 
         var optimizationScore = generatedEntries.Count > 0 ? CalculateOptimizationScore(generatedEntries, warnings) : 0;
