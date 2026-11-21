@@ -429,7 +429,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
   }
 
-  function printTimetableTemplate() {
+  function timetableTemplatePdfOptions() {
     const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
     const rows = visibleDays.flatMap(day =>
       templateSlots.flatMap((slot, slotIndex) => {
@@ -523,7 +523,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         return row
       }),
     ]
-    printInstitutionalPdf({
+    return {
       ...base,
       title: templateTitle || base.title,
       content: [
@@ -559,7 +559,15 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         },
         { text: templateFooterText, alignment: 'left', fontSize: 8, margin: [0, 10, 0, 0] },
       ],
-    })
+    }
+  }
+
+  function printTimetableTemplate() {
+    printInstitutionalPdf(timetableTemplatePdfOptions())
+  }
+
+  function downloadTimetableTemplatePdf() {
+    downloadInstitutionalPdf(timetableTemplatePdfOptions())
   }
 
   async function handleGenerate(event: React.FormEvent) {
@@ -1896,6 +1904,14 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             >
               <Save size={15} />
               {templateSaving ? 'Saving template…' : 'Save timetable template'}
+            </button>
+            <button
+              className="timetable-action"
+              type="button"
+              onClick={downloadTimetableTemplatePdf}
+              disabled={!institutionLoaded || !institution.isActive}
+            >
+              Download PDF
             </button>
             <button
               className="timetable-action"
