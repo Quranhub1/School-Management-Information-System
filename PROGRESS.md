@@ -42,6 +42,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Validate every student/staff CSV and Excel row with Zod before upload, report row/field errors and duplicate file identifiers, and enforce the same critical rules server-side with RFC4180-compatible CSV parsing, strict dates, email and staff-type validation.
 - [x] Connect the student-receivables accounting report to the existing outstanding-invoice endpoint and apply the selected currency consistently to the general ledger, trial balance, income statement and balance sheet.
 - [x] Wire Zod validation into examination plan/mark APIs, academic year/period APIs, administration user/password/permission APIs, and calendar event/reminder APIs.
+- [x] Wire Zod validation into curriculum/course creation and updates, single/bulk curriculum mappings, and clinical logbook requirement/competency assessments.
 - [ ] Run and pass the complete backend/frontend/E2E CI for this branch before opening or merging its PR.
 
 ### Remaining audit work
