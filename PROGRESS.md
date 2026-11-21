@@ -43,6 +43,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Connect the student-receivables accounting report to the existing outstanding-invoice endpoint and apply the selected currency consistently to the general ledger, trial balance, income statement and balance sheet.
 - [x] Wire Zod validation into examination plan/mark APIs, academic year/period APIs, administration user/password/permission APIs, and calendar event/reminder APIs.
 - [x] Wire Zod validation into curriculum/course creation and updates, single/bulk curriculum mappings, and clinical logbook requirement/competency assessments.
+- [x] Wire Zod validation into programme create/update and validate academic authority, programme type and duration fields.
 - [ ] Run and pass the complete backend/frontend/E2E CI for this branch before opening or merging its PR.
 
 ### Remaining audit work
