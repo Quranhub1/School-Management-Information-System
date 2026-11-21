@@ -13,6 +13,15 @@ describe('bulk import row validation', () => {
     expect(errors.some(error => error.startsWith('Row 3, email:'))).toBe(true)
   })
 
+
+  it('normalizes Excel Date cells to ISO dates before validating student rows', () => {
+    const errors = validateBulkImportRows('student', [
+      { StudentNumber: 'STU003', FirstName: 'Grace', LastName: 'Hopper', DateOfBirth: new Date('2000-01-01T00:00:00.000Z') },
+    ])
+
+    expect(errors).toEqual([])
+  })
+
   it('rejects duplicate student or staff identifiers within the same file', () => {
     const studentErrors = validateBulkImportRows('student', [
       { StudentNumber: 'STU001', FirstName: 'Jane', LastName: 'Doe' },
