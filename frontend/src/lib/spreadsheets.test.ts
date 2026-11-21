@@ -54,7 +54,7 @@ describe('local workbook parsing', () => {
 
 
   it('parses quoted CSV fields containing commas and escaped quotes', () => {
-    const parsed = parseCsvText('StudentNumber,FirstName,LastName\\nSTU001,"Jane, \\"J.J.\\"",Doe')
+    const parsed = parseCsvText('StudentNumber,FirstName,LastName\nSTU001,"Jane, ""J.J.""",Doe')
 
     expect(parsed.rows).toEqual([{ StudentNumber: 'STU001', FirstName: 'Jane, "J.J."', LastName: 'Doe' }])
     expect(parsed.csvData).toContain('Jane')
