@@ -24,12 +24,10 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         var ids = requirements.Select(x => x.Id).ToArray();
         var competencies = await db.LogbookCompetencyRequirements.AsNoTracking()
             .Where(x => ids.Contains(x.LogbookRequirementId)).OrderBy(x => x.Name).ToListAsync(ct);
-        return Ok(requirements.Select(x => new
-        {
+        return Ok(requirements.Select(x => new LogbookRequirementResponse(
             x.Id, x.CurriculumId, x.Title, x.Description, x.YearOfStudy, x.SemesterNumber,
             x.RequiredQuantity, x.IsMandatory, x.IsActive,
-            Competencies = competencies.Where(c => c.LogbookRequirementId == x.Id)
-        }));
+            competencies.Where(c => c.LogbookRequirementId == x.Id).Select(ToResponse).ToArray())).ToArray());
     }
 
     [HttpPost("curricula/{curriculumId:guid}/logbook-requirements")]
@@ -46,7 +44,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         };
         db.LogbookRequirements.Add(entity);
         await db.SaveChangesAsync(ct);
-        return Ok(entity);
+        return Created($"/api/curriculum-management/curricula/{curriculumId}/logbook-requirements/{entity.Id}", ToResponse(entity, []));
     }
 
     [HttpPost("logbook-requirements/{requirementId:guid}/competencies")]
@@ -64,7 +62,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         };
         db.LogbookCompetencyRequirements.Add(entity);
         await db.SaveChangesAsync(ct);
-        return Ok(entity);
+        return Created($"/api/curriculum-management/logbook-requirements/{requirementId}/competencies/{entity.Id}", ToResponse(entity));
     }
 
     [HttpGet("students/{studentId:guid}/logbooks")]
@@ -79,7 +77,10 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         var rows = await query.ToListAsync(ct);
         var logbookIds = rows.Select(x => x.Logbook.Id).ToArray();
         var assessments = await db.StudentLogbookCompetencies.AsNoTracking().Where(x => logbookIds.Contains(x.StudentLogbookId)).ToListAsync(ct);
-        return Ok(rows.Select(x => new { x.Logbook, x.Requirement, Competencies = assessments.Where(a => a.StudentLogbookId == x.Logbook.Id) }));
+        return Ok(rows.Select(x => new StudentLogbookDetailResponse(
+            ToResponse(x.Logbook),
+            new LogbookRequirementSummaryResponse(x.Requirement.Id, x.Requirement.Title, x.Requirement.YearOfStudy, x.Requirement.SemesterNumber, x.Requirement.RequiredQuantity, x.Requirement.IsMandatory),
+            assessments.Where(a => a.StudentLogbookId == x.Logbook.Id).Select(ToResponse).ToArray())).ToArray());
     }
 
     [HttpPost("students/{studentId:guid}/logbooks")]
@@ -111,7 +112,13 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
                 db.StudentLogbookCompetencies.Add(new StudentLogbookCompetency { StudentLogbookId = entity.Id, CompetencyRequirementId = competency.Id });
         }
         await db.SaveChangesAsync(ct);
-        return Ok(entity);
+        var issuedAssessments = await db.StudentLogbookCompetencies.AsNoTracking()
+            .Where(x => x.StudentLogbookId == entity.Id).ToListAsync(ct);
+        return Created($"/api/curriculum-management/students/{studentId}/logbooks/{entity.Id}",
+            new StudentLogbookDetailResponse(
+                ToResponse(entity),
+                new LogbookRequirementSummaryResponse(requirement.Id, requirement.Title, requirement.YearOfStudy, requirement.SemesterNumber, requirement.RequiredQuantity, requirement.IsMandatory),
+                issuedAssessments.Select(ToResponse).ToArray()));
     }
 
     [HttpPut("student-logbooks/{logbookId:guid}/competencies/{assessmentId:guid}")]
@@ -200,7 +207,8 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         var query = db.UhpabFeeReferences.AsNoTracking().Where(x => x.IsActive);
         if (!string.IsNullOrWhiteSpace(programmeCode)) query = query.Where(x => x.ProgrammeCode == programmeCode.Trim());
         if (!string.IsNullOrWhiteSpace(category)) query = query.Where(x => x.Category == category.Trim());
-        return Ok(await query.OrderBy(x => x.Category).ThenBy(x => x.ProgrammeCode).ThenBy(x => x.Description).ToListAsync(ct));
+        var references = await query.OrderBy(x => x.Category).ThenBy(x => x.ProgrammeCode).ThenBy(x => x.Description).ToListAsync(ct);
+        return Ok(references.Select(ToResponse).ToArray());
     }
 
     [HttpPost("uhpab-fee-references")]
@@ -225,7 +233,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         };
         db.UhpabFeeReferences.Add(entity);
         await db.SaveChangesAsync(ct);
-        return Ok(entity);
+        return Created($"/api/finance/uhpab-fee-references/{entity.Id}", ToResponse(entity));
     }
 }
 
