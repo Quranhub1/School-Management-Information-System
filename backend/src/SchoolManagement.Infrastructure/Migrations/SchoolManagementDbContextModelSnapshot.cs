@@ -4701,10 +4701,7 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("StaffId", "UserId");
-
-                    b.HasIndex("StaffId")
-                        .IsUnique();
+                    b.HasKey("StaffId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
