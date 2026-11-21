@@ -4703,6 +4703,9 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasKey("StaffId", "UserId");
 
+                    b.HasIndex("StaffId")
+                        .IsUnique();
+
                     b.HasIndex("UserId")
                         .IsUnique();
 
