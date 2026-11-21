@@ -389,7 +389,7 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         {
             var leaveRequest = await leaveService.RequestAsync(
                 id, request.LeaveType, request.StartDate, request.EndDate, request.Reason, cancellationToken);
-            return Created($"api/staff/{id}/leave/{leaveRequest.Id}", leaveRequest);
+            return CreatedAtAction(nameof(GetLeave), new { id }, LeaveRequestResponseDto.FromDomain(leaveRequest));
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
@@ -432,6 +432,32 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
         if (leaveRequest is null) return NotFound();
         return NoContent();
     }
+}
+
+
+public sealed record LeaveRequestResponseDto(
+    Guid Id,
+    Guid StaffMemberId,
+    string LeaveType,
+    DateOnly StartDate,
+    DateOnly EndDate,
+    string Reason,
+    string Status,
+    Guid? ApprovedBy,
+    DateTimeOffset? ApprovedAt,
+    DateTimeOffset CreatedAt)
+{
+    public static LeaveRequestResponseDto FromDomain(LeaveRequest request) => new(
+        request.Id,
+        request.StaffMemberId,
+        request.LeaveType.ToString(),
+        request.StartDate,
+        request.EndDate,
+        request.Reason,
+        request.Status.ToString(),
+        request.ApprovedBy,
+        request.ApprovedAt,
+        request.CreatedAt);
 }
 
 public sealed record CreateStaffRequest(string StaffNumber, string FirstName, string LastName, string? NationalId, string? PhoneNumber, string? Email, string EmploymentType, StaffType StaffType = StaffType.NonTeaching, Guid? DepartmentId = null, string? JobTitle = null, string? HighestQualification = null, string? Speciality = null, string? ProfessionalRegistration = null, Guid[]? CourseUnitIds = null, Guid? CampusId = null, bool CreateLoginAccount = false, string? Username = null, string? Password = null, string[]? RoleNames = null, string[]? PermissionCodes = null, string[]? DeniedPermissionCodes = null, StaffAccountRequest? Account = null, DateOnly? DateJoined = null, string? Gender = null, DateOnly? DateOfBirth = null, string? Address = null, string? BankName = null, string? BankAccountNumber = null, string? BankAddress = null, decimal? BasicSalary = null, string? AttendanceMode = null, string? PhotographDataUrl = null);
