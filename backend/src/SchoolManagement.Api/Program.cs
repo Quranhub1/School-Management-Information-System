@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
-using SchoolManagement.Application.Students;
 using SchoolManagement.Application.Finance;
+using SchoolManagement.Application.Students;
 using SchoolManagement.Api.BackgroundServices;
 using SchoolManagement.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
@@ -65,7 +65,8 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
 });
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<SchoolManagement.Api.Validation.CreateStudentRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateStudentRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateTimetableEntryRequestValidator>();
 builder.Services.AddControllers().AddJsonOptions(o =>
 {
     o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -164,6 +165,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
     await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
     await scope.ServiceProvider.GetRequiredService<FinanceAccountSeeder>().SeedAsync();
+    await scope.ServiceProvider.GetRequiredService<SchoolManagement.Infrastructure.Identity.PermissionCatalogSeeder>().SeedAsync();
 }
 app.UseMiddleware<SchoolManagement.Api.Middleware.CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging(options =>
