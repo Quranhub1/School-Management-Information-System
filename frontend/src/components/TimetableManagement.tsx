@@ -416,7 +416,8 @@ setLoading(false)
 
 function editEntry(entry: TimetableEntry) {
 const group = options.teachingGroups.find(item => item.id === entry.teachingGroupId)
-const mapping = options.curriculumCourses.find(item => item.courseId === entry.courseId && item.programmeId === group?.programmeId)
+const mappings = options.curriculumCourses.filter(item => item.courseId === entry.courseId && item.programmeId === group?.programmeId)
+const mapping = mappings.find(item => item.curriculumId === selectedCurriculum?.id) ?? mappings[0]
 const curriculum = options.curricula.find(item => item.id === mapping?.curriculumId)
 setProgrammeId(programmeOptions.find(item => item.sourceIds.includes(group?.programmeId ?? ''))?.id ?? group?.programmeId ?? '')
 setCurriculumId(curriculum?.id ?? '')
@@ -528,22 +529,47 @@ const populated = Object.entries(templateCells).filter(([key, cell]) => { const 
 if (templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)) { setError('Every period must have an end time later than its start time.'); return }
 if (populated.some(([, cell]) => !cell.courseId || !cell.teacherId)) { setError('Every filled timetable cell needs both a course unit and a tutor.'); return }
 
-const entries: CreateTimetableEntry[] = populated.map(([key, cell]) => {
-  const [day, slotIndexText] = key.split('-')
-  const slot = templateSlots[Number(slotIndexText)]
-  return {
+const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
+for (const [key, cell] of populated) {
+  const customTime = cell.customTime?.trim()
+  if (!customTime) continue
+  const match = /^(\\d{1,2}:\\d{2})\\s*[-–]\\s*(\\d{1,2}:\\d{2})$/.exec(customTime)
+  if (!match) { setError('Custom time must use HH:mm–HH:mm (24-hour time), for example 08:30–10:00.'); return }
+  const toMinutes = (value: string) => {
+    const [hours, minutes] = value.split(':').map(Number)
+    return hours * 60 + minutes
+  }
+  if (toMinutes(match[1]) >= toMinutes(match[2]) || toMinutes(match[2]) > 24 * 60 || toMinutes(match[1]) < 0) {
+    setError('Custom time must have a valid start time before its end time.'); return
+  }
+}
+const entries: CreateTimetableEntry[] = populated.flatMap(([key, cell]) => {
+  const [dayText, slotIndexText] = key.split('-')
+  const day = Number(dayText)
+  const slotIndex = Number(slotIndexText)
+  const slot = templateSlots[slotIndex]
+  const periodSpan = templatePeriodSpan(slotIndex, cell.colSpan)
+  const lastSlot = templateSlots[slotIndex + periodSpan - 1]
+  const visibleDayIndex = visibleDays.indexOf(day)
+  const daySpan = Math.max(1, Math.min(visibleDays.length - visibleDayIndex, Number(cell.rowSpan) || 1))
+  const customRange = cell.customTime?.trim()
+    ? /^(\\d{1,2}:\\d{2})\\s*[-–]\\s*(\\d{1,2}:\\d{2})$/.exec(cell.customTime.trim())
+    : null
+  const sessionStart = customRange?.[1] ?? slot.startTime
+  const sessionEnd = customRange?.[2] ?? lastSlot.endTime
+  return Array.from({ length: daySpan }, (_, offset) => ({
     teachingGroupId: templateGroupId,
     courseId: cell.courseId,
     teacherId: cell.teacherId,
     curriculumId: selectedCurriculum.id,
     yearOfStudy: Number(yearOfStudy),
     curriculumSemesterNumber: Number(curriculumSemester),
-    dayOfWeek: Number(day),
-    startTime: slot.startTime + ':00',
-    endTime: slot.endTime + ':00',
+    dayOfWeek: visibleDays[visibleDayIndex + offset],
+    startTime: sessionStart + ':00',
+    endTime: sessionEnd + ':00',
     room: cell.room.trim() || undefined,
     sessionType: cell.sessionType || 'Lecture',
-  }
+  }))
 })
 
 setTemplateSaving(true)
@@ -1029,6 +1055,7 @@ return (
           <label>1. Course unit (from system registry)<select aria-label="Course unit" value={cell.courseId} onChange={event => changeTemplateCell(activeTemplateCellKey, 'courseId', event.target.value)}><option value="">ENTER COURSE UNIT</option>{(availableCourses.length ? availableCourses : options.courses).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
           <label>2. Tutor / lecturer (editable independently)<select aria-label="Lecturer / teacher" value={cell.teacherId} onChange={event => changeTemplateCell(activeTemplateCellKey, 'teacherId', event.target.value)}><option value="">TUTOR</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
           <label>Room / venue<input aria-label="Room / venue" value={cell.room} onChange={event => changeTemplateCell(activeTemplateCellKey, 'room', event.target.value)} placeholder="Enter room or laboratory"/></label>
+          <label>Custom time (optional, 24-hour)<input aria-label="Custom time" value={cell.customTime ?? ''} onChange={event => changeTemplateCell(activeTemplateCellKey, 'customTime', event.target.value)} placeholder="08:30–10:00" /></label>
           <label>Session type<select aria-label="Session type" value={cell.sessionType} onChange={event => changeTemplateCell(activeTemplateCellKey, 'sessionType', event.target.value)}><option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option></select></label>
           <label>Merge down (days)<select aria-label="Merge down (days)" value={Number(cell.rowSpan) || 1} onChange={event => changeTemplateCell(activeTemplateCellKey, 'rowSpan', event.target.value)}>{[1,2,3,4,5,6,7].slice(0, templateDayOrder.filter(item => showWeekends || item <= 5).length - templateDayOrder.filter(item => showWeekends || item <= 5).indexOf(dayValue)).map(value => <option key={value} value={value}>{value} day(s)</option>)}</select></label>
           <label>Merge across periods<select aria-label="Merge across periods" value={Number(cell.colSpan) || 1} onChange={event => changeTemplateCell(activeTemplateCellKey, 'colSpan', event.target.value)}>{[1,2,3,4,5,6,7].slice(0, templateSlots.length - slotValue).map(value => <option key={value} value={value}>{value} period(s)</option>)}</select></label>
