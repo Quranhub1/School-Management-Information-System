@@ -166,7 +166,7 @@ const programmeCurricula = options.curricula.filter(item => selectedProgrammeIds
 const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? programmeCurricula[0]
 const curriculumMappings = options.curriculumCourses.filter(item => item.curriculumId === selectedCurriculum?.id)
 const semesterTemplates = useMemo(() => {
-const grouped = new Map<string, { year: number; semester: number; courseIds: Set; courseLabels: string[] }>()
+const grouped = new Map<string, { year: number; semester: number; courseIds: Set<string>; courseLabels: string[] }>()
 for (const mapping of curriculumMappings) {
 const key = mapping.yearOfStudy + '-' + mapping.semesterNumber
 const current = grouped.get(key) ?? { year: mapping.yearOfStudy, semester: mapping.semesterNumber, courseIds: new Set(), courseLabels: [] }
