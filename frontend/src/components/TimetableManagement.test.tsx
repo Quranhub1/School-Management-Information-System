@@ -126,7 +126,7 @@ describe('TimetableManagement', () => {
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
     fireEvent.change(screen.getByLabelText('Divider after period'), { target: { value: '1' } })
-    expect(screen.getByLabelText('BREAK')).toBeTruthy()
+    expect(await screen.findByRole('columnheader', { name: 'BREAK' })).toBeTruthy()
   })
 
   it('persists edited document metadata and merged-cell layout through the timetable API', async () => {

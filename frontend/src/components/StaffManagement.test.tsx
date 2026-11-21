@@ -14,6 +14,8 @@ vi.mock('../api/staff', () => ({
   listLeave: vi.fn().mockResolvedValue([]),
   requestLeave: vi.fn().mockResolvedValue(null),
   approveLeave: vi.fn().mockResolvedValue(null),
+  listStaffPermissionCatalog: vi.fn().mockResolvedValue([]),
+  listStaffRoles: vi.fn().mockResolvedValue([]),
   STAFF_CHANGED_EVENT: 'smis:staff-changed',
 }))
 
@@ -57,7 +59,7 @@ describe('StaffManagement', () => {
     expect(screen.getByLabelText('Name of staff')).toBeTruthy()
     expect(screen.getByText('Single day')).toBeTruthy()
     expect(screen.getByText('Multiple days')).toBeTruthy()
-    await waitFor(() => expect(screen.getByRole('option', { name: /Amina Nabirye/ })).toBeTruthy())
-    expect(screen.queryByRole('option', { name: /John Okello/ })).toBeNull()
+    await waitFor(() => expect(screen.getByRole('option', { name: /NABIRIYE AMINA/ })).toBeTruthy())
+    expect(screen.queryByRole('option', { name: /OKELLO JOHN/ })).toBeNull()
   })
 })
