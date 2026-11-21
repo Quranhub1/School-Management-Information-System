@@ -649,7 +649,7 @@ export const createCurriculumRequestSchema = z.object({
   programmeId: identifierSchema,
   version: requiredTextSchema.max(40),
   title: requiredTextSchema.max(160),
-  minimumCredits: z.number().finite().nonnegative(),
+  minimumCredits: z.number().int().nonnegative(),
   effectiveFrom: z.iso.date(),
   effectiveTo: z.iso.date().nullable().optional(),
   programmeType: z.number().int().min(0).max(1),
