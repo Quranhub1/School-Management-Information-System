@@ -533,7 +533,7 @@ const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
 for (const [key, cell] of populated) {
   const customTime = cell.customTime?.trim()
   if (!customTime) continue
-  const match = /^(\\d{1,2}:\\d{2})\\s*[-–]\\s*(\\d{1,2}:\\d{2})$/.exec(customTime)
+  const match = /^(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})$/.exec(customTime)
   if (!match) { setError('Custom time must use HH:mm–HH:mm (24-hour time), for example 08:30–10:00.'); return }
   const toMinutes = (value: string) => {
     const [hours, minutes] = value.split(':').map(Number)
@@ -553,7 +553,7 @@ const entries: CreateTimetableEntry[] = populated.flatMap(([key, cell]) => {
   const visibleDayIndex = visibleDays.indexOf(day)
   const daySpan = Math.max(1, Math.min(visibleDays.length - visibleDayIndex, Number(cell.rowSpan) || 1))
   const customRange = cell.customTime?.trim()
-    ? /^(\\d{1,2}:\\d{2})\\s*[-–]\\s*(\\d{1,2}:\\d{2})$/.exec(cell.customTime.trim())
+    ? /^(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})$/.exec(cell.customTime.trim())
     : null
   const sessionStart = customRange?.[1] ?? slot.startTime
   const sessionEnd = customRange?.[2] ?? lastSlot.endTime
