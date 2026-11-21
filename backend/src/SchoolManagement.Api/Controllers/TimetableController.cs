@@ -80,30 +80,34 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [Authorize(Policy = TimetablePolicies.Read)]
     public async Task<IActionResult> Conflicts([FromQuery] Guid? teachingGroupId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
     {
-        var query = db.TimetableEntries.AsNoTracking().Where(x => x.IsActive);
-        if (teachingGroupId.HasValue) query = query.Where(x => x.TeachingGroupId == teachingGroupId.Value);
+        var candidateQuery = db.TimetableEntries.AsNoTracking().Where(x => x.IsActive);
+        if (teachingGroupId.HasValue)
+            candidateQuery = candidateQuery.Where(x => x.TeachingGroupId == teachingGroupId.Value);
         if (semesterId.HasValue)
         {
-            query = query.Where(entry => db.TeachingGroups
+            candidateQuery = candidateQuery.Where(entry => db.TeachingGroups
                 .Where(group => group.Id == entry.TeachingGroupId)
                 .Join(db.CourseOfferings, group => group.CourseOfferingId, offering => offering.Id,
                     (group, offering) => offering.SemesterId)
                 .Any(id => id == semesterId.Value));
         }
 
-        var entries = await query.ToListAsync(cancellationToken);
+        var candidates = await candidateQuery.ToListAsync(cancellationToken);
+        var allActiveEntries = await db.TimetableEntries.AsNoTracking()
+            .Where(entry => entry.IsActive)
+            .ToListAsync(cancellationToken);
         var conflictingIds = new HashSet<Guid>();
-        for (var leftIndex = 0; leftIndex < entries.Count; leftIndex++)
+        foreach (var candidate in candidates)
         {
-            for (var rightIndex = leftIndex + 1; rightIndex < entries.Count; rightIndex++)
+            foreach (var other in allActiveEntries)
             {
-                if (!HasOverlap(entries[leftIndex], entries[rightIndex])) continue;
-                conflictingIds.Add(entries[leftIndex].Id);
-                conflictingIds.Add(entries[rightIndex].Id);
+                if (candidate.Id == other.Id || !HasOverlap(candidate, other)) continue;
+                conflictingIds.Add(candidate.Id);
+                break;
             }
         }
 
-        return Ok(entries.Where(entry => conflictingIds.Contains(entry.Id)).Select(ToDto).ToArray());
+        return Ok(candidates.Where(entry => conflictingIds.Contains(entry.Id)).Select(ToDto).ToArray());
     }
 
     private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, Guid curriculumId, int yearOfStudy, int curriculumSemesterNumber, CancellationToken cancellationToken)
