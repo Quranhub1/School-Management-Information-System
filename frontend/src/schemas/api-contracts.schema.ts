@@ -720,3 +720,23 @@ export const studentLogbookCompetencyAssessmentRequestSchema = z.object({
   evidenceReference: z.string().trim().max(500).optional(),
   remarks: z.string().trim().max(1000).optional(),
 });
+
+
+export const createProgrammeRequestSchema = z.object({
+  departmentId: identifierSchema.nullable().optional(),
+  code: requiredTextSchema.max(40),
+  name: requiredTextSchema.max(160),
+  award: requiredTextSchema.max(100),
+  awardTitle: z.string().trim().max(160).optional(),
+  durationYears: z.number().int().nonnegative(),
+  durationUnit: z.string().trim().max(40).optional(),
+  studyMode: z.string().trim().max(60).optional(),
+  deliveryType: z.string().trim().max(60).optional(),
+  type: z.number().int().min(0).max(1).optional(),
+  regulator: requiredTextSchema.max(80),
+  approvalReference: z.string().trim().max(160).optional(),
+  approvalDate: z.iso.date().optional(),
+  approvalStatus: z.string().trim().max(80).optional(),
+  sourceReference: z.string().trim().max(500).optional(),
+  isReferenceOnly: z.boolean().optional(),
+});
