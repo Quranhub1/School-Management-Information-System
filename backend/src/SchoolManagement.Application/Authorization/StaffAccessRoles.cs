@@ -13,9 +13,11 @@ public static class StaffAccessRoles
     public const string StaffAttendance = "StaffAccess.Staff.Attendance";
     public const string StudentsRead = "StaffAccess.Students.Read";
     public const string StudentsManage = "StaffAccess.Students.Manage";
+    public const string StudentsClassesManage = "StaffAccess.Students.Classes.Manage";
     public const string StudentsDelete = "StaffAccess.Students.Delete";
     public const string StudentsPromote = "StaffAccess.Students.Promote";
     public const string ClassesDelete = "StaffAccess.Classes.Delete";
+    public const string CurriculumCourseUnitsManage = "StaffAccess.Curriculum.CourseUnits.Manage";
     public const string CurriculumManage = "StaffAccess.Curriculum.Manage";
     public const string TimetableManage = "StaffAccess.Timetable.Manage";
     public const string LibraryManage = "StaffAccess.Library.Manage";
@@ -40,7 +42,7 @@ public static class StaffAccessRoles
         ["staff.attendance"] = StaffAttendance,
         ["students.delete"] = StudentsDelete,
         ["staff.manage"] = StaffManage,
-        ["curriculum.course-units.manage"] = CurriculumManage,
+        ["curriculum.course-units.manage"] = CurriculumCourseUnitsManage,
         ["curriculum.manage"] = CurriculumManage,
         ["library.manage"] = LibraryManage,
         ["finance.payments.delete"] = FinanceDeletePayments,
@@ -48,7 +50,7 @@ public static class StaffAccessRoles
         ["admissions.manage"] = AdmissionsManage,
         ["users.manage"] = UsersManage,
         ["students.promote"] = StudentsPromote,
-        ["students.classes.manage"] = StudentsManage,
+        ["students.classes.manage"] = StudentsClassesManage,
         ["timetable.manage"] = TimetableManage,
         ["staff.leaves.manage"] = StaffLeaveManage,
         ["noticeboard.manage"] = NoticeboardManage,
