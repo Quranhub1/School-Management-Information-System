@@ -25,7 +25,7 @@ public sealed class AddStaffUserLinks : Migration
                 table.ForeignKey(
                     name: "FK_StaffUserLinks_StaffMembers_StaffId",
                     column: x => x.StaffId,
-                    principalTable: "staff_members",
+                    principalTable: "StaffMembers",
                     principalColumn: "Id",
                     onDelete: ReferentialAction.Cascade);
                 table.ForeignKey(
