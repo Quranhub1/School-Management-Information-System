@@ -15,7 +15,7 @@ public sealed class CreateTimetableEntryRequestValidator : AbstractValidator<Cre
         RuleFor(x => x.EndTime).GreaterThan(x => x.StartTime)
             .WithMessage("End time must be after start time.");
         RuleFor(x => x.Room).MaximumLength(100);
-        RuleFor(x => x.SessionType).MaximumLength(60);
+        RuleFor(x => x.SessionType).MaximumLength(50);
         RuleFor(x => x.YearOfStudy).GreaterThan(0);
         RuleFor(x => x.CurriculumSemesterNumber).GreaterThan(0);
     }
