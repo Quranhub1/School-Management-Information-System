@@ -540,3 +540,24 @@ export const closeFiscalPeriodRequestSchema = z.object({
   fiscalPeriodId: identifierSchema,
   retainedEarningsAccountId: identifierSchema,
 });
+
+
+export const assessmentPlanCreateRequestSchema = z.object({
+  courseId: identifierSchema,
+  name: requiredTextSchema.max(160),
+  assessmentType: requiredTextSchema.max(80),
+  weightPercentage: z.number().finite().min(0).max(100),
+  isCompetencyBased: z.boolean(),
+});
+
+export const recordAssessmentRequestSchema = z.object({
+  studentId: identifierSchema,
+  courseRegistrationId: identifierSchema,
+  assessmentPlanId: identifierSchema,
+  score: z.number().finite().nonnegative(),
+  maximumScore: z.number().finite().positive(),
+  competencyLevel: z.string().trim().max(120).optional(),
+}).refine(value => value.score <= value.maximumScore, {
+  path: ["score"],
+  message: "Score cannot exceed the maximum score.",
+});
