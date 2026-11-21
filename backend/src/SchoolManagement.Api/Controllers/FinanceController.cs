@@ -139,7 +139,7 @@ public sealed class FinanceController(FinanceWorkflowService finance, InvoiceDis
     }
 
     [HttpGet("reports/outstanding-balances")]
-    public async Task<IActionResult> GetOutstandingBalancesCompatibility(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetOutstandingBalancesCompatibility([FromQuery] string? currency, CancellationToken cancellationToken)
     {
         var accessibleCampuses = await campusAccess.GetAccessibleCampusIdsAsync(User, cancellationToken);
         if (accessibleCampuses is { Count: 0 }) return Forbid();
