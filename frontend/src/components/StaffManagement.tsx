@@ -145,7 +145,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
   useEffect(() => { if (canReadPayroll && tab === 'payroll') void loadPayroll() }, [tab, canReadPayroll])
 
   async function saveAccountForStaff(staffId: string) {
-    const requested = accountForm.password.trim() || accountForm.permissions.length > 0 || (!accountLinked && accountForm.username.trim())
+    const requested = accountLinked || Boolean(accountForm.password.trim() || accountForm.permissions.length > 0 || accountForm.username.trim())
     if (!requested) return
     if (!accountForm.username.trim()) throw new Error('Enter a username for the staff login account.')
     if (!accountLinked && accountForm.permissions.length === 0) throw new Error('Select at least one screen or action for this staff account.')
