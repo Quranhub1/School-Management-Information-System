@@ -16,7 +16,7 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
         catch (FormatException ex) { return new BulkImportResult(0, 1, new[] { ex.Message }, Array.Empty<string>()); }
         if (rows.Count < 2)
             return new BulkImportResult(0, 1, new[] { "CSV data is empty or missing headers." }, Array.Empty<string>());
-        var headers = rows[0].Select(h => h.Trim().ToLowerInvariant()).ToArray();
+        var headers = rows[0].Select(NormalizeHeader).ToArray();
         if (headers.Distinct(StringComparer.OrdinalIgnoreCase).Count() != headers.Length)
             return new BulkImportResult(0, 1, new[] { "CSV headers must be unique." }, Array.Empty<string>());
         var studentNumberIdx = Array.IndexOf(headers, "studentnumber");
@@ -176,6 +176,10 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
         return sb.ToString();
     }
 
+
+
+    private static string NormalizeHeader(string header) =>
+        new(header.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
 
     private static string Escape(string? value)
     {
