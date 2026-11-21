@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bulkCurriculumCourseMappingRequestSchema, calendarEventCreateRequestSchema, calendarReminderCreateRequestSchema, createCourseRequestSchema, createCurriculumRequestSchema, curriculumCourseMappingRequestSchema, logbookCompetencyRequestSchema, logbookRequirementRequestSchema, studentLogbookCompetencyAssessmentRequestSchema, updateCourseRequestSchema, updateCurriculumRequestSchema, academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, createUserRequestSchema, permissionCodesRequestSchema, resetUserPasswordRequestSchema, setUserActiveRequestSchema, updateUserRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { bulkCurriculumCourseMappingRequestSchema, createProgrammeRequestSchema, calendarEventCreateRequestSchema, calendarReminderCreateRequestSchema, createCourseRequestSchema, createCurriculumRequestSchema, curriculumCourseMappingRequestSchema, logbookCompetencyRequestSchema, logbookRequirementRequestSchema, studentLogbookCompetencyAssessmentRequestSchema, updateCourseRequestSchema, updateCurriculumRequestSchema, academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, createUserRequestSchema, permissionCodesRequestSchema, resetUserPasswordRequestSchema, setUserActiveRequestSchema, updateUserRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -147,6 +147,30 @@ describe("SMIS Zod domain schemas", () => {
 
 
 
+
+
+  it("validates academic programme authority and duration fields", () => {
+    const programme = {
+      departmentId: "department-1",
+      code: "DIP-PHA",
+      name: "Diploma in Pharmacy",
+      award: "Diploma",
+      awardTitle: "Diploma in Pharmacy",
+      durationYears: 2,
+      durationUnit: "Years",
+      studyMode: "Full-time",
+      deliveryType: "Academic",
+      type: 0,
+      regulator: "UHPAB",
+      approvalDate: "2026-01-01",
+      approvalStatus: "Approved",
+      isReferenceOnly: false,
+    };
+    expect(createProgrammeRequestSchema.safeParse(programme).success).toBe(true);
+    expect(createProgrammeRequestSchema.safeParse({ ...programme, durationYears: -1 }).success).toBe(false);
+    expect(createProgrammeRequestSchema.safeParse({ ...programme, regulator: "" }).success).toBe(false);
+    expect(createProgrammeRequestSchema.safeParse({ ...programme, type: 4 }).success).toBe(false);
+  });
 
   it("validates curriculum, course, mapping and logbook payloads", () => {
     const curriculum = {
