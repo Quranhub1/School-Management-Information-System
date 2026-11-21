@@ -5,7 +5,6 @@ using SchoolManagement.Api.Services;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Students;
 using SchoolManagement.Application.StudentRecords;
-using SchoolManagement.Domain.Students;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Infrastructure.Persistence;
 
@@ -263,7 +262,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
     [Authorize(Policy = AuthorizationPolicies.StudentManagement)]
     public async Task<IActionResult> Update(Guid id, UpdateStudentRequest request, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return ValidationProblem(ModelState);
         if (!await campusAccess.CanAccessStudentAsync(User, id, cancellationToken)) return Forbid();
         if (id != request.Id)
             return BadRequest(new { message = "Route ID and body ID must match." });
@@ -290,28 +288,6 @@ public sealed class StudentsController(StudentService service, SchoolManagementD
         var deleted = await service.DeleteAsync(id, cancellationToken);
         return deleted ? NoContent() : NotFound();
     }
-
-    private static StudentDto ToDto(Student student) => new(
-        student.Id,
-        student.StudentNumber,
-        student.FirstName,
-        student.LastName,
-        student.OtherNames,
-        student.DisplayName,
-        student.DateOfBirth,
-        student.Gender,
-        student.NationalId,
-        student.PhoneNumber,
-        student.Email,
-        student.Status,
-        student.IsArchived,
-        student.ArchivedAt,
-        student.ArchivedBy,
-        student.ArchiveReason,
-        student.StatusBeforeArchive,
-        student.AdmissionId,
-        student.CampusId,
-        student.CreatedAt);
 }
 
 public sealed record StudentResponse(Guid Id, string StudentNumber, string FirstName, string LastName, string? OtherNames,
