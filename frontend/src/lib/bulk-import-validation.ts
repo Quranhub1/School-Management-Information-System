@@ -7,6 +7,9 @@ function readValue(row: BulkImportRow, name: string): string | undefined {
   const normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '')
   const entry = Object.entries(row).find(([key]) => key.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedName)
   if (!entry || entry[1] === null || entry[1] === undefined) return undefined
+  if (entry[1] instanceof Date && !Number.isNaN(entry[1].getTime())) {
+    return name.toLowerCase() === 'dateofbirth' ? entry[1].toISOString().slice(0, 10) : entry[1].toISOString()
+  }
   const value = String(entry[1]).trim()
   return value.length ? value : undefined
 }
