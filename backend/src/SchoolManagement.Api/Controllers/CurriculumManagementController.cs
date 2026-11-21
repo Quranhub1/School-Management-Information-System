@@ -13,14 +13,14 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class CurriculumManagementController(CurriculumManagementService service, SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("curricula")]
-    public async Task<IActionResult> GetCurricula(CancellationToken ct) => Ok(await service.GetCurriculaAsync(ct));
+    public async Task<IActionResult> GetCurricula(CancellationToken ct) => Ok((await service.GetCurriculaAsync(ct)).Select(CurriculumResponseDto.FromDomain).ToArray());
 
     [HttpGet("curricula/{id:guid}")]
     public async Task<IActionResult> GetCurriculum(Guid id, CancellationToken ct)
     {
         var curriculum = await db.Curricula.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
         if (curriculum is null) return NotFound(new { message = "Curriculum not found." });
-        return Ok(curriculum);
+        return Ok(CurriculumResponseDto.FromDomain(curriculum));
     }
 
     [HttpPut("curricula/{id:guid}")]
@@ -120,19 +120,20 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
             select authority.Id).AnyAsync(ct);
         if (!authorityActive) return Conflict(new { message = "Select a programme registered under an active academic authority." });
         var result = await service.CreateCurriculumAsync(request, ct);
-        return result.Success ? Ok(result.Curriculum) : BadRequest(new { message = result.Error });
+        return result.Success && result.Curriculum is not null ? Ok(CurriculumResponseDto.FromDomain(result.Curriculum)) : BadRequest(new { message = result.Error });
     }
 
     [HttpGet("courses")]
     public async Task<IActionResult> GetCourses([FromQuery] string? authorityCode, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(authorityCode))
-            return Ok(await service.GetCoursesAsync(ct));
+            return Ok((await service.GetCoursesAsync(ct)).Select(CourseResponseDto.FromDomain).ToArray());
         var code = authorityCode.Trim().ToUpperInvariant();
         if (!await db.AcademicAuthorities.AsNoTracking().AnyAsync(x => x.Code == code && x.IsActive, ct))
             return NotFound(new { message = "The selected academic authority is not registered or active." });
-        return Ok(await db.Courses.AsNoTracking().Where(x => x.AuthorityCode == code || x.AuthorityCode == null)
-            .OrderBy(x => x.AuthorityCode == null).ThenBy(x => x.Code).ToListAsync(ct));
+        var courses = await db.Courses.AsNoTracking().Where(x => x.AuthorityCode == code || x.AuthorityCode == null)
+            .OrderBy(x => x.AuthorityCode == null).ThenBy(x => x.Code).ToListAsync(ct);
+        return Ok(courses.Select(CourseResponseDto.FromDomain).ToArray());
     }
 
     [HttpPut("courses/{id:guid}")]
@@ -351,7 +352,7 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
 
             var result = await service.AddMappingAsync(curriculumId, new AddCurriculumCourseRequest(courseId, request.YearOfStudy, request.SemesterNumber, request.IsCore), ct);
             if (result.Success && result.Mapping is not null)
-                results.Add(result.Mapping);
+                results.Add(CurriculumCourseResponseDto.FromDomain(result.Mapping));
             else
                 errors.Add($"Course {courseIdStr}: {result.Error}");
         }
@@ -404,6 +405,26 @@ public sealed class CurriculumManagementController(CurriculumManagementService s
         var deleted = await service.RemoveCoursePrerequisiteAsync(prerequisiteId, ct);
         return deleted ? NoContent() : NotFound();
     }
+
+
+public sealed record CurriculumResponseDto(Guid Id, Guid ProgrammeId, string Version, string Title, int MinimumCredits, DateOnly EffectiveFrom, DateOnly? EffectiveTo, SchoolManagement.Domain.Academic.ProgrammeType ProgrammeType, string Status, bool IsActive)
+{
+    public static CurriculumResponseDto FromDomain(SchoolManagement.Domain.Academic.Curriculum curriculum) => new(
+        curriculum.Id, curriculum.ProgrammeId, curriculum.Version, curriculum.Title, curriculum.MinimumCredits,
+        curriculum.EffectiveFrom, curriculum.EffectiveTo, curriculum.ProgrammeType, curriculum.Status, curriculum.IsActive);
+}
+
+public sealed record CourseResponseDto(Guid Id, string? AuthorityCode, string Code, string Name, int CreditUnits, string? Description, string? CourseType, bool IsActive)
+{
+    public static CourseResponseDto FromDomain(SchoolManagement.Domain.Academic.Course course) => new(
+        course.Id, course.AuthorityCode, course.Code, course.Name, course.CreditUnits, course.Description, course.CourseType, course.IsActive);
+}
+
+public sealed record CurriculumCourseResponseDto(Guid Id, Guid CurriculumId, Guid CourseId, int YearOfStudy, int SemesterNumber, bool IsCore)
+{
+    public static CurriculumCourseResponseDto FromDomain(SchoolManagement.Domain.Academic.CurriculumCourse mapping) => new(
+        mapping.Id, mapping.CurriculumId, mapping.CourseId, mapping.YearOfStudy, mapping.SemesterNumber, mapping.IsCore);
+}
 
     public sealed record SetActiveRequest(bool IsActive);
 }

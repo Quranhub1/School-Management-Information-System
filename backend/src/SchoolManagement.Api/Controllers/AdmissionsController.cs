@@ -208,9 +208,22 @@ public sealed class AdmissionsController(AdmissionsWorkflowService workflow, Fin
         await db.SaveChangesAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
-        return Created($"/api/students/{student.Id}", new { student, admission, enrollment, feeStructuresApplied = appliedFeeStructureIds, clearanceOffices });
+        return Created($"/api/students/{student.Id}", new AdmitApplicantResponseDto(
+            new StudentResponse(student.Id, student.StudentNumber, student.FirstName, student.LastName, student.OtherNames,
+                student.DisplayName, student.DateOfBirth, student.Gender, student.NationalId, student.PhoneNumber,
+                student.Email, student.Status, student.IsArchived, student.ArchivedAt, student.ArchivedBy,
+                student.ArchiveReason, student.AdmissionId, student.CampusId, student.CreatedAt),
+            new AdmissionDto(admission.Id, admission.ApplicantId, admission.ProgrammeId, admission.AcademicYearId,
+                admission.IntakeId, admission.Status, admission.DecidedAt),
+            new StudentEnrollmentResponseDto(enrollment.Id, enrollment.StudentId, enrollment.ProgrammeId,
+                enrollment.IntakeId, enrollment.AdmissionDate, enrollment.Status, enrollment.CurrentYear),
+            appliedFeeStructureIds.ToArray(), clearanceOffices));
     }
 }
 
 public sealed record AdmitApplicantRequest(Guid ProgrammeId, Guid IntakeId, Guid AcademicYearId, string StudentNumber, string? AdmissionNumber, string? AdmissionType, DateOnly? ReportingDate, string? DecisionReference);
 public record CreateAdmissionRequirementRequest(Guid ProgrammeId, string RequirementType, string Description, bool IsMandatory, int DisplayOrder);
+
+
+public sealed record StudentEnrollmentResponseDto(Guid Id, Guid StudentId, Guid ProgrammeId, Guid IntakeId, DateOnly AdmissionDate, string Status, int CurrentYear);
+public sealed record AdmitApplicantResponseDto(StudentResponse Student, AdmissionDto Admission, StudentEnrollmentResponseDto Enrollment, IReadOnlyCollection<Guid> FeeStructuresApplied, IReadOnlyCollection<string> ClearanceOffices);

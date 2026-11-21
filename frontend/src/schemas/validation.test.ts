@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addBankStatementLineRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { bulkCurriculumCourseMappingRequestSchema, createProgrammeRequestSchema, calendarEventCreateRequestSchema, calendarReminderCreateRequestSchema, createCourseRequestSchema, createCurriculumRequestSchema, curriculumCourseMappingRequestSchema, logbookCompetencyRequestSchema, logbookRequirementRequestSchema, studentLogbookCompetencyAssessmentRequestSchema, updateCourseRequestSchema, updateCurriculumRequestSchema, academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, createUserRequestSchema, permissionCodesRequestSchema, resetUserPasswordRequestSchema, setUserActiveRequestSchema, updateUserRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -142,6 +142,155 @@ describe("SMIS Zod domain schemas", () => {
     }).success).toBe(false);
   });
 
+
+
+
+
+
+
+
+  it("validates academic programme authority and duration fields", () => {
+    const programme = {
+      departmentId: "department-1",
+      code: "DIP-PHA",
+      name: "Diploma in Pharmacy",
+      award: "Diploma",
+      awardTitle: "Diploma in Pharmacy",
+      durationYears: 2,
+      durationUnit: "Years",
+      studyMode: "Full-time",
+      deliveryType: "Academic",
+      type: 0,
+      regulator: "UHPAB",
+      approvalDate: "2026-01-01",
+      approvalStatus: "Approved",
+      isReferenceOnly: false,
+    };
+    expect(createProgrammeRequestSchema.safeParse(programme).success).toBe(true);
+    expect(createProgrammeRequestSchema.safeParse({ ...programme, durationYears: -1 }).success).toBe(false);
+    expect(createProgrammeRequestSchema.safeParse({ ...programme, regulator: "" }).success).toBe(false);
+    expect(createProgrammeRequestSchema.safeParse({ ...programme, type: 4 }).success).toBe(false);
+  });
+
+  it("validates curriculum, course, mapping and logbook payloads", () => {
+    const curriculum = {
+      programmeId: "programme-1", version: "1.0", title: "Diploma curriculum",
+      minimumCredits: 120, effectiveFrom: "2026-01-01", effectiveTo: null, programmeType: 0,
+    };
+    expect(createCurriculumRequestSchema.safeParse(curriculum).success).toBe(true);
+    expect(createCurriculumRequestSchema.safeParse({ ...curriculum, minimumCredits: -1 }).success).toBe(false);
+
+    const course = { authorityCode: "UHPAB", code: "PHA101", name: "Pharmacology", creditUnits: 4 };
+    expect(createCourseRequestSchema.safeParse(course).success).toBe(true);
+    expect(updateCourseRequestSchema.safeParse({ ...course, isActive: true }).success).toBe(true);
+
+    const mapping = { courseId: "course-1", yearOfStudy: 1, semesterNumber: 1, isCore: true };
+    expect(curriculumCourseMappingRequestSchema.safeParse(mapping).success).toBe(true);
+    expect(bulkCurriculumCourseMappingRequestSchema.safeParse({
+      courseIds: ["course-1", "course-2"], yearOfStudy: 1, semesterNumber: 1, isCore: true,
+    }).success).toBe(true);
+    expect(bulkCurriculumCourseMappingRequestSchema.safeParse({
+      courseIds: ["course-1", "course-1"], yearOfStudy: 1, semesterNumber: 1, isCore: true,
+    }).success).toBe(false);
+
+    expect(updateCurriculumRequestSchema.safeParse({
+      version: "1.1", title: "Updated curriculum", minimumCredits: 100,
+      effectiveFrom: "2026-01-01", programmeType: 0, isActive: true,
+    }).success).toBe(true);
+    expect(logbookRequirementRequestSchema.safeParse({
+      title: "Clinical logbook", yearOfStudy: 1, semesterNumber: 1, requiredQuantity: 1, isMandatory: true,
+    }).success).toBe(true);
+    expect(logbookCompetencyRequestSchema.safeParse({
+      code: "COMP-1", name: "Dispensing", requiredCount: 5, isMandatory: true,
+    }).success).toBe(true);
+    expect(studentLogbookCompetencyAssessmentRequestSchema.safeParse({
+      outcome: "Competent", assessedOn: "2026-11-21",
+    }).success).toBe(true);
+  });
+
+  it("validates calendar event ranges and reminder recipient/channel values", () => {
+    const event = {
+      title: "Semester opening",
+      description: "Opening day",
+      eventType: "Academic",
+      startDate: "2026-12-01",
+      endDate: "2026-12-01",
+      location: "Main campus",
+    };
+    expect(calendarEventCreateRequestSchema.safeParse(event).success).toBe(true);
+    expect(calendarEventCreateRequestSchema.safeParse({ ...event, endDate: "2026-11-30" }).success).toBe(false);
+
+    const reminder = {
+      recipientType: "All",
+      recipientId: "",
+      message: "Semester begins tomorrow",
+      remindOnUtc: "2026-11-30",
+      channel: "InApp",
+    };
+    expect(calendarReminderCreateRequestSchema.safeParse(reminder).success).toBe(true);
+    expect(calendarReminderCreateRequestSchema.safeParse({ ...reminder, recipientType: "Everyone" }).success).toBe(false);
+    expect(calendarReminderCreateRequestSchema.safeParse({ ...reminder, channel: "Push" }).success).toBe(false);
+  });
+
+  it("validates administration users, passwords, status and permission lists", () => {
+    const user = {
+      username: "operator.one",
+      password: "SecurePass123",
+      firstName: "Operator",
+      lastName: "One",
+      email: "operator@example.com",
+      roles: ["Accountant", "RecordsOfficer"],
+    };
+    expect(createUserRequestSchema.safeParse(user).success).toBe(true);
+    expect(createUserRequestSchema.safeParse({ ...user, password: "short" }).success).toBe(false);
+    expect(createUserRequestSchema.safeParse({ ...user, roles: ["Accountant", "accountant"] }).success).toBe(false);
+
+    const update = { firstName: "Operator", lastName: "One", email: null, roles: ["Accountant"] };
+    expect(updateUserRequestSchema.safeParse(update).success).toBe(true);
+    expect(resetUserPasswordRequestSchema.safeParse({ newPassword: "new-secure-password" }).success).toBe(true);
+    expect(resetUserPasswordRequestSchema.safeParse({ newPassword: "short" }).success).toBe(false);
+    expect(setUserActiveRequestSchema.safeParse({ active: false }).success).toBe(true);
+    expect(permissionCodesRequestSchema.safeParse({ permissionCodes: ["Students.Read", "Finance.Read"] }).success).toBe(true);
+    expect(permissionCodesRequestSchema.safeParse({ permissionCodes: ["Students.Read", "Students.Read"] }).success).toBe(false);
+  });
+
+  it("validates academic year and period date boundaries and sequence numbers", () => {
+    const year = { name: "2026-2027", startDate: "2026-01-01", endDate: "2026-12-31" };
+    expect(academicYearRequestSchema.safeParse(year).success).toBe(true);
+    expect(academicYearRequestSchema.safeParse({ ...year, endDate: "2025-12-31" }).success).toBe(false);
+
+    const period = { academicYearId: "year-1", name: "Semester 1", sequence: 1, startDate: "2026-01-01", endDate: "2026-06-30" };
+    expect(academicPeriodRequestSchema.safeParse(period).success).toBe(true);
+    expect(academicPeriodRequestSchema.safeParse({ ...period, sequence: 0 }).success).toBe(false);
+    expect(academicPeriodRequestSchema.safeParse({ ...period, endDate: "2025-12-31" }).success).toBe(false);
+    expect(academicPeriodUpdateRequestSchema.safeParse({
+      name: "Semester 2", sequence: 2, startDate: "2026-07-01", endDate: "2026-12-31",
+    }).success).toBe(true);
+  });
+
+  it("validates assessment plan weights and assessment score boundaries", () => {
+    const plan = {
+      courseId: "course-1",
+      name: "Final examination",
+      assessmentType: "Written",
+      weightPercentage: 60,
+      isCompetencyBased: false,
+    };
+    expect(assessmentPlanCreateRequestSchema.safeParse(plan).success).toBe(true);
+    expect(assessmentPlanCreateRequestSchema.safeParse({ ...plan, weightPercentage: 101 }).success).toBe(false);
+
+    const mark = {
+      studentId: "student-1",
+      courseRegistrationId: "registration-1",
+      assessmentPlanId: "plan-1",
+      score: 75,
+      maximumScore: 100,
+      competencyLevel: "Competent",
+    };
+    expect(recordAssessmentRequestSchema.safeParse(mark).success).toBe(true);
+    expect(recordAssessmentRequestSchema.safeParse({ ...mark, score: 101 }).success).toBe(false);
+    expect(recordAssessmentRequestSchema.safeParse({ ...mark, maximumScore: 0 }).success).toBe(false);
+  });
 
   it("validates opening balances and fiscal period closing requests", () => {
     const openingBalances = {

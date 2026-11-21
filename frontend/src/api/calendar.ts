@@ -1,3 +1,6 @@
+import { parseApiInput } from '../lib/validation'
+import { calendarEventCreateRequestSchema, calendarReminderCreateRequestSchema } from '../schemas'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 function token() { return sessionStorage.getItem('smis.accessToken'); }
@@ -9,8 +12,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export type CalendarEvent = { id:string; title:string; description?:string; eventType:string; startDate:string; endDate:string; location?:string; isActive:boolean };
 export function listEvents(){ return request<CalendarEvent[]>('/api/calendar'); }
-export function createEvent(input: Omit<CalendarEvent,'id'|'isActive'>){ return request<CalendarEvent>('/api/calendar',{method:'POST',body:JSON.stringify(input)}); }
-export function deactivateEvent(id:string){ return request<void>(`/api/calendar/${id}`,{method:'DELETE'}); }
+export function createEvent(input: Omit<CalendarEvent,'id'|'isActive'>){ const validated = parseApiInput(calendarEventCreateRequestSchema, input, 'create calendar event'); return request<CalendarEvent>('/api/calendar',{method:'POST',body:JSON.stringify(validated)}); }
+export function deactivateEvent(id:string){ if (!id.trim()) throw new Error('Calendar event ID is required.'); return request<void>(`/api/calendar/${encodeURIComponent(id)}`,{method:'DELETE'}); }
 
 export interface CalendarReminder {
   id: string
@@ -26,16 +29,20 @@ export interface CalendarReminder {
 }
 
 export function listReminders(eventId: string) {
-  return request<CalendarReminder[]>(`/api/calendar/${eventId}/reminders`)
+  if (!eventId.trim()) throw new Error('Calendar event ID is required.')
+  return request<CalendarReminder[]>(`/api/calendar/${encodeURIComponent(eventId)}/reminders`)
 }
 
 export function createReminder(eventId: string, input: { recipientType: string; recipientId?: string; message?: string; remindOnUtc: string; channel?: string }) {
-  return request<CalendarReminder>(`/api/calendar/${eventId}/reminders`, {
+  if (!eventId.trim()) throw new Error('Calendar event ID is required.')
+  const validated = parseApiInput(calendarReminderCreateRequestSchema, input, 'create calendar reminder')
+  return request<CalendarReminder>(`/api/calendar/${encodeURIComponent(eventId)}/reminders`, {
     method: 'POST',
-    body: JSON.stringify(input),
+    body: JSON.stringify(validated),
   })
 }
 
 export function markReminderSent(eventId: string, reminderId: string) {
-  return request<{ message: string }>(`/api/calendar/${eventId}/reminders/${reminderId}/send`, { method: 'POST' })
+  if (!eventId.trim() || !reminderId.trim()) throw new Error('Calendar event and reminder IDs are required.')
+  return request<{ message: string }>(`/api/calendar/${encodeURIComponent(eventId)}/reminders/${encodeURIComponent(reminderId)}/send`, { method: 'POST' })
 }

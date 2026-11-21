@@ -157,7 +157,7 @@ export const staffCreateRequestSchema = z.object({
   firstName: requiredTextSchema.min(2),
   lastName: requiredTextSchema.min(2),
   employmentType: requiredTextSchema,
-  staffType: requiredTextSchema,
+  staffType: z.enum(['Teaching', 'NonTeaching']),
   nationalId: z.string().trim().optional(),
   phoneNumber: z.string().trim().optional(),
   email: z.email().optional().or(z.literal("")),
@@ -539,4 +539,204 @@ export const createFiscalPeriodRequestSchema = z.object({
 export const closeFiscalPeriodRequestSchema = z.object({
   fiscalPeriodId: identifierSchema,
   retainedEarningsAccountId: identifierSchema,
+});
+
+
+export const assessmentPlanCreateRequestSchema = z.object({
+  courseId: identifierSchema,
+  name: requiredTextSchema.max(160),
+  assessmentType: requiredTextSchema.max(80),
+  weightPercentage: z.number().finite().min(0).max(100),
+  isCompetencyBased: z.boolean(),
+});
+
+export const recordAssessmentRequestSchema = z.object({
+  studentId: identifierSchema,
+  courseRegistrationId: identifierSchema,
+  assessmentPlanId: identifierSchema,
+  score: z.number().finite().nonnegative(),
+  maximumScore: z.number().finite().positive(),
+  competencyLevel: z.string().trim().max(120).optional(),
+}).refine(value => value.score <= value.maximumScore, {
+  path: ["score"],
+  message: "Score cannot exceed the maximum score.",
+});
+
+
+export const academicYearRequestSchema = z.object({
+  name: requiredTextSchema.max(100),
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+}).refine(value => value.endDate >= value.startDate, {
+  path: ["endDate"],
+  message: "Academic year end date cannot be before its start date.",
+});
+
+export const academicPeriodRequestSchema = z.object({
+  academicYearId: identifierSchema,
+  name: requiredTextSchema.max(100),
+  sequence: z.number().int().positive(),
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+}).refine(value => value.endDate >= value.startDate, {
+  path: ["endDate"],
+  message: "Academic period end date cannot be before its start date.",
+});
+
+export const academicPeriodUpdateRequestSchema = academicPeriodRequestSchema.omit({ academicYearId: true });
+
+
+export const createUserRequestSchema = z.object({
+  username: requiredTextSchema.max(100),
+  password: z.string().min(8).max(256),
+  firstName: requiredTextSchema.max(100),
+  lastName: requiredTextSchema.max(100),
+  email: z.email().optional().or(z.literal("")),
+  roles: z.array(requiredTextSchema.max(100)).min(1).max(100),
+}).refine(value => new Set(value.roles.map(role => role.toLowerCase())).size === value.roles.length, {
+  path: ["roles"],
+  message: "Roles must not contain duplicates.",
+});
+
+export const updateUserRequestSchema = z.object({
+  firstName: requiredTextSchema.max(100),
+  lastName: requiredTextSchema.max(100),
+  email: z.email().nullable().optional().or(z.literal("")),
+  roles: z.array(requiredTextSchema.max(100)).min(1).max(100),
+}).refine(value => new Set(value.roles.map(role => role.toLowerCase())).size === value.roles.length, {
+  path: ["roles"],
+  message: "Roles must not contain duplicates.",
+});
+
+export const resetUserPasswordRequestSchema = z.object({
+  newPassword: z.string().min(8).max(256),
+});
+
+export const setUserActiveRequestSchema = z.object({
+  active: z.boolean(),
+});
+
+export const permissionCodesRequestSchema = z.object({
+  permissionCodes: z.array(requiredTextSchema.max(160)).max(500),
+}).refine(value => new Set(value.permissionCodes.map(code => code.toLowerCase())).size === value.permissionCodes.length, {
+  path: ["permissionCodes"],
+  message: "Permission codes must not contain duplicates.",
+});
+
+
+export const calendarEventCreateRequestSchema = z.object({
+  title: requiredTextSchema.max(160),
+  description: z.string().trim().max(1000).optional().or(z.literal("")),
+  eventType: requiredTextSchema.max(80),
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
+  location: z.string().trim().max(200).optional().or(z.literal("")),
+}).refine(value => value.endDate >= value.startDate, {
+  path: ["endDate"],
+  message: "Event end date cannot be before its start date.",
+});
+
+export const calendarReminderCreateRequestSchema = z.object({
+  recipientType: z.enum(["All", "Student", "Staff"]),
+  recipientId: z.string().trim().max(100).optional().or(z.literal("")),
+  message: requiredTextSchema.max(1000),
+  remindOnUtc: z.iso.date(),
+  channel: z.enum(["InApp", "SMS", "Email"]),
+});
+
+
+export const createCurriculumRequestSchema = z.object({
+  programmeId: identifierSchema,
+  version: requiredTextSchema.max(40),
+  title: requiredTextSchema.max(160),
+  minimumCredits: z.number().int().nonnegative(),
+  effectiveFrom: z.iso.date(),
+  effectiveTo: z.iso.date().nullable().optional(),
+  programmeType: z.number().int().min(0).max(1),
+});
+
+export const createCourseRequestSchema = z.object({
+  authorityCode: requiredTextSchema.max(40),
+  code: requiredTextSchema.max(40),
+  name: requiredTextSchema.max(160),
+  creditUnits: z.number().int().nonnegative(),
+  description: z.string().trim().max(1000).nullable().optional(),
+  courseType: z.string().trim().max(80).nullable().optional(),
+});
+
+export const curriculumCourseMappingRequestSchema = z.object({
+  courseId: identifierSchema,
+  yearOfStudy: z.number().int().positive(),
+  semesterNumber: z.number().int().positive(),
+  isCore: z.boolean(),
+});
+
+export const bulkCurriculumCourseMappingRequestSchema = z.object({
+  courseIds: z.array(identifierSchema).min(1).max(500),
+  yearOfStudy: z.number().int().positive(),
+  semesterNumber: z.number().int().positive(),
+  isCore: z.boolean(),
+}).refine(value => new Set(value.courseIds).size === value.courseIds.length, {
+  path: ["courseIds"],
+  message: "A course may only be selected once in a bulk mapping.",
+});
+
+export const updateCourseRequestSchema = createCourseRequestSchema.extend({
+  isActive: z.boolean(),
+});
+
+export const updateCurriculumRequestSchema = z.object({
+  version: requiredTextSchema.max(40),
+  title: requiredTextSchema.max(160),
+  minimumCredits: z.number().finite().nonnegative(),
+  effectiveFrom: z.iso.date(),
+  effectiveTo: z.iso.date().nullable().optional(),
+  programmeType: z.number().int().min(0).max(1),
+  isActive: z.boolean(),
+});
+
+export const logbookRequirementRequestSchema = z.object({
+  title: requiredTextSchema.max(160),
+  description: z.string().trim().max(1000).optional(),
+  yearOfStudy: z.number().int().positive(),
+  semesterNumber: z.number().int().positive(),
+  requiredQuantity: z.number().int().positive(),
+  isMandatory: z.boolean(),
+});
+
+export const logbookCompetencyRequestSchema = z.object({
+  code: requiredTextSchema.max(40),
+  name: requiredTextSchema.max(160),
+  requiredCount: z.number().int().positive(),
+  isMandatory: z.boolean(),
+});
+
+export const studentLogbookCompetencyAssessmentRequestSchema = z.object({
+  outcome: requiredTextSchema.max(80),
+  assessedOn: z.iso.date().nullable().optional(),
+  assessorName: z.string().trim().max(160).optional(),
+  assessorRole: z.string().trim().max(100).optional(),
+  studentPlacementId: identifierSchema.nullable().optional(),
+  evidenceReference: z.string().trim().max(500).optional(),
+  remarks: z.string().trim().max(1000).optional(),
+});
+
+
+export const createProgrammeRequestSchema = z.object({
+  departmentId: identifierSchema.nullable().optional(),
+  code: requiredTextSchema.max(40),
+  name: requiredTextSchema.max(160),
+  award: requiredTextSchema.max(100),
+  awardTitle: z.string().trim().max(160).optional(),
+  durationYears: z.number().int().nonnegative(),
+  durationUnit: z.string().trim().max(40).optional(),
+  studyMode: z.string().trim().max(60).optional(),
+  deliveryType: z.string().trim().max(60).optional(),
+  type: z.number().int().min(0).max(1).optional(),
+  regulator: requiredTextSchema.max(80),
+  approvalReference: z.string().trim().max(160).optional(),
+  approvalDate: z.iso.date().optional(),
+  approvalStatus: z.string().trim().max(80).optional(),
+  sourceReference: z.string().trim().max(500).optional(),
+  isReferenceOnly: z.boolean().optional(),
 });

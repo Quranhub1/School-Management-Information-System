@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { getAccessToken } from '../api/auth'
 import { readApiErrorMessage } from '../api/errors'
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
+import { createFiscalPeriod, createOpeningBalances, getFiscalPeriods, postFiscalPeriodClosing, type FiscalPeriod } from '../api/finance'
 
 type Account = { id: string; code: string; name: string; accountType: string }
 type LedgerRow = { accountCode: string; accountName: string; accountType: string; date: string; entryNumber: string; description: string; debit: number; credit: number; balance: number }
@@ -12,7 +13,7 @@ type BalanceReport = { assets: StatementRow[]; liabilities: StatementRow[]; equi
 type ReceivableInvoiceRow = { studentId: string; studentNumber: string; studentName: string; programmeName: string; amount: number; paidAmount: number; balance: number; currency: string; status: string }
 type StudentReceivableRow = { studentId: string; studentNumber: string; studentName: string; programmeName: string; currency: string; invoiceCount: number; billed: number; paid: number; outstanding: number }
 
-type Tab = 'accounts' | 'ledger' | 'trial-balance' | 'income-statement' | 'balance-sheet' | 'student-receivables'
+type Tab = 'accounts' | 'ledger' | 'trial-balance' | 'income-statement' | 'balance-sheet' | 'student-receivables' | 'fiscal-periods' | 'opening-balances'
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
 async function request<T>(path: string): Promise<T> {
@@ -30,6 +31,16 @@ export function AccountingReportsWorkspace() {
   const [income, setIncome] = useState<IncomeReport | null>(null)
   const [balance, setBalance] = useState<BalanceReport | null>(null)
   const [receivableInvoices, setReceivableInvoices] = useState<ReceivableInvoiceRow[]>([])
+  const [fiscalPeriods, setFiscalPeriods] = useState<FiscalPeriod[]>([])
+  const [fiscalPeriodForm, setFiscalPeriodForm] = useState({ name: '', startDate: '', endDate: '' })
+  const [openingPeriodId, setOpeningPeriodId] = useState('')
+  const [openingDebitAccountId, setOpeningDebitAccountId] = useState('')
+  const [openingCreditAccountId, setOpeningCreditAccountId] = useState('')
+  const [openingDebitAmount, setOpeningDebitAmount] = useState('0')
+  const [openingCreditAmount, setOpeningCreditAmount] = useState('0')
+  const [closingPeriodId, setClosingPeriodId] = useState('')
+  const [retainedEarningsAccountId, setRetainedEarningsAccountId] = useState('')
+  const [notice, setNotice] = useState('')
   const [receivableSearch, setReceivableSearch] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -43,10 +54,28 @@ export function AccountingReportsWorkspace() {
     setLoading(true); setError('')
     try {
       if (tab === 'accounts') setAccounts(await request<Account[]>('/api/finance/administration/accounts'))
+      if (tab === 'fiscal-periods') {
+        const rows = await getFiscalPeriods()
+        setFiscalPeriods(rows)
+        setClosingPeriodId(current => rows.some(row => row.id === current && row.status.toLowerCase() === 'open') ? current : (rows.find(row => row.status.toLowerCase() === 'open')?.id ?? ''))
+      }
+      if (tab === 'opening-balances') {
+        const [accountRows, periodRows] = await Promise.all([
+          request<Account[]>('/api/finance/administration/accounts'),
+          getFiscalPeriods(),
+        ])
+        setAccounts(accountRows)
+        setFiscalPeriods(periodRows)
+        setOpeningPeriodId(current => periodRows.some(row => row.id === current && row.status.toLowerCase() === 'open') ? current : (periodRows.find(row => row.status.toLowerCase() === 'open')?.id ?? ''))
+        setOpeningDebitAccountId(current => accountRows.some(row => row.id === current) ? current : (accountRows.find(row => row.accountType.toLowerCase() === 'asset')?.id ?? accountRows[0]?.id ?? ''))
+        setOpeningCreditAccountId(current => accountRows.some(row => row.id === current) ? current : (accountRows.find(row => row.accountType.toLowerCase() === 'equity')?.id ?? accountRows[1]?.id ?? ''))
+        setRetainedEarningsAccountId(current => accountRows.some(row => row.id === current) ? current : (accountRows.find(row => row.accountType.toLowerCase() === 'equity')?.id ?? ''))
+      }
+      if (tab === 'student-receivables') setReceivableInvoices(await request<ReceivableInvoiceRow[]>(`/api/finance/reports/outstanding-balances?currency=${encodeURIComponent(currency)}`))
       if (tab === 'ledger') setLedger(await request<LedgerRow[]>(`/api/finance/reports/general-ledger?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency })}`))
       if (tab === 'trial-balance') setTrial(await request<TrialRow[]>(`/api/finance/reports/trial-balance?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency })}`))
-      if (tab === 'income-statement') setIncome(await request<IncomeReport>(`/api/finance/reports/income-statement?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency: SYSTEM_CURRENCY })}`))
-      if (tab === 'balance-sheet') setBalance(await request<BalanceReport>(`/api/finance/reports/balance-sheet?${new URLSearchParams({ ...(asOf ? { asOf } : {}), currency: SYSTEM_CURRENCY })}`))
+      if (tab === 'income-statement') setIncome(await request<IncomeReport>(`/api/finance/reports/income-statement?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), currency })}`))
+      if (tab === 'balance-sheet') setBalance(await request<BalanceReport>(`/api/finance/reports/balance-sheet?${new URLSearchParams({ ...(asOf ? { asOf } : {}), currency })}`))
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load accounting data.') }
     finally { setLoading(false) }
   }
@@ -108,10 +137,14 @@ export function AccountingReportsWorkspace() {
 
   return <section className="accounting-reports-workspace">
     <div className="library-workspace-tabs" role="tablist" aria-label="Accounting reports">
-      {([['accounts','Chart of Accounts'],['ledger','General Ledger'],['trial-balance','Trial Balance'],['income-statement','Income Statement'],['balance-sheet','Balance Sheet'],['student-receivables','Student Receivables']] as [Tab,string][]).map(([key,label]) => <button key={key} role="tab" aria-selected={tab === key} className={tab === key ? 'active' : ''} onClick={() => setTab(key)}>{label}</button>)}
+      {([['accounts','Chart of Accounts'],['ledger','General Ledger'],['trial-balance','Trial Balance'],['income-statement','Income Statement'],['balance-sheet','Balance Sheet'],['student-receivables','Student Receivables'],['fiscal-periods','Fiscal Periods'],['opening-balances','Opening Balances']] as [Tab,string][]).map(([key,label]) => <button key={key} role="tab" aria-selected={tab === key} className={tab === key ? 'active' : ''} onClick={() => setTab(key)}>{label}</button>)}
     </div>
-    {error && <div className="error" role="alert">{error}</div>}
-    {tab !== 'accounts' && tab !== 'balance-sheet' && <div className="filter-toolbar"><label>Currency<select value={currency} onChange={e => setCurrency(e.target.value)}><option value={SYSTEM_CURRENCY}>{SYSTEM_CURRENCY} · System default</option>{['UGX','USD','KES','EUR','GBP','TZS','RWF','ZAR','AED'].filter(code => code !== SYSTEM_CURRENCY).map(code => <option key={code} value={code}>{code}</option>)}</select></label><label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label><button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Running…' : 'Run report'}</button></div>}
+    {error && <div className="error" role="alert">{error}</div>}\n    {notice && <p role="status" className="form-success">{notice}</p>}
+    {tab !== 'accounts' && tab !== 'balance-sheet' && tab !== 'student-receivables' && tab !== 'fiscal-periods' && tab !== 'opening-balances' && <div className="filter-toolbar"><label>Currency<select value={currency} onChange={e => setCurrency(e.target.value)}><option value={SYSTEM_CURRENCY}>{SYSTEM_CURRENCY} · System default</option>{['UGX','USD','KES','EUR','GBP','TZS','RWF','ZAR','AED'].filter(code => code !== SYSTEM_CURRENCY).map(code => <option key={code} value={code}>{code}</option>)}</select></label><label>From<input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label><label>To<input type="date" value={to} onChange={e => setTo(e.target.value)} /></label><button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Running…' : 'Run report'}</button></div>}
+    {tab === 'student-receivables' && <div className="filter-toolbar">
+      <label>Currency<select value={currency} onChange={e => setCurrency(e.target.value)}><option value={SYSTEM_CURRENCY}>{SYSTEM_CURRENCY} · System default</option>{['UGX','USD','KES','EUR','GBP','TZS','RWF','ZAR','AED'].filter(code => code !== SYSTEM_CURRENCY).map(code => <option key={code} value={code}>{code}</option>)}</select></label>
+      <label>Search student<input type="search" value={receivableSearch} onChange={e => setReceivableSearch(e.target.value)} placeholder="Student number or name" /></label>
+    </div>}
     {tab === 'balance-sheet' && <div className="filter-toolbar"><label>Currency<select value={currency} onChange={e => setCurrency(e.target.value)}><option value={SYSTEM_CURRENCY}>{SYSTEM_CURRENCY} · System default</option>{['UGX','USD','KES','EUR','GBP','TZS','RWF','ZAR','AED'].filter(code => code !== SYSTEM_CURRENCY).map(code => <option key={code} value={code}>{code}</option>)}</select></label><label>As of<input type="date" value={asOf} onChange={e => setAsOf(e.target.value)} /></label><button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Running…' : 'Run report'}</button></div>}
     {loading ? <p className="empty">Loading accounting data…</p> : tab === 'accounts' ? <div className="table-wrap"><table><thead><tr><th>Code</th><th>Account</th><th>Type</th><th>Status</th></tr></thead><tbody>{accounts.map(a => <tr key={a.id}><td><strong>{a.code}</strong></td><td>{a.name}</td><td>{a.accountType}</td><td><span className="finance-status success">Active</span></td></tr>)}{accounts.length === 0 && <tr><td colSpan={4} className="empty">No finance accounts configured.</td></tr>}</tbody></table></div>
     : tab === 'ledger' ? <div className="table-wrap"><table><thead><tr><th>Date</th><th>Entry</th><th>Account</th><th>Description</th><th>Debit</th><th>Credit</th><th>Balance</th></tr></thead><tbody>{ledger.map((x,i) => <tr key={x.entryNumber + '-' + i}><td>{new Date(x.date).toLocaleDateString('en-UG')}</td><td><strong>{x.entryNumber}</strong></td><td>{x.accountCode}<small>{x.accountName}</small></td><td>{x.description}</td><td>{money(x.debit)}</td><td>{money(x.credit)}</td><td><strong>{money(x.balance)}</strong></td></tr>)}{ledger.length === 0 && <tr><td colSpan={7} className="empty">No posted ledger entries for this period.</td></tr>}</tbody></table></div>
@@ -120,7 +153,50 @@ export function AccountingReportsWorkspace() {
       <div className="summary-grid">{receivableTotals.map(([currency, total]) => <div className="summary-card" key={currency}><span>Outstanding · {currency}</span><strong className="finance-value-danger">{formatCurrency(total.outstanding, currency)}</strong><small>{total.students.toLocaleString()} students · {total.invoices.toLocaleString()} unpaid invoices</small></div>)}{receivableTotals.length === 0 && <div className="summary-card"><span>Outstanding receivables</span><strong>{formatCurrency(0, 'UGX')}</strong></div>}</div>
       <div className="table-wrap"><table><thead><tr><th>Student No.</th><th>Student</th><th>Fee structure</th><th>Unpaid invoices</th><th>Net value of open invoices</th><th>Paid on open invoices</th><th>Outstanding</th><th>Currency</th></tr></thead><tbody>{filteredReceivables.map(row => <tr key={row.studentId + row.currency}><td><strong>{row.studentNumber}</strong></td><td>{row.studentName}</td><td>{row.programmeName}</td><td>{row.invoiceCount}</td><td>{formatCurrency(row.billed, row.currency)}</td><td>{formatCurrency(row.paid, row.currency)}</td><td><strong>{formatCurrency(row.outstanding, row.currency)}</strong></td><td>{row.currency}</td></tr>)}{filteredReceivables.length === 0 && <tr><td colSpan={8} className="empty">No outstanding student receivables found.</td></tr>}</tbody></table></div>
     </div>
-    : tab === 'income-statement' && income ? <div className="accounting-report-grid"><div className="summary-grid"><div className="summary-card"><span>Total revenue</span><strong className="finance-value-success">{money(income.totalRevenue)}</strong></div><div className="summary-card"><span>Total expenses</span><strong className="finance-value-danger">{money(income.totalExpenses)}</strong></div><div className="summary-card"><span>Net income</span><strong>{money(income.netIncome)}</strong></div></div><div className="table-wrap"><table><thead><tr><th>Revenue account</th><th>Type</th><th>Amount</th></tr></thead><tbody>{income.revenue.map(x => <tr key={x.accountCode}><td><strong>{x.accountCode}</strong> · {x.accountName}</td><td>{x.accountType}</td><td>{money(x.amount ?? 0)}</td></tr>)}</tbody></table></div><div className="table-wrap"><table><thead><tr><th>Expense account</th><th>Type</th><th>Amount</th></tr></thead><tbody>{income.expenses.map(x => <tr key={x.accountCode}><td><strong>{x.accountCode}</strong> · {x.accountName}</td><td>{x.accountType}</td><td>{money(x.amount ?? 0)}</td></tr>)}</tbody></table></div></div>
+
+    : tab === 'fiscal-periods' ? <div className="accounting-report-grid">
+      <form className="student-form" onSubmit={saveFiscalPeriod}>
+        <h3>Create fiscal period</h3>
+        <div className="form-row">
+          <label>Name<input required maxLength={100} value={fiscalPeriodForm.name} onChange={e => setFiscalPeriodForm({ ...fiscalPeriodForm, name: e.target.value })} /></label>
+          <label>Start date<input required type="date" value={fiscalPeriodForm.startDate} onChange={e => setFiscalPeriodForm({ ...fiscalPeriodForm, startDate: e.target.value })} /></label>
+          <label>End date<input required type="date" value={fiscalPeriodForm.endDate} onChange={e => setFiscalPeriodForm({ ...fiscalPeriodForm, endDate: e.target.value })} /></label>
+          <button type="submit" disabled={loading}>Create period</button>
+        </div>
+      </form>
+      <div className="table-wrap"><table><thead><tr><th>Period</th><th>Dates</th><th>Status</th></tr></thead><tbody>
+        {fiscalPeriods.map(period => <tr key={period.id}><td>{period.name}</td><td>{period.startDate} – {period.endDate}</td><td>{period.status}</td></tr>)}
+        {fiscalPeriods.length === 0 && <tr><td colSpan={3} className="empty">No fiscal periods configured.</td></tr>}
+      </tbody></table></div>
+      <form className="student-form" onSubmit={event => { event.preventDefault(); void closeFiscalPeriod() }}>
+        <h3>Close fiscal period</h3>
+        <div className="form-row">
+          <label>Open period<select value={closingPeriodId} onChange={e => setClosingPeriodId(e.target.value)}><option value="">Select period</option>{fiscalPeriods.filter(period => period.status.toLowerCase() === 'open').map(period => <option key={period.id} value={period.id}>{period.name}</option>)}</select></label>
+          <label>Retained earnings account<select value={retainedEarningsAccountId} onChange={e => setRetainedEarningsAccountId(e.target.value)}><option value="">Select account</option>{accounts.filter(account => account.accountType.toLowerCase() === 'equity').map(account => <option key={account.id} value={account.id}>{account.code} · {account.name}</option>)}</select></label>
+          <button type="submit" disabled={loading || !closingPeriodId || !retainedEarningsAccountId}>Close period</button>
+        </div>
+      </form>
+    </div>
+    : tab === 'opening-balances' ? <div className="accounting-report-grid">
+      <form className="student-form" onSubmit={saveOpeningBalances}>
+        <h3>Post opening balances</h3>
+        <p>Enter balanced opening debits and credits. The API validates that both totals match before posting.</p>
+        <div className="form-row">
+          <label>Fiscal period<select value={openingPeriodId} onChange={e => setOpeningPeriodId(e.target.value)}><option value="">Select open period</option>{fiscalPeriods.filter(period => period.status.toLowerCase() === 'open').map(period => <option key={period.id} value={period.id}>{period.name}</option>)}</select></label>
+          <label>Currency<select value={currency} onChange={e => setCurrency(e.target.value)}><option value={SYSTEM_CURRENCY}>{SYSTEM_CURRENCY} · System default</option>{['UGX','USD','KES','EUR','GBP','TZS','RWF','ZAR','AED'].filter(code => code !== SYSTEM_CURRENCY).map(code => <option key={code} value={code}>{code}</option>)}</select></label>
+        </div>
+        <div className="form-row">
+          <label>Debit account<select value={openingDebitAccountId} onChange={e => setOpeningDebitAccountId(e.target.value)}><option value="">Select account</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.code} · {account.name}</option>)}</select></label>
+          <label>Debit amount<input type="number" min="0.01" step="0.01" required value={openingDebitAmount} onChange={e => setOpeningDebitAmount(e.target.value)} /></label>
+        </div>
+        <div className="form-row">
+          <label>Credit account<select value={openingCreditAccountId} onChange={e => setOpeningCreditAccountId(e.target.value)}><option value="">Select account</option>{accounts.map(account => <option key={account.id} value={account.id}>{account.code} · {account.name}</option>)}</select></label>
+          <label>Credit amount<input type="number" min="0.01" step="0.01" required value={openingCreditAmount} onChange={e => setOpeningCreditAmount(e.target.value)} /></label>
+        </div>
+        <button type="submit" disabled={loading || !openingPeriodId || !openingDebitAccountId || !openingCreditAccountId}>Post opening balances</button>
+      </form>
+    </div>
+        : tab === 'income-statement' && income ? <div className="accounting-report-grid"><div className="summary-grid"><div className="summary-card"><span>Total revenue</span><strong className="finance-value-success">{money(income.totalRevenue)}</strong></div><div className="summary-card"><span>Total expenses</span><strong className="finance-value-danger">{money(income.totalExpenses)}</strong></div><div className="summary-card"><span>Net income</span><strong>{money(income.netIncome)}</strong></div></div><div className="table-wrap"><table><thead><tr><th>Revenue account</th><th>Type</th><th>Amount</th></tr></thead><tbody>{income.revenue.map(x => <tr key={x.accountCode}><td><strong>{x.accountCode}</strong> · {x.accountName}</td><td>{x.accountType}</td><td>{money(x.amount ?? 0)}</td></tr>)}</tbody></table></div><div className="table-wrap"><table><thead><tr><th>Expense account</th><th>Type</th><th>Amount</th></tr></thead><tbody>{income.expenses.map(x => <tr key={x.accountCode}><td><strong>{x.accountCode}</strong> · {x.accountName}</td><td>{x.accountType}</td><td>{money(x.amount ?? 0)}</td></tr>)}</tbody></table></div></div>
     : tab === 'balance-sheet' && balance ? <div className="accounting-report-grid"><div className="summary-grid"><div className="summary-card"><span>Total assets</span><strong>{money(balance.totalAssets)}</strong></div><div className="summary-card"><span>Liabilities</span><strong>{money(balance.totalLiabilities)}</strong></div><div className="summary-card"><span>Equity</span><strong>{money(balance.totalEquity)}</strong></div><div className="summary-card"><span>Net income</span><strong>{money(balance.currentPeriodNetIncome)}</strong></div></div>{([['Assets',balance.assets],['Liabilities',balance.liabilities],['Equity',balance.equity]] as [string,StatementRow[]][]).map(([title,rows]) => <div className="table-wrap" key={title}><table><thead><tr><th>{title}</th><th>Type</th><th>Balance</th></tr></thead><tbody>{rows.map(x => <tr key={x.accountCode}><td><strong>{x.accountCode}</strong> · {x.accountName}</td><td>{x.accountType}</td><td>{money(x.balance ?? 0)}</td></tr>)}</tbody></table></div>)}<div className="finance-control-list"><div><span>Total assets</span><strong>{money(balance.totalAssets)}</strong></div><div><span>Liabilities + equity + current net income</span><strong>{money(balance.totalLiabilitiesAndEquity)}</strong></div></div></div>
     : <p className="empty">No report data.</p>}
   </section>

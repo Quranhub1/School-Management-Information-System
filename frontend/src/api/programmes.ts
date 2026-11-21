@@ -1,4 +1,6 @@
 import { getAccessToken } from './auth'
+import { parseApiInput } from '../lib/validation'
+import { createProgrammeRequestSchema } from '../schemas'
 
 export interface Programme {
   id: string
@@ -67,11 +69,14 @@ export function getProgrammes(): Promise<Programme[]> {
 }
 
 export function createProgramme(input: CreateProgrammeRequest): Promise<Programme> {
-  return request<Programme>('/api/programmes', { method: 'POST', body: JSON.stringify(input) })
+  const validated = parseApiInput(createProgrammeRequestSchema, input, 'create programme')
+  return request<Programme>('/api/programmes', { method: 'POST', body: JSON.stringify(validated) })
 }
 
 export function updateProgramme(id: string, input: CreateProgrammeRequest): Promise<Programme> {
-  return request<Programme>(`/api/programmes/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+  if (!id.trim()) throw new Error('Programme ID is required.')
+  const validated = parseApiInput(createProgrammeRequestSchema, input, 'update programme')
+  return request<Programme>(`/api/programmes/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(validated) })
 }
 
 export function deleteProgramme(id: string): Promise<void> {

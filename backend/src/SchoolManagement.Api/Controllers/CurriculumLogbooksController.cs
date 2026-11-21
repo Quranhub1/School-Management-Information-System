@@ -24,12 +24,10 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         var ids = requirements.Select(x => x.Id).ToArray();
         var competencies = await db.LogbookCompetencyRequirements.AsNoTracking()
             .Where(x => ids.Contains(x.LogbookRequirementId)).OrderBy(x => x.Name).ToListAsync(ct);
-        return Ok(requirements.Select(x => new
-        {
+        return Ok(requirements.Select(x => new LogbookRequirementResponse(
             x.Id, x.CurriculumId, x.Title, x.Description, x.YearOfStudy, x.SemesterNumber,
             x.RequiredQuantity, x.IsMandatory, x.IsActive,
-            Competencies = competencies.Where(c => c.LogbookRequirementId == x.Id)
-        }));
+            competencies.Where(c => c.LogbookRequirementId == x.Id).Select(ToResponse).ToArray())).ToArray());
     }
 
     [HttpPost("curricula/{curriculumId:guid}/logbook-requirements")]
@@ -46,7 +44,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         };
         db.LogbookRequirements.Add(entity);
         await db.SaveChangesAsync(ct);
-        return Ok(entity);
+        return Ok(ToResponse(entity, []));
     }
 
     [HttpPost("logbook-requirements/{requirementId:guid}/competencies")]
@@ -64,7 +62,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         };
         db.LogbookCompetencyRequirements.Add(entity);
         await db.SaveChangesAsync(ct);
-        return Ok(entity);
+        return Ok(ToResponse(entity));
     }
 
     [HttpGet("students/{studentId:guid}/logbooks")]
@@ -79,7 +77,10 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         var rows = await query.ToListAsync(ct);
         var logbookIds = rows.Select(x => x.Logbook.Id).ToArray();
         var assessments = await db.StudentLogbookCompetencies.AsNoTracking().Where(x => logbookIds.Contains(x.StudentLogbookId)).ToListAsync(ct);
-        return Ok(rows.Select(x => new { x.Logbook, x.Requirement, Competencies = assessments.Where(a => a.StudentLogbookId == x.Logbook.Id) }));
+        return Ok(rows.Select(x => new StudentLogbookDetailResponse(
+            ToResponse(x.Logbook),
+            new LogbookRequirementSummaryResponse(x.Requirement.Id, x.Requirement.CurriculumId, x.Requirement.Title, x.Requirement.Description, x.Requirement.YearOfStudy, x.Requirement.SemesterNumber, x.Requirement.RequiredQuantity, x.Requirement.IsMandatory, x.Requirement.IsActive),
+            assessments.Where(a => a.StudentLogbookId == x.Logbook.Id).Select(ToResponse).ToArray())).ToArray());
     }
 
     [HttpPost("students/{studentId:guid}/logbooks")]
@@ -111,7 +112,13 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
                 db.StudentLogbookCompetencies.Add(new StudentLogbookCompetency { StudentLogbookId = entity.Id, CompetencyRequirementId = competency.Id });
         }
         await db.SaveChangesAsync(ct);
-        return Ok(entity);
+        var issuedAssessments = await db.StudentLogbookCompetencies.AsNoTracking()
+            .Where(x => x.StudentLogbookId == entity.Id).ToListAsync(ct);
+        return Ok(
+            new StudentLogbookDetailResponse(
+                ToResponse(entity),
+                new LogbookRequirementSummaryResponse(requirement.Id, requirement.CurriculumId, requirement.Title, requirement.Description, requirement.YearOfStudy, requirement.SemesterNumber, requirement.RequiredQuantity, requirement.IsMandatory, requirement.IsActive),
+                issuedAssessments.Select(ToResponse).ToArray()));
     }
 
     [HttpPut("student-logbooks/{logbookId:guid}/competencies/{assessmentId:guid}")]
@@ -200,7 +207,8 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         var query = db.UhpabFeeReferences.AsNoTracking().Where(x => x.IsActive);
         if (!string.IsNullOrWhiteSpace(programmeCode)) query = query.Where(x => x.ProgrammeCode == programmeCode.Trim());
         if (!string.IsNullOrWhiteSpace(category)) query = query.Where(x => x.Category == category.Trim());
-        return Ok(await query.OrderBy(x => x.Category).ThenBy(x => x.ProgrammeCode).ThenBy(x => x.Description).ToListAsync(ct));
+        var references = await query.OrderBy(x => x.Category).ThenBy(x => x.ProgrammeCode).ThenBy(x => x.Description).ToListAsync(ct);
+        return Ok(references.Select(ToResponse).ToArray());
     }
 
     [HttpPost("uhpab-fee-references")]
@@ -225,9 +233,40 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         };
         db.UhpabFeeReferences.Add(entity);
         await db.SaveChangesAsync(ct);
-        return Ok(entity);
+        return Ok(ToResponse(entity));
     }
+
+    private static LogbookCompetencyRequirementResponse ToResponse(LogbookCompetencyRequirement entity) =>
+        new(entity.Id, entity.LogbookRequirementId, entity.Code, entity.Name, entity.RequiredCount, entity.IsMandatory, entity.IsActive);
+
+    private static LogbookRequirementResponse ToResponse(LogbookRequirement entity, IReadOnlyCollection<LogbookCompetencyRequirementResponse> competencies) =>
+        new(entity.Id, entity.CurriculumId, entity.Title, entity.Description, entity.YearOfStudy, entity.SemesterNumber,
+            entity.RequiredQuantity, entity.IsMandatory, entity.IsActive, competencies);
+
+    private static StudentLogbookResponse ToResponse(StudentLogbook entity) =>
+        new(entity.Id, entity.StudentId, entity.LogbookRequirementId, entity.SerialNumber, entity.IssuedOn,
+            entity.SubmittedOn, entity.Status, entity.IssuedBy, entity.Remarks);
+
+    private static StudentLogbookCompetencyResponse ToResponse(StudentLogbookCompetency entity) =>
+        new(entity.Id, entity.StudentLogbookId, entity.CompetencyRequirementId, entity.StudentPlacementId,
+            entity.Outcome, entity.AssessedOn, entity.AssessorName, entity.AssessorRole,
+            entity.EvidenceReference, entity.Remarks);
+
+    private static UhpabFeeReferenceResponse ToResponse(UhpabFeeReference entity) =>
+        new(entity.Id, entity.Category, entity.ProgrammeCode, entity.ProgrammeName, entity.Description,
+            entity.Amount, entity.Currency, entity.SourceUrl, entity.SourceTitle, entity.SourceCheckedOn,
+            entity.EffectiveFrom, entity.EffectiveTo, entity.IsActive);
+
 }
+
+
+public sealed record LogbookRequirementResponse(Guid Id, Guid CurriculumId, string Title, string? Description, int YearOfStudy, int SemesterNumber, int RequiredQuantity, bool IsMandatory, bool IsActive, IReadOnlyCollection<LogbookCompetencyRequirementResponse> Competencies);
+public sealed record LogbookCompetencyRequirementResponse(Guid Id, Guid LogbookRequirementId, string Code, string Name, int RequiredCount, bool IsMandatory, bool IsActive);
+public sealed record LogbookRequirementSummaryResponse(Guid Id, Guid CurriculumId, string Title, string? Description, int YearOfStudy, int SemesterNumber, int RequiredQuantity, bool IsMandatory, bool IsActive);
+public sealed record StudentLogbookResponse(Guid Id, Guid StudentId, Guid LogbookRequirementId, string SerialNumber, DateOnly IssuedOn, DateOnly? SubmittedOn, string Status, string? IssuedBy, string? Remarks);
+public sealed record StudentLogbookCompetencyResponse(Guid Id, Guid StudentLogbookId, Guid CompetencyRequirementId, Guid? StudentPlacementId, string Outcome, DateOnly? AssessedOn, string? AssessorName, string? AssessorRole, string? EvidenceReference, string? Remarks);
+public sealed record StudentLogbookDetailResponse(StudentLogbookResponse Logbook, LogbookRequirementSummaryResponse Requirement, IReadOnlyCollection<StudentLogbookCompetencyResponse> Competencies);
+public sealed record UhpabFeeReferenceResponse(Guid Id, string Category, string? ProgrammeCode, string? ProgrammeName, string Description, decimal Amount, string Currency, string SourceUrl, string SourceTitle, DateOnly SourceCheckedOn, DateOnly EffectiveFrom, DateOnly? EffectiveTo, bool IsActive);
 
 public sealed record CreateLogbookRequirementRequest(string Title, string? Description, int YearOfStudy, int SemesterNumber, int RequiredQuantity, bool IsMandatory);
 public sealed record CreateLogbookCompetencyRequest(string Code, string Name, int RequiredCount, bool IsMandatory);

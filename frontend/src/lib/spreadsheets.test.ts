@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import * as XLSX from 'xlsx'
-import { parseSpreadsheetFile, sanitizeSpreadsheetRows } from './spreadsheets'
+import { parseCsvText, parseSpreadsheetFile, sanitizeSpreadsheetRows } from './spreadsheets'
 
 function workbookFile(sheets: Record<string, unknown[][]>, name = 'import.xlsx'): File {
   const workbook = XLSX.utils.book_new()
@@ -50,6 +50,18 @@ describe('local workbook parsing', () => {
     expect(parsed.sheetNames).toEqual(['Students', 'Staff'])
     expect(parsed.rows).toEqual([{ StaffNumber: 'STF001', FirstName: 'Grace' }])
     expect(parsed.csvData).toContain('STF001')
+  })
+
+
+  it('parses quoted CSV fields containing commas and escaped quotes', () => {
+    const parsed = parseCsvText('StudentNumber,FirstName,LastName\nSTU001,"Jane, ""J.J.""",Doe')
+
+    expect(parsed.rows).toEqual([{ StudentNumber: 'STU001', FirstName: 'Jane, "J.J."', LastName: 'Doe' }])
+    expect(parsed.csvData).toContain('Jane')
+  })
+
+  it('rejects CSV input without a data row', () => {
+    expect(() => parseCsvText('StudentNumber,FirstName,LastName')).toThrow('at least one data row')
   })
 
   it('rejects a worksheet name that is not in the workbook', async () => {

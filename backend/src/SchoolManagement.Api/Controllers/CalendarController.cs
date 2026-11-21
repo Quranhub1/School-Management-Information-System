@@ -15,14 +15,14 @@ public sealed class CalendarController(SchoolManagementDbContext db) : Controlle
     public async Task<IActionResult> List(CancellationToken cancellationToken)
     {
         var query = db.CalendarEvents.AsNoTracking().Where(x => x.IsActive);
-        return Ok(await query.OrderBy(x => x.StartDate).ToListAsync(cancellationToken));
+        return Ok((await query.OrderBy(x => x.StartDate).ToListAsync(cancellationToken)).Select(CalendarEventResponseDto.FromDomain).ToArray());
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         var calendarEvent = await db.CalendarEvents.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        return calendarEvent is null ? NotFound() : Ok(calendarEvent);
+        return calendarEvent is null ? NotFound() : Ok(CalendarEventResponseDto.FromDomain(calendarEvent));
     }
 
     [HttpPost]
@@ -42,7 +42,7 @@ public sealed class CalendarController(SchoolManagementDbContext db) : Controlle
         };
         db.CalendarEvents.Add(calendarEvent);
         await db.SaveChangesAsync(cancellationToken);
-        return Created($"api/calendar/{calendarEvent.Id}", calendarEvent);
+        return Created($"api/calendar/{calendarEvent.Id}", CalendarEventResponseDto.FromDomain(calendarEvent));
     }
 
     [HttpDelete("{id:guid}")]
@@ -54,6 +54,13 @@ public sealed class CalendarController(SchoolManagementDbContext db) : Controlle
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
+}
+
+public sealed record CalendarEventResponseDto(Guid Id, string Title, string? Description, string EventType, DateOnly StartDate, DateOnly EndDate, string? Location, bool IsActive)
+{
+    public static CalendarEventResponseDto FromDomain(Domain.Calendar.CalendarEvent calendarEvent) => new(
+        calendarEvent.Id, calendarEvent.Title, calendarEvent.Description, calendarEvent.EventType,
+        calendarEvent.StartDate, calendarEvent.EndDate, calendarEvent.Location, calendarEvent.IsActive);
 }
 
 public sealed record CreateCalendarEventRequest(string Title, string? Description, string EventType, DateOnly StartDate, DateOnly EndDate, string? Location);

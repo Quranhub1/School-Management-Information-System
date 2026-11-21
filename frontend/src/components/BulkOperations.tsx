@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react'
 import { importData, importSpreadsheetData, exportData, exportDataAsExcel } from '../api/importExport'
-import { parseSpreadsheetFile } from '../lib/spreadsheets'
+import { parseCsvText, parseSpreadsheetFile } from '../lib/spreadsheets'
+import { validateBulkImportRows } from '../lib/bulk-import-validation'
 
 type EntityType = 'student' | 'staff'
 type Tab = 'import' | 'export'
 
 const SAMPLE_CSV: Record<EntityType, string> = {
   student: 'StudentNumber,FirstName,LastName,OtherNames,DateOfBirth,Gender,PhoneNumber,Email,Status\nSTU001,John,Doe,,2000-01-01,Male,0700000000,john@example.com,Active',
-  staff: 'StaffNumber,FirstName,LastName,EmploymentType,NationalId,PhoneNumber,Email\nSTF001,Jane,Smith,Permanent,ID123,0712345678,jane@example.com',
+  staff: 'StaffNumber,FirstName,LastName,EmploymentType,StaffType,NationalId,PhoneNumber,Email\nSTF001,Jane,Smith,Permanent,NonTeaching,ID123,0712345678,jane@example.com',
 }
 
 const SPREADSHEET_ACCEPT = '.xlsx,.xls,.xlsm,.xlsb,.ods,.csv,.tsv'
@@ -30,9 +31,17 @@ export function BulkOperations() {
     setError('')
     setResult(null)
     try {
+      const parsed = selectedFile
+        ? await parseSpreadsheetFile(selectedFile, selectedSheet || undefined)
+        : parseCsvText(csv)
+      const rowErrors = validateBulkImportRows(entityType, parsed.rows)
+      if (rowErrors.length) {
+        setResult({ success: 0, errors: rowErrors, warnings: [] })
+        return
+      }
       const res = selectedFile
         ? await importSpreadsheetData(entityType, selectedFile, selectedSheet || undefined)
-        : await importData({ entityType, csvData: csv })
+        : await importData({ entityType, csvData: parsed.csvData })
       setResult({ success: res.successCount, errors: res.errors, warnings: res.warnings })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Import failed.')
@@ -103,7 +112,7 @@ export function BulkOperations() {
               </select>
             </label>
           </div>
-          <p className="hint">Choose an Excel, OpenDocument or CSV/TSV file, or paste CSV data below.</p>
+          <p className="hint">Choose an Excel, OpenDocument or CSV/TSV file, or paste CSV data below. Every data row is checked before anything is sent to the server.</p>
           <input ref={fileRef} type="file" accept={SPREADSHEET_ACCEPT} onChange={e => void handleFileChange(e)} />
           {sheetNames.length > 1 && (
             <label>Worksheet

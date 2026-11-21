@@ -30,6 +30,54 @@ public sealed class FinanceWorkflowServiceTests
         Assert.Equal(40000m, payment.UnallocatedAmount);
     }
 
+
+    [Fact]
+    public async Task AllocatePaymentAsync_rejects_empty_allocations()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.AllocatePaymentAsync(Guid.NewGuid(), Array.Empty<PaymentAllocationRequest>()));
+    }
+
+    [Fact]
+    public async Task AllocatePaymentAsync_rejects_duplicate_invoice_lines()
+    {
+        var service = CreateService();
+        var invoiceId = Guid.NewGuid();
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.AllocatePaymentAsync(Guid.NewGuid(),
+            [
+                new PaymentAllocationRequest(invoiceId, 10m),
+                new PaymentAllocationRequest(invoiceId, 20m)
+            ]));
+
+        Assert.Contains("only appear once", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task AllocatePaymentAsync_rejects_amount_above_unallocated_payment_balance()
+    {
+        var repository = new InMemoryFinanceRepository();
+        var payment = new Payment
+        {
+            StudentId = Guid.NewGuid(),
+            ReceiptNumber = "RC-OVERALLOC",
+            Amount = 100m,
+            PaymentMethod = "Cash"
+        };
+        repository.PaymentToReturn = payment;
+        var service = new FinanceWorkflowService(
+            new FinanceService(repository, new FiscalPeriodService(new InMemoryFiscalPeriodRepository())));
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.AllocatePaymentAsync(payment.Id,
+                [new PaymentAllocationRequest(Guid.NewGuid(), 101m)]));
+
+        Assert.Contains("unallocated balance", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static FinanceWorkflowService CreateService()
     {
         var periods = new FiscalPeriodService(new InMemoryFiscalPeriodRepository());
@@ -51,6 +99,7 @@ public sealed class FinanceWorkflowServiceTests
     private sealed class InMemoryFinanceRepository : global::SchoolManagement.Application.Finance.IFinanceRepository
     {
         private readonly List<CreditNote> creditNotes = [];
+        public Payment? PaymentToReturn { get; set; }
         public Task<StudentInvoice?> GetInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken) => Task.FromResult<StudentInvoice?>(null);
         public Task<IReadOnlyList<StudentInvoice>> GetStudentInvoicesAsync(Guid studentId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
         public Task<IReadOnlyList<StudentInvoice>> GetAllStudentInvoicesAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
@@ -58,7 +107,7 @@ public sealed class FinanceWorkflowServiceTests
         public Task<bool> StudentExistsAsync(Guid studentId, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task<bool> InvoiceNumberExistsAsync(string invoiceNumber, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task<bool> ReceiptExistsAsync(string receiptNumber, CancellationToken cancellationToken) => Task.FromResult(false);
-        public Task<Payment?> GetPaymentAsync(Guid paymentId, CancellationToken cancellationToken) => Task.FromResult<Payment?>(null);
+        public Task<Payment?> GetPaymentAsync(Guid paymentId, CancellationToken cancellationToken) => Task.FromResult(PaymentToReturn?.Id == paymentId ? PaymentToReturn : null);
         public Task<IReadOnlyList<StudentInvoice>> GetOutstandingInvoicesAsync(Guid studentId, string currency, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<StudentInvoice>>([]);
         public Task<IReadOnlyList<PaymentLedgerEntry>> GetStudentLedgerAsync(Guid studentId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<PaymentLedgerEntry>>([]);
         public Task<bool> JournalEntryNumberExistsAsync(string entryNumber, CancellationToken cancellationToken) => Task.FromResult(false);

@@ -118,7 +118,12 @@ public sealed class LibrariansController(
             return HandlePersistenceFailure(ex, $"update librarian {id}");
         }
 
-        return Ok(librarian);
+        var staff = await db.StaffMembers.AsNoTracking().SingleOrDefaultAsync(x => x.Id == librarian.StaffMemberId, ct);
+        if (staff is null) return Conflict(new { message = "The librarian's staff profile is no longer available." });
+        return Ok(new LibrarianView(
+            librarian.Id, staff.Id, staff.StaffNumber, staff.FirstName, staff.LastName,
+            staff.PhoneNumber, staff.Email, librarian.LibraryRole, librarian.IsActive,
+            librarian.AssignedAtUtc, librarian.DeactivatedAtUtc));
     }
 
     private IActionResult HandlePersistenceFailure(DbUpdateException exception, string operation)
