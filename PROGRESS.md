@@ -39,6 +39,7 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Replace direct payroll, academic year/intake/semester/stream, curriculum/course/mapping, calendar event, message/conversation, gate log, assessment plan/record and staff leave responses with explicit DTOs.
 - [x] Replace direct admission-completion, nested hostel, stream, subject and librarian-update entity responses with explicit DTOs.
 - [x] Add API/application tests for DTO projections, retained API fields, payment allocation bounds and inclusive fiscal-period start/end boundaries.
+- [x] Validate every student/staff CSV and Excel row with Zod before upload, report row/field errors and duplicate file identifiers, and enforce the same critical rules server-side with RFC4180-compatible CSV parsing, strict dates, email and staff-type validation.
 - [ ] Run and pass the complete backend/frontend/E2E CI for this branch before opening or merging its PR.
 
 ### Remaining audit work
