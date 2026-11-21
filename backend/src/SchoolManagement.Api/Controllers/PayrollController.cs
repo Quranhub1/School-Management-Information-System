@@ -18,14 +18,14 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
     {
         var query = db.PayrollRecords.AsNoTracking();
         if (staffMemberId.HasValue) query = query.Where(x => x.StaffMemberId == staffMemberId.Value);
-        return Ok(await query.OrderByDescending(x => x.Year).ThenByDescending(x => x.Month).ToListAsync(cancellationToken));
+        return Ok((await query.OrderByDescending(x => x.Year).ThenByDescending(x => x.Month).ToListAsync(cancellationToken)).Select(PayrollRecordResponseDto.FromDomain).ToArray());
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         var record = await db.PayrollRecords.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        return record is null ? NotFound() : Ok(record);
+        return record is null ? NotFound() : Ok(PayrollRecordResponseDto.FromDomain(record));
     }
 
     [HttpPost("generate")]
@@ -117,6 +117,14 @@ public sealed class PayrollController(SchoolManagementDbContext db, IConfigurati
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
+}
+
+public sealed record PayrollRecordResponseDto(Guid Id, Guid StaffMemberId, int Month, int Year, decimal BasicSalary, decimal Allowances, decimal Deductions, decimal NetPay, string Currency, DateTimeOffset? PaymentDate, string Status, string? PaymentMethod, string? Reference)
+{
+    public static PayrollRecordResponseDto FromDomain(SchoolManagement.Domain.Staff.PayrollRecord record) => new(
+        record.Id, record.StaffMemberId, record.Month, record.Year, record.BasicSalary, record.Allowances,
+        record.Deductions, record.NetPay, record.Currency, record.PaymentDate, record.Status,
+        record.PaymentMethod, record.Reference);
 }
 
 public sealed record GeneratePayrollRequest(int Month, int Year);
