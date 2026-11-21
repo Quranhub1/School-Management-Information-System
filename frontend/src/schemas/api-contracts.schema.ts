@@ -584,3 +584,41 @@ export const academicPeriodRequestSchema = z.object({
 });
 
 export const academicPeriodUpdateRequestSchema = academicPeriodRequestSchema.omit({ academicYearId: true });
+
+
+export const createUserRequestSchema = z.object({
+  username: requiredTextSchema.max(100),
+  password: z.string().min(8).max(256),
+  firstName: requiredTextSchema.max(100),
+  lastName: requiredTextSchema.max(100),
+  email: z.email().optional().or(z.literal("")),
+  roles: z.array(requiredTextSchema.max(100)).min(1).max(100),
+}).refine(value => new Set(value.roles.map(role => role.toLowerCase())).size === value.roles.length, {
+  path: ["roles"],
+  message: "Roles must not contain duplicates.",
+});
+
+export const updateUserRequestSchema = z.object({
+  firstName: requiredTextSchema.max(100),
+  lastName: requiredTextSchema.max(100),
+  email: z.email().nullable().optional().or(z.literal("")),
+  roles: z.array(requiredTextSchema.max(100)).min(1).max(100),
+}).refine(value => new Set(value.roles.map(role => role.toLowerCase())).size === value.roles.length, {
+  path: ["roles"],
+  message: "Roles must not contain duplicates.",
+});
+
+export const resetUserPasswordRequestSchema = z.object({
+  newPassword: z.string().min(8).max(256),
+});
+
+export const setUserActiveRequestSchema = z.object({
+  active: z.boolean(),
+});
+
+export const permissionCodesRequestSchema = z.object({
+  permissionCodes: z.array(requiredTextSchema.max(160)).max(500),
+}).refine(value => new Set(value.permissionCodes).size === value.permissionCodes.length, {
+  path: ["permissionCodes"],
+  message: "Permission codes must not contain duplicates.",
+});
