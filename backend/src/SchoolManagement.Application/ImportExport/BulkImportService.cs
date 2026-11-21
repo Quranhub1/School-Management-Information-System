@@ -98,10 +98,11 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
         if (staffNumberIdx < 0 || firstNameIdx < 0 || lastNameIdx < 0 || employmentTypeIdx < 0 || staffTypeIdx < 0) return new BulkImportResult(0, 1, new[] { "CSV must contain: StaffNumber, FirstName, LastName, EmploymentType, StaffType." }, Array.Empty<string>());
         var existingStaff = await staff.GetAllAsync(cancellationToken: cancellationToken);
         var existingNumbers = new HashSet<string>(existingStaff.Select(s => s.StaffNumber), StringComparer.OrdinalIgnoreCase);
-        for (var i = 1; i < lines.Length; i++)
+        var importedNumbers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 1; i < rows.Count; i++)
         {
-            var values = lines[i].Split(',');
-            if (values.Length < headers.Length) { errors.Add($"Row {i + 1}: insufficient columns."); continue; }
+            var values = rows[i];
+            if (values.Length != headers.Length) { errors.Add($"Row {i + 1}: expected {headers.Length} columns but found {values.Length}."); continue; }
             var staffNumber = values.ElementAtOrDefault(staffNumberIdx)?.Trim();
             var firstName = values.ElementAtOrDefault(firstNameIdx)?.Trim();
             var lastName = values.ElementAtOrDefault(lastNameIdx)?.Trim();
