@@ -45,9 +45,9 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
 
         // The API accepts a teaching-group ID. Do not compare it with a course-offering ID:
         // those are separate records and the mismatch silently generated empty timetables.
-        if (request.TeachingGroupIds is { Count: > 0 })
+        if (request.TeachingGroupIds is { Count: > 0 } selectedGroupIds)
         {
-            var requestedGroupIds = request.TeachingGroupIds.Distinct().ToArray();
+            var requestedGroupIds = selectedGroupIds.Distinct().ToArray();
             teachingGroupsQuery = teachingGroupsQuery.Where(x => requestedGroupIds.Contains(x.Id));
         }
         else if (request.TeachingGroupId.HasValue)
@@ -55,7 +55,7 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             teachingGroupsQuery = teachingGroupsQuery.Where(x => x.Id == request.TeachingGroupId.Value);
         }
 
-        var teachingGroups = await teachingGroupsQuery.ToListAsync(cancellationToken);
+        var teachingGroups = await teachingGroupsQuery.OrderBy(x => x.GroupCode).ToListAsync(cancellationToken);
         if ((request.TeachingGroupId.HasValue || request.TeachingGroupIds is { Count: > 0 }) && teachingGroups.Count == 0)
             return new GeneratedTimetableResult([], [], [], 0,
                 ["None of the selected teaching groups belong to the selected programme curriculum and academic period."], false);
@@ -149,10 +149,14 @@ public sealed class TimetableGeneratorService(SchoolManagementDbContext db)
             if (groupSchedules.TryGetValue(entry.TeachingGroupId, out var groupSlots)) groupSlots.Remove(slot);
         }
 
+        // Remove all selected groups' old slots from the candidate index up front so
+        // they do not block one another's replacements. Failed groups are restored
+        // immediately before the next group is considered.
+        foreach (var previous in existingForGroups) RemoveFromSchedules(previous);
+
         foreach (var teachingGroup in teachingGroups)
         {
             var previousGroupEntries = existingForGroups.Where(x => x.TeachingGroupId == teachingGroup.Id).ToList();
-            foreach (var previous in previousGroupEntries) RemoveFromSchedules(previous);
             var groupGeneratedEntries = new List<TimetableEntry>();
 
             var courseOffering = courseOfferings.FirstOrDefault(co => co.Id == teachingGroup.CourseOfferingId);
