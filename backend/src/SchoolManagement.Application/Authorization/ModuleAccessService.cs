@@ -5,6 +5,7 @@ namespace SchoolManagement.Application.Authorization;
 public sealed class ModuleAccessService
 {
     private const string AdmissionsManageRole = "StaffAccess.Admissions.Manage";
+    private const string CurriculumCourseUnitsManageRole = "StaffAccess.Curriculum.CourseUnits.Manage";
     private const string CurriculumManageRole = "StaffAccess.Curriculum.Manage";
     private const string ClassesDeleteRole = "StaffAccess.Classes.Delete";
     private const string TimetableManageRole = "StaffAccess.Timetable.Manage";
@@ -50,8 +51,8 @@ public sealed class ModuleAccessService
             InstitutionalModules.Dashboard => hasAnyStaffPermission,
             InstitutionalModules.Admissions => Has(AdmissionsManageRole),
             InstitutionalModules.Students => HasPrefix("StaffAccess.Students."),
-            InstitutionalModules.Academic => Has(CurriculumManageRole) || Has(ClassesDeleteRole),
-            InstitutionalModules.Curriculum => Has(CurriculumManageRole),
+            InstitutionalModules.Academic => Has(CurriculumCourseUnitsManageRole) || Has(CurriculumManageRole) || Has(ClassesDeleteRole),
+            InstitutionalModules.Curriculum => Has(CurriculumCourseUnitsManageRole) || Has(CurriculumManageRole),
             InstitutionalModules.Timetable => Has(TimetableManageRole),
             InstitutionalModules.Attendance => Has(StaffAttendanceRole),
             InstitutionalModules.Finance => HasPrefix("StaffAccess.Finance."),

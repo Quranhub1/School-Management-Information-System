@@ -38,6 +38,33 @@ public sealed class ModuleAccessServiceTests
         Assert.Equal(ModuleAccess.RolesByModule.Keys.Concat(new[] { "Library", "Communication" }).OrderBy(module => module).Distinct(StringComparer.OrdinalIgnoreCase), modules);
     }
 
+
+    [Fact]
+    public void Staff_checklist_permissions_resolve_to_independent_roles()
+    {
+        var roleNames = StaffAccessRoles.ByPermission.Values.ToArray();
+
+        Assert.Equal(roleNames.Length, roleNames.Distinct(StringComparer.Ordinal).Count());
+        Assert.NotEqual(
+            StaffAccessRoles.ByPermission["curriculum.course-units.manage"],
+            StaffAccessRoles.ByPermission["curriculum.manage"]);
+        Assert.NotEqual(
+            StaffAccessRoles.ByPermission["students.classes.manage"],
+            StaffAccessRoles.ByPermission["students.manage"]);
+    }
+
+    [Fact]
+    public void Course_unit_permission_exposes_academic_workspace_without_other_staff_modules()
+    {
+        var modules = new ModuleAccessService()
+            .GetAccessibleModules(Principal(StaffAccessRoles.CurriculumCourseUnitsManage));
+
+        Assert.Contains(InstitutionalModules.Academic, modules);
+        Assert.Contains(InstitutionalModules.Curriculum, modules);
+        Assert.DoesNotContain(InstitutionalModules.Finance, modules);
+        Assert.DoesNotContain(InstitutionalModules.Users, modules);
+    }
+
     private static ClaimsPrincipal Principal(string role)
     {
         var identity = new ClaimsIdentity(

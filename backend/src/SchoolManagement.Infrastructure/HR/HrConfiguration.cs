@@ -8,7 +8,7 @@ public sealed class HrConfiguration : IEntityTypeConfiguration<StaffMember>
 {
     public void Configure(EntityTypeBuilder<StaffMember> builder)
     {
-        builder.ToTable("staff_members");
+        builder.ToTable("StaffMembers");
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.StaffNumber)
@@ -21,6 +21,14 @@ public sealed class HrConfiguration : IEntityTypeConfiguration<StaffMember>
         builder.Property(x => x.NationalId).HasMaxLength(50);
         builder.Property(x => x.PhoneNumber).HasMaxLength(40);
         builder.Property(x => x.Email).HasMaxLength(254);
+        builder.Property(x => x.Gender).HasMaxLength(30);
+        builder.Property(x => x.Address).HasMaxLength(1000);
+        builder.Property(x => x.BankName).HasMaxLength(150);
+        builder.Property(x => x.BankAccountNumber).HasMaxLength(80);
+        builder.Property(x => x.BankAddress).HasMaxLength(500);
+        builder.Property(x => x.AttendanceMode).HasMaxLength(40);
+        builder.Property(x => x.PhotographDataUrl).HasColumnType("text");
+        builder.Property(x => x.BasicSalary).HasPrecision(18, 2);
         builder.Property(x => x.EmploymentType).HasMaxLength(80).IsRequired();
         builder.HasIndex(x => new { x.IsActive, x.LastName, x.FirstName });
     }

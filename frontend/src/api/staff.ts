@@ -16,10 +16,19 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 export type StaffCourseUnit = { id: string; code: string; name: string; creditUnits: number };
 export type StaffDepartment = { id: string; code: string; name: string };
-export type StaffMember = { id:string; userId?:string|null; staffNumber:string; firstName:string; lastName:string; otherNames?:string|null; displayName?:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string; staffType:string; isActive:boolean; departmentId?:string|null; jobTitle?:string|null; highestQualification?:string|null; speciality?:string|null; professionalRegistration?:string|null; courseUnitIds?:string[] };
+export type StaffMember = { id:string; userId?:string|null; staffNumber:string; firstName:string; lastName:string; otherNames?:string|null; displayName?:string; nationalId?:string; phoneNumber?:string; email?:string; employmentType:string; staffType:string; isActive:boolean; departmentId?:string|null; jobTitle?:string|null; highestQualification?:string|null; speciality?:string|null; professionalRegistration?:string|null; dateJoined?:string|null; dateOfBirth?:string|null; gender?:string|null; address?:string|null; bankName?:string|null; bankAccountNumber?:string|null; bankAddress?:string|null; basicSalary?:number|null; attendanceMode?:string|null; photographDataUrl?:string|null; courseUnitIds?:string[] };
 export type StaffProfileInput = Omit<StaffMember, 'id' | 'isActive'>;
 export type StaffPermission = { id: string; code: string; name: string; groupKey: string; description?: string | null };
 export type StaffRole = { id: string; name: string; description?: string | null; permissionCodes: string[] };
+export type StaffAccount = { linked: boolean; username: string | null; permissions: string[]; isActive?: boolean };
+export function getStaffAccount(id: string) {
+  if (!id.trim()) throw new Error('Staff ID is required.');
+  return request<StaffAccount>(`/api/staff/${encodeURIComponent(id)}/account`);
+}
+export function saveStaffAccount(id: string, input: { username: string; password?: string; permissions: string[] }) {
+  if (!id.trim()) throw new Error('Staff ID is required.');
+  return request<StaffAccount>(`/api/staff/${encodeURIComponent(id)}/account`, { method: 'PUT', body: JSON.stringify(input) });
+}
 export type StaffCreateInput = StaffProfileInput & { createLoginAccount?: boolean; username?: string; password?: string; roleNames?: string[]; permissionCodes?: string[]; deniedPermissionCodes?: string[] };
 export type LeaveRequest = { id:string; staffMemberId:string; leaveType:string; startDate:string; endDate:string; reason:string; status:string; approvedBy?:string; approvedAt?:string };
 export const STAFF_CHANGED_EVENT = 'smis:staff-changed'

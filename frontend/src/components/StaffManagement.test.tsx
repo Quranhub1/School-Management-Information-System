@@ -14,6 +14,8 @@ vi.mock('../api/staff', () => ({
   listLeave: vi.fn().mockResolvedValue([]),
   requestLeave: vi.fn().mockResolvedValue(null),
   approveLeave: vi.fn().mockResolvedValue(null),
+  getStaffAccount: vi.fn().mockResolvedValue({ linked: false, username: null, permissions: [] }),
+  saveStaffAccount: vi.fn().mockResolvedValue({ linked: true, username: 'staff.user', permissions: [] }),
   STAFF_CHANGED_EVENT: 'smis:staff-changed',
 }))
 
@@ -43,6 +45,31 @@ describe('StaffManagement', () => {
   it('supports permission flags', () => {
     render(<StaffManagement canManage canReadPayroll />)
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
+  })
+
+  it('shows the staff access checklist and supports marking module permissions', async () => {
+    render(<StaffManagement canManage canManageAccounts />)
+    expect(screen.getByRole('heading', { name: 'Administrator Permissions' })).toBeTruthy()
+    expect(screen.getByLabelText('Manage timetable')).toBeTruthy()
+    expect(screen.getByLabelText('Manage admissions')).toBeTruthy()
+    expect(screen.getByLabelText('Manage settings (System Administrator only)')).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Manage timetable'))
+    expect(screen.getByText('1 Selected')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Unmark All' }))
+    expect(screen.getByText('0 Selected')).toBeTruthy()
+  })
+
+  it('captures the complete staff recruitment profile including a photograph', () => {
+    render(<StaffManagement canManage />)
+    expect(screen.getByLabelText('Gender')).toBeTruthy()
+    expect(screen.getByLabelText('Date of birth')).toBeTruthy()
+    expect(screen.getByLabelText('Residential address')).toBeTruthy()
+    expect(screen.getByLabelText('Staff photograph')).toBeTruthy()
+    expect(screen.getByLabelText('Attendance mode')).toBeTruthy()
+    expect(screen.getByLabelText('Basic monthly salary')).toBeTruthy()
+    expect(screen.getByLabelText('Bank name')).toBeTruthy()
+    expect(screen.getByLabelText('Bank account number')).toBeTruthy()
+    expect(screen.getByLabelText('Bank address')).toBeTruthy()
   })
 
   it('shows the redesigned leave request form and only offers active staff', async () => {

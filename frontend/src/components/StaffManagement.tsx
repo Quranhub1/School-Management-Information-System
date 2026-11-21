@@ -3,7 +3,7 @@ import './StaffCreateForm.css'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
-import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listStaffPermissionCatalog, listStaffRoles, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment, type StaffPermission, type StaffRole } from '../api/staff'
+import { createStaff, updateStaff, updateStaffCourseUnits, deleteStaff, activateStaff, deactivateStaff, listStaff, listStaffCourseUnits, listStaffDepartments, listStaffPermissionCatalog, listStaffRoles, getStaffAccount, saveStaffAccount, listLeave, requestLeave, approveLeave, STAFF_CHANGED_EVENT, type StaffMember, type LeaveRequest, type StaffCourseUnit, type StaffDepartment, type StaffPermission, type StaffRole } from '../api/staff'
 import { listPayroll, generatePayroll, markPayrollPaid, type PayrollRecord } from '../api/payroll'
 import { notify } from './GlobalNotifications'
 import { validateForm } from '../lib/validation'
@@ -54,7 +54,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
   async function loadLeave() { if (!leaveForm.staffMemberId.trim()) { setLeaveRequests([]); return } try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
   async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
 
-  const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', courseUnitIds: [] as string[] })
+  const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', gender: '', dateOfBirth: '', address: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', dateJoined: '', bankName: '', bankAccountNumber: '', bankAddress: '', basicSalary: '' as string, attendanceMode: 'Biometric', photographDataUrl: '', courseUnitIds: [] as string[] })
   const duplicateErrorPattern = /staff number is already registered|staff member with this staff number already exists/i
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
   const [leaveDuration, setLeaveDuration] = useState<'single' | 'multiple'>('single')
@@ -144,12 +144,26 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
   useEffect(() => { if (canManage && tab === 'leave') void loadLeave() }, [tab, canManage, leaveForm.staffMemberId])
   useEffect(() => { if (canReadPayroll && tab === 'payroll') void loadPayroll() }, [tab, canReadPayroll])
 
+  async function saveAccountForStaff(staffId: string) {
+    const requested = accountLinked || Boolean(accountForm.password.trim() || accountForm.permissions.length > 0 || accountForm.username.trim())
+    if (!requested) return
+    if (!accountForm.username.trim()) throw new Error('Enter a username for the staff login account.')
+    if (!accountLinked && accountForm.permissions.length === 0) throw new Error('Select at least one screen or action for this staff account.')
+    if (!accountLinked && accountForm.mode === 'new' && accountForm.password.length < 8) throw new Error('A new staff login password must contain at least 8 characters.')
+    setSavingAccount(true)
+    try {
+      await saveStaffAccount(staffId, { username: accountForm.username.trim(), password: accountForm.password || undefined, permissions: accountForm.permissions })
+      setAccountLinked(true)
+      setAccountForm(current => ({ ...current, mode: 'existing', password: '' }))
+    } finally { setSavingAccount(false) }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSuccess('')
     try {
-      const profile = { ...form, departmentId: form.departmentId || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
+      const profile = { ...form, departmentId: form.departmentId || null, dateJoined: form.dateJoined || null, dateOfBirth: form.dateOfBirth || null, photographDataUrl: form.photographDataUrl || null, basicSalary: form.basicSalary.trim() === '' ? null : Number(form.basicSalary), courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
       const validation = validateForm(staffCreateRequestSchema, profile)
       if (!validation.success) {
         setValidationErrors(validation.errors)
