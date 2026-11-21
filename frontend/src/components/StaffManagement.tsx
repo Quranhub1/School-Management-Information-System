@@ -54,7 +54,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
   async function loadLeave() { if (!leaveForm.staffMemberId.trim()) { setLeaveRequests([]); return } try { setLeaveRequests(await listLeave(leaveForm.staffMemberId.trim())) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load leave requests.') } }
   async function loadPayroll() { try { setPayroll(await listPayroll()) } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load payroll.') } }
 
-  const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', courseUnitIds: [] as string[] })
+  const emptyStaffForm = () => ({ staffNumber: '', firstName: '', lastName: '', nationalId: '', phoneNumber: '', email: '', gender: '', dateOfBirth: '', address: '', employmentType: 'Permanent', staffType: 'Teaching', departmentId: '', jobTitle: '', highestQualification: '', speciality: '', professionalRegistration: '', dateJoined: '', bankName: '', bankAccountNumber: '', bankAddress: '', basicSalary: '' as string, attendanceMode: 'Biometric', photographDataUrl: '', courseUnitIds: [] as string[] })
   const duplicateErrorPattern = /staff number is already registered|staff member with this staff number already exists/i
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
   const [leaveDuration, setLeaveDuration] = useState<'single' | 'multiple'>('single')
@@ -149,7 +149,7 @@ export function StaffManagement({ canManage = false, canManageAccounts = false, 
     setError('')
     setSuccess('')
     try {
-      const profile = { ...form, departmentId: form.departmentId || null, courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
+      const profile = { ...form, departmentId: form.departmentId || null, dateJoined: form.dateJoined || null, dateOfBirth: form.dateOfBirth || null, photographDataUrl: form.photographDataUrl || null, basicSalary: form.basicSalary.trim() === '' ? null : Number(form.basicSalary), courseUnitIds: form.staffType === 'Teaching' ? form.courseUnitIds : [] }
       const validation = validateForm(staffCreateRequestSchema, profile)
       if (!validation.success) {
         setValidationErrors(validation.errors)

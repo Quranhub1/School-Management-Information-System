@@ -3,7 +3,7 @@ namespace SchoolManagement.Domain.Identity;
 public sealed class User
 {
     public Guid Id { get; init; } = Guid.NewGuid();
-    public required string Username { get; init; }
+    public required string Username { get; set; }
     public required string PasswordHash { get; set; }
     public required string FirstName { get; set; }
     public required string LastName { get; set; }

@@ -166,6 +166,16 @@ export const staffCreateRequestSchema = z.object({
   highestQualification: z.string().trim().nullable().optional(),
   speciality: z.string().trim().nullable().optional(),
   professionalRegistration: z.string().trim().nullable().optional(),
+  dateJoined: z.iso.date().nullable().optional(),
+  gender: z.string().trim().max(30).nullable().optional(),
+  dateOfBirth: z.iso.date().nullable().optional(),
+  address: z.string().trim().max(1000).nullable().optional(),
+  bankName: z.string().trim().max(150).nullable().optional(),
+  bankAccountNumber: z.string().trim().max(80).nullable().optional(),
+  bankAddress: z.string().trim().max(500).nullable().optional(),
+  basicSalary: z.number().finite().nonnegative().nullable().optional(),
+  attendanceMode: z.string().trim().max(40).nullable().optional(),
+  photographDataUrl: z.string().max(2_100_000).nullable().optional(),
   courseUnitIds: z.array(identifierSchema).optional(),
 });
 export const leaveRequestSchema = z.object({

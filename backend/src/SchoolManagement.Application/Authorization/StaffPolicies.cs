@@ -4,4 +4,6 @@ public static class StaffPolicies
 {
     public const string Read = "StaffRead";
     public const string Management = "StaffManagement";
+    public const string LeaveManagement = "StaffLeaveManagement";
+    public const string AccountManagement = "StaffAccountManagement";
 }
