@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema, addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -143,6 +143,21 @@ describe("SMIS Zod domain schemas", () => {
   });
 
 
+
+
+  it("validates academic year and period date boundaries and sequence numbers", () => {
+    const year = { name: "2026-2027", startDate: "2026-01-01", endDate: "2026-12-31" };
+    expect(academicYearRequestSchema.safeParse(year).success).toBe(true);
+    expect(academicYearRequestSchema.safeParse({ ...year, endDate: "2025-12-31" }).success).toBe(false);
+
+    const period = { academicYearId: "year-1", name: "Semester 1", sequence: 1, startDate: "2026-01-01", endDate: "2026-06-30" };
+    expect(academicPeriodRequestSchema.safeParse(period).success).toBe(true);
+    expect(academicPeriodRequestSchema.safeParse({ ...period, sequence: 0 }).success).toBe(false);
+    expect(academicPeriodRequestSchema.safeParse({ ...period, endDate: "2025-12-31" }).success).toBe(false);
+    expect(academicPeriodUpdateRequestSchema.safeParse({
+      name: "Semester 2", sequence: 2, startDate: "2026-07-01", endDate: "2026-12-31",
+    }).success).toBe(true);
+  });
 
   it("validates assessment plan weights and assessment score boundaries", () => {
     const plan = {
