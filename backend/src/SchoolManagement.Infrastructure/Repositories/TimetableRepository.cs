@@ -46,7 +46,7 @@ public sealed class TimetableRepository(SchoolManagementDbContext db) : ITimetab
             .Where(x => x.IsActive
                 && x.DayOfWeek == dayOfWeek
                 && x.Room != null
-                && x.Room == normalizedRoom
+                && x.Room.ToLower() == normalizedRoom.ToLower()
                 && x.StartTime < endTime
                 && startTime < x.EndTime);
 

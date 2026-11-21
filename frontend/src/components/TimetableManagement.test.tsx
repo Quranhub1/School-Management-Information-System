@@ -44,6 +44,11 @@ vi.mock('../api/timetable', () => ({
   }),
 }))
 
+vi.mock('../lib/pdfmake', () => ({
+  downloadInstitutionalPdf: vi.fn(),
+  printInstitutionalPdf: vi.fn(),
+}))
+
 vi.mock('./InstitutionSettingsContext', () => ({
   useInstitutionSettings: vi.fn(() => ({
     institution: { id: 'institution-1', institutionName: 'KAMPALA SCHOOL OF HEALTH SCIENCES', abbreviation: 'KSHS', motto: 'Health is Life', address: '', phone: '', email: '', website: '', postalAddress: '', country: 'Uganda', institutionType: 'School', logoPath: null, primaryColor: '#0505cc', accentColor: '#0735ed', isActive: true, updatedAt: '' },
@@ -51,7 +56,8 @@ vi.mock('./InstitutionSettingsContext', () => ({
   })),
 }))
 
-import { saveTimetableTemplate } from '../api/timetable'
+import { generateTimetable, saveTimetableTemplate } from '../api/timetable'
+import { downloadInstitutionalPdf } from '../lib/pdfmake'
 import { TimetableManagement } from './TimetableManagement'
 
 describe('TimetableManagement', () => {
@@ -79,9 +85,28 @@ describe('TimetableManagement', () => {
     fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
+    const teachingGroups = screen.getByLabelText('Teaching groups') as HTMLSelectElement
+    teachingGroups.options[0].selected = true
+    fireEvent.change(teachingGroups)
     fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
     expect(await screen.findByText('KAMPALA SCHOOL OF HEALTH SCIENCES')).toBeTruthy()
     expect(screen.getByText(/VALID FOR: 01 Jan 2026 – 30 Jun 2026/)).toBeTruthy()
+  })
+
+  it('sends all explicitly selected teaching groups in one generation request', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
+    fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
+    fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
+    const teachingGroups = screen.getByLabelText('Teaching groups') as HTMLSelectElement
+    Array.from(teachingGroups.options).forEach(option => { option.selected = true })
+    fireEvent.change(teachingGroups)
+    fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
+    await waitFor(() => expect(generateTimetable).toHaveBeenCalledTimes(1))
+    expect(generateTimetable).toHaveBeenCalledWith('period-1', ['group-1', 'group-2'], 'curriculum-1', 1, 1, 'programme-1')
   })
 
   it('shows live system data from the central timetable options API', async () => {
@@ -136,15 +161,34 @@ describe('TimetableManagement', () => {
     fireEvent.change(await screen.findByLabelText('Timetable document title'), { target: { value: 'OFFICIAL CLASS TIMETABLE' } })
     fireEvent.change(screen.getByLabelText('Registrar name'), { target: { value: 'JANE DOE' } })
     fireEvent.click(screen.getByRole('button', { name: /edit monday 08:00 period/i }))
+    fireEvent.change(screen.getByLabelText('Course unit'), { target: { value: 'course-1' } })
+    fireEvent.change(screen.getByLabelText('Lecturer / teacher'), { target: { value: 'teacher-1' } })
     fireEvent.change(screen.getByLabelText('Merge down (days)'), { target: { value: '2' } })
+    fireEvent.change(screen.getByLabelText('Merge across periods'), { target: { value: '2' } })
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
     fireEvent.click(screen.getByRole('button', { name: /save timetable template/i }))
     await waitFor(() => expect(saveTimetableTemplate).toHaveBeenCalled())
-    expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', [], expect.objectContaining({
+    expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', expect.arrayContaining([
+      expect.objectContaining({ dayOfWeek: 1, startTime: '08:00:00', endTime: '10:00:00', courseId: 'course-1', teacherId: 'teacher-1' }),
+      expect.objectContaining({ dayOfWeek: 2, startTime: '08:00:00', endTime: '10:00:00', courseId: 'course-1', teacherId: 'teacher-1' }),
+    ]), expect.objectContaining({
       title: 'OFFICIAL CLASS TIMETABLE',
       registrarName: 'JANE DOE',
-      cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2' }) }),
+      cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2', colSpan: '2' }) }),
     }))
+    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }))
+    expect(downloadInstitutionalPdf).toHaveBeenCalledWith(expect.objectContaining({
+      orientation: 'landscape',
+      title: 'OFFICIAL CLASS TIMETABLE',
+    }))
+    const pdfOptions = vi.mocked(downloadInstitutionalPdf).mock.calls[0][0]
+    expect(pdfOptions.content[1]).toMatchObject({
+      table: {
+        body: expect.arrayContaining([
+          expect.arrayContaining([expect.objectContaining({ rowSpan: 2, colSpan: 2 })]),
+        ]),
+      },
+    })
   })
 
   it('supports readOnly mode', () => {

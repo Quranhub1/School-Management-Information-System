@@ -119,7 +119,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
   const [showGenerator, setShowGenerator] = useState(false)
   const [showScheduleForm, setShowScheduleForm] = useState(false)
-  const [timetableCount, setTimetableCount] = useState('1')
+  const [selectedTeachingGroupIds, setSelectedTeachingGroupIds] = useState<string[]>([])
   const [generatedTimetables, setGeneratedTimetables] = useState<
     Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }>
   >([])
@@ -429,7 +429,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
   }
 
-  function printTimetableTemplate() {
+  function timetableTemplatePdfOptions() {
     const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
     const rows = visibleDays.flatMap(day =>
       templateSlots.flatMap((slot, slotIndex) => {
@@ -523,7 +523,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         return row
       }),
     ]
-    printInstitutionalPdf({
+    return {
       ...base,
       title: templateTitle || base.title,
       content: [
@@ -559,7 +559,15 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         },
         { text: templateFooterText, alignment: 'left', fontSize: 8, margin: [0, 10, 0, 0] },
       ],
-    })
+    }
+  }
+
+  function printTimetableTemplate() {
+    printInstitutionalPdf(timetableTemplatePdfOptions())
+  }
+
+  function downloadTimetableTemplatePdf() {
+    downloadInstitutionalPdf(timetableTemplatePdfOptions())
   }
 
   async function handleGenerate(event: React.FormEvent) {
@@ -573,29 +581,31 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       )
       return
     }
-    const selectedGroups = teachingGroupId
-      ? availableGroups.filter(group => group.id === teachingGroupId)
-      : availableGroups.slice(0, Math.max(1, Math.min(availableGroups.length, Number(timetableCount) || 1)))
+    const selectedGroups = availableGroups.filter(group => selectedTeachingGroupIds.includes(group.id))
     if (selectedGroups.length === 0) {
-      setError('Create teaching groups before generating timetables.')
+      setError('Select at least one teaching group to generate its timetable.')
       return
     }
     setLoading(true)
     try {
-      const results: Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }> = []
-      for (const group of selectedGroups) {
-        const result = await generateTimetable(
-          semesterId,
-          group.id,
-          selectedCurriculum.id,
-          Number(yearOfStudy),
-          Number(curriculumSemester),
-          group.programmeId
-        )
-        results.push({ groupId: group.id, groupLabel: group.label, result })
-      }
+      const combinedResult = await generateTimetable(
+        semesterId,
+        selectedGroups.map(group => group.id),
+        selectedCurriculum.id,
+        Number(yearOfStudy),
+        Number(curriculumSemester),
+        selectedGroups[0].programmeId
+      )
+      const results = selectedGroups.map(group => ({
+        groupId: group.id,
+        groupLabel: group.label,
+        result: {
+          ...combinedResult,
+          entries: combinedResult.entries.filter(entry => entry.teachingGroupId === group.id),
+        },
+      }))
       setGeneratedTimetables(results)
-      if (results.length === 1) setGeneratedResult(results[0].result)
+      setGeneratedResult(combinedResult)
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to generate timetables.')
@@ -826,9 +836,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setError('Choose a class and load it into the template before saving.')
       return
     }
+    const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
+    const visibleDaySet = new Set(visibleDays)
     const coveredPopulated = Object.entries(templateCells).filter(([key, cell]) => {
       const [day, slot] = key.split('-').map(Number)
-      return (cell.courseId || cell.teacherId) && templateCellCovered(day, slot)
+      return visibleDaySet.has(day) && (cell.courseId || cell.teacherId) && templateCellCovered(day, slot)
     })
     if (coveredPopulated.length) {
       setError(
@@ -838,7 +850,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
     const populated = Object.entries(templateCells).filter(([key, cell]) => {
       const [day, slot] = key.split('-').map(Number)
-      return (cell.courseId || cell.teacherId) && !templateCellCovered(day, slot)
+      return visibleDaySet.has(day) && (cell.courseId || cell.teacherId) && !templateCellCovered(day, slot)
     })
     if (
       templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)
@@ -851,22 +863,29 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       return
     }
 
-    const templateEntries: CreateTimetableEntry[] = populated.map(([key, cell]) => {
-      const [day, slotIndexText] = key.split('-')
-      const slot = templateSlots[Number(slotIndexText)]
-      return {
+    const templateEntries: CreateTimetableEntry[] = populated.flatMap(([key, cell]) => {
+      const [dayText, slotIndexText] = key.split('-')
+      const day = Number(dayText)
+      const slotIndex = Number(slotIndexText)
+      const slot = templateSlots[slotIndex]
+      const periodSpan = templatePeriodSpan(slotIndex, cell.colSpan)
+      const lastSlot = templateSlots[slotIndex + periodSpan - 1]
+      const dayIndex = visibleDays.indexOf(day)
+      const daySpan = Math.max(1, Math.min(visibleDays.length - dayIndex, Number(cell.rowSpan) || 1))
+      if (!slot || !lastSlot || dayIndex < 0) return []
+      return Array.from({ length: daySpan }, (_, offset) => ({
         teachingGroupId: templateGroupId,
         courseId: cell.courseId,
         teacherId: cell.teacherId,
         curriculumId: selectedCurriculum.id,
         yearOfStudy: Number(yearOfStudy),
         curriculumSemesterNumber: Number(curriculumSemester),
-        dayOfWeek: Number(day),
+        dayOfWeek: visibleDays[dayIndex + offset],
         startTime: slot.startTime + ':00',
-        endTime: slot.endTime + ':00',
+        endTime: lastSlot.endTime + ':00',
         room: cell.room.trim() || undefined,
         sessionType: cell.sessionType || 'Lecture',
-      }
+      }))
     })
 
     setTemplateSaving(true)
@@ -1257,45 +1276,37 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           <h3>Generate a timetable</h3>
           <div className="timetable-form-grid">
             <label>
-              Teaching group
+              Teaching groups
               <select
-                value={teachingGroupId}
-                onChange={event => setTeachingGroupId(event.target.value)}
+                multiple
+                size={Math.min(6, Math.max(2, availableGroups.length))}
+                value={selectedTeachingGroupIds}
+                onChange={event =>
+                  setSelectedTeachingGroupIds(
+                    Array.from(event.target.selectedOptions, option => option.value)
+                  )
+                }
               >
-                <option value="">Generate for multiple classes</option>
                 {availableGroups.map(item => (
                   <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
                 ))}
               </select>
-              {availableGroups.length === 0 && (
+              {availableGroups.length === 0 ? (
                 <small className="timetable-class-empty-hint">
                   No active teaching groups are linked to this programme and academic period. Check
                   Course Offerings and Teaching Groups.
                 </small>
+              ) : (
+                <small className="timetable-generator-help">
+                  Select every class that should receive a timetable. Use Ctrl-click to select
+                  multiple groups.
+                </small>
               )}
             </label>
-            {!teachingGroupId && (
-              <label>
-                Number of timetables
-                <input
-                  type="number"
-                  min="1"
-                  max={Math.max(1, availableGroups.length)}
-                  value={timetableCount}
-                  onChange={event => setTimetableCount(event.target.value)}
-                  required
-                />
-              </label>
-            )}
           </div>
-          {!teachingGroupId && (
-            <p className="timetable-generator-help">
-              Generates one separate timetable for each of the first N teaching groups. Available
-              groups: {availableGroups.length}.
-            </p>
-          )}
+          <p className="timetable-generator-help">Selected teaching groups: {selectedTeachingGroupIds.filter(id => availableGroups.some(group => group.id === id)).length} of {availableGroups.length} available.</p>
           <div className="timetable-form-footer">
             <button
               className="timetable-action primary"
@@ -1893,6 +1904,14 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             >
               <Save size={15} />
               {templateSaving ? 'Saving template…' : 'Save timetable template'}
+            </button>
+            <button
+              className="timetable-action"
+              type="button"
+              onClick={downloadTimetableTemplatePdf}
+              disabled={!institutionLoaded || !institution.isActive}
+            >
+              Download PDF
             </button>
             <button
               className="timetable-action"
