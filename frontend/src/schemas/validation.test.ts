@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addBankStatementLineRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
+import { addBankStatementLineRequestSchema, assessmentPlanCreateRequestSchema, recordAssessmentRequestSchema, applyFeeStructureRequestSchema, closeFiscalPeriodRequestSchema, createFiscalPeriodRequestSchema, createOpeningBalanceRequestSchema, bulkImportRequestSchema, bulkPaymentRequestSchema, createBankReconciliationRequestSchema, createBudgetRequestSchema, createInvoiceRequestSchema, creditNoteRequestSchema, expenseEntrySchema, inventoryItemSchema, inventoryGridRowSchema, inventoryRegisterSaveRequestSchema, feeStructureCreateRequestSchema, libraryLoanSchema, mobileMoneyCreateRequestSchema, paymentEntrySchema, staffAdvanceRequestSchema, sendSmsRequestSchema, studentAdmissionSchema, studentApplicationSubmissionSchema, studentCreateRequestSchema, timetableEntrySchema } from "./index";
 import { parseApiInput, parseApiResponse, validateForm } from "../lib/validation";
 
 describe("SMIS Zod domain schemas", () => {
@@ -142,6 +142,31 @@ describe("SMIS Zod domain schemas", () => {
     }).success).toBe(false);
   });
 
+
+
+  it("validates assessment plan weights and assessment score boundaries", () => {
+    const plan = {
+      courseId: "course-1",
+      name: "Final examination",
+      assessmentType: "Written",
+      weightPercentage: 60,
+      isCompetencyBased: false,
+    };
+    expect(assessmentPlanCreateRequestSchema.safeParse(plan).success).toBe(true);
+    expect(assessmentPlanCreateRequestSchema.safeParse({ ...plan, weightPercentage: 101 }).success).toBe(false);
+
+    const mark = {
+      studentId: "student-1",
+      courseRegistrationId: "registration-1",
+      assessmentPlanId: "plan-1",
+      score: 75,
+      maximumScore: 100,
+      competencyLevel: "Competent",
+    };
+    expect(recordAssessmentRequestSchema.safeParse(mark).success).toBe(true);
+    expect(recordAssessmentRequestSchema.safeParse({ ...mark, score: 101 }).success).toBe(false);
+    expect(recordAssessmentRequestSchema.safeParse({ ...mark, maximumScore: 0 }).success).toBe(false);
+  });
 
   it("validates opening balances and fiscal period closing requests", () => {
     const openingBalances = {
