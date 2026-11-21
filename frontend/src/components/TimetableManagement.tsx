@@ -582,20 +582,24 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
     setLoading(true)
     try {
-      const results: Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }> = []
-      for (const group of selectedGroups) {
-        const result = await generateTimetable(
-          semesterId,
-          group.id,
-          selectedCurriculum.id,
-          Number(yearOfStudy),
-          Number(curriculumSemester),
-          group.programmeId
-        )
-        results.push({ groupId: group.id, groupLabel: group.label, result })
-      }
+      const combinedResult = await generateTimetable(
+        semesterId,
+        selectedGroups.map(group => group.id),
+        selectedCurriculum.id,
+        Number(yearOfStudy),
+        Number(curriculumSemester),
+        selectedGroups[0].programmeId
+      )
+      const results = selectedGroups.map(group => ({
+        groupId: group.id,
+        groupLabel: group.label,
+        result: {
+          ...combinedResult,
+          entries: combinedResult.entries.filter(entry => entry.teachingGroupId === group.id),
+        },
+      }))
       setGeneratedTimetables(results)
-      if (results.length === 1) setGeneratedResult(results[0].result)
+      setGeneratedResult(combinedResult)
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to generate timetables.')
