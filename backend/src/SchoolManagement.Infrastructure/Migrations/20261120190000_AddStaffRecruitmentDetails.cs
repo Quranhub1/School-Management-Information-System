@@ -23,8 +23,6 @@ public sealed class AddStaffRecruitmentDetails : Migration
         migrationBuilder.AddColumn<decimal>(
             name: "BasicSalary", table: "StaffMembers", type: "numeric(18,2)", precision: 18, scale: 2, nullable: true);
         migrationBuilder.AddColumn<DateOnly>(
-            name: "DateJoined", table: "StaffMembers", type: "date", nullable: true);
-        migrationBuilder.AddColumn<DateOnly>(
             name: "DateOfBirth", table: "StaffMembers", type: "date", nullable: true);
         migrationBuilder.AddColumn<string>(
             name: "Gender", table: "StaffMembers", type: "character varying(30)", maxLength: 30, nullable: true);
@@ -41,7 +39,6 @@ public sealed class AddStaffRecruitmentDetails : Migration
         migrationBuilder.DropColumn(name: "BankAddress", table: "StaffMembers");
         migrationBuilder.DropColumn(name: "BankName", table: "StaffMembers");
         migrationBuilder.DropColumn(name: "BasicSalary", table: "StaffMembers");
-        migrationBuilder.DropColumn(name: "DateJoined", table: "StaffMembers");
         migrationBuilder.DropColumn(name: "DateOfBirth", table: "StaffMembers");
         migrationBuilder.DropColumn(name: "Gender", table: "StaffMembers");
         migrationBuilder.DropColumn(name: "AttendanceMode", table: "StaffMembers");
