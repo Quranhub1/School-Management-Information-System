@@ -1,7 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
@@ -9,74 +6,141 @@ public sealed partial class AddIndependentStaffPermissions : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.CreateTable(
-            name: "Permissions",
-            columns: table => new
-            {
-                Id = table.Column<Guid>(type: "uuid", nullable: false),
-                Code = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
-                Name = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
-                GroupKey = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
-                Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
-            },
-            constraints: table => table.PrimaryKey("PK_Permissions", x => x.Id));
+        // 20261120180000 already created the permission tables and StaffUserLinks.
+        // Evolve that schema to the independent staff-permission model instead of
+        // attempting to create the same tables a second time.
+        migrationBuilder.DropIndex(
+            name: "IX_Permissions_GroupCode_Code",
+            table: "Permissions");
 
-        migrationBuilder.CreateTable(
-            name: "RolePermissions",
-            columns: table => new
-            {
-                RoleId = table.Column<Guid>(type: "uuid", nullable: false),
-                PermissionId = table.Column<Guid>(type: "uuid", nullable: false)
-            },
-            constraints: table =>
-            {
-                table.PrimaryKey("PK_RolePermissions", x => new { x.RoleId, x.PermissionId });
-                table.ForeignKey("FK_RolePermissions_Permissions_PermissionId", x => x.PermissionId, "Permissions", "Id", onDelete: ReferentialAction.Cascade);
-                table.ForeignKey("FK_RolePermissions_Roles_RoleId", x => x.RoleId, "Roles", "Id", onDelete: ReferentialAction.Cascade);
-            });
+        migrationBuilder.RenameColumn(
+            name: "GroupCode",
+            table: "Permissions",
+            newName: "GroupKey");
 
-        migrationBuilder.CreateTable(
-            name: "UserPermissions",
-            columns: table => new
-            {
-                UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                PermissionId = table.Column<Guid>(type: "uuid", nullable: false),
-                IsGranted = table.Column<bool>(type: "boolean", nullable: false)
-            },
-            constraints: table =>
-            {
-                table.PrimaryKey("PK_UserPermissions", x => new { x.UserId, x.PermissionId });
-                table.ForeignKey("FK_UserPermissions_Permissions_PermissionId", x => x.PermissionId, "Permissions", "Id", onDelete: ReferentialAction.Cascade);
-                table.ForeignKey("FK_UserPermissions_Users_UserId", x => x.UserId, "Users", "Id", onDelete: ReferentialAction.Cascade);
-            });
+        migrationBuilder.DropColumn(
+            name: "GroupName",
+            table: "Permissions");
 
-        migrationBuilder.AddColumn<Guid>(
-            name: "UserId",
-            table: "StaffMembers",
-            type: "uuid",
-            nullable: true);
+        migrationBuilder.AlterColumn<string>(
+            name: "Code",
+            table: "Permissions",
+            type: "character varying(120)",
+            maxLength: 120,
+            nullable: false,
+            oldClrType: typeof(string),
+            oldType: "character varying(160)",
+            oldMaxLength: 160);
 
-        migrationBuilder.CreateIndex(name: "IX_Permissions_Code", table: "Permissions", column: "Code", unique: true);
-        migrationBuilder.CreateIndex(name: "IX_Permissions_GroupKey", table: "Permissions", column: "GroupKey");
-        migrationBuilder.CreateIndex(name: "IX_RolePermissions_PermissionId", table: "RolePermissions", column: "PermissionId");
-        migrationBuilder.CreateIndex(name: "IX_UserPermissions_PermissionId", table: "UserPermissions", column: "PermissionId");
-        migrationBuilder.CreateIndex(name: "IX_StaffMembers_UserId", table: "StaffMembers", column: "UserId", unique: true);
-        migrationBuilder.AddForeignKey(
-            name: "FK_StaffMembers_Users_UserId",
-            table: "StaffMembers",
-            column: "UserId",
-            principalTable: "Users",
-            principalColumn: "Id",
-            onDelete: ReferentialAction.SetNull);
+        migrationBuilder.AlterColumn<string>(
+            name: "Name",
+            table: "Permissions",
+            type: "character varying(160)",
+            maxLength: 160,
+            nullable: false,
+            oldClrType: typeof(string),
+            oldType: "character varying(240)",
+            oldMaxLength: 240);
+
+        migrationBuilder.AlterColumn<string>(
+            name: "Description",
+            table: "Permissions",
+            type: "character varying(500)",
+            maxLength: 500,
+            nullable: true,
+            oldClrType: typeof(string),
+            oldType: "character varying(1000)",
+            oldMaxLength: 1000,
+            oldNullable: true);
+
+        migrationBuilder.CreateIndex(
+            name: "IX_Permissions_GroupKey",
+            table: "Permissions",
+            column: "GroupKey");
+
+        migrationBuilder.AddColumn<bool>(
+            name: "IsGranted",
+            table: "UserPermissions",
+            type: "boolean",
+            nullable: false,
+            defaultValue: false);
+
+        migrationBuilder.DropPrimaryKey(
+            name: "PK_StaffUserLinks",
+            table: "StaffUserLinks");
+
+        migrationBuilder.AddPrimaryKey(
+            name: "PK_StaffUserLinks",
+            table: "StaffUserLinks",
+            columns: new[] { "StaffId", "UserId" });
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropForeignKey(name: "FK_StaffMembers_Users_UserId", table: "StaffMembers");
-        migrationBuilder.DropIndex(name: "IX_StaffMembers_UserId", table: "StaffMembers");
-        migrationBuilder.DropColumn(name: "UserId", table: "StaffMembers");
-        migrationBuilder.DropTable(name: "RolePermissions");
-        migrationBuilder.DropTable(name: "UserPermissions");
-        migrationBuilder.DropTable(name: "Permissions");
+        migrationBuilder.DropPrimaryKey(
+            name: "PK_StaffUserLinks",
+            table: "StaffUserLinks");
+
+        migrationBuilder.AddPrimaryKey(
+            name: "PK_StaffUserLinks",
+            table: "StaffUserLinks",
+            column: "StaffId");
+
+        migrationBuilder.DropColumn(
+            name: "IsGranted",
+            table: "UserPermissions");
+
+        migrationBuilder.DropIndex(
+            name: "IX_Permissions_GroupKey",
+            table: "Permissions");
+
+        migrationBuilder.AlterColumn<string>(
+            name: "Code",
+            table: "Permissions",
+            type: "character varying(160)",
+            maxLength: 160,
+            nullable: false,
+            oldClrType: typeof(string),
+            oldType: "character varying(120)",
+            oldMaxLength: 120);
+
+        migrationBuilder.AlterColumn<string>(
+            name: "Name",
+            table: "Permissions",
+            type: "character varying(240)",
+            maxLength: 240,
+            nullable: false,
+            oldClrType: typeof(string),
+            oldType: "character varying(160)",
+            oldMaxLength: 160);
+
+        migrationBuilder.AlterColumn<string>(
+            name: "Description",
+            table: "Permissions",
+            type: "character varying(1000)",
+            maxLength: 1000,
+            nullable: true,
+            oldClrType: typeof(string),
+            oldType: "character varying(500)",
+            oldMaxLength: 500,
+            oldNullable: true);
+
+        migrationBuilder.AddColumn<string>(
+            name: "GroupName",
+            table: "Permissions",
+            type: "character varying(160)",
+            maxLength: 160,
+            nullable: false,
+            defaultValue: "");
+
+        migrationBuilder.RenameColumn(
+            name: "GroupKey",
+            table: "Permissions",
+            newName: "GroupCode");
+
+        migrationBuilder.CreateIndex(
+            name: "IX_Permissions_GroupCode_Code",
+            table: "Permissions",
+            columns: new[] { "GroupCode", "Code" });
     }
 }
