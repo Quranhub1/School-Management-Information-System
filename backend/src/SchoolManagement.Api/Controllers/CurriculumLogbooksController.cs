@@ -79,7 +79,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         var assessments = await db.StudentLogbookCompetencies.AsNoTracking().Where(x => logbookIds.Contains(x.StudentLogbookId)).ToListAsync(ct);
         return Ok(rows.Select(x => new StudentLogbookDetailResponse(
             ToResponse(x.Logbook),
-            new LogbookRequirementSummaryResponse(x.Requirement.Id, x.Requirement.Title, x.Requirement.YearOfStudy, x.Requirement.SemesterNumber, x.Requirement.RequiredQuantity, x.Requirement.IsMandatory),
+            new LogbookRequirementSummaryResponse(x.Requirement.Id, x.Requirement.CurriculumId, x.Requirement.Title, x.Requirement.Description, x.Requirement.YearOfStudy, x.Requirement.SemesterNumber, x.Requirement.RequiredQuantity, x.Requirement.IsMandatory, x.Requirement.IsActive),
             assessments.Where(a => a.StudentLogbookId == x.Logbook.Id).Select(ToResponse).ToArray())).ToArray());
     }
 
@@ -117,7 +117,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         return Ok(
             new StudentLogbookDetailResponse(
                 ToResponse(entity),
-                new LogbookRequirementSummaryResponse(requirement.Id, requirement.Title, requirement.YearOfStudy, requirement.SemesterNumber, requirement.RequiredQuantity, requirement.IsMandatory),
+                new LogbookRequirementSummaryResponse(requirement.Id, requirement.CurriculumId, requirement.Title, requirement.Description, requirement.YearOfStudy, requirement.SemesterNumber, requirement.RequiredQuantity, requirement.IsMandatory, requirement.IsActive),
                 issuedAssessments.Select(ToResponse).ToArray()));
     }
 
@@ -262,7 +262,7 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
 
 public sealed record LogbookRequirementResponse(Guid Id, Guid CurriculumId, string Title, string? Description, int YearOfStudy, int SemesterNumber, int RequiredQuantity, bool IsMandatory, bool IsActive, IReadOnlyCollection<LogbookCompetencyRequirementResponse> Competencies);
 public sealed record LogbookCompetencyRequirementResponse(Guid Id, Guid LogbookRequirementId, string Code, string Name, int RequiredCount, bool IsMandatory, bool IsActive);
-public sealed record LogbookRequirementSummaryResponse(Guid Id, string Title, int YearOfStudy, int SemesterNumber, int RequiredQuantity, bool IsMandatory);
+public sealed record LogbookRequirementSummaryResponse(Guid Id, Guid CurriculumId, string Title, string? Description, int YearOfStudy, int SemesterNumber, int RequiredQuantity, bool IsMandatory, bool IsActive);
 public sealed record StudentLogbookResponse(Guid Id, Guid StudentId, Guid LogbookRequirementId, string SerialNumber, DateOnly IssuedOn, DateOnly? SubmittedOn, string Status, string? IssuedBy, string? Remarks);
 public sealed record StudentLogbookCompetencyResponse(Guid Id, Guid StudentLogbookId, Guid CompetencyRequirementId, Guid? StudentPlacementId, string Outcome, DateOnly? AssessedOn, string? AssessorName, string? AssessorRole, string? EvidenceReference, string? Remarks);
 public sealed record StudentLogbookDetailResponse(StudentLogbookResponse Logbook, LogbookRequirementSummaryResponse Requirement, IReadOnlyCollection<StudentLogbookCompetencyResponse> Competencies);
