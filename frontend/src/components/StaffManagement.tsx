@@ -1,4 +1,5 @@
 import { formatPersonName } from '../utils/personName'
+import './StaffCreateForm.css'
 import { showConfirmDialog } from '../utils/confirmDialog'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import LoadingSpinner from './LoadingSpinner';
@@ -10,41 +11,12 @@ import { staffCreateRequestSchema } from '../schemas'
 import { SYSTEM_CURRENCY } from '../lib/currency'
 import { StaffAttendanceManagement } from './StaffAttendanceManagement'
 import { LEAVE_TYPE_OPTIONS, STAFF_TYPE_OPTIONS } from '../constants/referenceEnums'
+import { getUsers, resetUserPassword, getPermissionCatalogue, getPermissionRoles, getRolePermissionCodes, getUserPermissionSummary, type PermissionGroup, type PermissionRole } from '../api/administration'
 
 type Tab = 'staff' | 'payroll' | 'leave' | 'recruitment' | 'attendance'
 
-type StaffAccessOption = { code: string; label: string; restricted?: boolean; group: string }
-const STAFF_ACCESS_OPTIONS: StaffAccessOption[] = [
-  { code: 'staff.list', label: 'Staff list', group: 'Staff & attendance' },
-  { code: 'staff.leaves.read', label: 'Staff leaves', group: 'Staff & attendance' },
-  { code: 'staff.attendance', label: 'Staff attendance', group: 'Staff & attendance' },
-  { code: 'students.delete', label: 'Delete students', group: 'Students & academics' },
-  { code: 'staff.manage', label: 'Add / Remove staff', group: 'Staff & attendance' },
-  { code: 'curriculum.course-units.manage', label: 'Manage course units, curriculum', group: 'Students & academics' },
-  { code: 'curriculum.manage', label: 'Manage curriculums', group: 'Students & academics' },
-  { code: 'library.manage', label: 'Manage library', group: 'Other modules' },
-  { code: 'finance.payments.delete', label: 'Delete payments', group: 'Finance' },
-  { code: 'finance.expenses.read', label: 'View stats - Expense', group: 'Finance' },
-  { code: 'admissions.manage', label: 'Manage admissions', group: 'Students & academics' },
-  { code: 'users.manage', label: 'Add / Remove admins', group: 'System administration', restricted: true },
-  { code: 'students.promote', label: 'Student promotion', group: 'Students & academics' },
-  { code: 'students.classes.manage', label: 'Manage classes and students', group: 'Students & academics' },
-  { code: 'timetable.manage', label: 'Manage timetable', group: 'Students & academics' },
-  { code: 'staff.leaves.manage', label: 'Manage staff leaves', group: 'Staff & attendance' },
-  { code: 'noticeboard.manage', label: 'Manage noticeboard', group: 'Other modules' },
-  { code: 'roles.manage', label: 'Manage roles', group: 'System administration', restricted: true },
-  { code: 'students.manage', label: 'Manage students', group: 'Students & academics' },
-  { code: 'finance.income.read', label: 'View stats - Income', group: 'Finance' },
-  { code: 'finance.payments.read', label: 'View stats - Payments', group: 'Finance' },
-  { code: 'settings.manage', label: 'Manage settings', group: 'System administration', restricted: true },
-  { code: 'finance.invoices.delete', label: 'Delete invoices', group: 'Finance' },
-  { code: 'finance.expenses.manage', label: 'Manage expenses', group: 'Finance' },
-  { code: 'classes.delete', label: 'Delete classes', group: 'Students & academics' },
-  { code: 'finance.fee-types.manage', label: 'Manage fee types', group: 'Finance' },
-  { code: 'backups.manage', label: 'Manage logs & backups', group: 'System administration', restricted: true },
-]
 
-export function StaffManagement({ canManage = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, canManageAccounts = false, activeSubsection = null }: { canManage?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; canManageAccounts?: boolean; activeSubsection?: string | null }) {
+export function StaffManagement({ canManage = false, canManageAccounts = false, canReadPayroll = false, canManagePayroll = false, canProcessPayroll = false, activeSubsection = null }: { canManage?: boolean; canManageAccounts?: boolean; canReadPayroll?: boolean; canManagePayroll?: boolean; canProcessPayroll?: boolean; activeSubsection?: string | null }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [courseUnits, setCourseUnits] = useState<StaffCourseUnit[]>([])
   const [departments, setDepartments] = useState<StaffDepartment[]>([])
@@ -87,9 +59,51 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   const [leaveForm, setLeaveForm] = useState({ staffMemberId: '', leaveType: 'Annual', startDate: '', endDate: '', reason: '' })
   const [leaveDuration, setLeaveDuration] = useState<'single' | 'multiple'>('single')
   const [form, setForm] = useState(emptyStaffForm())
-  const [accountForm, setAccountForm] = useState({ mode: 'new' as 'new' | 'existing', username: '', password: '', permissions: [] as string[] })
-  const [accountLinked, setAccountLinked] = useState(false)
-  const [savingAccount, setSavingAccount] = useState(false)
+  const [accountMode, setAccountMode] = useState<'new' | 'existing'>('new')
+  const [accountUsername, setAccountUsername] = useState('')
+  const [accountPassword, setAccountPassword] = useState('')
+  const [credentialFeedback, setCredentialFeedback] = useState('')
+  const [credentialBusy, setCredentialBusy] = useState(false)
+  const [staffStatus, setStaffStatus] = useState<'Active' | 'Inactive'>('Active')
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
+  const [permissionSearch, setPermissionSearch] = useState('')
+  const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([])
+  const [availableRoles, setAvailableRoles] = useState<PermissionRole[]>([])
+  const [selectedAccountRoles, setSelectedAccountRoles] = useState<string[]>([])
+  const [inheritedPermissions, setInheritedPermissions] = useState<string[]>([])
+  const [existingPermissionsLoaded, setExistingPermissionsLoaded] = useState(false)
+  const [permissionsLoading, setPermissionsLoading] = useState(false)
+  const allPermissionIds = useMemo(() => permissionGroups.flatMap(group => group.permissions.map(permission => permission.id)), [permissionGroups])
+  const filteredPermissionGroups = useMemo(() => permissionGroups.map(group => ({ ...group, permissions: group.permissions.filter(permission => !permissionSearch.trim() || permission.label.toLowerCase().includes(permissionSearch.toLowerCase()) || permission.id.toLowerCase().includes(permissionSearch.toLowerCase())) })).filter(group => group.permissions.length > 0), [permissionGroups, permissionSearch])
+  const togglePermissionGroup = (groupId: string, checked: boolean) => {
+    const group = permissionGroups.find(item => item.id === groupId)
+    if (!group) return
+    const ids = group.permissions.map(permission => permission.id).filter(id => !inheritedPermissions.includes(id))
+    setSelectedPermissions(current => checked ? [...new Set([...current, ...ids])] : current.filter(id => !ids.includes(id)))
+  }
+
+  useEffect(() => {
+    if (!canManage) return
+    let cancelled = false
+    setPermissionsLoading(true)
+    Promise.all([getPermissionCatalogue(), getPermissionRoles()]).then(([catalogue, roles]) => {
+      if (cancelled) return
+      setPermissionGroups(catalogue)
+      setAvailableRoles(roles)
+      setSelectedAccountRoles([])
+    }).catch(error => { if (!cancelled) { const message = error instanceof Error ? error.message : 'Unable to load the central permission catalogue.'; setError(message); notify(message, 'error', 'Permissions unavailable') } }).finally(() => { if (!cancelled) setPermissionsLoading(false) })
+    return () => { cancelled = true }
+  }, [canManage])
+
+  useEffect(() => {
+    const selectedRoles = availableRoles.filter(item => selectedAccountRoles.includes(item.name))
+    if (!selectedRoles.length) { setInheritedPermissions([]); return }
+    let cancelled = false
+    Promise.all(selectedRoles.map(role => getRolePermissionCodes(role.id)))
+      .then(results => { if (!cancelled) setInheritedPermissions([...new Set(results.flatMap(result => result.permissionCodes))]) })
+      .catch(error => { if (!cancelled) { setInheritedPermissions([]); const message = error instanceof Error ? error.message : 'Unable to load inherited role permissions.'; setError(message) } })
+    return () => { cancelled = true }
+  }, [availableRoles, selectedAccountRoles])
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -159,8 +173,9 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
       setValidationErrors({})
       if (editingStaffId) {
         const updated = await updateStaff(editingStaffId, { id: editingStaffId, ...profile })
-        await saveAccountForStaff(updated.id)
-        setStaff(current => current.map(item => item.id === updated.id ? updated : item))
+        setStaff(current => current.map(item => item.id === updated.id ? { ...updated, isActive: staffStatus === 'Active' } : item))
+        if (staffStatus === 'Active' && !updated.isActive) await activateStaff(updated.id)
+        if (staffStatus === 'Inactive' && updated.isActive) await deactivateStaff(updated.id)
         setSuccess(`${formatPersonName(updated.lastName, updated.firstName)} was updated successfully.`)
         notify(`${formatPersonName(updated.lastName, updated.firstName)} updated successfully.`, 'success', 'Staff updated')
         setEditingStaffId(null)
@@ -187,24 +202,26 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
     }
   }
   function beginEdit(person: StaffMember) {
+    setSelectedPermissions([])
     setEditingStaffId(person.id)
-    setAccountLinked(false)
-    setAccountForm({ mode: 'new', username: '', password: '', permissions: [] })
-    if (canManageAccounts) {
-      void getStaffAccount(person.id).then(account => {
-        setAccountLinked(account.linked)
-        setAccountForm({ mode: account.linked ? 'existing' : 'new', username: account.username ?? '', password: '', permissions: account.permissions ?? [] })
-      }).catch(e => setError(e instanceof Error ? e.message : 'Unable to load staff login details.'))
-    }
-    setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', dateJoined: person.dateJoined ?? '', gender: person.gender ?? '', dateOfBirth: person.dateOfBirth ?? '', address: person.address ?? '', bankName: person.bankName ?? '', bankAccountNumber: person.bankAccountNumber ?? '', bankAddress: person.bankAddress ?? '', basicSalary: person.basicSalary == null ? '' : String(person.basicSalary), attendanceMode: person.attendanceMode ?? 'Biometric', photographDataUrl: '', courseUnitIds: person.courseUnitIds ?? [] })
+    setStaffStatus(person.isActive ? 'Active' : 'Inactive')
+    setAccountMode('new')
+    setAccountUsername('')
+    setAccountPassword('')
+    setCredentialFeedback('')
+    setForm({ ...emptyStaffForm(), staffNumber: person.staffNumber, firstName: person.firstName, lastName: person.lastName, nationalId: person.nationalId ?? '', phoneNumber: person.phoneNumber ?? '', email: person.email ?? '', employmentType: person.employmentType, staffType: person.staffType ?? 'Teaching', departmentId: person.departmentId ?? '', jobTitle: person.jobTitle ?? '', highestQualification: person.highestQualification ?? '', speciality: person.speciality ?? '', professionalRegistration: person.professionalRegistration ?? '', courseUnitIds: person.courseUnitIds ?? [] })
     setError('')
     setSuccess('')
     setTab('staff')
   }
   function cancelEdit() {
+    setSelectedPermissions([])
     setEditingStaffId(null)
-    setAccountLinked(false)
-    setAccountForm({ mode: 'new', username: '', password: '', permissions: [] })
+    setStaffStatus('Active')
+    setAccountMode('new')
+    setAccountUsername('')
+    setAccountPassword('')
+    setCredentialFeedback('')
     setForm(emptyStaffForm())
     setAccessForm({ createLoginAccount: false, username: '', password: '', roleNames: [], permissionCodes: [], deniedPermissionCodes: [] })
   }
@@ -272,6 +289,41 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
   async function handleGeneratePayroll() { setError(''); setSuccess(''); try { await generatePayroll(payrollMonth, payrollYear); await loadPayroll(); setSuccess(`Payroll generation completed for ${new Date(payrollYear, payrollMonth - 1).toLocaleString('default', { month: 'long' })} ${payrollYear}. Existing entries for this period were retained.`)
       notify('Payroll generation completed successfully.', 'success', 'Payroll generated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to generate payroll.'; setError(message); notify(message, 'error', 'Payroll generation failed') } }
   async function handleMarkPaid(id: string) { try { await markPayrollPaid(id); await loadPayroll();       notify('Payroll payment status updated.', 'success', 'Payroll updated') } catch (e) { const message = e instanceof Error ? e.message : 'Unable to mark payroll as paid.'; setError(message); notify(message, 'error', 'Payroll update failed') } }
+
+  async function loadExistingAccountPermissions() {
+    const username = accountUsername.trim()
+    if (!username) { setError('Enter an existing username first.'); return }
+    setCredentialBusy(true)
+    setError('')
+    try {
+      const users = await getUsers()
+      const matched = users.find(user => user.username.toLowerCase() === username.toLowerCase())
+      if (!matched) throw new Error('No existing SMIS account matches that username.')
+      const summary = await getUserPermissionSummary(matched.id)
+      setSelectedPermissions(summary.directPermissionCodes)
+      setInheritedPermissions(summary.inheritedPermissionCodes)
+      setExistingPermissionsLoaded(true)
+      setCredentialFeedback(`Loaded role-inherited and individual permissions for ${matched.username}.`)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load existing account permissions.') }
+    finally { setCredentialBusy(false) }
+  }
+
+  async function updateExistingStaffCredentials() {
+    const username = accountUsername.trim()
+    if (!username && !accountPassword) { setError('Enter the existing username and at least a new password.'); return }
+    if (!accountPassword.trim()) { setError('Enter a new password to update credentials.'); return }
+    if (accountPassword.length < 8) { setError('Password must contain at least 8 characters.'); return }
+    setCredentialBusy(true); setError(''); setCredentialFeedback('')
+    try {
+      const users = await getUsers()
+      const matched = users.find(user => user.username.toLowerCase() === username.toLowerCase())
+      if (!matched) throw new Error('No existing login account matches that username.')
+      await resetUserPassword(matched.id, accountPassword)
+      setCredentialFeedback(`Credentials updated for ${matched.username}.`)
+      setAccountPassword('')
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to update login credentials.') }
+    finally { setCredentialBusy(false) }
+  }
 
   const isDuplicateStaffNumber = /staff number is already registered|staff member with this staff number already exists/i.test(error)
   const roleDefaultPermissionCodes = staffRoles.filter(role => accessForm.roleNames.includes(role.name)).flatMap(role => role.permissionCodes)
@@ -416,75 +468,109 @@ export function StaffManagement({ canManage = false, canReadPayroll = false, can
                   </div>
                 </>}
               </fieldset>}
-              {form.staffType === 'Teaching' && <fieldset className="field-label staff-course-unit-field" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
-                <legend style={{ padding: '0 5px', fontWeight: 600 }}>Course units taught</legend>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
-                  
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{form.courseUnitIds.length} selected</span>
-                </div>
-              </fieldset>}
-
-              {form.staffType === 'Teaching' && (
-                <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-                    <h3 style={{ margin: 0, color: '#111827', fontSize: 16, fontWeight: 750 }}>Course Units Assigned</h3>
-                    <span className="badge">{form.courseUnitIds.length} selected</span>
-                  </div>
-                  {courseUnits.length === 0 ? <p className="empty">No active course units are available in the academic catalogue.</p> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,250px),1fr))', gap: 8, maxHeight: 240, overflowY: 'auto' }}>
+              {form.staffType === 'Teaching' && <fieldset className="staff-create-course-units" style={{ gridColumn: '1 / -1', minWidth: 0, margin: 0, padding: 12, border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
+                <legend>Course units taught</legend>
+                <div className="staff-create-course-summary">{form.courseUnitIds.length} selected</div>
+                {courseUnits.length === 0
+                  ? <p className="staff-create-hint">No active course units are available. Populate the course catalogue or check the staff lookup API.</p>
+                  : <div className="staff-create-permissions-grid">
                     {courseUnits.map(unit => {
                       const checked = form.courseUnitIds.includes(unit.id)
-                      return <label key={unit.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '9px 10px', border: `1px solid ${checked ? '#93c5fd' : '#e2e8f0'}`, borderRadius: 6, background: checked ? '#eff6ff' : '#f8fafc', cursor: 'pointer', fontSize: 13 }}>
+                      return <label key={unit.id} className="staff-create-check">
                         <input type="checkbox" checked={checked} onChange={e => setForm(current => ({ ...current, courseUnitIds: e.target.checked ? [...current.courseUnitIds.filter(id => id !== unit.id), unit.id] : current.courseUnitIds.filter(id => id !== unit.id) }))} />
-                        <span><strong>{unit.code}</strong> — {unit.name} <span style={{ color: '#64748b' }}>({unit.creditUnits} CU)</span></span>
+                        <span><strong>{unit.code}</strong> — {unit.name} <small>({unit.creditUnits} CU)</small></span>
                       </label>
                     })}
                   </div>}
+              </fieldset>}
+
+              <div className="staff-create-bottom-grid">
+                <section className="staff-create-card">
+                  <div className="staff-create-card-heading">
+                    <div>
+                      <h3 className="staff-create-card-title">Permissions by module</h3>
+                      {!canManageAccounts && <p className="staff-create-hint">Only a System Administrator can assign staff login roles and permissions. You can view the catalogue here, but the controls are read-only.</p>}
+                  <p className="staff-create-hint">Role permissions are inherited automatically. Checked inherited items are read-only; select additional permissions to grant them directly to this account.</p>
+                    </div>
+                    <strong className="staff-permission-count">{selectedPermissions.length + inheritedPermissions.filter(id => !selectedPermissions.includes(id)).length} / {allPermissionIds.length} effective</strong>
+                  </div>
+                  <div className="staff-permission-toolbar">
+                    <input type="search" aria-label="Search permissions" placeholder="Search permissions…" value={permissionSearch} onChange={event => setPermissionSearch(event.target.value)} />
+                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions(allPermissionIds.filter(id => !inheritedPermissions.includes(id)))} disabled={!canManageAccounts || Boolean(editingStaffId)}>Select all</button>
+                    <button type="button" className="secondary-button" onClick={() => setSelectedPermissions([])} disabled={!canManageAccounts || Boolean(editingStaffId)}>Clear all</button>
+                  </div>
+                  <div className="staff-permission-groups">
+                    {filteredPermissionGroups.map(group => {
+                      const groupIds = permissionGroups.find(item => item.id === group.id)?.permissions.map(permission => permission.id) ?? []
+                      const selectedCount = groupIds.filter(id => selectedPermissions.includes(id) || inheritedPermissions.includes(id)).length
+                      const allSelected = groupIds.length > 0 && selectedCount === groupIds.length
+                      return <details className="staff-permission-group" key={group.id} open={Boolean(permissionSearch.trim())}>
+                        <summary>
+                          <input type="checkbox" aria-label={`Select all ${group.label} permissions`} checked={allSelected} disabled={!canManageAccounts || Boolean(editingStaffId)} onChange={event => togglePermissionGroup(group.id, event.target.checked)} onClick={event => event.stopPropagation()} />
+                          <span className="staff-permission-group-title">{group.label}</span>
+                          <span className="staff-permission-group-count">{selectedCount} selected</span>
+                        </summary>
+                        <div className="staff-permission-items">
+                          {group.permissions.map(permission => <label className="staff-permission-item" key={permission.id}>
+                            <input type="checkbox" checked={selectedPermissions.includes(permission.id) || inheritedPermissions.includes(permission.id)} disabled={!canManageAccounts || Boolean(editingStaffId) || inheritedPermissions.includes(permission.id)} onChange={event => setSelectedPermissions(current => event.target.checked ? [...current, permission.id] : current.filter(id => id !== permission.id))} />
+                            <span>{permission.label}<small>{permission.id}</small></span>
+                          </label>)}
+                        </div>
+                      </details>
+                    })}
+                  </div>
+                  <p className="staff-create-hint staff-permission-notice">Direct grants are saved with the linked login account, while inherited permissions come from its assigned roles. Staff and leave API actions now enforce granular permission claims; other module APIs still use their existing role policies and require the same permission-policy migration.</p>
                 </section>
-              )}
+                <section className="staff-create-card">
+                  <h3 className="staff-create-card-title">Account & Status</h3>
+                  <p className="staff-create-hint">Set the staff member's employment status below. Login credentials are managed by the secure SMIS identity service.</p>
+                  <span className="staff-create-status">{editingStaffId ? 'Editing existing staff record' : 'New staff record'}</span>
+                </section>
+              </div>
 
-              {canManageAccounts && (<>
-              <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid #e5e7eb' }}>
-                  <div><h3 style={{ margin: '0 0 4px', color: '#111827', fontSize: 16, fontWeight: 750 }}>Administrator Permissions</h3><p style={{ margin: 0, color: '#64748b', fontSize: 12 }}>Choose the screens and actions this staff login can access. Each selection is assigned as a dedicated access role.</p></div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <strong style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', borderRadius: 999, padding: '4px 10px' }}>{accountForm.permissions.length} Selected</strong>
-                    <button type="button" className="secondary-button" onClick={() => setAccountForm(current => ({ ...current, permissions: STAFF_ACCESS_OPTIONS.filter(option => !option.restricted).map(option => option.code) }))} style={{ padding: '6px 12px', fontSize: 12 }}>Mark All</button>
-                    <button type="button" className="secondary-button" onClick={() => setAccountForm(current => ({ ...current, permissions: [] }))} style={{ padding: '6px 12px', fontSize: 12 }}>Unmark All</button>
+              <div className="staff-create-bottom-grid">
+                <section className="staff-create-card">
+                  <div className="staff-create-card-heading">
+                    <h3 className="staff-create-card-title" id="staff-login-card-title">{accountMode === 'existing' ? 'Change Credentials' : 'Login Details'}</h3>
+                    <div className="staff-create-radio-row" role="radiogroup" aria-label="Account mode">
+                      <label><input type="radio" name="accountMode" value="new" checked={accountMode === 'new'} disabled={!canManageAccounts} onChange={() => { setAccountMode('new'); setSelectedAccountRoles([]); setSelectedPermissions([]); setInheritedPermissions([]); setExistingPermissionsLoaded(false); setCredentialFeedback(''); setError('') }} /> New</label>
+                      <label><input type="radio" name="accountMode" value="existing" checked={accountMode === 'existing'} disabled={!canManageAccounts} onChange={() => { setAccountMode('existing'); setSelectedAccountRoles([]); setSelectedPermissions([]); setInheritedPermissions([]); setExistingPermissionsLoaded(false); setCredentialFeedback(''); setError('') }} /> Existing</label>
+                    </div>
                   </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: 10 }}>
-                  {STAFF_ACCESS_OPTIONS.map(option => {
-                    const checked = accountForm.permissions.includes(option.code)
-                    return <label key={option.code} title={option.restricted ? 'System Administrator only; this privilege is not delegated through staff recruitment.' : undefined} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid #e2e8f0', borderRadius: 6, background: checked ? '#eff6ff' : '#f8fafc', color: option.restricted ? '#94a3b8' : '#1f2937', fontSize: 13, cursor: option.restricted ? 'not-allowed' : 'pointer' }}>
-                      <input type="checkbox" checked={checked} disabled={option.restricted} onChange={event => setAccountForm(current => ({ ...current, permissions: event.target.checked ? [...current.permissions, option.code] : current.permissions.filter(code => code !== option.code) }))} />
-                      <span>{option.label}{option.restricted ? ' (System Administrator only)' : ''}</span>
+                  <label className="staff-create-field">{accountMode === 'existing' ? 'Existing Username' : 'Username'}
+                    <input autoComplete="username" placeholder={accountMode === 'existing' ? 'Enter existing username' : 'Enter Username'} disabled={!canManageAccounts} value={accountUsername} onChange={e => { setAccountUsername(e.target.value); if (accountMode === 'existing') { setSelectedPermissions([]); setInheritedPermissions([]); setExistingPermissionsLoaded(false); setCredentialFeedback('') } }} />
+                  </label>
+                  {accountMode === 'existing' && <button type="button" className="secondary-button" style={{ marginTop: 8 }} onClick={() => void loadExistingAccountPermissions()} disabled={!canManageAccounts || credentialBusy}>{credentialBusy ? 'Loading…' : 'Load existing account permissions'}</button>}
+                  <label className="staff-create-field" style={{ marginTop: 12 }}>{accountMode === 'existing' ? 'New Password' : 'Password'}
+                    <input type="password" autoComplete="new-password" minLength={8} placeholder={accountMode === 'existing' ? 'Enter New Password' : 'Enter Password'} disabled={!canManageAccounts} value={accountPassword} onChange={e => setAccountPassword(e.target.value)} />
+                  </label>
+                  {credentialFeedback && <div className="staff-create-credential-feedback" role="status" aria-live="polite">{credentialFeedback}</div>}
+                  {accountMode === 'new' && <>
+                    <label className="staff-create-field" style={{ marginTop: 12 }}>Login roles (select one or more)
+                      <select multiple size={4} value={selectedAccountRoles} onChange={event => setSelectedAccountRoles(Array.from(event.target.selectedOptions, option => option.value))} disabled={permissionsLoading || !canManageAccounts}>
+                        {availableRoles.map(role => <option key={role.id} value={role.name}>{role.name}</option>)}
+                      </select>
                     </label>
-                  })}
-                </div>
-              </section>
-
-              <section className="staff-form-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(15,23,42,.04)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-                  <h3 style={{ margin: 0, color: '#111827', fontSize: 16, fontWeight: 750 }}>{accountLinked ? 'Change Credentials' : 'Login Details'}</h3>
-                  <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}><input type="radio" name="staffAccountMode" checked={accountForm.mode === 'new'} disabled={accountLinked} onChange={() => setAccountForm(current => ({ ...current, mode: 'new' }))} /> New</label>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}><input type="radio" name="staffAccountMode" checked={accountForm.mode === 'existing'} disabled={!accountLinked} onChange={() => setAccountForm(current => ({ ...current, mode: 'existing' }))} /> Existing</label>
+                    <p className="staff-create-hint" style={{ marginTop: 10 }}>The new account is created with this role. The selected permissions below are saved as additional individual grants.</p>
+                  </>}
+                  {accountMode === 'existing' && <p className="staff-create-hint" style={{ marginTop: 10 }}>The existing account will be linked to this staff profile. Enter a new password only if you also want to reset it. The selected permissions are saved as individual grants.</p>}
+                </section>
+                <section className="staff-create-card">
+                  <h3 className="staff-create-card-title">Status</h3>
+                  <div className="staff-create-radio-row staff-create-status-options" role="radiogroup" aria-label="Staff status">
+                    <label><input type="radio" name="staffStatus" value="Active" checked={staffStatus === 'Active'} onChange={() => setStaffStatus('Active')} /> Active</label>
+                    <label><input type="radio" name="staffStatus" value="Inactive" checked={staffStatus === 'Inactive'} onChange={() => setStaffStatus('Inactive')} /> Inactive</label>
                   </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: 14 }}>
-                  <label className="field-label">{accountLinked ? 'Username' : 'Username'}<input aria-label="Staff username" value={accountForm.username} onChange={event => setAccountForm(current => ({ ...current, username: event.target.value }))} placeholder="Enter username" autoComplete="off" /></label>
-                  <label className="field-label">{accountLinked ? 'New password (optional)' : 'Password'}<input aria-label="Staff password" type="password" value={accountForm.password} onChange={event => setAccountForm(current => ({ ...current, password: event.target.value }))} placeholder={accountLinked ? 'Leave blank to keep current password' : 'At least 8 characters'} autoComplete="new-password" /></label>
-                </div>
-                <p style={{ margin: '10px 0 0', color: '#64748b', fontSize: 12 }}>{accountLinked ? 'Existing account will retain its password unless a new one is entered. Selected access roles replace its current staff access profile.' : 'A login account is created when you enter a username, password and select at least one permission. Passwords are stored as secure hashes.'}</p>
-              </section>
-              </>)}
+                </section>
+              </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '4px 0 10px' }}>
-                <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
-                  <button type="submit" disabled={loading || savingAccount} style={{ background: '#15803d', color: '#fff', border: '1px solid #166534', borderRadius: 6, padding: '10px 18px', fontWeight: 700 }}>{savingAccount ? 'Saving account…' : editingStaffId ? 'Update Staff' : 'Add New Staff'}</button>
+              <div className="staff-create-actions">
+                <button type="submit" className="staff-create-primary" disabled={permissionsLoading || Boolean(editingStaffId && accountMode === 'existing')}>{editingStaffId ? 'Save changes' : accountMode === 'existing' ? 'Link Account & Add Staff' : 'Add New Staff'}</button>
+                <div className="staff-create-actions-right">
+                  {accountMode === 'existing' && <button type="button" className="staff-create-primary" onClick={() => void updateExistingStaffCredentials()} disabled={!canManageAccounts || credentialBusy}>{credentialBusy ? 'Updating…' : 'Update Staff login details'}</button>}
                   {editingStaffId && <button type="button" className="secondary-button" onClick={cancelEdit}>Cancel edit</button>}
+                  <button type="button" className="secondary-button" onClick={() => { if (editingStaffId) cancelEdit(); else { setForm(emptyStaffForm()); setStaffStatus('Active'); setAccountMode('new'); setAccountUsername(''); setAccountPassword(''); setCredentialFeedback(''); setValidationErrors({}); setError(''); setSuccess('') } }}>Cancel</button>
                 </div>
-                <span style={{ color: '#64748b', fontSize: 12 }}>Staff details are validated and saved to the institutional database.</span>
               </div>
             </form>
           )}

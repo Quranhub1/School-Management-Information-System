@@ -4523,6 +4523,46 @@ namespace SchoolManagement.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.Permission", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("Code").IsRequired().HasMaxLength(120).HasColumnType("character varying(120)");
+                    b.Property<string>("Description").HasMaxLength(500).HasColumnType("character varying(500)");
+                    b.Property<string>("GroupKey").IsRequired().HasMaxLength(80).HasColumnType("character varying(80)");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(160).HasColumnType("character varying(160)");
+                    b.HasKey("Id");
+                    b.HasIndex("Code").IsUnique();
+                    b.HasIndex("GroupKey");
+                    b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.RolePermission", b =>
+                {
+                    b.Property<Guid>("RoleId").HasColumnType("uuid");
+                    b.Property<Guid>("PermissionId").HasColumnType("uuid");
+                    b.HasKey("RoleId", "PermissionId");
+                    b.HasIndex("PermissionId");
+                    b.ToTable("RolePermissions");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.StaffUserLink", b =>
+                {
+                    b.Property<Guid>("StaffId").HasColumnType("uuid");
+                    b.Property<Guid>("UserId").HasColumnType("uuid");
+                    b.HasKey("StaffId", "UserId");
+                    b.HasIndex("UserId").IsUnique();
+                    b.ToTable("StaffUserLinks");
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.UserPermission", b =>
+                {
+                    b.Property<Guid>("UserId").HasColumnType("uuid");
+                    b.Property<Guid>("PermissionId").HasColumnType("uuid");
+                    b.HasKey("UserId", "PermissionId");
+                    b.HasIndex("PermissionId");
+                    b.ToTable("UserPermissions");
+                });
+
             modelBuilder.Entity("SchoolManagement.Domain.Identity.Role", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4630,6 +4670,12 @@ namespace SchoolManagement.Infrastructure.Migrations
             modelBuilder.Entity("SchoolManagement.Domain.Staff.StaffMember", b =>
                 {
                     b.HasOne("SchoolManagement.Domain.Identity.User", null).WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Identity.StaffUserLink", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Staff.StaffMember", null).WithMany().HasForeignKey("StaffId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("SchoolManagement.Domain.Identity.User", null).WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade).IsRequired();
                 });
 
             modelBuilder.Entity("SchoolManagement.Domain.Identity.UserRole", b =>
@@ -5238,6 +5284,40 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("text")
                         .HasDefaultValue("[]");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("BankAccountNumber")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("BankAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<decimal?>("BasicSalary")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("AttendanceMode")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("PhotographDataUrl")
+                        .HasColumnType("text");
 
                     b.Property<DateOnly?>("DateJoined")
                         .HasColumnType("date");

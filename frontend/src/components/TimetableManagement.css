@@ -63,14 +63,14 @@
 @media(max-width:1000px){.timetable-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.timetable-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.timetable-hero{align-items:flex-start;flex-direction:column}}
 @media(max-width:560px){.timetable-form-grid{grid-template-columns:1fr}.timetable-print-area{padding:10px}.timetable-document-footer{flex-direction:column}.timetable-toolbar{align-items:flex-start;flex-direction:column}.timetable-metrics{gap:7px}.timetable-metric{padding:10px}.timetable-actions{width:100%}}
 @media print{
-  @page{size:landscape;margin:10mm}
-  body *{visibility:hidden!important}
-  .timetable-print-area,.timetable-print-area *{visibility:visible!important}
-  .timetable-print-area{position:absolute!important;inset:0 auto auto 0!important;width:100%!important;padding:0!important;border:0!important}
-  .timetable-document-print-actions,.timetable-event-remove{display:none!important}
-  .timetable-grid-scroll{overflow:visible!important}
-  .timetable-formal-grid{min-width:0!important;font-size:9pt}
-  .timetable-formal-grid th,.timetable-formal-grid td{padding:5px}
+@page{size:landscape;margin:10mm}
+body *{visibility:hidden!important}
+.timetable-print-area,.timetable-print-area *{visibility:visible!important}
+.timetable-print-area{position:absolute!important;inset:0 auto auto 0!important;width:100%!important;padding:0!important;border:0!important}
+.timetable-document-print-actions,.timetable-event-remove{display:none!important}
+.timetable-grid-scroll{overflow:visible!important}
+.timetable-formal-grid{min-width:0!important;font-size:9pt}
+.timetable-formal-grid th,.timetable-formal-grid td{padding:5px}
 }
 .timetable-generator-help{margin:10px 0 0;color:#596579;font-size:.82rem}
 .timetable-generated-list{display:flex;flex-direction:column;gap:12px}
@@ -86,16 +86,16 @@
 .timetable-class-warning{margin:7px 0;padding:8px 10px;background:#fff7e8;border:1px solid #f0d39b;color:#754c12;font-size:.8rem}
 @media(max-width:560px){.timetable-class-document-heading{align-items:flex-start;flex-direction:column}.timetable-generated-heading{align-items:flex-start;flex-direction:column}}
 @media print{
-  .timetable-class-document{display:none!important}
-  .timetable-class-document[data-print-target="true"]{display:block!important;position:absolute!important;inset:0 auto auto 0!important;width:100%!important;padding:0!important;border:0!important}
-  .timetable-class-document[data-print-target="true"] *{visibility:visible!important}
-  .timetable-class-document[data-print-target="true"] .timetable-class-actions{display:none!important}
-  body:has(.timetable-class-document[data-print-target="true"]) .timetable-print-area{display:none!important}
-  .timetable-class-document[data-print-target="true"] .timetable-table-wrap{overflow:visible!important}
-  .timetable-class-document[data-print-target="true"] table{min-width:0!important;white-space:normal!important}
+.timetable-class-document{display:none!important}
+.timetable-class-document[data-print-target="true"]{display:block!important;position:absolute!important;inset:0 auto auto 0!important;width:100%!important;padding:0!important;border:0!important}
+.timetable-class-document[data-print-target="true"] *{visibility:visible!important}
+.timetable-class-document[data-print-target="true"] .timetable-class-actions{display:none!important}
+body:has(.timetable-class-document[data-print-target="true"]) .timetable-print-area{display:none!important}
+.timetable-class-document[data-print-target="true"] .timetable-table-wrap{overflow:visible!important}
+.timetable-class-document[data-print-target="true"] table{min-width:0!important;white-space:normal!important}
 }
 
- .timetable-template-editor{padding:16px;background:#fff;border:1px solid #cbd2dc;border-radius:3px;min-width:0}
+.timetable-template-editor{padding:16px;background:#fff;border:1px solid #cbd2dc;border-radius:3px;min-width:0}
 .timetable-template-document-heading{text-align:center;padding:4px 0 17px;border-bottom:2px solid #303b4c;margin-bottom:16px;color:#111827}
 .timetable-template-document-heading p{margin:3px 0;font-size:.72rem;font-weight:800;letter-spacing:.08em}
 .timetable-template-document-heading h3{margin:5px 0;font-size:1.2rem;font-weight:850;letter-spacing:.025em}
@@ -120,121 +120,114 @@
 .timetable-template-existing{display:inline-block;margin-top:2px;padding:3px 5px;background:#edf6f0;color:#236044;font-size:.64rem;font-weight:700}
 @media(max-width:850px){.timetable-template-editor-heading{flex-direction:column}.timetable-template-controls{width:100%}.timetable-template-controls label{flex:1}}
 @media print{
-  .timetable-template-editor[data-print-target="false"]{display:none!important}
-  body:has(.timetable-template-editor[data-print-target="true"]) *{visibility:hidden!important}
-  .timetable-template-editor[data-print-target="true"],
-  .timetable-template-editor[data-print-target="true"] *{visibility:visible!important}
-  body:has(.timetable-class-document[data-print-target="true"]) .timetable-template-editor{display:none!important}
-  .timetable-template-editor[data-print-target="true"]{position:absolute!important;inset:0 auto auto 0!important;width:100%!important;padding:0!important;border:0!important}
-  .timetable-template-editor-heading p:not(.timetable-eyebrow),.timetable-template-controls,.timetable-template-editor .timetable-form-footer,.timetable-template-existing{display:none!important}
-  .timetable-editable-grid select,.timetable-editable-grid input{appearance:none!important;border:0!important;background:transparent!important;color:#111827!important;padding:0!important;font-size:7pt!important;box-shadow:none!important}
-  .timetable-editable-grid{min-width:0!important;font-size:7pt}
-  .timetable-editable-grid th,.timetable-editable-grid td{padding:4px;height:70px}
-  .timetable-editable-grid td:before{content:"";display:block}
+.timetable-template-editor[data-print-target="false"]{display:none!important}
+body:has(.timetable-template-editor[data-print-target="true"]) *{visibility:hidden!important}
+.timetable-template-editor[data-print-target="true"],
+.timetable-template-editor[data-print-target="true"] *{visibility:visible!important}
+body:has(.timetable-class-document[data-print-target="true"]) .timetable-template-editor{display:none!important}
+.timetable-template-editor[data-print-target="true"]{position:absolute!important;inset:0 auto auto 0!important;width:100%!important;padding:0!important;border:0!important}
+.timetable-template-editor-heading p:not(.timetable-eyebrow),.timetable-template-controls,.timetable-template-editor .timetable-form-footer,.timetable-template-existing{display:none!important}
+.timetable-editable-grid select,.timetable-editable-grid input{appearance:none!important;border:0!important;background:transparent!important;color:#111827!important;padding:0!important;font-size:7pt!important;box-shadow:none!important}
+.timetable-editable-grid{min-width:0!important;font-size:7pt}
+.timetable-editable-grid th,.timetable-editable-grid td{padding:4px;height:70px}
+.timetable-editable-grid td:before{content:"";display:block}
 }
-
 
 /* Timetable header actions: let each button grow to fit its full label. */
 .timetable-screen .timetable-hero {
-  align-items: flex-start;
-  flex-wrap: wrap;
+align-items: flex-start;
+flex-wrap: wrap;
 }
 
 .timetable-screen .timetable-hero > div:first-child {
-  flex: 1 1 100%;
-  min-width: 0;
+flex: 1 1 100%;
+min-width: 0;
 }
 
 .timetable-screen .timetable-actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(max-content, 1fr));
-  flex: 1 1 100%;
-  width: 100%;
-  min-width: 0;
-  gap: 10px;
-  align-items: stretch;
+display: grid;
+grid-template-columns: repeat(3, minmax(max-content, 1fr));
+flex: 1 1 100%;
+width: 100%;
+min-width: 0;
+gap: 10px;
+align-items: stretch;
 }
 
 .timetable-screen .timetable-actions > .timetable-action {
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 auto;
-  width: auto;
-  min-width: max-content;
-  max-width: 100%;
-  min-height: 46px;
-  margin: 0;
-  padding: 11px 22px;
-  gap: 9px;
-  white-space: nowrap;
-  line-height: 1.25;
-  text-align: center;
+box-sizing: border-box;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+flex: 1 1 auto;
+width: auto;
+min-width: max-content;
+max-width: 100%;
+min-height: 46px;
+margin: 0;
+padding: 11px 22px;
+gap: 9px;
+white-space: nowrap;
+line-height: 1.25;
+text-align: center;
 }
 
 .timetable-screen .timetable-actions > .timetable-action svg {
-  flex: 0 0 16px;
+flex: 0 0 16px;
 }
 
 .timetable-screen .timetable-actions > .timetable-action.primary {
-  background: #176b45;
-  border-color: #176b45;
-  color: #ffffff;
-  font-weight: 700;
-  letter-spacing: 0.025em;
-  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.45);
+background: #176b45;
+border-color: #176b45;
+color: #ffffff;
+font-weight: 700;
+letter-spacing: 0.025em;
+-webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.45);
 }
 
 .timetable-screen .timetable-actions > .timetable-action.primary:hover {
-  background: #105538;
-  border-color: #105538;
-  color: #ffffff;
-  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.45);
+background: #105538;
+border-color: #105538;
+color: #ffffff;
+-webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.45);
 }
 
-/* Phones: stack full-width, and let long labels wrap instead of overflowing. */
 @media (max-width: 560px) {
-  .timetable-screen .timetable-actions > .timetable-action {
-    flex: 1 1 100%;
-    min-width: 0;
-    white-space: normal;
-  }
+.timetable-screen .timetable-actions > .timetable-action {
+flex: 1 1 100%;
+min-width: 0;
+white-space: normal;
+}
 }
 
-
-/* The shared button normalizer treats SVG + text-node buttons as icon-only
-   because :only-child ignores text nodes. Restore intrinsic label sizing for
-   the three timetable header actions without changing other icon controls. */
 .app-shell .content .timetable-screen .timetable-actions > button.timetable-action {
-  display: inline-flex;
-  flex: 0 1 auto;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  min-width: max-content;
-  max-width: 100%;
-  min-height: 46px;
-  padding: 11px 22px;
-  gap: 9px;
-  white-space: nowrap;
-  line-height: 1.25;
+display: inline-flex;
+flex: 0 1 auto;
+flex-direction: row;
+align-items: center;
+justify-content: center;
+width: auto;
+min-width: max-content;
+max-width: 100%;
+min-height: 46px;
+padding: 11px 22px;
+gap: 9px;
+white-space: nowrap;
+line-height: 1.25;
 }
 
 .app-shell .content .timetable-screen .timetable-actions > button.timetable-action > svg {
-  flex: 0 0 16px;
+flex: 0 0 16px;
 }
 
 @media (max-width: 560px) {
-  .app-shell .content .timetable-screen .timetable-actions > button.timetable-action {
-    flex: 1 1 100%;
-    width: 100%;
-    min-width: 0;
-    white-space: normal;
-  }
+.app-shell .content .timetable-screen .timetable-actions > button.timetable-action {
+flex: 1 1 100%;
+width: 100%;
+min-width: 0;
+white-space: normal;
 }
-
+}
 
 .timetable-class-document-identity{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
 .timetable-class-document-identity>p{margin:0;color:#475569;font-size:.66rem;font-weight:800;letter-spacing:.08em}
@@ -245,7 +238,6 @@
 .timetable-template-document-heading h3{text-transform:uppercase}
 .timetable-document-heading h3{text-transform:uppercase}
 
- 
 .timetable-semester-templates{display:grid;gap:12px;margin:18px 0;padding:16px;border:1px solid var(--border-color,#d8d5cc);border-radius:8px;background:var(--surface,#fff)}
 .timetable-semester-templates-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .timetable-semester-templates-heading h3{margin:0;font-size:1rem}
@@ -260,8 +252,6 @@
 .timetable-semester-template-card .timetable-action{margin-top:auto;width:100%;justify-content:center}
 @media(max-width:640px){.timetable-semester-templates{padding:12px}.timetable-semester-template-grid{grid-template-columns:1fr}}
 
-
-/* Integrated editor controls: all timetable styling remains locally scoped. */
 .timetable-toolbar-controls{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 .timetable-weekend-toggle{display:inline-flex;align-items:center;gap:7px;color:#364152;font-size:.8rem;font-weight:650;white-space:nowrap}
 .timetable-weekend-toggle input{width:16px;height:16px;accent-color:#176b45}
@@ -278,8 +268,6 @@
 @media(max-width:760px){.timetable-system-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.timetable-system-data-heading{flex-direction:column}.timetable-toolbar-controls{justify-content:flex-start}}
 @media(max-width:480px){.timetable-system-data-grid{grid-template-columns:1fr}}
 
-
-/* Official document designer — scoped to the timetable template only. */
 .timetable-screen .timetable-template-editor{padding:24px;background:#fff;border:1px solid #c7c7c7;border-radius:0;box-shadow:0 8px 28px rgba(15,23,42,.08);color:#111827}
 .timetable-screen .timetable-template-document-heading{padding:8px 12px 18px;border-bottom:2px solid #111827;font-family:Georgia,'Times New Roman',serif}
 .timetable-screen .timetable-template-document-heading h3{font-size:1.45rem;letter-spacing:.035em}
@@ -293,7 +281,7 @@
 .timetable-screen .timetable-editable-grid thead th{background:#eceff2;padding:9px 7px}
 .timetable-screen .timetable-editable-grid tbody th{background:#f1f1ef;vertical-align:middle}
 .timetable-screen .timetable-editable-grid td{height:165px;padding:9px;background:#fff}
-.timetable-screen .timetable-editable-grid td select,.timetable-screen .timetable-editable-grid td input{border-radius:2px;border-color:#c2c7ce;padding:7px 6px;font-family:Inter,Arial,sans-serif}
+.timetable-screen .timetable-editable-grid td select,.timetable-screen .timetable-editable-grid td input{display:block;width:100%;min-width:0;margin:0 0 6px;border-radius:2px;border-color:#c2c7ce;padding:7px 6px;font-family:Inter,Arial,sans-serif}
 .timetable-screen .timetable-break-after{border-right:4px double #111827!important}
 .timetable-screen .timetable-break-label{display:block;margin:4px auto;padding:3px 5px;max-width:100%;background:#e9ecef;border:1px solid #aab1ba;font:800 .62rem Arial,sans-serif;letter-spacing:.1em;writing-mode:vertical-rl;transform:rotate(180deg)}
 .timetable-screen .timetable-period-tools,.timetable-screen .timetable-day-tools{display:flex;justify-content:center;gap:4px;margin-top:7px}
@@ -313,7 +301,6 @@
 @media(max-width:480px){.timetable-screen .timetable-document-meta-editor{grid-template-columns:1fr}}
 @media print{.timetable-screen .timetable-document-title-input{border:0;background:transparent}.timetable-screen .timetable-document-meta-editor,.timetable-screen .timetable-period-tools,.timetable-screen .timetable-day-tools,.timetable-screen .timetable-cell-merge-tools,.timetable-screen .timetable-template-design-tools{display:none!important}.timetable-screen .timetable-editable-grid{min-width:0!important}.timetable-screen .timetable-editable-grid td{height:85px}.timetable-screen .timetable-template-document-footer{break-inside:avoid}}
 
-/* Official timetable sheet: institutional masthead and paper-like document frame. */
 .timetable-template-editor{background:#eef1f5;border:1px solid #cbd2dc;padding:18px}
 .timetable-template-document-heading{background:#fff;border:1px solid #111827;border-bottom:3px double #111827;padding:18px 22px 16px;margin-bottom:16px}
 .timetable-official-identity{display:flex;align-items:center;justify-content:center;gap:16px;min-width:0}
@@ -340,109 +327,105 @@
 .timetable-class-document-identity .timetable-institution-logo{width:58px;height:58px}
 @media(max-width:600px){.timetable-template-editor{padding:8px}.timetable-template-document-heading{padding:12px 8px}.timetable-official-identity{flex-direction:column;gap:8px}.timetable-institution-logo{width:58px;height:58px}.timetable-official-identity-copy h3{font-size:1rem}.timetable-institution-contact{text-align:center;overflow-wrap:anywhere}}
 @media print{
- .timetable-template-editor{background:#fff!important;padding:0!important}
- .timetable-template-document-heading,.timetable-template-editor-heading,.timetable-template-design-tools,.timetable-template-document-footer{background:#fff!important}
- .timetable-template-document-heading{border:0!important;border-bottom:3px double #111827!important}
- .timetable-document-title-input{border:0!important}
+.timetable-template-editor{background:#fff!important;padding:0!important}
+.timetable-template-document-heading,.timetable-template-editor-heading,.timetable-template-design-tools,.timetable-template-document-footer{background:#fff!important}
+.timetable-template-document-heading{border:0!important;border-bottom:3px double #111827!important}
+.timetable-document-title-input{border:0!important}
 }
 
-
-/* Template actions: consistent full-width controls with clear visual hierarchy. */
 .timetable-screen .timetable-template-editor .timetable-form-footer {
-  display: flex;
-  align-items: stretch;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 14px 16px;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-top: 0;
+display: flex;
+align-items: stretch;
+justify-content: flex-end;
+flex-wrap: wrap;
+gap: 10px;
+padding: 14px 16px;
+background: #fff;
+border: 1px solid #d1d5db;
+border-top: 0;
 }
 .timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action {
-  display: inline-flex;
-  flex: 1 1 220px;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  min-height: 44px;
-  margin: 0;
-  padding: 10px 18px;
-  border: 1px solid #aeb8c5;
-  border-radius: 4px;
-  background: #f8fafc;
-  color: #1f2937;
-  font: inherit;
-  font-size: .84rem;
-  font-weight: 750;
-  line-height: 1.25;
-  letter-spacing: .01em;
-  white-space: normal;
-  text-align: center;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .08);
-  cursor: pointer;
+display: inline-flex;
+flex: 1 1 220px;
+align-items: center;
+justify-content: center;
+min-width: 0;
+min-height: 44px;
+margin: 0;
+padding: 10px 18px;
+border: 1px solid #aeb8c5;
+border-radius: 4px;
+background: #f8fafc;
+color: #1f2937;
+font: inherit;
+font-size: .84rem;
+font-weight: 750;
+line-height: 1.25;
+letter-spacing: .01em;
+white-space: normal;
+text-align: center;
+box-shadow: 0 1px 2px rgba(15, 23, 42, .08);
+cursor: pointer;
 }
 .timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action.primary {
-  background: #176b45;
-  border-color: #176b45;
-  color: #fff;
+background: #176b45;
+border-color: #176b45;
+color: #fff;
 }
 .timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action.primary:hover:not(:disabled) {
-  background: #105538;
-  border-color: #105538;
+background: #105538;
+border-color: #105538;
 }
 .timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action:not(.primary):hover:not(:disabled) {
-  background: #edf1f5;
-  border-color: #8793a3;
+background: #edf1f5;
+border-color: #8793a3;
 }
 .timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action:focus-visible,
 .timetable-screen .timetable-template-controls > .timetable-action:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, .35);
-  outline-offset: 2px;
+outline: 3px solid rgba(37, 99, 235, .35);
+outline-offset: 2px;
 }
 .timetable-screen .timetable-template-controls > .timetable-action {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  min-width: 132px;
-  min-height: 40px;
-  padding: 9px 16px;
-  border: 1px solid #176b45;
-  border-radius: 4px;
-  background: #176b45;
-  color: #fff;
-  font-size: .82rem;
-  font-weight: 750;
-  line-height: 1.2;
-  white-space: nowrap;
+display: inline-flex;
+flex: 0 0 auto;
+align-items: center;
+justify-content: center;
+min-width: 132px;
+min-height: 40px;
+padding: 9px 16px;
+border: 1px solid #176b45;
+border-radius: 4px;
+background: #176b45;
+color: #fff;
+font-size: .82rem;
+font-weight: 750;
+line-height: 1.2;
+white-space: nowrap;
 }
 .timetable-screen .timetable-template-controls > .timetable-action:hover:not(:disabled) {
-  background: #105538;
-  border-color: #105538;
+background: #105538;
+border-color: #105538;
 }
 .timetable-screen .timetable-template-controls > .timetable-action:disabled,
 .timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action:disabled {
-  opacity: .55;
-  cursor: not-allowed;
+opacity: .55;
+cursor: not-allowed;
 }
 @media (max-width: 560px) {
-  .timetable-screen .timetable-template-editor .timetable-form-footer {
-    flex-direction: column;
-    padding: 10px;
-  }
-  .timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action {
-    flex: 1 1 auto;
-    width: 100%;
-  }
-  .timetable-screen .timetable-template-controls > .timetable-action {
-    flex: 1 1 100%;
-    width: 100%;
-  }
+.timetable-screen .timetable-template-editor .timetable-form-footer {
+flex-direction: column;
+padding: 10px;
+}
+.timetable-screen .timetable-template-editor .timetable-form-footer > .timetable-action {
+flex: 1 1 auto;
+width: 100%;
+}
+.timetable-screen .timetable-template-controls > .timetable-action {
+flex: 1 1 100%;
+width: 100%;
+}
 }
 
-
-/* Full-week template grid: click a period to edit it in a focused dialog. */
 .timetable-screen .timetable-editable-grid{min-width:1120px;table-layout:fixed}
 .timetable-screen .timetable-editable-grid td{height:112px;min-width:125px;padding:5px;vertical-align:middle}
 .timetable-screen .timetable-template-cell-trigger{display:flex;width:100%;min-height:96px;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:9px 7px;border:1px solid transparent;border-radius:3px;background:#fff;color:#111827;text-align:center;font:inherit;cursor:pointer}
@@ -450,7 +433,7 @@
 .timetable-screen .timetable-template-cell-trigger:focus-visible{outline:3px solid rgba(37,99,235,.35);outline-offset:1px}
 .timetable-screen .timetable-template-cell-trigger strong{font-size:.8rem;line-height:1.25}
 .timetable-screen .timetable-template-cell-trigger>span:not(.timetable-template-cell-edit){font-size:.75rem}
-.timetable-screen .timetable-template-cell-trigger small{font: .68rem Inter,Arial,sans-serif;color:#475569}
+.timetable-screen .timetable-template-cell-trigger small{font:.68rem Inter,Arial,sans-serif;color:#475569}
 .timetable-screen .timetable-template-cell-empty{color:#64748b;font:italic .75rem Inter,Arial,sans-serif}
 .timetable-screen .timetable-template-cell-edit{display:inline-flex;align-items:center;gap:4px;margin-top:3px;color:#176b45;font:700 .65rem Inter,Arial,sans-serif;opacity:.78}
 .timetable-screen .timetable-cell-modal-overlay{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.58)}
@@ -470,8 +453,6 @@
 @media(max-width:560px){.timetable-screen .timetable-cell-modal-fields{grid-template-columns:1fr;padding:14px}.timetable-screen .timetable-cell-modal-fields label{grid-column:1/-1}}
 @media print{.timetable-screen .timetable-template-cell-edit{display:none!important}.timetable-screen .timetable-template-cell-trigger{min-height:0;padding:3px;border:0;cursor:default}}
 
-
-/* Load-class selector and action: keep controls legible and explain an empty registry result. */
 .timetable-screen .timetable-template-controls{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;min-width:min(100%,420px)}
 .timetable-screen .timetable-template-controls>label{display:flex;flex:1 1 260px;min-width:220px;flex-direction:column;gap:6px;color:#253247;font-size:.78rem;font-weight:750}
 .timetable-screen .timetable-template-controls>label select{width:100%;min-height:42px;padding:9px 34px 9px 11px;border:1px solid #8b98a9;border-radius:4px;background:#fff;color:#172033;font:600 .84rem Inter,Arial,sans-serif}
@@ -482,24 +463,21 @@
 .timetable-screen .timetable-class-empty-hint{display:block;margin-top:5px;color:#9a3412;font-size:.72rem;font-weight:600;line-height:1.4}
 @media(max-width:560px){.timetable-screen .timetable-template-controls{min-width:0;width:100%;align-items:stretch}.timetable-screen .timetable-template-controls>label{min-width:0}.timetable-screen .timetable-template-controls>.timetable-action{width:100%}}
 
-
-/* Match the supplied formal timetable sheet: a narrow, full-height break column
-   separates teaching periods instead of relying only on a border treatment. */
 .timetable-screen .timetable-template-divider-header,
 .timetable-screen .timetable-template-divider-cell{
-  width:30px;min-width:30px;padding:5px 3px!important;text-align:center!important;
-  vertical-align:middle!important;background:#fff!important;border-left:2px solid #111827!important;
-  border-right:2px solid #111827!important;font-family:Georgia,'Times New Roman',serif;
-  font-weight:800;letter-spacing:.04em;
+width:30px;min-width:30px;padding:5px 3px!important;text-align:center!important;
+vertical-align:middle!important;background:#fff!important;border-left:2px solid #111827!important;
+border-right:2px solid #111827!important;font-family:Georgia,'Times New Roman',serif;
+font-weight:800;letter-spacing:.04em;
 }
 .timetable-screen .timetable-template-divider-header{background:#f8fafc!important}
 .timetable-screen .timetable-template-divider-header span,
 .timetable-screen .timetable-template-divider-cell span{
-  display:block;margin:0 auto;font-size:.68rem;line-height:1.25;
+display:block;margin:0 auto;font-size:.68rem;line-height:1.25;
 }
 .timetable-screen .timetable-template-divider-cell>div{
-  display:flex;min-height:380px;height:100%;flex-direction:column;align-items:center;
-  justify-content:space-around;
+display:flex;min-height:380px;height:100%;flex-direction:column;align-items:center;
+justify-content:space-around;
 }
 .timetable-screen .timetable-editable-grid .timetable-template-divider-cell{height:auto}
 .timetable-screen .timetable-template-editor{font-family:Georgia,'Times New Roman',serif}
@@ -515,5 +493,55 @@
 .timetable-screen .timetable-editable-grid td{border:1px solid #000!important}
 .timetable-screen .timetable-editable-grid thead th{background:#f8fafc;color:#000}
 @media print{
-  .timetable-screen .timetable-template-divider-cell>div{min-height:250px}
+.timetable-screen .timetable-template-divider-cell>div{min-height:250px}
+}
+
+/* Official KSHS Horizontal Matrix Sheet Designer */
+.timetable-screen .kshs-official-sheet-wrap{background:#eef1f5;border:1px solid #cbd5e1;border-radius:8px;padding:0;overflow:hidden}
+.timetable-screen .kshs-sheet-toolbar{background:#0f172a;color:#f8fafc;padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.timetable-screen .kshs-sheet-toolbar-group{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.timetable-screen .kshs-sheet-badge{font-weight:700;font-size:.86rem;padding-right:10px;border-right:1px solid #334155;color:#fff}
+.timetable-screen .kshs-sheet-select,.timetable-screen .kshs-sheet-btn{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:5px;padding:6px 11px;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:34px}
+.timetable-screen .kshs-sheet-select:hover,.timetable-screen .kshs-sheet-btn:hover:not(:disabled){background:#334155}
+.timetable-screen .kshs-sheet-btn:disabled{opacity:.5;cursor:not-allowed}
+.timetable-screen .kshs-sheet-btn.is-amber{background:#d97706;border-color:#f59e0b;color:#fff}
+.timetable-screen .kshs-sheet-btn.is-amber:hover{background:#b45309}
+.timetable-screen .kshs-sheet-btn.is-primary{background:#176b45;border-color:#176b45;color:#fff}
+.timetable-screen .kshs-sheet-btn.is-primary:hover:not(:disabled){background:#105538}
+.timetable-screen .kshs-sheet-weekend-pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;color:#cbd5e1;background:#1e293b;border:1px solid #334155;padding:5px 10px;border-radius:5px;cursor:pointer}
+.timetable-screen .kshs-official-paper{background:#fff;border:1px solid #cbd5e1;box-shadow:0 10px 28px rgba(15,23,42,.08);margin:16px;padding:24px 28px 28px;font-family:"Times New Roman",Times,Georgia,serif;color:#000}
+.timetable-screen .kshs-official-masthead{text-align:center;margin-bottom:14px;transition:background .15s}
+.timetable-screen .is-sheet-editing .kshs-official-masthead{border:1.5px dashed #d97706;background:#fffdf7;padding:8px;border-radius:5px;cursor:pointer}
+.timetable-screen .kshs-masthead-line{text-transform:uppercase;font-weight:700;color:#000;line-height:1.32}
+.timetable-screen .kshs-masthead-inst{font-size:1.34rem}
+.timetable-screen .kshs-masthead-sub{font-size:1.05rem}
+.timetable-screen .kshs-masthead-meta{font-size:1rem}
+.timetable-screen .kshs-matrix-table{width:100%;min-width:940px;border-collapse:collapse;table-layout:fixed;border:1.5px solid #000}
+.timetable-screen .kshs-matrix-table th,.timetable-screen .kshs-matrix-table td{border:1px solid #000!important;text-align:center;vertical-align:middle;color:#000}
+.timetable-screen .kshs-matrix-day-head,.timetable-screen .kshs-matrix-slot-head{font-size:.9rem;font-weight:700;padding:8px 6px;background:#f8fafc}
+.timetable-screen .is-sheet-editing .kshs-matrix-day-head,.timetable-screen .is-sheet-editing .kshs-matrix-slot-head{background:#fffbeb;cursor:pointer}
+.timetable-screen .kshs-matrix-divider{width:34px;min-width:34px;padding:6px 2px!important;background:#fff!important;font-weight:700;font-size:.9rem;line-height:1.15}
+.timetable-screen .is-sheet-editing .kshs-matrix-divider{background:#fffbeb!important;cursor:pointer}
+.timetable-screen .kshs-divider-letters{display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:270px;height:100%}
+.timetable-screen .kshs-matrix-day-cell{width:92px;font-weight:700;font-size:.94rem;padding:8px 6px;background:#fff}
+.timetable-screen .is-sheet-editing .kshs-matrix-day-cell{background:#fffdf7}
+.timetable-screen .kshs-matrix-lecture-cell{padding:9px 7px;height:86px;font-size:.88rem;background:#fff;transition:background .12s}
+.timetable-screen .is-sheet-editing .kshs-matrix-lecture-cell:hover{background:#fefce8;cursor:pointer}
+.timetable-screen .kshs-matrix-course{font-weight:700;text-transform:uppercase;margin-bottom:2px;border-radius:3px;padding:1px 3px}
+.timetable-screen .kshs-matrix-tutor{font-style:italic;text-transform:uppercase;color:#1e293b;font-size:.84rem;border-radius:3px;padding:1px 3px}
+.timetable-screen .is-sheet-editing .kshs-matrix-course:hover,.timetable-screen .is-sheet-editing .kshs-matrix-tutor:hover{background:#fde68a;outline:1px dashed #b45309}
+.timetable-screen .kshs-inline-tutor-select{font-family:Inter,Arial,sans-serif;font-size:.76rem;padding:3px 5px;border:1.5px solid #1d4ed8;border-radius:4px;background:#fff;color:#0f172a;width:100%;max-width:190px;margin-top:2px}
+.timetable-screen .kshs-matrix-meta{font-size:.75rem;color:#475569;margin-top:2px;font-family:Inter,Arial,sans-serif}
+.timetable-screen .kshs-matrix-empty{color:#94a3b8;font-size:.75rem;font-style:italic;font-family:Inter,Arial,sans-serif}
+.timetable-screen .kshs-official-footer{margin-top:24px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;min-height:48px}
+.timetable-screen .is-sheet-editing .kshs-official-footer{border:1.5px dashed #d97706;background:#fffdf7;padding:10px;border-radius:5px;cursor:pointer}
+.timetable-screen .kshs-registrar-sign-block{min-width:240px}
+.timetable-screen .kshs-registrar-dotted-line{border-bottom:1.5px dotted #000;height:28px;margin-bottom:4px}
+.timetable-screen .kshs-registrar-label{font-size:.88rem;font-weight:700;text-transform:uppercase;line-height:1.3}
+.timetable-screen .kshs-sheet-toast{position:fixed;bottom:20px;right:20px;background:#0f172a;color:#fff;padding:10px 16px;border-radius:6px;font-size:.82rem;font-weight:600;box-shadow:0 10px 25px rgba(0,0,0,.22);z-index:1500}
+@media print{
+.timetable-screen .kshs-sheet-toolbar,.timetable-screen .kshs-matrix-empty,.timetable-screen .kshs-sheet-toast{display:none!important}
+.timetable-screen .kshs-official-sheet-wrap{border:0!important;background:#fff!important}
+.timetable-screen .kshs-official-paper{margin:0!important;padding:0!important;border:0!important;box-shadow:none!important}
+.timetable-screen .kshs-official-masthead,.timetable-screen .kshs-official-footer{border:0!important;background:transparent!important;padding:0!important}
 }

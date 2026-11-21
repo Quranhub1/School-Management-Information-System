@@ -5,12 +5,13 @@ using SchoolManagement.Application.Administration;
 namespace SchoolManagement.Application.Authentication;
 
 public sealed record LoginRequest(string Username, string Password);
-public sealed record AuthenticatedUser(Guid UserId, string Username, IReadOnlyList<string> Roles);
+public sealed record AuthenticatedUser(Guid UserId, string Username, IReadOnlyList<string> Roles, IReadOnlyList<string> Permissions);
 
 public interface IUserRepository
 {
     Task<User?> FindByUsernameAsync(string username, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<string>> GetRolesAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> GetPermissionCodesAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<UserSummary>> GetUsersAsync(CancellationToken cancellationToken = default);
     Task<UserSummary?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default);
     Task AddUserAsync(User user, IReadOnlyList<string> roles, CancellationToken cancellationToken = default);
@@ -27,9 +28,10 @@ public sealed class AuthService(IUserRepository users)
         var user = await users.FindByUsernameAsync(request.Username.Trim(), cancellationToken);
         if (user is null || !user.IsActive || !VerifyPassword(request.Password, user.PasswordHash)) return null;
         var roles = await users.GetRolesAsync(user.Id, cancellationToken);
+        var permissions = await users.GetPermissionCodesAsync(user.Id, cancellationToken);
         user.LastLoginAt = DateTimeOffset.UtcNow;
         await users.SaveChangesAsync(cancellationToken);
-        return new AuthenticatedUser(user.Id, user.Username, roles);
+        return new AuthenticatedUser(user.Id, user.Username, roles, permissions);
     }
 
     public static string HashPassword(string password)

@@ -162,6 +162,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
     await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
     await scope.ServiceProvider.GetRequiredService<FinanceAccountSeeder>().SeedAsync();
+    await scope.ServiceProvider.GetRequiredService<SchoolManagement.Infrastructure.Identity.PermissionCatalogSeeder>().SeedAsync();
 }
 app.UseMiddleware<SchoolManagement.Api.Middleware.CorrelationIdMiddleware>();
 app.UseSerilogRequestLogging(options =>

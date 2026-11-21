@@ -13,6 +13,20 @@ public sealed class UserRepository(SchoolManagementDbContext db) : IUserReposito
     public async Task<IReadOnlyList<string>> GetRolesAsync(Guid userId, CancellationToken cancellationToken = default) =>
         await (from ur in db.UserRoles join role in db.Roles on ur.RoleId equals role.Id where ur.UserId == userId select role.Name).ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<string>> GetPermissionCodesAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var inherited = from assignment in db.UserRoles
+                        join rolePermission in db.RolePermissions on assignment.RoleId equals rolePermission.RoleId
+                        join permission in db.Permissions on rolePermission.PermissionId equals permission.Id
+                        where assignment.UserId == userId
+                        select permission.Code;
+        var individual = from grant in db.UserPermissions
+                         join permission in db.Permissions on grant.PermissionId equals permission.Id
+                         where grant.UserId == userId
+                         select permission.Code;
+        return await inherited.Union(individual).Distinct().OrderBy(code => code).ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<UserSummary>> GetUsersAsync(CancellationToken cancellationToken = default) =>
         await db.Users.AsNoTracking().OrderBy(x => x.Username).Select(x => new UserSummary(x.Id, x.Username, x.FirstName, x.LastName, x.Email, x.IsActive, x.CreatedAt, x.LastLoginAt,
             db.UserRoles.Where(ur => ur.UserId == x.Id).Join(db.Roles, ur => ur.RoleId, r => r.Id, (_, r) => r.Name).ToList())).ToListAsync(cancellationToken);
