@@ -54,6 +54,15 @@ vi.mock('./InstitutionSettingsContext', () => ({
 import { saveTimetableTemplate } from '../api/timetable'
 import { TimetableManagement } from './TimetableManagement'
 
+const openGeneratorAndSelect = async () => {
+  fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
+  fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
+  fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
+  fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
+  fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
+  fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
+}
+
 describe('TimetableManagement', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -64,21 +73,14 @@ describe('TimetableManagement', () => {
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
-  it('shows the editable official timetable designer as the primary management view', () => {
+  it('shows the timetable generator as the primary management view', () => {
     render(<TimetableManagement />)
-    expect(screen.getByRole('region', { name: 'Editable timetable template' })).toBeTruthy()
-    expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /generate timetable/i })).toBeTruthy()
   })
-
 
   it('prints generated class timetables for the full semester using Institution Settings', async () => {
     render(<TimetableManagement />)
-    fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
-    fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
-    fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
-    fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
-    fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
-    fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
+    await openGeneratorAndSelect()
     fireEvent.click(screen.getByRole('button', { name: 'Generate schedule' }))
     expect(await screen.findByText('KAMPALA SCHOOL OF HEALTH SCIENCES')).toBeTruthy()
     expect(screen.getByText(/VALID FOR: 01 Jan 2026 – 30 Jun 2026/)).toBeTruthy()
@@ -96,54 +98,45 @@ describe('TimetableManagement', () => {
 
   it('supports weekend visibility control', () => {
     render(<TimetableManagement />)
-    const toggle = screen.getByRole('checkbox', { name: /show weekend days/i })
+    const toggle = screen.getByRole('checkbox', { name: /show saturday/i })
     expect(toggle).toBeTruthy()
     fireEvent.click(toggle)
     expect((toggle as HTMLInputElement).checked).toBe(false)
   })
 
-  it('renders the official document designer with editable heading, signature and merge controls', async () => {
+  it('renders the official document designer from a semester template card', async () => {
     render(<TimetableManagement />)
+    await openGeneratorAndSelect()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
-    expect(await screen.findByLabelText('Timetable document title')).toBeTruthy()
-    expect(screen.getByLabelText('Day column heading')).toBeTruthy()
-    expect(screen.getByLabelText('Registrar name')).toBeTruthy()
-    expect(screen.getByLabelText('Registrar title')).toBeTruthy()
-    expect(screen.getByLabelText('Footer text')).toBeTruthy()
-    expect(screen.getByRole('button', { name: /edit monday 08:00 period/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /edit saturday 08:00 period/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /edit sunday 08:00 period/i })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /edit monday 08:00 period/i }))
-    expect(screen.getByRole('dialog', { name: /edit timetable period/i })).toBeTruthy()
-    expect(screen.getByLabelText('Merge down (days)')).toBeTruthy()
-    expect(screen.getByLabelText('Merge across periods')).toBeTruthy()
-    expect(screen.queryByText('REPUBLIC OF UGANDA')).toBeNull()
+    expect(screen.getByRole('button', { name: /load class/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /columns & breaks/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /sync & save to system/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /print \/ pdf/i })).toBeTruthy()
   })
 
   it('renders a full-height vertical break divider in the timetable design', async () => {
     render(<TimetableManagement />)
+    await openGeneratorAndSelect()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
-    fireEvent.change(screen.getByLabelText('Divider after period'), { target: { value: '1' } })
+    fireEvent.click(screen.getByRole('button', { name: /columns & breaks/i }))
+    fireEvent.change(screen.getByLabelText('Vertical Break Column After'), { target: { value: '0' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
     expect(await screen.findByRole('columnheader', { name: 'BREAK' })).toBeTruthy()
   })
 
   it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
     render(<TimetableManagement />)
+    await openGeneratorAndSelect()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
-    fireEvent.change(await screen.findByLabelText('Timetable document title'), { target: { value: 'OFFICIAL CLASS TIMETABLE' } })
-    fireEvent.change(screen.getByLabelText('Registrar name'), { target: { value: 'JANE DOE' } })
-    fireEvent.click(screen.getByRole('button', { name: /edit monday 08:00 period/i }))
-    fireEvent.change(screen.getByLabelText('Merge down (days)'), { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: /columns & breaks/i }))
+    fireEvent.change(screen.getByLabelText('Vertical Break Column After'), { target: { value: '0' } })
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
-    fireEvent.click(screen.getByRole('button', { name: /save timetable template/i }))
+    fireEvent.click(screen.getByRole('button', { name: /sync & save to system/i }))
     await waitFor(() => expect(saveTimetableTemplate).toHaveBeenCalled())
     expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', [], expect.objectContaining({
-      title: 'OFFICIAL CLASS TIMETABLE',
-      registrarName: 'JANE DOE',
-      cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2' }) }),
+      breakLabel: 'BREAK',
     }))
   })
 
@@ -167,8 +160,9 @@ describe('TimetableManagement', () => {
 
   it('lists all active teaching groups for the selected programme and academic period in Load class', async () => {
     render(<TimetableManagement />)
+    await openGeneratorAndSelect()
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    const classSelect = await screen.findByLabelText('Class / teaching group') as HTMLSelectElement
+    const classSelect = await screen.findByLabelText('Class or teaching group') as HTMLSelectElement
     expect(Array.from(classSelect.options).map(option => option.textContent)).toContain('CPH-Y1-S1')
     expect(Array.from(classSelect.options).map(option => option.textContent)).toContain('CPH-Y1-S1-B')
   })
@@ -182,7 +176,7 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText('Curriculum semester')).toBeTruthy()
     expect(screen.getByText(/CPH 101 — Pharmacy Practice/)).toBeTruthy()
   })
- 
+
   it('shows a separate blank timetable template for every mapped curriculum semester', async () => {
     render(<TimetableManagement />)
     expect(await screen.findByRole('heading', { name: /semester templates/i })).toBeTruthy()
@@ -191,8 +185,28 @@ describe('TimetableManagement', () => {
     expect(screen.getAllByRole('heading', { name: 'Semester 2' })).toHaveLength(2)
     expect(screen.getAllByRole('button', { name: /open semester template/i })).toHaveLength(4)
     expect(screen.getAllByText(/Blank template ready/)).toHaveLength(4)
-    fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
-    expect(await screen.findByRole('heading', { name: /edit the timetable grid/i })).toBeTruthy()
   })
 
+  it('opens the timetable template editor from a semester template card', async () => {
+    render(<TimetableManagement />)
+    await openGeneratorAndSelect()
+    fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
+    expect(screen.getByRole('button', { name: /load class/i })).toBeTruthy()
+    expect(screen.getByText(/Select a Class \/ Teaching Group above to load its Official Timetable Sheet/)).toBeTruthy()
+  })
+
+  it('schedules a teaching session through the schedule form', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getByRole('button', { name: /generate timetable/i })) // open generator
+    fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
+    fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
+    fireEvent.click(screen.getByRole('button', { name: /hide generator/i })) // close generator
+    fireEvent.click(screen.getByRole('button', { name: /schedule session/i }))
+    expect(await screen.findByLabelText('Teaching group')).toBeTruthy()
+    expect(await screen.findByLabelText('Course')).toBeTruthy()
+    expect(await screen.findByLabelText('Teacher / staff')).toBeTruthy()
+  })
 })

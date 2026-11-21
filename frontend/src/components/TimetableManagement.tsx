@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { CalendarDays, LayoutGrid, List, Plus, Sparkles, Trash2, Pencil, Save } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { CalendarDays, LayoutGrid, List, Plus, Sparkles, Trash2, Pencil, Save, Printer, Columns, X } from 'lucide-react'
 import LoadingSpinner from './LoadingSpinner'
 import { createTimetableEntry, deactivateTimetableEntry, generateTimetable, getTimetableOptions, getTimetableTemplate, listTimetable, saveTimetableTemplate, updateTimetableEntry, type CreateTimetableEntry, type GenerateTimetableResult, type TimetableEntry, type TimetableOptions } from '../api/timetable'
 import './TimetableManagement.css'
@@ -7,8 +7,30 @@ import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const shortDays = ['SUN', 'MON', 'TUE', 'WED', 'THUR', 'FRID', 'SAT']
 const weekOrder = [1, 2, 3, 4, 5, 6, 0]
 const emptyOptions: TimetableOptions = { teachingGroups: [], courses: [], teachers: [], semesters: [], programmes: [], curricula: [], curriculumCourses: [] }
+const defaultTemplateSlots = [
+  { startTime: '08:00', endTime: '10:30' },
+  { startTime: '11:00', endTime: '13:00' },
+  { startTime: '14:00', endTime: '16:00' },
+  { startTime: '17:00', endTime: '18:30' },
+]
+
+type TemplateCell = {
+  id?: string
+  courseId: string
+  teacherId: string
+  room: string
+  sessionType: string
+  customTime?: string
+  rowSpan?: number | string
+  colSpan?: number | string
+}
+
+type SheetColumn =
+  | { id: string; type: 'slot'; slotIndex: number; startTime: string; endTime: string }
+  | { id: string; type: 'divider'; verticalText: string }
 
 type ProgrammeOption = TimetableOptions['programmes'][number] & { sourceIds: string[] }
 const programmeIdentity = (programme: TimetableOptions['programmes'][number]) =>
@@ -29,9 +51,19 @@ const deduplicateProgrammeOptions = (programmes: TimetableOptions['programmes'],
     return { ...ranked[0], sourceIds: items.map(item => item.id) }
   }).sort((left, right) => left.label.localeCompare(right.label))
 }
-const defaultTemplateSlots = [{ startTime: '08:00', endTime: '09:00' }, { startTime: '09:00', endTime: '10:00' }, { startTime: '10:30', endTime: '11:30' }, { startTime: '11:30', endTime: '12:30' }, { startTime: '13:30', endTime: '14:30' }, { startTime: '14:30', endTime: '15:30' }, { startTime: '15:30', endTime: '16:30' }]
-type TemplateCell = { id?: string; courseId: string; teacherId: string; room: string; sessionType: string; rowSpan?: number | string; colSpan?: number | string }
+
 const timeLabel = (value: string) => value.slice(0, 5)
+const format12Hour = (time24: string) => {
+  if (!time24) return ''
+  const [hStr, mStr] = time24.slice(0, 5).split(':')
+  const h = Number(hStr)
+  if (Number.isNaN(h)) return time24
+  const period = h >= 12 ? 'PM' : 'AM'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  return `${h12}:${mStr || '00'} ${period}`
+}
+const formatSlotRange12 = (startTime: string, endTime: string) => `${format12Hour(startTime)} – ${format12Hour(endTime)}`
+
 const formatSemesterDate = (value?: string) => {
   if (!value) return ''
   const date = new Date(value.slice(0, 10) + 'T00:00:00')
@@ -47,6 +79,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [options, setOptions] = useState<TimetableOptions>(emptyOptions)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [toastMsg, setToastMsg] = useState('')
   const [semesterId, setSemesterId] = useState('')
   const [programmeId, setProgrammeId] = useState('')
   const [curriculumId, setCurriculumId] = useState('')
@@ -69,22 +102,45 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [view, setView] = useState<'week' | 'list'>('week')
   const [showWeekends, setShowWeekends] = useState(true)
   const [showSystemData, setShowSystemData] = useState(false)
-  const [showTemplateEditor, setShowTemplateEditor] = useState(true)
+
+  // Official KSHS Document Sheet Editor State
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false)
+  const [sheetEditingMode, setSheetEditingMode] = useState(true)
   const [templateGroupId, setTemplateGroupId] = useState('')
   const [templateLoadedGroupId, setTemplateLoadedGroupId] = useState('')
   const [templateSlots, setTemplateSlots] = useState(defaultTemplateSlots)
   const [templateCells, setTemplateCells] = useState<Record<string, TemplateCell>>({})
-  const [templateTitle, setTemplateTitle] = useState('CLASS TEACHING TIMETABLE')
+  const [templateInstitution, setTemplateInstitution] = useState('KAMPALA SCHOOL OF HEALTH SCIENCES')
+  const [templateTitle, setTemplateTitle] = useState('TEACHING TIME TABLE')
+  const [templateYearLabel, setTemplateYearLabel] = useState('')
+  const [templateSemesterLabel, setTemplateSemesterLabel] = useState('')
   const [templateDayLabel, setTemplateDayLabel] = useState('DAY')
   const [templateRegistrarName, setTemplateRegistrarName] = useState('')
   const [templateRegistrarRole, setTemplateRegistrarRole] = useState('ACADEMIC REGISTRAR')
-  const [templateFooterText, setTemplateFooterText] = useState('Prepared for academic use')
-  const [templateBreakAfter, setTemplateBreakAfter] = useState<number | null>(null)
+  const [templateSecondaryName, setTemplateSecondaryName] = useState('')
+  const [templateSecondaryRole, setTemplateSecondaryRole] = useState('')
+  const [templateFooterText, setTemplateFooterText] = useState('')
+  const [templateBreakAfter, setTemplateBreakAfter] = useState<number | null>(0)
   const [templateBreakLabel, setTemplateBreakLabel] = useState('BREAK')
+  const [templateLunchAfter, setTemplateLunchAfter] = useState<number | null>(1)
+  const [templateLunchLabel, setTemplateLunchLabel] = useState('LUNCH')
   const [templateDayOrder, setTemplateDayOrder] = useState([1, 2, 3, 4, 5, 6, 0])
   const [templateSaving, setTemplateSaving] = useState(false)
-  const [activeTemplateCellKey, setActiveTemplateCellKey] = useState<string | null>(null)
+
+  // Interactive Sheet Modals & Inline Tutor Picker State
+  const [activeCellModal, setActiveCellModal] = useState<{ day: number; slotIndex: number } | null>(null)
+  const [inlineTutorTarget, setInlineTutorTarget] = useState<string | null>(null)
+  const [clipboardCell, setClipboardCell] = useState<TemplateCell | null>(null)
+  const [showHeaderModal, setShowHeaderModal] = useState(false)
+  const [showColumnsModal, setShowColumnsModal] = useState(false)
+  const [showRegistrarModal, setShowRegistrarModal] = useState(false)
+
   const { institution, loaded: institutionLoaded } = useInstitutionSettings()
+
+  const triggerToast = useCallback((msg: string) => {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(prev => (prev === msg ? '' : prev)), 2400)
+  }, [])
 
   const load = useCallback(async () => {
     setError('')
@@ -93,14 +149,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setEntries(loadedEntries)
       setOptions({ ...emptyOptions, ...loadedOptions, programmes: loadedOptions.programmes ?? [], curricula: loadedOptions.curricula ?? [], curriculumCourses: loadedOptions.curriculumCourses ?? [] })
       setSemesterId(current => current || loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || '')
-      const uniqueProgrammes = deduplicateProgrammeOptions(loadedOptions.programmes ?? [], loadedOptions.curricula ?? [], loadedOptions.teachingGroups ?? [])
-      const preferredProgramme = uniqueProgrammes[0]
-      const preferredCurriculum = loadedOptions.curricula.find(item => preferredProgramme?.sourceIds.includes(item.programmeId))
-      const preferredPeriodId = loadedOptions.semesters.find(item => item.isCurrent)?.id || loadedOptions.semesters.find(item => item.isActive)?.id || loadedOptions.semesters[0]?.id || ''
-      const preferredGroup = loadedOptions.teachingGroups.find(item => item.programmeId === preferredCurriculum?.programmeId && item.semesterId === preferredPeriodId)
-      setProgrammeId(current => current || preferredProgramme?.id || '')
-      setCurriculumId(current => current || preferredCurriculum?.id || '')
-      setTemplateGroupId(current => current || preferredGroup?.id || '')
+      setProgrammeId(current => current || loadedOptions.programmes?.[0]?.id || '')
+      setCurriculumId(current => current || loadedOptions.curricula.find(item => item.programmeId === (loadedOptions.programmes[0]?.id ?? ''))?.id || '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
     }
@@ -111,21 +161,27 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     void load().finally(() => setLoading(false))
   }, [load])
 
+  useEffect(() => {
+    if (institutionLoaded && institution.isActive && institution.institutionName) {
+      setTemplateInstitution(institution.institutionName.toUpperCase())
+    }
+  }, [institutionLoaded, institution])
+
   const groupLabels = useMemo(() => new Map(options.teachingGroups.map(item => [item.id, item.label])), [options.teachingGroups])
   const courseLabels = useMemo(() => new Map(options.courses.map(item => [item.id, item.label])), [options.courses])
   const teacherLabels = useMemo(() => new Map(options.teachers.map(item => [item.id, item.label])), [options.teachers])
   const availableSemesters = options.semesters
   const selectedSemester = availableSemesters.find(item => item.id === semesterId)
   const academicYearLabel = selectedSemester?.academicYearLabel || selectedSemester?.label || 'Academic year not set'
-  const programmeOptions = useMemo(() => deduplicateProgrammeOptions(options.programmes, options.curricula, options.teachingGroups), [options.programmes, options.curricula, options.teachingGroups])
-  const selectedProgramme = programmeOptions.find(item => item.id === programmeId)
-  const selectedProgrammeIds = new Set(selectedProgramme?.sourceIds ?? (programmeId ? [programmeId] : []))
+  const selectedProgramme = options.programmes.find(item => item.id === programmeId)
   const semesterGroupIds = useMemo(() => new Set(options.teachingGroups.filter(item => item.semesterId === semesterId).map(item => item.id)), [options.teachingGroups, semesterId])
-  const programmeCurricula = options.curricula.filter(item => selectedProgrammeIds.has(item.programmeId))
+  const deduplicatedProgrammes = deduplicateProgrammeOptions(options.programmes, options.curricula, options.teachingGroups)
+  const programmeSourceIds = useMemo(() => new Map(deduplicatedProgrammes.map(item => [item.id, item.sourceIds])), [deduplicatedProgrammes])
+  const selectedSourceIds = programmeSourceIds.get(programmeId) ?? [programmeId]
+  const programmeCurricula = options.curricula.filter(item => selectedSourceIds.includes(item.programmeId))
   const selectedCurriculum = programmeCurricula.find(item => item.id === curriculumId) ?? programmeCurricula[0]
   const curriculumMappings = options.curriculumCourses.filter(item => item.curriculumId === selectedCurriculum?.id)
-  // Each distinct year/semester in an active curriculum is represented as its own
-  // timetable template for the selected academic period, even before sessions exist.
+
   const semesterTemplates = useMemo(() => {
     const grouped = new Map<string, { year: number; semester: number; courseIds: Set<string>; courseLabels: string[] }>()
     for (const mapping of curriculumMappings) {
@@ -137,12 +193,14 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
     return [...grouped.values()].sort((a, b) => a.year - b.year || a.semester - b.semester)
   }, [curriculumMappings])
+
   const studyYears = [...new Set(curriculumMappings.map(item => item.yearOfStudy))].sort((a, b) => a - b)
   const curriculumSemesters = [...new Set(curriculumMappings.filter(item => !yearOfStudy || item.yearOfStudy === Number(yearOfStudy)).map(item => item.semesterNumber))].sort((a, b) => a - b)
   const eligibleMappings = curriculumMappings.filter(item => (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) && (!curriculumSemester || item.semesterNumber === Number(curriculumSemester)))
   const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
   const availableCourses = options.courses.filter(item => eligibleCourseIds.has(item.id))
-  const availableGroups = options.teachingGroups.filter(item => item.programmeId === selectedCurriculum?.programmeId && item.semesterId === semesterId)
+  const availableGroups = options.teachingGroups.filter(item => item.programmeId === programmeId && item.semesterId === semesterId && eligibleCourseIds.has(item.courseId))
+  const allSemesterGroups = options.teachingGroups.filter(item => item.programmeId === programmeId && item.semesterId === semesterId)
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedGroupCourses = selectedGroup ? options.courses.filter(item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)) : []
   const activeEntries = useMemo(() => entries.filter(item => item.isActive && semesterGroupIds.has(item.teachingGroupId)), [entries, semesterGroupIds])
@@ -152,6 +210,35 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const orderedEntries = useMemo(() => [...activeEntries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)), [activeEntries])
   const displayedWeekDays = showWeekends ? weekOrder.filter(day => day !== 0) : weekOrder.filter(day => day >= 1 && day <= 5)
   const timeSlots = useMemo(() => [...new Set(activeEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b)), [activeEntries])
+
+  // Build horizontal columns with vertical BREAK and LUNCH dividers
+  const sheetColumns = useMemo<SheetColumn[]>(() => {
+    const cols: SheetColumn[] = []
+    templateSlots.forEach((slot, idx) => {
+      cols.push({
+        id: `slot-${idx}`,
+        type: 'slot',
+        slotIndex: idx,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      })
+      if (templateBreakAfter === idx) {
+        cols.push({
+          id: `div-break-${idx}`,
+          type: 'divider',
+          verticalText: (templateBreakLabel || 'BREAK').toUpperCase(),
+        })
+      }
+      if (templateLunchAfter === idx && templateLunchAfter !== templateBreakAfter) {
+        cols.push({
+          id: `div-lunch-${idx}`,
+          type: 'divider',
+          verticalText: (templateLunchLabel || 'LUNCH').toUpperCase(),
+        })
+      }
+    })
+    return cols
+  }, [templateSlots, templateBreakAfter, templateBreakLabel, templateLunchAfter, templateLunchLabel])
 
   function timetablePdfOptions(title: string, rows: TimetableEntry[], filename: string) {
     const sorted = [...rows].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
@@ -178,7 +265,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       title,
       filename,
       orientation: 'landscape' as const,
-      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : undefined,
+      institutionName: institutionLoaded && institution.isActive ? institution.institutionName : templateInstitution || undefined,
       motto: institutionLoaded && institution.isActive ? institution.motto : undefined,
       contactLines: institutionLoaded && institution.isActive ? [institution.address, institution.phone, institution.email].filter((value): value is string => Boolean(value?.trim())) : [],
       accentColor: institutionLoaded && institution.isActive ? institution.primaryColor : undefined,
@@ -194,7 +281,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           paddingTop: () => 5,
           paddingBottom: () => 5,
         } },
-        { text: 'Academic Registrar: ______________________________', alignment: 'right', margin: [0, 28, 0, 0] },
+        ...(templateRegistrarName.trim()
+          ? [{ text: `${templateRegistrarRole || 'ACADEMIC REGISTRAR'}: ${templateRegistrarName.trim().toUpperCase()}`, alignment: 'left' as const, margin: [0, 28, 0, 0] }]
+          : []),
       ],
     }
   }
@@ -205,80 +294,92 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   }
 
   function printTimetableTemplate() {
-    const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
-    const rows = visibleDays.flatMap(day => templateSlots.flatMap((slot, slotIndex) => {
-      const cell = templateCells[day + '-' + slotIndex]
-      if (!cell?.courseId && !cell?.teacherId && !cell?.room?.trim()) return []
-      return [{
-        id: day + '-' + slotIndex,
-        teachingGroupId: templateGroupId,
-        courseId: cell.courseId,
-        teacherId: cell.teacherId,
-        curriculumId: selectedCurriculum?.id ?? '',
-        yearOfStudy: Number(yearOfStudy),
-        curriculumSemesterNumber: Number(curriculumSemester),
-        dayOfWeek: day,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        room: cell.room,
-        sessionType: cell.sessionType,
-        isActive: true,
-      } as TimetableEntry]
-    }))
+    const visibleDays = templateDayOrder.filter(day => showWeekends || (day >= 1 && day <= 5))
     const groupLabel = groupLabels.get(templateGroupId) ?? 'Class timetable'
-    const base = timetablePdfOptions(templateTitle || groupLabel + ' Timetable Template', rows, groupLabel + '-timetable-template')
+    const base = timetablePdfOptions(templateTitle || groupLabel + ' Timetable', [], groupLabel + '-timetable-template')
+
+    const headerRow: Array<Record<string, unknown>> = [{ text: templateDayLabel || 'DAY', style: 'tableHeader' }]
+    sheetColumns.forEach(col => {
+      if (col.type === 'divider') {
+        headerRow.push({ text: col.verticalText[0] || 'B', style: 'tableHeader', alignment: 'center' })
+      } else {
+        headerRow.push({ text: formatSlotRange12(col.startTime, col.endTime), style: 'tableHeader', alignment: 'center' })
+      }
+    })
+
     const body = [
-      [
-        { text: templateDayLabel || 'DAY', style: 'tableHeader' },
-        ...templateSlots.flatMap((slot, index) => [
-          { text: [`PERIOD ${index + 1}`, `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`].join('\\n'), style: 'tableHeader' },
-          ...(templateBreakAfter === index ? [{ text: (templateBreakLabel || 'BREAK').split('').join('\\n'), style: 'tableHeader' }] : []),
-        ]),
-      ],
-      ...visibleDays.map((day, dayIndex) => {
-        const row: Array<Record<string, unknown>> = [{ text: days[day].toUpperCase(), style: 'tableHeader' }]
-        templateSlots.forEach((slot, slotIndex) => {
-          if (templateCellCovered(day, slotIndex)) {
-            row.push({})
-          } else {
-            const cell = templateCells[day + '-' + slotIndex]
-            const rowSpan = Math.max(1, Math.min(visibleDays.length - dayIndex, Number(cell?.rowSpan) || 1))
-            const colSpan = templatePeriodSpan(slotIndex, cell?.colSpan)
-            const text = cell ? [
-              courseLabels.get(cell.courseId) ?? '',
-              teacherLabels.get(cell.teacherId) ?? '',
-              `${timeLabel(slot.startTime)}–${timeLabel(slot.endTime)}`,
-              cell.room ? `Venue: ${cell.room}` : '',
-              cell.sessionType || '',
-            ].filter(Boolean).join('\\n') : '—'
-            row.push({ text: text || '—', alignment: 'center', ...(rowSpan > 1 ? { rowSpan } : {}), ...(colSpan > 1 ? { colSpan } : {}) })
+      headerRow,
+      ...visibleDays.map((day, rIdx) => {
+        const row: Array<Record<string, unknown>> = [{ text: shortDays[day] || days[day].toUpperCase(), style: 'tableHeader' }]
+        sheetColumns.forEach(col => {
+          if (col.type === 'divider') {
+            if (rIdx === 0) {
+              row.push({
+                text: col.verticalText.slice(1).split('').join('\n'),
+                rowSpan: visibleDays.length,
+                alignment: 'center',
+                bold: true,
+              })
+            } else {
+              row.push({})
+            }
+            return
           }
-          if (templateBreakAfter === slotIndex) {
-            row.push(dayIndex === 0
-              ? { text: (templateBreakLabel || 'BREAK').split('').join('\\n'), alignment: 'center', bold: true, rowSpan: visibleDays.length }
-              : {})
-          }
+          const slotIndex = col.slotIndex
+          if (templateCellCovered(day, slotIndex)) { row.push({}); return }
+          const cell = templateCells[day + '-' + slotIndex]
+          const rowSpan = Math.max(1, Math.min(visibleDays.length - rIdx, Number(cell?.rowSpan) || 1))
+          const colSpan = Math.max(1, Math.min(templateSlots.length - slotIndex, Number(cell?.colSpan) || 1))
+          const courseName = cell?.courseId ? (courseLabels.get(cell.courseId) ?? '').toUpperCase() : ''
+          const teacherName = cell?.teacherId ? `(${(teacherLabels.get(cell.teacherId) ?? '').toUpperCase()})` : ''
+          const metaLine = [cell?.customTime, cell?.room].filter(Boolean).join(' • ')
+          const text = cell ? [courseName, teacherName, metaLine].filter(Boolean).join('\n') : ''
+          row.push({ text: text || ' ', alignment: 'center', ...(rowSpan > 1 ? { rowSpan } : {}), ...(colSpan > 1 ? { colSpan } : {}) })
         })
         return row
       }),
     ]
+
+    const widths = ['auto', ...sheetColumns.map(col => (col.type === 'divider' ? 18 : '*'))]
+    const footerContent: Array<Record<string, unknown>> = []
+    if (templateRegistrarName.trim()) {
+      footerContent.push({
+        text: `..........................................\n${templateRegistrarRole || 'ACADEMIC REGISTRAR'}\n${templateRegistrarName.trim().toUpperCase()}`,
+        alignment: 'left',
+        bold: true,
+        margin: [0, 24, 0, 0],
+      })
+    }
+    if (templateFooterText.trim()) {
+      footerContent.push({ text: templateFooterText, alignment: 'left', fontSize: 8, margin: [0, 8, 0, 0] })
+    }
+
     printInstitutionalPdf({
       ...base,
+      institutionName: templateInstitution || base.institutionName,
       title: templateTitle || base.title,
       content: [
-        base.content[0],
-        { table: { headerRows: 1, widths: ['auto', ...templateSlots.flatMap((_, index) => templateBreakAfter === index ? ['*', 14] : ['*'])], body }, layout: {
-          hLineWidth: () => 0.8,
-          vLineWidth: () => 0.8,
-          hLineColor: () => '#111827',
-          vLineColor: () => '#111827',
-          paddingLeft: () => 4,
-          paddingRight: () => 4,
-          paddingTop: () => 5,
-          paddingBottom: () => 5,
-        } },
-        { text: `${templateRegistrarRole || 'ACADEMIC REGISTRAR'}: ${templateRegistrarName || '____________________________'}`, alignment: 'right', margin: [0, 28, 0, 0] },
-        { text: templateFooterText, alignment: 'left', fontSize: 8, margin: [0, 10, 0, 0] },
+        {
+          text: `${templateYearLabel || 'ACADEMIC YEAR ' + academicYearLabel}\n${templateSemesterLabel || (yearOfStudy && curriculumSemester ? `YEAR ${yearOfStudy} SEMESTER ${curriculumSemester}` : selectedSemester?.label ?? '')}`,
+          alignment: 'center',
+          bold: true,
+          fontSize: 10,
+          margin: [0, 0, 0, 10],
+        },
+        {
+          table: { headerRows: 1, widths, body },
+          layout: {
+            hLineWidth: () => 0.8,
+            vLineWidth: () => 0.8,
+            hLineColor: () => '#000000',
+            vLineColor: () => '#000000',
+            paddingLeft: () => 4,
+            paddingRight: () => 4,
+            paddingTop: () => 6,
+            paddingBottom: () => 6,
+          },
+        },
+        ...footerContent,
       ],
     })
   }
@@ -297,7 +398,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     try {
       const results: Array<{ groupId: string; groupLabel: string; result: GenerateTimetableResult }> = []
       for (const group of selectedGroups) {
-        const result = await generateTimetable(semesterId, group.id, selectedCurriculum.id, Number(yearOfStudy), Number(curriculumSemester), group.programmeId)
+        const result = await generateTimetable(semesterId, group.id, selectedCurriculum.id, Number(yearOfStudy), Number(curriculumSemester), programmeId)
         results.push({ groupId: group.id, groupLabel: group.label, result })
       }
       setGeneratedTimetables(results)
@@ -362,7 +463,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     const group = options.teachingGroups.find(item => item.id === entry.teachingGroupId)
     const mapping = options.curriculumCourses.find(item => item.courseId === entry.courseId && item.programmeId === group?.programmeId)
     const curriculum = options.curricula.find(item => item.id === mapping?.curriculumId)
-    setProgrammeId(programmeOptions.find(item => item.sourceIds.includes(group?.programmeId ?? ''))?.id ?? group?.programmeId ?? '')
+    setProgrammeId(group?.programmeId ?? '')
     setCurriculumId(curriculum?.id ?? '')
     setYearOfStudy(mapping ? String(mapping.yearOfStudy) : '')
     setCurriculumSemester(mapping ? String(mapping.semesterNumber) : '')
@@ -380,36 +481,71 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setError('')
   }
 
-  async function loadTemplate() {
-    if (!selectedCurriculum || !yearOfStudy || !curriculumSemester) { setError('Select a curriculum, year of study and curriculum semester before loading the template.'); return }
-    if (!templateGroupId || !availableGroups.some(item => item.id === templateGroupId)) { setError('Choose a class from the selected programme and academic period. Its course units are still validated against the selected curriculum when saving.'); return }
+  async function loadTemplate(overrideGroupId?: string, overrideYear?: string, overrideSem?: string) {
+    const targetGroupId = overrideGroupId ?? templateGroupId
+    const targetYear = overrideYear ?? yearOfStudy
+    const targetSem = overrideSem ?? curriculumSemester
+    if (!selectedCurriculum || !targetYear || !targetSem) { setError('Select a curriculum, year of study and curriculum semester before loading the template.'); return }
+    if (!targetGroupId || !options.teachingGroups.some(item => item.id === targetGroupId)) { setError('Choose a teaching group from the selected programme curriculum and academic period.'); return }
     setError('')
+    const progName = (selectedProgramme?.label || 'CERTIFICATE IN PHARMACY').toUpperCase()
+    const defaultInst = institutionLoaded && institution.isActive && institution.institutionName
+      ? institution.institutionName.toUpperCase()
+      : 'KAMPALA SCHOOL OF HEALTH SCIENCES'
+    const defaultYearStr = `ACADEMIC YEAR ${academicYearLabel.toUpperCase()}`
+    const defaultSemStr = `YEAR ${targetYear} SEMESTER ${targetSem}`
+
     try {
-      const saved = await getTimetableTemplate(templateGroupId)
+      const saved = await getTimetableTemplate(targetGroupId)
       if (saved.layoutJson) {
-        const layout = JSON.parse(saved.layoutJson) as { slots?: Array<{ startTime: string; endTime: string }>; cells?: Record<string, TemplateCell>; showWeekends?: boolean; title?: string; dayLabel?: string; registrarName?: string; registrarRole?: string; footerText?: string; breakAfter?: number | null; breakLabel?: string; dayOrder?: number[] }
+        const layout = JSON.parse(saved.layoutJson) as {
+          slots?: Array<{ startTime: string; endTime: string }>
+          cells?: Record<string, TemplateCell>
+          showWeekends?: boolean
+          institutionName?: string
+          title?: string
+          yearLabel?: string
+          semesterLabel?: string
+          dayLabel?: string
+          registrarName?: string
+          registrarRole?: string
+          secondaryName?: string
+          secondaryRole?: string
+          footerText?: string
+          breakAfter?: number | null
+          breakLabel?: string
+          lunchAfter?: number | null
+          lunchLabel?: string
+          dayOrder?: number[]
+        }
         if (Array.isArray(layout.slots) && layout.slots.length > 0 && layout.cells && typeof layout.cells === 'object') {
           setTemplateSlots(layout.slots.map(slot => ({ startTime: slot.startTime, endTime: slot.endTime })))
           setTemplateCells(layout.cells)
-          // The official timetable always opens with the complete seven-day week, including for older saved layouts.
-          setShowWeekends(true)
-          setTemplateTitle(layout.title || 'CLASS TEACHING TIMETABLE')
+          if (typeof layout.showWeekends === 'boolean') setShowWeekends(layout.showWeekends)
+          setTemplateInstitution(layout.institutionName || defaultInst)
+          setTemplateTitle(layout.title || `TEACHING TIME TABLE FOR ${progName}`)
+          setTemplateYearLabel(layout.yearLabel || defaultYearStr)
+          setTemplateSemesterLabel(layout.semesterLabel || defaultSemStr)
           setTemplateDayLabel(layout.dayLabel || 'DAY')
           setTemplateRegistrarName(layout.registrarName || '')
           setTemplateRegistrarRole(layout.registrarRole || 'ACADEMIC REGISTRAR')
-          setTemplateFooterText(layout.footerText || 'Prepared for academic use')
-          setTemplateBreakAfter(typeof layout.breakAfter === 'number' ? layout.breakAfter : null)
+          setTemplateSecondaryName(layout.secondaryName || '')
+          setTemplateSecondaryRole(layout.secondaryRole || '')
+          setTemplateFooterText(layout.footerText ?? '')
+          setTemplateBreakAfter(typeof layout.breakAfter === 'number' ? layout.breakAfter : 0)
           setTemplateBreakLabel(layout.breakLabel || 'BREAK')
-          const savedDayOrder = Array.isArray(layout.dayOrder) && layout.dayOrder.length ? layout.dayOrder : [1, 2, 3, 4, 5, 6, 0]
-          setTemplateDayOrder([...savedDayOrder, ...[1, 2, 3, 4, 5, 6, 0].filter(day => !savedDayOrder.includes(day))])
-          setTemplateLoadedGroupId(templateGroupId)
+          setTemplateLunchAfter(typeof layout.lunchAfter === 'number' ? layout.lunchAfter : 1)
+          setTemplateLunchLabel(layout.lunchLabel || 'LUNCH')
+          setTemplateDayOrder(Array.isArray(layout.dayOrder) && layout.dayOrder.length ? layout.dayOrder : [1, 2, 3, 4, 5, 6, 0])
+          setTemplateLoadedGroupId(targetGroupId)
           setShowTemplateEditor(true)
+          triggerToast('Loaded official timetable sheet.')
           return
         }
       }
 
-      // Backward-compatible fallback for groups that have lessons but no saved layout yet.
-      const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === templateGroupId)
+      // Backward-compatible fallback for groups with existing sessions
+      const groupEntries = activeEntries.filter(entry => entry.teachingGroupId === targetGroupId)
       const slots = [...defaultTemplateSlots.map(slot => ({ ...slot }))]
       for (const entry of groupEntries) {
         const start = timeLabel(entry.startTime)
@@ -426,27 +562,49 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           setError('This class has multiple sessions at the same day and start time. Resolve the duplicate sessions before editing its template.')
           return
         }
-        cells[key] = { id: entry.id, courseId: entry.courseId, teacherId: entry.teacherId, room: entry.room ?? '', sessionType: entry.sessionType ?? 'Lecture' }
+        cells[key] = { id: entry.id, courseId: entry.courseId, teacherId: entry.teacherId, room: entry.room ?? '', sessionType: entry.sessionType ?? 'Lecture', rowSpan: 1, colSpan: 1 }
       }
       setTemplateSlots(slots)
       setTemplateCells(cells)
-      setTemplateTitle('CLASS TEACHING TIMETABLE')
+      setTemplateInstitution(defaultInst)
+      setTemplateTitle(`TEACHING TIME TABLE FOR ${progName}`)
+      setTemplateYearLabel(defaultYearStr)
+      setTemplateSemesterLabel(defaultSemStr)
       setTemplateDayLabel('DAY')
       setTemplateRegistrarName('')
       setTemplateRegistrarRole('ACADEMIC REGISTRAR')
-      setTemplateFooterText('Prepared for academic use')
-      setTemplateBreakAfter(null)
+      setTemplateSecondaryName('')
+      setTemplateSecondaryRole('')
+      setTemplateFooterText('')
+      setTemplateBreakAfter(0)
       setTemplateBreakLabel('BREAK')
+      setTemplateLunchAfter(1)
+      setTemplateLunchLabel('LUNCH')
       setTemplateDayOrder([1, 2, 3, 4, 5, 6, 0])
-      setTemplateLoadedGroupId(templateGroupId)
+      setTemplateLoadedGroupId(targetGroupId)
       setShowTemplateEditor(true)
+      triggerToast('Initialized official timetable sheet.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load the saved timetable template.')
     }
   }
 
-  function changeTemplateCell(key: string, field: keyof TemplateCell, value: string) {
-    setTemplateCells(current => ({ ...current, [key]: { ...(current[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture', rowSpan: 1, colSpan: 1 }), [field]: value } }))
+  function changeTemplateCell(key: string, field: keyof TemplateCell, value: string | number) {
+    setTemplateCells(current => ({
+      ...current,
+      [key]: {
+        ...(current[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture', customTime: '', rowSpan: 1, colSpan: 1 }),
+        [field]: value,
+      },
+    }))
+  }
+
+  function clearTemplateCell(key: string) {
+    setTemplateCells(current => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
   }
 
   async function saveTemplate() {
@@ -456,9 +614,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     if (coveredPopulated.length) { setError('A merged cell covers another populated lesson. Move or clear the covered lesson before saving so no scheduled session is lost.'); return }
     const populated = Object.entries(templateCells).filter(([key, cell]) => { const [day, slot] = key.split('-').map(Number); return (cell.courseId || cell.teacherId) && !templateCellCovered(day, slot) })
     if (templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)) { setError('Every period must have an end time later than its start time.'); return }
-    if (populated.some(([, cell]) => !cell.courseId || !cell.teacherId)) { setError('Every filled timetable cell needs both a course and a teacher.'); return }
+    if (populated.some(([, cell]) => !cell.courseId || !cell.teacherId)) { setError('Every filled timetable cell needs both a course unit and a tutor assigned.'); return }
 
-    const entries: CreateTimetableEntry[] = populated.map(([key, cell]) => {
+    const payloadEntries: CreateTimetableEntry[] = populated.map(([key, cell]) => {
       const [day, slotIndexText] = key.split('-')
       const slot = templateSlots[Number(slotIndexText)]
       return {
@@ -479,11 +637,28 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     setTemplateSaving(true)
     setError('')
     try {
-      await saveTimetableTemplate(templateGroupId, entries, { slots: templateSlots, cells: templateCells, showWeekends, title: templateTitle, dayLabel: templateDayLabel, registrarName: templateRegistrarName, registrarRole: templateRegistrarRole, footerText: templateFooterText, breakAfter: templateBreakAfter, breakLabel: templateBreakLabel, dayOrder: templateDayOrder })
+      await saveTimetableTemplate(templateGroupId, payloadEntries, {
+        slots: templateSlots,
+        cells: templateCells,
+        showWeekends,
+        institutionName: templateInstitution,
+        title: templateTitle,
+        yearLabel: templateYearLabel,
+        semesterLabel: templateSemesterLabel,
+        dayLabel: templateDayLabel,
+        registrarName: templateRegistrarName,
+        registrarRole: templateRegistrarRole,
+        secondaryName: templateSecondaryName,
+        secondaryRole: templateSecondaryRole,
+        footerText: templateFooterText,
+        breakAfter: templateBreakAfter,
+        breakLabel: templateBreakLabel,
+        lunchAfter: templateLunchAfter,
+        lunchLabel: templateLunchLabel,
+        dayOrder: templateDayOrder,
+      })
       await load()
-      setShowTemplateEditor(false)
-      setTemplateCells({})
-      setTemplateLoadedGroupId('')
+      triggerToast('Timetable sheet synced & saved to system.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to save the timetable template. No changes were saved.')
     } finally {
@@ -513,10 +688,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       })
       return next
     })
-    setTemplateBreakAfter(current => current === null ? null : order.indexOf(current) >= 0 ? order.indexOf(current) : null)
+    setTemplateBreakAfter(current => (current === null ? null : order.indexOf(current) >= 0 ? order.indexOf(current) : null))
+    setTemplateLunchAfter(current => (current === null ? null : order.indexOf(current) >= 0 ? order.indexOf(current) : null))
   }
 
   function removeTemplateSlot(index: number) {
+    if (templateSlots.length <= 1) return
     reorderTemplateSlots(templateSlots.map((_, slotIndex) => slotIndex).filter(slotIndex => slotIndex !== index))
   }
 
@@ -528,16 +705,10 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     reorderTemplateSlots(order)
   }
 
-  function templatePeriodSpan(slotIndex: number, requestedSpan: number | string = 1) {
-    const availablePeriods = templateBreakAfter !== null && slotIndex <= templateBreakAfter
-      ? templateBreakAfter - slotIndex + 1
-      : templateSlots.length - slotIndex
-    return Math.max(1, Math.min(availablePeriods, Number(requestedSpan) || 1))
-  }
-
   function templateCellCovered(day: number, slotIndex: number) {
-    const visibleDays = templateDayOrder.filter(item => showWeekends || item <= 5)
+    const visibleDays = templateDayOrder.filter(item => showWeekends || (item >= 1 && item <= 5))
     const rowIndex = visibleDays.indexOf(day)
+    if (rowIndex === -1) return false
     for (let r = 0; r <= rowIndex; r++) {
       const sourceDay = visibleDays[r]
       const maxSlot = r === rowIndex ? slotIndex - 1 : templateSlots.length - 1
@@ -545,7 +716,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         const source = templateCells[sourceDay + '-' + c]
         if (!source) continue
         const rowSpan = Math.max(1, Math.min(visibleDays.length - r, Number(source.rowSpan) || 1))
-        const colSpan = templatePeriodSpan(c, source.colSpan)
+        const colSpan = Math.max(1, Math.min(templateSlots.length - c, Number(source.colSpan) || 1))
         if (r + rowSpan > rowIndex && c + colSpan > slotIndex) return true
       }
     }
@@ -563,21 +734,104 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
   }
 
+  const visibleSheetDays = templateDayOrder.filter(day => showWeekends || (day >= 1 && day <= 5))
+  const modalCellData = activeCellModal
+    ? templateCells[activeCellModal.day + '-' + activeCellModal.slotIndex] ?? {
+        courseId: '',
+        teacherId: '',
+        room: '',
+        sessionType: 'Lecture',
+        customTime: '',
+        rowSpan: 1,
+        colSpan: 1,
+      }
+    : null
+
   return <section className="timetable-screen">
+    <style>{`
+      .kshs-workspace { background: #eef1f5; border: 1px solid #cbd5e1; border-radius: 10px; overflow: hidden; margin-bottom: 1.5rem; }
+      .kshs-toolbar { background: #0f172a; color: #f8fafc; padding: 0.75rem 1.15rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+      .kshs-toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+      .kshs-badge { font-weight: 700; font-size: 0.9rem; padding-right: 0.65rem; border-right: 1px solid #334155; color: #fff; }
+      .kshs-select, .kshs-btn { background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 6px; padding: 0.42rem 0.75rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; }
+      .kshs-select:hover, .kshs-btn:hover { background: #334155; }
+      .kshs-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .kshs-btn-amber { background: #d97706; border-color: #f59e0b; color: #fff; }
+      .kshs-btn-amber:hover { background: #b45309; }
+      .kshs-btn-blue { background: #1d4ed8; border-color: #2563eb; color: #fff; }
+      .kshs-btn-blue:hover { background: #1e40af; }
+      .kshs-sheet-viewport { padding: 1.25rem; overflow-x: auto; }
+      .kshs-document-sheet { background: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 10px 28px rgba(15,23,42,0.08); padding: 1.75rem 2rem 2rem; font-family: "Times New Roman", Times, Georgia, serif; color: #000000; max-width: 1280px; margin: 0 auto; }
+      .kshs-doc-header { text-align: center; margin-bottom: 1rem; transition: background 0.15s; }
+      .kshs-is-editing .kshs-doc-header { border: 1.5px dashed #d97706; background: #fffdf7; padding: 0.6rem; border-radius: 6px; cursor: pointer; }
+      .kshs-doc-line { text-transform: uppercase; font-weight: 700; color: #000; line-height: 1.32; }
+      .kshs-doc-inst { font-size: 1.35rem; }
+      .kshs-doc-sub { font-size: 1.06rem; }
+      .kshs-doc-meta { font-size: 1rem; }
+      .kshs-table-wrap { width: 100%; overflow-x: auto; }
+      .kshs-grid { width: 100%; min-width: 920px; border-collapse: collapse; table-layout: fixed; border: 1.5px solid #000000; }
+      .kshs-grid th, .kshs-grid td { border: 1px solid #000000; text-align: center; vertical-align: middle; color: #000000; }
+      .kshs-col-day, .kshs-col-slot { font-size: 0.9rem; font-weight: 700; padding: 0.55rem; background: #f8fafc; }
+      .kshs-is-editing .kshs-col-day, .kshs-is-editing .kshs-col-slot { background: #fffbeb; cursor: pointer; }
+      .kshs-col-divider { width: 34px; padding: 0.4rem 0.15rem; background: #ffffff; font-weight: 700; font-size: 0.9rem; line-height: 1.15; }
+      .kshs-is-editing .kshs-col-divider { background: #fffbeb; cursor: pointer; }
+      .kshs-divider-stack { display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 260px; height: 100%; }
+      .kshs-day-cell { font-weight: 700; font-size: 0.94rem; padding: 0.55rem; background: #ffffff; width: 92px; }
+      .kshs-is-editing .kshs-day-cell { background: #fffdf7; }
+      .kshs-row-ctrls { display: flex; justify-content: center; gap: 3px; margin-top: 4px; font-family: sans-serif; }
+      .kshs-mini-btn { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 3px; font-size: 0.68rem; padding: 1px 5px; cursor: pointer; }
+      .kshs-mini-btn:hover { background: #e2e8f0; }
+      .kshs-lecture-cell { padding: 0.6rem; font-size: 0.88rem; background: #ffffff; transition: background 0.12s; }
+      .kshs-is-editing .kshs-lecture-cell:hover { background: #fefce8; cursor: pointer; }
+      .kshs-cell-course { font-weight: 700; margin-bottom: 2px; border-radius: 4px; padding: 1px 4px; text-transform: uppercase; }
+      .kshs-cell-tutor { font-style: italic; color: #1e293b; font-size: 0.84rem; border-radius: 4px; padding: 1px 4px; text-transform: uppercase; }
+      .kshs-is-editing .kshs-cell-course:hover, .kshs-is-editing .kshs-cell-tutor:hover { background: #fde68a; outline: 1px dashed #b45309; }
+      .kshs-inline-picker { font-family: sans-serif; font-size: 0.78rem; padding: 3px 5px; border: 1.5px solid #1d4ed8; border-radius: 4px; background: #fff; color: #0f172a; width: 100%; max-width: 195px; margin-top: 2px; }
+      .kshs-cell-sub { font-size: 0.76rem; color: #475569; margin-top: 2px; }
+      .kshs-empty-hint { color: #94a3b8; font-size: 0.75rem; font-style: italic; font-family: sans-serif; }
+      .kshs-doc-footer { margin-top: 1.6rem; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 2rem; min-height: 48px; }
+      .kshs-is-editing .kshs-doc-footer { border: 1.5px dashed #d97706; background: #fffdf7; padding: 0.65rem; border-radius: 6px; cursor: pointer; }
+      .kshs-reg-block { min-width: 240px; }
+      .kshs-sig-line { border-bottom: 1.5px dotted #000000; height: 26px; margin-bottom: 4px; }
+      .kshs-reg-text { font-size: 0.88rem; font-weight: 700; text-transform: uppercase; line-height: 1.3; }
+      .kshs-modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+      .kshs-modal-card { background: #ffffff; width: 100%; max-width: 520px; border-radius: 10px; box-shadow: 0 24px 48px rgba(15,23,42,0.22); overflow: hidden; font-family: sans-serif; color: #0f172a; }
+      .kshs-modal-head { background: #0f172a; color: #ffffff; padding: 0.9rem 1.2rem; display: flex; align-items: center; justify-content: space-between; }
+      .kshs-modal-head h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+      .kshs-modal-body { padding: 1.15rem; display: flex; flex-direction: column; gap: 0.85rem; max-height: 75vh; overflow-y: auto; }
+      .kshs-modal-foot { background: #f8fafc; padding: 0.8rem 1.2rem; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+      .kshs-field { display: flex; flex-direction: column; gap: 0.3rem; }
+      .kshs-field label { font-size: 0.78rem; font-weight: 700; color: #334155; }
+      .kshs-input { border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.48rem 0.7rem; font-size: 0.88rem; width: 100%; background: #fff; color: #0f172a; }
+      .kshs-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+      .kshs-mbtn { padding: 0.45rem 0.9rem; border-radius: 6px; font-weight: 600; font-size: 0.82rem; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #0f172a; }
+      .kshs-mbtn-save { background: #1d4ed8; color: #fff; border-color: #2563eb; }
+      .kshs-mbtn-danger { background: #fef2f2; color: #dc2626; border-color: #fca5a5; }
+      .kshs-toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #0f172a; color: #fff; padding: 0.7rem 1.15rem; border-radius: 8px; font-size: 0.84rem; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.22); z-index: 2000; }
+      @media print {
+        .kshs-toolbar, .kshs-row-ctrls, .kshs-empty-hint { display: none !important; }
+        .kshs-workspace { border: none; background: #fff; }
+        .kshs-sheet-viewport { padding: 0; overflow: visible !important; }
+        .kshs-document-sheet { border: none !important; box-shadow: none !important; padding: 0.4cm; }
+        .kshs-doc-header, .kshs-doc-footer { border: none !important; background: transparent !important; padding: 0 !important; }
+      }
+    `}</style>
+
     <header className="timetable-hero">
       <div>
         <p className="timetable-eyebrow">Academic planning</p>
         <h2>{readOnly ? 'Timetable' : 'Timetable management'}</h2>
-        <p>Load and edit the official class timetable, assign lecturers and venues, then save or print it.</p>
+        <p>Review the weekly teaching schedule, rooms and staff assignments in one place.</p>
       </div>
       <div className="timetable-actions">
         {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowGenerator(value => !value)} aria-expanded={showGenerator}><Sparkles /> {showGenerator ? 'Hide generator' : 'Generate timetable'}</button>}
-        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}><Pencil /> {showTemplateEditor ? 'Hide timetable designer' : 'Open timetable designer'}</button>}
+        {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowTemplateEditor(value => !value)} aria-expanded={showTemplateEditor}><Pencil /> {showTemplateEditor ? 'Close template editor' : 'Edit timetable template'}</button>}
         {!readOnly && <button className="timetable-action primary" type="button" onClick={() => setShowScheduleForm(value => !value)} aria-expanded={showScheduleForm}><Plus /> {showScheduleForm ? 'Close form' : 'Schedule session'}</button>}
       </div>
     </header>
 
     {error && <div className="timetable-notice" role="alert">{error}</div>}
+    {toastMsg && <div className="kshs-toast">{toastMsg}</div>}
 
     <div className="timetable-metrics" aria-label="Timetable summary">
       <div className="timetable-metric"><span>Scheduled sessions</span><strong>{activeEntries.length}</strong></div>
@@ -593,7 +847,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       {semesterTemplates.length === 0 ? <p className="timetable-day-empty">This active curriculum has no semester course mappings yet. Add course units and assign each to a year and semester in Curriculum &amp; Courses; its timetable templates will appear here automatically.</p> :
         <div className="timetable-semester-template-grid">
           {semesterTemplates.map(item => {
-            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === selectedCurriculum?.programmeId && group.semesterId === semesterId)
+            const courseIds = item.courseIds
+            const matchingGroups = options.teachingGroups.filter(group => group.programmeId === programmeId && group.semesterId === semesterId && courseIds.has(group.courseId))
             const sessionCount = activeEntries.filter(entry => matchingGroups.some(group => group.id === entry.teachingGroupId)).length
             const selected = yearOfStudy === String(item.year) && curriculumSemester === String(item.semester)
             return <article className={`timetable-semester-template-card${selected ? ' is-selected' : ''}`} key={item.year + '-' + item.semester}>
@@ -601,15 +856,22 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               <p>{item.courseLabels.length} course unit{item.courseLabels.length === 1 ? '' : 's'} · {matchingGroups.length} teaching group{matchingGroups.length === 1 ? '' : 's'}</p>
               <span className="timetable-semester-template-status">{sessionCount > 0 ? sessionCount + ' scheduled session' + (sessionCount === 1 ? '' : 's') : 'Blank template ready'}</span>
               <button className="timetable-action primary" type="button" onClick={() => {
-                setYearOfStudy(String(item.year))
-                setCurriculumSemester(String(item.semester))
-                setTeachingGroupId(matchingGroups[0]?.id ?? '')
-                setTemplateGroupId(matchingGroups[0]?.id ?? '')
-                setTemplateLoadedGroupId('')
-                setTemplateCells({})
+                const yr = String(item.year)
+                const sem = String(item.semester)
+                const grpId = matchingGroups[0]?.id ?? ''
+                setYearOfStudy(yr)
+                setCurriculumSemester(sem)
+                setTeachingGroupId(grpId)
+                setTemplateGroupId(grpId)
                 setShowTemplateEditor(true)
                 setShowGenerator(false)
                 setShowScheduleForm(false)
+                if (grpId) {
+                  void loadTemplate(grpId, yr, sem)
+                } else {
+                  setTemplateLoadedGroupId('')
+                  setTemplateCells({})
+                }
               }}>Open semester template</button>
             </article>
           })}
@@ -619,7 +881,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     {!readOnly && (showGenerator || showTemplateEditor || showScheduleForm) && <section className="timetable-form-panel timetable-curriculum-guide" aria-label="Programme curriculum selection">
       <h3>Programme curriculum guide</h3>
       <div className="timetable-form-grid">
-        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); setCurriculumId(options.curricula.find(item => programmeOptions.find(option => option.id === next)?.sourceIds.includes(item.programmeId))?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{programmeOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Programme<select value={programmeId} onChange={event => { const next = event.target.value; setProgrammeId(next); const nextSourceIds = programmeSourceIds.get(next) ?? [next]; setCurriculumId(options.curricula.find(item => nextSourceIds.includes(item.programmeId))?.id ?? ''); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select programme</option>{deduplicatedProgrammes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Curriculum<select value={selectedCurriculum?.id ?? ''} onChange={event => { setCurriculumId(event.target.value); setYearOfStudy(''); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">Select curriculum</option>{programmeCurricula.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         <label>Year of study<select value={yearOfStudy} onChange={event => { setYearOfStudy(event.target.value); setCurriculumSemester(''); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All years</option>{studyYears.map(item => <option key={item} value={item}>Year {item}</option>)}</select></label>
         <label>Curriculum semester<select value={curriculumSemester} onChange={event => { setCurriculumSemester(event.target.value); setTeachingGroupId(''); setTemplateGroupId(''); setCourseId(''); setTemplateLoadedGroupId(''); }}><option value="">All semesters</option>{curriculumSemesters.map(item => <option key={item} value={item}>Semester {item}</option>)}</select></label>
@@ -630,10 +892,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       {eligibleMappings.length === 0 && <p className="timetable-day-empty">No course units are mapped to this programme, year and semester. Add them under Curriculum &amp; Courses; unrelated courses will not be shown.</p>}
       {eligibleMappings.length > 0 && availableGroups.length === 0 && <p className="timetable-day-empty">The curriculum has course units, but no active course offerings and teaching groups match this academic period. Set up the offerings and groups before scheduling.</p>}
     </section>}
+
     {!readOnly && showGenerator && <form className="timetable-form-panel" onSubmit={handleGenerate}>
       <h3>Generate a timetable</h3>
       <div className="timetable-form-grid">
-        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>{availableGroups.length === 0 && <small className="timetable-class-empty-hint">No active teaching groups are linked to this programme and academic period. Check Course Offerings and Teaching Groups.</small>}</label>
+        <label>Teaching group<select value={teachingGroupId} onChange={event => setTeachingGroupId(event.target.value)}><option value="">Generate for multiple classes</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
         {!teachingGroupId && <label>Number of timetables<input type="number" min="1" max={Math.max(1, availableGroups.length)} value={timetableCount} onChange={event => setTimetableCount(event.target.value)} required /></label>}
       </div>
       {!teachingGroupId && <p className="timetable-generator-help">Generates one separate timetable for each of the first N teaching groups. Available groups: {availableGroups.length}.</p>}
@@ -643,82 +906,673 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       </div>
     </form>}
 
-    {!readOnly && showTemplateEditor && <section className="timetable-template-editor" aria-label="Editable timetable template">
-      <div className="timetable-template-document-heading">
-        <div className="timetable-official-identity">
-          {institutionLoaded && institution.isActive && institution.logoPath && <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} />}
-          <div className="timetable-official-identity-copy">
-            <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
-            {institutionLoaded && institution.isActive && institution.motto && <p className="timetable-institution-motto">{institution.motto}</p>}
-            {institutionLoaded && institution.isActive && <p className="timetable-institution-contact">{[institution.address, institution.phone, institution.email, institution.website].filter(value => Boolean(value?.trim())).join(' · ')}</p>}
+    {/* ========================================================================= */}
+    {/* REPLACED TIMETABLE TEMPLATE EDITOR WITH OFFICIAL KSHS HORIZONTAL SHEET    */}
+    {/* ========================================================================= */}
+    {!readOnly && showTemplateEditor && (
+      <section className="kshs-workspace" aria-label="Official Teaching Timetable Sheet Editor">
+        {/* Top Dark Control Bar */}
+        <div className="kshs-toolbar">
+          <div className="kshs-toolbar-group">
+            <span className="kshs-badge">Official Sheet Editor</span>
+            <select
+              className="kshs-select"
+              aria-label="Class or teaching group"
+              value={templateGroupId}
+              onChange={e => {
+                const nextId = e.target.value
+                setTemplateGroupId(nextId)
+                setTemplateLoadedGroupId('')
+                setTemplateCells({})
+                if (nextId) void loadTemplate(nextId)
+              }}
+            >
+              <option value="">-- Select Class / Teaching Group --</option>
+              {allSemesterGroups.map(item => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </select>
+            <button type="button" className="kshs-btn" onClick={() => void loadTemplate()} disabled={!templateGroupId}>
+              Load Class
+            </button>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', fontWeight: 600, color: '#cbd5e1', cursor: 'pointer' }}>
+              <input type="checkbox" checked={showWeekends} onChange={e => setShowWeekends(e.target.checked)} />
+              <span>Sat &amp; Sun</span>
+            </label>
+          </div>
+
+          <div className="kshs-toolbar-group">
+            <button
+              type="button"
+              className={`kshs-btn ${sheetEditingMode ? 'kshs-btn-amber' : ''}`}
+              onClick={() => setSheetEditingMode(v => !v)}
+            >
+              <Pencil size={14} /> {sheetEditingMode ? 'Editing On' : 'Preview Mode'}
+            </button>
+            <button type="button" className="kshs-btn" onClick={() => setShowSystemData(v => !v)}>
+              System Data ({options.courses.length} Courses · {options.teachers.length} Tutors)
+            </button>
+            <button type="button" className="kshs-btn" onClick={() => setShowColumnsModal(true)}>
+              <Columns size={14} /> Columns &amp; Breaks
+            </button>
+            <button
+              type="button"
+              className="kshs-btn kshs-btn-blue"
+              onClick={() => void saveTemplate()}
+              disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving}
+            >
+              <Save size={14} /> {templateSaving ? 'Syncing…' : 'Sync & Save to System'}
+            </button>
+            <button type="button" className="kshs-btn" onClick={printTimetableTemplate} disabled={!institutionLoaded || !institution.isActive}>
+              <Printer size={14} /> Print / PDF
+            </button>
           </div>
         </div>
-        <div className="timetable-official-rule" />
-        <input className="timetable-document-title-input" aria-label="Timetable document title" value={templateTitle} onChange={event => setTemplateTitle(event.target.value)} />
-        <strong className="timetable-document-programme">{selectedProgramme?.label ?? 'Programme not selected'}{selectedCurriculum ? ' · ' + selectedCurriculum.label : ''}</strong>
-        <span className="timetable-document-period">ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · YEAR {yearOfStudy || '—'} · CURRICULUM SEMESTER {curriculumSemester || '—'}</span>
-        <span className="timetable-document-period">VALID FOR {semesterDateRange(selectedSemester)}{templateGroupId ? ' · ' + (groupLabels.get(templateGroupId) ?? 'Selected class') : ''}</span>
-      </div>
-      <div className="timetable-document-meta-editor">
-        <label>Day column heading<input value={templateDayLabel} onChange={event => setTemplateDayLabel(event.target.value)} maxLength={20}/></label>
-        <label>Registrar name<input value={templateRegistrarName} onChange={event => setTemplateRegistrarName(event.target.value)} placeholder="Name (optional)" maxLength={120}/></label>
-        <label>Registrar title<input value={templateRegistrarRole} onChange={event => setTemplateRegistrarRole(event.target.value)} maxLength={80}/></label>
-        <label>Footer text<input value={templateFooterText} onChange={event => setTemplateFooterText(event.target.value)} maxLength={160}/></label>
-      </div>
-      <div className="timetable-template-editor-heading">
-        <div><p className="timetable-eyebrow">Fillable timetable template</p><h3>Edit the timetable grid</h3><p>All teaching days are shown together. Click any period to assign or update its course, lecturer and venue.</p></div>
-        <div className="timetable-template-controls">
-          <label>Class / teaching group<select value={templateGroupId} onChange={event => { setTemplateGroupId(event.target.value); setTemplateLoadedGroupId(''); setTemplateCells({}); setTemplateSlots(defaultTemplateSlots) }}><option value="">Select class</option>{availableGroups.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-          <button className="timetable-action" type="button" onClick={loadTemplate} disabled={!templateGroupId}><Pencil size={15}/> Load class</button>
-        </div>
-      </div>
-      {templateGroupId && templateLoadedGroupId === templateGroupId && <div className="timetable-grid-scroll">
-        <table className="timetable-editable-grid">
-          <thead><tr><th>{templateDayLabel || 'DAY'}</th>{templateSlots.map((slot, index) => <React.Fragment key={index}><th className={templateBreakAfter === index ? 'timetable-break-after' : ''}><span>PERIOD {index + 1}</span><label>From<input aria-label={`Period ${index + 1} start time`} type="time" value={slot.startTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, startTime: event.target.value } : item))}/></label><label>To<input aria-label={`Period ${index + 1} end time`} type="time" value={slot.endTime} onChange={event => setTemplateSlots(current => current.map((item, slotIndex) => slotIndex === index ? { ...item, endTime: event.target.value } : item))}/></label><div className="timetable-period-tools"><button type="button" onClick={() => moveTemplateSlot(index, -1)} disabled={index === 0} aria-label={`Move period ${index + 1} left`}>←</button><button type="button" onClick={() => moveTemplateSlot(index, 1)} disabled={index === templateSlots.length - 1} aria-label={`Move period ${index + 1} right`}>→</button><button type="button" onClick={() => removeTemplateSlot(index)} disabled={templateSlots.length <= 1} aria-label={`Remove period ${index + 1}`}>−</button></div></th>{templateBreakAfter === index && <th className="timetable-template-divider-header" aria-label={templateBreakLabel || 'Break'}>{(templateBreakLabel || 'BREAK').split('').map((letter, letterIndex) => <span key={letterIndex}>{letter}</span>)}</th>}</React.Fragment>)}</tr></thead>
-          <tbody>{templateDayOrder.filter(day => showWeekends || day <= 5).map((day, rowIndex) => <tr key={day}><th><div className="timetable-day-tools"><button type="button" onClick={() => moveTemplateDay(day, -1)} disabled={rowIndex === 0} aria-label={`Move ${days[day]} up`}>↑</button><button type="button" onClick={() => moveTemplateDay(day, 1)} disabled={rowIndex === templateDayOrder.filter(item => showWeekends || item <= 5).length - 1} aria-label={`Move ${days[day]} down`}>↓</button></div>{days[day].toUpperCase()}</th>{templateSlots.map((slot, slotIndex) => {
-            const key = day + '-' + slotIndex
-            const cell = templateCells[key] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture', rowSpan: 1, colSpan: 1 }
-            const rowSpan = Math.max(1, Math.min(templateDayOrder.filter(item => showWeekends || item <= 5).length - rowIndex, Number(cell.rowSpan) || 1))
-            const colSpan = templatePeriodSpan(slotIndex, cell.colSpan)
-            return <React.Fragment key={slotIndex}>{!templateCellCovered(day, slotIndex) && <td rowSpan={rowSpan} colSpan={colSpan} className={templateBreakAfter === slotIndex ? 'timetable-break-after' : ''}>
-              <button type="button" className="timetable-template-cell-trigger" onClick={() => setActiveTemplateCellKey(key)} aria-label={'Edit ' + days[day] + ' ' + timeLabel(slot.startTime) + ' period'}>
-                {cell.courseId || cell.teacherId || cell.room ? <>{cell.courseId && <strong>{courseLabels.get(cell.courseId) ?? 'Course'}</strong>}{cell.teacherId && <span>{teacherLabels.get(cell.teacherId) ?? 'Lecturer'}</span>}{cell.room && <small>{cell.room}</small>}<small>{cell.sessionType}</small></> : <span className="timetable-template-cell-empty">+ Add session</span>}
-                {cell.id && <small className="timetable-template-existing">Saved session</small>}
-                <span className="timetable-template-cell-edit"><Pencil size={12}/> Edit period</span>
-              </button>
-            </td>}{templateBreakAfter === slotIndex && rowIndex === 0 && <td rowSpan={templateDayOrder.filter(item => showWeekends || item <= 5).length} className="timetable-template-divider-cell" aria-label={templateBreakLabel || 'Break'}><div>{(templateBreakLabel || 'BREAK').split('').map((letter, letterIndex) => <span key={letterIndex}>{letter}</span>)}</div></td>}</React.Fragment>
-          })}</tr>)}</tbody>
-        </table>
-      </div>}
-      {templateGroupId && templateLoadedGroupId !== templateGroupId && <p className="timetable-generator-help">Click “Load class” to fill the template with that class’s saved sessions before editing.</p>}
-      {activeTemplateCellKey && (() => {
-        const [dayValue, slotValue] = activeTemplateCellKey.split('-').map(Number)
-        const slot = templateSlots[slotValue]
-        const cell = templateCells[activeTemplateCellKey] ?? { courseId: '', teacherId: '', room: '', sessionType: 'Lecture', rowSpan: 1, colSpan: 1 }
-        if (!slot) return null
-        return <div className="timetable-cell-modal-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setActiveTemplateCellKey(null) }}>
-          <section className="timetable-cell-modal" role="dialog" aria-modal="true" aria-labelledby="timetable-cell-modal-title">
-            <header><div><h3 id="timetable-cell-modal-title">Edit timetable period</h3><p>{days[dayValue]} · {timeLabel(slot.startTime)}–{timeLabel(slot.endTime)}</p></div><button type="button" aria-label="Close period editor" onClick={() => setActiveTemplateCellKey(null)}>×</button></header>
-            <div className="timetable-cell-modal-fields">
-              <label>Course unit<select aria-label="Course unit" value={cell.courseId} onChange={event => changeTemplateCell(activeTemplateCellKey, 'courseId', event.target.value)}><option value="">— Select course —</option>{availableCourses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-              <label>Lecturer / teacher<select aria-label="Lecturer / teacher" value={cell.teacherId} onChange={event => changeTemplateCell(activeTemplateCellKey, 'teacherId', event.target.value)}><option value="">— Select lecturer —</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-              <label>Room / venue<input aria-label="Room / venue" value={cell.room} onChange={event => changeTemplateCell(activeTemplateCellKey, 'room', event.target.value)} placeholder="Enter room or laboratory"/></label>
-              <label>Session type<select aria-label="Session type" value={cell.sessionType} onChange={event => changeTemplateCell(activeTemplateCellKey, 'sessionType', event.target.value)}><option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option></select></label>
-              <label>Merge down (days)<select aria-label="Merge down (days)" value={Number(cell.rowSpan) || 1} onChange={event => changeTemplateCell(activeTemplateCellKey, 'rowSpan', event.target.value)}>{[1,2,3,4,5,6].slice(0, templateDayOrder.filter(item => showWeekends || item <= 5).length - templateDayOrder.filter(item => showWeekends || item <= 5).indexOf(dayValue)).map(value => <option key={value} value={value}>{value} day(s)</option>)}</select></label>
-              <label>Merge across periods<select aria-label="Merge across periods" value={Number(cell.colSpan) || 1} onChange={event => changeTemplateCell(activeTemplateCellKey, 'colSpan', event.target.value)}>{[1,2,3,4,5,6,7].slice(0, templateSlots.length - slotValue).map(value => <option key={value} value={value}>{value} period(s)</option>)}</select></label>
+
+        {/* Printable Official Document Viewport */}
+        <div className={`kshs-sheet-viewport ${sheetEditingMode ? 'kshs-is-editing' : ''}`}>
+          {!templateGroupId || templateLoadedGroupId !== templateGroupId ? (
+            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#475569' }}>
+              <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.4rem' }}>Select a Class / Teaching Group above to load its Official Timetable Sheet</p>
+              <p style={{ fontSize: '0.86rem' }}>Course units, tutors, academic periods and curricula are fetched directly from your SMIS database.</p>
             </div>
-            <footer><button type="button" className="timetable-cell-clear" onClick={() => { changeTemplateCell(activeTemplateCellKey, 'courseId', ''); changeTemplateCell(activeTemplateCellKey, 'teacherId', ''); changeTemplateCell(activeTemplateCellKey, 'room', ''); changeTemplateCell(activeTemplateCellKey, 'sessionType', 'Lecture'); changeTemplateCell(activeTemplateCellKey, 'rowSpan', '1'); changeTemplateCell(activeTemplateCellKey, 'colSpan', '1') }}>Clear period</button><button type="button" className="timetable-cell-done" onClick={() => setActiveTemplateCellKey(null)}>Done</button></footer>
-          </section>
+          ) : (
+            <article className="kshs-document-sheet">
+              {/* Editable Official Header */}
+              <div
+                className="kshs-doc-header"
+                onClick={() => sheetEditingMode && setShowHeaderModal(true)}
+                title={sheetEditingMode ? 'Click to edit School Name, Timetable Title, Academic Year & Semester' : undefined}
+              >
+                <div className="kshs-doc-line kshs-doc-inst">{templateInstitution}</div>
+                <div className="kshs-doc-line kshs-doc-sub">{templateTitle}</div>
+                <div className="kshs-doc-line kshs-doc-meta">
+                  {templateYearLabel || `ACADEMIC YEAR ${academicYearLabel.toUpperCase()}`}
+                </div>
+                <div className="kshs-doc-line kshs-doc-meta">
+                  {templateSemesterLabel || (yearOfStudy && curriculumSemester ? `YEAR ${yearOfStudy} SEMESTER ${curriculumSemester}` : selectedSemester?.label ?? '')}
+                </div>
+              </div>
+
+              {/* Horizontal Single-Line-Per-Day Matrix Grid */}
+              <div className="kshs-table-wrap">
+                <table className="kshs-grid">
+                  <thead>
+                    <tr>
+                      <th
+                        className="kshs-col-day"
+                        onClick={() => sheetEditingMode && setShowHeaderModal(true)}
+                        title={sheetEditingMode ? 'Click to edit corner header' : undefined}
+                      >
+                        {templateDayLabel || 'DAY'}
+                      </th>
+                      {sheetColumns.map(col =>
+                        col.type === 'divider' ? (
+                          <th
+                            key={col.id}
+                            className="kshs-col-divider"
+                            aria-label={col.verticalText || 'BREAK'}
+                            onClick={() => sheetEditingMode && setShowColumnsModal(true)}
+                            title={sheetEditingMode ? 'Click to configure Break / Lunch dividers' : undefined}
+                          >
+                            {(col.verticalText || 'B')[0]}
+                          </th>
+                        ) : (
+                          <th
+                            key={col.id}
+                            className="kshs-col-slot"
+                            onClick={() => sheetEditingMode && setShowColumnsModal(true)}
+                            title={sheetEditingMode ? 'Click to edit lecture time slots' : undefined}
+                          >
+                            {formatSlotRange12(col.startTime, col.endTime)}
+                          </th>
+                        )
+                      )}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {visibleSheetDays.map((day, rIdx) => (
+                      <tr key={day}>
+                        <td className="kshs-day-cell">
+                          <div>{shortDays[day] || days[day].toUpperCase()}</div>
+                          {sheetEditingMode && (
+                            <div className="kshs-row-ctrls">
+                              <button
+                                type="button"
+                                className="kshs-mini-btn"
+                                onClick={() => moveTemplateDay(day, -1)}
+                                disabled={rIdx === 0}
+                                title="Move Day Up"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                className="kshs-mini-btn"
+                                onClick={() => moveTemplateDay(day, 1)}
+                                disabled={rIdx === visibleSheetDays.length - 1}
+                                title="Move Day Down"
+                              >
+                                ↓
+                              </button>
+                            </div>
+                          )}
+                        </td>
+
+                        {sheetColumns.map(col => {
+                          if (col.type === 'divider') {
+                            if (rIdx === 0) {
+                              const letters = (col.verticalText || 'BREAK').slice(1).split('')
+                              return (
+                                <td
+                                  key={col.id}
+                                  className="kshs-col-divider"
+                                  rowSpan={visibleSheetDays.length}
+                                  onClick={() => sheetEditingMode && setShowColumnsModal(true)}
+                                >
+                                  <div className="kshs-divider-stack">
+                                    {letters.map((ch, idx) => (
+                                      <span key={idx}>{ch}</span>
+                                    ))}
+                                  </div>
+                                </td>
+                              )
+                            }
+                            return null
+                          }
+
+                          const slotIndex = col.slotIndex
+                          if (templateCellCovered(day, slotIndex)) return null
+
+                          const key = day + '-' + slotIndex
+                          const cell = templateCells[key]
+                          const rSpan = Math.max(1, Math.min(visibleSheetDays.length - rIdx, Number(cell?.rowSpan) || 1))
+                          const cSpan = Math.max(1, Math.min(templateSlots.length - slotIndex, Number(cell?.colSpan) || 1))
+                          const courseName = cell?.courseId ? (courseLabels.get(cell.courseId) ?? '') : ''
+                          const tutorName = cell?.teacherId ? (teacherLabels.get(cell.teacherId) ?? '') : ''
+                          const hasContent = Boolean(courseName || tutorName || cell?.room || cell?.customTime)
+                          const metaLine = [cell?.customTime, cell?.room].filter(Boolean).join(' • ')
+                          const isInlineTutorOpen = inlineTutorTarget === key
+
+                          return (
+                            <td
+                              key={col.id}
+                              className="kshs-lecture-cell"
+                              rowSpan={rSpan > 1 ? rSpan : undefined}
+                              colSpan={cSpan > 1 ? cSpan : undefined}
+                              onClick={() => {
+                                if (sheetEditingMode) {
+                                  setActiveCellModal({ day, slotIndex })
+                                }
+                              }}
+                            >
+                              {hasContent ? (
+                                <>
+                                  <div
+                                    className="kshs-cell-course"
+                                    title={sheetEditingMode ? 'Click to edit Course Unit' : undefined}
+                                  >
+                                    {courseName}
+                                  </div>
+
+                                  {isInlineTutorOpen && sheetEditingMode ? (
+                                    <select
+                                      className="kshs-inline-picker"
+                                      autoFocus
+                                      value={cell?.teacherId ?? ''}
+                                      onClick={e => e.stopPropagation()}
+                                      onChange={e => {
+                                        changeTemplateCell(key, 'teacherId', e.target.value)
+                                        setInlineTutorTarget(null)
+                                        triggerToast('Tutor updated independently.')
+                                      }}
+                                      onBlur={() => setInlineTutorTarget(null)}
+                                    >
+                                      <option value="">-- No Tutor --</option>
+                                      {options.teachers.map(t => (
+                                        <option key={t.id} value={t.id}>
+                                          {t.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <div
+                                      className="kshs-cell-tutor"
+                                      onClick={e => {
+                                        if (sheetEditingMode) {
+                                          e.stopPropagation()
+                                          setInlineTutorTarget(key)
+                                        }
+                                      }}
+                                      title={sheetEditingMode ? 'Click to change Tutor alone' : undefined}
+                                    >
+                                      {tutorName ? `(${tutorName})` : courseName ? '(+ Assign Tutor)' : ''}
+                                    </div>
+                                  )}
+
+                                  {metaLine && <div className="kshs-cell-sub">{metaLine}</div>}
+                                </>
+                              ) : (
+                                sheetEditingMode && <span className="kshs-empty-hint">+ Edit</span>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Blank-Until-Registered Academic Registrar Footer */}
+              <footer
+                className="kshs-doc-footer"
+                onClick={() => sheetEditingMode && setShowRegistrarModal(true)}
+                title={sheetEditingMode ? 'Click to configure Academic Registrar signature block' : undefined}
+              >
+                {!templateRegistrarName.trim() && !templateSecondaryName.trim() ? (
+                  sheetEditingMode && (
+                    <span className="kshs-empty-hint">
+                      No Academic Registrar registered in system (click here to register)
+                    </span>
+                  )
+                ) : (
+                  <>
+                    {templateRegistrarName.trim() && (
+                      <div className="kshs-reg-block">
+                        <div className="kshs-sig-line" />
+                        <div className="kshs-reg-text">{templateRegistrarRole || 'ACADEMIC REGISTRAR'}</div>
+                        <div className="kshs-reg-text">{templateRegistrarName}</div>
+                      </div>
+                    )}
+                    {templateSecondaryName.trim() && (
+                      <div className="kshs-reg-block">
+                        <div className="kshs-sig-line" />
+                        <div className="kshs-reg-text">{templateSecondaryRole}</div>
+                        <div className="kshs-reg-text">{templateSecondaryName}</div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </footer>
+            </article>
+          )}
         </div>
-      })()}
-      <div className="timetable-template-design-tools">
-        <label>Divider after period<select value={templateBreakAfter ?? ''} onChange={event => setTemplateBreakAfter(event.target.value === '' ? null : Number(event.target.value))}><option value="">No divider</option>{templateSlots.map((_, index) => <option key={index} value={index}>After period {index + 1}</option>)}</select></label>
-        <label>Break label<input value={templateBreakLabel} onChange={event => setTemplateBreakLabel(event.target.value)} maxLength={30}/></label>
-        <button type="button" className="timetable-action" onClick={() => setTemplateSlots(current => [...current, { startTime: '16:30', endTime: '17:30' }])}>+ Add period</button>
-      </div>
-      <div className="timetable-template-document-footer"><span>{templateFooterText}</span><div><div className="timetable-signature-line"></div><strong>{templateRegistrarName || '____________________________'}</strong><small>{templateRegistrarRole || 'ACADEMIC REGISTRAR'}</small></div></div>
-      <div className="timetable-form-footer"><button className="timetable-action primary" type="button" onClick={() => void saveTemplate()} disabled={!templateGroupId || templateLoadedGroupId !== templateGroupId || templateSaving || !availableCourses.length || !options.teachers.length}><Save size={15}/>{templateSaving ? 'Saving template…' : 'Save timetable template'}</button><button className="timetable-action" type="button" onClick={printTimetableTemplate} disabled={!institutionLoaded || !institution.isActive}>Print template</button></div>
-    </section>}
+
+        {/* Modal 1: Cell Editor (Separate Course Unit & Tutor Pickers from System) */}
+        {activeCellModal && modalCellData && (
+          <div className="kshs-modal-backdrop" onClick={() => setActiveCellModal(null)}>
+            <div className="kshs-modal-card" onClick={e => e.stopPropagation()}>
+              <div className="kshs-modal-head">
+                <h4>
+                  Edit Lecture — {days[activeCellModal.day]} ({formatSlotRange12(
+                    templateSlots[activeCellModal.slotIndex]?.startTime ?? '',
+                    templateSlots[activeCellModal.slotIndex]?.endTime ?? ''
+                  )})
+                </h4>
+                <button type="button" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setActiveCellModal(null)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="kshs-modal-body">
+                {(() => {
+                  const cellKey = activeCellModal.day + '-' + activeCellModal.slotIndex
+                  const groupCourseObj = options.teachingGroups.find(g => g.id === templateGroupId)
+                  const courseChoices = groupCourseObj
+                    ? options.courses.filter(c => c.id === groupCourseObj.courseId || eligibleCourseIds.has(c.id))
+                    : availableCourses.length > 0
+                      ? availableCourses
+                      : options.courses
+
+                  return (
+                    <>
+                      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.75rem' }} className="kshs-field">
+                        <label>1. Course Unit (From System Registry)</label>
+                        <select
+                          className="kshs-input"
+                          value={modalCellData.courseId}
+                          onChange={e => changeTemplateCell(cellKey, 'courseId', e.target.value)}
+                        >
+                          <option value="">-- Select Course Unit --</option>
+                          {courseChoices.map(c => (
+                            <option key={c.id} value={c.id}>{c.label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.75rem' }} className="kshs-field">
+                        <label>2. Tutor / Lecturer (Editable Independently)</label>
+                        <select
+                          className="kshs-input"
+                          value={modalCellData.teacherId}
+                          onChange={e => changeTemplateCell(cellKey, 'teacherId', e.target.value)}
+                        >
+                          <option value="">-- Select Tutor / Lecturer --</option>
+                          {options.teachers.map(t => (
+                            <option key={t.id} value={t.id}>{t.label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="kshs-grid-2">
+                        <div className="kshs-field">
+                          <label>Room / Venue (Optional)</label>
+                          <input
+                            className="kshs-input"
+                            value={modalCellData.room}
+                            onChange={e => changeTemplateCell(cellKey, 'room', e.target.value)}
+                            placeholder="e.g. Hall A / Lab 2"
+                          />
+                        </div>
+                        <div className="kshs-field">
+                          <label>Session Type</label>
+                          <select
+                            className="kshs-input"
+                            value={modalCellData.sessionType || 'Lecture'}
+                            onChange={e => changeTemplateCell(cellKey, 'sessionType', e.target.value)}
+                          >
+                            <option>Lecture</option>
+                            <option>Practical</option>
+                            <option>Tutorial</option>
+                            <option>Seminar</option>
+                            <option>Examination</option>
+                            <option>Other</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="kshs-grid-2">
+                        <div className="kshs-field">
+                          <label>Merge Down (Rows)</label>
+                          <select
+                            className="kshs-input"
+                            value={Number(modalCellData.rowSpan) || 1}
+                            onChange={e => changeTemplateCell(cellKey, 'rowSpan', Number(e.target.value))}
+                          >
+                            {[1, 2, 3, 4, 5, 6].map(n => (
+                              <option key={n} value={n}>{n} {n === 1 ? 'Row (Normal)' : 'Rows'}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="kshs-field">
+                          <label>Merge Across (Slots)</label>
+                          <select
+                            className="kshs-input"
+                            value={Number(modalCellData.colSpan) || 1}
+                            onChange={e => changeTemplateCell(cellKey, 'colSpan', Number(e.target.value))}
+                          >
+                            {templateSlots.map((_, idx) => (
+                              <option key={idx + 1} value={idx + 1}>{idx + 1} {idx === 0 ? 'Slot (Normal)' : 'Slots'}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
+              </div>
+              <div className="kshs-modal-foot">
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <button
+                    type="button"
+                    className="kshs-mbtn kshs-mbtn-danger"
+                    onClick={() => {
+                      clearTemplateCell(activeCellModal.day + '-' + activeCellModal.slotIndex)
+                      setActiveCellModal(null)
+                      triggerToast('Cell cleared.')
+                    }}
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    className="kshs-mbtn"
+                    onClick={() => {
+                      setClipboardCell({ ...modalCellData })
+                      triggerToast('Cell copied.')
+                    }}
+                  >
+                    Copy
+                  </button>
+                  <button
+                    type="button"
+                    className="kshs-mbtn"
+                    onClick={() => {
+                      if (!clipboardCell) {
+                        triggerToast('Nothing copied yet.')
+                        return
+                      }
+                      const key = activeCellModal.day + '-' + activeCellModal.slotIndex
+                      setTemplateCells(prev => ({
+                        ...prev,
+                        [key]: { ...clipboardCell, rowSpan: 1, colSpan: 1 },
+                      }))
+                      triggerToast('Cell pasted.')
+                    }}
+                  >
+                    Paste
+                  </button>
+                </div>
+                <button type="button" className="kshs-mbtn kshs-mbtn-save" onClick={() => setActiveCellModal(null)}>
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal 2: School & Course Header Editor */}
+        {showHeaderModal && (
+          <div className="kshs-modal-backdrop" onClick={() => setShowHeaderModal(false)}>
+            <div className="kshs-modal-card" onClick={e => e.stopPropagation()}>
+              <div className="kshs-modal-head">
+                <h4>Edit School &amp; Course Header</h4>
+                <button type="button" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setShowHeaderModal(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="kshs-modal-body">
+                <div className="kshs-field">
+                  <label>School / Institution Name</label>
+                  <input className="kshs-input" value={templateInstitution} onChange={e => setTemplateInstitution(e.target.value)} />
+                </div>
+                <div className="kshs-field">
+                  <label>Timetable Title &amp; Course</label>
+                  <input className="kshs-input" value={templateTitle} onChange={e => setTemplateTitle(e.target.value)} />
+                </div>
+                <div className="kshs-grid-2">
+                  <div className="kshs-field">
+                    <label>Academic Year Line</label>
+                    <input className="kshs-input" value={templateYearLabel} onChange={e => setTemplateYearLabel(e.target.value)} />
+                  </div>
+                  <div className="kshs-field">
+                    <label>Semester / Class Line</label>
+                    <input className="kshs-input" value={templateSemesterLabel} onChange={e => setTemplateSemesterLabel(e.target.value)} />
+                  </div>
+                </div>
+                <div className="kshs-field">
+                  <label>Top-Left Corner Label</label>
+                  <input className="kshs-input" value={templateDayLabel} onChange={e => setTemplateDayLabel(e.target.value)} />
+                </div>
+              </div>
+              <div className="kshs-modal-foot">
+                <div style={{ marginLeft: 'auto' }}>
+                  <button type="button" className="kshs-mbtn kshs-mbtn-save" onClick={() => setShowHeaderModal(false)}>
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal 3: Columns & Vertical Break/Lunch Dividers */}
+        {showColumnsModal && (
+          <div className="kshs-modal-backdrop" onClick={() => setShowColumnsModal(false)}>
+            <div className="kshs-modal-card" onClick={e => e.stopPropagation()}>
+              <div className="kshs-modal-head">
+                <h4>Manage Time Columns &amp; Vertical Dividers</h4>
+                <button type="button" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setShowColumnsModal(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="kshs-modal-body">
+                {templateSlots.map((slot, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, width: 58, color: '#475569' }}>SLOT {idx + 1}</span>
+                    <input
+                      type="time"
+                      className="kshs-input"
+                      value={slot.startTime}
+                      onChange={e => setTemplateSlots(prev => prev.map((s, i) => (i === idx ? { ...s, startTime: e.target.value } : s)))}
+                    />
+                    <span>–</span>
+                    <input
+                      type="time"
+                      className="kshs-input"
+                      value={slot.endTime}
+                      onChange={e => setTemplateSlots(prev => prev.map((s, i) => (i === idx ? { ...s, endTime: e.target.value } : s)))}
+                    />
+                    <button type="button" className="kshs-mbtn" style={{ padding: '0.35rem 0.5rem' }} onClick={() => moveTemplateSlot(idx, -1)} disabled={idx === 0}>←</button>
+                    <button type="button" className="kshs-mbtn" style={{ padding: '0.35rem 0.5rem' }} onClick={() => moveTemplateSlot(idx, 1)} disabled={idx === templateSlots.length - 1}>→</button>
+                    <button type="button" className="kshs-mbtn kshs-mbtn-danger" style={{ padding: '0.35rem 0.5rem' }} onClick={() => removeTemplateSlot(idx)} disabled={templateSlots.length <= 1}>×</button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="kshs-mbtn"
+                  onClick={() => setTemplateSlots(prev => [...prev, { startTime: '16:30', endTime: '18:00' }])}
+                >
+                  + Add Lecture Time Slot
+                </button>
+
+                <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
+
+                <div className="kshs-grid-2">
+                  <div className="kshs-field">
+                    <label htmlFor="vertical-break-column-after">Vertical Break Column After</label>
+                    <select
+                      id="vertical-break-column-after"
+                      className="kshs-input"
+                      value={templateBreakAfter ?? ''}
+                      onChange={e => setTemplateBreakAfter(e.target.value === '' ? null : Number(e.target.value))}
+                    >
+                      <option value="">None</option>
+                      {templateSlots.map((_, idx) => (
+                        <option key={idx} value={idx}>After Slot {idx + 1}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="kshs-field">
+                    <label htmlFor="break-label">Break Label</label>
+                    <input id="break-label" className="kshs-input" value={templateBreakLabel} onChange={e => setTemplateBreakLabel(e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="kshs-grid-2">
+                  <div className="kshs-field">
+                    <label htmlFor="vertical-lunch-column-after">Vertical Lunch Column After</label>
+                    <select
+                      id="vertical-lunch-column-after"
+                      className="kshs-input"
+                      value={templateLunchAfter ?? ''}
+                      onChange={e => setTemplateLunchAfter(e.target.value === '' ? null : Number(e.target.value))}
+                    >
+                      <option value="">None</option>
+                      {templateSlots.map((_, idx) => (
+                        <option key={idx} value={idx}>After Slot {idx + 1}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="kshs-field">
+                    <label htmlFor="lunch-label">Lunch Label</label>
+                    <input id="lunch-label" className="kshs-input" value={templateLunchLabel} onChange={e => setTemplateLunchLabel(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+              <div className="kshs-modal-foot">
+                <div style={{ marginLeft: 'auto' }}>
+                  <button type="button" className="kshs-mbtn kshs-mbtn-save" onClick={() => setShowColumnsModal(false)}>
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal 4: Academic Registrar Footer Configuration */}
+        {showRegistrarModal && (
+          <div className="kshs-modal-backdrop" onClick={() => setShowRegistrarModal(false)}>
+            <div className="kshs-modal-card" onClick={e => e.stopPropagation()}>
+              <div className="kshs-modal-head">
+                <h4>Academic Registrar Signature Block</h4>
+                <button type="button" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setShowRegistrarModal(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="kshs-modal-body">
+                <p style={{ fontSize: '0.8rem', color: '#475569', margin: 0 }}>
+                  Leave the Academic Registrar name blank to keep the footer completely empty.
+                </p>
+                <div className="kshs-field">
+                  <label>Academic Registrar Full Name</label>
+                  <input
+                    className="kshs-input"
+                    value={templateRegistrarName}
+                    onChange={e => setTemplateRegistrarName(e.target.value)}
+                    placeholder="Leave blank for empty footer"
+                  />
+                </div>
+                <div className="kshs-field">
+                  <label>Official Title</label>
+                  <input
+                    className="kshs-input"
+                    value={templateRegistrarRole}
+                    onChange={e => setTemplateRegistrarRole(e.target.value)}
+                  />
+                </div>
+                <div className="kshs-grid-2">
+                  <div className="kshs-field">
+                    <label>Secondary Signatory (Optional)</label>
+                    <input
+                      className="kshs-input"
+                      value={templateSecondaryName}
+                      onChange={e => setTemplateSecondaryName(e.target.value)}
+                    />
+                  </div>
+                  <div className="kshs-field">
+                    <label>Secondary Title (Optional)</label>
+                    <input
+                      className="kshs-input"
+                      value={templateSecondaryRole}
+                      onChange={e => setTemplateSecondaryRole(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="kshs-modal-foot">
+                <button
+                  type="button"
+                  className="kshs-mbtn kshs-mbtn-danger"
+                  onClick={() => {
+                    setTemplateRegistrarName('')
+                    setTemplateSecondaryName('')
+                    setShowRegistrarModal(false)
+                  }}
+                >
+                  Clear / Blank
+                </button>
+                <button type="button" className="kshs-mbtn kshs-mbtn-save" onClick={() => setShowRegistrarModal(false)}>
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+    )}
 
     {!readOnly && showScheduleForm && <form className="timetable-form-panel" onSubmit={submit}>
       <h3>{editingEntryId ? 'Edit teaching session' : 'Schedule a teaching session'}</h3>
@@ -745,7 +1599,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         const classEntries = [...result.entries].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
         const classTimeSlots = [...new Set(classEntries.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b))
         return <article className="timetable-class-document" key={groupId}>
-          <div className="timetable-class-document-heading"><div className="timetable-class-document-identity"><div className="timetable-official-identity">{institutionLoaded && institution.isActive && institution.logoPath && <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} />}<div className="timetable-official-identity-copy"><h4>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h4>{institutionLoaded && institution.isActive && institution.motto && <span className="timetable-institution-motto">{institution.motto}</span>}{institutionLoaded && institution.isActive && <span className="timetable-institution-contact">{[institution.address, institution.phone, institution.email].filter(value => Boolean(value?.trim())).join(' · ')}</span>}</div></div><strong>{selectedProgramme?.label ?? 'Programme'} · {groupLabel}</strong><span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Selected academic period'} · YEAR {yearOfStudy} · CURRICULUM SEMESTER {curriculumSemester}</span><span>VALID FOR: {semesterDateRange(selectedSemester)}</span></div>
+          <div className="timetable-class-document-heading"><div className="timetable-class-document-identity"><p>REPUBLIC OF UGANDA</p><h4>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h4><strong>{selectedProgramme?.label ?? 'Programme'} · {groupLabel}</strong><span>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Selected academic period'} · YEAR {yearOfStudy} · CURRICULUM SEMESTER {curriculumSemester}</span><span>VALID FOR: {semesterDateRange(selectedSemester)}</span></div>
             <div className="timetable-class-actions">
               <button className="timetable-action" type="button" onClick={() => downloadInstitutionalPdf(timetablePdfOptions(groupLabel + ' Teaching Timetable', classEntries, groupLabel + '-timetable'))} disabled={!institutionLoaded || !institution.isActive}>Download PDF</button>
               <button className="timetable-action" type="button" onClick={() => printGeneratedTimetable(groupId)} disabled={!institutionLoaded || !institution.isActive}>Print</button>
@@ -794,7 +1648,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     <div className="timetable-toolbar">
       <h3>Weekly schedule <span>({activeEntries.length})</span></h3>
       <div className="timetable-toolbar-controls">
-        <label className="timetable-weekend-toggle"><input type="checkbox" checked={showWeekends} onChange={event => setShowWeekends(event.target.checked)} /> Show weekend days (Saturday & Sunday)</label>
+        <label className="timetable-weekend-toggle"><input type="checkbox" checked={showWeekends} onChange={event => setShowWeekends(event.target.checked)} /> Show Saturday</label>
         {!readOnly && <button className="timetable-action" type="button" aria-expanded={showSystemData} onClick={() => setShowSystemData(value => !value)}>{showSystemData ? 'Hide system data' : 'System Data & Sync'}</button>}
         <div className="timetable-view-switch" role="group" aria-label="Schedule display">
           <button type="button" aria-pressed={view === 'week'} onClick={() => setView('week')}><LayoutGrid /> Week</button>
@@ -818,17 +1672,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
 
     {loading && activeEntries.length === 0 ? <div className="timetable-empty"><LoadingSpinner label="Loading timetable…" /></div> : activeEntries.length === 0 ? <div className="timetable-empty"><CalendarDays size={26} /><strong>No sessions scheduled yet</strong><span>Schedule or generate sessions to populate the formal weekly timetable.</span></div> : view === 'week' ? <div className="timetable-print-area">
       <div className="timetable-document-heading">
-        <div className="timetable-official-identity">
-          {institutionLoaded && institution.isActive && institution.logoPath ? <img className="timetable-institution-logo" src={institution.logoPath} alt={institution.institutionName + ' logo'} /> : <div className="timetable-document-mark">{institutionLoaded && institution.isActive ? institution.abbreviation || 'SMIS' : 'SMIS'}</div>}
-          <div className="timetable-official-identity-copy">
-                <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
-            {institutionLoaded && institution.isActive && institution.motto && <span className="timetable-institution-motto">{institution.motto}</span>}
-            {institutionLoaded && institution.isActive && <span className="timetable-institution-contact">{[institution.address, institution.phone, institution.email].filter(value => Boolean(value?.trim())).join(' · ')}</span>}
-          </div>
-        </div>
-        <div className="timetable-official-rule" />
+        <div className="timetable-document-mark">{institutionLoaded && institution.isActive ? institution.abbreviation || 'SMIS' : 'SMIS'}</div>
+        <h3>{institutionLoaded && institution.isActive ? institution.institutionName : 'Institution settings loading…'}</h3>
         <p>TEACHING TIMETABLE</p>
-        <strong className="timetable-document-programme">{selectedProgramme?.label ?? 'All programmes'}</strong>
         <small>ACADEMIC YEAR {academicYearLabel} · {selectedSemester?.label ?? 'Academic period not selected'} · VALID FOR {semesterDateRange(selectedSemester)}</small>
       </div>
       <div className="timetable-grid-scroll">
@@ -841,14 +1687,14 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               return <td key={slot} className={cellEntries.length ? 'has-session' : 'empty-session'}>
                 {cellEntries.map(entry => <article className="timetable-grid-session" key={entry.id}>
                   <strong>{courseLabels.get(entry.courseId) ?? 'Course not found'}</strong>
-                  <span>{groupLabels.get(entry.teachingGroupId) ?? 'Teaching group'}</span>
                   <span>{teacherLabels.get(entry.teacherId) ?? 'Teacher not found'}</span>
                   <span className="timetable-grid-time">{timeRange(entry)}</span>
                   {entry.room && <span>Venue: {entry.room}</span>}
+                  {entry.sessionType && <span>{entry.sessionType}</span>}
                   {!readOnly && (
                     <>
-                      <button className="timetable-event-remove" type="button" onClick={() => void editEntry(entry)}><Pencil size={12} /> Edit</button>
-                      <button className="timetable-event-remove" type="button" onClick={() => void remove(entry.id)}><Trash2 size={12} /> Remove</button>
+                      <button className="timetable-action" type="button" onClick={() => void editEntry(entry)}><Pencil size={12} /> Edit</button>
+                      <button className="timetable-action" type="button" onClick={() => void remove(entry.id)}><Trash2 size={12} /> Remove</button>
                     </>
                   )}
                 </article>)}
