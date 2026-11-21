@@ -147,11 +147,11 @@ describe('TimetableManagement', () => {
   })
 
   it('renders a full-height vertical break divider in the timetable design', async () => {
-    render(<TimetableManagement />)
+    const { container } = render(<TimetableManagement />)
     fireEvent.click((await screen.findAllByRole('button', { name: /open semester template/i }))[0])
     fireEvent.click(await screen.findByRole('button', { name: /load class/i }))
     fireEvent.change(screen.getByLabelText('Divider after period'), { target: { value: '1' } })
-    expect(screen.getByLabelText('BREAK')).toBeTruthy()
+    expect(container.querySelector('.timetable-template-divider-header[aria-label="BREAK"]')).toBeTruthy()
   })
 
   it('persists edited document metadata and merged-cell layout through the timetable API', async () => {
