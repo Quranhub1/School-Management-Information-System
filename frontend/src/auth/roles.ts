@@ -9,13 +9,13 @@ export function hasAnyRole(userRoles: string[], allowedRoles: readonly string[])
   return allowedRoles.some(role => normalizedUserRoles.has(normalizeRole(role)))
 }
 export const ADMINISTRATION_ROLES = [ROLES.systemAdministrator] as const
-export const ACADEMIC_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.academicRegistrar, ROLES.assistantRegistrar, ROLES.hrManager, 'StaffAccess.Curriculum.Manage', 'StaffAccess.Classes.Delete'] as const
+export const ACADEMIC_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.academicRegistrar, ROLES.assistantRegistrar, ROLES.hrManager, 'StaffAccess.Curriculum.CourseUnits.Manage', 'StaffAccess.Curriculum.Manage', 'StaffAccess.Classes.Delete'] as const
 export const FINANCE_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.accountant, 'StaffAccess.Finance.Expenses.Manage', 'StaffAccess.Finance.FeeTypes.Manage', 'StaffAccess.Finance.Invoices.Delete', 'StaffAccess.Finance.Payments.Delete'] as const
 export const FINANCE_OPERATIONS_ROLES = [ROLES.systemAdministrator, ROLES.accountant, ROLES.assistantAccountant, 'StaffAccess.Finance.Invoices.Delete', 'StaffAccess.Finance.Payments.Delete'] as const
 export const FINANCE_READ_ROLES = [ROLES.systemAdministrator, ROLES.accountant, ROLES.assistantAccountant, ROLES.principal, ROLES.director, ROLES.assistantPrincipal, ROLES.headOfDepartment, ROLES.residentDirector, ROLES.secretary, ROLES.hrManager, 'StaffAccess.Finance.Income.Read', 'StaffAccess.Finance.Payments.Read', 'StaffAccess.Finance.Expenses.Read'] as const
 export const PAYROLL_READ_ROLES = [ROLES.systemAdministrator, ROLES.accountant, ROLES.assistantAccountant, ROLES.hrManager] as const
 export const EXAMINATION_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.examinationsOfficer, ROLES.hrManager] as const
-export const STUDENT_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.adminSecretary, ROLES.hrManager, 'StaffAccess.Students.Read', 'StaffAccess.Students.Manage', 'StaffAccess.Students.Delete', 'StaffAccess.Students.Promote'] as const
+export const STUDENT_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.adminSecretary, ROLES.hrManager, 'StaffAccess.Students.Read', 'StaffAccess.Students.Manage', 'StaffAccess.Students.Classes.Manage', 'StaffAccess.Students.Delete', 'StaffAccess.Students.Promote'] as const
 export const INVENTORY_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.recordsOfficer, ROLES.hrManager] as const
 export const HOSTEL_MANAGEMENT_ROLES = [ROLES.systemAdministrator, ROLES.schoolWarden, ROLES.residentDirector, ROLES.hrManager] as const
 export const REPORTS_ROLES = [ROLES.systemAdministrator, ROLES.adminSecretary, ROLES.academicRegistrar, ROLES.assistantRegistrar, ROLES.admissionsOfficer, ROLES.examinationsOfficer, ROLES.principal, ROLES.director, ROLES.residentDirector, ROLES.assistantPrincipal, ROLES.headOfDepartment, ROLES.secretary, ROLES.hrManager, ROLES.recordsOfficer] as const
