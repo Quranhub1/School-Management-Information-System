@@ -157,7 +157,7 @@ export const staffCreateRequestSchema = z.object({
   firstName: requiredTextSchema.min(2),
   lastName: requiredTextSchema.min(2),
   employmentType: requiredTextSchema,
-  staffType: requiredTextSchema,
+  staffType: z.enum(['Teaching', 'NonTeaching']),
   nationalId: z.string().trim().optional(),
   phoneNumber: z.string().trim().optional(),
   email: z.email().optional().or(z.literal("")),
