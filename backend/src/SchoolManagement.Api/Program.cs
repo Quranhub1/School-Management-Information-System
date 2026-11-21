@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using SchoolManagement.Application;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Finance;
+using SchoolManagement.Application.Students;
 using SchoolManagement.Api.BackgroundServices;
 using SchoolManagement.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
@@ -64,6 +65,8 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
 });
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateAdmissionRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateStudentRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateTimetableEntryRequestValidator>();
 builder.Services.AddControllers().AddJsonOptions(o =>
 {
     o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
