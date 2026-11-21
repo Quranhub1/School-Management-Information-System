@@ -292,7 +292,7 @@ const text = cell ? [
 cName,
 tName,
 cell.customTime || '',
-cell.room ? Venue: ${cell.room} : '',
+cell.room ? `Venue: ${cell.room}` : '',
 ].filter(Boolean).join('\n') : ''
 row.push({ text: text || '', alignment: 'center', ...(rowSpan > 1 ? { rowSpan } : {}), ...(colSpan > 1 ? { colSpan } : {}) })
 }
