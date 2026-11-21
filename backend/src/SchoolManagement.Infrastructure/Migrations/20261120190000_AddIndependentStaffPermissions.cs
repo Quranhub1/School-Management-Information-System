@@ -1,7 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using SchoolManagement.Infrastructure.Persistence;
 
 namespace SchoolManagement.Infrastructure.Migrations;
 
@@ -9,74 +6,75 @@ public sealed partial class AddIndependentStaffPermissions : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.CreateTable(
-            name: "Permissions",
-            columns: table => new
-            {
-                Id = table.Column<Guid>(type: "uuid", nullable: false),
-                Code = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
-                Name = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
-                GroupKey = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
-                Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
-            },
-            constraints: table => table.PrimaryKey("PK_Permissions", x => x.Id));
+        // Permission tables are not part of the clean-install baseline migration.
+        // Create them when absent; upgrade legacy installations when they exist.
+        migrationBuilder.Sql("""
+            DO $$
+            BEGIN
+                IF to_regclass('"Permissions"') IS NULL THEN
+                    CREATE TABLE "Permissions" (
+                        "Id" uuid NOT NULL,
+                        "Code" character varying(120) NOT NULL,
+                        "Name" character varying(160) NOT NULL,
+                        "GroupKey" character varying(80) NOT NULL,
+                        "Description" character varying(500),
+                        CONSTRAINT "PK_Permissions" PRIMARY KEY ("Id")
+                    );
+                ELSE
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_schema = current_schema()
+                          AND table_name = 'Permissions' AND column_name = 'GroupCode'
+                    ) AND NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_schema = current_schema()
+                          AND table_name = 'Permissions' AND column_name = 'GroupKey'
+                    ) THEN
+                        ALTER TABLE "Permissions" RENAME COLUMN "GroupCode" TO "GroupKey";
+                    END IF;
 
-        migrationBuilder.CreateTable(
-            name: "RolePermissions",
-            columns: table => new
-            {
-                RoleId = table.Column<Guid>(type: "uuid", nullable: false),
-                PermissionId = table.Column<Guid>(type: "uuid", nullable: false)
-            },
-            constraints: table =>
-            {
-                table.PrimaryKey("PK_RolePermissions", x => new { x.RoleId, x.PermissionId });
-                table.ForeignKey("FK_RolePermissions_Permissions_PermissionId", x => x.PermissionId, "Permissions", "Id", onDelete: ReferentialAction.Cascade);
-                table.ForeignKey("FK_RolePermissions_Roles_RoleId", x => x.RoleId, "Roles", "Id", onDelete: ReferentialAction.Cascade);
-            });
+                    ALTER TABLE "Permissions" DROP COLUMN IF EXISTS "GroupName";
+                    ALTER TABLE "Permissions" ALTER COLUMN "Code" TYPE character varying(120);
+                    ALTER TABLE "Permissions" ALTER COLUMN "Name" TYPE character varying(160);
+                    ALTER TABLE "Permissions" ALTER COLUMN "Description" TYPE character varying(500);
+                END IF;
+            END $$;
 
-        migrationBuilder.CreateTable(
-            name: "UserPermissions",
-            columns: table => new
-            {
-                UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                PermissionId = table.Column<Guid>(type: "uuid", nullable: false),
-                IsGranted = table.Column<bool>(type: "boolean", nullable: false)
-            },
-            constraints: table =>
-            {
-                table.PrimaryKey("PK_UserPermissions", x => new { x.UserId, x.PermissionId });
-                table.ForeignKey("FK_UserPermissions_Permissions_PermissionId", x => x.PermissionId, "Permissions", "Id", onDelete: ReferentialAction.Cascade);
-                table.ForeignKey("FK_UserPermissions_Users_UserId", x => x.UserId, "Users", "Id", onDelete: ReferentialAction.Cascade);
-            });
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_Permissions_Code" ON "Permissions" ("Code");
+            CREATE INDEX IF NOT EXISTS "IX_Permissions_GroupKey" ON "Permissions" ("GroupKey");
 
-        migrationBuilder.AddColumn<Guid>(
-            name: "UserId",
-            table: "StaffMembers",
-            type: "uuid",
-            nullable: true);
+            CREATE TABLE IF NOT EXISTS "RolePermissions" (
+                "RoleId" uuid NOT NULL,
+                "PermissionId" uuid NOT NULL,
+                CONSTRAINT "PK_RolePermissions" PRIMARY KEY ("RoleId", "PermissionId"),
+                CONSTRAINT "FK_RolePermissions_Roles_RoleId"
+                    FOREIGN KEY ("RoleId") REFERENCES "Roles" ("Id") ON DELETE CASCADE,
+                CONSTRAINT "FK_RolePermissions_Permissions_PermissionId"
+                    FOREIGN KEY ("PermissionId") REFERENCES "Permissions" ("Id") ON DELETE CASCADE
+            );
 
-        migrationBuilder.CreateIndex(name: "IX_Permissions_Code", table: "Permissions", column: "Code", unique: true);
-        migrationBuilder.CreateIndex(name: "IX_Permissions_GroupKey", table: "Permissions", column: "GroupKey");
-        migrationBuilder.CreateIndex(name: "IX_RolePermissions_PermissionId", table: "RolePermissions", column: "PermissionId");
-        migrationBuilder.CreateIndex(name: "IX_UserPermissions_PermissionId", table: "UserPermissions", column: "PermissionId");
-        migrationBuilder.CreateIndex(name: "IX_StaffMembers_UserId", table: "StaffMembers", column: "UserId", unique: true);
-        migrationBuilder.AddForeignKey(
-            name: "FK_StaffMembers_Users_UserId",
-            table: "StaffMembers",
-            column: "UserId",
-            principalTable: "Users",
-            principalColumn: "Id",
-            onDelete: ReferentialAction.SetNull);
+            CREATE TABLE IF NOT EXISTS "UserPermissions" (
+                "UserId" uuid NOT NULL,
+                "PermissionId" uuid NOT NULL,
+                "IsGranted" boolean NOT NULL DEFAULT FALSE,
+                CONSTRAINT "PK_UserPermissions" PRIMARY KEY ("UserId", "PermissionId"),
+                CONSTRAINT "FK_UserPermissions_Users_UserId"
+                    FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE,
+                CONSTRAINT "FK_UserPermissions_Permissions_PermissionId"
+                    FOREIGN KEY ("PermissionId") REFERENCES "Permissions" ("Id") ON DELETE CASCADE
+            );
+
+            ALTER TABLE "UserPermissions"
+                ADD COLUMN IF NOT EXISTS "IsGranted" boolean NOT NULL DEFAULT FALSE;
+            """);
+
+        // StaffUserLinks is created with the composite key by the preceding migration.
+        // Do not drop and recreate that same key here.
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropForeignKey(name: "FK_StaffMembers_Users_UserId", table: "StaffMembers");
-        migrationBuilder.DropIndex(name: "IX_StaffMembers_UserId", table: "StaffMembers");
-        migrationBuilder.DropColumn(name: "UserId", table: "StaffMembers");
-        migrationBuilder.DropTable(name: "RolePermissions");
-        migrationBuilder.DropTable(name: "UserPermissions");
-        migrationBuilder.DropTable(name: "Permissions");
+        // Keep permission assignments intact on rollback; these tables may predate
+        // this migration in upgraded installations and may contain live access data.
     }
 }

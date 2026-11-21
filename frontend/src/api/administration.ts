@@ -21,3 +21,14 @@ export const setUserActive = (id: string, active: boolean) => request<UserSummar
 
 export const updateUser = (id: string, body: UpdateUserRequest) => request<UserSummary>(`/api/administration/users/${id}`, { method: 'PUT', body: JSON.stringify(body) })
 export const resetUserPassword = (id: string, newPassword: string) => request<void>(`/api/administration/users/${id}/password`, { method: 'PATCH', body: JSON.stringify({ newPassword }) })
+
+export interface PermissionItem { id: string; label: string; description?: string | null }
+export interface PermissionGroup { id: string; label: string; permissions: PermissionItem[] }
+export interface PermissionRole { id: string; name: string; description?: string | null; isSystemRole: boolean }
+export interface UserPermissionSummary { userId: string; directPermissionCodes: string[]; inheritedPermissionCodes: string[]; effectivePermissionCodes: string[] }
+export const getPermissionCatalogue = () => request<PermissionGroup[]>('/api/permissions/catalogue')
+export const getPermissionRoles = () => request<PermissionRole[]>('/api/permissions/roles')
+export const getRolePermissionCodes = (roleId: string) => request<{ roleId: string; permissionCodes: string[] }>(`/api/permissions/roles/${roleId}`)
+export const setRolePermissionCodes = (roleId: string, permissionCodes: string[]) => request<{ roleId: string; assignedCount: number }>(`/api/permissions/roles/${roleId}`, { method: 'PUT', body: JSON.stringify({ permissionCodes }) })
+export const getUserPermissionSummary = (userId: string) => request<UserPermissionSummary>(`/api/permissions/users/${userId}`)
+export const setUserPermissionCodes = (userId: string, permissionCodes: string[]) => request<{ userId: string; directPermissionCount: number }>(`/api/permissions/users/${userId}`, { method: 'PUT', body: JSON.stringify({ permissionCodes }) })

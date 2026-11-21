@@ -31,5 +31,14 @@ public sealed class StaffMember
     public required SchoolManagement.Domain.Staff.StaffType StaffType { get; set; }
     public string EmploymentStatus { get; set; } = "Active";
     public DateOnly? DateJoined { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
+    public string? Gender { get; set; }
+    public string? Address { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? BankAddress { get; set; }
+    public decimal? BasicSalary { get; set; }
+    public string? AttendanceMode { get; set; }
+    public string? PhotographDataUrl { get; set; }
     public bool IsActive { get; set; } = true;
 }
