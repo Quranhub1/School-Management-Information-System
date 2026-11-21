@@ -155,6 +155,9 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
     [Authorize(Policy = "permission:staff.create")]
     public async Task<IActionResult> Create([FromBody] CreateStaffRequest request, CancellationToken cancellationToken)
     {
+        if (request.CreateLoginAccount && request.Account is not null)
+            return BadRequest(new { message = "Choose one staff account creation or linking workflow, not both." });
+
         if (string.IsNullOrWhiteSpace(request.StaffNumber) || string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.EmploymentType))
             return BadRequest(new { message = "Staff number, names and employment type are required." });
         if (request.BasicSalary is < 0)
@@ -256,6 +259,8 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             CourseUnitIdsJson = SerializeCourseIds(request.CourseUnitIds)
         };
         db.StaffMembers.Add(staff);
+        if (loginUser is not null)
+            db.StaffUserLinks.Add(new StaffUserLink { StaffId = staff.Id, UserId = loginUser.Id });
         if (request.Account is not null)
         {
             if (!User.IsInRole(InstitutionalRoles.SystemAdministrator)) return Forbid();
