@@ -48,12 +48,14 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
             DateOnly? dob = null;
             if (!string.IsNullOrWhiteSpace(dobStr))
             {
-                if (!DateOnly.TryParse(dobStr, out var parsedDob)) { errors.Add($"Row {i + 1}: DateOfBirth must be a valid date in yyyy-MM-dd format."); continue; }
+                if (!DateOnly.TryParseExact(dobStr, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDob)) { errors.Add($"Row {i + 1}: DateOfBirth must be a valid date in yyyy-MM-dd format."); continue; }
                 dob = parsedDob;
             }
             var gender = values.ElementAtOrDefault(genderIdx)?.Trim();
             var phone = values.ElementAtOrDefault(phoneIdx)?.Trim();
             var email = values.ElementAtOrDefault(emailIdx)?.Trim();
+            if (!string.IsNullOrWhiteSpace(email) && !System.Net.Mail.MailAddress.TryCreate(email, out _))
+            { errors.Add($"Row {i + 1}: Email must be a valid email address."); continue; }
             var status = values.ElementAtOrDefault(statusIdx)?.Trim() ?? "Active";
             var student = new SchoolManagement.Domain.Students.Student
             {
@@ -116,6 +118,8 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
             var nationalId = values.ElementAtOrDefault(nationalIdIdx)?.Trim();
             var phone = values.ElementAtOrDefault(phoneIdx)?.Trim();
             var email = values.ElementAtOrDefault(emailIdx)?.Trim();
+            if (!string.IsNullOrWhiteSpace(email) && !System.Net.Mail.MailAddress.TryCreate(email, out _))
+            { errors.Add($"Row {i + 1}: Email must be a valid email address."); continue; }
             var staffMember = new StaffMember
             {
                 StaffNumber = staffNumber,
