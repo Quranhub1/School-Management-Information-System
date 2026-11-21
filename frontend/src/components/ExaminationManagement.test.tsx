@@ -27,6 +27,6 @@ describe('ExaminationManagement', () => {
     render(<ExaminationManagement canManage />)
     await screen.findByRole('heading', { name: 'Manage exams' })
     screen.getByRole('button', { name: 'Add New Exam' }).click()
-    expect(screen.getByRole('heading', { name: 'Add new exam' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Add new exam' })).toBeTruthy()
   })
 })
