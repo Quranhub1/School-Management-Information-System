@@ -235,7 +235,38 @@ public sealed class CurriculumLogbooksController(SchoolManagementDbContext db) :
         await db.SaveChangesAsync(ct);
         return Created($"/api/finance/uhpab-fee-references/{entity.Id}", ToResponse(entity));
     }
+
+    private static LogbookCompetencyRequirementResponse ToResponse(LogbookCompetencyRequirement entity) =>
+        new(entity.Id, entity.LogbookRequirementId, entity.Code, entity.Name, entity.RequiredCount, entity.IsMandatory, entity.IsActive);
+
+    private static LogbookRequirementResponse ToResponse(LogbookRequirement entity, IReadOnlyCollection<LogbookCompetencyRequirementResponse> competencies) =>
+        new(entity.Id, entity.CurriculumId, entity.Title, entity.Description, entity.YearOfStudy, entity.SemesterNumber,
+            entity.RequiredQuantity, entity.IsMandatory, entity.IsActive, competencies);
+
+    private static StudentLogbookResponse ToResponse(StudentLogbook entity) =>
+        new(entity.Id, entity.StudentId, entity.LogbookRequirementId, entity.SerialNumber, entity.IssuedOn,
+            entity.SubmittedOn, entity.Status, entity.IssuedBy, entity.Remarks);
+
+    private static StudentLogbookCompetencyResponse ToResponse(StudentLogbookCompetency entity) =>
+        new(entity.Id, entity.StudentLogbookId, entity.CompetencyRequirementId, entity.StudentPlacementId,
+            entity.Outcome, entity.AssessedOn, entity.AssessorName, entity.AssessorRole,
+            entity.EvidenceReference, entity.Remarks);
+
+    private static UhpabFeeReferenceResponse ToResponse(UhpabFeeReference entity) =>
+        new(entity.Id, entity.Category, entity.ProgrammeCode, entity.ProgrammeName, entity.Description,
+            entity.Amount, entity.Currency, entity.SourceUrl, entity.SourceTitle, entity.SourceCheckedOn,
+            entity.EffectiveFrom, entity.EffectiveTo, entity.IsActive);
+
 }
+
+
+public sealed record LogbookRequirementResponse(Guid Id, Guid CurriculumId, string Title, string? Description, int YearOfStudy, int SemesterNumber, int RequiredQuantity, bool IsMandatory, bool IsActive, IReadOnlyCollection<LogbookCompetencyRequirementResponse> Competencies);
+public sealed record LogbookCompetencyRequirementResponse(Guid Id, Guid LogbookRequirementId, string Code, string Name, int RequiredCount, bool IsMandatory, bool IsActive);
+public sealed record LogbookRequirementSummaryResponse(Guid Id, string Title, int YearOfStudy, int SemesterNumber, int RequiredQuantity, bool IsMandatory);
+public sealed record StudentLogbookResponse(Guid Id, Guid StudentId, Guid LogbookRequirementId, string SerialNumber, DateOnly IssuedOn, DateOnly? SubmittedOn, string Status, string? IssuedBy, string? Remarks);
+public sealed record StudentLogbookCompetencyResponse(Guid Id, Guid StudentLogbookId, Guid CompetencyRequirementId, Guid? StudentPlacementId, string Outcome, DateOnly? AssessedOn, string? AssessorName, string? AssessorRole, string? EvidenceReference, string? Remarks);
+public sealed record StudentLogbookDetailResponse(StudentLogbookResponse Logbook, LogbookRequirementSummaryResponse Requirement, IReadOnlyCollection<StudentLogbookCompetencyResponse> Competencies);
+public sealed record UhpabFeeReferenceResponse(Guid Id, string Category, string? ProgrammeCode, string? ProgrammeName, string Description, decimal Amount, string Currency, string SourceUrl, string SourceTitle, DateOnly SourceCheckedOn, DateOnly EffectiveFrom, DateOnly? EffectiveTo, bool IsActive);
 
 public sealed record CreateLogbookRequirementRequest(string Title, string? Description, int YearOfStudy, int SemesterNumber, int RequiredQuantity, bool IsMandatory);
 public sealed record CreateLogbookCompetencyRequest(string Code, string Name, int RequiredCount, bool IsMandatory);
