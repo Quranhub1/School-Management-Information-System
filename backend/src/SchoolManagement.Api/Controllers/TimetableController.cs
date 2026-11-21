@@ -80,15 +80,25 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
     [Authorize(Policy = TimetablePolicies.Read)]
     public async Task<IActionResult> Conflicts([FromQuery] Guid? teachingGroupId, [FromQuery] Guid? semesterId, CancellationToken cancellationToken)
     {
-        var query = db.TimetableEntries.AsNoTracking().Where(x => x.IsActive);
-        if (teachingGroupId.HasValue) query = query.Where(x => x.TeachingGroupId == teachingGroupId.Value);
-        var entries = await query.ToListAsync(cancellationToken);
-        var conflicts = entries
-            .GroupBy(x => new { x.DayOfWeek, x.Room })
-            .Where(g => g.Count() > 1)
-            .SelectMany(g => g)
-            .ToList();
-        return Ok(conflicts.Select(ToDto).ToArray());
+        var candidateQuery = db.TimetableEntries.AsNoTracking().Where(x => x.IsActive);
+        if (teachingGroupId.HasValue)
+            candidateQuery = candidateQuery.Where(x => x.TeachingGroupId == teachingGroupId.Value);
+        if (semesterId.HasValue)
+        {
+            candidateQuery = candidateQuery.Where(entry => db.TeachingGroups
+                .Where(group => group.Id == entry.TeachingGroupId)
+                .Join(db.CourseOfferings, group => group.CourseOfferingId, offering => offering.Id,
+                    (group, offering) => offering.SemesterId)
+                .Any(id => id == semesterId.Value));
+        }
+
+        var candidates = await candidateQuery.ToListAsync(cancellationToken);
+        var allActiveEntries = await db.TimetableEntries.AsNoTracking()
+            .Where(entry => entry.IsActive)
+            .ToListAsync(cancellationToken);
+        var conflicts = candidates.Where(candidate => allActiveEntries.Any(other =>
+            candidate.Id != other.Id && HasOverlap(candidate, other)));
+        return Ok(conflicts.OrderBy(x => x.DayOfWeek).ThenBy(x => x.StartTime).Select(ToDto).ToArray());
     }
 
     private async Task<bool> IsCourseMappedToTeachingGroupAsync(Guid teachingGroupId, Guid courseId, Guid curriculumId, int yearOfStudy, int curriculumSemesterNumber, CancellationToken cancellationToken)
@@ -266,6 +276,17 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         new(entry.Id, entry.TeachingGroupId, entry.CourseId, entry.TeacherId, entry.DayOfWeek,
             entry.StartTime, entry.EndTime, entry.Room, entry.SessionType, entry.IsActive,
             entry.GeneratedAt, entry.GenerationSource);
+
+    private static bool HasOverlap(Domain.Academic.TimetableEntry left, Domain.Academic.TimetableEntry right)
+    {
+        if (left.DayOfWeek != right.DayOfWeek || left.StartTime >= right.EndTime || right.StartTime >= left.EndTime)
+            return false;
+        var sameClass = left.TeachingGroupId == right.TeachingGroupId;
+        var sameTeacher = left.TeacherId == right.TeacherId;
+        var sameRoom = !string.IsNullOrWhiteSpace(left.Room) && !string.IsNullOrWhiteSpace(right.Room)
+            && string.Equals(left.Room.Trim(), right.Room.Trim(), StringComparison.OrdinalIgnoreCase);
+        return sameClass || sameTeacher || sameRoom;
+    }
 
     private static bool HasOverlap(CreateTimetableEntryRequest left, CreateTimetableEntryRequest right)
     {
