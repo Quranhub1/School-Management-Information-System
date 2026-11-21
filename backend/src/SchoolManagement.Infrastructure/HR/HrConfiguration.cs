@@ -8,7 +8,7 @@ public sealed class HrConfiguration : IEntityTypeConfiguration<StaffMember>
 {
     public void Configure(EntityTypeBuilder<StaffMember> builder)
     {
-        builder.ToTable("StaffMembers");
+        builder.ToTable("staff_members");
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.StaffNumber)
