@@ -95,7 +95,7 @@ public sealed class AcademicDepartmentsController(SchoolManagementDbContext db) 
         if (await db.Departments.AnyAsync(x => x.Code == code && x.FacultyId == request.FacultyId, ct)) return Conflict(new { message = $"Department code '{code}' already exists in this faculty." });
         var department = new Department { FacultyId = request.FacultyId, Code = code, Name = name };
         db.Departments.Add(department); await db.SaveChangesAsync(ct);
-        return Created($"/api/academic-departments/{department.Id}", department);
+        return CreatedAtAction(nameof(GetDepartments), new { campusId = targetFaculty.CampusId }, new DepartmentResponseDto(department.Id, department.FacultyId, targetFaculty.Name, department.Code, department.Name, department.IsActive));
     }
 
     [HttpPut("{id:guid}")]
@@ -140,6 +140,7 @@ public sealed class AcademicDepartmentsController(SchoolManagementDbContext db) 
     }
 }
 
+public sealed record DepartmentResponseDto(Guid Id, Guid FacultyId, string FacultyName, string Code, string Name, bool IsActive);
 public sealed record SaveFacultyRequest(Guid CampusId, string Code, string Name, string? Description);
 public sealed record UpdateFacultyRequest(Guid CampusId, string Code, string Name, string? Description, bool IsActive);
 public sealed record SetFacultyActiveRequest(bool IsActive);

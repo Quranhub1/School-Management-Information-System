@@ -1,4 +1,6 @@
 import { getAccessToken } from './auth'
+import { parseApiInput } from '../lib/validation'
+import { academicPeriodRequestSchema, academicPeriodUpdateRequestSchema, academicYearRequestSchema } from '../schemas'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
@@ -45,12 +47,12 @@ export const getAcademicPeriods = (yearId: string) => {
   if (!yearId.trim()) throw new Error('Academic year ID is required.')
   return request<AcademicPeriod[]>(`/api/academic-calendar/years/${encodeURIComponent(yearId)}/periods`)
 }
-export const createAcademicYear = (input: AcademicYearInput) => request<AcademicYear>('/api/academic-calendar/years', { method: 'POST', body: JSON.stringify(input) })
-export const updateAcademicYear = (id: string, input: AcademicYearInput) => request<void>(`/api/academic-calendar/years/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
+export const createAcademicYear = (input: AcademicYearInput) => { const validated = parseApiInput(academicYearRequestSchema, input, 'create academic year'); return request<AcademicYear>('/api/academic-calendar/years', { method: 'POST', body: JSON.stringify(validated) }) }
+export const updateAcademicYear = (id: string, input: AcademicYearInput) => { const validated = parseApiInput(academicYearRequestSchema, input, 'update academic year'); if (!id.trim()) throw new Error('Academic year ID is required.'); return request<void>(`/api/academic-calendar/years/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(validated) }) }
 export const setAcademicYearActive = (id: string, isActive: boolean) => request<void>(`/api/academic-calendar/years/${encodeURIComponent(id)}/active`, { method: 'PATCH', body: JSON.stringify({ isActive }) })
 export const setCurrentAcademicYear = (id: string) => request<void>(`/api/academic-calendar/years/${encodeURIComponent(id)}/current`, { method: 'PATCH' })
-export const createAcademicPeriod = (input: AcademicPeriodInput) => request<AcademicPeriod>('/api/academic-calendar/periods', { method: 'POST', body: JSON.stringify(input) })
-export const updateAcademicPeriod = (yearId: string, periodId: string, input: AcademicPeriodUpdate) => request<void>(`/api/academic-calendar/years/${encodeURIComponent(yearId)}/periods/${encodeURIComponent(periodId)}`, { method: 'PUT', body: JSON.stringify(input) })
+export const createAcademicPeriod = (input: AcademicPeriodInput) => { const validated = parseApiInput(academicPeriodRequestSchema, input, 'create academic period'); return request<AcademicPeriod>('/api/academic-calendar/periods', { method: 'POST', body: JSON.stringify(validated) }) }
+export const updateAcademicPeriod = (yearId: string, periodId: string, input: AcademicPeriodUpdate) => { const validated = parseApiInput(academicPeriodUpdateRequestSchema, input, 'update academic period'); if (!yearId.trim() || !periodId.trim()) throw new Error('Year and period IDs are required.'); return request<void>(`/api/academic-calendar/years/${encodeURIComponent(yearId)}/periods/${encodeURIComponent(periodId)}`, { method: 'PUT', body: JSON.stringify(validated) }) }
 export const setAcademicPeriodActive = (yearId: string, periodId: string, isActive: boolean) => request<void>(`/api/academic-calendar/years/${encodeURIComponent(yearId)}/periods/${encodeURIComponent(periodId)}/active`, { method: 'PATCH', body: JSON.stringify({ isActive }) })
 export const setCurrentAcademicPeriod = (yearId: string, periodId: string) => request<void>(`/api/academic-calendar/years/${encodeURIComponent(yearId)}/periods/${encodeURIComponent(periodId)}/current`, { method: 'PATCH' })
 export const deleteAcademicPeriod = (yearId: string, periodId: string) => {

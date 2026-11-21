@@ -13,11 +13,11 @@ public sealed class SubjectsController(SubjectService service) : ControllerBase
 {
     [HttpGet("by-programme/{programmeId:guid}")]
     public async Task<ActionResult<IReadOnlyList<Subject>>> GetByProgramme(Guid programmeId, CancellationToken ct)
-        => Ok(await service.GetByProgrammeAsync(programmeId, ct));
+        => Ok((await service.GetByProgrammeAsync(programmeId, ct)).Select(SubjectResponseDto.FromDomain).ToArray());
 
     [HttpGet("by-programme/{programmeId:guid}/year/{yearOfStudy:int}")]
     public async Task<ActionResult<IReadOnlyList<Subject>>> GetByProgrammeAndYear(Guid programmeId, int yearOfStudy, CancellationToken ct)
-        => Ok(await service.GetByProgrammeAndYearAsync(programmeId, yearOfStudy, ct));
+        => Ok((await service.GetByProgrammeAndYearAsync(programmeId, yearOfStudy, ct)).Select(SubjectResponseDto.FromDomain).ToArray());
 
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSubjectRequest request, CancellationToken ct)
@@ -31,6 +31,13 @@ public sealed class SubjectsController(SubjectService service) : ControllerBase
     {
         var (success, error, result) = await service.CreateAsync(request, ct);
         if (!success) return BadRequest(new { message = error });
-        return Created($"api/subjects/{result!.Id}", result);
+        return Created($"api/subjects/{result!.Id}", SubjectResponseDto.FromDomain(result));
     }
+}
+
+
+public sealed record SubjectResponseDto(Guid Id, Guid ProgrammeId, Guid CourseId, int YearOfStudy, int? PeriodSequence, bool IsCompulsory, string? ElectiveGroup, bool IsActive)
+{
+    public static SubjectResponseDto FromDomain(Subject subject) =>
+        new(subject.Id, subject.ProgrammeId, subject.CourseId, subject.YearOfStudy, subject.PeriodSequence, subject.IsCompulsory, subject.ElectiveGroup, subject.IsActive);
 }

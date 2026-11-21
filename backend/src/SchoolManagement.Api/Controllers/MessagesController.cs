@@ -13,18 +13,18 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class MessagesController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("conversations")]
-    public async Task<ActionResult<IReadOnlyList<Conversation>>> GetConversations(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<ConversationResponseDto>>> GetConversations(CancellationToken ct)
     {
         var conversations = await db.Conversations.AsNoTracking().OrderByDescending(x => x.LastMessageAt).ToListAsync(ct);
-        return Ok(conversations);
+        return Ok(conversations.Select(ConversationResponseDto.FromDomain).ToArray());
     }
 
     [HttpGet("{conversationId}")]
-    public async Task<ActionResult<IReadOnlyList<Message>>> GetMessages(string conversationId, CancellationToken ct)
-        => Ok(await db.Messages.AsNoTracking().Where(x => x.ConversationId == conversationId).OrderBy(x => x.SentAt).ToListAsync(ct));
+    public async Task<ActionResult<IReadOnlyList<MessageResponseDto>>> GetMessages(string conversationId, CancellationToken ct)
+        => Ok((await db.Messages.AsNoTracking().Where(x => x.ConversationId == conversationId).OrderBy(x => x.SentAt).ToListAsync(ct)).Select(MessageResponseDto.FromDomain).ToArray());
 
     [HttpPost("send")]
-    public async Task<ActionResult<Message>> Send([FromBody] SendMessageRequest request, CancellationToken ct)
+    public async Task<ActionResult<MessageResponseDto>> Send([FromBody] SendMessageRequest request, CancellationToken ct)
     {
         var message = new Message
         {
@@ -46,8 +46,21 @@ public sealed class MessagesController(SchoolManagementDbContext db) : Controlle
             conversation.LastMessageAt = message.SentAt;
         }
         await db.SaveChangesAsync(ct);
-        return Created($"api/messages/{message.Id}", message);
+        return Created($"api/messages/{message.Id}", MessageResponseDto.FromDomain(message));
     }
+}
+
+
+public sealed record ConversationResponseDto(string ConversationId, string? Subject, DateTimeOffset LastMessageAt, string Participants)
+{
+    public static ConversationResponseDto FromDomain(Conversation conversation) =>
+        new(conversation.ConversationId, conversation.Subject, conversation.LastMessageAt, conversation.Participants);
+}
+
+public sealed record MessageResponseDto(Guid Id, string ConversationId, string SenderId, string? RecipientId, string? Subject, string Body, DateTimeOffset SentAt, DateTimeOffset? ReadAt)
+{
+    public static MessageResponseDto FromDomain(Message message) =>
+        new(message.Id, message.ConversationId, message.SenderId, message.RecipientId, message.Subject, message.Body, message.SentAt, message.ReadAt);
 }
 
 public sealed record SendMessageRequest(string ConversationId, string SenderId, string? RecipientId, string? Subject, string Body);

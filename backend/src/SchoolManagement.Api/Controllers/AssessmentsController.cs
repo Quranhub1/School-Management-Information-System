@@ -18,7 +18,7 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
     public async Task<ActionResult<IReadOnlyList<AssessmentPlan>>> GetPlans(
         [FromQuery] Guid? courseId,
         CancellationToken cancellationToken) =>
-        Ok(await service.GetPlansAsync(courseId, cancellationToken));
+        Ok((await service.GetPlansAsync(courseId, cancellationToken)).Select(AssessmentPlanResponseDto.FromDomain).ToArray());
 
     [HttpPost("plans")]
     public async Task<ActionResult<AssessmentPlan>> CreatePlan(
@@ -64,7 +64,7 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
         {
             return Conflict(new { message = "An assessment plan with this name already exists for the selected course." });
         }
-        return Created($"/api/assessments/plans?courseId={plan.CourseId}", plan);
+        return Created($"/api/assessments/plans?courseId={plan.CourseId}", AssessmentPlanResponseDto.FromDomain(plan));
     }
 
     [HttpGet("registrations/{courseRegistrationId:guid}")]
@@ -76,7 +76,7 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
             .SingleOrDefaultAsync(x => x.Id == courseRegistrationId, cancellationToken);
         if (registration is null) return NotFound(new { message = "Course registration was not found." });
         if (!await campusAccess.CanAccessStudentAsync(User, registration.StudentId, cancellationToken)) return Forbid();
-        return Ok(await service.GetStudentAssessmentsAsync(courseRegistrationId, cancellationToken));
+        return Ok((await service.GetStudentAssessmentsAsync(courseRegistrationId, cancellationToken)).Select(StudentAssessmentResponseDto.FromDomain).ToArray());
     }
 
     [HttpGet("records/{id:guid}")]
@@ -85,7 +85,7 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
         var assessment = await service.GetStudentAssessmentByIdAsync(id, cancellationToken);
         if (assessment is null) return NotFound();
         if (!await campusAccess.CanAccessStudentAsync(User, assessment.StudentId, cancellationToken)) return Forbid();
-        return Ok(assessment);
+        return Ok(StudentAssessmentResponseDto.FromDomain(assessment));
     }
 
     [HttpPatch("records/{id:guid}/finalize")]
@@ -97,7 +97,7 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
         try
         {
             var assessment = await service.FinalizeStudentAssessmentAsync(id, cancellationToken);
-            return assessment is null ? NotFound(new { message = "Assessment record was not found." }) : Ok(assessment);
+            return assessment is null ? NotFound(new { message = "Assessment record was not found." }) : Ok(StudentAssessmentResponseDto.FromDomain(assessment));
         }
         catch (InvalidOperationException ex)
         {
@@ -146,7 +146,7 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
                 request.MaximumScore,
                 request.CompetencyLevel,
                 cancellationToken);
-            return Created($"/api/assessments/records/{assessment.Id}", assessment);
+            return Created($"/api/assessments/records/{assessment.Id}", StudentAssessmentResponseDto.FromDomain(assessment));
         }
         catch (DbUpdateException)
         {
@@ -160,6 +160,21 @@ public sealed class AssessmentsController(AssessmentService service, SchoolManag
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+
+    public sealed record AssessmentPlanResponseDto(Guid Id, Guid CourseId, string Name, string AssessmentType, decimal WeightPercentage, bool IsCompetencyBased, bool IsActive)
+    {
+        public static AssessmentPlanResponseDto FromDomain(AssessmentPlan plan) =>
+            new(plan.Id, plan.CourseId, plan.Name, plan.AssessmentType, plan.WeightPercentage, plan.IsCompetencyBased, plan.IsActive);
+    }
+
+    public sealed record StudentAssessmentResponseDto(Guid Id, Guid StudentId, Guid CourseRegistrationId, Guid AssessmentPlanId, decimal Score, decimal MaximumScore, string? Grade, string? CompetencyLevel, bool IsFinalized, bool IsFinal, DateTimeOffset RecordedAt)
+    {
+        public static StudentAssessmentResponseDto FromDomain(StudentAssessment assessment) =>
+            new(assessment.Id, assessment.StudentId, assessment.CourseRegistrationId, assessment.AssessmentPlanId,
+                assessment.Score, assessment.MaximumScore, assessment.Grade, assessment.CompetencyLevel,
+                assessment.IsFinalized, assessment.IsFinal, assessment.RecordedAt);
     }
 
     public sealed record CreateAssessmentPlanRequest(Guid CourseId, string? Name, string? AssessmentType, decimal WeightPercentage, bool IsCompetencyBased);

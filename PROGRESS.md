@@ -31,6 +31,21 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Pin migration generation to `main` and fast-forward before committing generated migrations.
 - [x] Remove duplicate progress metadata and the duplicate system-wide name-display section from this file. The lowercase `progress.md` file is not present on the current baseline.
 
+### Additional DTO implementation — `feature/finance-api-dto-hardening`
+
+- [x] Add explicit finance response DTOs for fee structures and line items, discounts, installments, student charges, credit notes (including cancellation audit fields), and journal reversals.
+- [x] Replace direct finance entity responses for fee structures, charges, credit notes, discounts, installments and journal reversals with DTOs.
+- [x] Replace direct entity responses in curriculum logbook requirements, competency requirements, student logbooks/assessments and UHPAB fee references with contract-preserving DTOs.
+- [x] Replace direct payroll, academic year/intake/semester/stream, curriculum/course/mapping, calendar event, message/conversation, gate log, assessment plan/record and staff leave responses with explicit DTOs.
+- [x] Replace direct admission-completion, nested hostel, stream, subject and librarian-update entity responses with explicit DTOs.
+- [x] Add API/application tests for DTO projections, retained API fields, payment allocation bounds and inclusive fiscal-period start/end boundaries.
+- [x] Validate every student/staff CSV and Excel row with Zod before upload, report row/field errors and duplicate file identifiers, and enforce the same critical rules server-side with RFC4180-compatible CSV parsing, strict dates, email and staff-type validation.
+- [x] Connect the student-receivables accounting report to the existing outstanding-invoice endpoint and apply the selected currency consistently to the general ledger, trial balance, income statement and balance sheet.
+- [x] Wire Zod validation into examination plan/mark APIs, academic year/period APIs, administration user/password/permission APIs, and calendar event/reminder APIs.
+- [x] Wire Zod validation into curriculum/course creation and updates, single/bulk curriculum mappings, and clinical logbook requirement/competency assessments.
+- [x] Wire Zod validation into programme create/update and validate academic authority, programme type and duration fields.
+- [ ] Run and pass the complete backend/frontend/E2E CI for this branch before opening or merging its PR.
+
 ### Remaining audit work
 ### Baseline findings that refine the original audit
 

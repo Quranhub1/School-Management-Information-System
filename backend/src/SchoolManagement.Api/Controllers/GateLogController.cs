@@ -19,14 +19,14 @@ public sealed class GateLogController(SchoolManagementDbContext db) : Controller
         if (!string.IsNullOrWhiteSpace(personType)) query = query.Where(x => x.PersonType == personType.Trim());
         if (from.HasValue) query = query.Where(x => x.EntryTime >= from.Value);
         if (to.HasValue) query = query.Where(x => x.EntryTime <= to.Value);
-        return Ok(await query.OrderByDescending(x => x.EntryTime).ToListAsync(cancellationToken));
+        return Ok((await query.OrderByDescending(x => x.EntryTime).ToListAsync(cancellationToken)).Select(GateLogResponseDto.FromDomain).ToArray());
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
         var gateLog = await db.GateLogs.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        return gateLog is null ? NotFound() : Ok(gateLog);
+        return gateLog is null ? NotFound() : Ok(GateLogResponseDto.FromDomain(gateLog));
     }
 
     [HttpPost]
@@ -43,7 +43,7 @@ public sealed class GateLogController(SchoolManagementDbContext db) : Controller
         };
         db.GateLogs.Add(gateLog);
         await db.SaveChangesAsync(cancellationToken);
-        return Created($"api/gate/{gateLog.Id}", gateLog);
+        return Created($"api/gate/{gateLog.Id}", GateLogResponseDto.FromDomain(gateLog));
     }
 
     [HttpPatch("{id:guid}/exit")]
@@ -55,6 +55,13 @@ public sealed class GateLogController(SchoolManagementDbContext db) : Controller
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
+}
+
+public sealed record GateLogResponseDto(Guid Id, string PersonName, string PersonType, string Purpose, DateTimeOffset EntryTime, DateTimeOffset? ExitTime, Guid? IssuedBy, string? Notes)
+{
+    public static GateLogResponseDto FromDomain(Domain.Access.GateLog gateLog) => new(
+        gateLog.Id, gateLog.PersonName, gateLog.PersonType, gateLog.Purpose,
+        gateLog.EntryTime, gateLog.ExitTime, gateLog.IssuedBy, gateLog.Notes);
 }
 
 public sealed record CreateGateLogRequest(string PersonName, string PersonType, string Purpose, Guid? IssuedBy, string? Notes);
