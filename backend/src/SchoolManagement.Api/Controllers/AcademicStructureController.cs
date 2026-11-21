@@ -14,7 +14,7 @@ namespace SchoolManagement.Api.Controllers;
 public sealed class AcademicStructureController(SchoolManagementDbContext db) : ControllerBase
 {
     [HttpGet("years")]
-    public async Task<ActionResult<IReadOnlyList<AcademicYear>>> GetYears(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<AcademicYearResponseDto>>> GetYears(CancellationToken ct)
     {
         // Keep the dropdown continuous from 2001-2002 and always extend it
         // at least 100 years beyond the current year. This avoids a hard stop
@@ -36,21 +36,25 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
             );
             """, ct);
 
-        return Ok(await db.AcademicYears.AsNoTracking()
+        var years = await db.AcademicYears.AsNoTracking()
             .Where(x => x.IsActive)
             .OrderBy(x => x.StartDate)
-            .ToListAsync(ct));
+            .ToListAsync(ct);
+        return Ok(years.Select(AcademicYearResponseDto.FromDomain).ToArray());
     }
 
     [HttpGet("intakes")]
-    public async Task<ActionResult<IReadOnlyList<Intake>>> GetIntakes(CancellationToken ct)
-        => Ok(await db.Intakes.AsNoTracking()
+    public async Task<ActionResult<IReadOnlyList<IntakeResponseDto>>> GetIntakes(CancellationToken ct)
+    {
+        var intakes = await db.Intakes.AsNoTracking()
             .Where(x => x.IsOpen)
             .OrderBy(x => x.StartDate)
-            .ToListAsync(ct));
+            .ToListAsync(ct);
+        return Ok(intakes.Select(IntakeResponseDto.FromDomain).ToArray());
+    }
 
     [HttpPost("years")]
-    public async Task<ActionResult<AcademicYear>> CreateYear(CreateAcademicYearRequest request, CancellationToken ct)
+    public async Task<ActionResult<AcademicYearResponseDto>> CreateYear(CreateAcademicYearRequest request, CancellationToken ct)
     {
         if (request.StartDate >= request.EndDate) return BadRequest("Start date must be before end date.");
         if (await db.AcademicYears.AnyAsync(x => x.Name == request.Name && x.IsActive, ct)) return Conflict("An academic year with this name already exists.");
@@ -63,7 +67,7 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
         var year = new AcademicYear { Name = request.Name.Trim(), StartDate = request.StartDate, EndDate = request.EndDate, IsCurrent = request.IsCurrent, IsActive = true };
         db.AcademicYears.Add(year);
         await db.SaveChangesAsync(ct);
-        return Created($"api/academic-structure/years/{year.Id}", year);
+        return Created($"api/academic-structure/years/{year.Id}", AcademicYearResponseDto.FromDomain(year));
     }
 
     [HttpPut("years/{id:guid}/current")]
@@ -90,11 +94,14 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
     }
 
     [HttpGet("years/{academicYearId:guid}/periods")]
-    public async Task<ActionResult<IReadOnlyList<Semester>>> GetPeriods(Guid academicYearId, CancellationToken ct)
-        => Ok(await db.Semesters.AsNoTracking().Where(x => x.AcademicYearId == academicYearId).OrderBy(x => x.Sequence).ToListAsync(ct));
+    public async Task<ActionResult<IReadOnlyList<SemesterResponseDto>>> GetPeriods(Guid academicYearId, CancellationToken ct)
+    {
+        var periods = await db.Semesters.AsNoTracking().Where(x => x.AcademicYearId == academicYearId).OrderBy(x => x.Sequence).ToListAsync(ct);
+        return Ok(periods.Select(SemesterResponseDto.FromDomain).ToArray());
+    }
 
     [HttpPost("years/{academicYearId:guid}/periods")]
-    public async Task<ActionResult<Semester>> CreatePeriod(Guid academicYearId, CreateSemesterRequest request, CancellationToken ct)
+    public async Task<ActionResult<SemesterResponseDto>> CreatePeriod(Guid academicYearId, CreateSemesterRequest request, CancellationToken ct)
     {
         var year = await db.AcademicYears.FindAsync([academicYearId], ct);
         if (year is null) return NotFound("Academic year not found.");
@@ -109,21 +116,24 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
         var period = new Semester { AcademicYearId = academicYearId, Name = request.Name.Trim(), Sequence = request.Sequence, StartDate = request.StartDate, EndDate = request.EndDate, IsCurrent = request.IsCurrent, IsActive = true };
         db.Semesters.Add(period);
         await db.SaveChangesAsync(ct);
-        return Created($"api/academic-structure/periods/{period.Id}", period);
+        return Created($"api/academic-structure/periods/{period.Id}", SemesterResponseDto.FromDomain(period));
     }
 
     [HttpGet("streams")]
-    public async Task<ActionResult<IReadOnlyList<AcademicStream>>> GetStreams(CancellationToken ct)
-        => Ok(await db.Streams.AsNoTracking().OrderBy(x => x.Code).ToListAsync(ct));
+    public async Task<ActionResult<IReadOnlyList<AcademicStreamResponseDto>>> GetStreams(CancellationToken ct)
+    {
+        var streams = await db.Streams.AsNoTracking().OrderBy(x => x.Code).ToListAsync(ct);
+        return Ok(streams.Select(AcademicStreamResponseDto.FromDomain).ToArray());
+    }
 
     [HttpPost("streams")]
-    public async Task<ActionResult<AcademicStream>> CreateStream([FromBody] CreateStreamRequest request, CancellationToken ct)
+    public async Task<ActionResult<AcademicStreamResponseDto>> CreateStream([FromBody] CreateStreamRequest request, CancellationToken ct)
     {
         if (await db.Streams.AnyAsync(x => x.Code == request.Code.Trim(), ct)) return Conflict("A stream with this code already exists.");
         var stream = new AcademicStream { Name = request.Name.Trim(), Code = request.Code.Trim().ToUpperInvariant(), ClassFormId = request.ClassFormId, IsActive = true };
         db.Streams.Add(stream);
         await db.SaveChangesAsync(ct);
-        return Created($"api/academic-structure/streams/{stream.Id}", stream);
+        return Created($"api/academic-structure/streams/{stream.Id}", AcademicStreamResponseDto.FromDomain(stream));
     }
 
     [HttpPatch("streams/{id:guid}")]
@@ -138,6 +148,27 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
+}
+
+
+public sealed record AcademicYearResponseDto(Guid Id, string Name, DateOnly StartDate, DateOnly EndDate, bool IsCurrent, bool IsActive)
+{
+    public static AcademicYearResponseDto FromDomain(AcademicYear year) => new(year.Id, year.Name, year.StartDate, year.EndDate, year.IsCurrent, year.IsActive);
+}
+
+public sealed record IntakeResponseDto(Guid Id, string Name, string Code, DateOnly StartDate, bool IsOpen)
+{
+    public static IntakeResponseDto FromDomain(Intake intake) => new(intake.Id, intake.Name, intake.Code, intake.StartDate, intake.IsOpen);
+}
+
+public sealed record SemesterResponseDto(Guid Id, Guid AcademicYearId, string Name, int Sequence, DateOnly StartDate, DateOnly EndDate, bool IsCurrent, bool IsActive)
+{
+    public static SemesterResponseDto FromDomain(Semester period) => new(period.Id, period.AcademicYearId, period.Name, period.Sequence, period.StartDate, period.EndDate, period.IsCurrent, period.IsActive);
+}
+
+public sealed record AcademicStreamResponseDto(Guid Id, string Name, string Code, Guid AcademicClassId, string? ClassFormId, bool IsActive)
+{
+    public static AcademicStreamResponseDto FromDomain(AcademicStream stream) => new(stream.Id, stream.Name, stream.Code, stream.AcademicClassId, stream.ClassFormId, stream.IsActive);
 }
 
 public sealed record CreateStreamRequest(string Name, string Code, string? ClassFormId);
