@@ -25,7 +25,7 @@ public sealed class AddStaffUserLinks : Migration
                 table.ForeignKey(
                     name: "FK_StaffUserLinks_StaffMembers_StaffId",
                     column: x => x.StaffId,
-                    principalTable: "StaffMembers",
+                    principalTable: "staff_members",
                     principalColumn: "Id",
                     onDelete: ReferentialAction.Cascade);
                 table.ForeignKey(
@@ -35,6 +35,12 @@ public sealed class AddStaffUserLinks : Migration
                     principalColumn: "Id",
                     onDelete: ReferentialAction.Cascade);
             });
+
+        migrationBuilder.CreateIndex(
+            name: "IX_StaffUserLinks_StaffId",
+            table: "StaffUserLinks",
+            column: "StaffId",
+            unique: true);
 
         migrationBuilder.CreateIndex(
             name: "IX_StaffUserLinks_UserId",
