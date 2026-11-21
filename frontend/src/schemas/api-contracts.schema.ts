@@ -643,3 +643,80 @@ export const calendarReminderCreateRequestSchema = z.object({
   remindOnUtc: z.iso.date(),
   channel: z.enum(["InApp", "SMS", "Email"]),
 });
+
+
+export const createCurriculumRequestSchema = z.object({
+  programmeId: identifierSchema,
+  version: requiredTextSchema.max(40),
+  title: requiredTextSchema.max(160),
+  minimumCredits: z.number().finite().nonnegative(),
+  effectiveFrom: z.iso.date(),
+  effectiveTo: z.iso.date().nullable().optional(),
+  programmeType: z.number().int().min(0).max(1),
+});
+
+export const createCourseRequestSchema = z.object({
+  authorityCode: requiredTextSchema.max(40),
+  code: requiredTextSchema.max(40),
+  name: requiredTextSchema.max(160),
+  creditUnits: z.number().int().nonnegative(),
+  description: z.string().trim().max(1000).nullable().optional(),
+  courseType: z.string().trim().max(80).nullable().optional(),
+});
+
+export const curriculumCourseMappingRequestSchema = z.object({
+  courseId: identifierSchema,
+  yearOfStudy: z.number().int().positive(),
+  semesterNumber: z.number().int().positive(),
+  isCore: z.boolean(),
+});
+
+export const bulkCurriculumCourseMappingRequestSchema = z.object({
+  courseIds: z.array(identifierSchema).min(1).max(500),
+  yearOfStudy: z.number().int().positive(),
+  semesterNumber: z.number().int().positive(),
+  isCore: z.boolean(),
+}).refine(value => new Set(value.courseIds).size === value.courseIds.length, {
+  path: ["courseIds"],
+  message: "A course may only be selected once in a bulk mapping.",
+});
+
+export const updateCourseRequestSchema = createCourseRequestSchema.extend({
+  isActive: z.boolean(),
+});
+
+export const updateCurriculumRequestSchema = z.object({
+  version: requiredTextSchema.max(40),
+  title: requiredTextSchema.max(160),
+  minimumCredits: z.number().finite().nonnegative(),
+  effectiveFrom: z.iso.date(),
+  effectiveTo: z.iso.date().nullable().optional(),
+  programmeType: z.number().int().min(0).max(1),
+  isActive: z.boolean(),
+});
+
+export const logbookRequirementRequestSchema = z.object({
+  title: requiredTextSchema.max(160),
+  description: z.string().trim().max(1000).optional(),
+  yearOfStudy: z.number().int().positive(),
+  semesterNumber: z.number().int().positive(),
+  requiredQuantity: z.number().int().positive(),
+  isMandatory: z.boolean(),
+});
+
+export const logbookCompetencyRequestSchema = z.object({
+  code: requiredTextSchema.max(40),
+  name: requiredTextSchema.max(160),
+  requiredCount: z.number().int().positive(),
+  isMandatory: z.boolean(),
+});
+
+export const studentLogbookCompetencyAssessmentRequestSchema = z.object({
+  outcome: requiredTextSchema.max(80),
+  assessedOn: z.iso.date().nullable().optional(),
+  assessorName: z.string().trim().max(160).optional(),
+  assessorRole: z.string().trim().max(100).optional(),
+  studentPlacementId: identifierSchema.nullable().optional(),
+  evidenceReference: z.string().trim().max(500).optional(),
+  remarks: z.string().trim().max(1000).optional(),
+});
