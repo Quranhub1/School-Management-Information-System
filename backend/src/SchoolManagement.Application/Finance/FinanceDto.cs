@@ -312,3 +312,134 @@ public sealed record StaffAdvanceDto(
         a.RecoveredFromPayrollId,
         a.Notes);
 }
+
+
+public sealed record FeeStructureItemResponseDto(
+    Guid Id,
+    Guid FeeStructureId,
+    string Code,
+    string Name,
+    decimal Amount,
+    string Currency,
+    Guid? IncomeAccountId,
+    int SortOrder,
+    bool IsOptional)
+{
+    public static FeeStructureItemResponseDto FromDomain(FeeStructureItem item) => new(
+        item.Id, item.FeeStructureId, item.Code, item.Name, item.Amount, item.Currency,
+        item.IncomeAccountId, item.SortOrder, item.IsOptional);
+}
+
+public sealed record FeeStructureResponseDto(
+    Guid Id,
+    Guid ProgrammeId,
+    Guid AcademicYearId,
+    string Name,
+    string FeeType,
+    decimal TotalAmount,
+    string Currency,
+    bool IsActive,
+    DateTimeOffset CreatedAt,
+    IReadOnlyCollection<FeeStructureItemResponseDto> Items)
+{
+    public static FeeStructureResponseDto FromDomain(FeeStructure fee) => new(
+        fee.Id, fee.ProgrammeId, fee.AcademicYearId, fee.Name, fee.FeeType,
+        fee.TotalAmount, fee.Currency, fee.IsActive, fee.CreatedAt,
+        fee.Items.OrderBy(item => item.SortOrder).Select(FeeStructureItemResponseDto.FromDomain).ToArray());
+}
+
+public sealed record InvoiceDiscountResponseDto(
+    Guid Id,
+    Guid StudentInvoiceId,
+    string DiscountType,
+    decimal? Percentage,
+    decimal Amount,
+    string Reason,
+    string Status,
+    string? RequestedBy,
+    string? ApprovedBy,
+    DateTimeOffset RequestedAt,
+    DateTimeOffset? ApprovedAt,
+    Guid? ApprovalJournalEntryId)
+{
+    public static InvoiceDiscountResponseDto FromDomain(InvoiceDiscount item) => new(
+        item.Id, item.StudentInvoiceId, item.DiscountType, item.Percentage, item.Amount,
+        item.Reason, item.Status, item.RequestedBy, item.ApprovedBy, item.RequestedAt,
+        item.ApprovedAt, item.ApprovalJournalEntryId);
+}
+
+public sealed record InvoiceInstallmentResponseDto(
+    Guid Id,
+    Guid StudentInvoiceId,
+    int Sequence,
+    DateOnly DueDate,
+    decimal Percentage,
+    decimal Amount,
+    decimal PaidAmount,
+    decimal OutstandingAmount,
+    string Status,
+    DateTimeOffset CreatedAt)
+{
+    public static InvoiceInstallmentResponseDto FromDomain(InvoiceInstallment item) => new(
+        item.Id, item.StudentInvoiceId, item.Sequence, item.DueDate, item.Percentage,
+        item.Amount, item.PaidAmount, item.OutstandingAmount, item.Status, item.CreatedAt);
+}
+
+public sealed record StudentChargeResponseDto(
+    Guid Id,
+    Guid StudentId,
+    Guid? StudentInvoiceId,
+    string ChargeType,
+    string Description,
+    decimal Amount,
+    string Currency,
+    string Status,
+    string? CreatedBy,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? VoidedAt,
+    string? VoidedBy,
+    string? VoidReason)
+{
+    public static StudentChargeResponseDto FromDomain(StudentCharge item) => new(
+        item.Id, item.StudentId, item.StudentInvoiceId, item.ChargeType, item.Description,
+        item.Amount, item.Currency, item.Status, item.CreatedBy, item.CreatedAt,
+        item.VoidedAt, item.VoidedBy, item.VoidReason);
+}
+
+public sealed record JournalEntryLineResponseDto(
+    Guid Id,
+    Guid AccountId,
+    string? Description,
+    decimal Debit,
+    decimal Credit,
+    Guid? CampusId,
+    Guid? FacultyId,
+    Guid? DepartmentId,
+    Guid? ProgrammeId)
+{
+    public static JournalEntryLineResponseDto FromDomain(JournalEntryLine line) => new(
+        line.Id, line.AccountId, line.Description, line.Debit, line.Credit,
+        line.CampusId, line.FacultyId, line.DepartmentId, line.ProgrammeId);
+}
+
+public sealed record JournalEntryResponseDto(
+    Guid Id,
+    string EntryNumber,
+    string Currency,
+    DateTimeOffset EntryDate,
+    string? Description,
+    string Status,
+    DateTimeOffset? PostedAt,
+    string? PostedBy,
+    DateTimeOffset CreatedAt,
+    string? SourceType,
+    Guid? SourceId,
+    Guid? ReversalOfJournalEntryId,
+    IReadOnlyCollection<JournalEntryLineResponseDto> Lines)
+{
+    public static JournalEntryResponseDto FromDomain(JournalEntry entry) => new(
+        entry.Id, entry.EntryNumber, entry.Currency, entry.EntryDate, entry.Description,
+        entry.Status, entry.PostedAt, entry.PostedBy, entry.CreatedAt, entry.SourceType,
+        entry.SourceId, entry.ReversalOfJournalEntryId,
+        entry.Lines.Select(JournalEntryLineResponseDto.FromDomain).ToArray());
+}
