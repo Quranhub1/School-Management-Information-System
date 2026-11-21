@@ -9,9 +9,7 @@ public sealed partial class AddIndependentStaffPermissions : Migration
         // 20261120180000 already created the permission tables and StaffUserLinks.
         // Evolve that schema to the independent staff-permission model instead of
         // attempting to create the same tables a second time.
-        migrationBuilder.DropIndex(
-            name: "IX_Permissions_GroupCode_Code",
-            table: "Permissions");
+        migrationBuilder.Sql("DROP INDEX IF EXISTS \"IX_Permissions_GroupCode_Code\";");
 
         migrationBuilder.RenameColumn(
             name: "GroupCode",
