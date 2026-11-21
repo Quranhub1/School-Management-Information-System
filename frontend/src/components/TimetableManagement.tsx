@@ -197,7 +197,7 @@ const sorted = [...rows].sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime
 const slots = [...new Set(sorted.map(entry => entry.startTime))].sort((a, b) => a.localeCompare(b))
 const printableSlots = slots.length ? slots : defaultTemplateSlots.map(slot => slot.startTime)
 const timetableBody = [
-[{ text: 'DAY', style: 'tableHeader' }, ...printableSlots.map((slot, index) => ({ text: PERIOD ${index + 1}\n${timeLabel(slot)}, style: 'tableHeader' }))],
+[{ text: 'DAY', style: 'tableHeader' }, ...printableSlots.map((slot, index) => ({ text: `PERIOD ${index + 1}\n${timeLabel(slot)}`, style: 'tableHeader' }))],
 ...displayedWeekDays.map(day => [
 { text: days[day].toUpperCase(), style: 'tableHeader' },
 ...printableSlots.map(slot => {
@@ -332,7 +332,7 @@ paddingTop: () => 6,
 paddingBottom: () => 6,
 } },
 ...(templateRegistrarName.trim()
-? [{ text: ${templateRegistrarRole || 'ACADEMIC REGISTRAR'}\n${templateRegistrarName.trim().toUpperCase()}, alignment: 'left' as const, bold: true, margin: [0, 28, 0, 0] }]
+? [{ text: `${templateRegistrarRole || 'ACADEMIC REGISTRAR'}\n${templateRegistrarName.trim().toUpperCase()}`, alignment: 'left' as const, bold: true, margin: [0, 28, 0, 0] }]
 : []),
 ...(templateFooterText.trim() ? [{ text: templateFooterText, alignment: 'left' as const, fontSize: 8, margin: [0, 10, 0, 0] }] : []),
 ],
