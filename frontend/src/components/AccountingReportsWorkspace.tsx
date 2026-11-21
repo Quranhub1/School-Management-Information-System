@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { getAccessToken } from '../api/auth'
 import { readApiErrorMessage } from '../api/errors'
 import { formatCurrency, SYSTEM_CURRENCY } from '../lib/currency'
@@ -78,6 +78,73 @@ export function AccountingReportsWorkspace() {
       if (tab === 'balance-sheet') setBalance(await request<BalanceReport>(`/api/finance/reports/balance-sheet?${new URLSearchParams({ ...(asOf ? { asOf } : {}), currency })}`))
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load accounting data.') }
     finally { setLoading(false) }
+  }
+
+
+  async function saveFiscalPeriod(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+    setNotice('')
+    try {
+      await createFiscalPeriod(fiscalPeriodForm)
+      setFiscalPeriodForm({ name: '', startDate: '', endDate: '' })
+      setNotice('Fiscal period created successfully.')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create fiscal period.')
+    }
+  }
+
+  async function closeFiscalPeriod() {
+    setError('')
+    setNotice('')
+    try {
+      await postFiscalPeriodClosing({ fiscalPeriodId: closingPeriodId, retainedEarningsAccountId })
+      setNotice('Fiscal period closed successfully.')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to close fiscal period.')
+    }
+  }
+
+  async function saveOpeningBalances(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+    setNotice('')
+    const debit = Number(openingDebitAmount)
+    const credit = Number(openingCreditAmount)
+    if (!openingPeriodId || !openingDebitAccountId || !openingCreditAccountId) {
+      setError('Select an open fiscal period, a debit account and a credit account.')
+      return
+    }
+    if (!Number.isFinite(debit) || !Number.isFinite(credit) || debit <= 0 || credit <= 0) {
+      setError('Enter positive debit and credit amounts.')
+      return
+    }
+    if (debit !== credit) {
+      setError('Opening balances must balance: total debits must equal total credits.')
+      return
+    }
+    if (openingDebitAccountId === openingCreditAccountId) {
+      setError('Choose different accounts for the debit and credit entries.')
+      return
+    }
+    try {
+      await createOpeningBalances({
+        fiscalPeriodId: openingPeriodId,
+        currency,
+        lines: [
+          { accountId: openingDebitAccountId, debit, credit: 0, description: 'Opening balance debit' },
+          { accountId: openingCreditAccountId, debit: 0, credit, description: 'Opening balance credit' },
+        ],
+      })
+      setNotice('Opening balances posted successfully.')
+      setOpeningDebitAmount('0')
+      setOpeningCreditAmount('0')
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to post opening balances.')
+    }
   }
 
   useEffect(() => {
