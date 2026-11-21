@@ -105,7 +105,8 @@ export function recordAssessment(input: {
   return sendJson<StudentAssessment>('/api/assessments', validated)
 }
 
-export async function finalizeAssessment(id: string): Promise<StudentAssessment> {\n  if (!id.trim()) throw new Error('Assessment ID is required.')
+export async function finalizeAssessment(id: string): Promise<StudentAssessment> {
+  if (!id.trim()) throw new Error('Assessment ID is required.')
   const token = getAccessToken()
   const response = await fetch(`${API_BASE_URL}/api/assessments/records/${encodeURIComponent(id)}/finalize`, {
     method: 'PATCH',
