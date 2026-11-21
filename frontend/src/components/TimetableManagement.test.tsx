@@ -151,14 +151,20 @@ describe('TimetableManagement', () => {
     fireEvent.change(await screen.findByLabelText('Timetable document title'), { target: { value: 'OFFICIAL CLASS TIMETABLE' } })
     fireEvent.change(screen.getByLabelText('Registrar name'), { target: { value: 'JANE DOE' } })
     fireEvent.click(screen.getByRole('button', { name: /edit monday 08:00 period/i }))
+    fireEvent.change(screen.getByLabelText('Course unit'), { target: { value: 'course-1' } })
+    fireEvent.change(screen.getByLabelText('Lecturer / teacher'), { target: { value: 'teacher-1' } })
     fireEvent.change(screen.getByLabelText('Merge down (days)'), { target: { value: '2' } })
+    fireEvent.change(screen.getByLabelText('Merge across periods'), { target: { value: '2' } })
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
     fireEvent.click(screen.getByRole('button', { name: /save timetable template/i }))
     await waitFor(() => expect(saveTimetableTemplate).toHaveBeenCalled())
-    expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', [], expect.objectContaining({
+    expect(saveTimetableTemplate).toHaveBeenCalledWith('group-1', expect.arrayContaining([
+      expect.objectContaining({ dayOfWeek: 1, startTime: '08:00:00', endTime: '10:00:00', courseId: 'course-1', teacherId: 'teacher-1' }),
+      expect.objectContaining({ dayOfWeek: 2, startTime: '08:00:00', endTime: '10:00:00', courseId: 'course-1', teacherId: 'teacher-1' }),
+    ]), expect.objectContaining({
       title: 'OFFICIAL CLASS TIMETABLE',
       registrarName: 'JANE DOE',
-      cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2' }) }),
+      cells: expect.objectContaining({ '1-0': expect.objectContaining({ rowSpan: '2', colSpan: '2' }) }),
     }))
   })
 
