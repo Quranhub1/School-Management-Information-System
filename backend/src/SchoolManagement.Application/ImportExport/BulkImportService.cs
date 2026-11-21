@@ -11,10 +11,14 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
         var errors = new List<string>();
         var warnings = new List<string>();
         var successCount = 0;
-        var lines = request.CsvData.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2)
+        IReadOnlyList<string[]> rows;
+        try { rows = ParseCsvRows(request.CsvData); }
+        catch (FormatException ex) { return new BulkImportResult(0, 1, new[] { ex.Message }, Array.Empty<string>()); }
+        if (rows.Count < 2)
             return new BulkImportResult(0, 1, new[] { "CSV data is empty or missing headers." }, Array.Empty<string>());
-        var headers = lines[0].Split(',').Select(h => h.Trim().ToLowerInvariant()).ToArray();
+        var headers = rows[0].Select(h => h.Trim().ToLowerInvariant()).ToArray();
+        if (headers.Distinct(StringComparer.OrdinalIgnoreCase).Count() != headers.Length)
+            return new BulkImportResult(0, 1, new[] { "CSV headers must be unique." }, Array.Empty<string>());
         var studentNumberIdx = Array.IndexOf(headers, "studentnumber");
         var firstNameIdx = Array.IndexOf(headers, "firstname");
         var lastNameIdx = Array.IndexOf(headers, "lastname");
@@ -28,19 +32,25 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
             return new BulkImportResult(0, 1, new[] { "CSV must contain: StudentNumber, FirstName, LastName." }, Array.Empty<string>());
         var existingStudents = await students.GetAllAsync(cancellationToken);
         var existingNumbers = new HashSet<string>(existingStudents.Select(s => s.StudentNumber), StringComparer.OrdinalIgnoreCase);
-        for (var i = 1; i < lines.Length; i++)
+        var importedNumbers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 1; i < rows.Count; i++)
         {
-            var values = lines[i].Split(',');
-            if (values.Length < headers.Length) { errors.Add($"Row {i + 1}: insufficient columns."); continue; }
+            var values = rows[i];
+            if (values.Length != headers.Length) { errors.Add($"Row {i + 1}: expected {headers.Length} columns but found {values.Length}."); continue; }
             var studentNumber = values.ElementAtOrDefault(studentNumberIdx)?.Trim();
             var firstName = values.ElementAtOrDefault(firstNameIdx)?.Trim();
             var lastName = values.ElementAtOrDefault(lastNameIdx)?.Trim();
             if (string.IsNullOrWhiteSpace(studentNumber) || string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName)) { errors.Add($"Row {i + 1}: StudentNumber, FirstName and LastName are required."); continue; }
             if (existingNumbers.Contains(studentNumber)) { warnings.Add($"Row {i + 1}: Student with number {studentNumber} already exists."); continue; }
+            if (!importedNumbers.Add(studentNumber)) { errors.Add($"Row {i + 1}: StudentNumber {studentNumber} is duplicated in this import file."); continue; }
             var otherNames = values.ElementAtOrDefault(otherNamesIdx)?.Trim();
             var dobStr = values.ElementAtOrDefault(dobIdx)?.Trim();
             DateOnly? dob = null;
-            if (!string.IsNullOrWhiteSpace(dobStr) && DateOnly.TryParse(dobStr, out var parsedDob)) dob = parsedDob;
+            if (!string.IsNullOrWhiteSpace(dobStr))
+            {
+                if (!DateOnly.TryParse(dobStr, out var parsedDob)) { errors.Add($"Row {i + 1}: DateOfBirth must be a valid date in yyyy-MM-dd format."); continue; }
+                dob = parsedDob;
+            }
             var gender = values.ElementAtOrDefault(genderIdx)?.Trim();
             var phone = values.ElementAtOrDefault(phoneIdx)?.Trim();
             var email = values.ElementAtOrDefault(emailIdx)?.Trim();
@@ -70,9 +80,13 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
         var errors = new List<string>();
         var warnings = new List<string>();
         var successCount = 0;
-        var lines = request.CsvData.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2) return new BulkImportResult(0, 1, new[] { "CSV data is empty or missing headers." }, Array.Empty<string>());
-        var headers = lines[0].Split(',').Select(h => h.Trim().ToLowerInvariant()).ToArray();
+        IReadOnlyList<string[]> rows;
+        try { rows = ParseCsvRows(request.CsvData); }
+        catch (FormatException ex) { return new BulkImportResult(0, 1, new[] { ex.Message }, Array.Empty<string>()); }
+        if (rows.Count < 2) return new BulkImportResult(0, 1, new[] { "CSV data is empty or missing headers." }, Array.Empty<string>());
+        var headers = rows[0].Select(h => h.Trim().ToLowerInvariant()).ToArray();
+        if (headers.Distinct(StringComparer.OrdinalIgnoreCase).Count() != headers.Length)
+            return new BulkImportResult(0, 1, new[] { "CSV headers must be unique." }, Array.Empty<string>());
         var staffNumberIdx = Array.IndexOf(headers, "staffnumber");
         var firstNameIdx = Array.IndexOf(headers, "firstname");
         var lastNameIdx = Array.IndexOf(headers, "lastname");
@@ -95,6 +109,9 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
             var staffType = values.ElementAtOrDefault(staffTypeIdx)?.Trim();
             if (string.IsNullOrWhiteSpace(staffNumber) || string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) || string.IsNullOrWhiteSpace(employmentType) || string.IsNullOrWhiteSpace(staffType)) { errors.Add($"Row {i + 1}: StaffNumber, FirstName, LastName, EmploymentType and StaffType are required."); continue; }
             if (existingNumbers.Contains(staffNumber)) { warnings.Add($"Row {i + 1}: Staff with number {staffNumber} already exists."); continue; }
+            if (!importedNumbers.Add(staffNumber)) { errors.Add($"Row {i + 1}: StaffNumber {staffNumber} is duplicated in this import file."); continue; }
+            if (!Enum.TryParse<StaffType>(staffType, true, out var parsedStaffType) || !Enum.IsDefined(parsedStaffType))
+            { errors.Add($"Row {i + 1}: StaffType must be Teaching or NonTeaching."); continue; }
             var nationalId = values.ElementAtOrDefault(nationalIdIdx)?.Trim();
             var phone = values.ElementAtOrDefault(phoneIdx)?.Trim();
             var email = values.ElementAtOrDefault(emailIdx)?.Trim();
@@ -104,7 +121,7 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
                 FirstName = firstName,
                 LastName = lastName,
                 EmploymentType = employmentType,
-                StaffType = Enum.Parse<SchoolManagement.Domain.Staff.StaffType>(staffType),
+                StaffType = parsedStaffType,
                 NationalId = nationalId,
                 PhoneNumber = phone,
                 Email = email
@@ -152,6 +169,53 @@ public sealed class BulkImportService(IStudentRepository students, HR.IHrReposit
         foreach (var s in staffList)
             sb.AppendLine(string.Join(",", Escape(s.StaffNumber), Escape(s.FirstName), Escape(s.LastName), Escape(s.NationalId), Escape(s.PhoneNumber), Escape(s.Email), Escape(s.EmploymentType), s.IsActive.ToString()));
         return sb.ToString();
+    }
+
+
+    private static IReadOnlyList<string[]> ParseCsvRows(string csvData)
+    {
+        if (string.IsNullOrWhiteSpace(csvData)) return Array.Empty<string[]>();
+        var rows = new List<string[]>();
+        var fields = new List<string>();
+        var field = new System.Text.StringBuilder();
+        var inQuotes = false;
+        for (var index = 0; index < csvData.Length; index++)
+        {
+            var character = csvData[index];
+            if (inQuotes)
+            {
+                if (character == '"')
+                {
+                    if (index + 1 < csvData.Length && csvData[index + 1] == '"')
+                    {
+                        field.Append('"');
+                        index++;
+                    }
+                    else inQuotes = false;
+                }
+                else field.Append(character);
+                continue;
+            }
+            if (character == '"' && field.Length == 0) inQuotes = true;
+            else if (character == '"') throw new FormatException("CSV contains an unexpected quote inside an unquoted field.");
+            else if (character == ',') { fields.Add(field.ToString()); field.Clear(); }
+            else if (character is '\r' or '\n')
+            {
+                fields.Add(field.ToString());
+                field.Clear();
+                if (fields.Any(value => !string.IsNullOrWhiteSpace(value))) rows.Add(fields.ToArray());
+                fields.Clear();
+                if (character == '\r' && index + 1 < csvData.Length && csvData[index + 1] == '\n') index++;
+            }
+            else field.Append(character);
+        }
+        if (inQuotes) throw new FormatException("CSV contains an unterminated quoted field.");
+        if (field.Length > 0 || fields.Count > 0)
+        {
+            fields.Add(field.ToString());
+            if (fields.Any(value => !string.IsNullOrWhiteSpace(value))) rows.Add(fields.ToArray());
+        }
+        return rows;
     }
 
     private static string Escape(string? value)
