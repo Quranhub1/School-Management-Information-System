@@ -830,9 +830,11 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setError('Choose a class and load it into the template before saving.')
       return
     }
+    const visibleDays = templateDayOrder.filter(day => showWeekends || day <= 5)
+    const visibleDaySet = new Set(visibleDays)
     const coveredPopulated = Object.entries(templateCells).filter(([key, cell]) => {
       const [day, slot] = key.split('-').map(Number)
-      return (cell.courseId || cell.teacherId) && templateCellCovered(day, slot)
+      return visibleDaySet.has(day) && (cell.courseId || cell.teacherId) && templateCellCovered(day, slot)
     })
     if (coveredPopulated.length) {
       setError(
@@ -842,7 +844,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
     const populated = Object.entries(templateCells).filter(([key, cell]) => {
       const [day, slot] = key.split('-').map(Number)
-      return (cell.courseId || cell.teacherId) && !templateCellCovered(day, slot)
+      return visibleDaySet.has(day) && (cell.courseId || cell.teacherId) && !templateCellCovered(day, slot)
     })
     if (
       templateSlots.some(slot => !slot.startTime || !slot.endTime || slot.endTime <= slot.startTime)
@@ -855,22 +857,29 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       return
     }
 
-    const templateEntries: CreateTimetableEntry[] = populated.map(([key, cell]) => {
-      const [day, slotIndexText] = key.split('-')
-      const slot = templateSlots[Number(slotIndexText)]
-      return {
+    const templateEntries: CreateTimetableEntry[] = populated.flatMap(([key, cell]) => {
+      const [dayText, slotIndexText] = key.split('-')
+      const day = Number(dayText)
+      const slotIndex = Number(slotIndexText)
+      const slot = templateSlots[slotIndex]
+      const periodSpan = templatePeriodSpan(slotIndex, cell.colSpan)
+      const lastSlot = templateSlots[slotIndex + periodSpan - 1]
+      const dayIndex = visibleDays.indexOf(day)
+      const daySpan = Math.max(1, Math.min(visibleDays.length - dayIndex, Number(cell.rowSpan) || 1))
+      if (!slot || !lastSlot || dayIndex < 0) return []
+      return Array.from({ length: daySpan }, (_, offset) => ({
         teachingGroupId: templateGroupId,
         courseId: cell.courseId,
         teacherId: cell.teacherId,
         curriculumId: selectedCurriculum.id,
         yearOfStudy: Number(yearOfStudy),
         curriculumSemesterNumber: Number(curriculumSemester),
-        dayOfWeek: Number(day),
+        dayOfWeek: visibleDays[dayIndex + offset],
         startTime: slot.startTime + ':00',
-        endTime: slot.endTime + ':00',
+        endTime: lastSlot.endTime + ':00',
         room: cell.room.trim() || undefined,
         sessionType: cell.sessionType || 'Lecture',
-      }
+      }))
     })
 
     setTemplateSaving(true)
