@@ -753,7 +753,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
   const selectedCurriculum = authorityCurricula.find(item => item.id === selected)
   const selectedProgrammeCode = programmes.find(item => item.id === selectedCurriculum?.programmeId)?.code ?? ''
   const semesterCodePrefix = selectedProgrammeCode
-    .replace(/^(?:UHPAB|UVTAB|SB)[-_]/i, '')
+    .replace(/^(?:UHPAB|UVTAB|KSHS|SB)[-_]/i, '')
     .replace(/[^a-zA-Z0-9]/g, '')
     .toUpperCase()
   const semesterGroups = Array.from(
