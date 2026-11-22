@@ -556,3 +556,17 @@ PR #290 is superseded; its payment-account resolver and clearing-account changes
 - [x] Populate the timetable year selector from curriculum course mappings when available, with programme duration as a fallback when mappings are absent.
 - [ ] Run backend/frontend builds and verify the dropdown in the running application.
 - [ ] Confirm curriculum course mappings are configured so course choices and saving remain available for each selected year/semester.
+
+
+## Timetable cascading selection and tutor loading — 2026-11-22
+- [x] Derive curriculum options from the selected programme and discard a stale curriculum when the programme changes.
+- [x] Populate study years from configured programme duration plus any mapped curriculum years.
+- [x] Derive curriculum semesters and course units from the selected curriculum/year/semester mappings; do not fabricate semester or course-unit records when mappings are absent.
+- [x] Filter teaching groups to active offerings matching the selected programme, academic period and mapped course units.
+- [x] Keep the generator's multi-group selection across all mapped course units while the template's class selector narrows to the selected course unit's teaching group.
+- [x] Return active Teaching staff with their CourseUnitIdsJson assignments and filter tutor choices for the selected course unit; staff without course-specific assignments remain available.
+- [x] Restrict each template cell's course unit to the selected teaching group's offering so template saves do not offer invalid course/group combinations.
+- [x] Add unit tests for programme → curriculum → year → curriculum semester → course unit → teaching group → tutor option derivation, programme changes, and incomplete mappings.
+- [ ] Run the timetable selection tests and frontend production build.
+- [ ] Run backend build and verify /api/timetable/options against the test database.
+- [ ] Browser-verify each dropdown cascade, template loading, tutor filtering, save/reload and PDF output.
