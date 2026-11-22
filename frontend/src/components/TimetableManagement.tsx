@@ -16,7 +16,7 @@ import {
   type TimetableOptions,
 } from '../api/timetable'
 import './TimetableManagement.css'
-import { deriveTimetableSelection } from './timetableSelection'
+import { deriveTimetableSelection, filterTutorsForCourse } from './timetableSelection'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 
@@ -275,9 +275,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const availableGroups = selection.teachingGroups
   const allAvailableGroups = selection.allTeachingGroups
   const availableTutors = selection.tutors
-  const scheduleTutors = options.teachers.filter(
-    item => !item.courseUnitIds?.length || !courseId || item.courseUnitIds.includes(courseId)
-  )
+  const scheduleTutors = filterTutorsForCourse(options.teachers, courseId)
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedTemplateGroup = options.teachingGroups.find(item => item.id === templateGroupId)
   const templateCourseId = selectedTemplateGroup?.courseId || selectedCourseUnitId
