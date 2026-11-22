@@ -197,6 +197,47 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
               AND p."Code" NOT IN ('SB-ADDS','KSHS-ADDS')
               AND split_part(course."Code",' ',2) ~ '^[1-3][12][0-9]{2}$';
 
+            -- The catalogue lists CSSOM / DSSOM together, so the same seven
+            -- semester course units belong to both the certificate and diploma curricula.
+            INSERT INTO "Curricula"
+            ("Id","ProgrammeId","Version","Title","MinimumCredits","EffectiveFrom","EffectiveTo",
+             "ProgrammeType","Status","IsActive","IsDeleted")
+            SELECT gen_random_uuid(),p."Id",'KSHS-MASTER-CATALOG-2026-11',
+                   'KSHS Master Curriculum & Course Units Catalog — imported source version',
+                   0,DATE '2026-11-23',NULL,0,'Draft',TRUE,FALSE
+            FROM "Programmes" p
+            WHERE p."Code"='KSHS-CSSOM'
+              AND NOT EXISTS (
+                  SELECT 1 FROM "Curricula" cu
+                  WHERE cu."ProgrammeId"=p."Id"
+                    AND cu."Version"='KSHS-MASTER-CATALOG-2026-11'
+              );
+
+            INSERT INTO "CurriculumCourses"
+            ("Id","CurriculumId","CourseId","YearOfStudy","SemesterNumber","IsCore","IsDeleted")
+            SELECT gen_random_uuid(),targetCurriculum."Id",sourceMapping."CourseId",
+                   sourceMapping."YearOfStudy",sourceMapping."SemesterNumber",TRUE,FALSE
+            FROM "Programmes" sourceProgramme
+            INNER JOIN "Curricula" sourceCurriculum
+                ON sourceCurriculum."ProgrammeId"=sourceProgramme."Id"
+               AND sourceCurriculum."Version"='KSHS-MASTER-CATALOG-2026-11'
+            INNER JOIN "CurriculumCourses" sourceMapping
+                ON sourceMapping."CurriculumId"=sourceCurriculum."Id"
+               AND sourceMapping."IsDeleted"=FALSE
+            INNER JOIN "Programmes" targetProgramme ON targetProgramme."Code"='KSHS-CSSOM'
+            INNER JOIN "Curricula" targetCurriculum
+                ON targetCurriculum."ProgrammeId"=targetProgramme."Id"
+               AND targetCurriculum."Version"='KSHS-MASTER-CATALOG-2026-11'
+            WHERE sourceProgramme."Code"='DSSOM'
+              AND NOT EXISTS (
+                  SELECT 1 FROM "CurriculumCourses" existing
+                  WHERE existing."CurriculumId"=targetCurriculum."Id"
+                    AND existing."CourseId"=sourceMapping."CourseId"
+                    AND existing."YearOfStudy"=sourceMapping."YearOfStudy"
+                    AND existing."SemesterNumber"=sourceMapping."SemesterNumber"
+                    AND existing."IsDeleted"=FALSE
+              );
+
             UPDATE "Curricula" cu
             SET "MinimumCredits"=COALESCE((
                 SELECT SUM(c."CreditUnits")
