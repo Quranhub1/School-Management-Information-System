@@ -588,18 +588,25 @@ export const academicYearRequestSchema = z.object({
   message: "Academic year end date cannot be before its start date.",
 });
 
-export const academicPeriodRequestSchema = z.object({
+const academicPeriodBaseSchema = z.object({
   academicYearId: identifierSchema,
   name: requiredTextSchema.max(100),
   sequence: z.number().int().positive(),
   startDate: z.iso.date(),
   endDate: z.iso.date(),
-}).refine(value => value.endDate >= value.startDate, {
+});
+
+export const academicPeriodRequestSchema = academicPeriodBaseSchema.refine(value => value.endDate >= value.startDate, {
   path: ["endDate"],
   message: "Academic period end date cannot be before its start date.",
 });
 
-export const academicPeriodUpdateRequestSchema = academicPeriodRequestSchema.omit({ academicYearId: true });
+export const academicPeriodUpdateRequestSchema = academicPeriodBaseSchema
+  .omit({ academicYearId: true })
+  .refine(value => value.endDate >= value.startDate, {
+    path: ["endDate"],
+    message: "Academic period end date cannot be before its start date.",
+  });
 
 export const createUserRequestSchema = z.object({
   username: requiredTextSchema.max(100),
