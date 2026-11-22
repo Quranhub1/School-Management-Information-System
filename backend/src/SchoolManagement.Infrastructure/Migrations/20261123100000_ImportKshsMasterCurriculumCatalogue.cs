@@ -171,45 +171,15 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
             -- ADDS uses 41xx/42xx codes for its one-year advanced award, so its
             -- explicit one-year semester placement is retained as Year 1 Semesters 1–2.
             UPDATE "CurriculumCourses" cc
-            SET "YearOfStudy"=substring(regexp_replace(course."Code",'^[^ ]+\\s*','') from 1 for 1)::integer,
-                "SemesterNumber"=substring(regexp_replace(course."Code",'^[^ ]+\\s*','') from 2 for 1)::integer
-            FROM "Curricula" cu
-            INNER JOIN "Programmes" p ON p."Id"=cu."ProgrammeId"
-            INNER JOIN "Courses" course ON course."Id"=cc."CourseId"
+            SET "YearOfStudy"=substring(split_part(course."Code",' ',2) from 1 for 1)::integer,
+                "SemesterNumber"=substring(split_part(course."Code",' ',2) from 2 for 1)::integer
+            FROM "Curricula" cu, "Programmes" p, "Courses" course
             WHERE cc."CurriculumId"=cu."Id"
+              AND p."Id"=cu."ProgrammeId"
+              AND course."Id"=cc."CourseId"
               AND cu."Version"='KSHS-MASTER-CATALOG-2026-11'
               AND p."Code" NOT IN ('SB-ADDS','KSHS-ADDS')
-              AND regexp_replace(course."Code",'^[^ ]+\\s*','') ~ '^[1-3][12][0-9]{2}
-                SELECT SUM(c."CreditUnits")
-                FROM "CurriculumCourses" cc
-                INNER JOIN "Courses" c ON c."Id"=cc."CourseId"
-                WHERE cc."CurriculumId"=cu."Id"
-                  AND cc."IsDeleted"=FALSE
-                  AND c."IsDeleted"=FALSE
-            ),0)
-            WHERE cu."Version"='KSHS-MASTER-CATALOG-2026-11';
-
-            UPDATE "Curricula" cu
-            SET "IsActive"=FALSE
-            FROM "Programmes" p
-            WHERE cu."ProgrammeId"=p."Id"
-              AND cu."Version"='UHPAB-DEC-2025-PROVISIONAL'
-              AND p."Code" IN (
-                'CN','CM','DN','DM','DCM','CPH','PHA','CLT','MLT','CMR','MER',
-                'CMHN','CEC','CEH','CTA'
-              );
-            """;
-    }
-
-    private static string SqlLiteral(string value) => "'" + value.Replace("'", "''") + "'";
-
-    protected override void Down(MigrationBuilder migrationBuilder)
-    {
-        // Imported academic catalogue records are intentionally retained on rollback.
-        // They may already be referenced by curriculum, timetable, registration or student records.
-    }
-}
-;
+              AND split_part(course."Code",' ',2) ~ '^[1-3][12][0-9]{2}$';
 
             UPDATE "Curricula" cu
             SET "MinimumCredits"=COALESCE((
