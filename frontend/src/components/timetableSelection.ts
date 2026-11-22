@@ -39,9 +39,12 @@ export function deriveTimetableSelection(
       .filter(item => programmeIdSet.has(item.id))
       .map(item => Number(item.durationYears) || 0)
   )
-  const studyYears = mappedYears.length
-    ? mappedYears
-    : Array.from({ length: durationYears }, (_, index) => index + 1)
+  const studyYears = [
+    ...new Set([
+      ...Array.from({ length: durationYears }, (_, index) => index + 1),
+      ...mappedYears,
+    ]),
+  ].sort((a, b) => a - b)
 
   const curriculumSemesters = [
     ...new Set(
