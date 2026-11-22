@@ -54,7 +54,7 @@ describe('timetable programme-to-template selection flow', () => {
 
   it('loads mapped years, then only semesters belonging to the selected year', () => {
     const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '', 'period-1', '')
-    expect(result.studyYears).toEqual([1, 2])
+    expect(result.studyYears).toEqual([1, 2, 3])
     expect(result.curriculumSemesters).toEqual([1, 2])
   })
 
