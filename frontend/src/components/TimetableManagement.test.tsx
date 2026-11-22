@@ -19,7 +19,14 @@ vi.mock('../api/timetable', () => ({
       { id: 'group-1', label: 'CPH-Y1-S1', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-1' },
       { id: 'group-2', label: 'CPH-Y1-S1-B', programmeId: 'programme-1', semesterId: 'period-1', courseId: 'course-not-in-selected-curriculum' },
     ],
-    courses: [{ id: 'course-1', label: 'CPH 101 — Pharmacy Practice' }],
+    courses: [
+      { id: 'course-1', label: 'CPH 101 — Pharmacy Practice' },
+      { id: 'course-2', label: 'CPH 102 — Pharmaceutics' },
+      { id: 'course-3', label: 'CPH 201 — Clinical Pharmacy' },
+      { id: 'course-4', label: 'CPH 202 — Dispensing Practice' },
+      { id: 'course-5', label: 'DPH 101 — Foundations' },
+      { id: 'course-6', label: 'DPH 301 — Advanced Practice' },
+    ],
     teachers: [{ id: 'teacher-1', label: 'Test Teacher' }],
     semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', academicYearLabel: '2026/2027', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
     programmes: [
@@ -40,6 +47,8 @@ vi.mock('../api/timetable', () => ({
       { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-2', courseLabel: 'CPH 102 — Pharmaceutics', yearOfStudy: 1, semesterNumber: 2, isCore: true },
       { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-3', courseLabel: 'CPH 201 — Clinical Pharmacy', yearOfStudy: 2, semesterNumber: 1, isCore: true },
       { curriculumId: 'curriculum-1', programmeId: 'programme-1', courseId: 'course-4', courseLabel: 'CPH 202 — Dispensing Practice', yearOfStudy: 2, semesterNumber: 2, isCore: true },
+      { curriculumId: 'curriculum-2', programmeId: 'programme-2', courseId: 'course-5', courseLabel: 'DPH 101 — Foundations', yearOfStudy: 1, semesterNumber: 2, isCore: true },
+      { curriculumId: 'curriculum-2', programmeId: 'programme-2', courseId: 'course-6', courseLabel: 'DPH 301 — Advanced Practice', yearOfStudy: 3, semesterNumber: 1, isCore: true },
     ],
   }),
 }))
@@ -76,6 +85,26 @@ describe('TimetableManagement', () => {
     expect(screen.getByLabelText('Class / teaching group')).toBeTruthy()
   })
 
+
+  it('keeps year, curriculum semester and course units linked to the selected programme and curriculum', async () => {
+    render(<TimetableManagement />)
+    fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-2' } })
+
+    const curriculum = screen.getByLabelText('Curriculum') as HTMLSelectElement
+    expect(curriculum.value).toBe('curriculum-2')
+
+    const year = screen.getByLabelText('Year of study') as HTMLSelectElement
+    expect(Array.from(year.options).map(option => option.value)).toEqual(['', '1', '2', '3'])
+    fireEvent.change(year, { target: { value: '3' } })
+
+    const curriculumSemester = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
+    expect(Array.from(curriculumSemester.options).map(option => option.value)).toEqual(['', '1'])
+    fireEvent.change(curriculumSemester, { target: { value: '1' } })
+
+    const courseUnit = screen.getByLabelText('Course unit selection') as HTMLSelectElement
+    expect(Array.from(courseUnit.options).map(option => option.value)).toEqual(['', 'course-6'])
+    expect(Array.from(courseUnit.options).some(option => option.value === 'course-1')).toBe(false)
+  })
 
   it('prints generated class timetables for the full semester using Institution Settings', async () => {
     render(<TimetableManagement />)
