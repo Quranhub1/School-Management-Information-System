@@ -28,19 +28,19 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
              "StudyMode","DeliveryType","Type","Regulator","ApprovalReference","ApprovalDate",
              "ApprovalStatus","SourceReference","IsReferenceOnly","IsActive")
             VALUES
-            (gen_random_uuid(),NULL,'KSHS-CFSN','Certificate in Food Science and Nutrition','Certificate',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'KSHS-DFSN','Diploma in Food Science and Nutrition','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'SB-DHND','Diploma in Human Nutrition and Dietetics','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'KSHS-DHND','Diploma in Human Nutrition and Dietetics','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'KSHS-DDS','Diploma in Diagnostic Sonography','Diploma',NULL,3,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'SB-ADDS','Advanced Diploma in Diagnostic Sonography','Advanced Diploma',NULL,1,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'KSHS-ADDS','Advanced Diploma in Diagnostic Sonography','Advanced Diploma',NULL,1,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'KSHS-CBME','Certificate in Biomedical Engineering','Certificate',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'KSHS-DBME','Diploma in Biomedical Engineering','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'DSSOM','Diploma in Secretarial Studies and Office Management','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'KSHS-CSSOM','Certificate in Secretarial Studies and Office Management','Certificate',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'KSHS-ADHPE','Advanced Diploma in Health Promotion and Education','Advanced Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
-            (gen_random_uuid(),NULL,'KSHS-DFST','Diploma in Food Science and Technology','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'NeedsVerification','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE)
+            (gen_random_uuid(),NULL,'KSHS-CFSN','Certificate in Food Science and Nutrition','Certificate',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'KSHS-DFSN','Diploma in Food Science and Nutrition','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'SB-DHND','Diploma in Human Nutrition and Dietetics','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'KSHS-DHND','Diploma in Human Nutrition and Dietetics','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'KSHS-DDS','Diploma in Diagnostic Sonography','Diploma',NULL,3,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'SB-ADDS','Advanced Diploma in Diagnostic Sonography','Advanced Diploma',NULL,1,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'KSHS-ADDS','Advanced Diploma in Diagnostic Sonography','Advanced Diploma',NULL,1,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'KSHS-CBME','Certificate in Biomedical Engineering','Certificate',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'KSHS-DBME','Diploma in Biomedical Engineering','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'DSSOM','Diploma in Secretarial Studies and Office Management','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'KSHS-CSSOM','Certificate in Secretarial Studies and Office Management','Certificate',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'KSHS-ADHPE','Advanced Diploma in Health Promotion and Education','Advanced Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE),
+            (gen_random_uuid(),NULL,'KSHS-DFST','Diploma in Food Science and Technology','Diploma',NULL,2,'Years','Full-time','Academic',0,'SCHOOL_BASED',NULL,NULL,'Institutional','KSHS Master Curriculum & Course Units Catalog supplied by the institution',FALSE,TRUE)
             ON CONFLICT ("Code") DO UPDATE SET
                 "Name"=EXCLUDED."Name",
                 "Award"=EXCLUDED."Award",
@@ -49,7 +49,7 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
                 "Regulator"=EXCLUDED."Regulator",
                 "IsReferenceOnly"=FALSE,
                 "IsActive"=TRUE,
-                "ApprovalStatus"='NeedsVerification',
+                "ApprovalStatus"='Institutional',
                 "SourceReference"=EXCLUDED."SourceReference";
 
             UPDATE "Programmes"
