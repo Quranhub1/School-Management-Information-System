@@ -274,6 +274,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const availableCourses = selection.courseUnits
   const availableGroups = selection.teachingGroups
   const availableTutors = selection.tutors
+  const scheduleTutors = options.teachers.filter(
+    item => !item.courseUnitIds?.length || !courseId || item.courseUnitIds.includes(courseId)
+  )
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedTemplateGroup = options.teachingGroups.find(item => item.id === templateGroupId)
   const templateCourseOptions = selectedTemplateGroup
@@ -1972,6 +1975,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setCourseId(
                     options.teachingGroups.find(item => item.id === next)?.courseId ?? ''
                   )
+                  setTeacherId('')
                 }}
                 required
               >
@@ -2006,7 +2010,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 required
               >
                 <option value="">Select teacher</option>
-                {availableTutors.map(item => (
+                {scheduleTutors.map(item => (
                   <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
