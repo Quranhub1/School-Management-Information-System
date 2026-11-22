@@ -366,7 +366,7 @@ public sealed class CurriculumManagementServiceTests
     }
 
     [Fact]
-    public async Task SoftDelete_marks_curriculum_deleted()
+    public void SoftDelete_marks_curriculum_deleted()
     {
         var curricula = new FakeCurriculumRepository();
         var id = Guid.NewGuid();
