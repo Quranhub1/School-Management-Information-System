@@ -55,7 +55,11 @@ const deduplicateProgrammeOptions = (
           groups.filter(group => group.programmeId === item.id).length
         return score(right) - score(left) || left.label.localeCompare(right.label)
       })
-      return { ...ranked[0], sourceIds: items.map(item => item.id) }
+      return {
+        ...ranked[0],
+        durationYears: Math.max(0, ...items.map(item => Number(item.durationYears) || 0)),
+        sourceIds: items.map(item => item.id),
+      }
     })
     .sort((left, right) => left.label.localeCompare(right.label))
 }
