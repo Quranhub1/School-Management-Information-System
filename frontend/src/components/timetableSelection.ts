@@ -11,6 +11,18 @@ export type TimetableSelection = {
   tutors: TimetableOptions['teachers']
 }
 
+export function filterTutorsForCourse(
+  tutors: TimetableOptions['teachers'],
+  courseUnitId: string
+): TimetableOptions['teachers'] {
+  return tutors.filter(
+    item =>
+      !item.courseUnitIds?.length ||
+      !courseUnitId ||
+      item.courseUnitIds.includes(courseUnitId)
+  )
+}
+
 /**
  * Derives each timetable dropdown from the preceding academic selection.
  * Curriculum mappings are the source of truth for semester and course-unit
@@ -74,12 +86,7 @@ export function deriveTimetableSelection(
   const teachingGroups = selectedCourseId
     ? allTeachingGroups.filter(item => item.courseId === selectedCourseId)
     : allTeachingGroups
-  const tutors = options.teachers.filter(
-    item =>
-      !item.courseUnitIds?.length ||
-      !selectedCourseId ||
-      item.courseUnitIds.includes(selectedCourseId)
-  )
+  const tutors = filterTutorsForCourse(options.teachers, selectedCourseId)
 
   return {
     curricula,
