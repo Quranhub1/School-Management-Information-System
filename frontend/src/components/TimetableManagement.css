@@ -545,3 +545,74 @@ justify-content:space-around;
 .timetable-screen .kshs-official-paper{margin:0!important;padding:0!important;border:0!important;box-shadow:none!important}
 .timetable-screen .kshs-official-masthead,.timetable-screen .kshs-official-footer{border:0!important;background:transparent!important;padding:0!important}
 }
+
+
+/* Official timetable is the sole management view; legacy weekly/list workflows are retired. */
+.timetable-screen:not(.is-read-only) > .timetable-hero .timetable-actions,
+.timetable-screen:not(.is-read-only) > .timetable-metrics,
+.timetable-screen:not(.is-read-only) > .timetable-semester-templates,
+.timetable-screen:not(.is-read-only) > .timetable-generated-list,
+.timetable-screen:not(.is-read-only) > .timetable-result,
+.timetable-screen:not(.is-read-only) > .timetable-toolbar,
+.timetable-screen:not(.is-read-only) > .timetable-system-data,
+.timetable-screen:not(.is-read-only) > .timetable-empty,
+.timetable-screen:not(.is-read-only) > .timetable-print-area,
+.timetable-screen:not(.is-read-only) > .timetable-table-wrap,
+.timetable-screen:not(.is-read-only) > .timetable-form-panel:not(.timetable-curriculum-guide) {
+  display: none !important;
+}
+.timetable-screen:not(.is-read-only) .timetable-curriculum-guide {
+  display: block;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+}
+.timetable-screen:not(.is-read-only) .timetable-curriculum-guide h3,
+.timetable-screen:not(.is-read-only) .timetable-curriculum-guide .timetable-generator-help,
+.timetable-screen:not(.is-read-only) .timetable-curriculum-guide .timetable-day-empty {
+  display: none;
+}
+.timetable-screen:not(.is-read-only) .timetable-template-editor {
+  display: block !important;
+}
+.timetable-screen:not(.is-read-only) .timetable-template-editor-heading > div:first-child p:not(.timetable-eyebrow) {
+  display: none;
+}
+.timetable-screen:not(.is-read-only) .timetable-grid-scroll {
+  overflow: auto;
+}
+.timetable-screen:not(.is-read-only) .timetable-editable-grid {
+  width: 100%;
+  min-width: 1120px;
+}
+
+
+/* Direct editing inside the official sheet cells. */
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor {
+  display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:5px;
+  min-width:0; width:100%; font-family:Inter,Arial,sans-serif;
+}
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor select,
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor input {
+  box-sizing:border-box; width:100%; min-width:0; min-height:29px; padding:4px 5px;
+  border:1px solid #cbd5e1; border-radius:3px; background:#fff; color:#111827;
+  font:500 .68rem Inter,Arial,sans-serif;
+}
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor select:focus,
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor input:focus {
+  outline:2px solid #2563eb; outline-offset:1px;
+}
+.timetable-screen:not(.is-read-only) .timetable-inline-merge {
+  display:flex; justify-content:center; gap:8px;
+}
+.timetable-screen:not(.is-read-only) .timetable-inline-merge label {
+  display:flex; align-items:center; gap:3px; color:#475569; font-size:.62rem; font-weight:700;
+}
+.timetable-screen:not(.is-read-only) .timetable-inline-merge select { width:48px; min-height:25px; }
+.timetable-screen:not(.is-read-only) .timetable-cell-modal-overlay { display:none !important; }
+@media print {
+  .timetable-screen:not(.is-read-only) .timetable-inline-cell-editor select,
+  .timetable-screen:not(.is-read-only) .timetable-inline-cell-editor input {
+    appearance:none; border:0; background:transparent; color:#000; padding:0;
+  }
+  .timetable-screen:not(.is-read-only) .timetable-inline-merge { display:none; }
+}
