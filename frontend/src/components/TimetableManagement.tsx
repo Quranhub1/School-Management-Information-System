@@ -909,9 +909,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         dayOrder: templateDayOrder,
       })
       await load()
-      setShowTemplateEditor(false)
-      setTemplateCells({})
-      setTemplateLoadedGroupId('')
+      setTemplateLoadedGroupId(templateGroupId)
     } catch (e) {
       setError(
         e instanceof Error
@@ -984,7 +982,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const visibleTemplateDays = templateDayOrder.filter(day => showWeekends || day <= 5)
 
   return (
-    <section className="timetable-screen">
+    <section className={readOnly ? 'timetable-screen is-read-only' : 'timetable-screen'}>
       <header className="timetable-hero">
         <div>
           <p className="timetable-eyebrow">Academic planning</p>
@@ -1601,43 +1599,25 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                                   templateBreakAfter === slotIndex ? 'timetable-break-after' : ''
                                 }
                               >
-                                <button
-                                  type="button"
-                                  className="timetable-template-cell-trigger"
-                                  onClick={() => setActiveTemplateCellKey(key)}
-                                  aria-label={
-                                    'Edit ' + days[day] + ' ' + timeLabel(slot.startTime) + ' period'
-                                  }
-                                >
-                                  {cell.courseId || cell.teacherId || cell.room ? (
-                                    <>
-                                      {cell.courseId && (
-                                        <strong>
-                                          {courseLabels.get(cell.courseId) ?? 'Course'}
-                                        </strong>
-                                      )}
-                                      {cell.teacherId && (
-                                        <span>
-                                          {teacherLabels.get(cell.teacherId) ?? 'Lecturer'}
-                                        </span>
-                                      )}
-                                      {cell.room && <small>{cell.room}</small>}
-                                      <small>{cell.sessionType}</small>
-                                    </>
-                                  ) : (
-                                    <span className="timetable-template-cell-empty">
-                                      + Add session
-                                    </span>
-                                  )}
-                                  {cell.id && (
-                                    <small className="timetable-template-existing">
-                                      Saved session
-                                    </small>
-                                  )}
-                                  <span className="timetable-template-cell-edit">
-                                    <Pencil size={12} /> Edit period
-                                  </span>
-                                </button>
+                                <div className="timetable-inline-cell-editor" aria-label={days[day] + ' period ' + (slotIndex + 1)}>
+                                  <select aria-label="Course unit" value={cell.courseId} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}>
+                                    <option value="">+ Select course</option>
+                                    {availableCourses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                                  </select>
+                                  <select aria-label="Lecturer" value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}>
+                                    <option value="">Select lecturer</option>
+                                    {options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                                  </select>
+                                  <input aria-label="Room or venue" value={cell.room} onChange={event => changeTemplateCell(key, 'room', event.target.value)} placeholder="Room / lab" />
+                                  <select aria-label="Session type" value={cell.sessionType} onChange={event => changeTemplateCell(key, 'sessionType', event.target.value)}>
+                                    <option>Lecture</option><option>Practical</option><option>Tutorial</option><option>Seminar</option><option>Examination</option><option>Other</option>
+                                  </select>
+                                  <div className="timetable-inline-merge">
+                                    <label>Days <select aria-label="Merge days" value={Number(cell.rowSpan) || 1} onChange={event => changeTemplateCell(key, 'rowSpan', event.target.value)}>{Array.from({length: Math.max(1, visibleTemplateDays.length - rowIndex)}, (_, index) => index + 1).map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+                                    <label>Periods <select aria-label="Merge periods" value={Number(cell.colSpan) || 1} onChange={event => changeTemplateCell(key, 'colSpan', event.target.value)}>{Array.from({length: Math.max(1, templateSlots.length - slotIndex)}, (_, index) => index + 1).map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+                                  </div>
+                                  {cell.id && <small className="timetable-template-existing">Saved session</small>}
+                                </div>
                               </td>
                             )}
                             {templateBreakAfter === slotIndex && rowIndex === 0 && (
