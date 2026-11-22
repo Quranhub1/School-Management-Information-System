@@ -269,8 +269,9 @@ public sealed class StaffController(SchoolManagementDbContext db, CampusAccessSe
             User linkedUser;
             if (request.Account.ExistingUserId.HasValue)
             {
-                linkedUser = await db.Users.SingleOrDefaultAsync(x => x.Id == request.Account.ExistingUserId.Value, cancellationToken);
-                if (linkedUser is null) return BadRequest(new { message = "The selected login account does not exist." });
+                var existingUser = await db.Users.SingleOrDefaultAsync(x => x.Id == request.Account.ExistingUserId.Value, cancellationToken);
+                if (existingUser is null) return BadRequest(new { message = "The selected login account does not exist." });
+                linkedUser = existingUser;
                 if (await db.StaffUserLinks.AnyAsync(x => x.UserId == linkedUser.Id, cancellationToken))
                     return Conflict(new { message = "This login account is already linked to another staff profile." });
                 if (!string.IsNullOrWhiteSpace(request.Account.Password))
