@@ -199,7 +199,7 @@ public sealed class CurriculumIntegrationsController(
         var title = titleElement.GetString();
         if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(title))
             return BadRequest(new { message = "Version and title must not be empty." });
-        var changeNotes = systemTextJson.TryGetProperty("changeNotes", out var cn) ? cn.GetString() : null;
+        var changeNotes = request.TryGetProperty("changeNotes", out var cn) && cn.ValueKind == System.Text.Json.JsonValueKind.String ? cn.GetString() : null;
         var result = await versionService.CreateSnapshotAsync(curriculumId, version, title, changeNotes, ct);
         if (!result.Success) return BadRequest(new { message = result.Error });
         return Ok(new { VersionId = result.VersionId });
