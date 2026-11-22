@@ -56,7 +56,7 @@ public sealed class FiscalPeriodClosingTests
         };
 
         var lines = FiscalPeriodClosingService.BuildClosingLines(new[] { entry }, retainedId);
-        var retained = Assert.Single(lines.Where(x => x.AccountId == retainedId));
+        var retained = Assert.Single(lines, x => x.AccountId == retainedId);
 
         Assert.Equal(500m, retained.Debit);
         Assert.Equal(0m, retained.Credit);
