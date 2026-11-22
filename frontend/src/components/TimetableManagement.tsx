@@ -1460,8 +1460,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             </div>
           </div>
 
-          {templateGroupId && templateLoadedGroupId === templateGroupId && (
-            <div className="timetable-grid-scroll">
+          <div className="timetable-grid-scroll">
               <table className="timetable-editable-grid">
                 <thead>
                   <tr>
@@ -1642,11 +1641,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   ))}
                 </tbody>
               </table>
-            </div>
-          )}
+          </div>
 
           {templateGroupId && templateLoadedGroupId !== templateGroupId && (
             <p className="timetable-generator-help">Loading the selected class into the timetable sheet…</p>
+          )}
+          {!templateGroupId && (
+            <p className="timetable-generator-help">The blank timetable sheet is ready. Select a teaching group above to load its saved sessions and enable saving.</p>
           )}
 
           {activeTemplateCellKey &&
