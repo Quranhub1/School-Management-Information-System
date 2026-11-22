@@ -71,7 +71,7 @@ describe('timetable programme-to-template selection flow', () => {
   })
 
   it('loads tutors assigned to the selected course unit plus unassigned teaching tutors', () => {
-    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '1', 'period-1', 'course-a1')
+    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', 'A11', 'period-1', 'course-a1')
     expect(result.tutors.map(item => item.id)).toEqual(['tutor-a1', 'tutor-general'])
   })
 
