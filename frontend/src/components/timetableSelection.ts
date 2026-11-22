@@ -51,7 +51,13 @@ export function deriveTimetableSelection(
     0,
     ...options.programmes
       .filter(item => programmeIdSet.has(item.id))
-      .map(item => Number(item.durationYears) || 0)
+      .map(item => {
+        const duration = Number(item.durationYears) || 0
+        const unit = item.durationUnit?.trim().toLowerCase() || 'years'
+        if (unit.startsWith('month')) return Math.ceil(duration / 12)
+        if (unit.startsWith('semester')) return Math.ceil(duration / 2)
+        return duration
+      })
   )
   const studyYears = [
     ...new Set([
