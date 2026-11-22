@@ -225,7 +225,7 @@ describe('TimetableManagement', () => {
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
-  it('loads the full programme → curriculum → year → semester → course-unit cascade', async () => {
+  it('loads the full programme → curriculum → semester → year → academic period → course-unit cascade', async () => {
     render(<TimetableManagement />)
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
 
@@ -263,7 +263,7 @@ describe('TimetableManagement', () => {
 
     const years = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2', '3'])
-    fireEvent.change(semesters, { target: { value: 'DPH12' } })
+    fireEvent.change(semesters, { target: { value: 'DPH31' } })
     fireEvent.change(years, { target: { value: '1' } })
     expect(screen.getByText(/No course units are mapped to this programme, year and semester/i)).toBeTruthy()
   })
