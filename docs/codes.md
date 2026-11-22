@@ -1412,3 +1412,68 @@ grep -o 'assets/index-[^"]*' /opt/schoolmanagement/frontend/index.html
 ```
 
 Confirm the deployed HTML path before running it; the deployment directory can differ between servers.
+
+---
+
+## 24. November 2026: curriculum catalogue and timetable verification
+
+The following commands were used during the 23 November 2026 curriculum migration and timetable regression check. Run each command from the stated directory.
+
+### Windows: update the local main checkout without discarding local changes
+
+From PowerShell:
+
+```powershell
+Set-Location "C:\Users\JOES TECH\School-Management-Information-System"; git switch main; git pull --ff-only origin main
+```
+
+This is the preferred non-destructive update. Do not replace it with `git reset --hard` or `git clean` when local edits or local assets must be preserved.
+
+### Windows: build the infrastructure project after a migration edit
+
+From the backend directory:
+
+```powershell
+dotnet build .\src\SchoolManagement.Infrastructure\SchoolManagement.Infrastructure.csproj --no-restore
+```
+
+A successful build of the repaired KSHS catalogue migration completed with 0 warnings and 0 errors on 23 November 2026.
+
+### Windows: run focused timetable component tests
+
+From the frontend directory:
+
+```powershell
+npm test -- --reporter=verbose src/components/TimetableManagement.test.tsx
+```
+
+The verbose output is required when diagnosing failures: inspect each failing test's assertion and stack trace. React `act(...)` warnings alone do not identify the cause of a failed assertion. After the focused file passes, run the full frontend test suite and production build.
+
+### PostgreSQL: verify the imported curriculum catalogue
+
+Connect interactively to the local database so the password is entered at the prompt:
+
+```powershell
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -h localhost -U school_management -d school_management -W
+```
+
+At the `school_management=#` prompt, run this single-line query:
+
+```sql
+SELECT 'Programmes' AS table_name, COUNT(*) FROM public."Programmes" UNION ALL SELECT 'Curricula', COUNT(*) FROM public."Curricula" UNION ALL SELECT 'Courses', COUNT(*) FROM public."Courses" UNION ALL SELECT 'CurriculumCourses', COUNT(*) FROM public."CurriculumCourses";
+```
+
+Verified local counts on 23 November 2026: 191 programmes, 82 curricula, 668 courses and 734 curriculum-course mappings. These are the observed local database counts, not guaranteed counts for another environment.
+
+### PostgreSQL: verify the curriculum foreign keys and migration history
+
+At the interactive `psql` prompt, list the curriculum relationships:
+
+```sql
+SELECT tc.table_name, kcu.column_name, ccu.table_name AS referenced_table, ccu.column_name AS referenced_column, rc.delete_rule FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.constraint_schema = kcu.constraint_schema JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = tc.constraint_name AND ccu.constraint_schema = tc.constraint_schema JOIN information_schema.referential_constraints rc ON rc.constraint_name = tc.constraint_name AND rc.constraint_schema = tc.constraint_schema WHERE tc.constraint_type = 'FOREIGN KEY' AND ((tc.table_name = 'Curricula' AND kcu.column_name = 'ProgrammeId') OR (tc.table_name = 'CurriculumCourses' AND kcu.column_name IN ('CourseId', 'CurriculumId')));
+SELECT "MigrationId" FROM public."__EFMigrationsHistory" ORDER BY "MigrationId" DESC LIMIT 15;
+```
+
+The verified relationships are `Curricula.ProgrammeId → Programmes.Id`, `CurriculumCourses.CourseId → Courses.Id`, and `CurriculumCourses.CurriculumId → Curricula.Id`, all with `ON DELETE RESTRICT`. The migrations `20261123100000_ImportKshsMasterCurriculumCatalogue` and `20261123120000_AddCurriculumCoreRelationships` were recorded in the local migration history.
+
+**Important:** the catalogue and foreign-key migrations were applied successfully to the local `school_management` database. Do not assume another machine or production database has been migrated; inspect its migration history and back it up before applying schema changes.
