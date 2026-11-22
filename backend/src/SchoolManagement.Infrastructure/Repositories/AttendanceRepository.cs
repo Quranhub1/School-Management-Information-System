@@ -172,6 +172,6 @@ public sealed class AttendanceRepository(SchoolManagementDbContext db) : IAttend
             percentage);
     }
 
-    public async Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         db.SaveChangesAsync(cancellationToken);
 }
