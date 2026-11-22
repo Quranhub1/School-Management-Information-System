@@ -170,12 +170,16 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       const preferredCurriculum = loadedOptions.curricula.find(item =>
         preferredProgramme?.sourceIds.includes(item.programmeId)
       )
+      const preferredMapping = loadedOptions.curriculumCourses.find(item => item.curriculumId === preferredCurriculum?.id)
       const preferredGroup = loadedOptions.teachingGroups.find(
         item => item.programmeId === preferredCurriculum?.programmeId && item.semesterId === preferredPeriodId
       )
       setProgrammeId(current => current || preferredProgramme?.id || '')
       setCurriculumId(current => current || preferredCurriculum?.id || '')
+      setYearOfStudy(current => current || (preferredMapping ? String(preferredMapping.yearOfStudy) : ''))
+      setCurriculumSemester(current => current || (preferredMapping ? String(preferredMapping.semesterNumber) : ''))
       setTemplateGroupId(current => current || preferredGroup?.id || '')
+      setTeachingGroupId(current => current || preferredGroup?.id || '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load timetable data.')
     }
@@ -971,6 +975,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     }
   }
 
+  useEffect(() => {
+    if (!readOnly && templateGroupId && selectedCurriculum && yearOfStudy && curriculumSemester && templateLoadedGroupId !== templateGroupId) {
+      void loadTemplate()
+    }
+  }, [readOnly, templateGroupId, selectedCurriculum?.id, yearOfStudy, curriculumSemester, templateLoadedGroupId])
+
   const visibleTemplateDays = templateDayOrder.filter(day => showWeekends || day <= 5)
 
   return (
@@ -1124,7 +1134,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         </section>
       )}
 
-      {!readOnly && (showGenerator || showTemplateEditor || showScheduleForm) && (
+      {!readOnly && showTemplateEditor && (
         <section
           className="timetable-form-panel timetable-curriculum-guide"
           aria-label="Programme curriculum selection"
@@ -1656,10 +1666,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
           )}
 
           {templateGroupId && templateLoadedGroupId !== templateGroupId && (
-            <p className="timetable-generator-help">
-              Click “Load class” to fill the template with that class’s saved sessions before
-              editing.
-            </p>
+            <p className="timetable-generator-help">Loading the selected class into the timetable sheet…</p>
           )}
 
           {activeTemplateCellKey &&
