@@ -1,6 +1,6 @@
 # School Management Information System — Project Progress
 
-**Last updated:** 2026-11-20  
+**Last updated:** 2026-11-22  
 **Tracking branch:** `main`  
 **Current release:** `v0.2.0`  
 **Currency:** UGX
@@ -12,6 +12,32 @@ The core backend, persistence, security hardening, frontend, automated verificat
 Corrected native release workflow run `34351052149` completed successfully for Windows x86/x64, Ubuntu x64, and release publication. The obsolete tag-helper workflow has been removed. The later duplicate desktop-workflow cleanup on `main` also passed the full CI suite, including native desktop builds.
 
 A dedicated executable target-environment acceptance runbook is now available at `docs/PRODUCTION_ACCEPTANCE.md`. It records the evidence required for golden-path, authorization, module, finance, attendance, assessment, clinical, staff/student, deployment, backup/restore, desktop, and security sign-off.
+
+## Official KSHS timetable editor — 2026-11-22
+
+**Merged to `main`:** PR [#457](https://github.com/Quranhub1/School-Management-Information-System/pull/457)  
+**Merge commit:** `0aec3362fb577b2cd81883864c306b7ccfac748e`
+
+### Implemented in the merged timetable UI
+
+- [x] Promote the official KSHS timetable sheet to the primary editable timetable-management workflow.
+- [x] Automatically choose the preferred available academic period, curriculum mapping and teaching group, then load the saved template when the required selections are ready.
+- [x] Retire the legacy weekly/list and standalone schedule-form workflows from the editable management screen.
+- [x] Replace the cell-click modal workflow with direct in-cell controls for course, lecturer, venue, session type and merge spans.
+- [x] Keep the timetable sheet open after saving instead of closing the editor and clearing the visible sheet.
+- [x] Scope the legacy-view styling so the read-only timetable display remains available.
+
+### Verification still required
+
+- [ ] Run the frontend TypeScript/Vite production build against the merged `main` branch.
+- [ ] Inspect the rendered editor to confirm the sheet and required selection controls remain visible, and that no legacy editable view leaks through.
+- [ ] Verify template-to-session conversion, period/time-slot mapping, merged-cell rendering and persistence across save/reload.
+- [ ] Verify generation for every selected teaching group and class/lecturer/room conflict detection.
+- [ ] Verify edit, save, reload, delete and read-only behavior against the API and PostgreSQL database.
+- [ ] Verify print and PDF export preserve the complete official KSHS sheet design, including merged cells and timetable layout.
+- [ ] Confirm all relevant CI workflows complete successfully on the merge commit.
+
+**Verification boundary:** PR #457 is merged, so its source changes are on `main`. The merge itself does not establish that the production build, browser rendering, timetable persistence/conflict scenarios or PDF output have passed. Do not treat the new editor as fully accepted until the checks above are completed.
 
 ## Production hardening audit — 2026-11-20
 
