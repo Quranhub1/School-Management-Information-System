@@ -93,13 +93,13 @@ describe('TimetableManagement', () => {
     const curriculum = screen.getByLabelText('Curriculum') as HTMLSelectElement
     expect(curriculum.value).toBe('curriculum-2')
 
+    const curriculumSemester = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
+    expect(Array.from(curriculumSemester.options).map(option => option.value)).toEqual(['', 'DPH12', 'DPH31'])
+    fireEvent.change(curriculumSemester, { target: { value: 'DPH31' } })
+
     const year = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(year.options).map(option => option.value)).toEqual(['', '1', '2', '3'])
     fireEvent.change(year, { target: { value: '3' } })
-
-    const curriculumSemester = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
-    expect(Array.from(curriculumSemester.options).map(option => option.value)).toEqual(['', '1'])
-    fireEvent.change(curriculumSemester, { target: { value: '1' } })
 
     const courseUnit = screen.getByLabelText('Course unit selection') as HTMLSelectElement
     expect(Array.from(courseUnit.options).map(option => option.value)).toEqual(['', 'course-6'])
@@ -112,7 +112,7 @@ describe('TimetableManagement', () => {
     fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
     fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
     fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
-    fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: 'CPH11' } })
     fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
     const teachingGroups = screen.getByLabelText('Teaching groups') as HTMLSelectElement
     teachingGroups.options[0].selected = true
@@ -128,7 +128,7 @@ describe('TimetableManagement', () => {
     fireEvent.change(await screen.findByLabelText('Programme'), { target: { value: 'programme-1' } })
     fireEvent.change(screen.getByLabelText('Curriculum'), { target: { value: 'curriculum-1' } })
     fireEvent.change(screen.getByLabelText('Year of study'), { target: { value: '1' } })
-    fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Curriculum semester'), { target: { value: 'CPH11' } })
     fireEvent.change(screen.getByLabelText('Academic period'), { target: { value: 'period-1' } })
     const teachingGroups = screen.getByLabelText('Teaching groups') as HTMLSelectElement
     Array.from(teachingGroups.options).forEach(option => { option.selected = true })
@@ -225,7 +225,7 @@ describe('TimetableManagement', () => {
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
   })
 
-  it('loads the full programme → curriculum → year → semester → course-unit cascade', async () => {
+  it('loads the full programme → curriculum → semester → year → academic period → course-unit cascade', async () => {
     render(<TimetableManagement />)
     fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
 
@@ -236,13 +236,13 @@ describe('TimetableManagement', () => {
     await waitFor(() => expect(curriculum.value).toBe('curriculum-1'))
     expect(Array.from(curriculum.options).map(option => option.value)).toContain('curriculum-duplicate')
 
+    const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'CPH11', 'CPH12', 'CPH21', 'CPH22'])
+    fireEvent.change(semesters, { target: { value: 'CPH11' } })
+
     const years = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2'])
     fireEvent.change(years, { target: { value: '1' } })
-
-    const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
-    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', '1', '2'])
-    fireEvent.change(semesters, { target: { value: '1' } })
 
     fireEvent.click(screen.getByRole('button', { name: /edit monday 08:00 period/i }))
     const courseSelect = await screen.findByLabelText('Course unit') as HTMLSelectElement
@@ -258,12 +258,13 @@ describe('TimetableManagement', () => {
 
     const curriculum = screen.getByLabelText('Curriculum') as HTMLSelectElement
     await waitFor(() => expect(curriculum.value).toBe('curriculum-2'))
+    const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', 'DPH12', 'DPH31'])
+
     const years = screen.getByLabelText('Year of study') as HTMLSelectElement
     expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2', '3'])
-
+    fireEvent.change(semesters, { target: { value: 'DPH31' } })
     fireEvent.change(years, { target: { value: '1' } })
-    const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
-    expect(Array.from(semesters.options).map(option => option.value)).toEqual([''])
     expect(screen.getByText(/No course units are mapped to this programme, year and semester/i)).toBeTruthy()
   })
 

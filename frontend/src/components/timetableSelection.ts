@@ -4,7 +4,8 @@ export type TimetableSelection = {
   curricula: TimetableOptions['curricula']
   selectedCurriculum?: TimetableOptions['curricula'][number]
   studyYears: number[]
-  curriculumSemesters: number[]
+  curriculumSemesters: Array<{ value: string; code: string; year: number; semesterNumber: number }>
+  selectedCurriculumSemester?: { value: string; code: string; year: number; semesterNumber: number }
   courseUnits: TimetableOptions['courses']
   teachingGroups: TimetableOptions['teachingGroups']
   allTeachingGroups: TimetableOptions['teachingGroups']
@@ -59,18 +60,28 @@ export function deriveTimetableSelection(
     ]),
   ].sort((a, b) => a - b)
 
+  const programmeCode = options.programmes.find(item => item.id === selectedCurriculum?.programmeId)?.code ?? ''
+  const semesterCodePrefix = programmeCode.trim()
+    .replace(/^(?:UHPAB|UVTAB|KSHS|SB)[-_]/i, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
   const curriculumSemesters = [
-    ...new Set(
-      mappings
-        .filter(item => !yearOfStudy || item.yearOfStudy === Number(yearOfStudy))
-        .map(item => item.semesterNumber)
-    ),
-  ].sort((a, b) => a - b)
+    ...new Map(mappings.map(item => {
+      const value = `${item.yearOfStudy}-${item.semesterNumber}`
+      return [value, {
+        value,
+        year: item.yearOfStudy,
+        semesterNumber: item.semesterNumber,
+        code: semesterCodePrefix ? `${semesterCodePrefix}${item.yearOfStudy}${item.semesterNumber}` : `Y${item.yearOfStudy}S${item.semesterNumber}`,
+      }] as const
+    })).values(),
+  ].sort((a, b) => a.year - b.year || a.semesterNumber - b.semesterNumber)
+  const selectedCurriculumSemester = curriculumSemesters.find(item => item.code === curriculumSemester)
 
   const eligibleMappings = mappings.filter(
     item =>
       (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) &&
-      (!curriculumSemester || item.semesterNumber === Number(curriculumSemester))
+      (!curriculumSemester || (item.yearOfStudy === selectedCurriculumSemester?.year && item.semesterNumber === selectedCurriculumSemester?.semesterNumber))
   )
   const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
   const courseUnits = options.courses.filter(item => eligibleCourseIds.has(item.id))
@@ -93,6 +104,7 @@ export function deriveTimetableSelection(
     selectedCurriculum,
     studyYears,
     curriculumSemesters,
+    selectedCurriculumSemester,
     courseUnits,
     teachingGroups,
     allTeachingGroups,
