@@ -6,11 +6,13 @@ const options: TimetableOptions = {
   programmes: [
     { id: 'programme-a', code: 'A', label: 'Programme A', durationYears: 3 },
     { id: 'programme-b', code: 'B', label: 'Programme B', durationYears: 2 },
+    { id: 'programme-bridge', code: 'SB-BRIDGE', label: 'Bridging Programme', durationYears: 9, durationUnit: 'Months' },
   ],
   curricula: [
     { id: 'curriculum-a', programmeId: 'programme-a', label: 'A Curriculum' },
     { id: 'curriculum-a-old', programmeId: 'programme-a', label: 'A Old Curriculum' },
     { id: 'curriculum-b', programmeId: 'programme-b', label: 'B Curriculum' },
+    { id: 'curriculum-bridge', programmeId: 'programme-bridge', label: 'Bridge Curriculum' },
   ],
   curriculumCourses: [
     { curriculumId: 'curriculum-a', programmeId: 'programme-a', courseId: 'course-a1', courseLabel: 'A101 — Anatomy', yearOfStudy: 1, semesterNumber: 1, isCore: true },
@@ -73,6 +75,37 @@ describe('timetable programme-to-template selection flow', () => {
   it('loads tutors assigned to the selected course unit plus unassigned teaching tutors', () => {
     const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', 'A11', 'period-1', 'course-a1')
     expect(result.tutors.map(item => item.id)).toEqual(['tutor-a1', 'tutor-general'])
+  })
+
+
+  it('converts month-based programme duration into study years', () => {
+    const result = deriveTimetableSelection(options, ['programme-bridge'], 'curriculum-bridge', '', '', 'period-1', '')
+    expect(result.studyYears).toEqual([1])
+  })
+
+  it('retains all five semester mappings for a five-semester certificate', () => {
+    const nursingOptions: TimetableOptions = {
+      ...options,
+      programmes: [{ id: 'programme-cn', code: 'CN', label: 'Certificate in Nursing', durationYears: 0 }],
+      curricula: [{ id: 'curriculum-cn', programmeId: 'programme-cn', label: 'CN curriculum' }],
+      curriculumCourses: [
+        { curriculumId: 'curriculum-cn', programmeId: 'programme-cn', courseId: 'cn-11', courseLabel: 'CNUR 1101', yearOfStudy: 1, semesterNumber: 1, isCore: true },
+        { curriculumId: 'curriculum-cn', programmeId: 'programme-cn', courseId: 'cn-12', courseLabel: 'CNUR 1201', yearOfStudy: 1, semesterNumber: 2, isCore: true },
+        { curriculumId: 'curriculum-cn', programmeId: 'programme-cn', courseId: 'cn-21', courseLabel: 'CNUR 2101', yearOfStudy: 2, semesterNumber: 1, isCore: true },
+        { curriculumId: 'curriculum-cn', programmeId: 'programme-cn', courseId: 'cn-22', courseLabel: 'CNUR 2201', yearOfStudy: 2, semesterNumber: 2, isCore: true },
+        { curriculumId: 'curriculum-cn', programmeId: 'programme-cn', courseId: 'cn-31', courseLabel: 'CNUR 3101', yearOfStudy: 3, semesterNumber: 1, isCore: true },
+      ],
+      courses: [
+        { id: 'cn-11', label: 'CNUR 1101' },
+        { id: 'cn-12', label: 'CNUR 1201' },
+        { id: 'cn-21', label: 'CNUR 2101' },
+        { id: 'cn-22', label: 'CNUR 2201' },
+        { id: 'cn-31', label: 'CNUR 3101' },
+      ],
+      teachingGroups: [],
+    }
+    const result = deriveTimetableSelection(nursingOptions, ['programme-cn'], 'curriculum-cn', '', '', 'period-1', '')
+    expect(result.curriculumSemesters.map(item => item.code)).toEqual(['CN11', 'CN12', 'CN21', 'CN22', 'CN31'])
   })
 
   it('filters assigned tutors by course unit and retains tutors without a course restriction', () => {
