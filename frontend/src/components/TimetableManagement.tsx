@@ -195,7 +195,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       setCurriculumId(current => current || preferredCurriculum?.id || '')
       setYearOfStudy(current => current || (preferredMapping ? String(preferredMapping.yearOfStudy) : ''))
       setSelectedCourseUnitId(current => current || preferredMapping?.courseId || '')
-      setCurriculumSemester(current => current || (preferredMapping ? String(preferredMapping.semesterNumber) : ''))
+      setCurriculumSemester(current => current || (preferredMapping ? (() => { const prefix = (uniqueProgrammes.find(item => item.sourceIds.includes(preferredCurriculum?.programmeId ?? ''))?.code ?? '').replace(/^(?:UHPAB|UVTAB|KSHS|SB)[-_]/i, '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase(); return prefix ? `${prefix}${preferredMapping.yearOfStudy}${preferredMapping.semesterNumber}` : `Y${preferredMapping.yearOfStudy}S${preferredMapping.semesterNumber}` })() : ''))
       setTemplateGroupId(current => current || preferredGroup?.id || '')
       setTeachingGroupId(current => current || preferredGroup?.id || '')
     } catch (e) {
@@ -278,7 +278,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const eligibleMappings = curriculumMappings.filter(
     item =>
       (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) &&
-      (!curriculumSemester || item.semesterNumber === Number(curriculumSemester))
+      (!curriculumSemester || (item.yearOfStudy === selection.selectedCurriculumSemester?.year && item.semesterNumber === selection.selectedCurriculumSemester?.semesterNumber))
   )
   const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
   const availableCourses = selection.courseUnits
@@ -471,7 +471,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             teacherId: cell.teacherId,
             curriculumId: selectedCurriculum?.id ?? '',
             yearOfStudy: Number(yearOfStudy),
-            curriculumSemesterNumber: Number(curriculumSemester),
+            curriculumSemesterNumber: (selection.selectedCurriculumSemester?.semesterNumber ?? 0),
             dayOfWeek: day,
             startTime: slot.startTime,
             endTime: slot.endTime,
@@ -621,7 +621,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         selectedGroups.map(group => group.id),
         selectedCurriculum.id,
         Number(yearOfStudy),
-        Number(curriculumSemester),
+        (selection.selectedCurriculumSemester?.semesterNumber ?? 0),
         selectedGroups[0].programmeId
       )
       const results = selectedGroups.map(group => ({
@@ -679,7 +679,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         teacherId,
         curriculumId: selectedCurriculum.id,
         yearOfStudy: Number(yearOfStudy),
-        curriculumSemesterNumber: Number(curriculumSemester),
+        curriculumSemesterNumber: (selection.selectedCurriculumSemester?.semesterNumber ?? 0),
         dayOfWeek: Number(dayOfWeek),
         startTime: startTime + ':00',
         endTime: endTime + ':00',
@@ -907,7 +907,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
         teacherId: cell.teacherId,
         curriculumId: selectedCurriculum.id,
         yearOfStudy: Number(yearOfStudy),
-        curriculumSemesterNumber: Number(curriculumSemester),
+        curriculumSemesterNumber: (selection.selectedCurriculumSemester?.semesterNumber ?? 0),
         dayOfWeek: visibleDays[dayIndex + offset],
         startTime: slot.startTime + ':00',
         endTime: lastSlot.endTime + ':00',
@@ -1109,7 +1109,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   matchingGroups.some(group => group.id === entry.teachingGroupId)
                 ).length
                 const selected =
-                  yearOfStudy === String(item.year) && curriculumSemester === String(item.semester)
+                  yearOfStudy === String(item.year) && curriculumSemester === (selection.curriculumSemesters.find(option => option.year === item.year && option.semesterNumber === item.semester)?.code ?? '')
                 return (
                   <article
                     className={`timetable-semester-template-card${selected ? ' is-selected' : ''}`}
@@ -1232,7 +1232,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 disabled={!selectedCurriculum || studyYears.length === 0}
                 onChange={event => {
                   setYearOfStudy(event.target.value)
-                  setCurriculumSemester('')
                   setSelectedCourseUnitId('')
                   setSelectedTeachingGroupIds([])
                   setTeachingGroupId('')
@@ -1255,7 +1254,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               <select
                 aria-label="Curriculum semester"
                 value={curriculumSemester}
-                disabled={!selectedCurriculum || !yearOfStudy || curriculumSemesters.length === 0}
+                disabled={!selectedCurriculum || curriculumSemesters.length === 0}
                 onChange={event => {
                   setCurriculumSemester(event.target.value)
                   setSelectedCourseUnitId('')
@@ -1269,8 +1268,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               >
                 <option value="">Select curriculum semester</option>
                 {curriculumSemesters.map(item => (
-                  <option key={item} value={item}>
-                    Semester {item}
+                  <option key={item.value} value={item.code}>
+                    {item.code}
                   </option>
                 ))}
               </select>
@@ -1448,7 +1447,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             <span className="timetable-document-period">
               ACADEMIC YEAR {academicYearLabel} ·{' '}
               {selectedSemester?.label ?? 'Academic period not selected'} · YEAR{' '}
-              {yearOfStudy || '—'} · CURRICULUM SEMESTER {curriculumSemester || '—'}
+              {yearOfStudy || '—'} · CURRICULUM SEMESTER {selection.selectedCurriculumSemester?.code || '—'}
             </span>
             <span className="timetable-document-period">
               VALID FOR {semesterDateRange(selectedSemester)}
@@ -2187,7 +2186,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                     <span>
                       ACADEMIC YEAR {academicYearLabel} ·{' '}
                       {selectedSemester?.label ?? 'Selected academic period'} · YEAR {yearOfStudy}{' '}
-                      · CURRICULUM SEMESTER {curriculumSemester}
+                      · CURRICULUM SEMESTER {selection.selectedCurriculumSemester?.code ?? curriculumSemester}
                     </span>
                     <span>VALID FOR: {semesterDateRange(selectedSemester)}</span>
                   </div>
