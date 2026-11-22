@@ -10,7 +10,7 @@ const { mockAuthorityList, mockProgrammes, mockCurricula, mockCourses } = vi.hoi
   ],
   mockProgrammes: [
     { id: 'programme-school', code: 'SB-CPH', name: 'Certificate in Public Health', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'SCHOOL_BASED', isActive: true, isReferenceOnly: false },
-    { id: 'programme-pharmacy', code: 'CPH', name: 'Certificate in Pharmacy', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
+    { id: 'programme-pharmacy', code: 'KSHS-CPH', name: 'Certificate in Pharmacy', award: 'Certificate', durationYears: 2, durationUnit: 'Years', studyMode: 'Full-time', deliveryType: 'Academic', approvalStatus: 'Approved', type: 0, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
     { id: 'programme-short', code: 'UHPAB-SHORT', name: 'Basic Life Support', award: 'Certificate', durationYears: 1, durationUnit: 'Days', studyMode: 'Full-time', deliveryType: 'ShortCourse', approvalStatus: 'Approved', type: 1, regulator: 'UHPAB', isActive: true, isReferenceOnly: false },
     { id: 'programme-uvtab', code: 'UVTAB-DBA', name: 'Diploma in Business Administration', award: 'Diploma', durationYears: 0, durationUnit: 'Not published', studyMode: 'Full-time', deliveryType: 'CompetencyBased', approvalStatus: 'NeedsVerification', type: 0, regulator: 'UVTAB', isActive: true, isReferenceOnly: false },
   ],
