@@ -22,6 +22,7 @@ const { mockAuthorityList, mockProgrammes, mockCurricula, mockCourses } = vi.hoi
     { id: 'curriculum-uvtab', programmeId: 'programme-uvtab', version: '1.0', title: 'UVTAB Business Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 0 },
   ],
   mockCourses: [
+    { id: 'course-pharm-legacy', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, isDeleted: false, courseType: 'Lecture' },
     { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'CPH1101', name: 'Human Anatomy and Physiology I', creditUnits: 3, isActive: true, isDeleted: false, courseType: 'Lecture' },
     { id: 'course-pharm-2', authorityCode: 'UHPAB', code: 'CPH1201', name: 'Human Anatomy and Physiology II', creditUnits: 3, isActive: true, isDeleted: false, courseType: 'Lecture' },
   ],
