@@ -1339,7 +1339,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               Teaching groups
               <select
                 multiple
-                size={Math.min(6, Math.max(2, availableGroups.length))}
+                size={Math.min(6, Math.max(2, allAvailableGroups.length))}
                 value={selectedTeachingGroupIds}
                 onChange={event =>
                   setSelectedTeachingGroupIds(
