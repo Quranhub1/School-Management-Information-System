@@ -570,3 +570,26 @@ PR #290 is superseded; its payment-account resolver and clearing-account changes
 - [ ] Run the timetable selection tests and frontend production build.
 - [ ] Run backend build and verify /api/timetable/options against the test database.
 - [ ] Browser-verify each dropdown cascade, template loading, tutor filtering, save/reload and PDF output.
+
+## Curriculum catalogue migration and timetable regression — 2026-11-23
+
+### Catalogue migration and PostgreSQL state
+
+- [x] Repair the malformed SQL string and duplicated trailing fragment in `20261123100000_ImportKshsMasterCurriculumCatalogue.cs`; merged to `main` in commit `d261e3e06dfb46211f9ac08a451a997b5e293cf0`.
+- [x] Build `SchoolManagement.Infrastructure` successfully after the migration repair (0 warnings, 0 errors).
+- [x] Apply `20261123100000_ImportKshsMasterCurriculumCatalogue` and `20261123120000_AddCurriculumCoreRelationships` to the local PostgreSQL `school_management` database.
+- [x] Verify the three restrictive foreign keys: `Curricula.ProgrammeId → Programmes.Id`, `CurriculumCourses.CourseId → Courses.Id`, and `CurriculumCourses.CurriculumId → Curricula.Id`.
+- [x] Verify imported catalogue counts: 191 programmes, 82 curricula, 668 courses and 734 curriculum-course mappings.
+- [x] Verify both migrations are recorded in `__EFMigrationsHistory`.
+- [x] Use a temporary process-scoped connection-string override to authenticate with the existing local database credentials; no password change or committed credential change was made.
+
+### Timetable frontend regression status
+
+- [x] Confirm the timetable selection helper tests cover programme/curriculum/year/semester/course-unit relationships, including incomplete mappings and year-dependent semester options.
+- [x] Confirm the timetable selector order is Programme → Curriculum → Year of study → Curriculum semester → Academic period → Course unit.
+- [ ] Resolve the 8 failing tests in `TimetableManagement.test.tsx` (17 tests total; 9 passed in the latest reported run).
+- [ ] Inspect the actual assertion/error output from the isolated verbose Vitest run before changing implementation; the React `act(...)` messages are warnings and are not yet established as the causes of the failures.
+- [ ] Re-run the focused timetable test file, then the full frontend test suite and production build.
+- [ ] Verify the complete live-data cascade, teaching-group selection, tutor filtering, template loading, save/reload and official PDF layout in the running application.
+
+**Verification boundary:** the catalogue migrations and local database relationships/data are verified. The timetable UI is not yet fully accepted: the latest component test run still reports 8 failures, and browser/PDF end-to-end verification remains outstanding. Do not mark timetable regression checks complete until the failures are diagnosed and the full checks pass.
