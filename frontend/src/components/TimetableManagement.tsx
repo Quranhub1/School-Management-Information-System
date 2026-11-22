@@ -16,6 +16,7 @@ import {
   type TimetableOptions,
 } from '../api/timetable'
 import './TimetableManagement.css'
+import { deriveTimetableSelection } from './timetableSelection'
 import { downloadInstitutionalPdf, printInstitutionalPdf } from '../lib/pdfmake'
 import { useInstitutionSettings } from './InstitutionSettingsContext'
 
@@ -110,6 +111,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const [programmeId, setProgrammeId] = useState('')
   const [curriculumId, setCurriculumId] = useState('')
   const [yearOfStudy, setYearOfStudy] = useState('')
+  const [selectedCourseUnitId, setSelectedCourseUnitId] = useState('')
   const [curriculumSemester, setCurriculumSemester] = useState('')
   const [teachingGroupId, setTeachingGroupId] = useState('')
   const [courseId, setCourseId] = useState('')
@@ -176,11 +178,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       )
       const preferredMapping = loadedOptions.curriculumCourses.find(item => item.curriculumId === preferredCurriculum?.id)
       const preferredGroup = loadedOptions.teachingGroups.find(
-        item => item.programmeId === preferredCurriculum?.programmeId && item.semesterId === preferredPeriodId
+        item => item.programmeId === preferredCurriculum?.programmeId &&
+          item.semesterId === preferredPeriodId && item.courseId === preferredMapping?.courseId
       )
       setProgrammeId(current => current || preferredProgramme?.id || '')
       setCurriculumId(current => current || preferredCurriculum?.id || '')
       setYearOfStudy(current => current || (preferredMapping ? String(preferredMapping.yearOfStudy) : ''))
+      setSelectedCourseUnitId(current => current || preferredMapping?.courseId || '')
       setCurriculumSemester(current => current || (preferredMapping ? String(preferredMapping.semesterNumber) : ''))
       setTemplateGroupId(current => current || preferredGroup?.id || '')
       setTeachingGroupId(current => current || preferredGroup?.id || '')
@@ -222,9 +226,17 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     () => new Set(options.teachingGroups.filter(item => item.semesterId === semesterId).map(item => item.id)),
     [options.teachingGroups, semesterId]
   )
-  const programmeCurricula = options.curricula.filter(item => selectedProgrammeIds.has(item.programmeId))
-  const selectedCurriculum =
-    programmeCurricula.find(item => item.id === curriculumId) ?? programmeCurricula[0]
+  const selection = deriveTimetableSelection(
+    options,
+    [...selectedProgrammeIds],
+    curriculumId,
+    yearOfStudy,
+    curriculumSemester,
+    semesterId,
+    selectedCourseUnitId
+  )
+  const programmeCurricula = selection.curricula
+  const selectedCurriculum = selection.selectedCurriculum
   const curriculumMappings = options.curriculumCourses.filter(
     item => item.curriculumId === selectedCurriculum?.id
   )
@@ -251,31 +263,22 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     return [...grouped.values()].sort((a, b) => a.year - b.year || a.semester - b.semester)
   }, [curriculumMappings])
 
-  const mappedStudyYears = [...new Set(curriculumMappings.map(item => item.yearOfStudy))].sort(
-    (a, b) => a - b
-  )
-  const programmeDurationYears = Math.max(0, Number(selectedProgramme?.durationYears) || 0)
-  const studyYears = mappedStudyYears.length
-    ? mappedStudyYears
-    : Array.from({ length: programmeDurationYears }, (_, index) => index + 1)
-  const curriculumSemesters = [
-    ...new Set(
-      curriculumMappings
-        .filter(item => !yearOfStudy || item.yearOfStudy === Number(yearOfStudy))
-        .map(item => item.semesterNumber)
-    ),
-  ].sort((a, b) => a - b)
+  const studyYears = selection.studyYears
+  const curriculumSemesters = selection.curriculumSemesters
   const eligibleMappings = curriculumMappings.filter(
     item =>
       (!yearOfStudy || item.yearOfStudy === Number(yearOfStudy)) &&
       (!curriculumSemester || item.semesterNumber === Number(curriculumSemester))
   )
   const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
-  const availableCourses = options.courses.filter(item => eligibleCourseIds.has(item.id))
-  const availableGroups = options.teachingGroups.filter(
-    item => item.programmeId === selectedCurriculum?.programmeId && item.semesterId === semesterId
-  )
+  const availableCourses = selection.courseUnits
+  const availableGroups = selection.teachingGroups
+  const availableTutors = selection.tutors
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
+  const selectedTemplateGroup = options.teachingGroups.find(item => item.id === templateGroupId)
+  const templateCourseOptions = selectedTemplateGroup
+    ? options.courses.filter(item => item.id === selectedTemplateGroup.courseId && eligibleCourseIds.has(item.id))
+    : availableCourses
   const selectedGroupCourses = selectedGroup
     ? options.courses.filter(
         item => item.id === selectedGroup.courseId && eligibleCourseIds.has(item.id)
@@ -1163,6 +1166,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   )
                   setYearOfStudy('')
                   setCurriculumSemester('')
+                  setSelectedCourseUnitId('')
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
@@ -1185,6 +1189,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setCurriculumId(event.target.value)
                   setYearOfStudy('')
                   setCurriculumSemester('')
+                  setSelectedCourseUnitId('')
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
@@ -1206,6 +1211,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 onChange={event => {
                   setYearOfStudy(event.target.value)
                   setCurriculumSemester('')
+                  setSelectedCourseUnitId('')
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
@@ -1226,6 +1232,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 value={curriculumSemester}
                 onChange={event => {
                   setCurriculumSemester(event.target.value)
+                  setSelectedCourseUnitId('')
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
@@ -1249,6 +1256,8 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setTemplateLoadedGroupId('')
+                  setTemplateGroupId('')
+                  setTemplateLoadedGroupId('')
                 }}
               >
                 <option value="">Select academic period</option>
@@ -1262,6 +1271,29 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               </select>
             </label>
           </div>
+          <label className="timetable-course-unit-filter">
+            Course unit
+            <select
+              aria-label="Course unit selection"
+              value={selectedCourseUnitId}
+              disabled={!selectedCurriculum || !yearOfStudy || !curriculumSemester || availableCourses.length === 0}
+              onChange={event => {
+                const nextCourseId = event.target.value
+                const nextGroup = options.teachingGroups.find(item =>
+                  item.programmeId === selectedCurriculum?.programmeId &&
+                  item.semesterId === semesterId && item.courseId === nextCourseId
+                )
+                setSelectedCourseUnitId(nextCourseId)
+                setTeachingGroupId(nextGroup?.id ?? '')
+                setTemplateGroupId(nextGroup?.id ?? '')
+                setTemplateLoadedGroupId('')
+                setTemplateCells({})
+              }}
+            >
+              <option value="">Select course unit</option>
+              {templateCourseOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+            </select>
+          </label>
           <p className="timetable-generator-help">
             {eligibleMappings.length} curriculum course unit(s) match this selection.{' '}
             {availableGroups.length} operational teaching group(s) are available for the selected
@@ -1443,7 +1475,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 <select
                   value={templateGroupId}
                   onChange={event => {
-                    setTemplateGroupId(event.target.value)
+                    const nextGroupId = event.target.value
+                    const nextGroup = options.teachingGroups.find(item => item.id === nextGroupId)
+                    setTemplateGroupId(nextGroupId)
+                    setTeachingGroupId(nextGroupId)
+                    setSelectedCourseUnitId(nextGroup?.courseId ?? '')
+                    setCourseId(nextGroup?.courseId ?? '')
                     setTemplateLoadedGroupId('')
                     setTemplateCells({})
                     setTemplateSlots(defaultTemplateSlots)
@@ -1613,7 +1650,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                                   </select>
                                   <select aria-label="Lecturer" value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}>
                                     <option value="">Select lecturer</option>
-                                    {options.teachers.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                                    {availableTutors.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
                                   </select>
                                   <input aria-label="Room or venue" value={cell.room} onChange={event => changeTemplateCell(key, 'room', event.target.value)} placeholder="Room / lab" />
                                   <select aria-label="Session type" value={cell.sessionType} onChange={event => changeTemplateCell(key, 'sessionType', event.target.value)}>
@@ -1717,7 +1754,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                           }
                         >
                           <option value="">— Select course —</option>
-                          {availableCourses.map(item => (
+                          {templateCourseOptions.map(item => (
                             <option key={item.id} value={item.id}>
                               {item.label}
                             </option>
@@ -1738,7 +1775,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                           }
                         >
                           <option value="">— Select lecturer —</option>
-                          {options.teachers.map(item => (
+                          {availableTutors.map(item => (
                             <option key={item.id} value={item.id}>
                               {item.label}
                             </option>
@@ -1969,7 +2006,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 required
               >
                 <option value="">Select teacher</option>
-                {options.teachers.map(item => (
+                {availableTutors.map(item => (
                   <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
