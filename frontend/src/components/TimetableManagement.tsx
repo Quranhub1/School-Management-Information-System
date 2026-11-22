@@ -247,9 +247,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
     return [...grouped.values()].sort((a, b) => a.year - b.year || a.semester - b.semester)
   }, [curriculumMappings])
 
-  const studyYears = [...new Set(curriculumMappings.map(item => item.yearOfStudy))].sort(
+  const mappedStudyYears = [...new Set(curriculumMappings.map(item => item.yearOfStudy))].sort(
     (a, b) => a - b
   )
+  const programmeDurationYears = Math.max(0, Number(selectedProgramme?.durationYears) || 0)
+  const studyYears = mappedStudyYears.length
+    ? mappedStudyYears
+    : Array.from({ length: programmeDurationYears }, (_, index) => index + 1)
   const curriculumSemesters = [
     ...new Set(
       curriculumMappings
