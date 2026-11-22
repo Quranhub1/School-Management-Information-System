@@ -16,26 +16,8 @@ public sealed class AcademicStructureController(SchoolManagementDbContext db) : 
     [HttpGet("years")]
     public async Task<ActionResult<IReadOnlyList<AcademicYearResponseDto>>> GetYears(CancellationToken ct)
     {
-        // Keep the dropdown continuous from 2001-2002 and always extend it
-        // at least 100 years beyond the current year. This avoids a hard stop
-        // at the range initially inserted by the seed migration.
-        var lastYear = DateTime.UtcNow.Year + 100;
-        await db.Database.ExecuteSqlInterpolatedAsync($"""
-            INSERT INTO "AcademicYears"
-                ("Id", "Name", "StartDate", "EndDate", "IsCurrent", "IsActive")
-            SELECT gen_random_uuid(),
-                   year_value::text || '-' || (year_value + 1)::text,
-                   make_date(year_value, 1, 1),
-                   make_date(year_value + 1, 1, 1) - 1,
-                   FALSE,
-                   TRUE
-            FROM generate_series(2001, {lastYear}) AS years(year_value)
-            WHERE NOT EXISTS (
-                SELECT 1 FROM "AcademicYears" existing
-                WHERE existing."Name" = year_value::text || '-' || (year_value + 1)::text
-            );
-            """, ct);
-
+        // Academic years are managed explicitly. Do not create additional years
+        // when a dropdown is loaded; the database catalogue is the source of truth.
         var years = await db.AcademicYears.AsNoTracking()
             .Where(x => x.IsActive)
             .OrderBy(x => x.StartDate)
