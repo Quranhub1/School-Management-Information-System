@@ -273,6 +273,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   const eligibleCourseIds = new Set(eligibleMappings.map(item => item.courseId))
   const availableCourses = selection.courseUnits
   const availableGroups = selection.teachingGroups
+  const allAvailableGroups = selection.allTeachingGroups
   const availableTutors = selection.tutors
   const scheduleTutors = options.teachers.filter(
     item => !item.courseUnitIds?.length || !courseId || item.courseUnitIds.includes(courseId)
@@ -600,7 +601,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       )
       return
     }
-    const selectedGroups = availableGroups.filter(group => selectedTeachingGroupIds.includes(group.id))
+    const selectedGroups = allAvailableGroups.filter(group => selectedTeachingGroupIds.includes(group.id))
     if (selectedGroups.length === 0) {
       setError('Select at least one teaching group to generate its timetable.')
       return
@@ -1171,6 +1172,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setYearOfStudy('')
                   setCurriculumSemester('')
                   setSelectedCourseUnitId('')
+                  setSelectedTeachingGroupIds([])
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
@@ -1194,6 +1196,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setYearOfStudy('')
                   setCurriculumSemester('')
                   setSelectedCourseUnitId('')
+                  setSelectedTeachingGroupIds([])
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
@@ -1216,6 +1219,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setYearOfStudy(event.target.value)
                   setCurriculumSemester('')
                   setSelectedCourseUnitId('')
+                  setSelectedTeachingGroupIds([])
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
@@ -1237,6 +1241,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 onChange={event => {
                   setCurriculumSemester(event.target.value)
                   setSelectedCourseUnitId('')
+                  setSelectedTeachingGroupIds([])
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setCourseId('')
@@ -1257,6 +1262,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 value={semesterId}
                 onChange={event => {
                   setSemesterId(event.target.value)
+                  setSelectedTeachingGroupIds([])
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setTemplateLoadedGroupId('')
@@ -1286,6 +1292,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   item.semesterId === semesterId && item.courseId === nextCourseId
                 )
                 setSelectedCourseUnitId(nextCourseId)
+                setSelectedTeachingGroupIds([])
                 setTeachingGroupId(nextGroup?.id ?? '')
                 setTemplateGroupId(nextGroup?.id ?? '')
                 setTemplateLoadedGroupId('')
@@ -1340,13 +1347,13 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   )
                 }
               >
-                {availableGroups.map(item => (
+                {allAvailableGroups.map(item => (
                   <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
                 ))}
               </select>
-              {availableGroups.length === 0 ? (
+              {allAvailableGroups.length === 0 ? (
                 <small className="timetable-class-empty-hint">
                   No active teaching groups are linked to this programme and academic period. Check
                   Course Offerings and Teaching Groups.
@@ -1359,12 +1366,12 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               )}
             </label>
           </div>
-          <p className="timetable-generator-help">Selected teaching groups: {selectedTeachingGroupIds.filter(id => availableGroups.some(group => group.id === id)).length} of {availableGroups.length} available.</p>
+          <p className="timetable-generator-help">Selected teaching groups: {selectedTeachingGroupIds.filter(id => allAvailableGroups.some(group => group.id === id)).length} of {allAvailableGroups.length} available.</p>
           <div className="timetable-form-footer">
             <button
               className="timetable-action primary"
               type="submit"
-              disabled={loading || availableSemesters.length === 0}
+              disabled={loading || availableSemesters.length === 0 || allAvailableGroups.length === 0}
             >
               {loading ? 'Generating…' : 'Generate schedule'}
             </button>
