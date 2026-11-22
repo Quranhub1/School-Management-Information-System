@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagement.Application.Academic;
 using SchoolManagement.Application.Authorization;
+using SchoolManagement.Domain.Academic;
 
 namespace SchoolManagement.Api.Controllers;
 
@@ -12,13 +13,13 @@ public sealed class ProgrammesController(ProgrammeService service) : ControllerB
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken) =>
-        Ok(await service.GetAllAsync(cancellationToken));
+        Ok((await service.GetAllAsync(cancellationToken)).Select(ProgrammeResponseDto.FromDomain).ToArray());
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var programme = await service.GetByIdAsync(id, cancellationToken);
-        return programme is null ? NotFound() : Ok(programme);
+        return programme is null ? NotFound() : Ok(ProgrammeResponseDto.FromDomain(programme));
     }
 
     [HttpPost]
@@ -26,7 +27,7 @@ public sealed class ProgrammesController(ProgrammeService service) : ControllerB
     {
         var result = await service.CreateAsync(request, cancellationToken);
         if (!result.Success) return BadRequest(new { message = result.Error });
-        return CreatedAtAction(nameof(GetById), new { id = result.Programme!.Id }, result.Programme);
+        return CreatedAtAction(nameof(GetById), new { id = result.Programme!.Id }, ProgrammeResponseDto.FromDomain(result.Programme));
     }
 
     [HttpPut("{id:guid}")]
@@ -34,7 +35,7 @@ public sealed class ProgrammesController(ProgrammeService service) : ControllerB
     {
         var result = await service.UpdateAsync(id, request, cancellationToken);
         if (!result.Success) return BadRequest(new { message = result.Error });
-        return Ok(result.Programme);
+        return Ok(ProgrammeResponseDto.FromDomain(result.Programme!));
     }
 
     [HttpDelete("{id:guid}")]
@@ -55,3 +56,55 @@ public sealed class ProgrammesController(ProgrammeService service) : ControllerB
 }
 
 public sealed record SetProgrammeActiveRequest(bool Active);
+
+public sealed record ProgrammeResponseDto(
+    Guid Id,
+    Guid? DepartmentId,
+    string Code,
+    string Name,
+    string Award,
+    string? AwardTitle,
+    int DurationYears,
+    string DurationUnit,
+    string StudyMode,
+    string DeliveryType,
+    ProgrammeType Type,
+    string? Regulator,
+    string? ApprovalReference,
+    DateOnly? ApprovalDate,
+    string ApprovalStatus,
+    string? SourceReference,
+    bool IsReferenceOnly,
+    bool IsActive)
+{
+    public static ProgrammeResponseDto FromDomain(Programme programme) => new(
+        programme.Id,
+        programme.DepartmentId,
+        ToDisplayCode(programme.Code),
+        programme.Name,
+        programme.Award,
+        programme.AwardTitle,
+        programme.DurationYears,
+        programme.DurationUnit,
+        programme.StudyMode,
+        programme.DeliveryType,
+        programme.Type,
+        programme.Regulator,
+        programme.ApprovalReference,
+        programme.ApprovalDate,
+        programme.ApprovalStatus,
+        programme.SourceReference,
+        programme.IsReferenceOnly,
+        programme.IsActive);
+
+    private static string ToDisplayCode(string code)
+    {
+        foreach (var prefix in new[] { "KSHS-", "UHPAB-", "UVTAB-", "SB-" })
+        {
+            if (code.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return code[prefix.Length..];
+        }
+
+        return code;
+    }
+}
