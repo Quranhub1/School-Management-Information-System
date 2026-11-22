@@ -59,15 +59,13 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
                 'SB-CPH','SB-DPH','KSHS-CFSN','KSHS-DFSN','SB-DHND','KSHS-DHND',
                 'KSHS-DDS','SB-ADDS','KSHS-ADDS','KSHS-CBME','KSHS-DBME',
                 'SB-CGC','SB-CRM-C','SB-DHCG','SB-DRM','DSSOM','KSHS-ADHPE','SB-BRIDGE','KSHS-DFST',
-                'CMHN','CEC','CEH','CTA','DMHN'
+                'CMHN','CEC','CEH','CTA','DMHN','DMHND'
             );
 
-            -- The source specifies a three-year DMHN award, but only provides
-            -- individual unit rows for Years 1 and 2; retain Year 3 as a study year
-            -- without inventing its missing semester course units.
+            -- The source provides all six semesters for the DMHN / DMHND track.
             UPDATE "Programmes"
             SET "DurationYears"=3, "DurationUnit"='Years'
-            WHERE "Code"='DMHN';
+            WHERE "Code" IN ('DMHN','DMHND');
             """);
 
         migrationBuilder.Sql(BuildCurriculumImportSql());
@@ -181,6 +179,72 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
                   AND existing."IsDeleted"=FALSE
             );
 
+            WITH dmhn_rows("YearOfStudy","SemesterNumber","Code","Name","CreditUnits","Assessment") AS (VALUES
+                (3,1,'DMHN 3101','Child/Adolescent, Geriatric, Forensic Psychiatry & Research Methods',6,'Theory'),
+                (3,2,'DMHN 3201','Mental Health Leadership, Dissertation & Senior Practicum III',8,'Clinical Final')
+            )
+            UPDATE "Courses" c
+            SET "CreditUnits"=s."CreditUnits",
+                "Description"='Imported from KSHS Master Curriculum & Course Units Catalog. Assessment: ' || s."Assessment",
+                "CourseType"=s."Assessment",
+                "IsActive"=TRUE,
+                "IsDeleted"=FALSE
+            FROM dmhn_rows s
+            WHERE c."AuthorityCode"='UHPAB'
+              AND c."Code"=s."Code"
+              AND c."Name"=s."Name";
+
+            WITH dmhn_rows("YearOfStudy","SemesterNumber","Code","Name","CreditUnits","Assessment") AS (VALUES
+                (3,1,'DMHN 3101','Child/Adolescent, Geriatric, Forensic Psychiatry & Research Methods',6,'Theory'),
+                (3,2,'DMHN 3201','Mental Health Leadership, Dissertation & Senior Practicum III',8,'Clinical Final')
+            )
+            INSERT INTO "Courses"
+            ("Id","AuthorityCode","Code","Name","CreditUnits","Description","CourseType","IsActive","IsDeleted")
+            SELECT gen_random_uuid(),'UHPAB',s."Code",s."Name",s."CreditUnits",
+                   'Imported from KSHS Master Curriculum & Course Units Catalog. Assessment: ' || s."Assessment",
+                   s."Assessment",TRUE,FALSE
+            FROM dmhn_rows s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "Courses" c
+                WHERE c."AuthorityCode"='UHPAB'
+                  AND c."Code"=s."Code"
+                  AND c."Name"=s."Name"
+                  AND c."IsActive"=TRUE
+                  AND c."IsDeleted"=FALSE
+            );
+
+            WITH dmhn_rows("YearOfStudy","SemesterNumber","Code","Name","CreditUnits","Assessment") AS (VALUES
+                (3,1,'DMHN 3101','Child/Adolescent, Geriatric, Forensic Psychiatry & Research Methods',6,'Theory'),
+                (3,2,'DMHN 3201','Mental Health Leadership, Dissertation & Senior Practicum III',8,'Clinical Final')
+            )
+            INSERT INTO "CurriculumCourses"
+            ("Id","CurriculumId","CourseId","YearOfStudy","SemesterNumber","IsCore","IsDeleted")
+            SELECT gen_random_uuid(),cu."Id",course."Id",s."YearOfStudy",s."SemesterNumber",TRUE,FALSE
+            FROM dmhn_rows s
+            INNER JOIN "Programmes" p ON p."Code"='DMHN'
+            INNER JOIN "Curricula" cu
+                ON cu."ProgrammeId"=p."Id"
+               AND cu."Version"='KSHS-MASTER-CATALOG-2026-11'
+            JOIN LATERAL (
+                SELECT c."Id"
+                FROM "Courses" c
+                WHERE c."AuthorityCode"='UHPAB'
+                  AND c."Code"=s."Code"
+                  AND c."Name"=s."Name"
+                  AND c."IsActive"=TRUE
+                  AND c."IsDeleted"=FALSE
+                ORDER BY c."Id"
+                LIMIT 1
+            ) course ON TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "CurriculumCourses" existing
+                WHERE existing."CurriculumId"=cu."Id"
+                  AND existing."CourseId"=course."Id"
+                  AND existing."YearOfStudy"=s."YearOfStudy"
+                  AND existing."SemesterNumber"=s."SemesterNumber"
+                  AND existing."IsDeleted"=FALSE
+            );
+
             -- The source uses the first two digits of each four-digit unit code
             -- for year/semester placement. Normalize those positions here so labels
             -- such as "CMR Yr 2 Sem 1" are not reduced to Year 1 by fallback parsing.
@@ -202,7 +266,8 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
             WITH curriculum_aliases("SourceCode","TargetCode") AS (VALUES
                 ('DSSOM','KSHS-CSSOM'),
                 ('SB-DHCG','SB-CGC'),
-                ('SB-DRM','SB-CRM-C')
+                ('SB-DRM','SB-CRM-C'),
+                ('DMHN','DMHND')
             )
             INSERT INTO "Curricula"
             ("Id","ProgrammeId","Version","Title","MinimumCredits","EffectiveFrom","EffectiveTo",
@@ -266,7 +331,7 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
               AND cu."Version"='UHPAB-DEC-2025-PROVISIONAL'
               AND p."Code" IN (
                 'CN','CM','DN','DM','DCM','CPH','PHA','CLT','MLT','CMR','MER',
-                'CMHN','CEC','CEH','CTA'
+                'CMHN','CEC','CEH','CTA','DMHN','DMHND'
               );
             """;
     }
