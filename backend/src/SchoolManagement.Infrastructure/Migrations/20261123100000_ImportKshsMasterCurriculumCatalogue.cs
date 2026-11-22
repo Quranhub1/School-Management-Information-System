@@ -286,7 +286,8 @@ H4sIAAAAAAAC/7VdW3PbOLJ+5vkVfFLZdZTKBJQze86bLDqxaizHIzqZs4+0BFs8kUgtL854f/124w4Q
             WITH curriculum_aliases("SourceCode","TargetCode") AS (VALUES
                 ('DSSOM','KSHS-CSSOM'),
                 ('SB-DHCG','SB-CGC'),
-                ('SB-DRM','SB-CRM-C')
+                ('SB-DRM','SB-CRM-C'),
+                ('DMHN','DMHND')
             )
             INSERT INTO "CurriculumCourses"
             ("Id","CurriculumId","CourseId","YearOfStudy","SemesterNumber","IsCore","IsDeleted")
