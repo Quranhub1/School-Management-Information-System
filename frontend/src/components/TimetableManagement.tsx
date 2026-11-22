@@ -1259,8 +1259,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setTeachingGroupId('')
                   setTemplateGroupId('')
                   setTemplateLoadedGroupId('')
-                  setTemplateGroupId('')
-                  setTemplateLoadedGroupId('')
                 }}
               >
                 <option value="">Select academic period</option>
@@ -1294,13 +1292,16 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               }}
             >
               <option value="">Select course unit</option>
-              {templateCourseOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+              {availableCourses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
           </label>
           <p className="timetable-generator-help">
             {eligibleMappings.length} curriculum course unit(s) match this selection.{' '}
             {availableGroups.length} operational teaching group(s) are available for the selected
             academic period.
+          </p>
+          <p className="timetable-generator-help">
+            {availableTutors.length} active teaching tutor(s) are available for the selected course unit.
           </p>
           {eligibleMappings.length > 0 && (
             <p className="timetable-generator-help">
