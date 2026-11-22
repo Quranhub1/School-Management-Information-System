@@ -13,7 +13,7 @@ export type TimetableSelection = {
 /**
  * Derives each timetable dropdown from the preceding academic selection.
  * Curriculum mappings are the source of truth for semester and course-unit
- * availability; programme duration is used only when no year mappings exist.
+ * availability; programme duration fills configured years even when some years have no mappings.
  */
 export function deriveTimetableSelection(
   options: TimetableOptions,
