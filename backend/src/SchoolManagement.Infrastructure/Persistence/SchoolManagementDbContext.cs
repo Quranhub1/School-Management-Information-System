@@ -253,9 +253,26 @@ public sealed class SchoolManagementDbContext(DbContextOptions<SchoolManagementD
         m.Entity<SchoolManagement.Domain.Students.Student>().HasIndex(student => new { student.IsArchived, student.CampusId, student.StudentNumber });
         // Preserve the existing singular table name after exposing StudentCharge as a DbSet.
         m.Entity<StudentCharge>().ToTable("StudentCharge");
-        m.Entity<Course>(e => { e.Property(x => x.AuthorityCode).HasMaxLength(40); e.HasIndex(x => x.AuthorityCode); e.Property(x => x.IsDeleted).HasDefaultValue(false); });
-        m.Entity<Curriculum>().Property(x => x.IsDeleted).HasDefaultValue(false);
-        m.Entity<CurriculumCourse>().Property(x => x.IsDeleted).HasDefaultValue(false);
+        m.Entity<Course>(e =>
+        {
+            e.Property(x => x.AuthorityCode).HasMaxLength(40);
+            e.HasIndex(x => x.AuthorityCode);
+            e.Property(x => x.IsDeleted).HasDefaultValue(false);
+        });
+        m.Entity<Curriculum>(e =>
+        {
+            e.Property(x => x.IsDeleted).HasDefaultValue(false);
+            e.HasIndex(x => x.ProgrammeId);
+            e.HasOne<Programme>().WithMany().HasForeignKey(x => x.ProgrammeId).OnDelete(DeleteBehavior.Restrict);
+        });
+        m.Entity<CurriculumCourse>(e =>
+        {
+            e.Property(x => x.IsDeleted).HasDefaultValue(false);
+            e.HasIndex(x => x.CurriculumId);
+            e.HasIndex(x => x.CourseId);
+            e.HasOne<Curriculum>().WithMany().HasForeignKey(x => x.CurriculumId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Restrict);
+        });
         m.Entity<AcademicAuthority>(e => { e.HasKey(x => x.Id); e.Property(x => x.Code).HasMaxLength(40).IsRequired(); e.Property(x => x.Name).HasMaxLength(160).IsRequired(); e.Property(x => x.Description).HasMaxLength(1000); e.Property(x => x.SourceReference).HasMaxLength(500); e.HasIndex(x => x.Code).IsUnique(); });
         m.Entity<Programme>().HasOne<AcademicAuthority>().WithMany().HasForeignKey(x => x.Regulator).HasPrincipalKey(x => x.Code).OnDelete(DeleteBehavior.Restrict);
         m.Entity<Programme>(e => { e.Property(x => x.ApprovalStatus).HasMaxLength(40).IsRequired(); e.Property(x => x.SourceReference).HasMaxLength(500); e.Property(x => x.Regulator).HasMaxLength(40); e.HasIndex(x => x.Regulator); e.HasIndex(x => x.Code).IsUnique(); });
