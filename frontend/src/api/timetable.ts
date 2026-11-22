@@ -19,7 +19,7 @@ export type CreateTimetableEntry = Omit<TimetableEntry, 'id' | 'isActive' | 'gen
 export type TimetableOptions = {
   teachingGroups: { id: string; label: string; programmeId: string; semesterId: string; courseId: string }[]
   courses: { id: string; label: string }[]
-  teachers: { id: string; label: string }[]
+  teachers: { id: string; label: string; courseUnitIds?: string[] }[]
   semesters: { id: string; label: string; academicYearId: string; academicYearLabel: string; startDate: string; endDate: string; isCurrent: boolean; isActive: boolean }[]
   programmes: { id: string; label: string; code?: string; durationYears?: number }[]
   curricula: { id: string; programmeId: string; label: string }[]
