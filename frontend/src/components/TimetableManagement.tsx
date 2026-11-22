@@ -279,8 +279,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
   )
   const selectedGroup = options.teachingGroups.find(item => item.id === teachingGroupId)
   const selectedTemplateGroup = options.teachingGroups.find(item => item.id === templateGroupId)
-  const templateCourseOptions = selectedTemplateGroup
-    ? options.courses.filter(item => item.id === selectedTemplateGroup.courseId && eligibleCourseIds.has(item.id))
+  const templateCourseId = selectedTemplateGroup?.courseId || selectedCourseUnitId
+  const templateCourseOptions = templateCourseId
+    ? options.courses.filter(item => item.id === templateCourseId && eligibleCourseIds.has(item.id))
     : availableCourses
   const selectedGroupCourses = selectedGroup
     ? options.courses.filter(
@@ -1650,7 +1651,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                                 <div className="timetable-inline-cell-editor" aria-label={days[day] + ' period ' + (slotIndex + 1)}>
                                   <select aria-label="Course unit" value={cell.courseId} onChange={event => changeTemplateCell(key, 'courseId', event.target.value)}>
                                     <option value="">+ Select course</option>
-                                    {availableCourses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                                    {templateCourseOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
                                   </select>
                                   <select aria-label="Lecturer" value={cell.teacherId} onChange={event => changeTemplateCell(key, 'teacherId', event.target.value)}>
                                     <option value="">Select lecturer</option>
