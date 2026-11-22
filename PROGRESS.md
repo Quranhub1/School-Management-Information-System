@@ -27,6 +27,8 @@ A dedicated executable target-environment acceptance runbook is now available at
 - [x] Keep the timetable sheet open after saving instead of closing the editor and clearing the visible sheet.
 - [x] Scope the legacy-view styling so the read-only timetable display remains available.
 
+- [x] Keep the blank timetable grid rendered even when no teaching group is selected; selecting a group loads its saved sessions, while selection no longer controls whether the sheet itself is visible.
+
 ### Verification still required
 
 - [ ] Run the frontend TypeScript/Vite production build against the merged `main` branch.
