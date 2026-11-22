@@ -53,25 +53,25 @@ describe('timetable programme-to-template selection flow', () => {
     expect(result.courseUnits.map(item => item.id)).toEqual(['course-b1'])
   })
 
-  it('loads mapped years, then only semesters belonging to the selected year', () => {
+  it('loads all coded curriculum semesters independently of selected year', () => {
     const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '', 'period-1', '')
     expect(result.studyYears).toEqual([1, 2, 3])
-    expect(result.curriculumSemesters).toEqual([1, 2])
+    expect(result.curriculumSemesters.map(item => item.code)).toEqual(['A11', 'A12', 'A21'])
   })
 
   it('loads only course units mapped to the selected year and curriculum semester', () => {
-    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '2', 'period-1', '')
+    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', 'A12', 'period-1', '')
     expect(result.courseUnits.map(item => item.id)).toEqual(['course-a2'])
   })
 
   it('loads teaching groups for the selected course unit and academic period', () => {
-    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '1', 'period-1', 'course-a1')
+    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', 'A11', 'period-1', 'course-a1')
     expect(result.teachingGroups.map(item => item.id)).toEqual(['group-a1'])
     expect(result.allTeachingGroups.map(item => item.id)).toEqual(['group-a1', 'group-a1b'])
   })
 
   it('loads tutors assigned to the selected course unit plus unassigned teaching tutors', () => {
-    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '1', 'period-1', 'course-a1')
+    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', 'A11', 'period-1', 'course-a1')
     expect(result.tutors.map(item => item.id)).toEqual(['tutor-a1', 'tutor-general'])
   })
 
