@@ -1166,6 +1166,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             <label>
               Programme
               <select
+                aria-label="Programme"
                 value={programmeId}
                 onChange={event => {
                   const next = event.target.value
@@ -1199,7 +1200,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             <label>
               Curriculum
               <select
+                aria-label="Curriculum"
                 value={selectedCurriculum?.id ?? ''}
+                disabled={!programmeId || programmeCurricula.length === 0}
                 onChange={event => {
                   setCurriculumId(event.target.value)
                   setYearOfStudy('')
@@ -1224,7 +1227,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             <label>
               Year of study
               <select
+                aria-label="Year of study"
                 value={yearOfStudy}
+                disabled={!selectedCurriculum || studyYears.length === 0}
                 onChange={event => {
                   setYearOfStudy(event.target.value)
                   setCurriculumSemester('')
@@ -1237,7 +1242,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setTemplateLoadedGroupId('')
                 }}
               >
-                <option value="">All years</option>
+                <option value="">Select year</option>
                 {studyYears.map(item => (
                   <option key={item} value={item}>
                     Year {item}
@@ -1248,7 +1253,9 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
             <label>
               Curriculum semester
               <select
+                aria-label="Curriculum semester"
                 value={curriculumSemester}
+                disabled={!selectedCurriculum || !yearOfStudy || curriculumSemesters.length === 0}
                 onChange={event => {
                   setCurriculumSemester(event.target.value)
                   setSelectedCourseUnitId('')
@@ -1260,7 +1267,7 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                   setTemplateLoadedGroupId('')
                 }}
               >
-                <option value="">All semesters</option>
+                <option value="">Select curriculum semester</option>
                 {curriculumSemesters.map(item => (
                   <option key={item} value={item}>
                     Semester {item}
