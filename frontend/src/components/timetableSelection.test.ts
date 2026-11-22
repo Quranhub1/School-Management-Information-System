@@ -55,10 +55,14 @@ describe('timetable programme-to-template selection flow', () => {
     expect(result.courseUnits.map(item => item.id)).toEqual(['course-b1'])
   })
 
-  it('loads all coded curriculum semesters independently of selected year', () => {
-    const result = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '', 'period-1', '')
-    expect(result.studyYears).toEqual([1, 2, 3])
-    expect(result.curriculumSemesters.map(item => item.code)).toEqual(['A11', 'A12', 'A21'])
+  it('loads only semesters belonging to the selected year of study', () => {
+    const yearOne = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '1', '', 'period-1', '')
+    const yearTwo = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '2', '', 'period-1', '')
+    const allYears = deriveTimetableSelection(options, ['programme-a'], 'curriculum-a', '', '', 'period-1', '')
+    expect(yearOne.studyYears).toEqual([1, 2, 3])
+    expect(yearOne.curriculumSemesters.map(item => item.code)).toEqual(['A11', 'A12'])
+    expect(yearTwo.curriculumSemesters.map(item => item.code)).toEqual(['A21'])
+    expect(allYears.curriculumSemesters.map(item => item.code)).toEqual(['A11', 'A12', 'A21'])
   })
 
   it('loads only course units mapped to the selected year and curriculum semester', () => {
