@@ -230,8 +230,7 @@ public sealed class CurriculumIntegrationsTests
     public async Task PloService_AddsAndLists()
     {
         var plos = new FakeProgrammeLearningOutcomeRepository();
-        var courses = new FakeCourseRepository();
-        var service = new ProgrammeLearningOutcomeService(plos, courses);
+        var service = new ProgrammeLearningOutcomeService(plos);
 
         var programmeId = Guid.NewGuid();
         var (success, error) = await service.AddAsync(programmeId, "PLO-01", "Demonstrate knowledge", 1);
