@@ -384,6 +384,8 @@ namespace SchoolManagement.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ProgrammeId");
+
                     b.ToTable("Curricula");
                 });
 
@@ -416,6 +418,10 @@ namespace SchoolManagement.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("CurriculumId");
 
                     b.ToTable("CurriculumCourses");
                 });
@@ -5837,6 +5843,30 @@ namespace SchoolManagement.Infrastructure.Migrations
                     b.HasOne("SchoolManagement.Domain.Students.Student", null)
                         .WithMany()
                         .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.Curriculum", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Programme", null)
+                        .WithMany()
+                        .HasForeignKey("ProgrammeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SchoolManagement.Domain.Academic.CurriculumCourse", b =>
+                {
+                    b.HasOne("SchoolManagement.Domain.Academic.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagement.Domain.Academic.Curriculum", null)
+                        .WithMany()
+                        .HasForeignKey("CurriculumId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
