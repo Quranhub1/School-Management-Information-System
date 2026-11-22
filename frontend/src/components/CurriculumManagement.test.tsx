@@ -22,7 +22,8 @@ const { mockAuthorityList, mockProgrammes, mockCurricula, mockCourses } = vi.hoi
     { id: 'curriculum-uvtab', programmeId: 'programme-uvtab', version: '1.0', title: 'UVTAB Business Curriculum', minimumCredits: 0, effectiveFrom: '2026-01-01', status: 'Active', isActive: true, isDeleted: false, programmeType: 0 },
   ],
   mockCourses: [
-    { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'PH101', name: 'Introduction to Pharmacy', creditUnits: 3, isActive: true, isDeleted: false, courseType: 'Lecture' },
+    { id: 'course-pharm-1', authorityCode: 'UHPAB', code: 'CPH1101', name: 'Human Anatomy and Physiology I', creditUnits: 3, isActive: true, isDeleted: false, courseType: 'Lecture' },
+    { id: 'course-pharm-2', authorityCode: 'UHPAB', code: 'CPH1201', name: 'Human Anatomy and Physiology II', creditUnits: 3, isActive: true, isDeleted: false, courseType: 'Lecture' },
   ],
 }))
 
@@ -91,7 +92,7 @@ vi.mock('../utils/academicAuthorities', () => ({
 vi.mock('../utils/confirmDialog', () => ({ showConfirmDialog: vi.fn(async () => true) }))
 
 import { CurriculumManagement } from './CurriculumManagement'
-import { addCurriculumCourse, createCourse, getCourses } from '../api/curriculumManagement'
+import { addCurriculumCourse, createCourse, getCourses, getCurriculumCourses } from '../api/curriculumManagement'
 import { getProgrammes } from '../api/programmes'
 
 describe('CurriculumManagement selectors', () => {
@@ -124,6 +125,26 @@ describe('CurriculumManagement selectors', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Short Courses' }))
     expect(within(screen.getByLabelText('Select programme')).getByRole('option', { name: /UHPAB-SHORT — Basic Life Support/ })).toBeInTheDocument()
     expect(within(screen.getByLabelText('Select curriculum')).queryByRole('option', { name: /Inactive short curriculum/ })).not.toBeInTheDocument()
+  })
+
+  it('groups course units under the programme-specific year and semester code', async () => {
+    vi.mocked(getCurriculumCourses).mockResolvedValue([
+      { id: 'mapping-pharm-1', curriculumId: 'curriculum-pharmacy', courseId: 'course-pharm-1', yearOfStudy: 1, semesterNumber: 1, isCore: true, isDeleted: false },
+      { id: 'mapping-pharm-2', curriculumId: 'curriculum-pharmacy', courseId: 'course-pharm-2', yearOfStudy: 1, semesterNumber: 2, isCore: true, isDeleted: false },
+    ])
+
+    render(<CurriculumManagement canManage />)
+    const authoritySelect = await screen.findByLabelText('Authority')
+    await waitFor(() => expect(authoritySelect).toHaveValue('SCHOOL_BASED'))
+    fireEvent.change(authoritySelect, { target: { value: 'UHPAB' } })
+    await waitFor(() => expect(authoritySelect).toHaveValue('UHPAB'))
+    fireEvent.change(screen.getByLabelText('Select curriculum'), { target: { value: 'curriculum-pharmacy' } })
+
+    expect(await screen.findByRole('heading', { name: 'CPH11 · Year 1' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'CPH12 · Year 1' })).toBeInTheDocument()
+    expect(screen.getByText('CPH1101 — Human Anatomy and Physiology I')).toBeInTheDocument()
+    expect(screen.getByText('CPH1201 — Human Anatomy and Physiology II')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Semester 1|Semester 2/ })).not.toBeInTheDocument()
   })
 
   it('lets administrators create and place a school-based unit directly in a curriculum semester', async () => {
