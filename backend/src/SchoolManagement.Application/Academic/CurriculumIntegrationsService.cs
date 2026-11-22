@@ -21,33 +21,21 @@ public sealed record GraduationAuditResult(
     List<string> MissingCourses,
     List<string> MissingElectiveGroups);
 
-public sealed class GraduationAuditService(
-    ICurriculumRepository curricula,
-    ICurriculumCourseRepository curriculumCourses,
-    ICourseRepository courses,
-    IProgrammeRepository programmes)
+public sealed class GraduationAuditService
 {
-    public async Task<GraduationAuditResult?> AuditAsync(Guid studentId, CancellationToken ct = default)
-    {
-        return null;
-    }
+    public Task<GraduationAuditResult?> AuditAsync(Guid studentId, CancellationToken ct = default) =>
+        Task.FromResult<GraduationAuditResult?>(null);
 
-    public async Task<IReadOnlyList<GraduationAuditResult>> AuditProgrammeAsync(Guid programmeId, CancellationToken ct = default)
-    {
-        return [];
-    }
+    public Task<IReadOnlyList<GraduationAuditResult>> AuditProgrammeAsync(Guid programmeId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<GraduationAuditResult>>([]);
 }
 
 public sealed record TimetableLinkResult(Guid TimetableEntryId, Guid CourseOfferingId, Guid TeachingGroupId, string Room, DayOfWeek DayOfWeek, TimeOnly StartTime, TimeOnly EndTime);
 
-public sealed class TimetableLinkingService(
-    ICurriculumCourseRepository curriculumCourses,
-    ICourseRepository courses)
+public sealed class TimetableLinkingService(ICurriculumCourseRepository curriculumCourses)
 {
-    public async Task<IReadOnlyList<TimetableLinkResult>> GetLinksForCurriculumAsync(Guid curriculumId, CancellationToken ct = default)
-    {
-        return [];
-    }
+    public Task<IReadOnlyList<TimetableLinkResult>> GetLinksForCurriculumAsync(Guid curriculumId, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<TimetableLinkResult>>([]);
 
     public async Task<(bool Success, string? Error)> ValidateLinkAsync(Guid curriculumId, Guid courseId, Guid semesterId, CancellationToken ct = default)
     {
@@ -351,9 +339,7 @@ public sealed class CourseEquivalenceService(
 
 public sealed record ProgrammeLearningOutcomeDto(Guid Id, Guid ProgrammeId, string Code, string Description, int Sequence, bool IsActive);
 
-public sealed class ProgrammeLearningOutcomeService(
-    IProgrammeLearningOutcomeRepository plos,
-    ICourseRepository courses)
+public sealed class ProgrammeLearningOutcomeService(IProgrammeLearningOutcomeRepository plos)
 {
     public async Task<IReadOnlyList<ProgrammeLearningOutcomeDto>> GetByProgrammeAsync(Guid programmeId, CancellationToken ct = default) =>
         (await plos.GetByProgrammeAsync(programmeId, ct))
