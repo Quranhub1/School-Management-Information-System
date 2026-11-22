@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using SchoolManagement.Domain.Staff;
 using SchoolManagement.Application.Authorization;
 using SchoolManagement.Application.Timetable;
 using SchoolManagement.Infrastructure.Persistence;
@@ -30,11 +32,22 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
             .OrderBy(x => x.Code)
             .Select(x => new { x.Id, Label = x.Code + " — " + x.Name })
             .ToListAsync(cancellationToken);
-        var teachers = await db.StaffMembers.AsNoTracking()
-            .Where(x => x.IsActive && x.EmploymentStatus == "Active")
+        var teachingStaff = await db.StaffMembers.AsNoTracking()
+            .Where(x => x.IsActive && x.EmploymentStatus == "Active" && x.StaffType == StaffType.Teaching)
             .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
-            .Select(x => new { x.Id, Label = (x.LastName + " " + x.FirstName).ToUpper() + " (" + x.StaffNumber + ")" })
+            .Select(x => new
+            {
+                x.Id,
+                Label = (x.LastName + " " + x.FirstName).ToUpper() + " (" + x.StaffNumber + ")",
+                x.CourseUnitIdsJson
+            })
             .ToListAsync(cancellationToken);
+        var teachers = teachingStaff.Select(x => new
+        {
+            x.Id,
+            x.Label,
+            CourseUnitIds = ParseCourseUnitIds(x.CourseUnitIdsJson)
+        }).ToList();
         var semesters = await (
             from semester in db.Semesters.AsNoTracking()
             join academicYear in db.AcademicYears.AsNoTracking() on semester.AcademicYearId equals academicYear.Id into academicYears
@@ -270,6 +283,19 @@ public sealed class TimetableController(SchoolManagementDbContext db, TimetableG
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return Ok(replacement.Select(ToDto).ToArray());
+    }
+
+    private static string[] ParseCourseUnitIds(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return [];
+        try
+        {
+            return JsonSerializer.Deserialize<string[]>(value) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 
     private static TimetableEntryDto ToDto(Domain.Academic.TimetableEntry entry) =>
