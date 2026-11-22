@@ -23,9 +23,9 @@ vi.mock('../api/timetable', () => ({
     teachers: [{ id: 'teacher-1', label: 'Test Teacher' }],
     semesters: [{ id: 'period-1', label: 'Semester 1 2026', academicYearId: 'year-1', academicYearLabel: '2026/2027', startDate: '2026-01-01', endDate: '2026-06-30', isCurrent: true, isActive: true }],
     programmes: [
-      { id: 'programme-1', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH' },
+      { id: 'programme-1', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH', durationYears: 2 },
       { id: 'programme-duplicate', label: 'Certificate in Pharmacy (Certificate)', code: 'CPH' },
-      { id: 'programme-2', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH' },
+      { id: 'programme-2', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH', durationYears: 3 },
       { id: 'programme-2-duplicate', label: 'Diploma in Pharmacy (Diploma)', code: 'DPH' },
     ],
     curricula: [
@@ -194,6 +194,48 @@ describe('TimetableManagement', () => {
   it('supports readOnly mode', () => {
     render(<TimetableManagement readOnly />)
     expect(screen.getAllByRole('heading').length).toBeGreaterThan(0)
+  })
+
+  it('loads the full programme → curriculum → year → semester → course-unit cascade', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
+
+    const programme = await screen.findByLabelText('Programme') as HTMLSelectElement
+    fireEvent.change(programme, { target: { value: 'programme-1' } })
+
+    const curriculum = screen.getByLabelText('Curriculum') as HTMLSelectElement
+    await waitFor(() => expect(curriculum.value).toBe('curriculum-1'))
+    expect(Array.from(curriculum.options).map(option => option.value)).toContain('curriculum-duplicate')
+
+    const years = screen.getByLabelText('Year of study') as HTMLSelectElement
+    expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2'])
+    fireEvent.change(years, { target: { value: '1' } })
+
+    const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual(['', '1', '2'])
+    fireEvent.change(semesters, { target: { value: '1' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /edit monday 08:00 period/i }))
+    const courseSelect = await screen.findByLabelText('Course unit') as HTMLSelectElement
+    expect(Array.from(courseSelect.options).map(option => option.value)).toEqual(['', 'course-1'])
+    expect(Array.from(courseSelect.options).some(option => option.value === 'course-2')).toBe(false)
+  })
+
+  it('uses programme duration for year options but does not invent unmapped semesters or course units', async () => {
+    render(<TimetableManagement />)
+    fireEvent.click(screen.getByRole('button', { name: /generate timetable/i }))
+    const programme = await screen.findByLabelText('Programme') as HTMLSelectElement
+    fireEvent.change(programme, { target: { value: 'programme-2' } })
+
+    const curriculum = screen.getByLabelText('Curriculum') as HTMLSelectElement
+    await waitFor(() => expect(curriculum.value).toBe('curriculum-2'))
+    const years = screen.getByLabelText('Year of study') as HTMLSelectElement
+    expect(Array.from(years.options).map(option => option.value)).toEqual(['', '1', '2', '3'])
+
+    fireEvent.change(years, { target: { value: '1' } })
+    const semesters = screen.getByLabelText('Curriculum semester') as HTMLSelectElement
+    expect(Array.from(semesters.options).map(option => option.value)).toEqual([''])
+    expect(screen.getByText(/No course units are mapped to this programme, year and semester/i)).toBeTruthy()
   })
 
   it('shows each programme code only once while retaining curricula attached to duplicate records', async () => {
