@@ -21,7 +21,7 @@ export type TimetableOptions = {
   courses: { id: string; label: string }[]
   teachers: { id: string; label: string; courseUnitIds?: string[] }[]
   semesters: { id: string; label: string; academicYearId: string; academicYearLabel: string; startDate: string; endDate: string; isCurrent: boolean; isActive: boolean }[]
-  programmes: { id: string; label: string; code?: string; durationYears?: number }[]
+  programmes: { id: string; label: string; code?: string; durationYears?: number; durationUnit?: string }[]
   curricula: { id: string; programmeId: string; label: string }[]
   curriculumCourses: { curriculumId: string; programmeId: string; courseId: string; courseLabel: string; yearOfStudy: number; semesterNumber: number; isCore: boolean }[]
 }
