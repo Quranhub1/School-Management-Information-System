@@ -587,28 +587,28 @@ justify-content:space-around;
 
 
 /* Direct editing inside the official sheet cells. */
-.timetable-screen:not(.is-read-only):not(.is-read-only) .timetable-inline-cell-editor {
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor {
   display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:5px;
   min-width:0; width:100%; font-family:Inter,Arial,sans-serif;
 }
-.timetable-screen:not(.is-read-only):not(.is-read-only) .timetable-inline-cell-editor select,
-.timetable-screen:not(.is-read-only):not(.is-read-only) .timetable-inline-cell-editor input {
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor select,
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor input {
   box-sizing:border-box; width:100%; min-width:0; min-height:29px; padding:4px 5px;
   border:1px solid #cbd5e1; border-radius:3px; background:#fff; color:#111827;
   font:500 .68rem Inter,Arial,sans-serif;
 }
-.timetable-screen:not(.is-read-only):not(.is-read-only) .timetable-inline-cell-editor select:focus,
-.timetable-screen:not(.is-read-only):not(.is-read-only) .timetable-inline-cell-editor input:focus {
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor select:focus,
+.timetable-screen:not(.is-read-only) .timetable-inline-cell-editor input:focus {
   outline:2px solid #2563eb; outline-offset:1px;
 }
-.timetable-screen:not(.is-read-only):not(.is-read-only) .timetable-inline-merge {
+.timetable-screen:not(.is-read-only) .timetable-inline-merge {
   display:flex; justify-content:center; gap:8px;
 }
-.timetable-screen:not(.is-read-only):not(.is-read-only) .timetable-inline-merge label {
+.timetable-screen:not(.is-read-only) .timetable-inline-merge label {
   display:flex; align-items:center; gap:3px; color:#475569; font-size:.62rem; font-weight:700;
 }
-.timetable-screen:not(.is-read-only):not(.is-read-only) .timetable-inline-merge select { width:48px; min-height:25px; }
-.timetable-screen:not(.is-read-only):not(.is-read-only) .timetable-cell-modal-overlay { display:none !important; }
+.timetable-screen:not(.is-read-only) .timetable-inline-merge select { width:48px; min-height:25px; }
+.timetable-screen:not(.is-read-only) .timetable-cell-modal-overlay { display:none !important; }
 @media print {
   .timetable-screen:not(.is-read-only) .timetable-inline-cell-editor select,
   .timetable-screen:not(.is-read-only) .timetable-inline-cell-editor input {
