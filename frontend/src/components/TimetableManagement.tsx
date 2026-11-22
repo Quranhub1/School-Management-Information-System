@@ -1225,6 +1225,32 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
               </select>
             </label>
             <label>
+              Year of study
+              <select
+                aria-label="Year of study"
+                value={yearOfStudy}
+                disabled={!selectedCurriculum || studyYears.length === 0}
+                onChange={event => {
+                  setYearOfStudy(event.target.value)
+                  setCurriculumSemester('')
+                  setSelectedCourseUnitId('')
+                  setSelectedTeachingGroupIds([])
+                  setTeachingGroupId('')
+                  setTemplateGroupId('')
+                  setCourseId('')
+                  setTeacherId('')
+                  setTemplateLoadedGroupId('')
+                }}
+              >
+                <option value="">Select year</option>
+                {studyYears.map(item => (
+                  <option key={item} value={item}>
+                    Year {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
               Curriculum semester
               <select
                 aria-label="Curriculum semester"
@@ -1245,31 +1271,6 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
                 {curriculumSemesters.map(item => (
                   <option key={item.value} value={item.code}>
                     {item.code}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Year of study
-              <select
-                aria-label="Year of study"
-                value={yearOfStudy}
-                disabled={!selectedCurriculum || studyYears.length === 0}
-                onChange={event => {
-                  setYearOfStudy(event.target.value)
-                  setSelectedCourseUnitId('')
-                  setSelectedTeachingGroupIds([])
-                  setTeachingGroupId('')
-                  setTemplateGroupId('')
-                  setCourseId('')
-                  setTeacherId('')
-                  setTemplateLoadedGroupId('')
-                }}
-              >
-                <option value="">Select year</option>
-                {studyYears.map(item => (
-                  <option key={item} value={item}>
-                    Year {item}
                   </option>
                 ))}
               </select>
