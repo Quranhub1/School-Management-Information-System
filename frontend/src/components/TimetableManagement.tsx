@@ -176,7 +176,17 @@ export function TimetableManagement({ readOnly = false }: { readOnly?: boolean }
       const preferredCurriculum = loadedOptions.curricula.find(item =>
         preferredProgramme?.sourceIds.includes(item.programmeId)
       )
-      const preferredMapping = loadedOptions.curriculumCourses.find(item => item.curriculumId === preferredCurriculum?.id)
+      const preferredMappings = loadedOptions.curriculumCourses.filter(
+        item => item.curriculumId === preferredCurriculum?.id
+      )
+      const preferredMapping =
+        preferredMappings.find(item =>
+          loadedOptions.teachingGroups.some(group =>
+            group.programmeId === preferredCurriculum?.programmeId &&
+            group.semesterId === preferredPeriodId &&
+            group.courseId === item.courseId
+          )
+        ) ?? preferredMappings[0]
       const preferredGroup = loadedOptions.teachingGroups.find(
         item => item.programmeId === preferredCurriculum?.programmeId &&
           item.semesterId === preferredPeriodId && item.courseId === preferredMapping?.courseId
