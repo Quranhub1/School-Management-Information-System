@@ -11,7 +11,7 @@ public sealed class CourseOfferingService(
     ISemesterRepository semesters,
     IProgrammeRepository programmes)
 {
-    public async Task<IReadOnlyList<CourseOffering>> GetAllAsync(CancellationToken ct = default) => [];
+    public Task<IReadOnlyList<CourseOffering>> GetAllAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<CourseOffering>>([]);
 
     public async Task<(bool Success, string? Error, Guid? OfferingId)> CreateOfferingAsync(CreateCourseOfferingRequest request, CancellationToken ct = default)
     {
@@ -36,8 +36,6 @@ public sealed class CourseOfferingService(
         return (true, null, offering.Id);
     }
 
-    public async Task<(bool Success, string? Error)> SetOfferingActiveAsync(Guid offeringId, bool isActive, CancellationToken ct = default)
-    {
-        return (true, null);
-    }
+    public Task<(bool Success, string? Error)> SetOfferingActiveAsync(Guid offeringId, bool isActive, CancellationToken ct = default) =>
+        Task.FromResult<(bool Success, string? Error)>((true, null));
 }
