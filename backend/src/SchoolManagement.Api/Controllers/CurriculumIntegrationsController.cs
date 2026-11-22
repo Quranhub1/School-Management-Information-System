@@ -12,12 +12,8 @@ namespace SchoolManagement.Api.Controllers;
 [Route("api/curriculum-integrations")]
 [Authorize(Policy = AuthorizationPolicies.AcademicManagement)]
 public sealed class CurriculumIntegrationsController(
-    CourseOfferingService offeringService,
-    GraduationAuditService graduationService,
-    TimetableLinkingService timetableService,
     ElectiveGroupService electiveGroupService,
     CurriculumVersionService versionService,
-    FacultyAssignmentService facultyService,
     FeeIntegrationService feeService,
     PrerequisiteChainService prereqChainService,
     CourseEquivalenceService equivalenceService,
@@ -192,11 +188,17 @@ public sealed class CurriculumIntegrationsController(
     }
 
     [HttpPost("curricula/{curriculumId:guid}/versions/snapshot")]
-    public async Task<IActionResult> CreateVersionSnapshot(Guid curriculumId, [FromBody] object request, CancellationToken ct)
+    public async Task<IActionResult> CreateVersionSnapshot(Guid curriculumId, [FromBody] System.Text.Json.JsonElement request, CancellationToken ct)
     {
-        var systemTextJson = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(request.ToString());
-        var version = systemTextJson.GetProperty("version").GetString()!;
-        var title = systemTextJson.GetProperty("title").GetString()!;
+        if (request.ValueKind != System.Text.Json.JsonValueKind.Object ||
+            !request.TryGetProperty("version", out var versionElement) ||
+            !request.TryGetProperty("title", out var titleElement))
+            return BadRequest(new { message = "Version and title are required." });
+
+        var version = versionElement.GetString();
+        var title = titleElement.GetString();
+        if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(title))
+            return BadRequest(new { message = "Version and title must not be empty." });
         var changeNotes = systemTextJson.TryGetProperty("changeNotes", out var cn) ? cn.GetString() : null;
         var result = await versionService.CreateSnapshotAsync(curriculumId, version, title, changeNotes, ct);
         if (!result.Success) return BadRequest(new { message = result.Error });
