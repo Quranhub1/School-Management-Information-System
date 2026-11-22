@@ -9,6 +9,4 @@ namespace SchoolManagement.Application.Attendance;
 /// </summary>
 public interface IAttendanceRepository : SchoolManagement.Application.Abstractions.IAttendanceRepository
 {
-    Task<IReadOnlyList<EligibleStudentDto>> GetEligibleStudentsAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default);
-    Task<SessionSummaryDto> GetSessionSummaryAsync(Guid attendanceSessionId, CancellationToken cancellationToken = default);
 }
