@@ -750,6 +750,12 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
     }
   }
 
+  const selectedCurriculum = authorityCurricula.find(item => item.id === selected)
+  const selectedProgrammeCode = programmes.find(item => item.id === selectedCurriculum?.programmeId)?.code ?? ''
+  const semesterCodePrefix = selectedProgrammeCode
+    .replace(/^(?:UHPAB|UVTAB|SB)[-_]/i, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
   const semesterGroups = Array.from(
     mappings.reduce((groups, mapping) => {
       const key = `${mapping.yearOfStudy}-${mapping.semesterNumber}`
@@ -758,7 +764,12 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
       groups.set(key, group)
       return groups
     }, new Map<string, { year: number; semester: number; mappings: CurriculumCourse[] }>()).values()
-  ).sort((left, right) => left.year - right.year || left.semester - right.semester)
+  )
+    .sort((left, right) => left.year - right.year || left.semester - right.semester)
+    .map(group => ({
+      ...group,
+      code: semesterCodePrefix ? `${semesterCodePrefix}${group.year}${group.semester}` : `Y${group.year}S${group.semester}`,
+    }))
 
   function getCreditLoadText(curriculumId: string, year: number, semester: number): string {
     const load = creditLoad[curriculumId]?.find(l => l.year === year && l.semester === semester)
@@ -1170,15 +1181,15 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               {semesterGroups.map(group => (
                 <section className="catalogue-board curriculum-semester" key={`${group.year}-${group.semester}`}>
                   <div className="panel-heading">
-                    <h3>Year {group.year} · Semester {group.semester}</h3>
+                    <h3>{group.code} · Year {group.year}</h3>
                     <div className="curriculum-semester-actions">
                       {selected && creditLoad[selected] && (
                         <span className={`credit-load-badge ${getCreditLoadClass(selected, group.year, group.semester)}`}>
                           {getCreditLoadText(selected, group.year, group.semester)}
                         </span>
                       )}
-                      <button type="button" className="secondary-button" onClick={() => beginSemesterEdit(group.year, group.semester)}>Edit semester</button>
-                      <button type="button" className="danger-button" onClick={() => void removeSemester(group.year, group.semester, group.mappings.length)}>Delete semester</button>
+                      <button type="button" className="secondary-button" onClick={() => beginSemesterEdit(group.year, group.semester)}>Edit {group.code}</button>
+                      <button type="button" className="danger-button" onClick={() => void removeSemester(group.year, group.semester, group.mappings.length)}>Remove {group.code}</button>
                     </div>
                   </div>
                   {semesterEdit?.year === group.year && semesterEdit.semester === group.semester && (
@@ -1216,7 +1227,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                   </div>
                 </section>
               ))}
-              {semesterGroups.length === 0 && <p className="empty">No semesters configured.</p>}
+              {semesterGroups.length === 0 && <p className="empty">No course-unit groupings configured.</p>}
             </div>
           )}
         </>
@@ -1324,15 +1335,15 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
               {semesterGroups.map(group => (
                 <section className="catalogue-board curriculum-semester" key={`${group.year}-${group.semester}`}>
                   <div className="panel-heading">
-                    <h3>Year {group.year} · Semester {group.semester}</h3>
+                    <h3>{group.code} · Year {group.year}</h3>
                     <div className="curriculum-semester-actions">
                       {selected && creditLoad[selected] && (
                         <span className={`credit-load-badge ${getCreditLoadClass(selected, group.year, group.semester)}`}>
                           {getCreditLoadText(selected, group.year, group.semester)}
                         </span>
                       )}
-                      <button type="button" className="secondary-button" onClick={() => beginSemesterEdit(group.year, group.semester)}>Edit semester</button>
-                      <button type="button" className="danger-button" onClick={() => void removeSemester(group.year, group.semester, group.mappings.length)}>Delete semester</button>
+                      <button type="button" className="secondary-button" onClick={() => beginSemesterEdit(group.year, group.semester)}>Edit {group.code}</button>
+                      <button type="button" className="danger-button" onClick={() => void removeSemester(group.year, group.semester, group.mappings.length)}>Remove {group.code}</button>
                     </div>
                   </div>
                   {semesterEdit?.year === group.year && semesterEdit.semester === group.semester && (
@@ -1370,7 +1381,7 @@ export function CurriculumManagement({ canManage }: { canManage?: boolean }) {
                   </div>
                 </section>
               ))}
-              {semesterGroups.length === 0 && <p className="empty">No semesters configured.</p>}
+              {semesterGroups.length === 0 && <p className="empty">No course-unit groupings configured.</p>}
             </div>
           )}
         </div>
