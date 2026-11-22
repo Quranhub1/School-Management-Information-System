@@ -6,6 +6,7 @@ const options: TimetableOptions = {
   programmes: [
     { id: 'programme-a', code: 'A', label: 'Programme A', durationYears: 3 },
     { id: 'programme-b', code: 'B', label: 'Programme B', durationYears: 2 },
+    { id: 'programme-bridge', code: 'SB-BRIDGE', label: 'Bridging Programme', durationYears: 9, durationUnit: 'Months' },
   ],
   curricula: [
     { id: 'curriculum-a', programmeId: 'programme-a', label: 'A Curriculum' },
